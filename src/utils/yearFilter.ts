@@ -3,7 +3,7 @@ export const getAvailableYears = <T extends Record<string, any>>(
   dateField: keyof T
 ): number[] => {
   const years = items
-    .map(item => {
+    .map((item) => {
       const dateValue = item[dateField];
       if (!dateValue) return null;
       return new Date(dateValue as string).getFullYear();
@@ -20,7 +20,7 @@ export const filterByYear = <T extends Record<string, any>>(
 ): T[] => {
   if (year === 'all') return items;
 
-  return items.filter(item => {
+  return items.filter((item) => {
     const dateValue = item[dateField];
     if (!dateValue) return false;
     const itemYear = new Date(dateValue as string).getFullYear();

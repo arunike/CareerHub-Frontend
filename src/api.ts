@@ -11,16 +11,18 @@ const api = axios.create({
 export const getEvents = (startDate?: string, endDate?: string) =>
   api.get('/events/', { params: { start_date: startDate, end_date: endDate } });
 
-export const createEvent = (data: Partial<Event>, params?: Record<string, unknown>) => api.post('/events/', data, { params });
+export const createEvent = (data: Partial<Event>, params?: Record<string, unknown>) =>
+  api.post('/events/', data, { params });
 export const deleteEvent = (id: number) => api.delete(`/events/${id}/`);
 export const deleteAllEvents = () => api.delete('/events/delete_all/');
-export const updateEvent = (id: number, data:Partial<Event>, params?: Record<string, unknown>) =>
+export const updateEvent = (id: number, data: Partial<Event>, params?: Record<string, unknown>) =>
   api.patch(`/events/${id}/`, data, { params });
 
 export const getHolidays = () => api.get('/holidays/');
 export const getFederalHolidays = () => api.get('/holidays/federal/');
 export const createHoliday = (data: Partial<Holiday>) => api.post('/holidays/', data);
-export const updateHoliday = (id: number, data: Partial<Holiday>) => api.patch(`/holidays/${id}/`, data);
+export const updateHoliday = (id: number, data: Partial<Holiday>) =>
+  api.patch(`/holidays/${id}/`, data);
 export const deleteHoliday = (id: number) => api.delete(`/holidays/${id}/`);
 export const deleteAllHolidays = () => api.delete('/holidays/delete_all/');
 
@@ -51,7 +53,8 @@ export const deleteCategory = (id: number) => api.delete(`/categories/${id}/`);
 
 // User Settings
 export const getUserSettings = () => api.get('/user-settings/current/');
-export const updateUserSettings = (data: Partial<UserSettings>) => api.put('/user-settings/current/', data);
+export const updateUserSettings = (data: Partial<UserSettings>) =>
+  api.put('/user-settings/current/', data);
 
 // Recurring Events
 export const getRecurringInstances = (startDate: string, endDate: string) =>
@@ -71,13 +74,16 @@ export const deleteRecurringInstance = (eventId: number, date: string) =>
 
 // Career - Companies
 export const getCompanies = () => api.get('/career/companies/');
-export const createCompany = (data: Record<string, unknown>) => api.post('/career/companies/', data);
-export const updateCompany = (id: number, data: Record<string, unknown>) => api.put(`/career/companies/${id}/`, data);
+export const createCompany = (data: Record<string, unknown>) =>
+  api.post('/career/companies/', data);
+export const updateCompany = (id: number, data: Record<string, unknown>) =>
+  api.put(`/career/companies/${id}/`, data);
 export const deleteCompany = (id: number) => api.delete(`/career/companies/${id}/`);
 
 // Career - Applications
 export const getApplications = () => api.get('/career/applications/');
-export const createApplication = (data: Record<string, unknown>) => api.post('/career/applications/', data);
+export const createApplication = (data: Record<string, unknown>) =>
+  api.post('/career/applications/', data);
 export const updateApplication = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/applications/${id}/`, data);
 export const deleteApplication = (id: number) => api.delete(`/career/applications/${id}/`);
@@ -91,7 +97,8 @@ export const importApplications = (formData: FormData) =>
 // Career - Offers
 export const getOffers = () => api.get('/career/offers/');
 export const createOffer = (data: Record<string, unknown>) => api.post('/career/offers/', data);
-export const updateOffer = (id: number, data: Record<string, unknown>) => api.put(`/career/offers/${id}/`, data);
+export const updateOffer = (id: number, data: Record<string, unknown>) =>
+  api.put(`/career/offers/${id}/`, data);
 export const deleteOffer = (id: number) => api.delete(`/career/offers/${id}/`);
 
 // Conflicts

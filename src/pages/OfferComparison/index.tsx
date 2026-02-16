@@ -73,10 +73,12 @@ const OfferComparison = () => {
       const [offersResp, appsResp] = await Promise.all([getOffers(), getApplications()]);
       setOffers(offersResp.data);
 
-      const formattedApps = appsResp.data.map((app: { company_details?: { name: string }; [key: string]: unknown }) => ({
-        ...app,
-        company_name: app.company_details?.name || '',
-      }));
+      const formattedApps = appsResp.data.map(
+        (app: { company_details?: { name: string }; [key: string]: unknown }) => ({
+          ...app,
+          company_name: app.company_details?.name || '',
+        })
+      );
       setApplications(formattedApps);
     } catch (err) {
       console.error(err);
@@ -186,8 +188,6 @@ const OfferComparison = () => {
       addToast('Failed to add current job.', 'error');
     }
   };
-
-
 
   // Filter offers by year
   const filteredOffers = filterByYear(offers, selectedYear, 'created_at');

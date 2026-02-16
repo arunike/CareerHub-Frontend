@@ -95,5 +95,3 @@ export interface ConflictAlert {
   detected_at: string;
   resolved: boolean;
 }
-
-
