@@ -1,31 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getAvailability, getEvents, getHolidays, getFederalHolidays } from '../../api';
-import type { Availability, Event, Holiday } from '../../types';
+import type { Availability as AvailabilityType, Event, Holiday } from '../../types';
 import {
-  Calendar,
-  Clock,
-  Copy,
-  CheckCircle,
-  List,
-  AlignJustify,
-  Clipboard,
-  CalendarDays,
-  Pencil,
-} from 'lucide-react';
+  CalendarOutlined,
+  ClockCircleOutlined,
+  CopyOutlined,
+  CheckCircleOutlined,
+  UnorderedListOutlined,
+  MenuOutlined,
+  ScheduleOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import clsx from 'clsx';
 import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
 import CalendarView from '../../components/CalendarView';
 import { useToast } from '../../context/ToastContext';
 import EmptyState from '../../components/EmptyState';
 
-const AvailabilityDashboard = () => {
+const Availability = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
+  
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<Availability[]>([]);
+  const [data, setData] = useState<AvailabilityType[]>([]);
   const [timezone, setTimezone] = useState('PT');
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
 
-  const [viewTab, setViewTab] = useState<'text' | 'calendar'>('text');
   const [textMode, setTextMode] = useState<'detailed' | 'combined'>('detailed');
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -78,7 +80,7 @@ const AvailabilityDashboard = () => {
     const start = parseISO(startDate);
 
     // Define buckets
-    const groups: { title: string; items: Availability[] }[] = [
+    const groups: { title: string; items: AvailabilityType[] }[] = [
       { title: 'This Week', items: [] },
       { title: 'Next Week', items: [] },
       { title: 'The Following Week', items: [] },
@@ -108,13 +110,14 @@ const AvailabilityDashboard = () => {
     return groups.filter((g) => g.items.length > 0);
   }, [data, startDate]);
 
-  // --- Condensing Logic ---
-  const processGroupItems = (items: Availability[]) => {
+  // Condensing Logic
+  const processGroupItems = (items: AvailabilityType[]) => {
     if (textMode === 'detailed')
       return items.map((item) => ({
         ...item,
         displayDate: `${item.day_name}, ${item.readable_date}`,
-        fullText: `${item.day_name}, ${item.readable_date}, ${item.availability}`,
+        availability: item.availability || 'Unknown',
+        fullText: `${item.day_name}, ${item.readable_date}, ${item.availability || 'Unknown'}`,
       }));
 
     // Combined View
@@ -139,7 +142,7 @@ const AvailabilityDashboard = () => {
     return condensed;
   };
 
-  const formatRange = (start: Availability, end: Availability) => {
+  const formatRange = (start: AvailabilityType, end: AvailabilityType) => {
     const sDate = parseISO(start.date);
     const eDate = parseISO(end.date);
     let dateStr = '';
@@ -154,8 +157,8 @@ const AvailabilityDashboard = () => {
 
     return {
       displayDate: dateStr,
-      availability: start.availability,
-      fullText: `${dateStr}, ${start.availability}`,
+      availability: start.availability || 'Unknown',
+      fullText: `${dateStr}, ${start.availability || 'Unknown'}`,
     };
   };
 
@@ -185,7 +188,7 @@ const AvailabilityDashboard = () => {
 
         <div className="flex bg-gray-100 p-1 rounded-xl">
           <button
-            onClick={() => setViewTab('text')}
+            onClick={() => setSearchParams({ view: 'text' })}
             className={clsx(
               'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
               viewTab === 'text'
@@ -193,11 +196,11 @@ const AvailabilityDashboard = () => {
                 : 'text-gray-500 hover:text-gray-700'
             )}
           >
-            <List className="h-4 w-4" />
+            <UnorderedListOutlined className="text-base" />
             <span>Availability Text</span>
           </button>
           <button
-            onClick={() => setViewTab('calendar')}
+            onClick={() => setSearchParams({ view: 'calendar' })}
             className={clsx(
               'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
               viewTab === 'calendar'
@@ -205,7 +208,7 @@ const AvailabilityDashboard = () => {
                 : 'text-gray-500 hover:text-gray-700'
             )}
           >
-            <CalendarDays className="h-4 w-4" />
+            <CalendarOutlined className="text-base" />
             <span>Calendar View</span>
           </button>
         </div>
@@ -219,13 +222,13 @@ const AvailabilityDashboard = () => {
         />
       ) : (
         <>
-          {/* Availability Generator Card */}
+          {/* AvailabilityType Generator Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex flex-col md:flex-row md:items-end gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <CalendarOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
                   <input
                     type="date"
                     value={startDate}
@@ -238,7 +241,7 @@ const AvailabilityDashboard = () => {
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
                 <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <ClockCircleOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
                   <select
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
@@ -277,7 +280,7 @@ const AvailabilityDashboard = () => {
                       : 'text-gray-500 hover:text-gray-700'
                   )}
                 >
-                  <List className="h-4 w-4" />
+                  <UnorderedListOutlined className="text-base" />
                   <span>Detailed</span>
                 </button>
                 <button
@@ -289,7 +292,7 @@ const AvailabilityDashboard = () => {
                       : 'text-gray-500 hover:text-gray-700'
                   )}
                 >
-                  <AlignJustify className="h-4 w-4" />
+                  <MenuOutlined className="text-base" />
                   <span>Combined</span>
                 </button>
               </div>
@@ -299,9 +302,9 @@ const AvailabilityDashboard = () => {
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-white rounded-lg transition-colors"
               >
                 {copiedIndex === 'ALL' ? (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <CheckCircleOutlined className="text-base text-green-500" />
                 ) : (
-                  <Clipboard className="h-4 w-4" />
+                  <ScheduleOutlined className="text-base" />
                 )}
                 Copy Full Schedule
               </button>
@@ -340,9 +343,9 @@ const AvailabilityDashboard = () => {
 
             {data.length === 0 && !loading && (
               <EmptyState
-                icon={Calendar}
+                icon={CalendarOutlined}
                 title="No availability generated"
-                description="Select a Start Date and Timezone, then click 'Generate Availability' to see your schedule."
+                description="Select a Start Date and Timezone, then click 'Generate AvailabilityType' to see your schedule."
               />
             )}
           </div>
@@ -367,7 +370,7 @@ const AvailabilityItem = ({
   onCopy: (text: string, id: string) => void;
 }) => {
   const [isEditing, setIsEditing] = React.useState(false);
-  const [editText, setEditText] = React.useState(item.availability);
+  const [editText, setEditText] = React.useState(item.availability || '');
   const [saving, setSaving] = React.useState(false);
   const { addToast } = useToast();
 
@@ -445,9 +448,9 @@ const AvailabilityItem = ({
                     setIsEditing(true);
                   }}
                   className="opacity-0 group-hover/text:opacity-100 text-gray-400 hover:text-indigo-600 transition-opacity p-1"
-                  title="Override Availability"
+                  title="Override AvailabilityType"
                 >
-                  <Pencil className="w-3 h-3" />
+                  <EditOutlined className="text-xs" />
                 </button>
               )}
             </div>
@@ -465,9 +468,9 @@ const AvailabilityItem = ({
           title="Copy line"
         >
           {copiedIndex === itemId ? (
-            <CheckCircle className="h-5 w-5" />
+            <CheckCircleOutlined className="text-xl" />
           ) : (
-            <Copy className="h-5 w-5" />
+            <CopyOutlined className="text-xl" />
           )}
         </button>
       </div>
@@ -476,4 +479,4 @@ const AvailabilityItem = ({
     </div>
   );
 };
-export default AvailabilityDashboard;
+export default Availability;

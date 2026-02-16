@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 
 interface ConfirmModalProps {
@@ -37,9 +37,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
               type === 'info' && 'bg-blue-100'
             )}
           >
-            <AlertTriangle
+            <ExclamationCircleOutlined
               className={clsx(
-                'w-6 h-6',
+                'text-2xl',
                 type === 'danger' && 'text-red-600',
                 type === 'warning' && 'text-amber-600',
                 type === 'info' && 'text-blue-600'

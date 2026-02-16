@@ -1,35 +1,61 @@
 import React from 'react';
 import type { EventCategory } from '../types';
 import {
-  Briefcase,
-  Calendar,
-  User,
-  Users,
-  BookOpen,
-  Target,
-  Coffee,
-  Phone,
-  Video,
-  MapPin,
-} from 'lucide-react';
+  SolutionOutlined,
+  CalendarOutlined,
+  UserOutlined,
+  TeamOutlined,
+  BookOutlined,
+  AimOutlined,
+  CoffeeOutlined,
+  PhoneOutlined,
+  VideoCameraOutlined,
+  EnvironmentOutlined,
+  BankOutlined,
+  CarOutlined,
+  RocketOutlined,
+  HomeOutlined,
+  ShopOutlined,
+  HeartOutlined,
+  ExperimentOutlined,
+  ThunderboltOutlined,
+  TrophyOutlined,
+  StarOutlined,
+  SmileOutlined,
+  TagOutlined,
+} from '@ant-design/icons';
 
 interface CategoryBadgeProps {
   category: EventCategory;
   size?: 'sm' | 'md' | 'lg';
 }
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  briefcase: Briefcase,
-  calendar: Calendar,
-  user: User,
-  users: Users,
-  book: BookOpen,
-  target: Target,
-  coffee: Coffee,
-  phone: Phone,
-  video: Video,
-  'map-pin': MapPin,
+export const ICON_MAP: Record<string, React.ElementType> = {
+  briefcase: SolutionOutlined,
+  calendar: CalendarOutlined,
+  user: UserOutlined,
+  users: TeamOutlined,
+  book: BookOutlined,
+  target: AimOutlined,
+  coffee: CoffeeOutlined,
+  phone: PhoneOutlined,
+  video: VideoCameraOutlined,
+  'map-pin': EnvironmentOutlined,
+  bank: BankOutlined,
+  car: CarOutlined,
+  rocket: RocketOutlined,
+  home: HomeOutlined,
+  shop: ShopOutlined,
+  heart: HeartOutlined,
+  experiment: ExperimentOutlined,
+  thunderbolt: ThunderboltOutlined,
+  trophy: TrophyOutlined,
+  star: StarOutlined,
+  smile: SmileOutlined,
+  tag: TagOutlined,
 };
+
+export const CATEGORY_ICONS = Object.keys(ICON_MAP);
 
 const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, size = 'md' }) => {
   const sizeClasses = {
@@ -53,7 +79,6 @@ const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, size = 'md' }) 
       {!IconComponent && category.icon && !ICON_MAP[category.icon] && (
         <span>{category.icon}</span>
       )}{' '}
-      {/* Fallback for older emoji data if any */}
       <span>{category.name}</span>
     </span>
   );

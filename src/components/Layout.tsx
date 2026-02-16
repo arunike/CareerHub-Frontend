@@ -1,158 +1,175 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Layout as AntLayout, Menu, Button, Grid } from 'antd';
 import {
-  Calendar,
-  List,
-  Sun,
-  BarChart3,
-  Settings as SettingsIcon,
-  Briefcase,
-  DollarSign,
-  Menu,
-  X,
-} from 'lucide-react';
-import clsx from 'clsx';
-
+  DashboardOutlined,
+  CalendarOutlined,
+  ScheduleOutlined,
+  LineChartOutlined,
+  SettingOutlined,
+  SolutionOutlined,
+  DollarOutlined,
+  MenuOutlined,
+  CloseOutlined,
+} from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
 
-const NavItem = ({
-  to,
-  icon: Icon,
-  children,
-  onClick,
-}: {
-  to: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-  onClick?: () => void;
-}) => {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className={clsx(
-        'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
-        isActive
-          ? 'bg-indigo-50 text-indigo-700'
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-      )}
-    >
-      <Icon className="mr-3 h-5 w-5" />
-      {children}
-    </Link>
-  );
-};
+const { Sider, Content } = AntLayout;
+const { useBreakpoint } = Grid;
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const screens = useBreakpoint();
+  const [collapsed, setCollapsed] = useState(true); // Default to collapsed on mobile
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Set initial collapsed state based on screen size
+  useEffect(() => {
+    if (screens.lg) {
+        setCollapsed(false);
+    } else {
+        setCollapsed(true);
+    }
+  }, [screens.lg]);
 
-  const closeMobileMenu = () => setMobileMenuOpen(false);
+  // Close sidebar on route change for mobile
+  useEffect(() => {
+    if (!screens.lg) {
+        setCollapsed(true);
+    }
+  }, [location, screens.lg]);
+
+  const menuItems = [
+    {
+        key: 'grp-1',
+        label: 'Schedule',
+        type: 'group' as const,
+        children: [
+            { key: '/', icon: <DashboardOutlined />, label: 'Availability' },
+            { key: '/events', icon: <CalendarOutlined />, label: 'Events' },
+            { key: '/holidays', icon: <ScheduleOutlined />, label: 'Holidays' },
+        ]
+    },
+    {
+        key: 'grp-2',
+        label: 'Career & Growth',
+        type: 'group' as const,
+        children: [
+            { key: '/applications', icon: <SolutionOutlined />, label: 'Applications' },
+            { key: '/offers', icon: <DollarOutlined />, label: 'Offers' },
+        ]
+    },
+    {
+        key: 'grp-3',
+        label: 'Insights',
+        type: 'group' as const,
+        children: [
+            { key: '/analytics', icon: <LineChartOutlined />, label: 'Analytics' },
+        ]
+    },
+    {
+        key: 'grp-4',
+        type: 'group' as const,
+        children: [
+             { key: '/settings', icon: <SettingOutlined />, label: 'Settings' },
+        ]
+    }
+  ];
+
+  const handleMenuClick = ({ key }: { key: string }) => {
+    navigate(key);
+    // Auto-close on mobile is handled by useEffect on location change
+  };
+
+  const SidebarContent = (
+    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+      <div className="px-6 py-5 flex items-center justify-between shrink-0 border-b border-gray-50">
+        <img src={logoWithText} alt="CareerHub" className="h-12" />
+        {!screens.lg && (
+             <Button 
+                type="text" 
+                icon={<CloseOutlined />} 
+                onClick={() => setCollapsed(true)} 
+                className="text-gray-400 hover:text-gray-600"
+            />
+        )}
+      </div>
+      
+      <div className="flex-1 overflow-y-auto py-4">
+        <Menu
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={handleMenuClick}
+          style={{ borderRight: 0 }}
+          className="border-none"
+        />
+      </div>
+
+       <div className="p-4 border-t border-gray-100">
+         <div className="flex items-center justify-between px-2 mb-2">
+            <span className="text-xs text-gray-400 font-medium">Notifications</span>
+            <NotificationBell placement="top-left" />
+         </div>
+         <p className="text-[10px] text-gray-300 text-center mt-2">© 2026 CareerHub</p>
+       </div>
+    </div>
+  );
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 flex">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+    <AntLayout style={{ minHeight: '100vh', flexDirection: 'row' }}>
+      {/* Unified Sider */}
+      <Sider
+        width={260}
+        theme="light"
+        collapsible
+        collapsed={collapsed}
+        trigger={null}
+        collapsedWidth={0}
+        style={{
+            height: '100vh',
+            position: screens.lg ? 'sticky' : 'fixed',
+            top: 0,
+            left: 0,
+            zIndex: 1000, // Ensure it's above content on mobile
+            boxShadow: !collapsed && !screens.lg ? '4px 0 24px rgba(0,0,0,0.1)' : 'none'
+        }}
+        className={!screens.lg && !collapsed ? 'fixed-sider-mobile' : ''}
       >
-        {mobileMenuOpen ? (
-          <X className="h-6 w-6 text-gray-600" />
-        ) : (
-          <Menu className="h-6 w-6 text-gray-600" />
-        )}
-      </button>
+        {SidebarContent}
+      </Sider>
 
-      {/* Sidebar */}
-      <aside
-        className={clsx(
-          'w-full lg:w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col z-40',
-          'fixed lg:relative h-full',
-          'transition-transform duration-300 ease-in-out',
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        )}
-      >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center">
-            <img src={logoWithText} alt="CareerHub" className="h-22" />
+      {/* Mobile Overlay (Darken background when menu is open) */}
+      {!screens.lg && !collapsed && (
+        <div 
+            className="fixed inset-0 bg-black/40 z-[999] animate-in fade-in"
+            onClick={() => setCollapsed(true)}
+        />
+      )}
+
+      <AntLayout className="min-h-screen bg-gray-50 transition-all duration-300">
+        <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
+          
+          {/* Mobile Toggle Button - Floating */}
+          {!screens.lg && (
+              <div className="fixed top-4 left-4 z-[900]">
+                  <Button
+                    type="default"
+                    icon={<MenuOutlined />}
+                    onClick={() => setCollapsed(false)}
+                    className="shadow-md border-gray-200 bg-white/90 backdrop-blur"
+                    size="large"
+                  />
+              </div>
+          )}
+
+          <div className={`p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto ${!screens.lg ? 'pt-20' : ''}`}>
+            {children}
           </div>
-          <NotificationBell />
-        </div>
-
-        {/* Scrollable Navigation Area */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col">
-          <div className="space-y-6 flex-1">
-            {/* Module: Availability */}
-            <div>
-              <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                Availability
-              </h3>
-              <nav className="space-y-0.5">
-                <NavItem to="/" icon={Sun} onClick={closeMobileMenu}>
-                  Dashboard
-                </NavItem>
-                <NavItem to="/events" icon={Calendar} onClick={closeMobileMenu}>
-                  Events
-                </NavItem>
-                <NavItem to="/holidays" icon={List} onClick={closeMobileMenu}>
-                  Holidays
-                </NavItem>
-              </nav>
-            </div>
-
-            {/* Module: Career */}
-            <div>
-              <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                Career & Growth
-              </h3>
-              <nav className="space-y-0.5">
-                <NavItem to="/applications" icon={Briefcase} onClick={closeMobileMenu}>
-                  Applications
-                </NavItem>
-                <NavItem to="/offers" icon={DollarSign} onClick={closeMobileMenu}>
-                  Offers
-                </NavItem>
-              </nav>
-            </div>
-
-            {/* Module: Insights */}
-            <div>
-              <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                Insights
-              </h3>
-              <nav className="space-y-0.5">
-                <NavItem to="/analytics" icon={BarChart3} onClick={closeMobileMenu}>
-                  Analytics
-                </NavItem>
-              </nav>
-            </div>
-
-            {/* Settings */}
-            <div>
-              <div className="my-2 border-t border-gray-100 mx-4"></div>
-              <nav className="space-y-0.5">
-                <NavItem to="/settings" icon={SettingsIcon} onClick={closeMobileMenu}>
-                  Settings
-                </NavItem>
-              </nav>
-            </div>
-          </div>
-
-          <div className="mt-auto px-4 py-4 border-t border-gray-100 shrink-0">
-            <p className="text-xs text-gray-400">© 2026 CareerHub</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto p-4 lg:p-8 pt-16 lg:pt-8">
-        <div className="max-w-5xl mx-auto">{children}</div>
-      </main>
-    </div>
+        </Content>
+      </AntLayout>
+    </AntLayout>
   );
 };
 

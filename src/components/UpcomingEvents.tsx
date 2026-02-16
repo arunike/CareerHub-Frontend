@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getEvents } from '../api';
 import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date-fns';
-import { Clock } from 'lucide-react';
+import { ClockCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { Event } from '../types';
 
@@ -85,7 +85,7 @@ const UpcomingEvents: React.FC = () => {
                   {dateLabel}
                 </div>
                 <div className="flex items-center text-xs text-gray-500">
-                  <Clock className="w-3 h-3 mr-1" />
+                  <ClockCircleOutlined className="text-xs mr-1" />
                   {format(new Date(`2000-01-01T${event.start_time}`), 'h:mm a')}
                 </div>
               </div>

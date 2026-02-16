@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import { X, Repeat } from 'lucide-react';
+import { CloseOutlined, RetweetOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 
-interface RecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  interval: number;
-  count?: number;
-  until?: string;
-  byweekday?: number[];
-}
+import type { RecurrenceRule } from '../types';
 
 interface RecurrenceModalProps {
   isOpen: boolean;
@@ -75,12 +69,12 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1050] p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 flex justify-between items-center rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <Repeat className="w-5 h-5 text-white" />
+              <RetweetOutlined className="text-xl text-white" />
             </div>
             <h2 className="text-xl font-bold text-white">Repeat Event</h2>
           </div>
@@ -88,7 +82,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
             onClick={onClose}
             className="text-white/80 hover:text-white transition p-1 hover:bg-white/10 rounded-lg"
           >
-            <X className="w-5 h-5" />
+            <CloseOutlined className="text-lg" />
           </button>
         </div>
 

@@ -17,7 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Plus, X } from 'lucide-react';
+import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import { useToast } from '../../context/ToastContext';
 
@@ -32,6 +32,7 @@ interface Offer {
   pto_days: number;
   is_current: boolean;
   created_at?: string;
+  [key: string]: unknown;
 }
 
 interface Application {
@@ -217,7 +218,7 @@ const OfferComparison = () => {
             onClick={() => setIsAddJobOpen(true)}
             className="flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium shadow-sm"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusOutlined className="mr-2" />
             Add Current Job
           </button>
         </div>
@@ -230,7 +231,7 @@ const OfferComparison = () => {
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="name" />
             <YAxis tickFormatter={(val) => `$${val / 1000}k`} />
-            <Tooltip formatter={(val: number) => `$${val.toLocaleString()}`} />
+            <Tooltip formatter={(val: number | undefined) => `$${(val || 0).toLocaleString()}`} />
             <Legend />
             <Bar dataKey="Base" stackId="a" fill="#6366f1" />
             <Bar dataKey="Bonus" stackId="a" fill="#8b5cf6" />
@@ -425,7 +426,7 @@ const OfferComparison = () => {
                 onClick={() => setIsAddJobOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="h-5 w-5" />
+                <CloseOutlined className="text-lg" />
               </button>
             </div>
             <form onSubmit={handleAddCurrentJob}>
@@ -471,7 +472,7 @@ const OfferComparison = () => {
                 onClick={() => setEditingOffer(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="h-5 w-5" />
+                <CloseOutlined className="text-lg" />
               </button>
             </div>
             <div className="p-6 space-y-4">
