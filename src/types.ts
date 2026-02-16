@@ -1,10 +1,9 @@
 export interface RecurrenceRule {
-  frequency: string;
-  interval?: number;
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;
   count?: number;
   until?: string;
   byweekday?: number[];
-  [key: string]: unknown;
 }
 
 export interface NotificationPreferences {
@@ -82,6 +81,7 @@ export interface UserSettings {
   notification_preferences: NotificationPreferences;
   global_availability: GlobalAvailability;
   ghosting_threshold_days: number;
+  default_event_category?: number | null;
   created_at: string;
   updated_at: string;
 }

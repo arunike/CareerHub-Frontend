@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import { CloseOutlined, CheckCircleFilled, ExclamationCircleFilled, InfoCircleFilled } from '@ant-design/icons';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -61,10 +61,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           >
             {/* Icon */}
             <div className="shrink-0 mt-0.5">
-              {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
-              {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
-              {toast.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-              {toast.type === 'info' && <Info className="w-5 h-5 text-blue-500" />}
+              {toast.type === 'success' && <CheckCircleFilled className="text-xl text-green-500" />}
+              {toast.type === 'error' && <ExclamationCircleFilled className="text-xl text-red-500" />}
+              {toast.type === 'warning' && <ExclamationCircleFilled className="text-xl text-amber-500" />}
+              {toast.type === 'info' && <InfoCircleFilled className="text-xl text-blue-500" />}
             </div>
 
             <div className="flex-1 text-sm font-medium">{toast.message}</div>
@@ -73,7 +73,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               onClick={() => removeToast(toast.id)}
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <X className="w-4 h-4" />
+              <CloseOutlined className="text-sm" />
             </button>
           </div>
         ))}

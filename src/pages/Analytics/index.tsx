@@ -2,13 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { Event } from '../../types';
 import { getEvents, getApplications } from '../../api';
 import {
-  BarChart3,
-  Calendar,
-  Clock,
-  TrendingUp,
-  PieChart as PieChartIcon,
-  Activity,
-} from 'lucide-react';
+  RiseOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
 import {
   format,
   parseISO,
@@ -19,6 +15,7 @@ import {
   addDays,
   subWeeks,
 } from 'date-fns';
+import type { CareerApplication } from '../../types/application';
 import {
   BarChart,
   Bar,
@@ -26,23 +23,20 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+
 
 import JobHuntAnalytics from '../../components/JobHuntAnalytics';
+import AvailabilityAnalytics from '../../components/AvailabilityAnalytics';
 
 const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'availability' | 'career'>('availability');
   const [loading, setLoading] = useState(true);
 
   // Data States
-  const [applications, setApplications] = useState<Array<{ status: string; date_applied?: string; [key: string]: unknown }>>([]);
+  const [applications, setApplications] = useState<CareerApplication[]>([]);
 
   // Derived Stats
   const [availabilityStats, setAvailabilityStats] = useState({
@@ -229,7 +223,7 @@ const Analytics: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Activity className="w-6 h-6 text-indigo-600" />
+          <ThunderboltOutlined className="text-2xl text-indigo-600 mr-2" />
           <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
         </div>
 
@@ -259,143 +253,15 @@ const Analytics: React.FC = () => {
       </div>
 
       {activeTab === 'availability' ? (
-        <div className="space-y-6 animate-in fade-in duration-500">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-indigo-100 rounded-lg">
-                  <Calendar className="w-6 h-6 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Total Events</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {availabilityStats.totalEvents}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Events This Week</p>
-                  <p className="text-2xl font-bold text-gray-900">{availabilityStats.thisWeek}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-amber-100 rounded-lg">
-                  <Clock className="w-6 h-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Avg Duration</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {availabilityStats.avgDuration} min
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Category Distribution Chart */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-6">
-                <PieChartIcon className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Events by Category</h3>
-              </div>
-              <div className="h-[300px] w-full">
-                {availabilityStats.byCategory.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={availabilityStats.byCategory}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {availabilityStats.byCategory.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-gray-400">
-                    No category data available
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Daily Activity Chart */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-6">
-                <BarChart3 className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Daily Activity (Last 7 Days)
-                </h3>
-              </div>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={availabilityStats.dailyActivity}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" orientation="left" stroke="#6366f1" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: '8px',
-                        border: 'none',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="count"
-                      name="Events"
-                      fill="#6366f1"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      yAxisId="right"
-                      dataKey="minutes"
-                      name="Minutes"
-                      fill="#f59e0b"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AvailabilityAnalytics stats={availabilityStats} />
       ) : (
         <div className="space-y-6 animate-in fade-in duration-500">
           <JobHuntAnalytics applications={applications} />
 
-          {/* Keeping the legacy charts below if needed, or we can remove them if they duplicate logic. 
-                 The user asked for the specific view from JobHuntAnalytics, so that takes precedence.
-                 I'll render the weekly activity chart below it as a bonus if it's not redundant.
-             */}
-
           {/* Weekly Volume Chart - Kept as supplementary info */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
-              <TrendingUp className="w-5 h-5 text-gray-600" />
+              <RiseOutlined className="text-xl text-gray-600 mr-2" />
               <h3 className="text-lg font-semibold text-gray-900">
                 Weekly Activity (Last 12 Weeks)
               </h3>

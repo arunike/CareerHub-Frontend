@@ -11,7 +11,7 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { LeftOutlined, RightOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { Event, Holiday } from '../types';
 import clsx from 'clsx';
 
@@ -34,7 +34,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-indigo-600" />
+            <CalendarOutlined className="text-xl text-indigo-600" />
             {format(currentMonth, 'MMMM yyyy')}
           </h2>
           <div className="flex space-x-1">
@@ -42,13 +42,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
               onClick={prevMonth}
               className="p-1 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <LeftOutlined className="text-lg text-gray-600" />
             </button>
             <button
               onClick={nextMonth}
               className="p-1 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <RightOutlined className="text-lg text-gray-600" />
             </button>
           </div>
         </div>
@@ -204,7 +204,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
       {/* Selected Day Detail (Mobile friendly mainly, or sidebar) */}
       <div className="mt-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-indigo-500" />
+          <ClockCircleOutlined className="text-base text-indigo-500 mr-2" />
           Details for {format(selectedDate, 'MMMM d, yyyy')}
         </h3>
         <div className="space-y-2">

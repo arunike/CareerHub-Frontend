@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, FileSpreadsheet, FileText, FileJson, ChevronDown } from 'lucide-react';
+import { DownloadOutlined, FileExcelOutlined, FileTextOutlined, FileUnknownOutlined, DownOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import { useToast } from '../context/ToastContext';
 
@@ -82,9 +82,9 @@ const ExportButton: React.FC<ExportButtonProps> = ({
           isExporting && 'opacity-50 cursor-not-allowed'
         )}
       >
-        <Download className="w-4 h-4 text-gray-500" />
+        <DownloadOutlined className="text-gray-500" />
         <span>{isExporting ? 'Exporting...' : label}</span>
-        <ChevronDown className="w-3 h-3 text-gray-400" />
+        <DownOutlined className="text-xs text-gray-400" />
       </button>
 
       {isOpen && (
@@ -98,7 +98,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
               onClick={() => handleExport('csv')}
               className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-2"
             >
-              <FileText className="w-4 h-4 text-green-600" />
+              <FileTextOutlined className="text-green-600" />
               <span>CSV</span>
             </button>
 
@@ -106,7 +106,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
               onClick={() => handleExport('xlsx')}
               className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-2"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <FileExcelOutlined className="text-emerald-600" />
               <span>Excel (XLSX)</span>
             </button>
 
@@ -114,7 +114,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
               onClick={() => handleExport('json')}
               className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-2"
             >
-              <FileJson className="w-4 h-4 text-yellow-600" />
+              <FileUnknownOutlined className="text-yellow-600" />
               <span>JSON</span>
             </button>
           </div>

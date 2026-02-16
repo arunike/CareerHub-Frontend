@@ -7,9 +7,16 @@ import {
   deleteCategory,
   exportAllData,
 } from '../../api';
-import type { EventCategory } from '../../types';
-import { Settings as SettingsIcon, Save, Plus, Trash2, X, Download } from 'lucide-react';
+import type { EventCategory, UserSettings } from '../../types';
+import { SettingOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useToast } from '../../context/ToastContext';
+import { TimePicker } from 'antd';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import IconPicker from '../../components/IconPicker';
+import CategoryBadge from '../../components/CategoryBadge';
+
+dayjs.extend(customParseFormat);
 
 const Settings: React.FC = () => {
   const { addToast } = useToast();
@@ -20,6 +27,7 @@ const Settings: React.FC = () => {
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#6366f1');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
@@ -63,6 +71,7 @@ const Settings: React.FC = () => {
   }, [successMessage]);
 
   const handleSave = async () => {
+    if (!settings) return;
     try {
       await updateUserSettings(settings);
       setSuccessMessage('Settings saved successfully!');
@@ -80,10 +89,11 @@ const Settings: React.FC = () => {
       await createCategory({
         name: newCategoryName,
         color: newCategoryColor,
-        icon: 'tag',
+        icon: newCategoryIcon,
       });
       setNewCategoryName('');
       setNewCategoryColor('#6366f1');
+      setNewCategoryIcon('tag');
       setIsAddingCategory(false);
       fetchCategories();
       addToast('Category created', 'success');
@@ -120,7 +130,7 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl relative">
+    <div className="space-y-6 max-w-3xl mx-auto relative">
       {/* Toast Notification */}
       {successMessage && (
         <div className="fixed top-4 right-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-right-5 fade-in z-50">
@@ -139,7 +149,7 @@ const Settings: React.FC = () => {
             onClick={() => setSuccessMessage(null)}
             className="ml-2 text-green-500 hover:text-green-700"
           >
-            <X className="w-4 h-4" />
+            <CloseOutlined className="text-xs" />
           </button>
         </div>
       )}
@@ -171,7 +181,7 @@ const Settings: React.FC = () => {
       )}
 
       <div className="flex items-center gap-2">
-        <SettingsIcon className="w-6 h-6 text-gray-700" />
+        <SettingOutlined className="text-2xl text-gray-700" />
         <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
       </div>
 
@@ -182,23 +192,39 @@ const Settings: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-            <input
-              type="time"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-              value={settings.work_start_time || '09:00:00'}
-              onChange={(e) =>
-                setSettings((prev) => ({ ...prev, work_start_time: e.target.value }))
-              }
+            <TimePicker
+              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-indigo-500 focus:border-indigo-500"
+              format="h:mm a"
+              value={settings.work_start_time ? dayjs(settings.work_start_time, 'HH:mm:ss') : dayjs('09:00:00', 'HH:mm:ss')}
+              onChange={(time) => {
+                if (time) {
+                  setSettings((prev) => (prev ? { ...prev, work_start_time: time.format('HH:mm:ss') } : null));
+                }
+              }}
+              minuteStep={1}
+              use12Hours
+              inputReadOnly={false}
+              needConfirm={false}
+               allowClear={false}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-            <input
-              type="time"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-              value={settings.work_end_time || '17:00:00'}
-              onChange={(e) => setSettings((prev) => ({ ...prev, work_end_time: e.target.value }))}
+            <TimePicker
+              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-indigo-500 focus:border-indigo-500"
+              format="h:mm a"
+              value={settings.work_end_time ? dayjs(settings.work_end_time, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')}
+              onChange={(time) => {
+                if (time) {
+                  setSettings((prev) => (prev ? { ...prev, work_end_time: time.format('HH:mm:ss') } : null));
+                }
+              }}
+              minuteStep={1}
+              use12Hours
+              inputReadOnly={false}
+              needConfirm={false}
+               allowClear={false}
             />
           </div>
         </div>
@@ -226,7 +252,7 @@ const Settings: React.FC = () => {
                     const newDays = isSelected
                       ? currentDays.filter((d: number) => d !== day.val)
                       : [...currentDays, day.val].sort();
-                    setSettings((prev) => ({ ...prev, work_days: newDays }));
+                    setSettings((prev) => (prev ? { ...prev, work_days: newDays } : null));
                   }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
                     isSelected
@@ -252,9 +278,32 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
             value={settings.default_event_duration || 60}
             onChange={(e) =>
-              setSettings((prev) => ({ ...prev, default_event_duration: Number(e.target.value) }))
+              setSettings((prev) => (prev ? { ...prev, default_event_duration: Number(e.target.value) } : null))
             }
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Default Event Category
+          </label>
+          <select
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            value={settings.default_event_category || ''}
+            onChange={(e) =>
+              setSettings((prev) => (prev ? {
+                ...prev,
+                default_event_category: e.target.value ? Number(e.target.value) : null,
+              } : null))
+            }
+          >
+            <option value="">No Default Category</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -268,7 +317,7 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
             value={settings.buffer_time || 0}
             onChange={(e) =>
-              setSettings((prev) => ({ ...prev, buffer_time: Number(e.target.value) }))
+              setSettings((prev) => (prev ? { ...prev, buffer_time: Number(e.target.value) } : null))
             }
           />
           <p className="text-xs text-gray-500 mt-1">Time buffer between events</p>
@@ -279,7 +328,7 @@ const Settings: React.FC = () => {
           <select
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
             value={settings.primary_timezone || 'America/Los_Angeles'}
-            onChange={(e) => setSettings((prev) => ({ ...prev, primary_timezone: e.target.value }))}
+            onChange={(e) => setSettings((prev) => (prev ? { ...prev, primary_timezone: e.target.value } : null))}
           >
             <option value="America/Los_Angeles">Pacific Time (PT)</option>
             <option value="America/New_York">Eastern Time (ET)</option>
@@ -302,7 +351,7 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
             value={settings.ghosting_threshold_days || 30}
             onChange={(e) =>
-              setSettings((prev) => ({ ...prev, ghosting_threshold_days: Number(e.target.value) }))
+              setSettings((prev) => (prev ? { ...prev, ghosting_threshold_days: Number(e.target.value) } : null))
             }
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -315,7 +364,7 @@ const Settings: React.FC = () => {
           onClick={handleSave}
           className="w-full mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
         >
-          <Save className="w-4 h-4" />
+          <SaveOutlined className="text-base" />
           Save Settings
         </button>
       </div>
@@ -372,7 +421,7 @@ const Settings: React.FC = () => {
               }}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 border border-indigo-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
             >
-              <Download className="w-4 h-4" />
+              <DownloadOutlined className="text-base" />
               <span>Export</span>
             </button>
           </div>
@@ -387,7 +436,7 @@ const Settings: React.FC = () => {
             onClick={() => setIsAddingCategory(!isAddingCategory)}
             className="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
           >
-            {isAddingCategory ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {isAddingCategory ? <CloseOutlined className="text-base" /> : <PlusOutlined className="text-base" />}
             {isAddingCategory ? 'Cancel' : 'Add Category'}
           </button>
         </div>
@@ -418,6 +467,10 @@ const Settings: React.FC = () => {
                   onChange={(e) => setNewCategoryColor(e.target.value)}
                 />
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Icon</label>
+                <IconPicker value={newCategoryIcon} onChange={setNewCategoryIcon} />
+              </div>
               <div className="flex items-end">
                 <button
                   type="submit"
@@ -442,18 +495,14 @@ const Settings: React.FC = () => {
                   className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-4 h-4 rounded-full shadow-sm"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    <span className="font-medium text-gray-900">{cat.name}</span>
+                     <CategoryBadge category={cat} />
                   </div>
                   <button
                     onClick={() => handleDeleteCategory(cat.id)}
                     className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition p-1"
                     title="Delete Category"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <DeleteOutlined className="text-base" />
                   </button>
                 </div>
               ))}

@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getEvents, getUnresolvedConflicts, resolveConflict, detectConflicts } from '../api';
 import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date-fns';
-import { Bell, Clock, AlertTriangle, Check } from 'lucide-react';
+import { BellOutlined, ClockCircleOutlined, AlertOutlined, CheckOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { ConflictAlert, Event } from '../types';
 import { useToast } from '../context/ToastContext';
 import ConfirmModal from './ConfirmModal';
 
-const NotificationBell: React.FC = () => {
+interface NotificationBellProps {
+  placement?: 'bottom-right' | 'top-left';
+}
+
+const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom-right' }) => {
   const { addToast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
@@ -83,9 +87,6 @@ const NotificationBell: React.FC = () => {
     e.stopPropagation();
     e.preventDefault();
 
-    // Close dropdown temporarily or keep it open?
-    // Modal is z-100, dropdown is z-50. Modal will show on top.
-
     setConfirmModal({
       isOpen: true,
       title: 'Resolve Conflict',
@@ -115,7 +116,7 @@ const NotificationBell: React.FC = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors outline-none focus:ring-2 focus:ring-indigo-100"
       >
-        <Bell className="w-5 h-5" />
+        <BellOutlined className="text-xl" />
         {totalNotifications > 0 && (
           <span
             className={`absolute top-1 right-1.5 w-2 h-2 rounded-full ring-2 ring-white ${hasConflicts ? 'bg-red-600 animate-pulse' : 'bg-red-500'}`}
@@ -124,11 +125,20 @@ const NotificationBell: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-left">
+        <div
+          className={`
+            absolute w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100
+            ${
+              placement === 'bottom-right'
+                ? 'top-full right-0 mt-2 origin-top-right'
+                : 'bottom-full left-0 mb-2 origin-bottom-left'
+            }
+          `}
+        >
           <div className="px-4 py-3 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
             <h3 className="font-semibold text-sm text-gray-900">Notifications</h3>
             <Link
-              to="/events"
+              to="/?view=calendar"
               className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
               onClick={() => setIsOpen(false)}
             >
@@ -150,7 +160,7 @@ const NotificationBell: React.FC = () => {
                 {conflicts.length > 0 && (
                   <div className="bg-red-50/50">
                     <div className="px-3 py-2 text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-2">
-                      <AlertTriangle className="h-3 w-3" />
+                      <AlertOutlined className="text-xs" />
                       Conflicts Detected
                     </div>
                     {conflicts.map((conflict) => (
@@ -175,7 +185,7 @@ const NotificationBell: React.FC = () => {
                             onClick={(e) => handleResolve(conflict.id, e)}
                             className="text-[10px] bg-white border border-red-200 text-red-600 px-2 py-1 rounded hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1 shadow-sm"
                           >
-                            <Check className="h-3 w-3" />
+                            <CheckOutlined className="text-xs" />
                             Resolve
                           </button>
                         </div>
@@ -215,7 +225,7 @@ const NotificationBell: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                        <Clock className="w-3 h-3" />
+                        <ClockCircleOutlined className="text-xs" />
                         <span>{timeLabel}</span>
                         {event.category_details && (
                           <>
