@@ -46,9 +46,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         label: 'Schedule',
         type: 'group' as const,
         children: [
-            { key: '/', icon: <DashboardOutlined />, label: 'Availability' },
-            { key: '/events', icon: <CalendarOutlined />, label: 'Events' },
-            { key: '/holidays', icon: <ScheduleOutlined />, label: 'Holidays' },
+            { key: '/', icon: <DashboardOutlined style={{ fontSize: '18px' }} />, label: 'Availability' },
+            { key: '/events', icon: <CalendarOutlined style={{ fontSize: '18px' }} />, label: 'Events' },
+            { key: '/holidays', icon: <ScheduleOutlined style={{ fontSize: '18px' }} />, label: 'Holidays' },
         ]
     },
     {
@@ -56,8 +56,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         label: 'Career & Growth',
         type: 'group' as const,
         children: [
-            { key: '/applications', icon: <SolutionOutlined />, label: 'Applications' },
-            { key: '/offers', icon: <DollarOutlined />, label: 'Offers' },
+            { key: '/applications', icon: <SolutionOutlined style={{ fontSize: '18px' }} />, label: 'Applications' },
+            { key: '/offers', icon: <DollarOutlined style={{ fontSize: '18px' }} />, label: 'Offers' },
         ]
     },
     {
@@ -65,14 +65,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         label: 'Insights',
         type: 'group' as const,
         children: [
-            { key: '/analytics', icon: <LineChartOutlined />, label: 'Analytics' },
+            { key: '/analytics', icon: <LineChartOutlined style={{ fontSize: '18px' }} />, label: 'Analytics' },
         ]
     },
     {
         key: 'grp-4',
         type: 'group' as const,
         children: [
-             { key: '/settings', icon: <SettingOutlined />, label: 'Settings' },
+             { key: '/settings', icon: <SettingOutlined style={{ fontSize: '18px' }} />, label: 'Settings' },
         ]
     }
   ];
@@ -85,7 +85,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const SidebarContent = (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
       <div className="px-6 py-5 flex items-center justify-between shrink-0 border-b border-gray-50">
-        <img src={logoWithText} alt="CareerHub" className="h-12" />
+        <img src={logoWithText} alt="CareerHub" className="h-24" />
         {!screens.lg && (
              <Button 
                 type="text" 

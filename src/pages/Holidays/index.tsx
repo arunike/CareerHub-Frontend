@@ -18,7 +18,8 @@ import {
   Col,
   Empty,
   Select,
-  Switch
+  Switch,
+  Modal
 } from 'antd';
 import {
   DeleteOutlined,
@@ -28,7 +29,8 @@ import {
   PlusOutlined,
   SyncOutlined,
   SortAscendingOutlined,
-  SortDescendingOutlined
+  SortDescendingOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { 
@@ -38,7 +40,8 @@ import {
   deleteHoliday, 
   deleteAllHolidays, 
   updateHoliday, 
-  exportHolidays 
+  exportHolidays,
+  importData
 } from '../../api';
 import type { Holiday } from '../../types';
 import ExportButton from '../../components/ExportButton';
@@ -61,6 +64,8 @@ const Holidays = () => {
 
   // Add Form State
   const [isRangeMode, setIsRangeMode] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
 
   const fetchData = async () => {
     try {
@@ -167,6 +172,22 @@ const Holidays = () => {
       }
   };
 
+
+
+  const handleImportUpload = async () => {
+    if (!importFile) return;
+    const formData = new FormData();
+    formData.append('file', importFile);
+    try {
+        await importData(formData);
+        messageApi.success('Import successful');
+        setShowImport(false);
+        fetchData();
+    } catch (e) {
+        messageApi.error('Import failed');
+    }
+  };
+
   const handleExportWrapper = async (format: string) => {
       const response = await exportHolidays(format);
       return {
@@ -237,7 +258,7 @@ const Holidays = () => {
             <Card 
                 title={
                     <div className="flex justify-between items-center">
-                        <Text strong>My Time Off ({holidays.length})</Text>
+                        <Title level={5} style={{ margin: 0 }}>My Time Off ({holidays.length})</Title>
                         <Space>
                              <Select 
                                 value={sortBy} 
@@ -246,11 +267,9 @@ const Holidays = () => {
                                     { value: 'date', label: 'By Date' }, 
                                     { value: 'name', label: 'By Name' }
                                 ]} 
-                                size="small"
                                 style={{ width: 100 }}
                             />
                             <Button 
-                                size="small" 
                                 icon={sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />} 
                                 onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                             />
@@ -262,7 +281,7 @@ const Holidays = () => {
                                 onConfirm={handleDeleteAll}
                                 disabled={holidays.length === 0}
                              >
-                                <Button danger size="small" disabled={holidays.length === 0} icon={<DeleteOutlined />}>Delete All</Button>
+                                <Button danger disabled={holidays.length === 0} icon={<DeleteOutlined />}>Delete All</Button>
                             </Popconfirm>
                         </Space>
                     </div>
@@ -354,10 +373,25 @@ const Holidays = () => {
                     onExport={handleExportWrapper} 
                     filename="holidays" 
                   />
+                  <Button icon={<UploadOutlined />} onClick={() => setShowImport(true)}>
+                      Import
+                  </Button>
               </Space>
           </div>
 
           <Tabs defaultActiveKey="custom" items={items} type="card" />
+
+           {/* Import Modal */}
+           <Modal
+              title="Import Holidays"
+              open={showImport}
+              onCancel={() => setShowImport(false)}
+              onOk={handleImportUpload}
+              okText="Upload"
+              confirmLoading={loading}
+          >
+              <Input type="file" onChange={(e) => setImportFile(e.target.files ? e.target.files[0] : null)} />
+          </Modal>
       </div>
     </>
   );

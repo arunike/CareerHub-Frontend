@@ -15,7 +15,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
   const SelectedIcon = ICON_MAP[value] || ICON_MAP['tag'];
 
   const content = (
-    <div className="w-64 grid grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1">
+    <div className="w-64 grid grid-cols-6 gap-2 max-h-60 overflow-y-auto p-1 overflow-x-hidden">
       {CATEGORY_ICONS.map((iconKey) => {
         const IconComponent = ICON_MAP[iconKey];
         const isSelected = value === iconKey;
@@ -28,7 +28,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
                 setOpen(false);
               }}
               className={`
-                w-8 h-8 flex items-center justify-center rounded-lg transition-all
+                w-10 h-10 flex items-center justify-center rounded-lg transition-all text-lg
                 ${isSelected 
                   ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-500 ring-offset-1' 
                   : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'}

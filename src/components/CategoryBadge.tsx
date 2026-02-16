@@ -68,14 +68,14 @@ const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, size = 'md' }) 
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClasses[size]}`}
+      className={`inline-flex items-center rounded-full font-medium ${sizeClasses[size]}`}
       style={{
         backgroundColor: `${category.color}15`,
         color: category.color,
         border: `1px solid ${category.color}30`,
       }}
     >
-      {IconComponent && <IconComponent className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />}
+      {IconComponent && <IconComponent className={size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'} />}
       {!IconComponent && category.icon && !ICON_MAP[category.icon] && (
         <span>{category.icon}</span>
       )}{' '}
