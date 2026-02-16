@@ -45,6 +45,8 @@ export const createSetting = (data: { key: string; value: string }) => api.post(
 export const getCategories = () => api.get('/categories/');
 export const createCategory = (data: { name: string; color: string; icon?: string }) =>
   api.post('/categories/', data);
+export const updateCategory = (id: number, data: { name: string; color: string; icon?: string }) =>
+  api.put(`/categories/${id}/`, data);
 export const deleteCategory = (id: number) => api.delete(`/categories/${id}/`);
 
 // User Settings

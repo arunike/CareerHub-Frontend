@@ -51,10 +51,12 @@ import {
   deleteRecurringInstance,
   getApplications,
   getUserSettings,
+  exportEvents
 } from '../../api';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import CategoryBadge from '../../components/CategoryBadge'; 
 import IconPicker from '../../components/IconPicker'; 
+import ExportButton from '../../components/ExportButton'; 
 
 dayjs.extend(customParseFormat);
 
@@ -334,6 +336,14 @@ const Events = () => {
       }
   };
 
+  const handleExportWrapper = async (format: string) => {
+    const response = await exportEvents(format);
+    return {
+        data: response.data,
+        headers: response.headers as unknown as Record<string, string>
+    };
+  };
+
   const toggleLock = async (event: Event) => {
       try {
           await updateEvent(event.id, { is_locked: !event.is_locked });
@@ -397,13 +407,15 @@ const Events = () => {
                             icon={<DeleteOutlined />} 
                             onClick={() => setIsDeleteAllOpen(true)}
                             disabled={events.length === 0}
-                        />
+                        >
+                            Delete All
+                        </Button>
                     </Tooltip>
                     
-                    {/* <ExportButton 
-                        onExport={exportEvents} 
+                    <ExportButton 
+                        onExport={handleExportWrapper} 
                         filename="events" 
-                    /> */}{/* Fix ExportButton types later */}
+                    />
                     
                     <Button icon={<UploadOutlined />} onClick={() => setShowImport(true)}>
                         Import
@@ -485,18 +497,18 @@ const Events = () => {
                                              <Button 
                                                 type="text" 
                                                 size="small" 
-                                                icon={event.is_locked ? <UnlockOutlined /> : <LockOutlined />} 
+                                                icon={event.is_locked ? <UnlockOutlined style={{ fontSize: '16px' }} /> : <LockOutlined style={{ fontSize: '16px' }} />} 
                                                 onClick={(e) => { e.stopPropagation(); toggleLock(event); }}
                                             />
                                          </Tooltip>
                                          <Tooltip title="View">
-                                             <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => setViewingEvent(event)} />
+                                             <Button type="text" size="small" icon={<EyeOutlined style={{ fontSize: '16px' }} />} onClick={() => setViewingEvent(event)} />
                                          </Tooltip>
                                          <Tooltip title="Edit">
                                              <Button 
                                                 type="text" 
                                                 size="small" 
-                                                icon={<EditOutlined />} 
+                                                icon={<EditOutlined style={{ fontSize: '16px' }} />} 
                                                 onClick={() => handleEdit(event)}
                                                 disabled={event.is_locked}
                                              />
@@ -511,7 +523,7 @@ const Events = () => {
                                                 type="text" 
                                                 danger 
                                                 size="small" 
-                                                icon={<DeleteOutlined />} 
+                                                icon={<DeleteOutlined style={{ fontSize: '16px' }} />} 
                                                 disabled={event.is_locked}
                                                 onClick={(e) => {
                                                     if (event.is_virtual && event.parent_event) {
@@ -535,7 +547,7 @@ const Events = () => {
                                 }
                                 actions={[
                                     <Space key="time">
-                                        <ClockCircleOutlined /> 
+                                        <ClockCircleOutlined style={{ fontSize: '16px' }} /> 
                                         {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
                                         {formatEventTime(event, userTimezone)}
                                     </Space>
@@ -544,11 +556,11 @@ const Events = () => {
                                 <Space direction="vertical" style={{ width: '100%' }}>
                                     <Space>
                                         {event.category_details && <CategoryBadge category={event.category_details} size="sm" />}
-                                        {event.location_type !== 'virtual' && <Tag icon={<EnvironmentOutlined />}>On-site</Tag>}
-                                        {event.location_type === 'virtual' && <Tag icon={<VideoCameraOutlined />}>Virtual</Tag>}
+                                        {event.location_type !== 'virtual' && <Tag icon={<EnvironmentOutlined style={{ fontSize: '14px' }} />}>On-site</Tag>}
+                                        {event.location_type === 'virtual' && <Tag icon={<VideoCameraOutlined style={{ fontSize: '14px' }} />}>Virtual</Tag>}
                                     </Space>
                                     <Space>
-                                        <CalendarOutlined style={{ color: '#8c8c8c' }} />
+                                        <CalendarOutlined style={{ color: '#8c8c8c', fontSize: '16px' }} />
                                         <Text type="secondary">{dayjs(event.date).format('MMM D, YYYY')}</Text>
                                     </Space>
                                     {event.application_details && (

@@ -4,11 +4,12 @@ import {
   updateUserSettings,
   getCategories,
   createCategory,
+  updateCategory,
   deleteCategory,
   exportAllData,
 } from '../../api';
 import type { EventCategory, UserSettings } from '../../types';
-import { SettingOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownloadOutlined } from '@ant-design/icons';
+import { SettingOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
 import { useToast } from '../../context/ToastContext';
 import { TimePicker } from 'antd';
 import dayjs from 'dayjs';
@@ -29,6 +30,7 @@ const Settings: React.FC = () => {
   const [newCategoryColor, setNewCategoryColor] = useState('#6366f1');
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
   const fetchSettings = async () => {
@@ -81,26 +83,53 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleAddCategory = async (e: React.FormEvent) => {
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
 
     try {
-      await createCategory({
-        name: newCategoryName,
-        color: newCategoryColor,
-        icon: newCategoryIcon,
-      });
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, {
+            name: newCategoryName,
+            color: newCategoryColor,
+            icon: newCategoryIcon,
+        });
+        addToast('Category updated', 'success');
+      } else {
+        await createCategory({
+            name: newCategoryName,
+            color: newCategoryColor,
+            icon: newCategoryIcon,
+        });
+        addToast('Category created', 'success');
+      }
+      
       setNewCategoryName('');
       setNewCategoryColor('#6366f1');
       setNewCategoryIcon('tag');
       setIsAddingCategory(false);
+      setEditingCategory(null);
       fetchCategories();
-      addToast('Category created', 'success');
     } catch (err) {
-      console.error('Error creating category:', err);
-      addToast('Failed to create category', 'error');
+      console.error('Error saving category:', err);
+      addToast('Failed to save category', 'error');
     }
+  };
+
+  const handleEditCategory = (cat: EventCategory) => {
+      setEditingCategory(cat);
+      setNewCategoryName(cat.name);
+      setNewCategoryColor(cat.color);
+      setNewCategoryIcon(cat.icon || 'tag');
+      setIsAddingCategory(true);
+  };
+
+  const handleCancelEdit = () => {
+      setIsAddingCategory(false);
+      setEditingCategory(null);
+      setNewCategoryName('');
+      setNewCategoryColor('#6366f1');
+      setNewCategoryIcon('tag');
   };
 
   const handleDeleteCategory = (id: number) => {
@@ -429,11 +458,18 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Category Manager */}
+
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center border-b pb-4 mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Manage Categories</h3>
           <button
-            onClick={() => setIsAddingCategory(!isAddingCategory)}
+            onClick={() => {
+                if (isAddingCategory) {
+                    handleCancelEdit();
+                } else {
+                    setIsAddingCategory(true);
+                }
+            }}
             className="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
           >
             {isAddingCategory ? <CloseOutlined className="text-base" /> : <PlusOutlined className="text-base" />}
@@ -443,7 +479,7 @@ const Settings: React.FC = () => {
 
         {isAddingCategory && (
           <form
-            onSubmit={handleAddCategory}
+            onSubmit={handleSaveCategory}
             className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2"
           >
             <div className="flex gap-3">
@@ -477,7 +513,7 @@ const Settings: React.FC = () => {
                   disabled={!newCategoryName.trim()}
                   className="h-[38px] px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Add
+                  {editingCategory ? 'Update' : 'Add'}
                 </button>
               </div>
             </div>
@@ -497,13 +533,22 @@ const Settings: React.FC = () => {
                   <div className="flex items-center gap-3">
                      <CategoryBadge category={cat} />
                   </div>
-                  <button
-                    onClick={() => handleDeleteCategory(cat.id)}
-                    className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition p-1"
-                    title="Delete Category"
-                  >
-                    <DeleteOutlined className="text-base" />
-                  </button>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={() => handleEditCategory(cat)}
+                        className="text-gray-400 hover:text-indigo-600 p-1 mr-1"
+                        title="Edit Category"
+                      >
+                        <EditOutlined className="text-base" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id)}
+                        className="text-gray-400 hover:text-red-600 p-1"
+                        title="Delete Category"
+                      >
+                        <DeleteOutlined className="text-base" />
+                      </button>
+                  </div>
                 </div>
               ))}
             </div>

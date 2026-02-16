@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DownloadOutlined, FileExcelOutlined, FileTextOutlined, FileUnknownOutlined, DownOutlined } from '@ant-design/icons';
-import clsx from 'clsx';
+import { Button, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
 import { useToast } from '../context/ToastContext';
 
 interface ExportButtonProps {
@@ -15,25 +16,11 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   filename = 'export',
 }) => {
   const { addToast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleExport = async (format: string) => {
     try {
       setIsExporting(true);
-      setIsOpen(false);
 
       const response = await onExport(format);
 
@@ -71,56 +58,33 @@ const ExportButton: React.FC<ExportButtonProps> = ({
     }
   };
 
+  const items: MenuProps['items'] = [
+    {
+      key: 'csv',
+      label: 'CSV',
+      icon: <FileTextOutlined style={{ color: '#52c41a' }} />,
+      onClick: () => handleExport('csv'),
+    },
+    {
+      key: 'xlsx',
+      label: 'Excel (XLSX)',
+      icon: <FileExcelOutlined style={{ color: '#13c2c2' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'json',
+      label: 'JSON',
+      icon: <FileUnknownOutlined style={{ color: '#faad14' }} />,
+      onClick: () => handleExport('json'),
+    },
+  ];
+
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={isExporting}
-        className={clsx(
-          'flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors',
-          isExporting && 'opacity-50 cursor-not-allowed'
-        )}
-      >
-        <DownloadOutlined className="text-gray-500" />
-        <span>{isExporting ? 'Exporting...' : label}</span>
-        <DownOutlined className="text-xs text-gray-400" />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="p-1">
-            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Select Format
-            </div>
-
-            <button
-              onClick={() => handleExport('csv')}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-2"
-            >
-              <FileTextOutlined className="text-green-600" />
-              <span>CSV</span>
-            </button>
-
-            <button
-              onClick={() => handleExport('xlsx')}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-2"
-            >
-              <FileExcelOutlined className="text-emerald-600" />
-              <span>Excel (XLSX)</span>
-            </button>
-
-            <button
-              onClick={() => handleExport('json')}
-              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-2"
-            >
-              <FileUnknownOutlined className="text-yellow-600" />
-              <span>JSON</span>
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <Dropdown menu={{ items }} trigger={['click']} disabled={isExporting}>
+      <Button icon={<DownloadOutlined />} loading={isExporting}>
+        {label} <DownOutlined className="text-xs" />
+      </Button>
+    </Dropdown>
   );
 };
 
