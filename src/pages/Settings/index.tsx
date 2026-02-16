@@ -9,7 +9,15 @@ import {
   exportAllData,
 } from '../../api';
 import type { EventCategory, UserSettings } from '../../types';
-import { SettingOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  SettingOutlined,
+  SaveOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  CloseOutlined,
+  DownloadOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import { useToast } from '../../context/ToastContext';
 import { TimePicker } from 'antd';
 import dayjs from 'dayjs';
@@ -90,20 +98,20 @@ const Settings: React.FC = () => {
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, {
-            name: newCategoryName,
-            color: newCategoryColor,
-            icon: newCategoryIcon,
+          name: newCategoryName,
+          color: newCategoryColor,
+          icon: newCategoryIcon,
         });
         addToast('Category updated', 'success');
       } else {
         await createCategory({
-            name: newCategoryName,
-            color: newCategoryColor,
-            icon: newCategoryIcon,
+          name: newCategoryName,
+          color: newCategoryColor,
+          icon: newCategoryIcon,
         });
         addToast('Category created', 'success');
       }
-      
+
       setNewCategoryName('');
       setNewCategoryColor('#1890ff');
       setNewCategoryIcon('tag');
@@ -117,19 +125,19 @@ const Settings: React.FC = () => {
   };
 
   const handleEditCategory = (cat: EventCategory) => {
-      setEditingCategory(cat);
-      setNewCategoryName(cat.name);
-      setNewCategoryColor(cat.color);
-      setNewCategoryIcon(cat.icon || 'tag');
-      setIsAddingCategory(true);
+    setEditingCategory(cat);
+    setNewCategoryName(cat.name);
+    setNewCategoryColor(cat.color);
+    setNewCategoryIcon(cat.icon || 'tag');
+    setIsAddingCategory(true);
   };
 
   const handleCancelEdit = () => {
-      setIsAddingCategory(false);
-      setEditingCategory(null);
-      setNewCategoryName('');
-      setNewCategoryColor('#1890ff');
-      setNewCategoryIcon('tag');
+    setIsAddingCategory(false);
+    setEditingCategory(null);
+    setNewCategoryName('');
+    setNewCategoryColor('#1890ff');
+    setNewCategoryIcon('tag');
   };
 
   const handleDeleteCategory = (id: number) => {
@@ -224,17 +232,23 @@ const Settings: React.FC = () => {
             <TimePicker
               className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
               format="h:mm a"
-              value={settings.work_start_time ? dayjs(settings.work_start_time, 'HH:mm:ss') : dayjs('09:00:00', 'HH:mm:ss')}
+              value={
+                settings.work_start_time
+                  ? dayjs(settings.work_start_time, 'HH:mm:ss')
+                  : dayjs('09:00:00', 'HH:mm:ss')
+              }
               onChange={(time) => {
                 if (time) {
-                  setSettings((prev) => (prev ? { ...prev, work_start_time: time.format('HH:mm:ss') } : null));
+                  setSettings((prev) =>
+                    prev ? { ...prev, work_start_time: time.format('HH:mm:ss') } : null
+                  );
                 }
               }}
               minuteStep={1}
               use12Hours
               inputReadOnly={false}
               needConfirm={false}
-               allowClear={false}
+              allowClear={false}
             />
           </div>
 
@@ -243,17 +257,23 @@ const Settings: React.FC = () => {
             <TimePicker
               className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
               format="h:mm a"
-              value={settings.work_end_time ? dayjs(settings.work_end_time, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')}
+              value={
+                settings.work_end_time
+                  ? dayjs(settings.work_end_time, 'HH:mm:ss')
+                  : dayjs('17:00:00', 'HH:mm:ss')
+              }
               onChange={(time) => {
                 if (time) {
-                  setSettings((prev) => (prev ? { ...prev, work_end_time: time.format('HH:mm:ss') } : null));
+                  setSettings((prev) =>
+                    prev ? { ...prev, work_end_time: time.format('HH:mm:ss') } : null
+                  );
                 }
               }}
               minuteStep={1}
               use12Hours
               inputReadOnly={false}
               needConfirm={false}
-               allowClear={false}
+              allowClear={false}
             />
           </div>
         </div>
@@ -307,7 +327,9 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.default_event_duration || 60}
             onChange={(e) =>
-              setSettings((prev) => (prev ? { ...prev, default_event_duration: Number(e.target.value) } : null))
+              setSettings((prev) =>
+                prev ? { ...prev, default_event_duration: Number(e.target.value) } : null
+              )
             }
           />
         </div>
@@ -320,10 +342,14 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={settings.default_event_category || ''}
             onChange={(e) =>
-              setSettings((prev) => (prev ? {
-                ...prev,
-                default_event_category: e.target.value ? Number(e.target.value) : null,
-              } : null))
+              setSettings((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      default_event_category: e.target.value ? Number(e.target.value) : null,
+                    }
+                  : null
+              )
             }
           >
             <option value="">No Default Category</option>
@@ -346,7 +372,9 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.buffer_time || 0}
             onChange={(e) =>
-              setSettings((prev) => (prev ? { ...prev, buffer_time: Number(e.target.value) } : null))
+              setSettings((prev) =>
+                prev ? { ...prev, buffer_time: Number(e.target.value) } : null
+              )
             }
           />
           <p className="text-xs text-gray-500 mt-1">Time buffer between events</p>
@@ -357,7 +385,9 @@ const Settings: React.FC = () => {
           <select
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={settings.primary_timezone || 'America/Los_Angeles'}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, primary_timezone: e.target.value } : null))}
+            onChange={(e) =>
+              setSettings((prev) => (prev ? { ...prev, primary_timezone: e.target.value } : null))
+            }
           >
             <option value="America/Los_Angeles">Pacific Time (PT)</option>
             <option value="America/New_York">Eastern Time (ET)</option>
@@ -380,7 +410,9 @@ const Settings: React.FC = () => {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.ghosting_threshold_days || 30}
             onChange={(e) =>
-              setSettings((prev) => (prev ? { ...prev, ghosting_threshold_days: Number(e.target.value) } : null))
+              setSettings((prev) =>
+                prev ? { ...prev, ghosting_threshold_days: Number(e.target.value) } : null
+              )
             }
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -464,15 +496,19 @@ const Settings: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-900">Manage Categories</h3>
           <button
             onClick={() => {
-                if (isAddingCategory) {
-                    handleCancelEdit();
-                } else {
-                    setIsAddingCategory(true);
-                }
+              if (isAddingCategory) {
+                handleCancelEdit();
+              } else {
+                setIsAddingCategory(true);
+              }
             }}
             className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
           >
-            {isAddingCategory ? <CloseOutlined className="text-base" /> : <PlusOutlined className="text-base" />}
+            {isAddingCategory ? (
+              <CloseOutlined className="text-base" />
+            ) : (
+              <PlusOutlined className="text-base" />
+            )}
             {isAddingCategory ? 'Cancel' : 'Add Category'}
           </button>
         </div>
@@ -531,23 +567,23 @@ const Settings: React.FC = () => {
                   className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
                 >
                   <div className="flex items-center gap-3">
-                     <CategoryBadge category={cat} />
+                    <CategoryBadge category={cat} />
                   </div>
                   <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
-                      <button
-                        onClick={() => handleEditCategory(cat)}
-                        className="text-gray-400 hover:text-blue-600 p-1 mr-1"
-                        title="Edit Category"
-                      >
-                        <EditOutlined className="text-base" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(cat.id)}
-                        className="text-gray-400 hover:text-red-600 p-1"
-                        title="Delete Category"
-                      >
-                        <DeleteOutlined className="text-base" />
-                      </button>
+                    <button
+                      onClick={() => handleEditCategory(cat)}
+                      className="text-gray-400 hover:text-blue-600 p-1 mr-1"
+                      title="Edit Category"
+                    >
+                      <EditOutlined className="text-base" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="text-gray-400 hover:text-red-600 p-1"
+                      title="Delete Category"
+                    >
+                      <DeleteOutlined className="text-base" />
+                    </button>
                   </div>
                 </div>
               ))}

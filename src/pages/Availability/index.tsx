@@ -21,7 +21,7 @@ import EmptyState from '../../components/EmptyState';
 const Availability = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
-  
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AvailabilityType[]>([]);
   const [timezone, setTimezone] = useState('PT');

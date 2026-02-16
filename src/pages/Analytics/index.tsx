@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Event } from '../../types';
 import { getEvents, getApplications } from '../../api';
-import {
-  RiseOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons';
+import { RiseOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import {
   format,
   parseISO,
@@ -16,17 +13,7 @@ import {
   subWeeks,
 } from 'date-fns';
 import type { CareerApplication } from '../../types/application';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-
-
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import JobHuntAnalytics from '../../components/JobHuntAnalytics';
 import AvailabilityAnalytics from '../../components/AvailabilityAnalytics';
@@ -143,7 +130,9 @@ const Analytics: React.FC = () => {
     });
   };
 
-  const processCareerData = (data: Array<{ status: string; date_applied?: string; [key: string]: unknown }>) => {
+  const processCareerData = (
+    data: Array<{ status: string; date_applied?: string; [key: string]: unknown }>
+  ) => {
     // 1. Funnel Data
     const stageCounts = {
       APPLIED: 0,

@@ -11,7 +11,12 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns';
-import { LeftOutlined, RightOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import {
+  LeftOutlined,
+  RightOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+} from '@ant-design/icons';
 import type { Event, Holiday } from '../types';
 import clsx from 'clsx';
 

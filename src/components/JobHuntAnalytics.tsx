@@ -8,7 +8,7 @@ import {
   QuestionCircleOutlined,
   ClockCircleOutlined,
   NumberOutlined,
-  HolderOutlined
+  HolderOutlined,
 } from '@ant-design/icons';
 import {
   ResponsiveContainer,
@@ -44,14 +44,16 @@ interface AnalyticsProps {
   applications: CareerApplication[];
 }
 
-const SortableItem = ({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id });
+const SortableItem = ({
+  id,
+  children,
+  className,
+}: {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -60,23 +62,30 @@ const SortableItem = ({ id, children, className }: { id: string; children: React
 
   return (
     <div ref={setNodeRef} style={style} className={className}>
-        {/* Grip handle for dragging, only visible on hover of the component ideally, but for now static */}
-       <div className="relative group h-full">
-          <div 
-            {...attributes} 
-            {...listeners} 
-            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/50 rounded"
-          >
-             <HolderOutlined className="w-4 h-4" />
-          </div>
-          {children}
-       </div>
+      {/* Grip handle for dragging, only visible on hover of the component ideally, but for now static */}
+      <div className="relative group h-full">
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/50 rounded"
+        >
+          <HolderOutlined className="w-4 h-4" />
+        </div>
+        {children}
+      </div>
     </div>
   );
 };
 
 const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
-  const [items, setItems] = useState<string[]>(['total', 'active', 'outcomes', 'ghosted', 'locations', 'rounds']);
+  const [items, setItems] = useState<string[]>([
+    'total',
+    'active',
+    'outcomes',
+    'ghosted',
+    'locations',
+    'rounds',
+  ]);
 
   useEffect(() => {
     const saved = localStorage.getItem('analytics_dashboard_order');
@@ -295,7 +304,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       case 'rounds':
         return (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
-             <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <AimOutlined className="text-xl text-gray-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Interview Rounds</h3>
@@ -354,15 +363,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
   };
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter} 
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext 
-        items={items} 
-        strategy={rectSortingStrategy}
-      >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={items} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {items.map((id) => (
             <SortableItem key={id} id={id} className={getColSpan(id)}>

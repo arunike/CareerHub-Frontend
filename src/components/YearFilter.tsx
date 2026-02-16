@@ -20,7 +20,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
       value: 'all',
       label: 'All Years',
     },
-    ...availableYears.map(year => ({
+    ...availableYears.map((year) => ({
       value: year,
       label: year === currentYear ? `${year} (Current)` : `${year}`,
     })),
