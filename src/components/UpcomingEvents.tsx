@@ -58,7 +58,7 @@ const UpcomingEvents: React.FC = () => {
     <div className="mt-6 px-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Upcoming</h3>
-        <Link to="/events" className="text-xs text-indigo-600 hover:text-indigo-800">
+        <Link to="/events" className="text-xs text-blue-600 hover:text-blue-800">
           View all
         </Link>
       </div>

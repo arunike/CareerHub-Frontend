@@ -30,7 +30,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
               className={`
                 w-10 h-10 flex items-center justify-center rounded-lg transition-all text-lg
                 ${isSelected 
-                  ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-500 ring-offset-1' 
+                  ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-500 ring-offset-1' 
                   : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'}
               `}
             >
@@ -54,7 +54,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
     >
       <Button 
         className="flex items-center gap-2 px-3"
-        icon={<SelectedIcon className="text-indigo-600" />}
+        icon={<SelectedIcon className="text-blue-600" />}
       >
         <span className="text-gray-600 capitalize">{value || 'Select Icon'}</span>
         <DownOutlined className="text-xs text-gray-400" />

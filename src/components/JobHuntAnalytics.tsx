@@ -186,7 +186,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
           <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
             <div>
               <p className="text-sm font-medium text-gray-500 mb-1">Total Applications</p>
-              <p className="text-3xl font-bold text-indigo-600">{stats.total}</p>
+              <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
             </div>
             <div className="mt-4 flex items-center text-sm text-gray-500">
               <FileTextOutlined className="mr-1.5 text-base" />
@@ -265,9 +265,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
                     <span
                       className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
                         idx === 0
-                          ? 'bg-indigo-100 text-indigo-700'
+                          ? 'bg-blue-100 text-blue-700'
                           : idx === 1
-                            ? 'bg-indigo-50 text-indigo-600'
+                            ? 'bg-blue-50 text-blue-600'
                             : 'bg-gray-100 text-gray-600'
                       }`}
                     >
@@ -278,7 +278,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
                   <div className="flex items-center gap-3">
                     <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-indigo-500 rounded-full"
+                        className="h-full bg-blue-500 rounded-full"
                         style={{ width: `${(loc.count / stats.total) * 100}%` }}
                       ></div>
                     </div>
@@ -324,7 +324,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
                       {stats.rounds.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'][index % 4]}
+                          fill={['#1890ff', '#8b5cf6', '#ec4899', '#f43f5e'][index % 4]}
                         />
                       ))}
                     </Bar>

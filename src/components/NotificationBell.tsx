@@ -114,7 +114,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors outline-none focus:ring-2 focus:ring-indigo-100"
+        className="relative p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors outline-none focus:ring-2 focus:ring-blue-100"
       >
         <BellOutlined className="text-xl" />
         {totalNotifications > 0 && (
@@ -139,7 +139,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             <h3 className="font-semibold text-sm text-gray-900">Notifications</h3>
             <Link
               to="/?view=calendar"
-              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
               onClick={() => setIsOpen(false)}
             >
               View Calendar
@@ -217,7 +217,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                             isToday(eventDate)
-                              ? 'bg-indigo-50 text-indigo-700 font-medium'
+                              ? 'bg-blue-50 text-blue-700 font-medium'
                               : 'bg-gray-100 text-gray-600'
                           }`}
                         >

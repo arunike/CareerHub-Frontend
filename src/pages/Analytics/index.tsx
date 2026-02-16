@@ -171,7 +171,7 @@ const Analytics: React.FC = () => {
 
     // Construct Funnel (Simplified Pipeline View)
     const funnelData = [
-      { name: 'Applied', value: stageCounts.APPLIED, fill: '#6366f1' },
+      { name: 'Applied', value: stageCounts.APPLIED, fill: '#1890ff' },
       { name: 'Online Assessment', value: stageCounts.OA, fill: '#8b5cf6' },
       { name: 'Phone Screen', value: stageCounts.SCREEN, fill: '#ec4899' },
       { name: 'Onsite', value: stageCounts.ONSITE, fill: '#10b981' },
@@ -223,7 +223,7 @@ const Analytics: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <ThunderboltOutlined className="text-2xl text-indigo-600 mr-2" />
+          <ThunderboltOutlined className="text-2xl text-blue-600 mr-2" />
           <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
         </div>
 
@@ -243,7 +243,7 @@ const Analytics: React.FC = () => {
             onClick={() => setActiveTab('career')}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
               activeTab === 'career'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -279,7 +279,7 @@ const Analytics: React.FC = () => {
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                   />
-                  <Bar dataKey="count" name="Applications" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="Applications" fill="#1890ff" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

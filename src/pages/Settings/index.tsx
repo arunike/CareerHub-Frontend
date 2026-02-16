@@ -27,7 +27,7 @@ const Settings: React.FC = () => {
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#6366f1');
+  const [newCategoryColor, setNewCategoryColor] = useState('#1890ff');
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
@@ -105,7 +105,7 @@ const Settings: React.FC = () => {
       }
       
       setNewCategoryName('');
-      setNewCategoryColor('#6366f1');
+      setNewCategoryColor('#1890ff');
       setNewCategoryIcon('tag');
       setIsAddingCategory(false);
       setEditingCategory(null);
@@ -128,7 +128,7 @@ const Settings: React.FC = () => {
       setIsAddingCategory(false);
       setEditingCategory(null);
       setNewCategoryName('');
-      setNewCategoryColor('#6366f1');
+      setNewCategoryColor('#1890ff');
       setNewCategoryIcon('tag');
   };
 
@@ -222,7 +222,7 @@ const Settings: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
             <TimePicker
-              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-indigo-500 focus:border-indigo-500"
+              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
               format="h:mm a"
               value={settings.work_start_time ? dayjs(settings.work_start_time, 'HH:mm:ss') : dayjs('09:00:00', 'HH:mm:ss')}
               onChange={(time) => {
@@ -241,7 +241,7 @@ const Settings: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
             <TimePicker
-              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-indigo-500 focus:border-indigo-500"
+              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
               format="h:mm a"
               value={settings.work_end_time ? dayjs(settings.work_end_time, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')}
               onChange={(time) => {
@@ -285,7 +285,7 @@ const Settings: React.FC = () => {
                   }}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
                     isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      ? 'bg-blue-600 text-white border-blue-600'
                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
@@ -304,7 +304,7 @@ const Settings: React.FC = () => {
             type="number"
             min="15"
             step="15"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.default_event_duration || 60}
             onChange={(e) =>
               setSettings((prev) => (prev ? { ...prev, default_event_duration: Number(e.target.value) } : null))
@@ -317,7 +317,7 @@ const Settings: React.FC = () => {
             Default Event Category
           </label>
           <select
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={settings.default_event_category || ''}
             onChange={(e) =>
               setSettings((prev) => (prev ? {
@@ -343,7 +343,7 @@ const Settings: React.FC = () => {
             type="number"
             min="0"
             step="5"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.buffer_time || 0}
             onChange={(e) =>
               setSettings((prev) => (prev ? { ...prev, buffer_time: Number(e.target.value) } : null))
@@ -355,7 +355,7 @@ const Settings: React.FC = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Primary Timezone</label>
           <select
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={settings.primary_timezone || 'America/Los_Angeles'}
             onChange={(e) => setSettings((prev) => (prev ? { ...prev, primary_timezone: e.target.value } : null))}
           >
@@ -377,7 +377,7 @@ const Settings: React.FC = () => {
           <input
             type="number"
             min="1"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.ghosting_threshold_days || 30}
             onChange={(e) =>
               setSettings((prev) => (prev ? { ...prev, ghosting_threshold_days: Number(e.target.value) } : null))
@@ -391,7 +391,7 @@ const Settings: React.FC = () => {
 
         <button
           onClick={handleSave}
-          className="w-full mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+          className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
         >
           <SaveOutlined className="text-base" />
           Save Settings
@@ -412,7 +412,7 @@ const Settings: React.FC = () => {
 
           <div className="flex gap-2">
             <select
-              className="px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               id="export-format"
               defaultValue="json"
             >
@@ -448,7 +448,7 @@ const Settings: React.FC = () => {
                   addToast('Export failed', 'error');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 border border-indigo-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-blue-700 transition-colors"
             >
               <DownloadOutlined className="text-base" />
               <span>Export</span>
@@ -470,7 +470,7 @@ const Settings: React.FC = () => {
                     setIsAddingCategory(true);
                 }
             }}
-            className="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+            className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
           >
             {isAddingCategory ? <CloseOutlined className="text-base" /> : <PlusOutlined className="text-base" />}
             {isAddingCategory ? 'Cancel' : 'Add Category'}
@@ -488,7 +488,7 @@ const Settings: React.FC = () => {
                 <input
                   type="text"
                   placeholder="e.g. Health, Finance"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   autoFocus
@@ -511,7 +511,7 @@ const Settings: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!newCategoryName.trim()}
-                  className="h-[38px] px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-[38px] px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingCategory ? 'Update' : 'Add'}
                 </button>
@@ -536,7 +536,7 @@ const Settings: React.FC = () => {
                   <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
                       <button
                         onClick={() => handleEditCategory(cat)}
-                        className="text-gray-400 hover:text-indigo-600 p-1 mr-1"
+                        className="text-gray-400 hover:text-blue-600 p-1 mr-1"
                         title="Edit Category"
                       >
                         <EditOutlined className="text-base" />

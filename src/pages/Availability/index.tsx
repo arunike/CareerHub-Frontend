@@ -192,7 +192,7 @@ const Availability = () => {
             className={clsx(
               'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
               viewTab === 'text'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             )}
           >
@@ -204,7 +204,7 @@ const Availability = () => {
             className={clsx(
               'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
               viewTab === 'calendar'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             )}
           >
@@ -233,7 +233,7 @@ const Availability = () => {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
               </div>
@@ -245,7 +245,7 @@ const Availability = () => {
                   <select
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
-                    className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all appearance-none bg-white"
+                    className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
                   >
                     <option value="PT">Pacific Time (PT)</option>
                     <option value="MT">Mountain Time (MT)</option>
@@ -259,7 +259,7 @@ const Availability = () => {
                 <button
                   onClick={fetchAvailability}
                   disabled={loading}
-                  className="w-[200px] px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-[200px] px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Calculating...' : 'Generate Availability'}
                 </button>
@@ -276,7 +276,7 @@ const Availability = () => {
                   className={clsx(
                     'flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                     textMode === 'detailed'
-                      ? 'bg-indigo-50 text-indigo-600'
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-500 hover:text-gray-700'
                   )}
                 >
@@ -288,7 +288,7 @@ const Availability = () => {
                   className={clsx(
                     'flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                     textMode === 'combined'
-                      ? 'bg-indigo-50 text-indigo-600'
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-500 hover:text-gray-700'
                   )}
                 >
@@ -299,7 +299,7 @@ const Availability = () => {
 
               <button
                 onClick={() => copyToClipboard(generateFullCopyText(), 'ALL')}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
               >
                 {copiedIndex === 'ALL' ? (
                   <CheckCircleOutlined className="text-base text-green-500" />
@@ -406,7 +406,7 @@ const AvailabilityItem = ({
   };
 
   return (
-    <div className="group relative bg-white rounded-xl p-5 border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-300">
+    <div className="group relative bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
       <div className="flex items-start md:items-center justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">
@@ -416,7 +416,7 @@ const AvailabilityItem = ({
           {isEditing ? (
             <div className="flex gap-2 mt-1">
               <input
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 autoFocus
@@ -424,7 +424,7 @@ const AvailabilityItem = ({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-indigo-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-indigo-700 disabled:opacity-50"
+                className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
               >
                 Save
               </button>
@@ -447,7 +447,7 @@ const AvailabilityItem = ({
                     setEditText(item.availability);
                     setIsEditing(true);
                   }}
-                  className="opacity-0 group-hover/text:opacity-100 text-gray-400 hover:text-indigo-600 transition-opacity p-1"
+                  className="opacity-0 group-hover/text:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity p-1"
                   title="Override AvailabilityType"
                 >
                   <EditOutlined className="text-xs" />
@@ -475,7 +475,7 @@ const AvailabilityItem = ({
         </button>
       </div>
 
-      <div className="absolute left-0 top-4 bottom-4 w-1 bg-indigo-500 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute left-0 top-4 bottom-4 w-1 bg-blue-500 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 };
