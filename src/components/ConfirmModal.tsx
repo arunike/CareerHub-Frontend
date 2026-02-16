@@ -70,7 +70,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 ? 'bg-red-600 hover:bg-red-700'
                 : type === 'warning'
                   ? 'bg-amber-600 hover:bg-amber-700'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
             )}
           >
             {confirmText}

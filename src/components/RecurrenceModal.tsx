@@ -71,7 +71,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1050] p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 flex justify-between items-center rounded-t-2xl">
+        <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex justify-between items-center rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <RetweetOutlined className="text-xl text-white" />
@@ -91,7 +91,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Repeat</label>
             <select
-              className="w-full rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white transition text-gray-900 font-medium"
+              className="w-full rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition text-gray-900 font-medium"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
             >
@@ -110,7 +110,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                 type="number"
                 min="1"
                 max="99"
-                className="w-24 rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 font-medium"
+                className="w-24 rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
                 value={interval}
                 onChange={(e) => setInterval(Number(e.target.value))}
               />
@@ -136,7 +136,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                     className={clsx(
                       'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm',
                       selectedDays.includes(day.value)
-                        ? 'bg-indigo-600 text-white ring-2 ring-indigo-300 ring-offset-1'
+                        ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow'
                     )}
                   >
@@ -157,7 +157,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                   name="endType"
                   checked={endType === 'never'}
                   onChange={() => setEndType('never')}
-                  className="w-4 h-4 text-indigo-600"
+                  className="w-4 h-4 text-blue-600"
                 />
                 <span className="text-sm font-medium text-gray-700">Never</span>
               </label>
@@ -168,7 +168,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                   name="endType"
                   checked={endType === 'count'}
                   onChange={() => setEndType('count')}
-                  className="w-4 h-4 text-indigo-600"
+                  className="w-4 h-4 text-blue-600"
                 />
                 <span className="text-sm font-medium text-gray-700">After</span>
                 <input
@@ -176,7 +176,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                   min="1"
                   max="999"
                   disabled={endType !== 'count'}
-                  className="w-20 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
+                  className="w-20 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
                   onClick={() => setEndType('count')}
@@ -190,13 +190,13 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                   name="endType"
                   checked={endType === 'until'}
                   onChange={() => setEndType('until')}
-                  className="w-4 h-4 text-indigo-600"
+                  className="w-4 h-4 text-blue-600"
                 />
                 <span className="text-sm font-medium text-gray-700">On</span>
                 <input
                   type="date"
                   disabled={endType !== 'until'}
-                  className="flex-1 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
+                  className="flex-1 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
                   value={until}
                   onChange={(e) => setUntil(e.target.value)}
                   onClick={() => setEndType('until')}
@@ -215,7 +215,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition font-semibold shadow-lg shadow-indigo-500/30"
+            className="flex-1 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-semibold shadow-lg shadow-blue-500/30"
           >
             Save
           </button>

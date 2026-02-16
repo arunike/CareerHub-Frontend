@@ -20,6 +20,8 @@ import {
 import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import { useToast } from '../../context/ToastContext';
+import YearFilter from '../../components/YearFilter';
+import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 interface Offer {
   id?: number;
@@ -60,6 +62,10 @@ const OfferComparison = () => {
 
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('offersSelectedYear');
+    return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
+  });
 
   const fetchData = async () => {
     try {
@@ -183,8 +189,16 @@ const OfferComparison = () => {
 
 
 
+  // Filter offers by year
+  const filteredOffers = filterByYear(offers, selectedYear, 'created_at');
+  const availableYears = getAvailableYears(offers, 'created_at');
+  const handleYearChange = (year: number | 'all') => {
+    setSelectedYear(year);
+    localStorage.setItem('offersSelectedYear', year.toString());
+  };
+
   // Prepare Chart Data
-  const chartData = offers.map((offer) => {
+  const chartData = filteredOffers.map((offer) => {
     const appName = getApplicationName(offer.application);
     const totalComp =
       Number(offer.base_salary) +
@@ -214,6 +228,11 @@ const OfferComparison = () => {
           <p className="text-gray-500">Compare Total Compensation (TC) across your offers.</p>
         </div>
         <div className="flex items-center gap-3">
+          <YearFilter
+            selectedYear={selectedYear}
+            onYearChange={handleYearChange}
+            availableYears={availableYears}
+          />
           <button
             onClick={() => setIsAddJobOpen(true)}
             className="flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium shadow-sm"
@@ -233,7 +252,7 @@ const OfferComparison = () => {
             <YAxis tickFormatter={(val) => `$${val / 1000}k`} />
             <Tooltip formatter={(val: number | undefined) => `$${(val || 0).toLocaleString()}`} />
             <Legend />
-            <Bar dataKey="Base" stackId="a" fill="#6366f1" />
+            <Bar dataKey="Base" stackId="a" fill="#1890ff" />
             <Bar dataKey="Bonus" stackId="a" fill="#8b5cf6" />
             <Bar dataKey="Equity" stackId="a" fill="#ec4899" />
             <Bar dataKey="SignOn" stackId="a" fill="#14b8a6" />
@@ -287,7 +306,7 @@ const OfferComparison = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {offers.map((offer, idx) => {
+              {filteredOffers.map((offer, idx) => {
                 const app = applications.find((a) => a.id === offer.application);
                 const total =
                   Number(offer.base_salary) +
@@ -311,7 +330,7 @@ const OfferComparison = () => {
                 const diffPercent = currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
 
                 return (
-                  <tr key={offer.id || idx} className={isCurrent ? 'bg-indigo-50' : ''}>
+                  <tr key={offer.id || idx} className={isCurrent ? 'bg-blue-50' : ''}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
@@ -323,7 +342,7 @@ const OfferComparison = () => {
                           </span>
                         </div>
                         {isCurrent && (
-                          <span className="ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                          <span className="ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                             Current
                           </span>
                         )}
@@ -386,7 +405,7 @@ const OfferComparison = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-3">
                       <button
                         onClick={() => handleEditClick(offer)}
-                        className="text-indigo-600 hover:text-indigo-900 font-medium"
+                        className="text-blue-600 hover:text-blue-900 font-medium"
                       >
                         Edit
                       </button>
@@ -395,7 +414,7 @@ const OfferComparison = () => {
                         onClick={() => toggleCurrent(offer)}
                         className={clsx(
                           'font-medium hover:underline',
-                          isCurrent ? 'text-gray-500' : 'text-gray-400 hover:text-indigo-600'
+                          isCurrent ? 'text-gray-500' : 'text-gray-400 hover:text-blue-600'
                         )}
                       >
                         {isCurrent ? 'Unmark' : 'Mark Current'}
@@ -438,7 +457,7 @@ const OfferComparison = () => {
                   value={newJobName}
                   onChange={(e) => setNewJobName(e.target.value)}
                   placeholder="e.g. Current Employer"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   autoFocus
                 />
               </div>
@@ -452,7 +471,7 @@ const OfferComparison = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700"
+                  className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
                 >
                   Add Job
                 </button>
@@ -487,7 +506,7 @@ const OfferComparison = () => {
                       onChange={(e) =>
                         setEditingApp({ ...editingApp, company_name: e.target.value })
                       }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                     />
                   </div>
                   <div>
@@ -496,7 +515,7 @@ const OfferComparison = () => {
                       type="text"
                       value={editingApp.role_title}
                       onChange={(e) => setEditingApp({ ...editingApp, role_title: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                     />
                   </div>
                 </div>
@@ -514,7 +533,7 @@ const OfferComparison = () => {
                         base_salary: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -537,7 +556,7 @@ const OfferComparison = () => {
                             setBonusMode('#');
                           }
                         }}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
                       >
                         Use {bonusMode === '#' ? '%' : '$'}
                       </button>
@@ -557,7 +576,7 @@ const OfferComparison = () => {
                                 bonus: parseFloat(e.target.value) || 0,
                               })
                             }
-                            className="block w-full rounded-md border-gray-300 pl-9 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 border"
+                            className="block w-full rounded-md border-gray-300 pl-9 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
                           />
                         </>
                       ) : (
@@ -573,7 +592,7 @@ const OfferComparison = () => {
                               const absVal = (pct / 100) * base;
                               setEditingOffer({ ...editingOffer, bonus: absVal });
                             }}
-                            className="block w-full rounded-md border-gray-300 pl-3 pr-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 border"
+                            className="block w-full rounded-md border-gray-300 pl-3 pr-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
                           />
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                             <span className="text-gray-500 sm:text-sm">%</span>
@@ -605,8 +624,8 @@ const OfferComparison = () => {
                           className={clsx(
                             'text-xs underline',
                             equityMode === 'total'
-                              ? 'text-indigo-800 font-bold'
-                              : 'text-gray-500 hover:text-indigo-600'
+                              ? 'text-blue-800 font-bold'
+                              : 'text-gray-500 hover:text-blue-600'
                           )}
                         >
                           Total
@@ -618,8 +637,8 @@ const OfferComparison = () => {
                           className={clsx(
                             'text-xs underline',
                             equityMode === 'annual'
-                              ? 'text-indigo-800 font-bold'
-                              : 'text-gray-500 hover:text-indigo-600'
+                              ? 'text-blue-800 font-bold'
+                              : 'text-gray-500 hover:text-blue-600'
                           )}
                         >
                           /Yr
@@ -641,7 +660,7 @@ const OfferComparison = () => {
                               equity: parseFloat(e.target.value) || 0,
                             })
                           }
-                          className="block w-full rounded-md border-gray-300 pl-9 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 border"
+                          className="block w-full rounded-md border-gray-300 pl-9 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
                           placeholder="Annual Value"
                         />
                       </div>
@@ -662,7 +681,7 @@ const OfferComparison = () => {
                               const annual = totalVal * ((vestingPercent || 0) / 100);
                               setEditingOffer({ ...editingOffer, equity: annual });
                             }}
-                            className="block w-full rounded-md border-gray-300 pl-9 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 border"
+                            className="block w-full rounded-md border-gray-300 pl-9 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
                           />
                         </div>
                         <div className="w-24 relative rounded-md shadow-sm">
@@ -677,7 +696,7 @@ const OfferComparison = () => {
                               const annual = total * (pct / 100);
                               setEditingOffer({ ...editingOffer, equity: annual });
                             }}
-                            className="block w-full rounded-md border-gray-300 pr-6 text-center focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 border"
+                            className="block w-full rounded-md border-gray-300 pr-6 text-center focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
                           />
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                             <span className="text-gray-500 sm:text-sm">%</span>
@@ -705,7 +724,7 @@ const OfferComparison = () => {
                           sign_on: parseFloat(e.target.value) || 0,
                         })
                       }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                     />
                   </div>
                   <div>
@@ -721,7 +740,7 @@ const OfferComparison = () => {
                           benefits_value: parseFloat(e.target.value) || 0,
                         })
                       }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                     />
                   </div>
                 </div>
@@ -733,7 +752,7 @@ const OfferComparison = () => {
                     onChange={(e) =>
                       setEditingOffer({ ...editingOffer, pto_days: parseInt(e.target.value) || 0 })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                   />
                 </div>
                 <div>
@@ -744,7 +763,7 @@ const OfferComparison = () => {
                       onChange={(e) =>
                         setEditingOffer({ ...editingOffer, is_current: e.target.checked })
                       }
-                      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                     <span>Is Current Role?</span>
                   </label>
@@ -760,7 +779,7 @@ const OfferComparison = () => {
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700"
+                className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
               >
                 Save Offer
               </button>

@@ -45,6 +45,8 @@ import {
 } from '../../api';
 import type { Holiday } from '../../types';
 import ExportButton from '../../components/ExportButton';
+import YearFilter from '../../components/YearFilter';
+import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -61,6 +63,10 @@ const Holidays = () => {
   // Sorting
   const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('holidaysSelectedYear');
+    return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
+  });
 
   // Add Form State
   const [isRangeMode, setIsRangeMode] = useState(false);
@@ -85,8 +91,8 @@ const Holidays = () => {
     fetchData();
   }, []);
 
-  // Computed
-  const sortedHolidays = [...holidays].sort((a, b) => {
+  // Computed - Filter by year then sort
+  const sortedHolidays = filterByYear(holidays, selectedYear, 'date').sort((a, b) => {
     let comparison = 0;
     if (sortBy === 'date') {
         comparison = dayjs(a.date).diff(dayjs(b.date));
@@ -96,9 +102,16 @@ const Holidays = () => {
     return sortOrder === 'asc' ? comparison : -comparison;
   });
 
-  const sortedFederalHolidays = [...federalHolidays]
-    .filter((h) => h.date.startsWith(dayjs().format('YYYY')))
-    .sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
+  const sortedFederalHolidays = filterByYear(federalHolidays, selectedYear, 'date').sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
+
+  // Get available years
+  const availableYears = getAvailableYears(holidays, 'date');
+
+  // Handle year change
+  const handleYearChange = (year: number | 'all') => {
+    setSelectedYear(year);
+    localStorage.setItem('holidaysSelectedYear', year.toString());
+  };
 
   // Handlers
   const handleAdd = async (values: any) => {
@@ -369,6 +382,11 @@ const Holidays = () => {
                   <Title level={2} style={{ margin: 0 }}>Holiday Manager</Title>
               </div>
               <Space>
+                  <YearFilter
+                      selectedYear={selectedYear}
+                      onYearChange={handleYearChange}
+                      availableYears={availableYears}
+                  />
                   <ExportButton 
                     onExport={handleExportWrapper} 
                     filename="holidays" 

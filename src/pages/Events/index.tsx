@@ -56,7 +56,9 @@ import {
 import RecurrenceModal from '../../components/RecurrenceModal';
 import CategoryBadge from '../../components/CategoryBadge'; 
 import IconPicker from '../../components/IconPicker'; 
-import ExportButton from '../../components/ExportButton'; 
+import ExportButton from '../../components/ExportButton';
+import YearFilter from '../../components/YearFilter';
+import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter'; 
 
 dayjs.extend(customParseFormat);
 
@@ -80,6 +82,10 @@ const Events = () => {
   const [sortBy, setSortBy] = useState<'date' | 'duration'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [userTimezone, setUserTimezone] = useState(() => localStorage.getItem('userTimezone') || 'PT');
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('eventsSelectedYear');
+    return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
+  });
 
   // UI State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -177,7 +183,7 @@ const Events = () => {
   }, []);
 
   // Filter Logic
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = filterByYear(events, selectedYear, 'date').filter(event => {
       if (categoryFilter !== 'ALL' && event.category !== categoryFilter) return false;
       if (dateRange && dateRange[0] && dateRange[1]) {
           const eventDate = dayjs(event.date);
@@ -195,6 +201,15 @@ const Events = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
   });
+
+  // Get available years from all events
+  const availableYears = getAvailableYears(events, 'date');
+
+  // Handle year change and persist to localStorage
+  const handleYearChange = (year: number | 'all') => {
+    setSelectedYear(year);
+    localStorage.setItem('eventsSelectedYear', year.toString());
+  };
 
   // Form Handlers
   const handleAdd = () => {
@@ -389,6 +404,11 @@ const Events = () => {
                    <Text type="secondary">{filteredEvents.length} events</Text>
                 </div>
                 <Space wrap>
+                    <YearFilter
+                        selectedYear={selectedYear}
+                        onYearChange={handleYearChange}
+                        availableYears={availableYears}
+                    />
                     <Select
                         defaultValue={userTimezone}
                         onChange={setUserTimezone}
@@ -564,7 +584,7 @@ const Events = () => {
                                         <Text type="secondary">{dayjs(event.date).format('MMM D, YYYY')}</Text>
                                     </Space>
                                     {event.application_details && (
-                                        <Tag color="purple">💼 {event.application_details.company}</Tag>
+                                        <Tag color="blue">💼 {event.application_details.company}</Tag>
                                     )}
                                 </Space>
                             </Card>

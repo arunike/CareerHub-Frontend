@@ -45,6 +45,8 @@ import {
 } from '../../api';
 import type { CareerApplication } from '../../types/application';
 import ExportButton from '../../components/ExportButton';
+import YearFilter from '../../components/YearFilter';
+import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 const { Title, Text, Link } = Typography;
 const { Option } = Select;
@@ -66,6 +68,10 @@ const Applications = () => {
   // Filter State
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('applicationsSelectedYear');
+    return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
+  });
 
   const fetchData = async () => {
     try {
@@ -194,13 +200,20 @@ const Applications = () => {
       }
   };
 
-  // Filtered Data
-  const filteredData = applications.filter(app => {
+  // Filtered Data - Apply year filter first
+  const filteredData = filterByYear(applications, selectedYear, 'date_applied').filter(app => {
       const matchesSearch = (app.company_details?.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
                             (app.role_title || '').toLowerCase().includes(searchText.toLowerCase());
       const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
       return matchesSearch && matchesStatus;
   });
+
+  // Get available years and handle year change
+  const availableYears = getAvailableYears(applications, 'date_applied');
+  const handleYearChange = (year: number | 'all') => {
+    setSelectedYear(year);
+    localStorage.setItem('applicationsSelectedYear', year.toString());
+  };
 
   const columns = [
       {
@@ -277,6 +290,11 @@ const Applications = () => {
                  <Text type="secondary">{applications.length} applications tracked</Text>
             </div>
             <Space>
+                 <YearFilter
+                     selectedYear={selectedYear}
+                     onYearChange={handleYearChange}
+                     availableYears={availableYears}
+                 />
                  <Popconfirm
                     title="Delete All Applications?"
                     description="This will delete all unlocked applications. This cannot be undone."

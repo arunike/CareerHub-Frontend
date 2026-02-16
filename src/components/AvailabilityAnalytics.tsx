@@ -38,7 +38,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+const COLORS = ['#1890ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
 interface AvailabilityStats {
   totalEvents: number;
@@ -123,8 +123,8 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         return (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-100 rounded-lg">
-                <CalendarOutlined className="w-6 h-6 text-indigo-600" />
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <CalendarOutlined className="w-6 h-6 text-blue-600" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Events</p>
@@ -216,7 +216,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
                   <BarChart data={stats.dailyActivity}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" orientation="left" stroke="#6366f1" />
+                    <YAxis yAxisId="left" orientation="left" stroke="#1890ff" />
                     <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" />
                     <Tooltip
                       contentStyle={{
@@ -230,7 +230,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
                       yAxisId="left"
                       dataKey="count"
                       name="Events"
-                      fill="#6366f1"
+                      fill="#1890ff"
                       radius={[4, 4, 0, 0]}
                     />
                     <Bar
