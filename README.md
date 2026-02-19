@@ -26,7 +26,6 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection
 - 📥 **Import/Export**: Bulk upload applications via CSV/XLSX and export data in multiple formats
 - 🎨 **Modern UI**: Clean, responsive design with Tailwind CSS and Lucide icons
-- 🔔 **Toast Notifications**: Real-time feedback for all user actions
 
 ## ✨ Features
 
@@ -78,10 +77,10 @@ The **Frontend** is a React-based single-page application that provides an intui
   - Ghosting threshold configuration
   - Timezone selector
   - Export all data (ZIP)
-- **Analytics.tsx**: Job search metrics (future feature)
-  - Application funnel visualization
-  - Timeline view
-  - Success rate metrics
+- **Analytics/index.tsx**: Comprehensive job search analytics
+  - **Availability Analytics**: Track meeting/interview volume and duration over time
+  - **Job Hunt Analytics**: visualize application funnel, active interviews, and outcomes
+  - **Custom Widgets**: Create personalized metrics and charts using natural language queries (e.g., "Applications by status", "Events this month")
 
 ## 🛠 Tech Stack
 
@@ -153,26 +152,36 @@ npm run lint
 ```
 frontend/
 ├── src/
-│   ├── components/              # React components
-│   │   ├── ApplicationList.tsx  # Job application tracker with filters & import/export
-│   │   ├── OfferComparison.tsx  # Offer comparison with charts & "Diff vs Current"
-│   │   ├── EventCalendar.tsx    # Weekly availability calendar
-│   │   ├── EventList.tsx        # Interview event management
-│   │   ├── HolidayList.tsx      # Holiday management
-│   │   ├── Settings.tsx         # User preferences (timezone, ghosting threshold)
-│   │   ├── Analytics.tsx        # Job search analytics dashboard
-│   │   └── Toast.tsx            # Toast notification system (Context API)
+│   ├── components/              # Reusable UI components
+│   │   ├── AvailabilityAnalytics.tsx
+│   │   ├── CustomWidgetCard.tsx # Renderer for custom metrics/charts
+│   │   ├── ExportButton.tsx
+│   │   ├── JobHuntAnalytics.tsx
+│   │   ├── Layout.tsx           # Main app layout with navigation
+│   │   └── ...
 │   │
-│   ├── api.ts                   # Axios API client (baseURL: http://localhost:8000/api)
-│   ├── App.tsx                  # Main app with React Router routing
-│   ├── main.tsx                 # Entry point (React 18 createRoot)
-│   └── index.css                # Global styles (Tailwind directives)
+│   ├── pages/                   # Page components (routed)
+│   │   ├── Analytics/           # Analytics dashboard
+│   │   ├── Applications/        # Application tracker
+│   │   ├── Availability/        # Availability calendar
+│   │   ├── Events/              # Event management
+│   │   ├── Holidays/            # Holiday management
+│   │   ├── OfferComparison/     # Offer comparison tool
+│   │   └── Settings/            # User settings
+│   │
+│   ├── hooks/                   # Custom React hooks
+│   │   └── useCustomWidgets.ts  # Hook for managing custom analytics widgets
+│   │
+│   ├── context/                 # React Contexts
+│   ├── utils/                   # Helper functions
+│   ├── api.ts                   # Axios API client
+│   ├── App.tsx                  # Main app component
+│   └── main.tsx                 # Entry point
 │
 ├── public/                      # Static assets
 ├── package.json                 # Dependencies & scripts
 ├── vite.config.ts               # Vite configuration
-├── tailwind.config.js           # Tailwind CSS customization
-└── tsconfig.json                # TypeScript configuration
+└── tailwind.config.js           # Tailwind CSS customization
 ```
 
 ## 🎨 Design System
@@ -261,15 +270,6 @@ export const exportApplications = (format: 'csv' | 'json' | 'xlsx') =>
 
 ## 🎯 Key Features Explained
 
-### Toast Notification System
-
-Custom React Context in `Toast.tsx`:
-
-```typescript
-const { addToast } = useToast();
-addToast('Application created successfully!', 'success'); // success, error, info
-```
-
 ### File Download Pattern
 
 ```typescript
@@ -284,6 +284,18 @@ const handleExport = async (format: 'csv' | 'json' | 'xlsx') => {
   URL.revokeObjectURL(url);
 };
 ```
+
+### Custom Analytics Engine
+
+The dashboard features a **Natural Language Query** engine that allows you to create custom widgets:
+
+1.  **Ask a question**: "Total offers in 2024" or "Events by category"
+2.  **Backend Processing**: The Django backend parses the query using regex and date logic (see `api/analytics/custom_widgets.py`).
+3.  **Dynamic Rendering**:
+    -   **Metrics**: Single value cards (e.g., "5 Offers")
+    -   **Charts**: Recharts visualizations (Bar/Pie) automatically selected based on data type
+
+No SQL knowledge required!
 
 ### Currency & Percentage Formatting
 
