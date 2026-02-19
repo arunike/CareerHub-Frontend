@@ -10,7 +10,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
-import { Modal, Button, Switch, Typography, Input, message } from 'antd';
+import { Modal, Button, Switch, Typography, Input, message, Tag } from 'antd';
 import {
   BarChart,
   Bar,
@@ -606,6 +606,18 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
                 rows={3}
                 className="flex-1"
               />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Text type="secondary" className="text-xs">Try charts:</Text>
+              <Tag 
+                className="cursor-pointer hover:border-blue-500" 
+                onClick={() => {
+                  setNewWidgetQuery('Events by category');
+                  setNewWidgetIcon('PieChartOutlined');
+                }}
+              >
+                Events by category
+              </Tag>
             </div>
             <div className="flex justify-between items-center mt-2">
               <Button 
