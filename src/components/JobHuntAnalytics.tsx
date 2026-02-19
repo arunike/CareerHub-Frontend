@@ -32,7 +32,10 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -122,11 +125,12 @@ const SortableItem = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0 : 1, // Hide the original item while dragging
   };
 
   return (
@@ -159,6 +163,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     }
     return AVAILABLE_WIDGETS.filter(w => w.defaultEnabled).map(w => w.id);
   });
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeSize, setActiveSize] = useState<{ width: number; height: number } | null>(null);
 
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem('analytics_dashboard_order');
@@ -208,6 +215,15 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+    // Capture the initial dimensions of the dragged item
+    if (event.active.rect.current.initial) {
+      const { width, height } = event.active.rect.current.initial;
+      setActiveSize({ width, height });
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -219,7 +235,12 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         localStorage.setItem('analytics_dashboard_order', JSON.stringify(newItems));
         return newItems;
       });
+    } else {
+      // Even if order didn't change at the end (because we updated during drag),
+      // make sure to save the current state
+      localStorage.setItem('analytics_dashboard_order', JSON.stringify(widgetOrder));
     }
+    setActiveId(null);
   };
 
   const toggleWidget = (widgetId: string) => {
@@ -569,9 +590,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         </Button>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter} 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
             {widgetOrder.map((id) => (
               <SortableItem key={id} id={id} className={getColSpan(id)}>
                 {renderWidget(id)}
@@ -579,6 +605,17 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
             ))}
           </div>
         </SortableContext>
+
+        <DragOverlay>
+          {activeId ? (
+            <div 
+              className={`h-full ${getColSpan(activeId)}`}
+              style={activeSize ? { width: activeSize.width, height: activeSize.height } : undefined}
+            >
+              {renderWidget(activeId)}
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
 
       <Modal
