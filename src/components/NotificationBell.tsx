@@ -4,15 +4,15 @@ import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date
 import { BellOutlined, ClockCircleOutlined, AlertOutlined, CheckOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { ConflictAlert, Event } from '../types';
-import { useToast } from '../context/ToastContext';
 import ConfirmModal from './ConfirmModal';
+import { message } from 'antd';
 
 interface NotificationBellProps {
   placement?: 'bottom-right' | 'top-left';
 }
 
 const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom-right' }) => {
-  const { addToast } = useToast();
+  const [messageApi, contextHolder] = message.useMessage();
   const [events, setEvents] = useState<Event[]>([]);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,8 +37,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       // 1. Kick off detection (fire and forget or wait)
       try {
         await detectConflicts();
-      } catch (e) {
-        console.error('Detection failed', e);
+      } catch (error) {
+        messageApi.error('Detection failed');
+        console.error('Detection failed', error);
       }
 
       // 2. Fetch parallel
@@ -64,8 +65,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
       setEvents(upcoming);
       setConflicts(conflictsResp.data);
-    } catch (err) {
-      console.error('Failed to fetch data', err);
+      setConflicts(conflictsResp.data);
+    } catch (error) {
+      messageApi.error('Failed to fetch data');
+      console.error('Failed to fetch data', error);
     } finally {
       setLoading(false);
     }
@@ -97,10 +100,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
           // Optimistic update
           setConflicts((prev) => prev.filter((c) => c.id !== id));
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-          addToast('Conflict resolved', 'success');
-        } catch (err) {
-          console.error(err);
-          addToast('Failed to resolve conflict', 'error');
+          messageApi.success('Conflict resolved');
+        } catch (error) {
+          messageApi.error('Failed to resolve conflict');
+          console.error(error);
         }
       },
     });
@@ -124,6 +127,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         )}
       </button>
 
+      {contextHolder}
+
       {isOpen && (
         <div
           className={`
@@ -146,7 +151,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             </Link>
           </div>
 
-          <div className="max-h-[300px] overflow-y-auto">
+          <div className="max-h-75 overflow-y-auto">
             {loading ? (
               <div className="p-4 text-center text-xs text-gray-400">Loading...</div>
             ) : totalNotifications === 0 ? (

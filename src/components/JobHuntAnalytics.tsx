@@ -147,13 +147,13 @@ const SortableItem = ({
 };
 
 const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [enabledWidgets, setEnabledWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem('job_hunt_analytics_enabled');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (error) {
-        message.error('Failed to parse enabled widgets');
         console.error('Failed to parse enabled widgets', error);
       }
     }
@@ -167,7 +167,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         const order = JSON.parse(saved);
         return order.filter((id: string) => enabledWidgets.includes(id));
       } catch (error) {
-        message.error('Failed to parse widget order');
         console.error('Failed to parse widget order', error);
       }
     }
@@ -182,7 +181,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     addCustomWidget,
     deleteCustomWidget,
     testQuery
-  } = useCustomWidgets('job_hunt_analytics_custom', 'job-hunt');
+  } = useCustomWidgets('job_hunt_analytics_custom', 'job-hunt', messageApi);
 
   const [newWidgetName, setNewWidgetName] = useState('');
   const [newWidgetQuery, setNewWidgetQuery] = useState('');
@@ -248,10 +247,10 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     try {
       const data = await testQuery(newWidgetQuery);
       setValidationResult(data);
-      message.success('Query successful!');
+      messageApi.success('Query successful!');
     } catch (error) {
       console.error('Query failed', error);
-      message.error('Query failed');
+      messageApi.error('Query failed');
     } finally {
       setIsValidating(false);
     }
@@ -259,11 +258,11 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
 
   const handleCreateCustomWidget = () => {
     if (!newWidgetName.trim()) {
-      message.error('Please enter a widget name');
+      messageApi.error('Please enter a widget name');
       return;
     }
     if (!validationResult) {
-      message.error('Please test your query first');
+      messageApi.error('Please test your query first');
       return;
     }
 
@@ -293,7 +292,10 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     setNewWidgetColor('blue');
     setIsCreateWidgetOpen(false);
 
-    message.success('Custom widget created!');
+    setNewWidgetColor('blue');
+    setIsCreateWidgetOpen(false);
+
+    messageApi.success('Custom widget created!');
   };
 
   const stats = useMemo(() => {
@@ -552,6 +554,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
 
   return (
     <>
+      {contextHolder}
       <div className="flex justify-between items-center mb-6">
         <div>
           <Text className="text-gray-500">

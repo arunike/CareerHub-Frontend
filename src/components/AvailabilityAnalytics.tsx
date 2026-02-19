@@ -145,13 +145,13 @@ const SortableItem = ({
 };
 
 const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [enabledWidgets, setEnabledWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem('availability_analytics_enabled');
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (error) {
-        message.error('Failed to parse enabled widgets');
         console.error('Failed to parse enabled widgets', error);
       }
     }
@@ -166,7 +166,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         // Filter to only include enabled widgets
         return order.filter((id: string) => enabledWidgets.includes(id));
       } catch (error) {
-        message.error('Failed to parse widget order');
         console.error('Failed to parse widget order', error);
       }
     }
@@ -177,11 +176,11 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
 
   const { 
-    customWidgets, 
+    customWidgets,
     addCustomWidget, 
     deleteCustomWidget, 
     testQuery 
-  } = useCustomWidgets('availability_analytics_custom', 'availability');
+  } = useCustomWidgets('availability_analytics_custom', 'availability', messageApi);
 
   const [newWidgetName, setNewWidgetName] = useState('');
   const [newWidgetQuery, setNewWidgetQuery] = useState('');
@@ -247,9 +246,9 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     try {
       const data = await testQuery(newWidgetQuery);
       setValidationResult(data);
-      message.success('Query successful!');
+      messageApi.success('Query successful!');
     } catch (error) {
-      message.error('Query failed');
+      messageApi.error('Query failed');
       console.error('Query failed', error);
     } finally {
       setIsValidating(false);
@@ -258,11 +257,11 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
   const handleCreateCustomWidget = () => {
     if (!newWidgetName.trim()) {
-      message.error('Please enter a widget name');
+      messageApi.error('Please enter a widget name');
       return;
     }
     if (!validationResult) {
-      message.error('Please test your query first');
+      messageApi.error('Please test your query first');
       return;
     }
 
@@ -292,7 +291,10 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     setNewWidgetColor('blue');
     setIsCreateWidgetOpen(false);
 
-    message.success('Custom widget created!');
+    setNewWidgetColor('blue');
+    setIsCreateWidgetOpen(false);
+
+    messageApi.success('Custom widget created!');
   };
 
 
@@ -450,6 +452,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
   return (
     <>
+      {contextHolder}
       <div className="flex justify-between items-center mb-6">
         <div>
           <Text className="text-gray-500">

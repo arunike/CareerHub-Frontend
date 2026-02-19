@@ -15,10 +15,11 @@ import {
 import clsx from 'clsx';
 import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
 import CalendarView from '../../components/CalendarView';
-import { useToast } from '../../context/ToastContext';
 import EmptyState from '../../components/EmptyState';
+import { message } from 'antd';
 
 const Availability = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
 
@@ -39,8 +40,9 @@ const Availability = () => {
     try {
       const resp = await getAvailability(startDate, timezone);
       setData(resp.data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      messageApi.error('Failed to fetch availability');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -56,8 +58,9 @@ const Availability = () => {
       setEvents(eventsResp.data);
       setCustomHolidays(holidaysResp.data);
       setFederalHolidays(fedResp.data);
-    } catch (err) {
-      console.error('Failed to fetch calendar data', err);
+    } catch (error) {
+      messageApi.error('Failed to fetch calendar data');
+      console.error('Failed to fetch calendar data', error);
     }
   };
 
@@ -180,6 +183,7 @@ const Availability = () => {
 
   return (
     <div className="space-y-6">
+      {contextHolder}
       {/* Main Header / View Toggle */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-4">
@@ -259,7 +263,7 @@ const Availability = () => {
                 <button
                   onClick={fetchAvailability}
                   disabled={loading}
-                  className="w-[200px] px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-50 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Calculating...' : 'Generate Availability'}
                 </button>
@@ -372,16 +376,15 @@ const AvailabilityItem = ({
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(item.availability || '');
   const [saving, setSaving] = React.useState(false);
-  const { addToast } = useToast();
+  const [messageApi, contextHolder] = message.useMessage();
 
   const handleSave = async () => {
     setSaving(true);
     try {
       // Check if we have a valid single date to override
       if (!item.date) {
-        addToast(
+        messageApi.error(
           'Cannot edit a combined range. Please switch to Detailed view to edit specific days.',
-          'error'
         );
         setIsEditing(false);
         setSaving(false);
@@ -396,10 +399,10 @@ const AvailabilityItem = ({
 
       setIsEditing(false);
       onUpdate(); // Refetch
-      addToast('Override saved', 'success');
-    } catch (err) {
-      console.error(err);
-      addToast('Failed to save override.', 'error');
+      messageApi.success('Override saved');
+    } catch (error) {
+      messageApi.error('Failed to save override');
+      console.error(error);
     } finally {
       setSaving(false);
     }
@@ -407,6 +410,7 @@ const AvailabilityItem = ({
 
   return (
     <div className="group relative bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
+      {contextHolder}
       <div className="flex items-start md:items-center justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">

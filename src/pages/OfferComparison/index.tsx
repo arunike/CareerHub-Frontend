@@ -19,9 +19,9 @@ import {
 } from 'recharts';
 import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
-import { useToast } from '../../context/ToastContext';
 import YearFilter from '../../components/YearFilter';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { message } from 'antd';
 
 interface Offer {
   id?: number;
@@ -46,7 +46,7 @@ interface Application {
 }
 
 const OfferComparison = () => {
-  const { addToast } = useToast();
+  const [messageApi, contextHolder] = message.useMessage();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,9 +80,9 @@ const OfferComparison = () => {
         })
       );
       setApplications(formattedApps);
-    } catch (err) {
-      console.error(err);
-      addToast('Failed to load data', 'error');
+    } catch (error) {
+      messageApi.error('Failed to load data');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -131,13 +131,13 @@ const OfferComparison = () => {
       // 2. Update Offer
       await updateOffer(editingOffer.id!, editingOffer);
 
-      addToast('Offer updated successfully', 'success');
+      messageApi.success('Offer updated successfully');
       setEditingOffer(null);
       setEditingApp(null);
       fetchData(); // Refresh to show new names/values
-    } catch (err) {
-      console.error(err);
-      addToast('Failed to save changes', 'error');
+    } catch (error) {
+      messageApi.error('Failed to save changes');
+      console.error(error);
     }
   };
 
@@ -149,9 +149,9 @@ const OfferComparison = () => {
     try {
       await updateOffer(offer.id, updated);
       setOffers((prev) => prev.map((o) => (o.id === offer.id ? updated : o)));
-    } catch (err) {
-      console.error(err);
-      addToast('Failed to update status', 'error');
+    } catch (error) {
+      messageApi.error('Failed to update status');
+      console.error(error);
     }
   };
 
@@ -180,12 +180,13 @@ const OfferComparison = () => {
       });
 
       fetchData();
-      addToast('Current job added!', 'success');
+      fetchData();
+      messageApi.success('Current job added!');
       setIsAddJobOpen(false);
       setNewJobName('Current Employer');
-    } catch (err) {
-      console.error(err);
-      addToast('Failed to add current job.', 'error');
+    } catch (error) {
+      messageApi.error('Failed to add current job');
+      console.error(error);
     }
   };
 
@@ -222,6 +223,7 @@ const OfferComparison = () => {
 
   return (
     <div className="space-y-6">
+      {contextHolder}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Offer Comparison</h2>
