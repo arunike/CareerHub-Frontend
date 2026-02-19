@@ -709,6 +709,18 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
                 className="flex-1"
               />
             </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Text type="secondary" className="text-xs">Try charts:</Text>
+              <Tag 
+                className="cursor-pointer hover:border-blue-500" 
+                onClick={() => {
+                  setNewWidgetQuery('Applications by status');
+                  setNewWidgetIcon('BarChartOutlined');
+                }}
+              >
+                Applications by status
+              </Tag>
+            </div>
             <div className="flex justify-between items-center mt-2">
               <Button 
                 onClick={handleTestQuery} 
