@@ -31,7 +31,10 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
   type DragEndEvent,
+  type DragStartEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -121,11 +124,12 @@ const SortableItem = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0 : 1, // Hide the original item while dragging
   };
 
   return (
@@ -157,6 +161,9 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     }
     return AVAILABLE_WIDGETS.filter(w => w.defaultEnabled).map(w => w.id);
   });
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeSize, setActiveSize] = useState<{ width: number; height: number } | null>(null);
 
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem('availability_analytics_order');
@@ -207,6 +214,15 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+    // Capture the initial dimensions of the dragged item
+    if (event.active.rect.current.initial) {
+      const { width, height } = event.active.rect.current.initial;
+      setActiveSize({ width, height });
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -218,7 +234,12 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         localStorage.setItem('availability_analytics_order', JSON.stringify(newItems));
         return newItems;
       });
+    } else {
+      // Even if order didn't change at the end (because we updated during drag),
+      // make sure to save the current state
+      localStorage.setItem('availability_analytics_order', JSON.stringify(widgetOrder));
     }
+    setActiveId(null);
   };
 
   const toggleWidget = (widgetId: string) => {
@@ -467,9 +488,14 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         </Button>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter} 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 animate-in fade-in duration-500 items-start">
             {widgetOrder.map((id) => (
               <SortableItem key={id} id={id} className={getItemClass(id)}>
                 {renderWidget(id)}
@@ -477,6 +503,16 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
             ))}
           </div>
         </SortableContext>
+        <DragOverlay>
+          {activeId ? (
+            <div 
+              className={`h-full ${getItemClass(activeId)}`}
+              style={activeSize ? { width: activeSize.width, height: activeSize.height } : undefined}
+            >
+              {renderWidget(activeId)}
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
 
       <Modal
