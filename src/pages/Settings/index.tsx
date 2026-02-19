@@ -18,8 +18,7 @@ import {
   DownloadOutlined,
   EditOutlined,
 } from '@ant-design/icons';
-import { useToast } from '../../context/ToastContext';
-import { TimePicker } from 'antd';
+import { message, TimePicker } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
@@ -28,7 +27,7 @@ import CategoryBadge from '../../components/CategoryBadge';
 dayjs.extend(customParseFormat);
 
 const Settings: React.FC = () => {
-  const { addToast } = useToast();
+  const [messageApi, contextHolder] = message.useMessage();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -49,8 +48,9 @@ const Settings: React.FC = () => {
         data.work_days = [0, 1, 2, 3, 4];
       }
       setSettings(data);
-    } catch (err) {
-      console.error('Error fetching settings:', err);
+    } catch (error) {
+      messageApi.error('Failed to fetch settings');
+      console.error('Error fetching settings:', error);
     } finally {
       setLoading(false);
     }
@@ -60,8 +60,9 @@ const Settings: React.FC = () => {
     try {
       const resp = await getCategories();
       setCategories(resp.data);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
+    } catch (error) {
+      messageApi.error('Failed to fetch categories');
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -85,9 +86,9 @@ const Settings: React.FC = () => {
     try {
       await updateUserSettings(settings);
       setSuccessMessage('Settings saved successfully!');
-    } catch (err) {
-      console.error('Error saving settings:', err);
-      addToast('Failed to save settings', 'error');
+    } catch (error) {
+      messageApi.error('Failed to save settings');
+      console.error('Error saving settings:', error);
     }
   };
 
@@ -102,14 +103,14 @@ const Settings: React.FC = () => {
           color: newCategoryColor,
           icon: newCategoryIcon,
         });
-        addToast('Category updated', 'success');
+        messageApi.success('Category updated');
       } else {
         await createCategory({
           name: newCategoryName,
           color: newCategoryColor,
           icon: newCategoryIcon,
         });
-        addToast('Category created', 'success');
+        messageApi.success('Category created');
       }
 
       setNewCategoryName('');
@@ -117,10 +118,11 @@ const Settings: React.FC = () => {
       setNewCategoryIcon('tag');
       setIsAddingCategory(false);
       setEditingCategory(null);
+      setEditingCategory(null);
       fetchCategories();
-    } catch (err) {
-      console.error('Error saving category:', err);
-      addToast('Failed to save category', 'error');
+    } catch (error) {
+      messageApi.error('Failed to save category');
+      console.error('Error saving category:', error);
     }
   };
 
@@ -149,12 +151,12 @@ const Settings: React.FC = () => {
     try {
       await deleteCategory(deletingCategoryId);
       fetchCategories();
-      addToast('Category deleted', 'success');
+      messageApi.success('Category deleted');
+      setDeletingCategoryId(null);  
+    } catch (error) {
+      messageApi.error('Failed to delete category');
       setDeletingCategoryId(null);
-    } catch (err) {
-      console.error('Error deleting category:', err);
-      addToast('Failed to delete category', 'error');
-      setDeletingCategoryId(null);
+      console.error('Error deleting category:', error);
     }
   };
 
@@ -168,6 +170,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto relative">
+      {contextHolder}
       {/* Toast Notification */}
       {successMessage && (
         <div className="fixed top-4 right-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-right-5 fade-in z-50">
@@ -475,9 +478,9 @@ const Settings: React.FC = () => {
                   link.click();
                   link.remove();
                   setSuccessMessage('Backup downloaded successfully!');
-                } catch (err) {
-                  console.error('Export failed', err);
-                  addToast('Export failed', 'error');
+                } catch (error) {
+                  messageApi.error('Export failed');
+                  console.error('Export failed', error);
                 }
               }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-blue-700 transition-colors"
@@ -534,7 +537,7 @@ const Settings: React.FC = () => {
                 <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
                 <input
                   type="color"
-                  className="h-[38px] w-[60px] cursor-pointer rounded-lg border border-gray-300 p-1"
+                  className="h-9.5 w-15 cursor-pointer rounded-lg border border-gray-300 p-1"
                   value={newCategoryColor}
                   onChange={(e) => setNewCategoryColor(e.target.value)}
                 />
@@ -547,7 +550,7 @@ const Settings: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!newCategoryName.trim()}
-                  className="h-[38px] px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingCategory ? 'Update' : 'Add'}
                 </button>

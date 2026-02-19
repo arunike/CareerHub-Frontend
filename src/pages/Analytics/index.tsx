@@ -17,8 +17,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 import JobHuntAnalytics from '../../components/JobHuntAnalytics';
 import AvailabilityAnalytics from '../../components/AvailabilityAnalytics';
+import { message } from 'antd';
 
 const Analytics: React.FC = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [activeTab, setActiveTab] = useState<'availability' | 'career'>('availability');
   const [loading, setLoading] = useState(true);
 
@@ -60,8 +62,10 @@ const Analytics: React.FC = () => {
 
       processAvailabilityData(eventsData);
       processCareerData(appsData);
-    } catch (err) {
-      console.error('Error fetching analytics:', err);
+      processCareerData(appsData);
+    } catch (error) {
+      messageApi.error('Error fetching analytics');
+      console.error('Error fetching analytics:', error);
     } finally {
       setLoading(false);
     }
@@ -210,6 +214,7 @@ const Analytics: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {contextHolder}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <ThunderboltOutlined className="text-2xl text-blue-600 mr-2" />
@@ -255,7 +260,7 @@ const Analytics: React.FC = () => {
                 Weekly Activity (Last 12 Weeks)
               </h3>
             </div>
-            <div className="h-[300px] w-full">
+            <div className="h-75 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={careerStats.weeklyActivity}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />

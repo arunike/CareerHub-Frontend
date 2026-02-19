@@ -79,9 +79,9 @@ const Holidays = () => {
       const [customResp, federalResp] = await Promise.all([getHolidays(), getFederalHolidays()]);
       setHolidays(customResp.data);
       setFederalHolidays(federalResp.data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
       messageApi.error('Failed to load holidays');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -154,8 +154,9 @@ const Holidays = () => {
       messageApi.success('Holiday(s) added');
       form.resetFields();
       fetchData();
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to create holidays');
+      console.error(error);
     }
   };
 
@@ -164,8 +165,9 @@ const Holidays = () => {
       await deleteHoliday(id);
       messageApi.success('Holiday deleted');
       fetchData();
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to delete holiday');
+      console.error(error);
     }
   };
 
@@ -174,8 +176,9 @@ const Holidays = () => {
       await deleteAllHolidays();
       messageApi.success('All unlocked holidays deleted');
       fetchData();
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to delete all');
+      console.error(error);
     }
   };
 
@@ -186,8 +189,9 @@ const Holidays = () => {
         prev.map((h) => (h.id === holiday.id ? { ...h, is_locked: !h.is_locked } : h))
       );
       messageApi.success(holiday.is_locked ? 'Unlocked' : 'Locked');
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to toggle lock');
+      console.error(error);
     }
   };
 
@@ -200,8 +204,9 @@ const Holidays = () => {
       messageApi.success('Import successful');
       setShowImport(false);
       fetchData();
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Import failed');
+      console.error(error);
     }
   };
 

@@ -6,9 +6,8 @@ import {
   FileUnknownOutlined,
   DownOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown } from 'antd';
+import { Button, Dropdown, message } from 'antd';
 import type { MenuProps } from 'antd';
-import { useToast } from '../context/ToastContext';
 
 interface ExportButtonProps {
   onExport: (format: string) => Promise<{ data: Blob; headers: Record<string, string> }>;
@@ -21,7 +20,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   label = 'Export',
   filename = 'export',
 }) => {
-  const { addToast } = useToast();
+  const [messageApi, contextHolder] = message.useMessage();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async (format: string) => {
@@ -55,10 +54,11 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
       // Clean up and remove the link
       link.parentNode?.removeChild(link);
-      addToast('Export successful', 'success');
+      link.parentNode?.removeChild(link);
+      messageApi.success('Export successful');
     } catch (error) {
       console.error('Export failed:', error);
-      addToast('Failed to export data', 'error');
+      messageApi.error('Failed to export data');
     } finally {
       setIsExporting(false);
     }
@@ -86,11 +86,14 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   ];
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']} disabled={isExporting}>
-      <Button icon={<DownloadOutlined />} loading={isExporting}>
-        {label} <DownOutlined className="text-xs" />
-      </Button>
-    </Dropdown>
+    <>
+      {contextHolder}
+      <Dropdown menu={{ items }} trigger={['click']} disabled={isExporting}>
+        <Button icon={<DownloadOutlined />} loading={isExporting}>
+          {label} <DownOutlined className="text-xs" />
+        </Button>
+      </Dropdown>
+    </>
   );
 };
 

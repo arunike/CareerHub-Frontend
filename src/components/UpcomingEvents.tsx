@@ -4,8 +4,10 @@ import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { Event } from '../types';
+import { message } from 'antd';
 
 const UpcomingEvents: React.FC = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,8 +36,9 @@ const UpcomingEvents: React.FC = () => {
         .slice(0, 3); // Take next 3
 
       setEvents(upcoming);
-    } catch (err) {
-      console.error('Failed to fetch upcoming events', err);
+    } catch (error) {
+      messageApi.error('Failed to fetch upcoming events');
+      console.error('Failed to fetch upcoming events', error);
     } finally {
       setLoading(false);
     }
@@ -56,6 +59,7 @@ const UpcomingEvents: React.FC = () => {
 
   return (
     <div className="mt-6 px-4">
+      {contextHolder}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Upcoming</h3>
         <Link to="/events" className="text-xs text-blue-600 hover:text-blue-800">

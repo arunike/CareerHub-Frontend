@@ -8,12 +8,10 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Applications from './pages/Applications';
 import OfferComparison from './pages/OfferComparison';
-import { ToastProvider } from './context/ToastContext';
 
 function App() {
   return (
-    <ToastProvider>
-      <ConfigProvider
+    <ConfigProvider
         theme={{
           token: {
             colorPrimary: '#1890ff',
@@ -35,7 +33,6 @@ function App() {
           </Layout>
         </Router>
       </ConfigProvider>
-    </ToastProvider>
   );
 }
 

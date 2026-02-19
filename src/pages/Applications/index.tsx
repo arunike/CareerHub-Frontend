@@ -78,9 +78,9 @@ const Applications = () => {
       setLoading(true);
       const resp = await getApplications();
       setApplications(resp.data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
       messageApi.error('Failed to load applications');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -103,8 +103,9 @@ const Applications = () => {
       await deleteApplication(id);
       messageApi.success('Application deleted');
       fetchData();
-    } catch (err) {
+    } catch (error) {
       messageApi.error('Failed to delete application');
+      console.error(error);
     }
   };
 
@@ -113,8 +114,9 @@ const Applications = () => {
       await deleteAllApplications();
       messageApi.success('All applications deleted');
       fetchData();
-    } catch (err) {
+    } catch (error) {
       messageApi.error('Failed to delete all applications');
+      console.error(error);
     }
   };
 
@@ -123,8 +125,9 @@ const Applications = () => {
       await updateApplication(app.id, { is_locked: !app.is_locked });
       messageApi.success(app.is_locked ? 'Application unlocked' : 'Application locked');
       fetchData();
-    } catch (err) {
+    } catch (error) {
       messageApi.error('Failed to toggle lock');
+      console.error(error);
     }
   };
 
@@ -147,8 +150,9 @@ const Applications = () => {
       form.resetFields();
       setEditingId(null);
       fetchData();
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to save application');
+      console.error(error);
     }
   };
 

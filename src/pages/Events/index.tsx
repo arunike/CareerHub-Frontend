@@ -161,9 +161,9 @@ const Events = () => {
       });
 
       setEvents(allEvents);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
       messageApi.error('Failed to load events');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -173,8 +173,9 @@ const Events = () => {
     try {
       const res = await getCategories();
       setCategories(res.data);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      messageApi.error('Failed to load categories');
+      console.error(error);
     }
   };
 
@@ -182,8 +183,9 @@ const Events = () => {
     try {
       const res = await getApplications();
       setApplications(res.data);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      messageApi.error('Failed to load applications');
+      console.error(error);
     }
   };
 
@@ -282,8 +284,9 @@ const Events = () => {
       messageApi.success('Event deleted');
       fetchData();
       setViewingEvent(null);
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to delete event');
+      console.error(error);
     }
   };
 
@@ -335,8 +338,8 @@ const Events = () => {
       }
       setIsFormOpen(false);
       fetchData();
-    } catch (err: any) {
-      if (err.response?.status === 400 && err.response?.data?.conflict) {
+    } catch (error: any) {
+      if (error.response?.status === 400 && error.response?.data?.conflict) {
         Modal.confirm({
           title: 'Schedule Conflict',
           content: 'Conflict detected. Force save?',
@@ -362,8 +365,9 @@ const Events = () => {
       messageApi.success('Import successful');
       setShowImport(false);
       fetchData();
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Import failed');
+      console.error(error);
     }
   };
 
@@ -382,8 +386,9 @@ const Events = () => {
         prev.map((e) => (e.id === event.id ? { ...e, is_locked: !e.is_locked } : e))
       );
       messageApi.success(event.is_locked ? 'Event unlocked' : 'Event locked');
-    } catch (e) {
+    } catch (error) {
       messageApi.error('Failed to toggle lock');
+      console.error(error);
     }
   };
 

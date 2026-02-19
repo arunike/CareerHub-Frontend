@@ -20,25 +20,23 @@ const { useBreakpoint } = Grid;
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const screens = useBreakpoint();
-  const [collapsed, setCollapsed] = useState(true); // Default to collapsed on mobile
+  const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Set initial collapsed state based on screen size
-  useEffect(() => {
-    if (screens.lg) {
-      setCollapsed(false);
-    } else {
-      setCollapsed(true);
-    }
-  }, [screens.lg]);
 
   // Close sidebar on route change for mobile
   useEffect(() => {
     if (!screens.lg) {
       setCollapsed(true);
     }
-  }, [location, screens.lg]);
+  }, [location]);
+
+  // Update collapsed state when screen size changes
+  useEffect(() => {
+    if (!screens.lg) {
+      setCollapsed(true);
+    }
+  }, [screens.lg]);
 
   const menuItems = [
     {
@@ -148,7 +146,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         width={260}
         theme="light"
         collapsible
-        collapsed={collapsed}
+        collapsed={screens.lg ? false : collapsed}
         trigger={null}
         collapsedWidth={0}
         style={{
@@ -167,7 +165,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Overlay (Darken background when menu is open) */}
       {!screens.lg && !collapsed && (
         <div
-          className="fixed inset-0 bg-black/40 z-[999] animate-in fade-in"
+          className="fixed inset-0 bg-black/40 z-999 animate-in fade-in"
           onClick={() => setCollapsed(true)}
         />
       )}
@@ -176,7 +174,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
           {/* Mobile Toggle Button - Floating */}
           {!screens.lg && (
-            <div className="fixed top-4 left-4 z-[900]">
+            <div className="fixed top-4 left-4 z-900">
               <Button
                 type="default"
                 icon={<MenuOutlined />}
@@ -187,7 +185,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
           )}
 
-          <div className={`p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto ${!screens.lg ? 'pt-20' : ''}`}>
+          <div className={`p-4 md:p-6 lg:p-8 max-w-400 mx-auto ${!screens.lg ? 'pt-20' : ''}`}>
             {children}
           </div>
         </Content>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { message } from 'antd';
+import type { MessageInstance } from 'antd/es/message/interface';
 
 export interface CustomWidget {
   id: string;
@@ -18,14 +18,18 @@ export interface CustomWidget {
   };
 }
 
-export const useCustomWidgets = (storageKey: string, context: 'availability' | 'job-hunt') => {
+export const useCustomWidgets = (
+  storageKey: string,
+  context: 'availability' | 'job-hunt',
+  messageApi: MessageInstance
+) => {
   const [customWidgets, setCustomWidgets] = useState<CustomWidget[]>(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (error) {
-        message.error('Failed to parse custom widgets');
+        // console.error to avoid side-effects in state initializer
         console.error('Failed to parse custom widgets', error);
       }
     }
@@ -54,7 +58,7 @@ export const useCustomWidgets = (storageKey: string, context: 'availability' | '
             }
           }
         } catch (error) {
-          message.error(`Failed to refresh widget ${widget.name}`);
+          messageApi.error(`Failed to refresh widget ${widget.name}`);
           console.error(`Failed to refresh widget ${widget.name}:`, error);
         }
         return widget;
@@ -79,7 +83,7 @@ export const useCustomWidgets = (storageKey: string, context: 'availability' | '
     const updated = customWidgets.filter(w => w.id !== id);
     setCustomWidgets(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
-    message.success('Custom widget deleted');
+    messageApi.success('Custom widget deleted');
   };
 
   const testQuery = async (query: string) => {
@@ -91,7 +95,7 @@ export const useCustomWidgets = (storageKey: string, context: 'availability' | '
       });
       return await response.json();
     } catch (error) {
-      message.error('API Error:');
+      messageApi.error('API Error');
       console.error('API Error:', error);
       throw error;
     }
