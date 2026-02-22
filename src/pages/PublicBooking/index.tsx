@@ -4,6 +4,7 @@ import { createPublicBooking, getPublicBookingSlots } from '../../api';
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import type { BookingDayAvailability, BookingSlot } from '../../types';
+import SegmentedToggle from '../../components/SegmentedToggle';
 
 const PublicBookingPage = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -14,6 +15,7 @@ const PublicBookingPage = () => {
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [days, setDays] = useState<BookingDayAvailability[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+  const [slotView, setSlotView] = useState<'list' | 'calendar'>('list');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,11 +25,11 @@ const PublicBookingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [linkInvalid, setLinkInvalid] = useState(false);
 
-  const loadSlots = async () => {
+  const loadSlots = async (anchorDate?: string) => {
     if (!uuid) return;
     setLoading(true);
     try {
-      const resp = await getPublicBookingSlots(uuid, selectedDate, timezone);
+      const resp = await getPublicBookingSlots(uuid, anchorDate || selectedDate, timezone);
       setTitle(resp.data.title || 'Book a time');
       setDays(resp.data.days || []);
       setLinkInvalid(false);
@@ -41,9 +43,19 @@ const PublicBookingPage = () => {
   };
 
   useEffect(() => {
-    loadSlots();
+    loadSlots(selectedDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uuid, selectedDate, timezone]);
+  }, [uuid, timezone]);
+
+  useEffect(() => {
+    if (!uuid) return;
+    if (days.length === 0) return;
+    const existsInLoadedRange = days.some((d) => d.date === selectedDate);
+    if (!existsInLoadedRange) {
+      loadSlots(selectedDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, days, uuid]);
 
   const selectedDay = useMemo(() => days.find((d) => d.date === selectedDate), [days, selectedDate]);
 
@@ -134,33 +146,114 @@ const PublicBookingPage = () => {
           </div>
 
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Available Slots</p>
-            {loading ? (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+              <p className="text-sm font-medium text-gray-700">Available Slots</p>
+              <SegmentedToggle
+                value={slotView}
+                onChange={setSlotView}
+                wrapperClassName="w-full sm:w-auto"
+                options={[
+                  { value: 'list', label: 'List' },
+                  { value: 'calendar', label: 'Calendar' },
+                ]}
+              />
+            </div>
+            {loading && days.length === 0 ? (
               <p className="text-sm text-gray-500">Loading slots...</p>
+            ) : slotView === 'calendar' ? (
+              <div className="space-y-3">
+                {loading && days.length > 0 && (
+                  <p className="text-xs text-gray-500">Refreshing slots for selected timezone...</p>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {days.map((day) => {
+                    const isSelected = day.date === selectedDate;
+                    const slotCount = day.slots.length;
+                    const disabled = slotCount === 0;
+                    return (
+                      <button
+                        key={day.date}
+                        type="button"
+                        onClick={() => {
+                          if (!disabled) setSelectedDate(day.date);
+                        }}
+                        disabled={disabled}
+                        className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                          disabled
+                            ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                            : isSelected
+                            ? 'border-blue-400 bg-blue-50'
+                            : 'border-gray-300 bg-white hover:border-blue-300'
+                        }`}
+                      >
+                        <div className={`text-xs ${disabled ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {day.day_name}
+                        </div>
+                        <div className={`text-sm font-medium ${disabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                          {day.readable_date}
+                        </div>
+                        <div className={`text-xs mt-1 ${slotCount > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                          {slotCount > 0 ? `${slotCount} slots` : 'No slots'}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {!selectedDay || selectedDay.slots.length === 0 ? (
+                  <p className="text-sm text-gray-500">No available slots for this date.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDay.slots.map((slot) => {
+                      const active =
+                        selectedSlot?.start_time === slot.start_time &&
+                        selectedSlot?.end_time === slot.end_time;
+                      return (
+                        <button
+                          key={`${slot.start_time}-${slot.end_time}`}
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`rounded-lg border px-3 py-2 text-sm flex items-center gap-2 ${
+                            active
+                              ? 'bg-blue-50 border-blue-400 text-blue-700'
+                              : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
+                          }`}
+                        >
+                          <ClockCircleOutlined />
+                          {slot.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             ) : !selectedDay || selectedDay.slots.length === 0 ? (
               <p className="text-sm text-gray-500">No available slots for this date.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {selectedDay.slots.map((slot) => {
-                  const active =
-                    selectedSlot?.start_time === slot.start_time &&
-                    selectedSlot?.end_time === slot.end_time;
-                  return (
-                    <button
-                      key={`${slot.start_time}-${slot.end_time}`}
-                      onClick={() => setSelectedSlot(slot)}
-                      className={`rounded-lg border px-3 py-2 text-sm flex items-center gap-2 ${
-                        active
-                          ? 'bg-blue-50 border-blue-400 text-blue-700'
-                          : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
-                      }`}
-                    >
-                      <ClockCircleOutlined />
-                      {slot.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                {loading && days.length > 0 && (
+                  <p className="text-xs text-gray-500 mb-2">Refreshing slots for selected timezone...</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {selectedDay.slots.map((slot) => {
+                    const active =
+                      selectedSlot?.start_time === slot.start_time &&
+                      selectedSlot?.end_time === slot.end_time;
+                    return (
+                      <button
+                        key={`${slot.start_time}-${slot.end_time}`}
+                        onClick={() => setSelectedSlot(slot)}
+                        className={`rounded-lg border px-3 py-2 text-sm flex items-center gap-2 ${
+                          active
+                            ? 'bg-blue-50 border-blue-400 text-blue-700'
+                            : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
+                        }`}
+                      >
+                        <ClockCircleOutlined />
+                        {slot.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </div>

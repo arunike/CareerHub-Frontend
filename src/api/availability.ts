@@ -51,7 +51,11 @@ export const deleteRecurringInstance = (eventId: number, date: string) =>
   api.post(`/events/${eventId}/delete_instance/`, { date });
 
 export const getCurrentShareLink = () => api.get<{ active: ShareLink | null }>('/share-links/current/');
-export const generateShareLink = (data: { title?: string; duration_days?: number }) =>
+export const generateShareLink = (data: {
+  title?: string;
+  duration_days?: number;
+  booking_block_minutes?: number;
+}) =>
   api.post<ShareLink>('/share-links/generate/', data);
 export const deactivateShareLink = () => api.post('/share-links/deactivate/');
 export const getPublicBookingSlots = (uuid: string, date?: string, timezone: string = 'PT') =>
@@ -59,6 +63,7 @@ export const getPublicBookingSlots = (uuid: string, date?: string, timezone: str
     title: string;
     expires_at: string;
     timezone: string;
+    booking_block_minutes: number;
     days: Array<{
       date: string;
       day_name: string;

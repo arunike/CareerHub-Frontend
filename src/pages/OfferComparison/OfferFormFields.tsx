@@ -134,7 +134,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   holidayDays,
   onHolidayDaysChange,
   companyPlaceholder = 'e.g. Google',
-  rolePlaceholder = 'e.g. Senior SWE',
+  rolePlaceholder = 'e.g. Software Engineer',
   locationPlaceholder = 'e.g. San Jose, CA, United States',
 }) => {
   const shouldShowCompanyRole = !(hideCompanyRoleWhenLinked && linkedApplicationId);
