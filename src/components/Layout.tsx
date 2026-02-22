@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Grid } from 'antd';
+import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider } from 'antd';
 import {
   DashboardOutlined,
   CalendarOutlined,
@@ -46,17 +46,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       children: [
         {
           key: '/',
-          icon: <DashboardOutlined style={{ fontSize: '18px' }} />,
+          icon: <DashboardOutlined />,
           label: 'Availability',
         },
         {
           key: '/events',
-          icon: <CalendarOutlined style={{ fontSize: '18px' }} />,
+          icon: <CalendarOutlined />,
           label: 'Events',
         },
         {
           key: '/holidays',
-          icon: <ScheduleOutlined style={{ fontSize: '18px' }} />,
+          icon: <ScheduleOutlined />,
           label: 'Holidays',
         },
       ],
@@ -68,10 +68,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       children: [
         {
           key: '/applications',
-          icon: <SolutionOutlined style={{ fontSize: '18px' }} />,
+          icon: <SolutionOutlined />,
           label: 'Applications',
         },
-        { key: '/offers', icon: <DollarOutlined style={{ fontSize: '18px' }} />, label: 'Offers' },
+        { key: '/offers', icon: <DollarOutlined />, label: 'Offers' },
       ],
     },
     {
@@ -81,7 +81,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       children: [
         {
           key: '/analytics',
-          icon: <LineChartOutlined style={{ fontSize: '18px' }} />,
+          icon: <LineChartOutlined />,
           label: 'Analytics',
         },
       ],
@@ -92,7 +92,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       children: [
         {
           key: '/settings',
-          icon: <SettingOutlined style={{ fontSize: '18px' }} />,
+          icon: <SettingOutlined />,
           label: 'Settings',
         },
       ],
@@ -101,7 +101,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
-    // Auto-close on mobile is handled by useEffect on location change
   };
 
   const SidebarContent = (
@@ -119,14 +118,30 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto py-4">
-        <Menu
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={handleMenuClick}
-          style={{ borderRight: 0 }}
-          className="border-none"
-        />
+        <ConfigProvider
+          theme={{
+            components: {
+              Menu: {
+                itemHeight: 52,
+                itemMarginInline: 16,
+                itemMarginBlock: 8,
+                collapsedIconSize: 20,
+                iconSize: 20,
+                iconMarginInlineEnd: 16,
+                fontSize: 16,
+              },
+            },
+          }}
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            items={menuItems}
+            onClick={handleMenuClick}
+            style={{ borderRight: 0 }}
+            className="border-none bg-transparent"
+          />
+        </ConfigProvider>
       </div>
 
       <div className="p-4 border-t border-gray-100">

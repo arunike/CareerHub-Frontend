@@ -14,7 +14,7 @@ import {
   EyeInvisibleOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
-import { Modal, Button, Switch, Typography, Input, message } from 'antd';
+import { Modal, Button, Switch, Typography, Input, message, Tag } from 'antd';
 import {
   ResponsiveContainer,
   BarChart,
@@ -582,12 +582,13 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
             {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
           </Text>
         </div>
-        <Button
-          icon={<SettingOutlined />}
+        <button
           onClick={() => setIsCustomizeOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
         >
+          <SettingOutlined />
           Customize Dashboard
-        </Button>
+        </button>
       </div>
 
       <DndContext 
@@ -748,8 +749,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               <Text type="secondary" className="text-xs">Try charts:</Text>
-              <Tag 
-                className="cursor-pointer hover:border-blue-500" 
+              <Tag
+                className="cursor-pointer hover:border-blue-500"
                 onClick={() => {
                   setNewWidgetQuery('Applications by status');
                   setNewWidgetIcon('BarChartOutlined');
