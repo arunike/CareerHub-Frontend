@@ -140,6 +140,10 @@ export const reorderTasks = (
   updates: Array<{ id: number; status: 'TODO' | 'IN_PROGRESS' | 'DONE'; position: number }>
 ) => api.post('/career/tasks/reorder/', { updates });
 
+export const getCareerReferenceData = () => api.get('/career/reference-data/');
+export const getCareerRentEstimate = (city: string) =>
+  api.get('/career/rent-estimate/', { params: { city } });
+
 export const exportEvents = (format: string = 'csv') =>
   api.get('/events/export/', {
     params: { fmt: format },
