@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getOffers,
   createOffer,
@@ -22,13 +22,25 @@ import clsx from 'clsx';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { message } from 'antd';
-import OfferScenarioSimulator from './OfferScenarioSimulator';
+import { createPortal } from 'react-dom';
+import { usaCities } from 'typed-usa-states';
+import OfferAdjustmentsPanel from './OfferAdjustmentsPanel';
+import OfferFormFields from './OfferFormFields';
+import { useSafeNullableFormState } from './useSafeFormState';
 import {
   type ApplicationLike as Application,
   type BenefitItem,
+  DEFAULT_STATE_NAME_TO_ABBR,
   type OfferLike as Offer,
   computeBenefitsTotal,
 } from './calculations';
+
+const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
+  id: item.id || fallbackId,
+  label: item.label || '',
+  amount: Number(item.amount) || 0,
+  frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
+});
 
 const OfferComparison = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -36,26 +48,56 @@ const OfferComparison = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
-  const [editingApp, setEditingApp] = useState<Application | null>(null);
+  const {
+    state: editingOffer,
+    setState: setEditingOffer,
+    patch: patchEditingOffer,
+    setField: setEditingOfferField,
+  } = useSafeNullableFormState<Offer>(null);
+  const {
+    state: editingApp,
+    setState: setEditingApp,
+    patch: patchEditingApp,
+  } = useSafeNullableFormState<Application>(null);
   const [editingBenefitItems, setEditingBenefitItems] = useState<BenefitItem[]>([]);
-  const [bonusMode, setBonusMode] = useState<'%' | '#'>('#');
-  const [bonusPercent, setBonusPercent] = useState<number | string>('');
-
-  const [equityMode, setEquityMode] = useState<'annual' | 'total'>('annual');
-  const [vestingPercent, setVestingPercent] = useState<number>(25);
-  const [tempTotalGrant, setTempTotalGrant] = useState<number | string>('');
+  const [offerModalMode, setOfferModalMode] = useState<'view' | 'edit'>('edit');
 
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [adjustedByOfferId, setAdjustedByOfferId] = useState<
-    Record<number, { adjustedValue: number; adjustedDiff: number }>
+    Record<
+      number,
+      {
+        adjustedValue: number;
+        adjustedDiff: number;
+        afterTaxBase: number;
+        afterTaxBonus: number;
+        afterTaxEquity: number;
+        usedBaseTaxRate: number;
+        usedBonusTaxRate: number;
+        usedEquityTaxRate: number;
+        monthlyRent: number;
+      }
+    >
   >({});
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
     const saved = localStorage.getItem('offersSelectedYear');
     return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
   });
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const allUsCityOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          usaCities.map((city) => {
+            const abbr = DEFAULT_STATE_NAME_TO_ABBR[city.state] || city.state;
+            return `${city.name}, ${abbr}, United States`;
+          })
+        )
+      ),
+    []
+  );
 
   const fetchData = async () => {
     try {
@@ -71,7 +113,7 @@ const OfferComparison = () => {
       );
       setApplications(formattedApps);
     } catch (error) {
-      messageApi.error('Failed to load data');
+      setLoadError('Failed to load data');
       console.error(error);
     } finally {
       setLoading(false);
@@ -83,6 +125,12 @@ const OfferComparison = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!loadError) return;
+    messageApi.error(loadError);
+    setLoadError(null);
+  }, [loadError, messageApi]);
+
   const getApplicationName = (appId: number) => {
     const app = applications.find((a) => a.id === appId);
     if (!app) return `App #${appId}`;
@@ -93,7 +141,8 @@ const OfferComparison = () => {
     return app.company_name || app.role_title || `App #${appId}`;
   };
 
-  const handleEditClick = (offer: Offer) => {
+  const openOfferModal = (offer: Offer, mode: 'view' | 'edit') => {
+    setOfferModalMode(mode);
     const app = applications.find((a) => a.id === offer.application);
     setEditingApp(
       app
@@ -107,25 +156,49 @@ const OfferComparison = () => {
                   : app.rto_policy === 'ONSITE'
                     ? 5
                     : 3,
+            commute_cost_value: Number(app.commute_cost_value || 0),
+            commute_cost_frequency: (app.commute_cost_frequency || 'MONTHLY') as 'DAILY' | 'MONTHLY' | 'YEARLY',
+            free_food_perk_value: Number(app.free_food_perk_value || 0),
+            free_food_perk_frequency: (app.free_food_perk_frequency || 'YEARLY') as 'DAILY' | 'MONTHLY' | 'YEARLY',
+            tax_base_rate: app.tax_base_rate != null ? Number(app.tax_base_rate) : undefined,
+            tax_bonus_rate: app.tax_bonus_rate != null ? Number(app.tax_bonus_rate) : undefined,
+            tax_equity_rate: app.tax_equity_rate != null ? Number(app.tax_equity_rate) : undefined,
+            monthly_rent_override:
+              app.monthly_rent_override != null ? Number(app.monthly_rent_override) : undefined,
           }
         : null
     );
     setEditingOffer({ ...offer });
-    setEditingBenefitItems([
-      {
-        id: `edit-benefit-${Date.now()}`,
-        label: 'Benefits',
-        amount: Number(offer.benefits_value) || 0,
-        frequency: 'YEARLY',
-      },
-    ]);
+    const benefitItems =
+      Array.isArray(offer.benefit_items) && offer.benefit_items.length > 0
+        ? offer.benefit_items.map((item, idx) =>
+            normalizeBenefitItem(item, `edit-benefit-${offer.id || Date.now()}-${idx}`)
+          )
+        : [
+            {
+              id: `edit-benefit-${Date.now()}`,
+              label: 'Benefits',
+              amount: Number(offer.benefits_value) || 0,
+              frequency: 'YEARLY' as const,
+            },
+          ];
+    setEditingBenefitItems(benefitItems);
+  };
 
-    // Reset Modes
-    setBonusMode('#');
-    setBonusPercent('');
-    setEquityMode('annual');
-    setVestingPercent(25);
-    setTempTotalGrant('');
+  const handleEditClick = (offer: Offer) => {
+    openOfferModal(offer, 'edit');
+  };
+
+  const handleViewFromAdjusted = (offerId: number) => {
+    const offer = offers.find((o) => o.id === offerId);
+    if (!offer) return;
+    openOfferModal(offer, 'view');
+  };
+
+  const handleEditFromAdjusted = (offerId: number) => {
+    const offer = offers.find((o) => o.id === offerId);
+    if (!offer) return;
+    openOfferModal(offer, 'edit');
   };
 
   const handleSaveEdit = async () => {
@@ -140,15 +213,28 @@ const OfferComparison = () => {
           location: editingApp.location,
           rto_policy: editingApp.rto_policy,
           rto_days_per_week: editingApp.rto_days_per_week ?? 0,
+          commute_cost_value: editingApp.commute_cost_value ?? 0,
+          commute_cost_frequency: editingApp.commute_cost_frequency ?? 'MONTHLY',
+          free_food_perk_value: editingApp.free_food_perk_value ?? 0,
+          free_food_perk_frequency: editingApp.free_food_perk_frequency ?? 'YEARLY',
+          tax_base_rate: editingApp.tax_base_rate ?? null,
+          tax_bonus_rate: editingApp.tax_bonus_rate ?? null,
+          tax_equity_rate: editingApp.tax_equity_rate ?? null,
+          monthly_rent_override: editingApp.monthly_rent_override ?? null,
         });
       }
 
       // 2. Update Offer
-      await updateOffer(editingOffer.id!, editingOffer);
+      await updateOffer(editingOffer.id!, {
+        ...editingOffer,
+        benefit_items: editingBenefitItems,
+        benefits_value: computeBenefitsTotal(editingBenefitItems),
+      });
 
       messageApi.success('Offer updated successfully');
       setEditingOffer(null);
       setEditingApp(null);
+      setOfferModalMode('edit');
       fetchData(); // Refresh to show new names/values
     } catch (error) {
       messageApi.error('Failed to save changes');
@@ -191,7 +277,9 @@ const OfferComparison = () => {
         equity: 0,
         sign_on: 0,
         benefits_value: 0,
+        benefit_items: [],
         pto_days: 15,
+        holiday_days: 11,
       });
 
       fetchData();
@@ -220,8 +308,7 @@ const OfferComparison = () => {
       Number(offer.base_salary) +
       Number(offer.bonus) +
       Number(offer.equity) +
-      Number(offer.sign_on) +
-      Number(offer.benefits_value);
+      Number(offer.sign_on);
 
     return {
       name: appName,
@@ -237,7 +324,10 @@ const OfferComparison = () => {
   const updateEditingBenefits = (items: BenefitItem[]) => {
     setEditingBenefitItems(items);
     const total = computeBenefitsTotal(items);
-    setEditingOffer((prev) => (prev ? { ...prev, benefits_value: total } : prev));
+    patchEditingOffer({
+      benefits_value: total,
+      benefit_items: items,
+    });
   };
 
   const addEditingBenefitItem = () => {
@@ -256,7 +346,22 @@ const OfferComparison = () => {
   };
 
   const handleRealAdjustedChange = useCallback(
-    (next: Record<number, { adjustedValue: number; adjustedDiff: number }>) => {
+    (
+      next: Record<
+        number,
+        {
+          adjustedValue: number;
+          adjustedDiff: number;
+          afterTaxBase: number;
+          afterTaxBonus: number;
+          afterTaxEquity: number;
+          usedBaseTaxRate: number;
+          usedBonusTaxRate: number;
+          usedEquityTaxRate: number;
+          monthlyRent: number;
+        }
+      >
+    ) => {
       setAdjustedByOfferId((prev) => {
         const prevKeys = Object.keys(prev);
         const nextKeys = Object.keys(next);
@@ -267,7 +372,14 @@ const OfferComparison = () => {
           if (!prevRow || !nextRow) return next;
           if (
             Math.round(prevRow.adjustedValue) !== Math.round(nextRow.adjustedValue) ||
-            Math.round(prevRow.adjustedDiff) !== Math.round(nextRow.adjustedDiff)
+            Math.round(prevRow.adjustedDiff) !== Math.round(nextRow.adjustedDiff) ||
+            Math.round(prevRow.afterTaxBase) !== Math.round(nextRow.afterTaxBase) ||
+            Math.round(prevRow.afterTaxBonus) !== Math.round(nextRow.afterTaxBonus) ||
+            Math.round(prevRow.afterTaxEquity) !== Math.round(nextRow.afterTaxEquity) ||
+            Math.round(prevRow.usedBaseTaxRate) !== Math.round(nextRow.usedBaseTaxRate) ||
+            Math.round(prevRow.usedBonusTaxRate) !== Math.round(nextRow.usedBonusTaxRate) ||
+            Math.round(prevRow.usedEquityTaxRate) !== Math.round(nextRow.usedEquityTaxRate) ||
+            Math.round(prevRow.monthlyRent) !== Math.round(nextRow.monthlyRent)
           ) {
             return next;
           }
@@ -320,11 +432,13 @@ const OfferComparison = () => {
         </ResponsiveContainer>
       </div>
 
-      <OfferScenarioSimulator
+      <OfferAdjustmentsPanel
         isOpen={isSimulatorOpen}
         filteredOffers={filteredOffers}
         applications={applications}
         getApplicationName={getApplicationName}
+        onViewRealOffer={handleViewFromAdjusted}
+        onEditRealOffer={handleEditFromAdjusted}
         onRealAdjustedChange={handleRealAdjustedChange}
       />
 
@@ -368,6 +482,9 @@ const OfferComparison = () => {
                   PTO Days
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Holiday Days
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Diff vs Current
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -385,8 +502,7 @@ const OfferComparison = () => {
                   Number(offer.base_salary) +
                   Number(offer.bonus) +
                   Number(offer.equity) +
-                  Number(offer.sign_on) +
-                  Number(offer.benefits_value);
+                  Number(offer.sign_on);
                 const isCurrent = offer.is_current;
 
                 // Find Current Offer Total for comparison
@@ -395,8 +511,7 @@ const OfferComparison = () => {
                   ? Number(currentOffer.base_salary) +
                     Number(currentOffer.bonus) +
                     Number(currentOffer.equity) +
-                    Number(currentOffer.sign_on) +
-                    Number(currentOffer.benefits_value)
+                    Number(currentOffer.sign_on)
                   : 0;
 
                 const diff = total - currentTotal;
@@ -442,13 +557,25 @@ const OfferComparison = () => {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${Number(offer.base_salary).toLocaleString()}
+                      <div>${Number(offer.base_salary).toLocaleString()}</div>
+                      <div className="text-xs text-gray-400">
+                        After tax: $
+                        {Math.round(adjustedByOfferId[offer.id!]?.afterTaxBase || 0).toLocaleString()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${Number(offer.bonus).toLocaleString()}
+                      <div>${Number(offer.bonus).toLocaleString()}</div>
+                      <div className="text-xs text-gray-400">
+                        After tax: $
+                        {Math.round(adjustedByOfferId[offer.id!]?.afterTaxBonus || 0).toLocaleString()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${Number(offer.equity).toLocaleString()}
+                      <div>${Number(offer.equity).toLocaleString()}</div>
+                      <div className="text-xs text-gray-400">
+                        After tax: $
+                        {Math.round(adjustedByOfferId[offer.id!]?.afterTaxEquity || 0).toLocaleString()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       ${Number(offer.sign_on).toLocaleString()}
@@ -463,6 +590,9 @@ const OfferComparison = () => {
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {offer.pto_days || 0} days
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {offer.holiday_days ?? 11} days
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
@@ -512,7 +642,7 @@ const OfferComparison = () => {
               })}
               {offers.length === 0 && (
                 <tr>
-                  <td colSpan={13} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={14} className="px-6 py-4 text-center text-gray-500">
                     No offers available. Add an "OFFER" status to an application to see it here.
                   </td>
                 </tr>
@@ -523,7 +653,9 @@ const OfferComparison = () => {
       </div>
 
       {/* Add Job Modal */}
-      {isAddJobOpen && (
+      {isAddJobOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
@@ -565,422 +697,185 @@ const OfferComparison = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Offer Modal */}
-      {editingOffer && (
+      {editingOffer &&
+        typeof document !== 'undefined' &&
+        createPortal(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="font-semibold text-gray-900">Edit Offer Details</h3>
+              <h3 className="font-semibold text-gray-900">
+                {offerModalMode === 'view' ? 'View Offer Details' : 'Edit Offer Details'}
+              </h3>
               <button
-                onClick={() => setEditingOffer(null)}
+                onClick={() => {
+                  setEditingOffer(null);
+                  setOfferModalMode('edit');
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <CloseOutlined className="text-lg" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              {/* App Details Editing */}
-              {editingApp && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-gray-100">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                    <input
-                      type="text"
-                      value={editingApp.company_name}
-                      onChange={(e) =>
-                        setEditingApp({ ...editingApp, company_name: e.target.value })
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <fieldset disabled={offerModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
+                <OfferFormFields
+                companyName={editingApp?.company_name || ''}
+                onCompanyNameChange={(value) =>
+                  patchEditingApp({ company_name: value })
+                }
+                roleTitle={editingApp?.role_title || ''}
+                onRoleTitleChange={(value) =>
+                  patchEditingApp({ role_title: value })
+                }
+                location={editingApp?.location || ''}
+                onLocationChange={(value) =>
+                  patchEditingApp({ location: value })
+                }
+                locationOptions={allUsCityOptions}
+                taxRatePreview={
+                  editingApp
+                    ? {
+                        baseTaxRate: Number(
+                          editingApp.tax_base_rate ??
+                            (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.usedBaseTaxRate : 32) ??
+                            32
+                        ),
+                        bonusTaxRate: Number(
+                          editingApp.tax_bonus_rate ??
+                            (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.usedBonusTaxRate : 40) ??
+                            40
+                        ),
+                        equityTaxRate: Number(
+                          editingApp.tax_equity_rate ??
+                            (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.usedEquityTaxRate : 42) ??
+                            42
+                        ),
+                        note: 'Per-offer manual',
                       }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Role Title</label>
-                    <input
-                      type="text"
-                      value={editingApp.role_title}
-                      onChange={(e) => setEditingApp({ ...editingApp, role_title: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Location</label>
-                    <input
-                      type="text"
-                      value={editingApp.location || ''}
-                      onChange={(e) => setEditingApp({ ...editingApp, location: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                      placeholder="e.g. San Francisco, CA"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">RTO Policy</label>
-                    <select
-                      value={editingApp.rto_policy || 'HYBRID'}
-                      onChange={(e) => {
-                        const nextPolicy = e.target.value;
-                        setEditingApp({
-                          ...editingApp,
-                          rto_policy: nextPolicy,
-                          rto_days_per_week:
-                            nextPolicy === 'REMOTE'
-                              ? 0
-                              : nextPolicy === 'ONSITE'
-                                ? 5
-                                : editingApp.rto_days_per_week ?? 3,
-                        });
-                      }}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                    >
-                      <option value="REMOTE">Remote</option>
-                      <option value="HYBRID">Hybrid</option>
-                      <option value="ONSITE">Onsite</option>
-                    </select>
-                  </div>
-                  {(editingApp.rto_policy === 'HYBRID' || editingApp.rto_policy === 'ONSITE') && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        In-Office Days / Week
-                      </label>
-                      <input
-                        type="number"
-                        min={editingApp.rto_policy === 'ONSITE' ? 3 : 1}
-                        max={5}
-                        value={editingApp.rto_days_per_week ?? (editingApp.rto_policy === 'ONSITE' ? 5 : 3)}
-                        onChange={(e) =>
-                          setEditingApp({
-                            ...editingApp,
-                            rto_days_per_week: Number(e.target.value) || 0,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Base Salary</label>
-                  <input
-                    type="number"
-                    value={editingOffer.base_salary}
-                    onChange={(e) =>
-                      setEditingOffer({
-                        ...editingOffer,
-                        base_salary: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Bonus (Annual)
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (bonusMode === '#') {
-                            // Switching TO %
-                            const base = Number(editingOffer.base_salary) || 0;
-                            const bonus = Number(editingOffer.bonus) || 0;
-                            const pct = base > 0 ? (bonus / base) * 100 : 0;
-                            setBonusPercent(pct.toFixed(2).replace(/\.00$/, ''));
-                            setBonusMode('%');
-                          } else {
-                            setBonusMode('#');
-                          }
-                        }}
-                        className="text-xs text-blue-600 hover:text-blue-800 underline"
-                      >
-                        Use {bonusMode === '#' ? '%' : '$'}
-                      </button>
-                    </div>
-                    <div className="relative rounded-md shadow-sm">
-                      {bonusMode === '#' ? (
-                        <>
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <span className="text-gray-500 sm:text-sm">$</span>
-                          </div>
-                          <input
-                            type="number"
-                            value={editingOffer.bonus}
-                            onChange={(e) =>
-                              setEditingOffer({
-                                ...editingOffer,
-                                bonus: parseFloat(e.target.value) || 0,
-                              })
-                            }
-                            className="block w-full rounded-md border-gray-300 pl-9 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <input
-                            type="number"
-                            placeholder="%"
-                            value={bonusPercent}
-                            onChange={(e) => {
-                              setBonusPercent(e.target.value);
-                              const pct = parseFloat(e.target.value) || 0;
-                              const base = Number(editingOffer.base_salary) || 0;
-                              const absVal = (pct / 100) * base;
-                              setEditingOffer({ ...editingOffer, bonus: absVal });
-                            }}
-                            className="block w-full rounded-md border-gray-300 pl-3 pr-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
-                          />
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                            <span className="text-gray-500 sm:text-sm">%</span>
-                          </div>
-                          <p className="absolute top-full text-xs text-gray-500 mt-1">
-                            ≈ ${Number(editingOffer.bonus).toLocaleString()}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-sm font-medium text-gray-700">Equity</label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // When switching to total, populate the total based on current annual / percent
-                            if (equityMode !== 'total') {
-                              const annual = Number(editingOffer.equity) || 0;
-                              const pct = vestingPercent || 25;
-                              const total = pct > 0 ? annual / (pct / 100) : 0;
-                              setTempTotalGrant(total.toFixed(0)); // Keep it clean
-                            }
-                            setEquityMode('total');
-                          }}
-                          className={clsx(
-                            'text-xs underline',
-                            equityMode === 'total'
-                              ? 'text-blue-800 font-bold'
-                              : 'text-gray-500 hover:text-blue-600'
-                          )}
-                        >
-                          Total
-                        </button>
-                        <span className="text-xs text-gray-300">|</span>
-                        <button
-                          type="button"
-                          onClick={() => setEquityMode('annual')}
-                          className={clsx(
-                            'text-xs underline',
-                            equityMode === 'annual'
-                              ? 'text-blue-800 font-bold'
-                              : 'text-gray-500 hover:text-blue-600'
-                          )}
-                        >
-                          /Yr
-                        </button>
-                      </div>
-                    </div>
-
-                    {equityMode === 'annual' ? (
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                          <span className="text-gray-500 sm:text-sm">$</span>
-                        </div>
-                        <input
-                          type="number"
-                          value={editingOffer.equity}
-                          onChange={(e) =>
-                            setEditingOffer({
-                              ...editingOffer,
-                              equity: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          className="block w-full rounded-md border-gray-300 pl-9 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
-                          placeholder="Annual Value"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <div className="relative rounded-md shadow-sm flex-1">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <span className="text-gray-500 sm:text-sm">$</span>
-                          </div>
-                          <input
-                            type="number"
-                            value={tempTotalGrant}
-                            placeholder="Total Grant"
-                            onChange={(e) => {
-                              const totalVal = parseFloat(e.target.value) || 0;
-                              setTempTotalGrant(e.target.value);
-                              // Calc annual: Total * (Percent / 100)
-                              const annual = totalVal * ((vestingPercent || 0) / 100);
-                              setEditingOffer({ ...editingOffer, equity: annual });
-                            }}
-                            className="block w-full rounded-md border-gray-300 pl-9 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
-                          />
-                        </div>
-                        <div className="w-24 relative rounded-md shadow-sm">
-                          <input
-                            type="number"
-                            value={vestingPercent}
-                            onChange={(e) => {
-                              const pct = parseFloat(e.target.value) || 0;
-                              setVestingPercent(pct);
-
-                              const total = Number(tempTotalGrant) || 0;
-                              const annual = total * (pct / 100);
-                              setEditingOffer({ ...editingOffer, equity: annual });
-                            }}
-                            className="block w-full rounded-md border-gray-300 pr-6 text-center focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 border"
-                          />
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                            <span className="text-gray-500 sm:text-sm">%</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {equityMode === 'total' && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        ≈ ${Number(editingOffer.equity).toLocaleString()} / yr
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Sign-on Bonus</label>
-                    <input
-                      type="number"
-                      value={editingOffer.sign_on}
-                      onChange={(e) =>
-                        setEditingOffer({
-                          ...editingOffer,
-                          sign_on: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Benefits Value (Auto)</label>
-                    <input
-                      type="number"
-                      readOnly
-                      value={editingOffer.benefits_value}
-                      className="mt-1 block w-full rounded-md border-gray-200 bg-gray-50 text-gray-700 shadow-sm sm:text-sm border p-2"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">Benefit Breakdown</label>
-                    <button
-                      type="button"
-                      onClick={addEditingBenefitItem}
-                      className="text-xs text-blue-600 hover:text-blue-700"
-                    >
-                      + Add Item
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {editingBenefitItems.map((item) => (
-                      <div key={item.id} className="grid grid-cols-12 gap-2">
-                        <input
-                          type="text"
-                          value={item.label}
-                          onChange={(e) =>
-                            updateEditingBenefitItem(item.id, { label: e.target.value })
-                          }
-                          placeholder="Benefit name"
-                          className="col-span-5 rounded-md border border-gray-300 px-2 py-2 text-sm"
-                        />
-                        <input
-                          type="number"
-                          min={0}
-                          value={item.amount}
-                          onChange={(e) =>
-                            updateEditingBenefitItem(item.id, {
-                              amount: Number(e.target.value) || 0,
-                            })
-                          }
-                          className="col-span-3 rounded-md border border-gray-300 px-2 py-2 text-sm"
-                        />
-                        <select
-                          value={item.frequency}
-                          onChange={(e) =>
-                            updateEditingBenefitItem(item.id, {
-                              frequency: e.target.value as BenefitItem['frequency'],
-                            })
-                          }
-                          className="col-span-3 rounded-md border border-gray-300 px-2 py-2 text-sm"
-                        >
-                          <option value="MONTHLY">/month</option>
-                          <option value="YEARLY">/year</option>
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => removeEditingBenefitItem(item.id)}
-                          className="col-span-1 text-red-500 text-sm"
-                          aria-label="Remove benefit item"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Annualized total: ${Math.round(computeBenefitsTotal(editingBenefitItems)).toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">PTO Days</label>
-                  <input
-                    type="number"
-                    value={editingOffer.pto_days}
-                    onChange={(e) =>
-                      setEditingOffer({ ...editingOffer, pto_days: parseInt(e.target.value) || 0 })
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={editingOffer.is_current}
-                      onChange={(e) =>
-                        setEditingOffer({ ...editingOffer, is_current: e.target.checked })
-                      }
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span>Is Current Role?</span>
-                  </label>
-                </div>
-              </div>
+                    : undefined
+                }
+                editableTaxRates={{
+                  baseTaxRate: Number(
+                    editingApp?.tax_base_rate ??
+                      (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.usedBaseTaxRate : 32) ??
+                      32
+                  ),
+                  bonusTaxRate: Number(
+                    editingApp?.tax_bonus_rate ??
+                      (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.usedBonusTaxRate : 40) ??
+                      40
+                  ),
+                  equityTaxRate: Number(
+                    editingApp?.tax_equity_rate ??
+                      (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.usedEquityTaxRate : 42) ??
+                      42
+                  ),
+                }}
+                onEditableTaxRatesChange={(next) =>
+                  patchEditingApp({
+                    tax_base_rate: next.baseTaxRate,
+                    tax_bonus_rate: next.bonusTaxRate,
+                    tax_equity_rate: next.equityTaxRate,
+                  })
+                }
+                editableMonthlyRent={Number(
+                  editingApp?.monthly_rent_override ??
+                    (editingOffer?.id ? adjustedByOfferId[editingOffer.id]?.monthlyRent : 0) ??
+                    0
+                )}
+                onEditableMonthlyRentChange={(value) =>
+                  patchEditingApp({ monthly_rent_override: value })
+                }
+                baseSalary={Number(editingOffer.base_salary) || 0}
+                onBaseSalaryChange={(value) => setEditingOfferField('base_salary', value)}
+                bonus={Number(editingOffer.bonus) || 0}
+                onBonusChange={(value) => setEditingOfferField('bonus', value)}
+                equity={Number(editingOffer.equity) || 0}
+                onEquityChange={(value) => setEditingOfferField('equity', value)}
+                equityTotalGrant={Number(editingOffer.equity_total_grant ?? 0)}
+                onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
+                equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}
+                onEquityVestingPercentChange={(value) => setEditingOfferField('equity_vesting_percent', value)}
+                defaultEquityMode={Number(editingOffer.equity_total_grant ?? 0) > 0 ? 'total' : 'annual'}
+                signOn={Number(editingOffer.sign_on) || 0}
+                onSignOnChange={(value) => setEditingOfferField('sign_on', value)}
+                benefitsValue={Number(editingOffer.benefits_value) || 0}
+                benefitItems={editingBenefitItems}
+                onAddBenefitItem={addEditingBenefitItem}
+                onUpdateBenefitItem={updateEditingBenefitItem}
+                onRemoveBenefitItem={removeEditingBenefitItem}
+                computeBenefitsTotal={computeBenefitsTotal}
+                workMode={
+                  editingApp?.rto_policy === 'REMOTE'
+                    ? 'REMOTE'
+                    : editingApp?.rto_policy === 'ONSITE'
+                      ? 'ONSITE'
+                      : 'HYBRID'
+                }
+                onWorkModeChange={(value) =>
+                  patchEditingApp((prev) => ({
+                    rto_policy: value,
+                    rto_days_per_week:
+                      value === 'REMOTE' ? 0 : value === 'ONSITE' ? 5 : prev.rto_days_per_week ?? 3,
+                  }))
+                }
+                rtoDaysPerWeek={Number(editingApp?.rto_days_per_week) || 0}
+                onRtoDaysPerWeekChange={(value) =>
+                  patchEditingApp({ rto_days_per_week: value })
+                }
+                commuteCostValue={Number(editingApp?.commute_cost_value) || 0}
+                commuteCostFrequency={(editingApp?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'}
+                onCommuteCostValueChange={(value) =>
+                  patchEditingApp({ commute_cost_value: value })
+                }
+                onCommuteCostFrequencyChange={(value) =>
+                  patchEditingApp({ commute_cost_frequency: value })
+                }
+                freeFoodPerkValue={Number(editingApp?.free_food_perk_value) || 0}
+                freeFoodPerkFrequency={(editingApp?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'}
+                onFreeFoodPerkValueChange={(value) =>
+                  patchEditingApp({ free_food_perk_value: value })
+                }
+                onFreeFoodPerkFrequencyChange={(value) =>
+                  patchEditingApp({ free_food_perk_frequency: value })
+                }
+                showCommuteAndPerks
+                enableCompModeToggles
+                ptoDays={Number(editingOffer.pto_days) || 0}
+                onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}
+                holidayDays={Number(editingOffer.holiday_days ?? 11)}
+                onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
+                  locationPlaceholder="e.g. San Jose, CA"
+                />
+              </fieldset>
             </div>
             <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
               <button
-                onClick={() => setEditingOffer(null)}
+                onClick={() => {
+                  setEditingOffer(null);
+                  setOfferModalMode('edit');
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                {offerModalMode === 'view' ? 'Close' : 'Cancel'}
               </button>
-              <button
-                onClick={handleSaveEdit}
-                className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Save Offer
-              </button>
+              {offerModalMode === 'edit' && (
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Save Offer
+                </button>
+              )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
