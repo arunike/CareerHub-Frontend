@@ -576,7 +576,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
   return (
     <>
       {contextHolder}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
           <Text className="text-gray-500">
             {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
@@ -584,7 +584,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         </div>
         <button
           onClick={() => setIsCustomizeOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
         >
           <SettingOutlined />
           Customize Dashboard

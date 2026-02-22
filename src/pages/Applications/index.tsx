@@ -304,18 +304,18 @@ const Applications = () => {
       </div>
 
       <Card>
-        <Space style={{ marginBottom: 16 }} size="middle">
+        <div className="grid grid-cols-1 md:grid-cols-[300px_200px] gap-3 mb-4">
           <Input
             placeholder="Search company or role"
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
+            style={{ width: '100%' }}
           />
           <Select
             value={statusFilter}
             onChange={setStatusFilter}
-            style={{ width: 200 }}
+            style={{ width: '100%' }}
             suffixIcon={<FilterOutlined />}
           >
             <Option value="ALL">All Statuses</Option>
@@ -328,7 +328,7 @@ const Applications = () => {
             <Option value="ACCEPTED">Accepted</Option>
             <Option value="GHOSTED">Ghosted</Option>
           </Select>
-        </Space>
+        </div>
 
         <Table
           loading={loading}
@@ -336,6 +336,7 @@ const Applications = () => {
           dataSource={filteredData}
           rowKey="id"
           pagination={{ pageSize: 10 }}
+          scroll={{ x: 900 }}
         />
       </Card>
 

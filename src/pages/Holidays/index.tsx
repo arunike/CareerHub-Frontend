@@ -288,11 +288,11 @@ const Holidays = () => {
           {/* List */}
           <Card
             title={
-              <div className="flex justify-between items-center">
+              <div className="holiday-list-header flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <Title level={5} style={{ margin: 0 }}>
                   My Time Off ({holidays.length})
                 </Title>
-                <Space>
+                <Space wrap className="holiday-list-actions">
                   <Select
                     value={sortBy}
                     onChange={setSortBy}
@@ -300,7 +300,7 @@ const Holidays = () => {
                       { value: 'date', label: 'By Date' },
                       { value: 'name', label: 'By Name' },
                     ]}
-                    style={{ width: 100 }}
+                    style={{ width: 120 }}
                   />
                   <Button
                     icon={

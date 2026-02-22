@@ -238,6 +238,7 @@ const Documents: React.FC = () => {
           rowKey="id" 
           loading={loading}
           pagination={{ pageSize: 10 }}
+          scroll={{ x: 900 }}
           className="career-table"
         />
       </Card>

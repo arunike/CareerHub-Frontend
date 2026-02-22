@@ -185,16 +185,17 @@ const Availability = () => {
     <div className="space-y-6">
       {contextHolder}
       {/* Main Header / View Toggle */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
         </div>
 
-        <div className="flex bg-gray-100 p-1 rounded-xl">
+        <div className="w-full md:w-auto overflow-x-auto">
+          <div className="flex bg-gray-100 p-1 rounded-xl w-max md:w-auto">
           <button
             onClick={() => setSearchParams({ view: 'text' })}
             className={clsx(
-              'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
               viewTab === 'text'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -206,7 +207,7 @@ const Availability = () => {
           <button
             onClick={() => setSearchParams({ view: 'calendar' })}
             className={clsx(
-              'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
               viewTab === 'calendar'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -216,11 +217,12 @@ const Availability = () => {
             <span>Calendar View</span>
           </button>
         </div>
+        </div>
       </div>
 
       {viewTab === 'calendar' ? (
         <CalendarView
-          events={events} // Pass full list, component filters by date
+          events={events}
           customHolidays={customHolidays}
           federalHolidays={federalHolidays}
         />
@@ -259,11 +261,11 @@ const Availability = () => {
                 </div>
               </div>
 
-              <div className="flex-none">
+              <div className="flex-none w-full md:w-auto">
                 <button
                   onClick={fetchAvailability}
                   disabled={loading}
-                  className="w-50 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Calculating...' : 'Generate Availability'}
                 </button>
@@ -273,12 +275,12 @@ const Availability = () => {
 
           {/* Controls Bar */}
           {data.length > 0 && (
-            <div className="flex justify-between items-center bg-gray-50 p-2 rounded-xl border border-gray-100">
-              <div className="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
+              <div className="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm w-full sm:w-auto">
                 <button
                   onClick={() => setTextMode('detailed')}
                   className={clsx(
-                    'flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                    'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                     textMode === 'detailed'
                       ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-500 hover:text-gray-700'
@@ -290,7 +292,7 @@ const Availability = () => {
                 <button
                   onClick={() => setTextMode('combined')}
                   className={clsx(
-                    'flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                    'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
                     textMode === 'combined'
                       ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-500 hover:text-gray-700'
@@ -303,7 +305,7 @@ const Availability = () => {
 
               <button
                 onClick={() => copyToClipboard(generateFullCopyText(), 'ALL')}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
               >
                 {copiedIndex === 'ALL' ? (
                   <CheckCircleOutlined className="text-base text-green-500" />
@@ -359,7 +361,6 @@ const Availability = () => {
   );
 };
 
-// Sub-component for individual items to handle edit state
 const AvailabilityItem = ({
   item,
   onUpdate,
@@ -393,12 +394,12 @@ const AvailabilityItem = ({
 
       const { createOverride } = await import('../../api');
       await createOverride({
-        date: item.date, // This comes from availability object
+        date: item.date,
         availability_text: editText,
       });
 
       setIsEditing(false);
-      onUpdate(); // Refetch
+      onUpdate();
       messageApi.success('Override saved');
     } catch (error) {
       messageApi.error('Failed to save override');
