@@ -128,3 +128,41 @@ export interface Task {
   created_at: string;
   updated_at: string;
 }
+
+export interface WeeklyReviewItemApplication {
+  id: number;
+  company: string;
+  role_title: string;
+  date_applied: string;
+  status: string;
+}
+
+export interface WeeklyReviewItemInterview {
+  id: number;
+  name: string;
+  date: string;
+  company?: string | null;
+  role_title?: string | null;
+}
+
+export interface WeeklyReviewItemTask {
+  id: number;
+  title: string;
+  status: 'TODO' | 'IN_PROGRESS';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  due_date?: string | null;
+  is_overdue: boolean;
+}
+
+export interface WeeklyReview {
+  start_date: string;
+  end_date: string;
+  applications_sent: number;
+  interviews_done: number;
+  next_actions_count: number;
+  applications: WeeklyReviewItemApplication[];
+  interviews: WeeklyReviewItemInterview[];
+  next_actions: WeeklyReviewItemTask[];
+  summary_text: string;
+  generated_at: string;
+}

@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, DatePicker, Empty, Form, Input, Modal, Select, Tag, message } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, DatePicker, Empty, Form, Input, Modal, Select, Tag, message } from 'antd';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import type { Task } from '../../types';
-import { createTask, deleteTask, getTasks, reorderTasks, updateTask } from '../../api';
+import type { Task, WeeklyReview } from '../../types';
+import { createTask, deleteTask, getTasks, getWeeklyReview, reorderTasks, updateTask } from '../../api';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
 
@@ -31,6 +31,8 @@ const Tasks: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'checklist'>('kanban');
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [weeklyReview, setWeeklyReview] = useState<WeeklyReview | null>(null);
+  const [weeklyReviewLoading, setWeeklyReviewLoading] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -45,8 +47,22 @@ const Tasks: React.FC = () => {
     }
   };
 
+  const fetchWeeklyReview = async () => {
+    try {
+      setWeeklyReviewLoading(true);
+      const response = await getWeeklyReview();
+      setWeeklyReview(response.data);
+    } catch (error) {
+      messageApi.error('Failed to load weekly review');
+      console.error(error);
+    } finally {
+      setWeeklyReviewLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
+    fetchWeeklyReview();
   }, []);
 
   const groupedTasks = useMemo(() => {
@@ -222,6 +238,60 @@ const Tasks: React.FC = () => {
         primaryActionLabel="Add Action Item"
         primaryActionIcon={<PlusOutlined />}
       />
+
+      <div>
+        <Card
+        title="Weekly Review"
+        loading={weeklyReviewLoading}
+        extra={
+          <Button icon={<ReloadOutlined />} onClick={fetchWeeklyReview}>
+            Refresh
+          </Button>
+        }
+      >
+        {weeklyReview ? (
+          <div className="space-y-3">
+            <div className="text-sm text-gray-600">
+              {dayjs(weeklyReview.start_date).format('MMM D')} - {dayjs(weeklyReview.end_date).format('MMM D, YYYY')}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-gray-200 px-3 py-2">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Applications Sent</div>
+                <div className="text-2xl font-semibold">{weeklyReview.applications_sent}</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 px-3 py-2">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Interviews Done</div>
+                <div className="text-2xl font-semibold">{weeklyReview.interviews_done}</div>
+              </div>
+              <div className="rounded-lg border border-gray-200 px-3 py-2">
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Next Actions</div>
+                <div className="text-2xl font-semibold">{weeklyReview.next_actions_count}</div>
+              </div>
+            </div>
+            <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm text-gray-700">
+              {weeklyReview.summary_text}
+            </div>
+            {weeklyReview.next_actions.length > 0 ? (
+              <div className="space-y-2">
+                <div className="text-sm font-medium">Top Next Actions</div>
+                <div className="space-y-1">
+                  {weeklyReview.next_actions.slice(0, 5).map((item) => (
+                    <div key={item.id} className="flex items-center justify-between text-sm rounded border border-gray-100 px-2 py-1">
+                      <span className="truncate pr-3">{item.title}</span>
+                      <span className={`text-xs ${item.is_overdue ? 'text-red-500' : 'text-gray-500'}`}>
+                        {item.due_date ? dayjs(item.due_date).format('YYYY-MM-DD') : 'No due date'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <Empty description="No weekly review available" />
+        )}
+      </Card>
+      </div>
 
       {viewMode === 'kanban' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
