@@ -103,6 +103,12 @@ export const deleteOffer = (id: number) => api.delete(`/career/offers/${id}/`);
 
 // Career - Documents
 export const getDocuments = () => api.get('/career/documents/');
+export const deleteAllDocuments = () => api.delete('/career/documents/delete_all/');
+export const exportDocuments = (format: string = 'csv') =>
+  api.get('/career/documents/export/', {
+    params: { fmt: format },
+    responseType: 'blob',
+  });
 export const createDocument = (formData: FormData) =>
   api.post('/career/documents/', formData, {
     headers: { 'Content-Type': undefined },

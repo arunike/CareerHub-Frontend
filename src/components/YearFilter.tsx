@@ -7,6 +7,9 @@ interface YearFilterProps {
   onYearChange: (year: number | 'all') => void;
   availableYears: number[];
   currentYear?: number;
+  className?: string;
+  size?: 'large' | 'middle' | 'small';
+  width?: number;
 }
 
 const YearFilter: React.FC<YearFilterProps> = ({
@@ -14,13 +17,24 @@ const YearFilter: React.FC<YearFilterProps> = ({
   onYearChange,
   availableYears,
   currentYear = new Date().getFullYear(),
+  className,
+  size = 'middle',
+  width = 190,
 }) => {
+  const normalizedYears = Array.from(
+    new Set([
+      currentYear,
+      ...(typeof selectedYear === 'number' ? [selectedYear] : []),
+      ...availableYears,
+    ])
+  ).sort((a, b) => b - a);
+
   const options = [
     {
       value: 'all',
       label: 'All Years',
     },
-    ...availableYears.map((year) => ({
+    ...normalizedYears.map((year) => ({
       value: year,
       label: year === currentYear ? `${year} (Current)` : `${year}`,
     })),
@@ -31,7 +45,9 @@ const YearFilter: React.FC<YearFilterProps> = ({
       value={selectedYear}
       onChange={onYearChange}
       options={options}
-      style={{ width: 150 }}
+      className={className}
+      size={size}
+      style={{ width }}
       suffixIcon={<CalendarOutlined />}
     />
   );

@@ -29,7 +29,6 @@ import {
   VideoCameraOutlined,
   LockOutlined,
   UnlockOutlined,
-  UploadOutlined,
   FilterOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
@@ -56,13 +55,12 @@ import {
 import RecurrenceModal from '../../components/RecurrenceModal';
 import CategoryBadge from '../../components/CategoryBadge';
 import IconPicker from '../../components/IconPicker';
-import ExportButton from '../../components/ExportButton';
-import YearFilter from '../../components/YearFilter';
+import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 dayjs.extend(customParseFormat);
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
 
@@ -425,52 +423,36 @@ const Events = () => {
       <div className="p-0">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* Header & Actions */}
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <Title level={2} style={{ margin: 0 }}>
-                Events
-              </Title>
-              <Text type="secondary">{filteredEvents.length} events</Text>
-            </div>
-            <Space wrap>
-              <YearFilter
-                selectedYear={selectedYear}
-                onYearChange={handleYearChange}
-                availableYears={availableYears}
-              />
+          <PageActionToolbar
+            title="Events"
+            subtitle={`${filteredEvents.length} events`}
+            selectedYear={selectedYear}
+            onYearChange={handleYearChange}
+            availableYears={availableYears}
+            extraActions={
               <Select
                 defaultValue={userTimezone}
                 onChange={setUserTimezone}
-                style={{ width: 140 }}
+                style={{ width: 160 }}
+                className="toolbar-select"
+                size="large"
                 options={[
                   { value: 'PT', label: 'Pacific (PT)' },
                   { value: 'MT', label: 'Mountain (MT)' },
                   { value: 'CT', label: 'Central (CT)' },
                   { value: 'ET', label: 'Eastern (ET)' },
                 ]}
-                // addonBefore={<GlobalOutlined />} // Not supported on Select
               />
-              <Tooltip title="Delete All Events">
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => setIsDeleteAllOpen(true)}
-                  disabled={events.length === 0}
-                >
-                  Delete All
-                </Button>
-              </Tooltip>
-
-              <ExportButton onExport={handleExportWrapper} filename="events" />
-
-              <Button icon={<UploadOutlined />} onClick={() => setShowImport(true)}>
-                Import
-              </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                Add Event
-              </Button>
-            </Space>
-          </div>
+            }
+            onDeleteAll={() => setIsDeleteAllOpen(true)}
+            deleteAllDisabled={events.length === 0}
+            onExport={handleExportWrapper}
+            exportFilename="events"
+            onImport={() => setShowImport(true)}
+            onPrimaryAction={handleAdd}
+            primaryActionLabel="Add Event"
+            primaryActionIcon={<PlusOutlined />}
+          />
 
           {/* Filters */}
           <Card bodyStyle={{ padding: '16px' }}>

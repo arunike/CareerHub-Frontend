@@ -30,7 +30,6 @@ import {
   SyncOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
-  UploadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
@@ -44,8 +43,7 @@ import {
   importData,
 } from '../../api';
 import type { Holiday } from '../../types';
-import ExportButton from '../../components/ExportButton';
-import YearFilter from '../../components/YearFilter';
+import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 const { Title, Text } = Typography;
@@ -434,24 +432,17 @@ const Holidays = () => {
   return (
     <>
       {contextHolder}
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <Title level={2} style={{ margin: 0 }}>
-              Holiday Manager
-            </Title>
-          </div>
-          <Space>
-            <YearFilter
-              selectedYear={selectedYear}
-              onYearChange={handleYearChange}
-              availableYears={availableYears}
-            />
-            <ExportButton onExport={handleExportWrapper} filename="holidays" />
-            <Button icon={<UploadOutlined />} onClick={() => setShowImport(true)}>
-              Import
-            </Button>
-          </Space>
+      <div className="w-full">
+        <div className="mb-6">
+          <PageActionToolbar
+            title="Holiday Manager"
+            selectedYear={selectedYear}
+            onYearChange={handleYearChange}
+            availableYears={availableYears}
+            onExport={handleExportWrapper}
+            exportFilename="holidays"
+            onImport={() => setShowImport(true)}
+          />
         </div>
 
         <Tabs defaultActiveKey="custom" items={items} type="card" />

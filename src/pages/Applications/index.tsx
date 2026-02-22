@@ -20,7 +20,6 @@ import {
 } from 'antd';
 import {
   PlusOutlined,
-  UploadOutlined,
   DeleteOutlined,
   EditOutlined,
   SearchOutlined,
@@ -44,11 +43,10 @@ import {
   exportApplications,
 } from '../../api';
 import type { CareerApplication } from '../../types/application';
-import ExportButton from '../../components/ExportButton';
-import YearFilter from '../../components/YearFilter';
+import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
-const { Title, Text, Link } = Typography;
+const { Text, Link } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
 
@@ -299,40 +297,26 @@ const Applications = () => {
   ];
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: 0, width: '100%' }}>
       {contextHolder}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <Title level={2} style={{ margin: 0 }}>
-            Job Applications
-          </Title>
-          <Text type="secondary">{applications.length} applications tracked</Text>
-        </div>
-        <Space>
-          <YearFilter
-            selectedYear={selectedYear}
-            onYearChange={handleYearChange}
-            availableYears={availableYears}
-          />
-          <Popconfirm
-            title="Delete All Applications?"
-            description="This will delete all unlocked applications. This cannot be undone."
-            okText="Delete All"
-            okType="danger"
-            onConfirm={handleDeleteAll}
-          >
-            <Button danger icon={<DeleteOutlined />}>
-              Delete All
-            </Button>
-          </Popconfirm>
-          <ExportButton onExport={handleExportWrapper} filename="applications" />
-          <Button icon={<UploadOutlined />} onClick={() => setIsImportModalOpen(true)}>
-            Import
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
-            Add Application
-          </Button>
-        </Space>
+      <div style={{ marginBottom: 24 }}>
+        <PageActionToolbar
+          title={<span className="whitespace-nowrap">Job Applications</span>}
+          subtitle={`${applications.length} applications tracked`}
+          singleRowDesktop
+          selectedYear={selectedYear}
+          onYearChange={handleYearChange}
+          availableYears={availableYears}
+          onDeleteAll={handleDeleteAll}
+          deleteAllConfirmTitle="Delete All Applications?"
+          deleteAllConfirmDescription="This will delete all unlocked applications. This cannot be undone."
+          onExport={handleExportWrapper}
+          exportFilename="applications"
+          onImport={() => setIsImportModalOpen(true)}
+          onPrimaryAction={openAddModal}
+          primaryActionLabel="Add Application"
+          primaryActionIcon={<PlusOutlined />}
+        />
       </div>
 
       <Card>
