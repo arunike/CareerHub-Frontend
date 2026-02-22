@@ -1,5 +1,13 @@
 import axios from 'axios';
-import type { Event, Holiday, UserSettings, RecurrenceRule, Task, WeeklyReview } from './types';
+import type {
+  Event,
+  Holiday,
+  UserSettings,
+  RecurrenceRule,
+  Task,
+  WeeklyReview,
+  ShareLink,
+} from './types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -31,6 +39,31 @@ export const getAvailability = (startDate?: string, timezone?: string) =>
 
 export const createOverride = (data: { date: string; availability_text: string }) =>
   api.post('/overrides/', data);
+
+export const getCurrentShareLink = () =>
+  api.get<{ active: ShareLink | null }>('/share-links/current/');
+export const generateShareLink = (data: { title?: string; duration_days?: number }) =>
+  api.post<ShareLink>('/share-links/generate/', data);
+export const deactivateShareLink = () => api.post('/share-links/deactivate/');
+export const getPublicBookingSlots = (uuid: string, date?: string, timezone: string = 'PT') =>
+  api.get<{
+    title: string;
+    expires_at: string;
+    timezone: string;
+    days: Array<{ date: string; day_name: string; readable_date: string; slots: Array<{ start_time: string; end_time: string; label: string }> }>;
+  }>(`/booking/${uuid}/slots/`, { params: { date, timezone } });
+export const createPublicBooking = (
+  uuid: string,
+  data: {
+    name: string;
+    email: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    timezone?: string;
+    notes?: string;
+  },
+) => api.post(`/booking/${uuid}/book/`, data);
 
 export const importData = (formData: FormData) =>
   api.post('/import/', formData, {
