@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Modal, Select, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Input, Modal, Select, Table, Tag, message } from 'antd';
 import { PlusOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, LockOutlined } from '@ant-design/icons';
-import { getApplications, getDocuments, deleteDocument, deleteAllDocuments, exportDocuments, patchDocument } from '../../api';
+import {
+  getApplications,
+  getDocuments,
+  deleteDocument,
+  deleteAllDocuments,
+  exportDocuments,
+  patchDocument,
+  getDocumentVersions,
+  createDocumentVersion,
+} from '../../api';
 import type { Document } from '../../types';
 import UploadDocumentModal from './UploadDocumentModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -12,9 +21,15 @@ const Documents: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [uploadingVersion, setUploadingVersion] = useState(false);
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [versionTarget, setVersionTarget] = useState<Document | null>(null);
+  const [versionList, setVersionList] = useState<Document[]>([]);
+  const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
   const [applications, setApplications] = useState<Array<{ id: number; role_title: string; company_details?: { name: string } }>>([]);
   const [form] = Form.useForm();
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
@@ -147,6 +162,49 @@ const Documents: React.FC = () => {
     }
   };
 
+  const openVersionsModal = async (record: Document) => {
+    try {
+      setVersionsLoading(true);
+      setVersionTarget(record);
+      setIsVersionModalOpen(true);
+      const response = await getDocumentVersions(record.id);
+      setVersionList(response.data);
+    } catch (error) {
+      message.error('Failed to load version history');
+      console.error(error);
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
+  const handleUploadNewVersion = async () => {
+    if (!versionTarget || !newVersionFile) {
+      message.error('Please choose a file for the new version');
+      return;
+    }
+    try {
+      setUploadingVersion(true);
+      const formData = new FormData();
+      formData.append('file', newVersionFile);
+      formData.append('title', versionTarget.title);
+      formData.append('document_type', versionTarget.document_type);
+      if (versionTarget.application) {
+        formData.append('application', String(versionTarget.application));
+      }
+      await createDocumentVersion(versionTarget.id, formData);
+      message.success('New version uploaded');
+      const versionsResp = await getDocumentVersions(versionTarget.id);
+      setVersionList(versionsResp.data);
+      setNewVersionFile(null);
+      fetchDocuments();
+    } catch (error: any) {
+      message.error(error?.response?.data?.error || 'Failed to upload new version');
+      console.error(error);
+    } finally {
+      setUploadingVersion(false);
+    }
+  };
+
   const columns = [
     {
       title: 'Type',
@@ -173,6 +231,18 @@ const Documents: React.FC = () => {
       key: 'document_type',
       render: (type: string) => (
         <Tag color={getTypeColor(type)}>{type.replace('_', ' ')}</Tag>
+      ),
+    },
+    {
+      title: 'Version',
+      key: 'version',
+      render: (_: any, record: Document) => (
+        <div className="flex items-center gap-2">
+          <Tag color="geekblue">v{record.version_number || 1}</Tag>
+          <Button type="link" size="small" onClick={() => openVersionsModal(record)}>
+            History ({record.version_count || 1})
+          </Button>
+        </div>
       ),
     },
     {
@@ -298,6 +368,70 @@ const Documents: React.FC = () => {
             />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title={`Version History${versionTarget ? ` - ${versionTarget.title}` : ''}`}
+        open={isVersionModalOpen}
+        onCancel={() => {
+          setIsVersionModalOpen(false);
+          setVersionTarget(null);
+          setVersionList([]);
+          setNewVersionFile(null);
+        }}
+        footer={null}
+        width={760}
+      >
+        <div className="space-y-4">
+          <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+            <div className="text-sm font-medium text-gray-800 mb-2">Upload New Version</div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                type="file"
+                onChange={(e) => setNewVersionFile(e.target.files?.[0] || null)}
+              />
+              <Button type="primary" loading={uploadingVersion} onClick={handleUploadNewVersion}>
+                Upload Version
+              </Button>
+            </div>
+          </div>
+
+          <Table
+            loading={versionsLoading}
+            dataSource={versionList}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            columns={[
+              {
+                title: 'Version',
+                key: 'version_number',
+                width: 110,
+                render: (_: any, row: Document) => (
+                  <Tag color={row.is_current ? 'success' : 'default'}>
+                    v{row.version_number || 1}{row.is_current ? ' (current)' : ''}
+                  </Tag>
+                ),
+              },
+              {
+                title: 'File',
+                key: 'file',
+                render: (_: any, row: Document) => (
+                  <a href={row.file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    {row.title}
+                  </a>
+                ),
+              },
+              {
+                title: 'Uploaded',
+                dataIndex: 'created_at',
+                key: 'created_at',
+                width: 140,
+                render: (value: string) => new Date(value).toLocaleDateString(),
+              },
+            ]}
+          />
+        </div>
       </Modal>
     </div>
   );

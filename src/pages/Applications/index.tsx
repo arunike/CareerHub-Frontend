@@ -35,8 +35,11 @@ import {
   importApplications,
   deleteAllApplications,
   exportApplications,
+  getDocuments,
+  patchDocument,
 } from '../../api';
 import type { CareerApplication } from '../../types/application';
+import type { Document } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
@@ -51,6 +54,7 @@ const Applications = () => {
 
   // Data State
   const [applications, setApplications] = useState<CareerApplication[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
 
   // View State
@@ -69,8 +73,9 @@ const Applications = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const resp = await getApplications();
-      setApplications(resp.data);
+      const [appsResp, docsResp] = await Promise.all([getApplications(), getDocuments()]);
+      setApplications(appsResp.data);
+      setDocuments(docsResp.data);
     } catch (error) {
       messageApi.error('Failed to load applications');
       console.error(error);
@@ -126,17 +131,38 @@ const Applications = () => {
 
   const handleAddEdit = async (values: any) => {
     try {
+      const selectedDocumentIds: number[] = values.linked_document_ids || [];
       const payload = {
         ...values,
         company_name: values.company, // API expects company_name
         date_applied: values.date_applied ? values.date_applied.format('YYYY-MM-DD') : undefined,
       };
+      delete payload.linked_document_ids;
 
       if (editingId) {
         await updateApplication(editingId, payload);
+
+        const currentlyLinkedDocIds = documents
+          .filter((doc) => doc.application === editingId)
+          .map((doc) => doc.id);
+
+        const docsToLink = selectedDocumentIds.filter((id) => !currentlyLinkedDocIds.includes(id));
+        const docsToUnlink = currentlyLinkedDocIds.filter((id) => !selectedDocumentIds.includes(id));
+
+        await Promise.all([
+          ...docsToLink.map((docId) => patchDocument(docId, { application: editingId })),
+          ...docsToUnlink.map((docId) => patchDocument(docId, { application: null })),
+        ]);
         messageApi.success('Application updated');
       } else {
-        await createApplication(payload);
+        const response = await createApplication(payload);
+        const applicationId = response.data.id;
+
+        if (selectedDocumentIds.length > 0) {
+          await Promise.all(
+            selectedDocumentIds.map((docId) => patchDocument(docId, { application: applicationId }))
+          );
+        }
         messageApi.success('Application created');
       }
       setIsAddModalOpen(false);
@@ -157,6 +183,7 @@ const Applications = () => {
       date_applied: dayjs(),
       rto_policy: 'UNKNOWN',
       current_round: 0,
+      linked_document_ids: [],
     });
     setIsAddModalOpen(true);
   };
@@ -174,6 +201,9 @@ const Applications = () => {
       current_round: app.current_round || 0,
       date_applied: app.date_applied ? dayjs(app.date_applied) : null,
       notes: app.notes,
+      linked_document_ids: documents
+        .filter((doc) => doc.application === app.id)
+        .map((doc) => doc.id),
     });
     setIsAddModalOpen(true);
   };
@@ -391,6 +421,20 @@ const Applications = () => {
             <Col span={24}>
               <Form.Item name="site_link" label="Job Link">
                 <Input prefix={<GlobalOutlined />} placeholder="https://..." />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item name="linked_document_ids" label="Linked Documents (Optional)">
+                <Select
+                  mode="multiple"
+                  allowClear
+                  placeholder="Select documents to link"
+                  optionFilterProp="label"
+                  options={documents.map((doc) => ({
+                    value: doc.id,
+                    label: `${doc.title} (v${doc.version_number || 1})`,
+                  }))}
+                />
               </Form.Item>
             </Col>
             <Col span={24}>

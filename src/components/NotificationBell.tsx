@@ -1,9 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getEvents, getUnresolvedConflicts, resolveConflict, detectConflicts } from '../api';
-import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date-fns';
-import { BellOutlined, ClockCircleOutlined, AlertOutlined, CheckOutlined } from '@ant-design/icons';
+import {
+  getEvents,
+  getUnresolvedConflicts,
+  resolveConflict,
+  detectConflicts,
+  getTasks,
+  updateTask,
+} from '../api';
+import {
+  format,
+  parseISO,
+  isAfter,
+  isToday,
+  isTomorrow,
+  compareAsc,
+  differenceInCalendarDays,
+  startOfDay,
+  addDays,
+} from 'date-fns';
+import {
+  BellOutlined,
+  ClockCircleOutlined,
+  AlertOutlined,
+  CheckOutlined,
+  FlagOutlined,
+} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import type { ConflictAlert, Event } from '../types';
+import type { ConflictAlert, Event, Task } from '../types';
 import ConfirmModal from './ConfirmModal';
 import { message } from 'antd';
 
@@ -11,18 +34,40 @@ interface NotificationBellProps {
   placement?: 'bottom-right' | 'top-left';
 }
 
+type DeadlinePriority = 'P0' | 'P1' | 'P2';
+
+interface DeadlineItem {
+  id: string;
+  taskId: number;
+  title: string;
+  priority: DeadlinePriority;
+  dueLabel: string;
+  dueDate: Date;
+}
+
+const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
+
 const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom-right' }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [events, setEvents] = useState<Event[]>([]);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
+  const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [snoozed, setSnoozed] = useState<Record<string, string>>(() => {
+    const raw = localStorage.getItem(DEADLINE_SNOOZE_KEY);
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) as Record<string, string>;
+    } catch {
+      return {};
+    }
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchData();
 
-    // Click outside to close
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -34,7 +79,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
   const fetchData = async () => {
     try {
-      // 1. Kick off detection (fire and forget or wait)
+      setLoading(true);
+
       try {
         await detectConflicts();
       } catch (error) {
@@ -42,10 +88,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         console.error('Detection failed', error);
       }
 
-      // 2. Fetch parallel
-      const [eventsResp, conflictsResp] = await Promise.all([
+      const [eventsResp, conflictsResp, tasksResp] = await Promise.all([
         getEvents(),
         getUnresolvedConflicts(),
+        getTasks(),
       ]);
 
       const allEvents = eventsResp.data;
@@ -65,7 +111,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
       setEvents(upcoming);
       setConflicts(conflictsResp.data);
-      setConflicts(conflictsResp.data);
+      setDeadlines(buildTaskDeadlines(tasksResp.data as Task[], snoozed));
     } catch (error) {
       messageApi.error('Failed to fetch data');
       console.error('Failed to fetch data', error);
@@ -97,7 +143,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       onConfirm: async () => {
         try {
           await resolveConflict(id);
-          // Optimistic update
           setConflicts((prev) => prev.filter((c) => c.id !== id));
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
           messageApi.success('Conflict resolved');
@@ -109,9 +154,36 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     });
   };
 
+  const snoozeDeadline = (deadlineId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const until = addDays(new Date(), 1).toISOString();
+    setSnoozed((prev) => {
+      const next = { ...prev, [deadlineId]: until };
+      localStorage.setItem(DEADLINE_SNOOZE_KEY, JSON.stringify(next));
+      return next;
+    });
+    setDeadlines((prev) => prev.filter((d) => d.id !== deadlineId));
+    messageApi.success('Snoozed for 1 day');
+  };
+
+  const markTaskDone = async (taskId: number, deadlineId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    try {
+      await updateTask(taskId, { status: 'DONE' });
+      setDeadlines((prev) => prev.filter((d) => d.id !== deadlineId));
+      messageApi.success('Task marked done');
+    } catch (error) {
+      messageApi.error('Failed to mark task done');
+      console.error(error);
+    }
+  };
+
   const hasEvents = events.length > 0;
   const hasConflicts = conflicts.length > 0;
-  const totalNotifications = events.length + conflicts.length;
+  const hasDeadlines = deadlines.length > 0;
+  const totalNotifications = events.length + conflicts.length + deadlines.length;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -122,7 +194,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         <BellOutlined className="text-xl" />
         {totalNotifications > 0 && (
           <span
-            className={`absolute top-1 right-1.5 w-2 h-2 rounded-full ring-2 ring-white ${hasConflicts ? 'bg-red-600 animate-pulse' : 'bg-red-500'}`}
+            className={`absolute top-1 right-1.5 w-2 h-2 rounded-full ring-2 ring-white ${hasConflicts || hasDeadlines ? 'bg-red-600 animate-pulse' : 'bg-red-500'}`}
           />
         )}
       </button>
@@ -161,7 +233,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
-                {/* Conflicts First */}
                 {conflicts.length > 0 && (
                   <div className="bg-red-50/50">
                     <div className="px-3 py-2 text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-2">
@@ -173,17 +244,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         key={conflict.id}
                         className="p-3 hover:bg-red-50 transition-colors relative group"
                       >
-                        <div className="text-xs font-medium text-gray-900 mb-1">
-                          Overlap Detected
-                        </div>
+                        <div className="text-xs font-medium text-gray-900 mb-1">Overlap Detected</div>
                         <div className="flex flex-col gap-1 text-xs text-gray-600 border-l-2 border-red-200 pl-2">
-                          <div className="truncate">
-                            {conflict.event1_details?.name || 'Unknown Event'}
-                          </div>
+                          <div className="truncate">{conflict.event1_details?.name || 'Unknown Event'}</div>
                           <div className="text-red-400 font-bold text-[10px]">VS</div>
-                          <div className="truncate">
-                            {conflict.event2_details?.name || 'Unknown Event'}
-                          </div>
+                          <div className="truncate">{conflict.event2_details?.name || 'Unknown Event'}</div>
                         </div>
                         <div className="mt-2 flex justify-end">
                           <button
@@ -199,7 +264,59 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   </div>
                 )}
 
-                {/* Events */}
+                {hasDeadlines && (
+                  <div className="bg-amber-50/40">
+                    <div className="px-3 py-2 text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                      <FlagOutlined className="text-xs" />
+                      Deadline Radar (Tasks)
+                    </div>
+                    {deadlines.map((deadline) => (
+                      <div key={deadline.id} className="p-3 hover:bg-amber-50 transition-colors">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-gray-900 truncate">{deadline.title}</div>
+                            <div className="text-[11px] text-gray-600 mt-1">Action Item</div>
+                          </div>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium ${
+                              deadline.priority === 'P0'
+                                ? 'bg-red-100 text-red-700'
+                                : deadline.priority === 'P1'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {deadline.dueLabel}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <Link
+                            to="/tasks"
+                            className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Open
+                          </Link>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => markTaskDone(deadline.taskId, deadline.id, e)}
+                              className="text-[10px] bg-green-50 border border-green-200 text-green-700 px-2 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                            >
+                              Done
+                            </button>
+                            <button
+                              onClick={(e) => snoozeDeadline(deadline.id, e)}
+                              className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                            >
+                              Snooze 1d
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {hasEvents && (
                   <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
                     Upcoming
@@ -216,9 +333,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   return (
                     <div key={event.id} className="p-3 hover:bg-gray-50 transition-colors">
                       <div className="flex justify-between items-start gap-2">
-                        <span className="font-medium text-sm text-gray-900 line-clamp-1">
-                          {event.name}
-                        </span>
+                        <span className="font-medium text-sm text-gray-900 line-clamp-1">{event.name}</span>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                             isToday(eventDate)
@@ -263,3 +378,54 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 };
 
 export default NotificationBell;
+
+const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): DeadlineItem[] => {
+  const now = new Date();
+  const maxDays = 7;
+  const items: Array<DeadlineItem & { rank: number }> = [];
+
+  const isVisible = (id: string) => {
+    const until = snoozed[id];
+    if (!until) return true;
+    return new Date(until).getTime() <= now.getTime();
+  };
+
+  tasks.forEach((task) => {
+    if (!task.due_date || task.status === 'DONE') return;
+    const dueDate = parseISO(task.due_date);
+    const diff = differenceInCalendarDays(startOfDay(dueDate), startOfDay(now));
+    if (diff > maxDays) return;
+
+    let priority: DeadlinePriority = 'P2';
+    let rank = 2;
+    let dueLabel = `${diff}d left`;
+
+    if (diff <= 0) {
+      priority = 'P0';
+      rank = 0;
+      dueLabel = diff < 0 ? 'Overdue' : 'Today';
+    } else if (diff <= 3) {
+      priority = 'P1';
+      rank = 1;
+      dueLabel = `${diff}d left`;
+    }
+
+    const id = `task-${task.id}`;
+    if (!isVisible(id)) return;
+
+    items.push({
+      id,
+      taskId: task.id,
+      title: task.title,
+      priority,
+      dueLabel,
+      dueDate,
+      rank,
+    });
+  });
+
+  return items
+    .sort((a, b) => a.rank - b.rank || compareAsc(a.dueDate, b.dueDate))
+    .slice(0, 10)
+    .map(({ rank, ...rest }) => rest);
+};

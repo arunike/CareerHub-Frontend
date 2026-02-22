@@ -34,7 +34,6 @@ import {
   DragOverlay,
   type DragEndEvent,
   type DragStartEvent,
-  type DragOverEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,

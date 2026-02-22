@@ -120,6 +120,11 @@ export const updateDocument = (id: number, formData: FormData) =>
 export const patchDocument = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/documents/${id}/`, data);
 export const deleteDocument = (id: number) => api.delete(`/career/documents/${id}/`);
+export const getDocumentVersions = (id: number) => api.get(`/career/documents/${id}/versions/`);
+export const createDocumentVersion = (id: number, formData: FormData) =>
+  api.post(`/career/documents/${id}/add_version/`, formData, {
+    headers: { 'Content-Type': undefined },
+  });
 
 // Conflicts
 export const detectConflicts = () => api.post('/events/detect_conflicts/');
