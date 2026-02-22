@@ -101,6 +101,18 @@ export const updateOffer = (id: number, data: Record<string, unknown>) =>
   api.put(`/career/offers/${id}/`, data);
 export const deleteOffer = (id: number) => api.delete(`/career/offers/${id}/`);
 
+// Career - Documents
+export const getDocuments = () => api.get('/career/documents/');
+export const createDocument = (formData: FormData) =>
+  api.post('/career/documents/', formData, {
+    headers: { 'Content-Type': undefined },
+  });
+export const updateDocument = (id: number, formData: FormData) =>
+  api.put(`/career/documents/${id}/`, formData, {
+    headers: { 'Content-Type': undefined },
+  });
+export const deleteDocument = (id: number) => api.delete(`/career/documents/${id}/`);
+
 // Conflicts
 export const detectConflicts = () => api.post('/events/detect_conflicts/');
 export const getUnresolvedConflicts = () => api.get('/conflicts/unresolved/');

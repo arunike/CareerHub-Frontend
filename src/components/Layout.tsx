@@ -11,6 +11,7 @@ import {
   DollarOutlined,
   MenuOutlined,
   CloseOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
@@ -72,6 +73,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           label: 'Applications',
         },
         { key: '/offers', icon: <DollarOutlined />, label: 'Offers' },
+        { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
       ],
     },
     {
@@ -122,9 +124,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           theme={{
             components: {
               Menu: {
-                itemHeight: 52,
+                itemHeight: 48,
                 itemMarginInline: 16,
-                itemMarginBlock: 8,
+                itemMarginBlock: 4,
                 collapsedIconSize: 20,
                 iconSize: 20,
                 iconMarginInlineEnd: 16,
@@ -169,7 +171,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           position: screens.lg ? 'sticky' : 'fixed',
           top: 0,
           left: 0,
-          zIndex: 1000, // Ensure it's above content on mobile
+          zIndex: 1000,
           boxShadow: !collapsed && !screens.lg ? '4px 0 24px rgba(0,0,0,0.1)' : 'none',
         }}
         className={!screens.lg && !collapsed ? 'fixed-sider-mobile' : ''}
