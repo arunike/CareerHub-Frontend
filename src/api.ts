@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Event, Holiday, UserSettings, RecurrenceRule, Task } from './types';
+import type { Event, Holiday, UserSettings, RecurrenceRule, Task, WeeklyReview } from './types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -139,6 +139,10 @@ export const deleteTask = (id: number) => api.delete(`/career/tasks/${id}/`);
 export const reorderTasks = (
   updates: Array<{ id: number; status: 'TODO' | 'IN_PROGRESS' | 'DONE'; position: number }>
 ) => api.post('/career/tasks/reorder/', { updates });
+export const getWeeklyReview = (startDate?: string, endDate?: string) =>
+  api.get<WeeklyReview>('/career/weekly-review/', {
+    params: { start_date: startDate, end_date: endDate },
+  });
 
 export const getCareerReferenceData = () => api.get('/career/reference-data/');
 export const getCareerRentEstimate = (city: string) =>
