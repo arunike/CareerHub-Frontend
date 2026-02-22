@@ -92,6 +92,10 @@ The **Frontend** is a React-based single-page application that provides an intui
   - Federal holiday indicators
   - Interview event badges
   - Date navigation (prev/next week)
+- **Availability Text + Booking Link**:
+  - generate/copy availability text
+  - generate/copy/deactivate public booking link
+  - booking page only exposes available slots, not private events/holidays
 - **EventList.tsx**: Interview event management
   - Create/edit/delete events with modal
   - Link events to applications
@@ -198,9 +202,12 @@ frontend/
 │   │   ├── Analytics/           # Analytics dashboard
 │   │   ├── Applications/        # Application tracker
 │   │   ├── Availability/        # Availability calendar
+│   │   ├── Documents/           # Document vault + versioning
 │   │   ├── Events/              # Event management
 │   │   ├── Holidays/            # Holiday management
 │   │   ├── OfferComparison/     # Offer comparison tool
+│   │   ├── PublicBooking/       # Public booking page (/book/:uuid)
+│   │   ├── Tasks/               # Action items / Kanban + checklist
 │   │   └── Settings/            # User settings
 │   │
 │   ├── hooks/                   # Custom React hooks
@@ -303,6 +310,8 @@ export const exportApplications = (format: 'csv' | 'json' | 'xlsx') =>
 ```
 
 Career endpoints are served under `/api/career/*` (for example `/api/career/applications/`, `/api/career/offers/`, `/api/career/documents/`, `/api/career/tasks/`).
+Availability endpoints are served under `/api/*` (for example `/api/availability/generate/`, `/api/share-links/generate/`, `/api/booking/:uuid/slots/`).
+Public booking page route: `/book/:uuid`.
 
 ## 🎯 Key Features Explained
 
