@@ -8,6 +8,7 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Applications from './pages/Applications';
 import OfferComparison from './pages/OfferComparison';
+import Documents from './pages/Documents';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/applications" element={<Applications />} />
               <Route path="/offers" element={<OfferComparison />} />
+              <Route path="/documents" element={<Documents />} />
             </Routes>
           </Layout>
         </Router>

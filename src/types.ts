@@ -95,3 +95,18 @@ export interface ConflictAlert {
   detected_at: string;
   resolved: boolean;
 }
+
+export interface Document {
+  id: number;
+  title: string;
+  file: string;
+  document_type: 'RESUME' | 'COVER_LETTER' | 'PORTFOLIO' | 'OTHER';
+  application?: number | null;
+  application_details?: {
+    id: number;
+    company: string;
+    role: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
