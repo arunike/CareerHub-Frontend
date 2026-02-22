@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   getOffers,
   createOffer,
@@ -22,28 +22,13 @@ import clsx from 'clsx';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { message } from 'antd';
-
-interface Offer {
-  id?: number;
-  application: number;
-  base_salary: number;
-  bonus: number;
-  equity: number;
-  sign_on: number;
-  benefits_value: number;
-  pto_days: number;
-  is_current: boolean;
-  created_at?: string;
-  [key: string]: unknown;
-}
-
-interface Application {
-  id: number;
-  company_name: string;
-  role_title: string;
-  location?: string;
-  rto_policy?: string;
-}
+import OfferScenarioSimulator from './OfferScenarioSimulator';
+import {
+  type ApplicationLike as Application,
+  type BenefitItem,
+  type OfferLike as Offer,
+  computeBenefitsTotal,
+} from './calculations';
 
 const OfferComparison = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -53,6 +38,7 @@ const OfferComparison = () => {
 
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
   const [editingApp, setEditingApp] = useState<Application | null>(null);
+  const [editingBenefitItems, setEditingBenefitItems] = useState<BenefitItem[]>([]);
   const [bonusMode, setBonusMode] = useState<'%' | '#'>('#');
   const [bonusPercent, setBonusPercent] = useState<number | string>('');
 
@@ -62,6 +48,10 @@ const OfferComparison = () => {
 
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [adjustedByOfferId, setAdjustedByOfferId] = useState<
+    Record<number, { adjustedValue: number; adjustedDiff: number }>
+  >({});
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
     const saved = localStorage.getItem('offersSelectedYear');
     return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
@@ -105,8 +95,30 @@ const OfferComparison = () => {
 
   const handleEditClick = (offer: Offer) => {
     const app = applications.find((a) => a.id === offer.application);
-    setEditingApp(app ? { ...app } : null);
+    setEditingApp(
+      app
+        ? {
+            ...app,
+            rto_days_per_week:
+              typeof app.rto_days_per_week === 'number'
+                ? app.rto_days_per_week
+                : app.rto_policy === 'REMOTE'
+                  ? 0
+                  : app.rto_policy === 'ONSITE'
+                    ? 5
+                    : 3,
+          }
+        : null
+    );
     setEditingOffer({ ...offer });
+    setEditingBenefitItems([
+      {
+        id: `edit-benefit-${Date.now()}`,
+        label: 'Benefits',
+        amount: Number(offer.benefits_value) || 0,
+        frequency: 'YEARLY',
+      },
+    ]);
 
     // Reset Modes
     setBonusMode('#');
@@ -125,6 +137,9 @@ const OfferComparison = () => {
         await updateApplication(editingApp.id, {
           company_name: editingApp.company_name,
           role_title: editingApp.role_title,
+          location: editingApp.location,
+          rto_policy: editingApp.rto_policy,
+          rto_days_per_week: editingApp.rto_days_per_week ?? 0,
         });
       }
 
@@ -219,6 +234,50 @@ const OfferComparison = () => {
     };
   });
 
+  const updateEditingBenefits = (items: BenefitItem[]) => {
+    setEditingBenefitItems(items);
+    const total = computeBenefitsTotal(items);
+    setEditingOffer((prev) => (prev ? { ...prev, benefits_value: total } : prev));
+  };
+
+  const addEditingBenefitItem = () => {
+    updateEditingBenefits([
+      ...editingBenefitItems,
+      { id: `edit-benefit-${Date.now()}`, label: '', amount: 0, frequency: 'MONTHLY' },
+    ]);
+  };
+
+  const updateEditingBenefitItem = (id: string, patch: Partial<BenefitItem>) => {
+    updateEditingBenefits(editingBenefitItems.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
+
+  const removeEditingBenefitItem = (id: string) => {
+    updateEditingBenefits(editingBenefitItems.filter((item) => item.id !== id));
+  };
+
+  const handleRealAdjustedChange = useCallback(
+    (next: Record<number, { adjustedValue: number; adjustedDiff: number }>) => {
+      setAdjustedByOfferId((prev) => {
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(next);
+        if (prevKeys.length !== nextKeys.length) return next;
+        for (const key of nextKeys) {
+          const prevRow = prev[Number(key)];
+          const nextRow = next[Number(key)];
+          if (!prevRow || !nextRow) return next;
+          if (
+            Math.round(prevRow.adjustedValue) !== Math.round(nextRow.adjustedValue) ||
+            Math.round(prevRow.adjustedDiff) !== Math.round(nextRow.adjustedDiff)
+          ) {
+            return next;
+          }
+        }
+        return prev;
+      });
+    },
+    []
+  );
+
   if (loading) return <div className="p-8 text-center text-gray-500">Loading offers...</div>;
 
   return (
@@ -233,6 +292,14 @@ const OfferComparison = () => {
         onPrimaryAction={() => setIsAddJobOpen(true)}
         primaryActionLabel="Add Current Job"
         primaryActionIcon={<PlusOutlined />}
+        extraActions={
+          <button
+            onClick={() => setIsSimulatorOpen((prev) => !prev)}
+            className="toolbar-native-btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm shadow-sm"
+          >
+            {isSimulatorOpen ? 'Hide Offer Adjustments' : 'Open Offer Adjustments'}
+          </button>
+        }
       />
 
       {/* Chart Section */}
@@ -252,6 +319,14 @@ const OfferComparison = () => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      <OfferScenarioSimulator
+        isOpen={isSimulatorOpen}
+        filteredOffers={filteredOffers}
+        applications={applications}
+        getApplicationName={getApplicationName}
+        onRealAdjustedChange={handleRealAdjustedChange}
+      />
 
       {/* Comparison Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -287,10 +362,16 @@ const OfferComparison = () => {
                   Total Comp
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Adjusted Value
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   PTO Days
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Diff vs Current
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Adj Diff vs Current
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -320,6 +401,7 @@ const OfferComparison = () => {
 
                 const diff = total - currentTotal;
                 const diffPercent = currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
+                const adjusted = offer.id ? adjustedByOfferId[offer.id] : undefined;
 
                 return (
                   <tr key={offer.id || idx} className={isCurrent ? 'bg-blue-50' : ''}>
@@ -375,6 +457,9 @@ const OfferComparison = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                       ${total.toLocaleString()}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      {adjusted ? `$${Math.round(adjusted.adjustedValue).toLocaleString()}` : '-'}
+                    </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {offer.pto_days || 0} days
@@ -390,6 +475,16 @@ const OfferComparison = () => {
                             ({diff > 0 ? '+' : ''}
                             {diffPercent}%)
                           </span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                      {isCurrent || !adjusted ? (
+                        <span className="text-gray-400">-</span>
+                      ) : (
+                        <span className={adjusted.adjustedDiff >= 0 ? 'text-green-600' : 'text-red-500'}>
+                          {adjusted.adjustedDiff >= 0 ? '+' : ''}$
+                          {Math.round(adjusted.adjustedDiff).toLocaleString()}
                         </span>
                       )}
                     </td>
@@ -417,7 +512,7 @@ const OfferComparison = () => {
               })}
               {offers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={13} className="px-6 py-4 text-center text-gray-500">
                     No offers available. Add an "OFFER" status to an application to see it here.
                   </td>
                 </tr>
@@ -489,7 +584,7 @@ const OfferComparison = () => {
             <div className="p-6 space-y-4">
               {/* App Details Editing */}
               {editingApp && (
-                <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-gray-100">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Company Name</label>
                     <input
@@ -510,6 +605,60 @@ const OfferComparison = () => {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Location</label>
+                    <input
+                      type="text"
+                      value={editingApp.location || ''}
+                      onChange={(e) => setEditingApp({ ...editingApp, location: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                      placeholder="e.g. San Francisco, CA"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">RTO Policy</label>
+                    <select
+                      value={editingApp.rto_policy || 'HYBRID'}
+                      onChange={(e) => {
+                        const nextPolicy = e.target.value;
+                        setEditingApp({
+                          ...editingApp,
+                          rto_policy: nextPolicy,
+                          rto_days_per_week:
+                            nextPolicy === 'REMOTE'
+                              ? 0
+                              : nextPolicy === 'ONSITE'
+                                ? 5
+                                : editingApp.rto_days_per_week ?? 3,
+                        });
+                      }}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                    >
+                      <option value="REMOTE">Remote</option>
+                      <option value="HYBRID">Hybrid</option>
+                      <option value="ONSITE">Onsite</option>
+                    </select>
+                  </div>
+                  {(editingApp.rto_policy === 'HYBRID' || editingApp.rto_policy === 'ONSITE') && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        In-Office Days / Week
+                      </label>
+                      <input
+                        type="number"
+                        min={editingApp.rto_policy === 'ONSITE' ? 3 : 1}
+                        max={5}
+                        value={editingApp.rto_days_per_week ?? (editingApp.rto_policy === 'ONSITE' ? 5 : 3)}
+                        onChange={(e) =>
+                          setEditingApp({
+                            ...editingApp,
+                            rto_days_per_week: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -720,21 +869,75 @@ const OfferComparison = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Benefits Value
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700">Benefits Value (Auto)</label>
                     <input
                       type="number"
+                      readOnly
                       value={editingOffer.benefits_value}
-                      onChange={(e) =>
-                        setEditingOffer({
-                          ...editingOffer,
-                          benefits_value: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                      className="mt-1 block w-full rounded-md border-gray-200 bg-gray-50 text-gray-700 shadow-sm sm:text-sm border p-2"
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">Benefit Breakdown</label>
+                    <button
+                      type="button"
+                      onClick={addEditingBenefitItem}
+                      className="text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {editingBenefitItems.map((item) => (
+                      <div key={item.id} className="grid grid-cols-12 gap-2">
+                        <input
+                          type="text"
+                          value={item.label}
+                          onChange={(e) =>
+                            updateEditingBenefitItem(item.id, { label: e.target.value })
+                          }
+                          placeholder="Benefit name"
+                          className="col-span-5 rounded-md border border-gray-300 px-2 py-2 text-sm"
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          value={item.amount}
+                          onChange={(e) =>
+                            updateEditingBenefitItem(item.id, {
+                              amount: Number(e.target.value) || 0,
+                            })
+                          }
+                          className="col-span-3 rounded-md border border-gray-300 px-2 py-2 text-sm"
+                        />
+                        <select
+                          value={item.frequency}
+                          onChange={(e) =>
+                            updateEditingBenefitItem(item.id, {
+                              frequency: e.target.value as BenefitItem['frequency'],
+                            })
+                          }
+                          className="col-span-3 rounded-md border border-gray-300 px-2 py-2 text-sm"
+                        >
+                          <option value="MONTHLY">/month</option>
+                          <option value="YEARLY">/year</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => removeEditingBenefitItem(item.id)}
+                          className="col-span-1 text-red-500 text-sm"
+                          aria-label="Remove benefit item"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Annualized total: ${Math.round(computeBenefitsTotal(editingBenefitItems)).toLocaleString()}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">PTO Days</label>
@@ -779,6 +982,7 @@ const OfferComparison = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

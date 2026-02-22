@@ -10,6 +10,7 @@ export interface CareerApplication {
   salary_range?: string;
   location?: string;
   rto_policy?: string;
+  rto_days_per_week?: number;
   current_round?: number;
   notes?: string;
   is_locked?: boolean;
