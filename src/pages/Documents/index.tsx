@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, Card, Table, Tag, Space, Popconfirm, message } from 'antd';
-import { UploadOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, DeleteOutlined } from '@ant-design/icons';
-import { getDocuments, deleteDocument } from '../../api';
+import { Button, Card, Table, Tag, Space, Popconfirm, message } from 'antd';
+import { PlusOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, DeleteOutlined } from '@ant-design/icons';
+import { getDocuments, deleteDocument, deleteAllDocuments, exportDocuments } from '../../api';
 import type { Document } from '../../types';
 import UploadDocumentModal from './UploadDocumentModal';
-
-const { Title } = Typography;
+import PageActionToolbar from '../../components/PageActionToolbar';
+import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 const Documents: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
+    const saved = localStorage.getItem('documentsSelectedYear');
+    return saved ? (saved === 'all' ? 'all' : parseInt(saved, 10)) : getCurrentYear();
+  });
 
   const fetchDocuments = async () => {
     try {
@@ -28,6 +32,33 @@ const Documents: React.FC = () => {
   useEffect(() => {
     fetchDocuments();
   }, []);
+
+  const handleYearChange = (year: number | 'all') => {
+    setSelectedYear(year);
+    localStorage.setItem('documentsSelectedYear', year.toString());
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await deleteAllDocuments();
+      message.success('All documents deleted successfully');
+      fetchDocuments();
+    } catch (error) {
+      message.error('Failed to delete all documents');
+      console.error(error);
+    }
+  };
+
+  const handleExportWrapper = async (format: string) => {
+    const response = await exportDocuments(format);
+    return {
+      data: response.data,
+      headers: response.headers as unknown as Record<string, string>,
+    };
+  };
+
+  const availableYears = getAvailableYears(documents, 'created_at');
+  const filteredDocuments = filterByYear(documents, selectedYear, 'created_at');
 
   const handleDelete = async (id: number) => {
     try {
@@ -116,28 +147,29 @@ const Documents: React.FC = () => {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <Title level={2} className="!mb-1">Document Vault</Title>
-          <Typography.Text className="text-gray-500">
-            Manage your resumes, cover letters, and other career materials.
-          </Typography.Text>
-        </div>
-        <Button 
-          type="primary" 
-          icon={<UploadOutlined />} 
-          size="large"
-          className="shadow-md bg-blue-600 hover:bg-blue-500 border-none px-6"
-          onClick={() => setIsUploadModalVisible(true)}
-        >
-          Upload Document
-        </Button>
-      </div>
+      <PageActionToolbar
+        title="Document Vault"
+        subtitle="Manage your resumes, cover letters, and other career materials."
+        selectedYear={selectedYear}
+        onYearChange={handleYearChange}
+        availableYears={availableYears}
+        onDeleteAll={handleDeleteAll}
+        deleteAllLabel="Delete All"
+        deleteAllConfirmTitle="Delete All Documents?"
+        deleteAllConfirmDescription="This will permanently delete all documents."
+        deleteAllDisabled={documents.length === 0}
+        onExport={handleExportWrapper}
+        exportFilename="documents"
+        onImport={() => setIsUploadModalVisible(true)}
+        onPrimaryAction={() => setIsUploadModalVisible(true)}
+        primaryActionLabel="Add Document"
+        primaryActionIcon={<PlusOutlined />}
+      />
 
       <Card className="shadow-sm border-gray-100 rounded-xl overflow-hidden">
         <Table 
           columns={columns} 
-          dataSource={documents} 
+          dataSource={filteredDocuments} 
           rowKey="id" 
           loading={loading}
           pagination={{ pageSize: 10 }}

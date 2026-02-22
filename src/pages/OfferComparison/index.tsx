@@ -19,7 +19,7 @@ import {
 } from 'recharts';
 import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
-import YearFilter from '../../components/YearFilter';
+import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { message } from 'antd';
 
@@ -224,26 +224,16 @@ const OfferComparison = () => {
   return (
     <div className="space-y-6">
       {contextHolder}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Offer Comparison</h2>
-          <p className="text-gray-500">Compare Total Compensation (TC) across your offers.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <YearFilter
-            selectedYear={selectedYear}
-            onYearChange={handleYearChange}
-            availableYears={availableYears}
-          />
-          <button
-            onClick={() => setIsAddJobOpen(true)}
-            className="flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium shadow-sm"
-          >
-            <PlusOutlined className="mr-2" />
-            Add Current Job
-          </button>
-        </div>
-      </div>
+      <PageActionToolbar
+        title="Offer Comparison"
+        subtitle="Compare Total Compensation (TC) across your offers."
+        selectedYear={selectedYear}
+        onYearChange={handleYearChange}
+        availableYears={availableYears}
+        onPrimaryAction={() => setIsAddJobOpen(true)}
+        primaryActionLabel="Add Current Job"
+        primaryActionIcon={<PlusOutlined />}
+      />
 
       {/* Chart Section */}
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-96">

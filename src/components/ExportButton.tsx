@@ -13,12 +13,16 @@ interface ExportButtonProps {
   onExport: (format: string) => Promise<{ data: Blob; headers: Record<string, string> }>;
   label?: string;
   filename?: string;
+  className?: string;
+  size?: 'large' | 'middle' | 'small';
 }
 
 const ExportButton: React.FC<ExportButtonProps> = ({
   onExport,
   label = 'Export',
   filename = 'export',
+  className,
+  size = 'middle',
 }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [isExporting, setIsExporting] = useState(false);
@@ -89,7 +93,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
     <>
       {contextHolder}
       <Dropdown menu={{ items }} trigger={['click']} disabled={isExporting}>
-        <Button icon={<DownloadOutlined />} loading={isExporting}>
+        <Button className={className} size={size} icon={<DownloadOutlined />} loading={isExporting}>
           {label} <DownOutlined className="text-xs" />
         </Button>
       </Dropdown>
