@@ -43,20 +43,47 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 - **OfferComparison.tsx**: Advanced offer analysis interface
   - **Interactive Chart**: Recharts-powered stacked bar chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
-  - **Comparison Table**: Multi-column table displaying:
+  - **Offer Details Table**: Multi-column table displaying:
     - Company Name & Role Title (bold/gray styling)
     - Location & RTO Policy (color-coded badges)
     - Salary components (Base, Bonus, Equity, Sign-On)
+    - After-tax breakdown (base/bonus/equity)
     - Total Compensation (calculated)
-    - PTO Days
+    - PTO/Holiday day counts
     - **Diff vs Current**: Automatic percentage and dollar difference vs. marked "Current" role (green = higher, red = lower)
-  - **Edit Modal**:
-    - Edit Company Name & Role Title directly
-    - Bonus input with $/ % toggle
-    - Equity calculator (Annual or Total Grant with vesting % slider)
-    - PTO Days input
-    - "Mark as Current" checkbox
+  - **Offer Adjustments Panel**:
+    - Adjusted comparison by tax/COL/rent/work setup
+    - Per-offer tax-rate and rent override support
+    - US city list and marital-status inputs
+    - Custom offers with view/edit/delete actions
+    - Saves adjustments locally (browser storage)
+  - **Offer Form (shared for real/custom offers)**:
+    - Bonus input with `$` / `%` toggle
+    - Equity input with `/yr` and `total + vesting %` mode
+    - Benefit items (monthly/yearly) with annualized roll-up
+    - Work mode, RTO days, commute and food-perk annualization
+    - PTO days and holiday days
+    - Distinct `View` (read-only) and `Edit` modes
   - **Add Current Job**: Quick action to add your current employer as a baseline
+
+### 📄 Document Vault
+
+- **Document management table** with:
+  - file type icon, title link, category, linked application, upload date
+  - row actions: lock/unlock, view, edit, delete
+- **Versioning support**:
+  - version badge (`v1`, `v2`, ...)
+  - version history modal per document
+  - upload a new version while preserving version chain
+- **Page actions**:
+  - year filter
+  - add/upload document
+  - import
+  - export
+  - delete all (locked documents are preserved by backend rules)
+- **Edit modal**:
+  - update title/type
+  - optional link to application
 
 ### 📅 Availability & Events
 
@@ -132,6 +159,13 @@ The **Frontend** is a React-based single-page application that provides an intui
    ```
 
 The app will be available at `http://localhost:5173` and will connect to the backend at `http://localhost:8000`.
+
+If backend models changed, run backend migrations before using the app:
+
+```bash
+cd ../api
+python manage.py migrate
+```
 
 ### Build for Production
 
@@ -245,28 +279,30 @@ frontend/
 All API calls are centralized in `src/api.ts` using Axios:
 
 ```typescript
-const apiClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+const api = axios.create({
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
 // Example functions
-export const getApplications = () => apiClient.get('/applications/');
-export const createApplication = (data) => apiClient.post('/applications/', data);
-export const updateApplication = (id, data) => apiClient.put(`/applications/${id}/`, data);
-export const deleteApplication = (id) => apiClient.delete(`/applications/${id}/`);
+export const getApplications = () => api.get('/career/applications/');
+export const createApplication = (data) => api.post('/career/applications/', data);
+export const updateApplication = (id, data) => api.patch(`/career/applications/${id}/`, data);
+export const deleteApplication = (id) => api.delete(`/career/applications/${id}/`);
 
 export const importApplications = (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
-  return apiClient.post('/applications/import/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  return api.post('/career/import/', formData, {
+    headers: { 'Content-Type': undefined },
   });
 };
 
 export const exportApplications = (format: 'csv' | 'json' | 'xlsx') =>
-  apiClient.get(`/applications/export/?fmt=${format}`, { responseType: 'blob' });
+  api.get(`/career/applications/export/?fmt=${format}`, { responseType: 'blob' });
 ```
+
+Career endpoints are served under `/api/career/*` (for example `/api/career/applications/`, `/api/career/offers/`, `/api/career/documents/`, `/api/career/tasks/`).
 
 ## 🎯 Key Features Explained
 
