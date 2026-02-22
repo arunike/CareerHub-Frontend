@@ -480,12 +480,13 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
             {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
           </Text>
         </div>
-        <Button
-          icon={<SettingOutlined />}
+        <button
           onClick={() => setIsCustomizeOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
         >
+          <SettingOutlined />
           Customize Dashboard
-        </Button>
+        </button>
       </div>
 
       <DndContext 

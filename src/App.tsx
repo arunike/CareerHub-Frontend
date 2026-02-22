@@ -16,6 +16,7 @@ function App() {
           token: {
             colorPrimary: '#1890ff',
             borderRadius: 8,
+            fontSize: 18,
           },
         }}
       >
