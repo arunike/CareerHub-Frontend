@@ -51,7 +51,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
 }) => {
   return (
     <div className={`page-toolbar ${singleRowDesktop ? 'page-toolbar-single-row' : ''}`.trim()}>
-      <div>
+      <div className="page-toolbar-heading">
         <Typography.Title level={2} style={{ margin: 0 }}>
           {title}
         </Typography.Title>

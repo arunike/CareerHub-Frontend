@@ -269,22 +269,17 @@ const Holidays = () => {
                     <Input placeholder="Winter Break" />
                   </Form.Item>
                 </Col>
-                <Col span={24} md={8} style={{ display: 'flex', alignItems: 'center' }}>
-                  <Form.Item
-                    name="is_recurring"
-                    valuePropName="checked"
-                    style={{ marginBottom: 0, marginTop: 24 }}
-                  >
-                    <Checkbox>Recurring (Yearly)</Checkbox>
+                <Col span={24} md={8}>
+                  <Form.Item label=" " colon={false} style={{ marginBottom: 0 }}>
+                    <div className="flex items-center justify-between gap-3">
+                      <Form.Item name="is_recurring" valuePropName="checked" noStyle>
+                        <Checkbox>Recurring (Yearly)</Checkbox>
+                      </Form.Item>
+                      <Button type="primary" htmlType="submit" icon={<PlusOutlined />} size="large">
+                        Add
+                      </Button>
+                    </div>
                   </Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    icon={<PlusOutlined />}
-                    style={{ marginLeft: 'auto', marginTop: 24 }}
-                  >
-                    Add
-                  </Button>
                 </Col>
               </Row>
             </Form>

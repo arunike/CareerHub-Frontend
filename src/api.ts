@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Event, Holiday, UserSettings, RecurrenceRule } from './types';
+import type { Event, Holiday, UserSettings, RecurrenceRule, Task } from './types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -125,6 +125,15 @@ export const deleteDocument = (id: number) => api.delete(`/career/documents/${id
 export const detectConflicts = () => api.post('/events/detect_conflicts/');
 export const getUnresolvedConflicts = () => api.get('/conflicts/unresolved/');
 export const resolveConflict = (id: number) => api.post(`/conflicts/${id}/resolve/`);
+
+// Career - Tasks
+export const getTasks = () => api.get('/career/tasks/');
+export const createTask = (data: Partial<Task>) => api.post('/career/tasks/', data);
+export const updateTask = (id: number, data: Partial<Task>) => api.patch(`/career/tasks/${id}/`, data);
+export const deleteTask = (id: number) => api.delete(`/career/tasks/${id}/`);
+export const reorderTasks = (
+  updates: Array<{ id: number; status: 'TODO' | 'IN_PROGRESS' | 'DONE'; position: number }>
+) => api.post('/career/tasks/reorder/', { updates });
 
 export const exportEvents = (format: string = 'csv') =>
   api.get('/events/export/', {

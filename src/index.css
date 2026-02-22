@@ -19,30 +19,63 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  padding-block: 4px;
+}
+
+.page-toolbar-heading {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .page-toolbar-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .page-toolbar-single-row {
   flex-wrap: nowrap;
 }
 
+.page-toolbar-single-row .page-toolbar-actions {
+  flex-wrap: nowrap;
+}
+
+.toolbar-extra-actions {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-toggle-group {
+  display: flex;
+  align-items: center;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.toolbar-toggle-group > button {
+  min-height: 40px;
+  height: 40px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  line-height: 1.1;
+}
+
 .toolbar-btn.ant-btn,
 .toolbar-native-btn {
-  height: 100%;
+  min-height: 40px;
+  height: 40px;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding: 8px 16px;
 }
 
 .toolbar-select.ant-select {
@@ -50,20 +83,63 @@ body {
 }
 
 .toolbar-select.ant-select .ant-select-selector {
+  min-height: 40px !important;
+  height: 40px !important;
+  padding-inline: 16px !important;
   display: flex;
   align-items: center;
+}
+
+@media (max-width: 1200px) {
+  .page-toolbar {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .page-toolbar-heading {
+    flex-basis: 100%;
+  }
+
+  .page-toolbar-actions {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 768px) {
   .page-toolbar {
     align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .page-toolbar-heading {
+    flex-basis: 100%;
+  }
+
+  .page-toolbar-actions {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .page-toolbar-actions .toolbar-btn,
+  .page-toolbar-actions .toolbar-select,
+  .page-toolbar-actions .toolbar-native-btn,
+  .page-toolbar-actions .toolbar-extra-actions {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .toolbar-select.ant-select {
+    min-width: 0;
   }
 }
 
 @media (max-width: 480px) {
   .page-toolbar-actions .toolbar-btn,
   .page-toolbar-actions .toolbar-select,
-  .page-toolbar-actions .toolbar-native-btn {
+  .page-toolbar-actions .toolbar-native-btn,
+  .page-toolbar-actions .toolbar-extra-actions {
     flex-basis: 100%;
   }
 }
