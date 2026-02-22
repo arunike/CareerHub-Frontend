@@ -5,6 +5,8 @@ type Props = {
   shareLink: ShareLink | null;
   shareDuration: number;
   onShareDurationChange: (value: number) => void;
+  bookingBlockMinutes: number;
+  onBookingBlockMinutesChange: (value: number) => void;
   generatingLink: boolean;
   onGenerateShareLink: () => void;
   onCopyShareLink: () => void;
@@ -17,6 +19,8 @@ const AvailabilityBookingCard = ({
   shareLink,
   shareDuration,
   onShareDurationChange,
+  bookingBlockMinutes,
+  onBookingBlockMinutesChange,
   generatingLink,
   onGenerateShareLink,
   onCopyShareLink,
@@ -45,6 +49,9 @@ const AvailabilityBookingCard = ({
               <p className="text-xs text-gray-500 mt-2">
                 Expires: {new Date(shareLink.expires_at).toLocaleString()}
               </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Booking duration: {shareLink.booking_block_minutes} minutes per slot
+              </p>
             </>
           ) : (
             <p className="text-sm text-gray-500">No active booking link.</p>
@@ -53,15 +60,32 @@ const AvailabilityBookingCard = ({
 
         <div className="flex flex-col sm:flex-row gap-2 lg:items-end">
           {!shareLink && (
-            <select
-              value={shareDuration}
-              onChange={(e) => onShareDurationChange(Number(e.target.value))}
-              className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
-            >
-              <option value={7}>7 days</option>
-              <option value={14}>14 days</option>
-              <option value={30}>30 days</option>
-            </select>
+            <>
+              <select
+                value={shareDuration}
+                onChange={(e) => onShareDurationChange(Number(e.target.value))}
+                className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                title="Link expiration"
+              >
+                <option value={7}>7 days</option>
+                <option value={14}>14 days</option>
+                <option value={30}>30 days</option>
+              </select>
+              <select
+                value={bookingBlockMinutes}
+                onChange={(e) => onBookingBlockMinutesChange(Number(e.target.value))}
+                className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                title="Booking duration"
+              >
+                <option value={15}>15 min</option>
+                <option value={20}>20 min</option>
+                <option value={30}>30 min</option>
+                <option value={45}>45 min</option>
+                <option value={60}>60 min</option>
+                <option value={90}>90 min</option>
+                <option value={120}>120 min</option>
+              </select>
+            </>
           )}
           {!shareLink ? (
             <button

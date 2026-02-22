@@ -36,6 +36,7 @@ const Availability = () => {
   const [textMode, setTextMode] = useState<'detailed' | 'combined'>('detailed');
   const [shareLink, setShareLink] = useState<ShareLink | null>(null);
   const [shareDuration, setShareDuration] = useState<number>(14);
+  const [bookingBlockMinutes, setBookingBlockMinutes] = useState<number>(30);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [deactivatingLink, setDeactivatingLink] = useState(false);
 
@@ -76,6 +77,9 @@ const Availability = () => {
     try {
       const resp = await getCurrentShareLink();
       setShareLink(resp.data.active);
+      if (resp.data.active?.booking_block_minutes) {
+        setBookingBlockMinutes(resp.data.active.booking_block_minutes);
+      }
     } catch (error) {
       console.error('Failed to fetch share link', error);
     }
@@ -94,6 +98,7 @@ const Availability = () => {
       const resp = await generateShareLink({
         title: 'Book a time with me',
         duration_days: shareDuration,
+        booking_block_minutes: bookingBlockMinutes,
       });
       setShareLink(resp.data);
       messageApi.success('Booking link generated');
@@ -283,6 +288,8 @@ const Availability = () => {
             shareLink={shareLink}
             shareDuration={shareDuration}
             onShareDurationChange={setShareDuration}
+            bookingBlockMinutes={bookingBlockMinutes}
+            onBookingBlockMinutesChange={setBookingBlockMinutes}
             generatingLink={generatingLink}
             onGenerateShareLink={handleGenerateShareLink}
             onCopyShareLink={handleCopyShareLink}

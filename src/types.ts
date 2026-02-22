@@ -172,6 +172,7 @@ export interface ShareLink {
   uuid: string;
   title: string;
   duration_days: number;
+  booking_block_minutes: number;
   created_at: string;
   expires_at: string;
   is_active: boolean;

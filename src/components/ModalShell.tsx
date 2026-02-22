@@ -13,6 +13,7 @@ type Props = {
   headerClassName?: string;
   titleClassName?: string;
   closeButtonClassName?: string;
+  zIndex?: number;
   footer?: ReactNode;
   children: ReactNode;
 };
@@ -28,13 +29,17 @@ const ModalShell = ({
   headerClassName = 'px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50',
   titleClassName = 'font-semibold text-gray-900',
   closeButtonClassName = 'text-gray-400 hover:text-gray-600',
+  zIndex = 1000,
   footer,
   children,
 }: Props) => {
   if (!isOpen || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+      style={{ zIndex }}
+    >
       <div
         className={`bg-white rounded-xl shadow-xl w-full ${maxWidthClass} max-h-[90vh] overflow-hidden flex flex-col ${wrapperClassName}`.trim()}
       >

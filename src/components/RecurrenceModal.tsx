@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { RetweetOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Modal } from 'antd';
 import clsx from 'clsx';
-import ModalShell from './ModalShell';
 
 import type { RecurrenceRule } from '../types';
 
@@ -18,16 +17,39 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
   onSave,
   initialRule,
 }) => {
+  const getInitialState = () => ({
+    frequency: (initialRule?.frequency || 'weekly') as 'daily' | 'weekly' | 'monthly' | 'yearly',
+    interval: String(initialRule?.interval || 1),
+    endType: (initialRule?.count ? 'count' : initialRule?.until ? 'until' : 'never') as
+      | 'never'
+      | 'count'
+      | 'until',
+    count: String(initialRule?.count || 10),
+    until: initialRule?.until || '',
+    selectedDays: initialRule?.byweekday || [],
+  });
+
+  const initial = getInitialState();
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>(
-    initialRule?.frequency || 'weekly'
+    initial.frequency
   );
-  const [interval, setInterval] = useState(initialRule?.interval || 1);
-  const [endType, setEndType] = useState<'never' | 'count' | 'until'>(
-    initialRule?.count ? 'count' : initialRule?.until ? 'until' : 'never'
-  );
-  const [count, setCount] = useState(initialRule?.count || 10);
-  const [until, setUntil] = useState(initialRule?.until || '');
-  const [selectedDays, setSelectedDays] = useState<number[]>(initialRule?.byweekday || []);
+  const [intervalValue, setIntervalValue] = useState(initial.interval);
+  const [endType, setEndType] = useState<'never' | 'count' | 'until'>(initial.endType);
+  const [countValue, setCountValue] = useState(initial.count);
+  const [until, setUntil] = useState(initial.until);
+  const [selectedDays, setSelectedDays] = useState<number[]>(initial.selectedDays);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const next = getInitialState();
+    setFrequency(next.frequency);
+    setIntervalValue(next.interval);
+    setEndType(next.endType);
+    setCountValue(next.count);
+    setUntil(next.until);
+    setSelectedDays(next.selectedDays);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialRule]);
 
   const weekDays = [
     { label: 'Mon', value: 0 },
@@ -39,14 +61,25 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
     { label: 'Sun', value: 6 },
   ];
 
+  const toggleDay = (day: number) => {
+    if (selectedDays.includes(day)) {
+      setSelectedDays(selectedDays.filter((d) => d !== day));
+    } else {
+      setSelectedDays([...selectedDays, day].sort());
+    }
+  };
+
   const handleSave = () => {
+    const parsedInterval = Math.max(1, Number(intervalValue) || 1);
+    const parsedCount = Math.max(1, Number(countValue) || 1);
+
     const rule: RecurrenceRule = {
       frequency,
-      interval,
+      interval: parsedInterval,
     };
 
     if (endType === 'count') {
-      rule.count = count;
+      rule.count = parsedCount;
     } else if (endType === 'until') {
       rule.until = until;
     }
@@ -59,57 +92,23 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
     onClose();
   };
 
-  const toggleDay = (day: number) => {
-    if (selectedDays.includes(day)) {
-      setSelectedDays(selectedDays.filter((d) => d !== day));
-    } else {
-      setSelectedDays([...selectedDays, day].sort());
-    }
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <ModalShell
-      isOpen={isOpen}
-      titleNode={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-            <RetweetOutlined className="text-xl text-white" />
-          </div>
-          <span className="text-xl font-bold text-white">Repeat Event</span>
-        </div>
-      }
-      onClose={onClose}
-      maxWidthClass="max-w-md"
-      wrapperClassName="rounded-2xl shadow-2xl"
-      headerClassName="sticky top-0 bg-linear-to-r from-blue-600 to-blue-700 px-6 py-5 flex justify-between items-center rounded-t-2xl"
-      titleClassName=""
-      closeButtonClassName="text-white/80 hover:text-white transition p-1 hover:bg-white/10 rounded-lg"
-      bodyClassName="overflow-y-auto"
-      footer={
-        <>
-          <button
-            onClick={onClose}
-            className="flex-1 px-5 py-2.5 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex-1 px-5 py-2.5 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-semibold shadow-lg shadow-blue-500/30"
-          >
-            Save
-          </button>
-        </>
-      }
+    <Modal
+      title="Repeat Event"
+      open={isOpen}
+      onCancel={onClose}
+      onOk={handleSave}
+      okText="Save"
+      cancelText="Cancel"
+      zIndex={1200}
+      destroyOnClose={false}
+      maskClosable={false}
     >
-      <div className="p-6 space-y-6">
-        {/* Frequency */}
+      <div className="space-y-5 pt-1">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Repeat</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
           <select
-            className="w-full rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition text-gray-900 font-medium"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={frequency}
             onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
           >
@@ -120,31 +119,29 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
           </select>
         </div>
 
-        {/* Interval */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Every</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
           <div className="flex items-center gap-3">
             <input
               type="number"
               min="1"
               max="99"
-              className="w-24 rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
-              value={interval}
-              onChange={(e) => setInterval(Number(e.target.value))}
+              className="w-24 rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={intervalValue}
+              onChange={(e) => setIntervalValue(e.target.value)}
             />
-            <span className="text-base text-gray-700 font-medium">
-              {frequency === 'daily' && (interval === 1 ? 'day' : 'days')}
-              {frequency === 'weekly' && (interval === 1 ? 'week' : 'weeks')}
-              {frequency === 'monthly' && (interval === 1 ? 'month' : 'months')}
-              {frequency === 'yearly' && (interval === 1 ? 'year' : 'years')}
+            <span className="text-sm text-gray-700">
+              {frequency === 'daily' && (Number(intervalValue) === 1 ? 'day' : 'days')}
+              {frequency === 'weekly' && (Number(intervalValue) === 1 ? 'week' : 'weeks')}
+              {frequency === 'monthly' && (Number(intervalValue) === 1 ? 'month' : 'months')}
+              {frequency === 'yearly' && (Number(intervalValue) === 1 ? 'year' : 'years')}
             </span>
           </div>
         </div>
 
-        {/* Days of Week (for weekly) */}
         {frequency === 'weekly' && (
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Repeat on</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Repeat on</label>
             <div className="flex gap-2">
               {weekDays.map((day) => (
                 <button
@@ -152,10 +149,10 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                   type="button"
                   onClick={() => toggleDay(day.value)}
                   className={clsx(
-                    'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm',
+                    'flex-1 py-2 rounded-lg text-sm font-medium transition-colors',
                     selectedDays.includes(day.value)
-                      ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   )}
                 >
                   {day.label}
@@ -165,65 +162,61 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
           </div>
         )}
 
-        {/* End Type */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Ends</label>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Ends</label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 px-2 py-1 rounded">
               <input
                 type="radio"
                 name="endType"
                 checked={endType === 'never'}
                 onChange={() => setEndType('never')}
-                className="w-4 h-4 text-blue-600"
               />
-              <span className="text-sm font-medium text-gray-700">Never</span>
+              <span className="text-sm text-gray-700">Never</span>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
+            <label className="flex items-center gap-3 px-2 py-1 rounded">
               <input
                 type="radio"
                 name="endType"
                 checked={endType === 'count'}
                 onChange={() => setEndType('count')}
-                className="w-4 h-4 text-blue-600"
               />
-              <span className="text-sm font-medium text-gray-700">After</span>
+              <span className="text-sm text-gray-700">After</span>
               <input
                 type="number"
                 min="1"
                 max="999"
                 disabled={endType !== 'count'}
-                className="w-20 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
-                value={count}
-                onChange={(e) => setCount(Number(e.target.value))}
-                onClick={() => setEndType('count')}
+                className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                value={countValue}
+                onChange={(e) => setCountValue(e.target.value)}
+                onFocus={() => setEndType('count')}
               />
-              <span className="text-sm font-medium text-gray-700">occurrences</span>
+              <span className="text-sm text-gray-700">occurrences</span>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
+            <label className="flex items-center gap-3 px-2 py-1 rounded">
               <input
                 type="radio"
                 name="endType"
                 checked={endType === 'until'}
                 onChange={() => setEndType('until')}
-                className="w-4 h-4 text-blue-600"
               />
-              <span className="text-sm font-medium text-gray-700">On</span>
+              <span className="text-sm text-gray-700">On</span>
               <input
                 type="date"
                 disabled={endType !== 'until'}
-                className="flex-1 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                 value={until}
                 onChange={(e) => setUntil(e.target.value)}
-                onClick={() => setEndType('until')}
+                onFocus={() => setEndType('until')}
               />
             </label>
           </div>
         </div>
       </div>
-    </ModalShell>
+    </Modal>
   );
 };
 
