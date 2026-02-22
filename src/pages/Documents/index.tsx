@@ -16,6 +16,7 @@ import UploadDocumentModal from './UploadDocumentModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import RowActions from '../../components/RowActions';
+import { usePersistedState } from '../../hooks/usePersistedState';
 
 const Documents: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -32,10 +33,14 @@ const Documents: React.FC = () => {
   const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
   const [applications, setApplications] = useState<Array<{ id: number; role_title: string; company_details?: { name: string } }>>([]);
   const [form] = Form.useForm();
-  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
-    const saved = localStorage.getItem('documentsSelectedYear');
-    return saved ? (saved === 'all' ? 'all' : parseInt(saved, 10)) : getCurrentYear();
-  });
+  const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
+    'documentsSelectedYear',
+    getCurrentYear(),
+    {
+      serialize: (value) => value.toString(),
+      deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw, 10)),
+    }
+  );
 
   const fetchDocuments = async () => {
     try {
@@ -66,7 +71,6 @@ const Documents: React.FC = () => {
 
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
-    localStorage.setItem('documentsSelectedYear', year.toString());
   };
 
   const handleDeleteAll = async () => {

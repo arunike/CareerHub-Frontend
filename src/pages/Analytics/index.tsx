@@ -18,6 +18,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import JobHuntAnalytics from '../../components/JobHuntAnalytics';
 import AvailabilityAnalytics from '../../components/AvailabilityAnalytics';
 import { message } from 'antd';
+import SegmentedToggle from '../../components/SegmentedToggle';
 
 const Analytics: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -61,7 +62,6 @@ const Analytics: React.FC = () => {
       setApplications(appsData);
 
       processAvailabilityData(eventsData);
-      processCareerData(appsData);
       processCareerData(appsData);
     } catch (error) {
       messageApi.error('Error fetching analytics');
@@ -221,30 +221,16 @@ const Analytics: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
         </div>
 
-        {/* Tab Switcher */}
         <div className="w-full sm:w-auto">
-          <div className="grid grid-cols-2 sm:flex bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('availability')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-              activeTab === 'availability'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Availability
-          </button>
-          <button
-            onClick={() => setActiveTab('career')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-              activeTab === 'career'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Job Hunt
-          </button>
-        </div>
+          <SegmentedToggle
+            value={activeTab}
+            onChange={setActiveTab}
+            wrapperClassName="grid grid-cols-2 sm:flex"
+            options={[
+              { value: 'availability', label: 'Availability', activeClassName: 'bg-white text-gray-900 shadow-sm' },
+              { value: 'career', label: 'Job Hunt', activeClassName: 'bg-white text-blue-600 shadow-sm' },
+            ]}
+          />
         </div>
       </div>
 

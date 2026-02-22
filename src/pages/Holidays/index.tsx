@@ -44,6 +44,7 @@ import type { Holiday } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { usePersistedState } from '../../hooks/usePersistedState';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -60,10 +61,14 @@ const Holidays = () => {
   // Sorting
   const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
-    const saved = localStorage.getItem('holidaysSelectedYear');
-    return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
-  });
+  const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
+    'holidaysSelectedYear',
+    getCurrentYear(),
+    {
+      serialize: (value) => value.toString(),
+      deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
+    }
+  );
 
   // Add Form State
   const [isRangeMode, setIsRangeMode] = useState(false);
@@ -109,7 +114,6 @@ const Holidays = () => {
   // Handle year change
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
-    localStorage.setItem('holidaysSelectedYear', year.toString());
   };
 
   // Handlers
