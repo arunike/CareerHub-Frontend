@@ -120,26 +120,45 @@ body {
   .page-toolbar-actions {
     width: 100%;
     margin-left: 0;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .page-toolbar-actions .toolbar-btn,
   .page-toolbar-actions .toolbar-select,
   .page-toolbar-actions .toolbar-native-btn,
   .page-toolbar-actions .toolbar-extra-actions {
-    flex: 1 1 calc(50% - 8px);
+    width: 100%;
+  }
+
+  .toolbar-btn.ant-btn,
+  .toolbar-native-btn {
+    width: 100%;
   }
 
   .toolbar-select.ant-select {
     min-width: 0;
+    width: 100% !important;
+  }
+
+  .toolbar-extra-actions {
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .page-toolbar-actions .toolbar-btn,
-  .page-toolbar-actions .toolbar-select,
-  .page-toolbar-actions .toolbar-native-btn,
-  .page-toolbar-actions .toolbar-extra-actions {
-    flex-basis: 100%;
+  .page-toolbar-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .holiday-list-header {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .holiday-list-actions {
+    padding-top: 2px;
+    padding-bottom: 2px;
   }
 }

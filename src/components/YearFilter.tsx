@@ -19,7 +19,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
   currentYear = new Date().getFullYear(),
   className,
   size = 'middle',
-  width = 190,
+  width,
 }) => {
   const normalizedYears = Array.from(
     new Set([
@@ -47,7 +47,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
       options={options}
       className={className}
       size={size}
-      style={{ width: '22%', height: '100%', paddingTop: 6, paddingBottom: 6, paddingLeft: 18 }}
+      style={typeof width === 'number' ? { width } : undefined}
       suffixIcon={<CalendarOutlined />}
     />
   );

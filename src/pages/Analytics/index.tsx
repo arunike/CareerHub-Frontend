@@ -215,17 +215,18 @@ const Analytics: React.FC = () => {
   return (
     <div className="space-y-6 w-full">
       {contextHolder}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <ThunderboltOutlined className="text-2xl text-blue-600 mr-2" />
           <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex bg-gray-100 p-1 rounded-lg">
+        <div className="w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('availability')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
               activeTab === 'availability'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -235,7 +236,7 @@ const Analytics: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('career')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
               activeTab === 'career'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -243,6 +244,7 @@ const Analytics: React.FC = () => {
           >
             Job Hunt
           </button>
+        </div>
         </div>
       </div>
 

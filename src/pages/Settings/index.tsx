@@ -436,8 +436,8 @@ const Settings: React.FC = () => {
       {/* Data Management */}
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-4 mb-4">Data Management</h3>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="min-w-0">
             <h4 className="font-medium text-gray-900">Export All Data</h4>
             <p className="text-sm text-gray-500">
               Download a full backup of all your data (Events, Holidays, Applications, Settings) as
@@ -445,9 +445,9 @@ const Settings: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
             <select
-              className="px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full lg:w-auto px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               id="export-format"
               defaultValue="json"
             >
@@ -483,7 +483,7 @@ const Settings: React.FC = () => {
                   console.error('Export failed', error);
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="w-full lg:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-blue-700 transition-colors"
             >
               <DownloadOutlined className="text-base" />
               <span>Export</span>
