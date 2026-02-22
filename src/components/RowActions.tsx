@@ -15,6 +15,7 @@ interface RowActionsProps {
   editTitle?: string;
   deleteTitle?: string;
   deleteDescription?: string;
+  deleteButtonTooltip?: string;
   confirmDelete?: boolean;
   size?: 'small' | 'middle' | 'large';
 }
@@ -32,6 +33,7 @@ const RowActions: React.FC<RowActionsProps> = ({
   editTitle = 'Edit',
   deleteTitle = 'Delete?',
   deleteDescription,
+  deleteButtonTooltip,
   confirmDelete = true,
   size = 'small',
 }) => {
@@ -65,15 +67,31 @@ const RowActions: React.FC<RowActionsProps> = ({
         </Tooltip>
       ) : null}
 
-      {onDelete ? (
-        confirmDelete ? (
-          <Popconfirm title={deleteTitle} description={deleteDescription} onConfirm={onDelete} disabled={disableDelete}>
-            <Button type="text" size={size} danger icon={<DeleteOutlined />} disabled={disableDelete} onClick={(e) => e.stopPropagation()} />
-          </Popconfirm>
+      {onDelete ? (() => {
+        const deleteButton = (
+          <Button
+            type="text"
+            size={size}
+            danger
+            icon={<DeleteOutlined />}
+            disabled={disableDelete}
+            onClick={confirmDelete ? (e) => e.stopPropagation() : stopAndRun(onDelete)}
+          />
+        );
+        const withConfirm =
+          confirmDelete && !disableDelete ? (
+            <Popconfirm title={deleteTitle} description={deleteDescription} onConfirm={onDelete}>
+              {deleteButton}
+            </Popconfirm>
+          ) : (
+            deleteButton
+          );
+        return deleteButtonTooltip ? (
+          <Tooltip title={deleteButtonTooltip}>{withConfirm}</Tooltip>
         ) : (
-          <Button type="text" size={size} danger icon={<DeleteOutlined />} disabled={disableDelete} onClick={stopAndRun(onDelete)} />
-        )
-      ) : null}
+          withConfirm
+        );
+      })() : null}
     </Space>
   );
 };

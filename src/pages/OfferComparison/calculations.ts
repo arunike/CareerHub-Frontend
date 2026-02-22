@@ -21,17 +21,27 @@ export interface SimulatedOffer {
   application?: number | null;
   custom_company_name?: string;
   custom_role_title?: string;
+  location?: string;
   base_salary: number;
   bonus: number;
   equity: number;
+  equity_total_grant?: number;
+  equity_vesting_percent?: number;
   sign_on: number;
   benefits_value: number;
+  benefit_items?: BenefitItem[];
   work_mode: 'REMOTE' | 'HYBRID' | 'ONSITE';
   rto_days_per_week: number;
-  free_food: boolean;
-  commute_monthly_cost: number;
-  wellness_stipend: number;
-  wlb_score: number;
+  commute_cost_value: number;
+  commute_cost_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  free_food_perk_value: number;
+  free_food_perk_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  pto_days: number;
+  holiday_days: number;
+  tax_base_rate?: number;
+  tax_bonus_rate?: number;
+  tax_equity_rate?: number;
+  monthly_rent?: number;
 }
 
 export interface OfferLike {
@@ -40,9 +50,13 @@ export interface OfferLike {
   base_salary: number;
   bonus: number;
   equity: number;
+  equity_total_grant?: number;
+  equity_vesting_percent?: number;
   sign_on: number;
   benefits_value: number;
+  benefit_items?: BenefitItem[];
   pto_days: number;
+  holiday_days?: number;
   is_current: boolean;
   created_at?: string;
   [key: string]: unknown;
@@ -55,6 +69,14 @@ export interface ApplicationLike {
   location?: string;
   rto_policy?: string;
   rto_days_per_week?: number;
+  commute_cost_value?: number;
+  commute_cost_frequency?: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  free_food_perk_value?: number;
+  free_food_perk_frequency?: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  tax_base_rate?: number;
+  tax_bonus_rate?: number;
+  tax_equity_rate?: number;
+  monthly_rent_override?: number;
 }
 
 export const DEFAULT_MARITAL_STATUS_OPTIONS: MaritalStatusOption[] = [
@@ -115,6 +137,16 @@ export const getDefaultLifestyleByWorkMode = (workMode: SimulatedOffer['work_mod
   return { remoteBonus: 0, rtoPenalty: 6000 };
 };
 
+export const annualizeAmount = (
+  amount: number,
+  frequency: 'DAILY' | 'MONTHLY' | 'YEARLY' = 'YEARLY'
+) => {
+  const safe = Number(amount) || 0;
+  if (frequency === 'DAILY') return safe * 260;
+  if (frequency === 'MONTHLY') return safe * 12;
+  return safe;
+};
+
 export const calculateScenarioValue = ({
   base_salary,
   bonus,
@@ -123,14 +155,11 @@ export const calculateScenarioValue = ({
   equity,
   work_mode,
   rto_days_per_week,
-  free_food,
-  commute_monthly_cost,
-  wellness_stipend,
-  wlb_score,
+  freeFoodPerkAnnual,
+  commuteAnnualCost,
   baseTaxRate,
   bonusTaxRate,
   equityTaxRate,
-  equityRealization,
   costOfLivingIndex,
 }: {
   base_salary: number;
@@ -140,36 +169,44 @@ export const calculateScenarioValue = ({
   equity: number;
   work_mode: SimulatedOffer['work_mode'];
   rto_days_per_week: number;
-  free_food: boolean;
-  commute_monthly_cost: number;
-  wellness_stipend: number;
-  wlb_score: number;
+  freeFoodPerkAnnual: number;
+  commuteAnnualCost: number;
   baseTaxRate: number;
   bonusTaxRate: number;
   equityTaxRate: number;
-  equityRealization: number;
   costOfLivingIndex: number;
 }) => {
   const taxedBase = Number(base_salary) * (1 - baseTaxRate / 100);
   const taxedBenefits = Number(benefits_value) * (1 - baseTaxRate / 100);
   const taxedBonus = (Number(bonus) + Number(sign_on)) * (1 - bonusTaxRate / 100);
-  const taxedEquity = Number(equity) * (equityRealization / 100) * (1 - equityTaxRate / 100);
+  const taxedEquity = Number(equity) * (1 - equityTaxRate / 100);
   const purchasingPowerAdjusted =
     (taxedBase + taxedBenefits + taxedBonus + taxedEquity) * (100 / costOfLivingIndex);
 
   const lifestyleDefault = getDefaultLifestyleByWorkMode(work_mode);
-  const rtoPenalty = Number(rto_days_per_week) * 1200 || lifestyleDefault.rtoPenalty;
+  const safeRtoDays = Number.isFinite(Number(rto_days_per_week))
+    ? Math.max(0, Math.min(5, Number(rto_days_per_week)))
+    : work_mode === 'REMOTE'
+      ? 0
+      : work_mode === 'ONSITE'
+        ? 5
+        : 3;
+  const rtoPenalty = safeRtoDays * 1200 || lifestyleDefault.rtoPenalty;
   const remoteBonus = lifestyleDefault.remoteBonus;
-  const freeFoodBonus = free_food ? 2500 : 0;
-  const commutePenalty = Number(commute_monthly_cost) * 12;
-  const wellnessBonus = Number(wellness_stipend) || 0;
-  const wlbBonus = (Number(wlb_score) - 5) * 1500;
-  const lifestyleAdjustment =
-    remoteBonus + freeFoodBonus + wellnessBonus + wlbBonus - rtoPenalty - commutePenalty;
+  const freeFoodBonus = Number(freeFoodPerkAnnual) || 0;
+  const commutePenalty = Number(commuteAnnualCost) || 0;
+  const lifestyleAdjustment = remoteBonus + freeFoodBonus - rtoPenalty - commutePenalty;
 
   return {
     adjustedValue: purchasingPowerAdjusted + lifestyleAdjustment,
     lifestyleAdjustment,
+    breakdown: {
+      taxedBase,
+      taxedBenefits,
+      taxedBonus: Number(bonus) * (1 - bonusTaxRate / 100),
+      taxedSignOn: Number(sign_on) * (1 - bonusTaxRate / 100),
+      taxedEquity,
+    },
   };
 };
 
