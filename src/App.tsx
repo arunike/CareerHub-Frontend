@@ -9,6 +9,7 @@ import Settings from './pages/Settings';
 import Applications from './pages/Applications';
 import OfferComparison from './pages/OfferComparison';
 import Documents from './pages/Documents';
+import Tasks from './pages/Tasks';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
               <Route path="/applications" element={<Applications />} />
               <Route path="/offers" element={<OfferComparison />} />
               <Route path="/documents" element={<Documents />} />
+              <Route path="/tasks" element={<Tasks />} />
             </Routes>
           </Layout>
         </Router>
