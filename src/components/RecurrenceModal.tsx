@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { CloseOutlined, RetweetOutlined } from '@ant-design/icons';
+import { RetweetOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
+import ModalShell from './ModalShell';
 
 import type { RecurrenceRule } from '../types';
 
@@ -69,146 +70,25 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-1050 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-linear-to-r from-blue-600 to-blue-700 px-6 py-5 flex justify-between items-center rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <RetweetOutlined className="text-xl text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-white">Repeat Event</h2>
+    <ModalShell
+      isOpen={isOpen}
+      titleNode={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <RetweetOutlined className="text-xl text-white" />
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition p-1 hover:bg-white/10 rounded-lg"
-          >
-            <CloseOutlined className="text-lg" />
-          </button>
+          <span className="text-xl font-bold text-white">Repeat Event</span>
         </div>
-
-        <div className="p-6 space-y-6">
-          {/* Frequency */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Repeat</label>
-            <select
-              className="w-full rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition text-gray-900 font-medium"
-              value={frequency}
-              onChange={(e) =>
-                setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')
-              }
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-
-          {/* Interval */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Every</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min="1"
-                max="99"
-                className="w-24 rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
-                value={interval}
-                onChange={(e) => setInterval(Number(e.target.value))}
-              />
-              <span className="text-base text-gray-700 font-medium">
-                {frequency === 'daily' && (interval === 1 ? 'day' : 'days')}
-                {frequency === 'weekly' && (interval === 1 ? 'week' : 'weeks')}
-                {frequency === 'monthly' && (interval === 1 ? 'month' : 'months')}
-                {frequency === 'yearly' && (interval === 1 ? 'year' : 'years')}
-              </span>
-            </div>
-          </div>
-
-          {/* Days of Week (for weekly) */}
-          {frequency === 'weekly' && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Repeat on</label>
-              <div className="flex gap-2">
-                {weekDays.map((day) => (
-                  <button
-                    key={day.value}
-                    type="button"
-                    onClick={() => toggleDay(day.value)}
-                    className={clsx(
-                      'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm',
-                      selectedDays.includes(day.value)
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow'
-                    )}
-                  >
-                    {day.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* End Type */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Ends</label>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
-                <input
-                  type="radio"
-                  name="endType"
-                  checked={endType === 'never'}
-                  onChange={() => setEndType('never')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-sm font-medium text-gray-700">Never</span>
-              </label>
-
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
-                <input
-                  type="radio"
-                  name="endType"
-                  checked={endType === 'count'}
-                  onChange={() => setEndType('count')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-sm font-medium text-gray-700">After</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="999"
-                  disabled={endType !== 'count'}
-                  className="w-20 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
-                  value={count}
-                  onChange={(e) => setCount(Number(e.target.value))}
-                  onClick={() => setEndType('count')}
-                />
-                <span className="text-sm font-medium text-gray-700">occurrences</span>
-              </label>
-
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
-                <input
-                  type="radio"
-                  name="endType"
-                  checked={endType === 'until'}
-                  onChange={() => setEndType('until')}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className="text-sm font-medium text-gray-700">On</span>
-                <input
-                  type="date"
-                  disabled={endType !== 'until'}
-                  className="flex-1 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
-                  value={until}
-                  onChange={(e) => setUntil(e.target.value)}
-                  onClick={() => setEndType('until')}
-                />
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="sticky bottom-0 bg-white px-6 py-4 flex gap-3 rounded-b-2xl border-t border-gray-200">
+      }
+      onClose={onClose}
+      maxWidthClass="max-w-md"
+      wrapperClassName="rounded-2xl shadow-2xl"
+      headerClassName="sticky top-0 bg-linear-to-r from-blue-600 to-blue-700 px-6 py-5 flex justify-between items-center rounded-t-2xl"
+      titleClassName=""
+      closeButtonClassName="text-white/80 hover:text-white transition p-1 hover:bg-white/10 rounded-lg"
+      bodyClassName="overflow-y-auto"
+      footer={
+        <>
           <button
             onClick={onClose}
             className="flex-1 px-5 py-2.5 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-semibold"
@@ -221,9 +101,129 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
           >
             Save
           </button>
+        </>
+      }
+    >
+      <div className="p-6 space-y-6">
+        {/* Frequency */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Repeat</label>
+          <select
+            className="w-full rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition text-gray-900 font-medium"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+
+        {/* Interval */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Every</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min="1"
+              max="99"
+              className="w-24 rounded-lg border-2 border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+              value={interval}
+              onChange={(e) => setInterval(Number(e.target.value))}
+            />
+            <span className="text-base text-gray-700 font-medium">
+              {frequency === 'daily' && (interval === 1 ? 'day' : 'days')}
+              {frequency === 'weekly' && (interval === 1 ? 'week' : 'weeks')}
+              {frequency === 'monthly' && (interval === 1 ? 'month' : 'months')}
+              {frequency === 'yearly' && (interval === 1 ? 'year' : 'years')}
+            </span>
+          </div>
+        </div>
+
+        {/* Days of Week (for weekly) */}
+        {frequency === 'weekly' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Repeat on</label>
+            <div className="flex gap-2">
+              {weekDays.map((day) => (
+                <button
+                  key={day.value}
+                  type="button"
+                  onClick={() => toggleDay(day.value)}
+                  className={clsx(
+                    'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm',
+                    selectedDays.includes(day.value)
+                      ? 'bg-blue-600 text-white ring-2 ring-blue-300 ring-offset-1'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow'
+                  )}
+                >
+                  {day.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* End Type */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Ends</label>
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
+              <input
+                type="radio"
+                name="endType"
+                checked={endType === 'never'}
+                onChange={() => setEndType('never')}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-700">Never</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
+              <input
+                type="radio"
+                name="endType"
+                checked={endType === 'count'}
+                onChange={() => setEndType('count')}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-700">After</span>
+              <input
+                type="number"
+                min="1"
+                max="999"
+                disabled={endType !== 'count'}
+                className="w-20 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+                onClick={() => setEndType('count')}
+              />
+              <span className="text-sm font-medium text-gray-700">occurrences</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition">
+              <input
+                type="radio"
+                name="endType"
+                checked={endType === 'until'}
+                onChange={() => setEndType('until')}
+                className="w-4 h-4 text-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-700">On</span>
+              <input
+                type="date"
+                disabled={endType !== 'until'}
+                className="flex-1 rounded-lg border-2 border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 font-medium"
+                value={until}
+                onChange={(e) => setUntil(e.target.value)}
+                onClick={() => setEndType('until')}
+              />
+            </label>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 };
 

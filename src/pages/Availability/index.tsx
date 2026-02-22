@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getAvailability, getEvents, getHolidays, getFederalHolidays } from '../../api';
-import type { Availability as AvailabilityType, Event, Holiday } from '../../types';
 import {
-  CalendarOutlined,
-  ClockCircleOutlined,
-  CopyOutlined,
-  CheckCircleOutlined,
-  UnorderedListOutlined,
-  MenuOutlined,
-  ScheduleOutlined,
-  EditOutlined,
-  LinkOutlined,
-  StopOutlined,
-} from '@ant-design/icons';
-import clsx from 'clsx';
+  deactivateShareLink,
+  generateShareLink,
+  getAvailability,
+  getCurrentShareLink,
+  getEvents,
+  getFederalHolidays,
+  getHolidays,
+} from '../../api';
+import type { Availability as AvailabilityType, Event, Holiday } from '../../types';
 import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
 import CalendarView from '../../components/CalendarView';
-import EmptyState from '../../components/EmptyState';
 import { message } from 'antd';
-import { getCurrentShareLink, generateShareLink, deactivateShareLink } from '../../api';
 import type { ShareLink } from '../../types';
+import {
+  AvailabilityBookingCard,
+  AvailabilityGeneratorCard,
+  AvailabilityGroups,
+  AvailabilityTextControls,
+  AvailabilityViewToggle,
+} from './components';
 
 const Availability = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -242,43 +242,24 @@ const Availability = () => {
     return text.trim();
   };
 
+  const renderedGroups = groupedData
+    .map((group) => ({
+      title: group.title,
+      items: processGroupItems(group.items),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <div className="space-y-6">
       {contextHolder}
-      {/* Main Header / View Toggle */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
         </div>
-
-        <div className="w-full md:w-auto overflow-x-auto">
-          <div className="flex bg-gray-100 p-1 rounded-xl w-max md:w-auto">
-          <button
-            onClick={() => setSearchParams({ view: 'text' })}
-            className={clsx(
-              'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
-              viewTab === 'text'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            )}
-          >
-            <UnorderedListOutlined className="text-base" />
-            <span>Availability Text</span>
-          </button>
-          <button
-            onClick={() => setSearchParams({ view: 'calendar' })}
-            className={clsx(
-              'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
-              viewTab === 'calendar'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            )}
-          >
-            <CalendarOutlined className="text-base" />
-            <span>Calendar View</span>
-          </button>
-        </div>
-        </div>
+        <AvailabilityViewToggle
+          viewTab={viewTab}
+          onChange={(next) => setSearchParams({ view: next })}
+        />
       </div>
 
       {viewTab === 'calendar' ? (
@@ -289,327 +270,45 @@ const Availability = () => {
         />
       ) : (
         <>
-          {/* AvailabilityType Generator Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex flex-col md:flex-row md:items-end gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <div className="relative">
-                  <CalendarOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
+          <AvailabilityGeneratorCard
+            startDate={startDate}
+            onStartDateChange={setStartDate}
+            timezone={timezone}
+            onTimezoneChange={setTimezone}
+            loading={loading}
+            onGenerate={fetchAvailability}
+          />
 
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-                <div className="relative">
-                  <ClockCircleOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
-                  <select
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                    className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
-                  >
-                    <option value="PT">Pacific Time (PT)</option>
-                    <option value="MT">Mountain Time (MT)</option>
-                    <option value="CT">Central Time (CT)</option>
-                    <option value="ET">Eastern Time (ET)</option>
-                  </select>
-                </div>
-              </div>
+          <AvailabilityBookingCard
+            shareLink={shareLink}
+            shareDuration={shareDuration}
+            onShareDurationChange={setShareDuration}
+            generatingLink={generatingLink}
+            onGenerateShareLink={handleGenerateShareLink}
+            onCopyShareLink={handleCopyShareLink}
+            deactivatingLink={deactivatingLink}
+            onDeactivateShareLink={handleDeactivateShareLink}
+            getShareLinkUrl={getShareLinkUrl}
+          />
 
-              <div className="flex-none w-full md:w-auto">
-                <button
-                  onClick={fetchAvailability}
-                  disabled={loading}
-                  className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Calculating...' : 'Generate Availability'}
-                </button>
-              </div>
-            </div>
-          </div>
+          <AvailabilityTextControls
+            hasData={data.length > 0}
+            textMode={textMode}
+            onTextModeChange={setTextMode}
+            copiedIndex={copiedIndex}
+            onCopyAll={() => copyToClipboard(generateFullCopyText(), 'ALL')}
+          />
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <LinkOutlined className="text-gray-500" />
-                  <label className="block text-sm font-medium text-gray-700">Public Booking Link</label>
-                </div>
-                <p className="text-xs text-gray-500 mb-2">
-                  People can only see and book your available slots. Event and holiday details stay private.
-                </p>
-                {shareLink ? (
-                  <>
-                    <input
-                      readOnly
-                      value={getShareLinkUrl()}
-                      className="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm bg-gray-50"
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Expires: {new Date(shareLink.expires_at).toLocaleString()}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">No active booking link.</p>
-                )}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 lg:items-end">
-                {!shareLink && (
-                  <select
-                    value={shareDuration}
-                    onChange={(e) => setShareDuration(Number(e.target.value))}
-                    className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
-                  >
-                    <option value={7}>7 days</option>
-                    <option value={14}>14 days</option>
-                    <option value={30}>30 days</option>
-                  </select>
-                )}
-                {!shareLink ? (
-                  <button
-                    onClick={handleGenerateShareLink}
-                    disabled={generatingLink}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-70"
-                  >
-                    {generatingLink ? 'Generating...' : 'Generate Link'}
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleCopyShareLink}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
-                    >
-                      Copy Link
-                    </button>
-                    <button
-                      onClick={handleDeactivateShareLink}
-                      disabled={deactivatingLink}
-                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-70 flex items-center justify-center gap-2"
-                    >
-                      <StopOutlined />
-                      {deactivatingLink ? 'Deactivating...' : 'Deactivate'}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Controls Bar */}
-          {data.length > 0 && (
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
-              <div className="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm w-full sm:w-auto">
-                <button
-                  onClick={() => setTextMode('detailed')}
-                  className={clsx(
-                    'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                    textMode === 'detailed'
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  )}
-                >
-                  <UnorderedListOutlined className="text-base" />
-                  <span>Detailed</span>
-                </button>
-                <button
-                  onClick={() => setTextMode('combined')}
-                  className={clsx(
-                    'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
-                    textMode === 'combined'
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  )}
-                >
-                  <MenuOutlined className="text-base" />
-                  <span>Combined</span>
-                </button>
-              </div>
-
-              <button
-                onClick={() => copyToClipboard(generateFullCopyText(), 'ALL')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-white rounded-lg transition-colors"
-              >
-                {copiedIndex === 'ALL' ? (
-                  <CheckCircleOutlined className="text-base text-green-500" />
-                ) : (
-                  <ScheduleOutlined className="text-base" />
-                )}
-                Copy Full Schedule
-              </button>
-            </div>
-          )}
-
-          <div className="space-y-8">
-            {groupedData.map((group, groupIdx) => {
-              const itemsToRender = processGroupItems(group.items);
-              if (itemsToRender.length === 0) return null;
-
-              return (
-                <div
-                  key={group.title}
-                  className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-                  style={{ animationDelay: `${groupIdx * 100}ms` }}
-                >
-                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">
-                    {group.title}
-                  </h3>
-                  <div className="space-y-3">
-                    {itemsToRender.map((item, idx) => (
-                      <AvailabilityItem
-                        key={`${group.title}-${idx}`}
-                        item={item}
-                        onUpdate={fetchAvailability}
-                        itemId={`${group.title}-${idx}`}
-                        copiedIndex={copiedIndex}
-                        onCopy={copyToClipboard}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-
-            {data.length === 0 && !loading && (
-              <EmptyState
-                icon={CalendarOutlined}
-                title="No availability generated"
-                description="Select a Start Date and Timezone, then click 'Generate AvailabilityType' to see your schedule."
-              />
-            )}
-          </div>
+          <AvailabilityGroups
+            groupedData={renderedGroups}
+            loading={loading}
+            hasData={data.length > 0}
+            copiedIndex={copiedIndex}
+            onCopy={copyToClipboard}
+            onUpdate={fetchAvailability}
+          />
         </>
       )}
-    </div>
-  );
-};
-
-const AvailabilityItem = ({
-  item,
-  onUpdate,
-  itemId,
-  copiedIndex,
-  onCopy,
-}: {
-  item: { displayDate: string; availability: string; fullText: string; date?: string };
-  onUpdate: () => void;
-  itemId: string;
-  copiedIndex: string | null;
-  onCopy: (text: string, id: string) => void;
-}) => {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editText, setEditText] = React.useState(item.availability || '');
-  const [saving, setSaving] = React.useState(false);
-  const [messageApi, contextHolder] = message.useMessage();
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      // Check if we have a valid single date to override
-      if (!item.date) {
-        messageApi.error(
-          'Cannot edit a combined range. Please switch to Detailed view to edit specific days.',
-        );
-        setIsEditing(false);
-        setSaving(false);
-        return;
-      }
-
-      const { createOverride } = await import('../../api');
-      await createOverride({
-        date: item.date,
-        availability_text: editText,
-      });
-
-      setIsEditing(false);
-      onUpdate();
-      messageApi.success('Override saved');
-    } catch (error) {
-      messageApi.error('Failed to save override');
-      console.error(error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="group relative bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
-      {contextHolder}
-      <div className="flex items-start md:items-center justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="font-semibold text-gray-900">{item.displayDate}</span>
-          </div>
-
-          {isEditing ? (
-            <div className="flex gap-2 mt-1">
-              <input
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                autoFocus
-              />
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-medium hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 group/text">
-              <p className="text-gray-700 font-medium font-mono text-sm md:text-base">
-                {item.availability}
-              </p>
-              {/* Only show edit pencil if it's a single date (detailed view usually) */}
-              {item.date && (
-                <button
-                  onClick={() => {
-                    setEditText(item.availability);
-                    setIsEditing(true);
-                  }}
-                  className="opacity-0 group-hover/text:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity p-1"
-                  title="Override AvailabilityType"
-                >
-                  <EditOutlined className="text-xs" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => onCopy(item.fullText, itemId)}
-          className={clsx(
-            'p-2 rounded-lg transition-colors',
-            copiedIndex === itemId
-              ? 'bg-green-50 text-green-600'
-              : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100 opacity-0'
-          )}
-          title="Copy line"
-        >
-          {copiedIndex === itemId ? (
-            <CheckCircleOutlined className="text-xl" />
-          ) : (
-            <CopyOutlined className="text-xl" />
-          )}
-        </button>
-      </div>
-
-      <div className="absolute left-0 top-4 bottom-4 w-1 bg-blue-500 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 };

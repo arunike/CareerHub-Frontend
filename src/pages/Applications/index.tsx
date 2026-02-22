@@ -43,6 +43,7 @@ import type { Document } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { usePersistedState } from '../../hooks/usePersistedState';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -65,10 +66,14 @@ const Applications = () => {
   // Filter State
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
-    const saved = localStorage.getItem('applicationsSelectedYear');
-    return saved ? (saved === 'all' ? 'all' : parseInt(saved)) : getCurrentYear();
-  });
+  const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
+    'applicationsSelectedYear',
+    getCurrentYear(),
+    {
+      serialize: (value) => value.toString(),
+      deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
+    }
+  );
 
   const fetchData = async () => {
     try {
@@ -240,7 +245,6 @@ const Applications = () => {
   const availableYears = getAvailableYears(applications, 'date_applied');
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
-    localStorage.setItem('applicationsSelectedYear', year.toString());
   };
 
   const columns = [
