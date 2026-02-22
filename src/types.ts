@@ -102,6 +102,11 @@ export interface Document {
   file: string;
   document_type: 'RESUME' | 'COVER_LETTER' | 'PORTFOLIO' | 'OTHER';
   application?: number | null;
+  root_document?: number | null;
+  root_document_id?: number;
+  version_number?: number;
+  version_count?: number;
+  is_current?: boolean;
   is_locked?: boolean;
   application_details?: {
     id: number;
