@@ -26,26 +26,23 @@ body {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .page-toolbar-single-row {
   flex-wrap: nowrap;
 }
 
-.page-toolbar-single-row .page-toolbar-actions {
-  flex-wrap: nowrap;
-}
-
 .toolbar-btn.ant-btn,
 .toolbar-native-btn {
-  min-height: 42px;
-  padding-inline: 16px;
+  height: 100%;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .toolbar-select.ant-select {
@@ -53,39 +50,13 @@ body {
 }
 
 .toolbar-select.ant-select .ant-select-selector {
-  min-height: 42px !important;
-  padding-inline: 16px !important;
   display: flex;
   align-items: center;
-}
-
-.toolbar-select.ant-select .ant-select-selection-item,
-.toolbar-select.ant-select .ant-select-selection-placeholder {
-  line-height: 40px !important;
 }
 
 @media (max-width: 768px) {
   .page-toolbar {
     align-items: stretch;
-  }
-
-  .page-toolbar-single-row,
-  .page-toolbar-single-row .page-toolbar-actions {
-    flex-wrap: wrap;
-  }
-
-  .page-toolbar-actions {
-    width: 100%;
-  }
-
-  .page-toolbar-actions .toolbar-btn,
-  .page-toolbar-actions .toolbar-select,
-  .page-toolbar-actions .toolbar-native-btn {
-    flex: 1 1 calc(50% - 10px);
-  }
-
-  .page-toolbar-actions .toolbar-select.ant-select {
-    min-width: 0;
   }
 }
 

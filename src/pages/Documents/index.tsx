@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Table, Tag, Space, Popconfirm, message } from 'antd';
-import { PlusOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, DeleteOutlined } from '@ant-design/icons';
-import { getDocuments, deleteDocument, deleteAllDocuments, exportDocuments } from '../../api';
+import { Card, Form, Input, Modal, Select, Table, Tag, message } from 'antd';
+import { PlusOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, LockOutlined } from '@ant-design/icons';
+import { getApplications, getDocuments, deleteDocument, deleteAllDocuments, exportDocuments, patchDocument } from '../../api';
 import type { Document } from '../../types';
 import UploadDocumentModal from './UploadDocumentModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import RowActions from '../../components/RowActions';
 
 const Documents: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [applications, setApplications] = useState<Array<{ id: number; role_title: string; company_details?: { name: string } }>>([]);
+  const [form] = Form.useForm();
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(() => {
     const saved = localStorage.getItem('documentsSelectedYear');
     return saved ? (saved === 'all' ? 'all' : parseInt(saved, 10)) : getCurrentYear();
@@ -31,7 +37,17 @@ const Documents: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
+    fetchApplications();
   }, []);
+
+  const fetchApplications = async () => {
+    try {
+      const response = await getApplications();
+      setApplications(response.data);
+    } catch (error) {
+      console.error('Failed to load applications', error);
+    }
+  };
 
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
@@ -71,6 +87,51 @@ const Documents: React.FC = () => {
     }
   };
 
+  const handleToggleLock = async (record: Document) => {
+    try {
+      await patchDocument(record.id, { is_locked: !record.is_locked });
+      message.success(record.is_locked ? 'Document unlocked' : 'Document locked');
+      fetchDocuments();
+    } catch (error: any) {
+      message.error(error?.response?.data?.error || 'Failed to update lock status');
+      console.error(error);
+    }
+  };
+
+  const openEditModal = (record: Document) => {
+    setEditingDocument(record);
+    form.setFieldsValue({
+      title: record.title,
+      document_type: record.document_type,
+      application: record.application ?? undefined,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingDocument) return;
+    try {
+      const values = await form.validateFields();
+      setSaving(true);
+      await patchDocument(editingDocument.id, {
+        title: values.title,
+        document_type: values.document_type,
+        application: values.application ?? null,
+      });
+      message.success('Document updated');
+      setIsEditModalOpen(false);
+      setEditingDocument(null);
+      form.resetFields();
+      fetchDocuments();
+    } catch (error: any) {
+      if (error?.errorFields) return;
+      message.error(error?.response?.data?.error || 'Failed to update document');
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getFileIcon = (fileName: string) => {
     if (fileName.endsWith('.pdf')) return <FilePdfOutlined className="text-red-500 text-lg" />;
     if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return <FileWordOutlined className="text-blue-500 text-lg" />;
@@ -98,9 +159,12 @@ const Documents: React.FC = () => {
       dataIndex: 'title',
       key: 'title',
       render: (text: string, record: Document) => (
-        <a href={record.file} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
-          {text}
-        </a>
+        <div className="flex items-center gap-2">
+          <a href={record.file} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
+            {text}
+          </a>
+          {record.is_locked ? <LockOutlined className="text-amber-500" /> : null}
+        </div>
       ),
     },
     {
@@ -130,17 +194,18 @@ const Documents: React.FC = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: Document) => (
-        <Space>
-          <Popconfirm
-            title="Delete the document"
-            description="Are you sure to delete this document?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
+        <RowActions
+          size="middle"
+          isLocked={record.is_locked}
+          onToggleLock={() => handleToggleLock(record)}
+          onView={() => window.open(record.file, '_blank', 'noopener,noreferrer')}
+          onEdit={() => openEditModal(record)}
+          disableEdit={Boolean(record.is_locked)}
+          onDelete={() => handleDelete(record.id)}
+          disableDelete={Boolean(record.is_locked)}
+          deleteTitle="Delete document?"
+          deleteDescription="Are you sure to delete this document?"
+        />
       ),
     },
   ];
@@ -185,6 +250,54 @@ const Documents: React.FC = () => {
           fetchDocuments();
         }}
       />
+
+      <Modal
+        title="Edit Document"
+        open={isEditModalOpen}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setEditingDocument(null);
+          form.resetFields();
+        }}
+        onOk={handleSaveEdit}
+        confirmLoading={saving}
+        okText="Save"
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="title"
+            label="Document Title"
+            rules={[{ required: true, message: 'Please enter a title' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="document_type"
+            label="Document Type"
+            rules={[{ required: true, message: 'Please select a type' }]}
+          >
+            <Select
+              options={[
+                { value: 'RESUME', label: 'Resume' },
+                { value: 'COVER_LETTER', label: 'Cover Letter' },
+                { value: 'PORTFOLIO', label: 'Portfolio' },
+                { value: 'OTHER', label: 'Other' },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="application" label="Link to Application (Optional)">
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              options={applications.map((app) => ({
+                value: app.id,
+                label: `${app.role_title} @ ${app.company_details?.name || 'Unknown'}`,
+              }))}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

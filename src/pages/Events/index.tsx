@@ -12,8 +12,6 @@ import {
   DatePicker,
   TimePicker,
   message,
-  Tooltip,
-  Popconfirm,
   Row,
   Col,
   Empty,
@@ -21,14 +19,10 @@ import {
 } from 'antd';
 import {
   PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  EyeOutlined,
   CalendarOutlined,
   EnvironmentOutlined,
   VideoCameraOutlined,
   LockOutlined,
-  UnlockOutlined,
   FilterOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
@@ -56,6 +50,7 @@ import RecurrenceModal from '../../components/RecurrenceModal';
 import CategoryBadge from '../../components/CategoryBadge';
 import IconPicker from '../../components/IconPicker';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 dayjs.extend(customParseFormat);
@@ -286,6 +281,31 @@ const Events = () => {
       messageApi.error('Failed to delete event');
       console.error(error);
     }
+  };
+
+  const handleDeleteAction = (event: Event) => {
+    if (event.is_virtual && event.parent_event) {
+      Modal.confirm({
+        title: 'Delete Recurring Event',
+        content: 'Delete this occurrence or the entire series?',
+        okText: 'Entire Series',
+        cancelText: 'Just this occurrence',
+        closable: true,
+        onOk: () => handleDelete(event, 'series'),
+        onCancel: () => {
+          handleDelete(event, 'instance');
+        },
+      });
+      return;
+    }
+
+    Modal.confirm({
+      title: 'Delete event?',
+      content: 'Are you sure?',
+      okText: 'Delete',
+      okType: 'danger',
+      onOk: () => handleDelete(event, 'series'),
+    });
   };
 
   const handleDeleteAll = async () => {
@@ -522,74 +542,17 @@ const Events = () => {
                       </Space>
                     }
                     extra={
-                      <Space>
-                        <Tooltip title={event.is_locked ? 'Unlock' : 'Lock'}>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={
-                              event.is_locked ? (
-                                <UnlockOutlined style={{ fontSize: '16px' }} />
-                              ) : (
-                                <LockOutlined style={{ fontSize: '16px' }} />
-                              )
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleLock(event);
-                            }}
-                          />
-                        </Tooltip>
-                        <Tooltip title="View">
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<EyeOutlined style={{ fontSize: '16px' }} />}
-                            onClick={() => setViewingEvent(event)}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Edit">
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<EditOutlined style={{ fontSize: '16px' }} />}
-                            onClick={() => handleEdit(event)}
-                            disabled={event.is_locked}
-                          />
-                        </Tooltip>
-                        <Popconfirm
-                          title="Delete event?"
-                          disabled={event.is_locked}
-                          onConfirm={() => handleDelete(event, 'series')}
-                          description={
-                            event.is_virtual ? 'Delete options for series?' : 'Are you sure?'
-                          }
-                        >
-                          <Button
-                            type="text"
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined style={{ fontSize: '16px' }} />}
-                            disabled={event.is_locked}
-                            onClick={(e) => {
-                              if (event.is_virtual && event.parent_event) {
-                                e.stopPropagation();
-                                Modal.confirm({
-                                  title: 'Delete Recurring Event',
-                                  content: 'Delete this occurrence or the entire series?',
-                                  okText: 'Entire Series',
-                                  cancelText: 'Just this occurrence',
-                                  closable: true,
-                                  onOk: () => handleDelete(event, 'series'),
-                                  onCancel: () => {
-                                    handleDelete(event, 'instance');
-                                  },
-                                });
-                              }
-                            }}
-                          />
-                        </Popconfirm>
-                      </Space>
+                      <RowActions
+                        isLocked={event.is_locked}
+                        onToggleLock={() => toggleLock(event)}
+                        onView={() => setViewingEvent(event)}
+                        onEdit={() => handleEdit(event)}
+                        disableEdit={Boolean(event.is_locked)}
+                        onDelete={() => handleDeleteAction(event)}
+                        disableDelete={Boolean(event.is_locked)}
+                        confirmDelete={false}
+                        size="small"
+                      />
                     }
                     actions={[
                       <Space key="time">

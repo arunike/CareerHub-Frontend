@@ -8,8 +8,6 @@ import {
   Form,
   Space,
   Tag,
-  Tooltip,
-  Popconfirm,
   Upload,
   message,
   Card,
@@ -20,12 +18,8 @@ import {
 } from 'antd';
 import {
   PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
   SearchOutlined,
   FilterOutlined,
-  LockOutlined,
-  UnlockOutlined,
   DollarOutlined,
   GlobalOutlined,
   EnvironmentOutlined,
@@ -44,6 +38,7 @@ import {
 } from '../../api';
 import type { CareerApplication } from '../../types/application';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 const { Text, Link } = Typography;
@@ -273,25 +268,14 @@ const Applications = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: CareerApplication) => (
-        <Space>
-          <Tooltip title={record.is_locked ? 'Unlock' : 'Lock'}>
-            <Button
-              type="text"
-              icon={record.is_locked ? <UnlockOutlined /> : <LockOutlined />}
-              onClick={() => toggleLock(record)}
-            />
-          </Tooltip>
-          <Tooltip title="Edit">
-            <Button type="text" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
-          </Tooltip>
-          <Popconfirm
-            title="Delete?"
-            onConfirm={() => handleDelete(record.id)}
-            disabled={record.is_locked}
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} disabled={record.is_locked} />
-          </Popconfirm>
-        </Space>
+        <RowActions
+          size="middle"
+          isLocked={record.is_locked}
+          onToggleLock={() => toggleLock(record)}
+          onEdit={() => openEditModal(record)}
+          onDelete={() => handleDelete(record.id)}
+          disableDelete={record.is_locked}
+        />
       ),
     },
   ];
