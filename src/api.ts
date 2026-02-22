@@ -117,6 +117,8 @@ export const updateDocument = (id: number, formData: FormData) =>
   api.put(`/career/documents/${id}/`, formData, {
     headers: { 'Content-Type': undefined },
   });
+export const patchDocument = (id: number, data: Record<string, unknown>) =>
+  api.patch(`/career/documents/${id}/`, data);
 export const deleteDocument = (id: number) => api.delete(`/career/documents/${id}/`);
 
 // Conflicts

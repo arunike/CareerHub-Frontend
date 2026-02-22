@@ -47,7 +47,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
       options={options}
       className={className}
       size={size}
-      style={{ width }}
+      style={{ width: '22%', height: '100%', paddingTop: 6, paddingBottom: 6, paddingLeft: 18 }}
       suffixIcon={<CalendarOutlined />}
     />
   );

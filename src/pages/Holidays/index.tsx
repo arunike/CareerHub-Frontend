@@ -12,7 +12,6 @@ import {
   DatePicker,
   Checkbox,
   message,
-  Tooltip,
   Popconfirm,
   Row,
   Col,
@@ -25,7 +24,6 @@ import {
   DeleteOutlined,
   CalendarOutlined,
   LockOutlined,
-  UnlockOutlined,
   PlusOutlined,
   SyncOutlined,
   SortAscendingOutlined,
@@ -44,6 +42,7 @@ import {
 } from '../../api';
 import type { Holiday } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 
 const { Title, Text } = Typography;
@@ -337,25 +336,14 @@ const Holidays = () => {
               renderItem={(item) => (
                 <List.Item
                   actions={[
-                    <Tooltip title={item.is_locked ? 'Unlock' : 'Lock'}>
-                      <Button
-                        type="text"
-                        icon={item.is_locked ? <UnlockOutlined /> : <LockOutlined />}
-                        onClick={() => toggleLock(item)}
-                      />
-                    </Tooltip>,
-                    <Popconfirm
-                      title="Delete?"
-                      onConfirm={() => handleDelete(item.id)}
-                      disabled={item.is_locked}
-                    >
-                      <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        disabled={item.is_locked}
-                      />
-                    </Popconfirm>,
+                    <RowActions
+                      key={`actions-${item.id}`}
+                      size="middle"
+                      isLocked={item.is_locked}
+                      onToggleLock={() => toggleLock(item)}
+                      onDelete={() => handleDelete(item.id)}
+                      disableDelete={item.is_locked}
+                    />,
                   ]}
                 >
                   <List.Item.Meta
