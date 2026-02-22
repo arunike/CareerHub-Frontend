@@ -166,3 +166,27 @@ export interface WeeklyReview {
   summary_text: string;
   generated_at: string;
 }
+
+export interface ShareLink {
+  id: number;
+  uuid: string;
+  title: string;
+  duration_days: number;
+  created_at: string;
+  expires_at: string;
+  is_active: boolean;
+  is_expired: boolean;
+}
+
+export interface BookingSlot {
+  start_time: string;
+  end_time: string;
+  label: string;
+}
+
+export interface BookingDayAvailability {
+  date: string;
+  day_name: string;
+  readable_date: string;
+  slots: BookingSlot[];
+}
