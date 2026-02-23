@@ -40,6 +40,21 @@ const Settings: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
+  const resetMeridiemColumnScroll = (open: boolean) => {
+    if (!open) return;
+    const reset = () => {
+      const columns = document.querySelectorAll(
+        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]'
+      );
+      columns.forEach((column) => {
+        (column as HTMLElement).scrollTop = 0;
+      });
+    };
+
+    requestAnimationFrame(reset);
+    setTimeout(reset, 120);
+  };
+
   const fetchSettings = async () => {
     try {
       const resp = await getUserSettings();
@@ -252,6 +267,8 @@ const Settings: React.FC = () => {
               inputReadOnly={false}
               needConfirm={false}
               allowClear={false}
+              popupClassName="event-timepicker-dropdown"
+              onOpenChange={resetMeridiemColumnScroll}
             />
           </div>
 
@@ -277,6 +294,8 @@ const Settings: React.FC = () => {
               inputReadOnly={false}
               needConfirm={false}
               allowClear={false}
+              popupClassName="event-timepicker-dropdown"
+              onOpenChange={resetMeridiemColumnScroll}
             />
           </div>
         </div>

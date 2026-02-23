@@ -14,6 +14,19 @@ body {
   color: var(--color-gray-900);
 }
 
+.event-timepicker-dropdown .ant-picker-time-panel {
+  min-width: 210px;
+}
+
+.event-timepicker-dropdown .ant-picker-time-panel-column[data-type='meridiem'] {
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+}
+
+.event-timepicker-dropdown .ant-picker-time-panel-column[data-type='meridiem']::-webkit-scrollbar {
+  width: 0;
+}
+
 .page-toolbar {
   display: flex;
   justify-content: space-between;
