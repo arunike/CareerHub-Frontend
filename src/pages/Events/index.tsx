@@ -216,7 +216,12 @@ const Events = () => {
     setIsFormOpen(true);
     form.resetFields();
 
-    const start = dayjs().hour(12).minute(0).second(0);
+    const now = dayjs();
+    const roundedMinute = Math.ceil(now.minute() / 5) * 5;
+    const start =
+      roundedMinute === 60
+        ? now.add(1, 'hour').minute(0).second(0)
+        : now.minute(roundedMinute).second(0);
     const end = start.add(defaultDuration, 'minute');
 
     form.setFieldsValue({

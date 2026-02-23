@@ -46,6 +46,7 @@ interface DeadlineItem {
 }
 
 const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
+const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
 
 const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom-right' }) => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -76,6 +77,20 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const refreshOnTaskUpdate = () => {
+      fetchData();
+    };
+    window.addEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
+    return () => window.removeEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen]);
 
   const fetchData = async () => {
     try {
@@ -173,6 +188,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     try {
       await updateTask(taskId, { status: 'DONE' });
       setDeadlines((prev) => prev.filter((d) => d.id !== deadlineId));
+      window.dispatchEvent(new Event(TASKS_UPDATED_EVENT));
       messageApi.success('Task marked done');
     } catch (error) {
       messageApi.error('Failed to mark task done');
@@ -291,7 +307,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <Link
-                            to="/tasks"
+                            to={`/tasks?taskId=${deadline.taskId}&mode=view`}
                             className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
                             onClick={() => setIsOpen(false)}
                           >

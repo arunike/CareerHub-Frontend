@@ -55,6 +55,21 @@ const EventEditorModal = ({
   onClearRecurrence,
   applications,
 }: EventEditorModalProps) => {
+  const resetMeridiemColumnScroll = (open: boolean) => {
+    if (!open) return;
+    const reset = () => {
+      const columns = document.querySelectorAll(
+        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]'
+      );
+      columns.forEach((column) => {
+        (column as HTMLElement).scrollTop = 0;
+      });
+    };
+
+    requestAnimationFrame(reset);
+    setTimeout(reset, 120);
+  };
+
   return (
     <Modal title={editingId ? 'Edit Event' : 'Add Event'} open={open} onCancel={onCancel} footer={null} width={600}>
       <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -83,6 +98,8 @@ const EventEditorModal = ({
                 format="h:mm a"
                 style={{ width: '100%' }}
                 minuteStep={5}
+                popupClassName="event-timepicker-dropdown"
+                onOpenChange={resetMeridiemColumnScroll}
                 onChange={(val) => {
                   if (val) {
                     const end = val.add(defaultDuration, 'minute');
@@ -94,7 +111,14 @@ const EventEditorModal = ({
           </Col>
           <Col span={12}>
             <Form.Item name="end_time" label="End Time" rules={[{ required: true }]}>
-              <TimePicker use12Hours format="h:mm a" style={{ width: '100%' }} minuteStep={5} />
+              <TimePicker
+                use12Hours
+                format="h:mm a"
+                style={{ width: '100%' }}
+                minuteStep={5}
+                popupClassName="event-timepicker-dropdown"
+                onOpenChange={resetMeridiemColumnScroll}
+              />
             </Form.Item>
           </Col>
         </Row>
