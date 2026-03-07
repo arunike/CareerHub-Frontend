@@ -15,6 +15,7 @@ import {
   Row,
   Col,
   DatePicker,
+  Tooltip,
 } from 'antd';
 import {
   PlusOutlined,
@@ -24,6 +25,9 @@ import {
   GlobalOutlined,
   EnvironmentOutlined,
   InboxOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
@@ -38,9 +42,9 @@ import {
   getDocuments,
   patchDocument,
 } from '../../api';
-import type { CareerApplication } from '../../types/application';
 import type { Document } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -62,6 +66,9 @@ const Applications = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Bulk Selection State
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   // Filter State
   const [searchText, setSearchText] = useState('');
@@ -133,6 +140,44 @@ const Applications = () => {
       console.error(error);
     }
   };
+
+  const handleBulkDelete = () => {
+    Modal.confirm({
+      title: 'Delete Selected Applications',
+      content: `Are you sure you want to delete ${selectedRowKeys.length} applications?`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await Promise.all(selectedRowKeys.map(id => deleteApplication(id as number)));
+          messageApi.success(`${selectedRowKeys.length} applications deleted`);
+          setSelectedRowKeys([]);
+          fetchData();
+        } catch (error) {
+          messageApi.error('Failed to delete some applications');
+          fetchData();
+        }
+      },
+    });
+  };
+
+  const handleBulkToggleLock = async (lock: boolean) => {
+    try {
+      await Promise.all(selectedRowKeys.map(id => updateApplication(id as number, { is_locked: lock })));
+      messageApi.success(`${selectedRowKeys.length} applications ${lock ? 'locked' : 'unlocked'}`);
+      setSelectedRowKeys([]);
+      fetchData();
+    } catch (error) {
+      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some applications`);
+      fetchData();
+    }
+  };
+
+  const isAnySelectedLocked = selectedRowKeys.some((id) => {
+    const app = applications.find((a) => a.id === id);
+    return app?.is_locked;
+  });
 
   const handleAddEdit = async (values: any) => {
     try {
@@ -337,7 +382,36 @@ const Applications = () => {
         />
       </div>
 
-      <Card>
+      <Card
+        title={selectedRowKeys.length > 0 ? (
+          <BulkActionHeader
+            selectedCount={selectedRowKeys.length}
+            totalCount={filteredData.length}
+            title="All Applications"
+            onCancelSelection={() => setSelectedRowKeys([])}
+            bulkActions={
+              <>
+                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                  Lock
+                </Button>
+                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
+                  Unlock
+                </Button>
+                <Tooltip title={isAnySelectedLocked ? "Cannot delete while locked items are selected" : ""}>
+                  <Button 
+                    danger 
+                    onClick={handleBulkDelete} 
+                    icon={<DeleteOutlined />}
+                    disabled={isAnySelectedLocked}
+                  >
+                    Delete
+                  </Button>
+                </Tooltip>
+              </>
+            }
+          />
+        ) : null}
+      >
         <div className="grid grid-cols-1 md:grid-cols-[300px_200px] gap-3 mb-4">
           <Input
             placeholder="Search company or role"
@@ -365,6 +439,10 @@ const Applications = () => {
         </div>
 
         <Table
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+          }}
           loading={loading}
           columns={columns}
           dataSource={filteredData}
