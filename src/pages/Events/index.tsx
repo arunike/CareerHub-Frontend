@@ -7,8 +7,11 @@ import {
   Input,
   Select,
   message,
+  Card,
+  Tooltip,
+  Button,
 } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
@@ -31,6 +34,7 @@ import {
 } from '../../api';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import BulkActionHeader from '../../components/BulkActionHeader';
 import EventsFilterBar from './components/EventsFilterBar';
 import EventsGrid from './components/EventsGrid';
 import EventEditorModal from './components/EventEditorModal';
@@ -88,6 +92,9 @@ const Events = () => {
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Recurrence & Extra
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
@@ -402,6 +409,62 @@ const Events = () => {
     }
   };
 
+  const handleSelectChange = (id: number, checked: boolean) => {
+    setSelectedIds((prev) => 
+      checked ? [...prev, id] : prev.filter(selectedId => selectedId !== id)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = filteredEvents.map(e => e.id);
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    Modal.confirm({
+      title: 'Delete Selected Events',
+      content: `Are you sure you want to delete ${selectedIds.length} events?`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          // Virtual events (negative IDs) must be handled differently or ignored
+          const realIds = selectedIds.filter(id => id > 0);
+          await Promise.all(realIds.map(id => deleteEvent(id)));
+          messageApi.success(`${realIds.length} events deleted`);
+          setSelectedIds([]);
+          fetchData();
+        } catch (error) {
+          messageApi.error('Failed to delete some events');
+          fetchData();
+        }
+      },
+    });
+  };
+
+  const handleBulkToggleLock = async (lock: boolean) => {
+    try {
+      const realIds = selectedIds.filter(id => id > 0);
+      await Promise.all(realIds.map(id => updateEvent(id, { is_locked: lock })));
+      messageApi.success(`${realIds.length} events ${lock ? 'locked' : 'unlocked'}`);
+      setSelectedIds([]);
+      fetchData();
+    } catch (error) {
+      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some events`);
+      fetchData();
+    }
+  };
+
+  const isAnySelectedLocked = selectedIds.some((id) => {
+    const ev = events.find((e) => e.id === id);
+    return ev?.is_locked;
+  });
+
   const formatEventTime = (event: Event, userTz: string) => {
     const offsets: Record<string, number> = {
       PT: -8,
@@ -478,16 +541,50 @@ const Events = () => {
             categories={categories}
           />
 
-          <EventsGrid
-            loading={loading}
-            events={filteredEvents}
-            userTimezone={userTimezone}
-            onToggleLock={toggleLock}
-            onView={setViewingEvent}
-            onEdit={handleEdit}
-            onDelete={handleDeleteAction}
-            formatEventTime={formatEventTime}
-          />
+          <Card
+            title={
+              <BulkActionHeader
+                selectedCount={selectedIds.length}
+                totalCount={filteredEvents.length}
+                onSelectAll={handleSelectAll}
+                onCancelSelection={() => setSelectedIds([])}
+                title="All Events"
+                bulkActions={
+                  <>
+                    <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                      Lock
+                    </Button>
+                    <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
+                      Unlock
+                    </Button>
+                    <Tooltip title={isAnySelectedLocked ? "Cannot delete while locked items are selected" : ""}>
+                      <Button 
+                        danger 
+                        onClick={handleBulkDelete} 
+                        icon={<DeleteOutlined />}
+                        disabled={isAnySelectedLocked}
+                      >
+                        Delete
+                      </Button>
+                    </Tooltip>
+                  </>
+                }
+              />
+            }
+          >
+            <EventsGrid
+              loading={loading}
+              events={filteredEvents}
+              userTimezone={userTimezone}
+              onToggleLock={toggleLock}
+              onView={setViewingEvent}
+              onEdit={handleEdit}
+              onDelete={handleDeleteAction}
+              formatEventTime={formatEventTime}
+              selectedIds={selectedIds}
+              onSelectChange={handleSelectChange}
+            />
+          </Card>
         </Space>
       </div>
 

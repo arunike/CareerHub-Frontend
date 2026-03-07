@@ -20,6 +20,7 @@ import {
   Switch,
   Modal,
   Collapse,
+  Tooltip,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -29,6 +30,8 @@ import {
   SyncOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
+  UnlockOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
@@ -43,6 +46,7 @@ import {
 } from '../../api';
 import type { Holiday } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -50,10 +54,23 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
-const GroupedHolidayItem = ({ item, handleToggleLockGroup, handleDeleteGroup, toggleLock, handleDelete }: any) => {
+const GroupedHolidayItem = ({ 
+  item, 
+  handleToggleLockGroup, 
+  handleDeleteGroup, 
+  toggleLock, 
+  handleDelete, 
+  handleEditItem,
+  selectedIds,
+  onSelectChange,
+  onSelectGroup
+}: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const startDate = item.items[0].date;
   const endDate = item.items[item.items.length - 1].date;
+
+  const allSelected = item.items.every((i: any) => selectedIds.includes(i.id));
+  const someSelected = item.items.some((i: any) => selectedIds.includes(i.id)) && !allSelected;
 
   return (
     <List.Item
@@ -64,13 +81,22 @@ const GroupedHolidayItem = ({ item, handleToggleLockGroup, handleDeleteGroup, to
           isLocked={item.is_locked}
           onToggleLock={() => handleToggleLockGroup(item)}
           onDelete={() => handleDeleteGroup(item)}
+          onEdit={() => handleEditItem(item)}
           disableDelete={item.is_locked}
         />,
       ] : []}
     >
       <List.Item.Meta
         avatar={
-          <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+          <div className="flex items-center gap-3">
+            <Checkbox 
+              checked={allSelected} 
+              indeterminate={someSelected}
+              onChange={() => onSelectGroup(item.items, !allSelected)}
+              style={{ marginTop: 8 }}
+            />
+            <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+          </div>
         }
         title={
           <Space>
@@ -113,12 +139,17 @@ const GroupedHolidayItem = ({ item, handleToggleLockGroup, handleDeleteGroup, to
                           isLocked={subItem.is_locked}
                           onToggleLock={() => toggleLock(subItem)}
                           onDelete={() => handleDelete(subItem.id)}
+                          onEdit={() => handleEditItem(subItem)}
                           disableDelete={subItem.is_locked}
                         />,
                       ]}
                     >
                       <Space>
-                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                        <Checkbox 
+                          checked={selectedIds.includes(subItem.id)}
+                          onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
+                        />
+                        <div className="w-2 h-2 rounded-full bg-blue-400 ml-2" />
                         <Text strong>{dayjs(subItem.date).format('dddd, MMMM D, YYYY')}</Text>
                       </Space>
                     </List.Item>
@@ -136,6 +167,7 @@ const GroupedHolidayItem = ({ item, handleToggleLockGroup, handleDeleteGroup, to
 const Holidays = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   // State
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -158,6 +190,13 @@ const Holidays = () => {
   const [isRangeMode, setIsRangeMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  
+  // Edit State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const fetchData = async () => {
     try {
@@ -223,6 +262,13 @@ const Holidays = () => {
 
     return groups;
   }, [sortedHolidays]);
+
+  const isAnySelectedLocked = React.useMemo(() => {
+    return selectedIds.some((id) => {
+      const holiday = holidays.find((h) => h.id === id);
+      return holiday?.is_locked;
+    });
+  }, [selectedIds, holidays]);
 
   const sortedFederalHolidays = filterByYear(federalHolidays, selectedYear, 'date').sort((a, b) =>
     dayjs(a.date).diff(dayjs(b.date))
@@ -308,6 +354,57 @@ const Holidays = () => {
     }
   };
 
+  const handleEditClick = (item: any) => {
+    setEditingItem(item);
+    // If it's a group, populate form with the first item's properties
+    const sampleItem = item.isGroup ? item.items[0] : item;
+    editForm.setFieldsValue({
+      description: sampleItem.description,
+      is_recurring: sampleItem.is_recurring,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      const values = await editForm.validateFields();
+      
+      let itemsToUpdate: any[] = [];
+      if (editingItem.isBulk) {
+        itemsToUpdate = editingItem.items; // [{id: 1}, {id: 2}]
+      } else if (editingItem.isGroup) {
+        itemsToUpdate = editingItem.items; // The group's actual array of CustomHolidays
+      } else {
+        itemsToUpdate = [editingItem]; // Single CustomHoliday
+      }
+
+      await Promise.all(
+        itemsToUpdate.map((i: any) => {
+          // If bulk editing and name is left blank when they originally had different names, ignore description update
+          const updatePayload: any = { is_recurring: values.is_recurring };
+          if (values.description !== undefined && values.description !== '') {
+            updatePayload.description = values.description;
+          } else if (!(editingItem.isBulk && !editingItem.allSameDesc)) {
+            // Only force description save if it's NOT the special mixed-bag scenario
+            updatePayload.description = values.description;
+          }
+          return updateHoliday(i.id, updatePayload);
+        })
+      );
+      
+      messageApi.success('Holiday updated successfully');
+      setEditModalOpen(false);
+      setSelectedIds([]); // Clear any bulk selections after a bulk edit
+      fetchData();
+    } catch (error) {
+      if (error && (error as any).errorFields) {
+        return;
+      }
+      messageApi.error('Failed to update holiday');
+      console.error(error);
+    }
+  };
+
   const toggleLock = async (holiday: Holiday) => {
     try {
       await updateHoliday(holiday.id, { is_locked: !holiday.is_locked });
@@ -319,6 +416,104 @@ const Holidays = () => {
       messageApi.error('Failed to toggle lock');
       console.error(error);
     }
+  };
+
+  const handleSelectChange = (id: number, checked: boolean) => {
+    setSelectedIds((prev) => 
+      checked ? [...prev, id] : prev.filter(selectedId => selectedId !== id)
+    );
+  };
+
+  const handleSelectGroup = (items: any[], checked: boolean) => {
+    const itemIds = items.map(i => i.id);
+    setSelectedIds((prev) => {
+      if (checked) {
+        const newIds = [...prev];
+        itemIds.forEach(id => {
+          if (!newIds.includes(id)) newIds.push(id);
+        });
+        return newIds;
+      } else {
+        return prev.filter(id => !itemIds.includes(id));
+      }
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Select all IDs from the currently visible/sorted holidays
+      const allIds = sortedHolidays.map(h => h.id);
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const allSelected = sortedHolidays.length > 0 && selectedIds.length === sortedHolidays.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < sortedHolidays.length;
+
+  const handleBulkDelete = () => {
+    Modal.confirm({
+      title: 'Delete Selected Holidays',
+      content: `Are you sure you want to delete ${selectedIds.length} holidays?`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          // Filter out locked ones if you want, or just let API fail. We'll disable delete if all selected are locked
+          await Promise.all(selectedIds.map(id => deleteHoliday(id)));
+          messageApi.success(`${selectedIds.length} holidays deleted`);
+          setSelectedIds([]);
+          fetchData();
+        } catch (error) {
+          messageApi.error('Failed to delete some holidays');
+          fetchData();
+        }
+      },
+    });
+  };
+
+  const handleBulkToggleLock = async (lock: boolean) => {
+    try {
+      await Promise.all(selectedIds.map(id => updateHoliday(id, { is_locked: lock })));
+      messageApi.success(`${selectedIds.length} holidays ${lock ? 'locked' : 'unlocked'}`);
+      setSelectedIds([]);
+      fetchData();
+    } catch (error) {
+      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some holidays`);
+      fetchData();
+    }
+  };
+
+  const handleBulkEditClick = () => {
+    editForm.resetFields();
+
+    // Find the actual holiday objects for the selected IDs
+    const selectedHolidays = selectedIds.map(id => holidays.find(h => h.id === id)).filter(Boolean) as Holiday[];
+
+    if (selectedHolidays.length > 0) {
+      const firstDesc = selectedHolidays[0].description;
+      const allSameDesc = selectedHolidays.every(h => h.description === firstDesc);
+      
+      const firstRecur = selectedHolidays[0].is_recurring;
+      const allSameRecur = selectedHolidays.every(h => h.is_recurring === firstRecur);
+
+      editForm.setFieldsValue({
+        description: allSameDesc ? firstDesc : undefined,
+        is_recurring: allSameRecur ? firstRecur : false,
+      });
+      
+      setEditingItem({ 
+        isBulk: true, 
+        items: selectedHolidays,
+        allSameDesc,
+      });
+    } else {
+      setEditingItem({ isBulk: true, items: [] });
+    }
+    
+    setEditModalOpen(true);
   };
 
   const handleToggleLockGroup = async (groupItem: any) => {
@@ -451,40 +646,67 @@ const Holidays = () => {
           {/* List */}
           <Card
             title={
-              <div className="holiday-list-header flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                <Title level={5} style={{ margin: 0 }}>
-                  My Time Off ({holidays.length})
-                </Title>
-                <Space wrap className="holiday-list-actions">
-                  <Select
-                    value={sortBy}
-                    onChange={setSortBy}
-                    options={[
-                      { value: 'date', label: 'By Date' },
-                      { value: 'name', label: 'By Name' },
-                    ]}
-                    style={{ width: 120 }}
-                  />
-                  <Button
-                    icon={
-                      sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />
-                    }
-                    onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                  />
-                  <Popconfirm
-                    title="Delete All Unlocked?"
-                    description="This will delete all custom holidays that are not locked. This cannot be undone."
-                    okText="Delete All"
-                    okType="danger"
-                    onConfirm={handleDeleteAll}
-                    disabled={holidays.length === 0}
-                  >
-                    <Button danger disabled={holidays.length === 0} icon={<DeleteOutlined />}>
-                      Delete All
+              <BulkActionHeader
+                selectedCount={selectedIds.length}
+                totalCount={sortedHolidays.length}
+                onSelectAll={handleSelectAll}
+                onCancelSelection={() => setSelectedIds([])}
+                title={`My Time Off (${holidays.length})`}
+                bulkActions={
+                  <>
+                    <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                      Lock
                     </Button>
-                  </Popconfirm>
-                </Space>
-              </div>
+                    <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
+                      Unlock
+                    </Button>
+                    <Button onClick={handleBulkEditClick} icon={<EditOutlined />}>
+                      Edit
+                    </Button>
+                    <Tooltip title={isAnySelectedLocked ? "Cannot delete while locked items are selected" : ""}>
+                      <Button 
+                        danger 
+                        onClick={handleBulkDelete} 
+                        icon={<DeleteOutlined />}
+                        disabled={isAnySelectedLocked}
+                      >
+                        Delete
+                      </Button>
+                    </Tooltip>
+                  </>
+                }
+                defaultActions={
+                  <>
+                    <Select
+                      value={sortBy}
+                      onChange={setSortBy}
+                      options={[
+                        { value: 'date', label: 'By Date' },
+                        { value: 'name', label: 'By Name' },
+                      ]}
+                      style={{ width: 120 }}
+                    />
+                    <Button
+                      icon={
+                        sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />
+                      }
+                      onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                    />
+                    <Popconfirm
+                      title="Delete All Unlocked?"
+                      description="This will delete all custom holidays that are not locked. This cannot be undone."
+                      okText="Delete All"
+                      okType="danger"
+                      onConfirm={handleDeleteAll}
+                      disabled={holidays.length === 0}
+                    >
+                      <Button danger disabled={holidays.length === 0} icon={<DeleteOutlined />}>
+                        Delete All
+                      </Button>
+                    </Popconfirm>
+                  </>
+                }
+              />
             }
           >
             <List
@@ -501,6 +723,10 @@ const Holidays = () => {
                       handleDeleteGroup={handleDeleteGroup}
                       toggleLock={toggleLock}
                       handleDelete={handleDelete}
+                      handleEditItem={handleEditClick}
+                      selectedIds={selectedIds}
+                      onSelectChange={handleSelectChange}
+                      onSelectGroup={handleSelectGroup}
                     />
                   );
                 }
@@ -514,13 +740,21 @@ const Holidays = () => {
                         isLocked={item.is_locked}
                         onToggleLock={() => toggleLock(item)}
                         onDelete={() => handleDelete(item.id)}
+                        onEdit={() => handleEditClick(item)}
                         disableDelete={item.is_locked}
                       />,
                     ]}
                   >
                     <List.Item.Meta
                       avatar={
-                        <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+                        <div className="flex items-center gap-3">
+                          <Checkbox 
+                            checked={selectedIds.includes(item.id)}
+                            onChange={(e) => handleSelectChange(item.id, e.target.checked)}
+                            style={{ marginTop: 8 }}
+                          />
+                          <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+                        </div>
                       }
                       title={
                         <Space>
@@ -609,6 +843,33 @@ const Holidays = () => {
         </div>
 
         <Tabs defaultActiveKey="custom" items={items} type="card" />
+
+        {/* Edit Modal */}
+        <Modal
+          title={editingItem?.isGroup ? "Edit Holiday Collection" : (editingItem?.isBulk ? `Edit ${editingItem.items.length} Holidays` : "Edit Holiday")}
+          open={editModalOpen}
+          onCancel={() => setEditModalOpen(false)}
+          onOk={handleEditSubmit}
+          okText="Save"
+        >
+          <Form form={editForm} layout="vertical">
+            {editingItem?.isBulk && !editingItem?.allSameDesc && (
+              <div className="mb-4 text-gray-500 text-sm italic">
+                You are editing multiple holidays with different names. Leave the name field blank to keep their original names, or type a new name to overwrite all of them.
+              </div>
+            )}
+            <Form.Item
+              name="description"
+              label="Name"
+              rules={editingItem?.isBulk && !editingItem?.allSameDesc ? [] : [{ required: true, message: 'Please enter a name' }]}
+            >
+              <Input placeholder={editingItem?.isBulk && !editingItem?.allSameDesc ? "Leave blank to keep original names..." : "Winter Break"} />
+            </Form.Item>
+            <Form.Item name="is_recurring" valuePropName="checked">
+              <Checkbox>Recurring (Yearly)</Checkbox>
+            </Form.Item>
+          </Form>
+        </Modal>
 
         {/* Import Modal */}
         <Modal

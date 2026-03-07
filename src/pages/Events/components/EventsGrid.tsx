@@ -7,6 +7,7 @@ import {
   VideoCameraOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { Checkbox } from 'antd';
 import type { Event } from '../../../types';
 import CategoryBadge from '../../../components/CategoryBadge';
 import RowActions from '../../../components/RowActions';
@@ -22,6 +23,8 @@ type EventsGridProps = {
   onEdit: (event: Event) => void;
   onDelete: (event: Event) => void;
   formatEventTime: (event: Event, userTimezone: string) => string | null;
+  selectedIds: number[];
+  onSelectChange: (id: number, checked: boolean) => void;
 };
 
 const EventsGrid = ({
@@ -33,6 +36,8 @@ const EventsGrid = ({
   onEdit,
   onDelete,
   formatEventTime,
+  selectedIds,
+  onSelectChange,
 }: EventsGridProps) => {
   if (loading) {
     return (
@@ -56,7 +61,11 @@ const EventsGrid = ({
             bodyStyle={{ flex: 1 }}
             title={
               <Space>
-                <Text strong ellipsis style={{ maxWidth: 180 }} title={event.name}>
+                <Checkbox
+                  checked={selectedIds.includes(event.id)}
+                  onChange={(e) => onSelectChange(event.id, e.target.checked)}
+                />
+                <Text strong ellipsis style={{ maxWidth: 150 }} title={event.name}>
                   {event.name}
                 </Text>
                 {event.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
