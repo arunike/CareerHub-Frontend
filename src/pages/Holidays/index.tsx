@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Tabs,
   List,
@@ -19,6 +19,7 @@ import {
   Select,
   Switch,
   Modal,
+  Collapse,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -48,6 +49,89 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
+
+const GroupedHolidayItem = ({ item, handleToggleLockGroup, handleDeleteGroup, toggleLock, handleDelete }: any) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const startDate = item.items[0].date;
+  const endDate = item.items[item.items.length - 1].date;
+
+  return (
+    <List.Item
+      actions={!isExpanded ? [
+        <RowActions
+          key={`actions-group-${item.id}`}
+          size="middle"
+          isLocked={item.is_locked}
+          onToggleLock={() => handleToggleLockGroup(item)}
+          onDelete={() => handleDeleteGroup(item)}
+          disableDelete={item.is_locked}
+        />,
+      ] : []}
+    >
+      <List.Item.Meta
+        avatar={
+          <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+        }
+        title={
+          <Space>
+            <Text strong>
+              {dayjs(startDate).format('YYYY-MM-DD')} to {dayjs(endDate).format('YYYY-MM-DD')}
+            </Text>
+            {item.is_recurring && (
+              <Tag color="blue" icon={<SyncOutlined />}>
+                Yearly
+              </Tag>
+            )}
+            {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+          </Space>
+        }
+        description={
+          <div className="mt-2 w-full">
+            <Collapse 
+              ghost 
+              size="small" 
+              style={{ marginLeft: -16 }}
+              onChange={(keys) => setIsExpanded(keys.length > 0)}
+            >
+              <Collapse.Panel header={<Text type="secondary">{item.description || 'Date Range Details'}</Text>} key="1">
+                <List
+                  size="small"
+                  dataSource={item.items}
+                  renderItem={(subItem: any) => (
+                    <List.Item 
+                      style={{ 
+                        padding: '12px 16px',
+                        backgroundColor: '#fafafa',
+                        marginBottom: '8px',
+                        borderRadius: '8px',
+                        border: '1px solid #f0f0f0'
+                      }}
+                      actions={[
+                        <RowActions
+                          key={`actions-${subItem.id}`}
+                          size="small"
+                          isLocked={subItem.is_locked}
+                          onToggleLock={() => toggleLock(subItem)}
+                          onDelete={() => handleDelete(subItem.id)}
+                          disableDelete={subItem.is_locked}
+                        />,
+                      ]}
+                    >
+                      <Space>
+                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                        <Text strong>{dayjs(subItem.date).format('dddd, MMMM D, YYYY')}</Text>
+                      </Space>
+                    </List.Item>
+                  )}
+                />
+              </Collapse.Panel>
+            </Collapse>
+          </div>
+        }
+      />
+    </List.Item>
+  );
+};
 
 const Holidays = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -104,6 +188,42 @@ const Holidays = () => {
     return sortOrder === 'asc' ? comparison : -comparison;
   });
 
+  const groupedHolidays = React.useMemo(() => {
+    const groups: any[] = [];
+    const groupMap = new Map();
+
+    sortedHolidays.forEach((item) => {
+      if (item.group_id) {
+        if (!groupMap.has(item.group_id)) {
+          const newGroup = {
+            isGroup: true,
+            id: item.group_id,
+            group_id: item.group_id,
+            items: [],
+            date: item.date,
+            description: item.description,
+            is_recurring: item.is_recurring,
+            is_locked: false, // Calculated logically if all are locked below
+          };
+          groupMap.set(item.group_id, newGroup);
+          groups.push(newGroup);
+        }
+        groupMap.get(item.group_id).items.push(item);
+      } else {
+        groups.push({ isGroup: false, ...item });
+      }
+    });
+
+    // Check lock status for groups
+    groups.forEach((g) => {
+      if (g.isGroup) {
+        g.is_locked = g.items.every((i: any) => i.is_locked);
+      }
+    });
+
+    return groups;
+  }, [sortedHolidays]);
+
   const sortedFederalHolidays = filterByYear(federalHolidays, selectedYear, 'date').sort((a, b) =>
     dayjs(a.date).diff(dayjs(b.date))
   );
@@ -120,44 +240,49 @@ const Holidays = () => {
   const handleAdd = async (values: any) => {
     const description = values.name || 'Custom Holiday';
     const isRecurring = values.is_recurring;
-    const datesToAdd: string[] = [];
-
+    
     if (isRangeMode && values.dateRange) {
       const [start, end] = values.dateRange;
-      let current = dayjs(start);
-      const endDay = dayjs(end);
-
-      if (endDay.isBefore(current)) {
+      if (end.isBefore(start)) {
         messageApi.error('End date must be after start date');
         return;
       }
 
-      while (current.isBefore(endDay) || current.isSame(endDay, 'day')) {
-        datesToAdd.push(current.format('YYYY-MM-DD'));
-        current = current.add(1, 'day');
-      }
-    } else if (values.date) {
-      datesToAdd.push(values.date.format('YYYY-MM-DD'));
-    } else {
-      return;
-    }
-
-    try {
-      const promises = datesToAdd.map((date) =>
-        createHoliday({
-          date,
+      const groupId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+      const promises = [];
+      let current = start.clone();
+      
+      while (current.isBefore(end) || current.isSame(end, 'day')) {
+        promises.push(createHoliday({
+          date: current.format('YYYY-MM-DD'),
+          group_id: groupId,
           description,
           is_recurring: isRecurring,
-        })
-      );
+        }));
+        current = current.add(1, 'day');
+      }
 
-      await Promise.allSettled(promises);
-      messageApi.success('Holiday(s) added');
-      form.resetFields();
-      fetchData();
-    } catch (error) {
-      messageApi.error('Failed to create holidays');
-      console.error(error);
+      try {
+        await Promise.allSettled(promises);
+        messageApi.success('Holiday collection added');
+        form.resetFields();
+        fetchData();
+      } catch (e) {
+        messageApi.error('Failed to create holiday collection');
+      }
+    } else if (values.date) {
+      try {
+        await createHoliday({
+          date: values.date.format('YYYY-MM-DD'),
+          description,
+          is_recurring: isRecurring,
+        });
+        messageApi.success('Holiday added');
+        form.resetFields();
+        fetchData();
+      } catch (error) {
+        messageApi.error('Failed to create holiday');
+      }
     }
   };
 
@@ -194,6 +319,40 @@ const Holidays = () => {
       messageApi.error('Failed to toggle lock');
       console.error(error);
     }
+  };
+
+  const handleToggleLockGroup = async (groupItem: any) => {
+    const newLockState = !groupItem.is_locked;
+    try {
+      await Promise.all(
+        groupItem.items.map((i: any) => updateHoliday(i.id, { is_locked: newLockState }))
+      );
+      messageApi.success(`Collection ${newLockState ? 'locked' : 'unlocked'}`);
+      fetchData();
+    } catch (error) {
+      messageApi.error(`Failed to toggle lock for collection`);
+      fetchData();
+    }
+  };
+
+  const handleDeleteGroup = (groupItem: any) => {
+    Modal.confirm({
+      title: 'Delete Holiday Collection',
+      content: `Are you sure you want to delete all ${groupItem.items.length} days in this collection?`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await Promise.all(groupItem.items.map((i: any) => deleteHoliday(i.id)));
+          messageApi.success('Holiday collection deleted');
+          fetchData();
+        } catch (error) {
+          messageApi.error('Failed to delete some holidays in the collection');
+          fetchData();
+        }
+      },
+    });
   };
 
   const handleImportUpload = async () => {
@@ -331,39 +490,56 @@ const Holidays = () => {
             <List
               loading={loading}
               itemLayout="horizontal"
-              dataSource={sortedHolidays}
-              renderItem={(item) => (
-                <List.Item
-                  actions={[
-                    <RowActions
-                      key={`actions-${item.id}`}
-                      size="middle"
-                      isLocked={item.is_locked}
-                      onToggleLock={() => toggleLock(item)}
-                      onDelete={() => handleDelete(item.id)}
-                      disableDelete={item.is_locked}
-                    />,
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
-                    }
-                    title={
-                      <Space>
-                        <Text strong>{dayjs(item.date).format('YYYY-MM-DD')}</Text>
-                        {item.is_recurring && (
-                          <Tag color="blue" icon={<SyncOutlined />}>
-                            Yearly
-                          </Tag>
-                        )}
-                        {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
-                      </Space>
-                    }
-                    description={item.description || 'No description'}
-                  />
-                </List.Item>
-              )}
+              dataSource={groupedHolidays}
+              renderItem={(item) => {
+                if (item.isGroup) {
+                  return (
+                    <GroupedHolidayItem
+                      key={`group-${item.id}`}
+                      item={item}
+                      handleToggleLockGroup={handleToggleLockGroup}
+                      handleDeleteGroup={handleDeleteGroup}
+                      toggleLock={toggleLock}
+                      handleDelete={handleDelete}
+                    />
+                  );
+                }
+
+                return (
+                  <List.Item
+                    actions={[
+                      <RowActions
+                        key={`actions-${item.id}`}
+                        size="middle"
+                        isLocked={item.is_locked}
+                        onToggleLock={() => toggleLock(item)}
+                        onDelete={() => handleDelete(item.id)}
+                        disableDelete={item.is_locked}
+                      />,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+                      }
+                      title={
+                        <Space>
+                          <Text strong>
+                            {dayjs(item.date).format('YYYY-MM-DD')}
+                          </Text>
+                          {item.is_recurring && (
+                            <Tag color="blue" icon={<SyncOutlined />}>
+                              Yearly
+                            </Tag>
+                          )}
+                          {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+                        </Space>
+                      }
+                      description={item.description || 'No description'}
+                    />
+                  </List.Item>
+                );
+              }}
               locale={{
                 emptyText: (
                   <Empty
