@@ -57,6 +57,7 @@ export interface Event {
 export interface Holiday {
   id: number;
   date: string;
+  group_id?: string | null;
   description: string;
   is_recurring?: boolean;
   is_locked?: boolean;
