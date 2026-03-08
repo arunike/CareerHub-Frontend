@@ -57,10 +57,12 @@ export interface Event {
 export interface Holiday {
   id: number;
   date: string;
-  group_id?: string | null;
+  group_id?: string;
   description: string;
-  is_recurring?: boolean;
-  is_locked?: boolean;
+  holiday_type?: 'custom' | 'federal';
+  is_recurring: boolean;
+  is_locked: boolean;
+  is_ignored?: boolean;
 }
 
 export interface Availability {
@@ -83,6 +85,7 @@ export interface UserSettings {
   global_availability: GlobalAvailability;
   ghosting_threshold_days: number;
   default_event_category?: number | null;
+  ignored_federal_holidays?: string[];
   created_at: string;
   updated_at: string;
 }
