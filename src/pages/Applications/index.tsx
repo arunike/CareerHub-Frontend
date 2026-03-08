@@ -43,6 +43,7 @@ import {
   patchDocument,
 } from '../../api';
 import type { Document } from '../../types';
+import type { CareerApplication } from '../../types/application';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';

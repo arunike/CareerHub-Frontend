@@ -43,15 +43,17 @@ import {
   updateHoliday,
   exportHolidays,
   importData,
+  getUserSettings,
+  updateUserSettings,
 } from '../../api';
-import type { Holiday } from '../../types';
+import type { Holiday, UserSettings } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const GroupedHolidayItem = ({ 
@@ -172,7 +174,11 @@ const Holidays = () => {
   // State
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Advanced Mode State
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
   // Sorting
   const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
@@ -191,6 +197,10 @@ const Holidays = () => {
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   
+  // Custom Federal Holiday State
+  const [addFederalModalOpen, setAddFederalModalOpen] = useState(false);
+  const [federalForm] = Form.useForm();
+  
   // Edit State
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -201,9 +211,14 @@ const Holidays = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [customResp, federalResp] = await Promise.all([getHolidays(), getFederalHolidays()]);
+      const [customResp, federalResp, settingsResp] = await Promise.all([
+        getHolidays(), 
+        getFederalHolidays(),
+        getUserSettings()
+      ]);
       setHolidays(customResp.data);
       setFederalHolidays(federalResp.data);
+      setUserSettings(settingsResp.data);
     } catch (error) {
       messageApi.error('Failed to load holidays');
       console.error(error);
@@ -332,6 +347,27 @@ const Holidays = () => {
     }
   };
 
+  const handleAddFederal = async () => {
+    try {
+      const values = await federalForm.validateFields();
+      await createHoliday({
+        date: values.date.format('YYYY-MM-DD'),
+        description: values.description,
+        holiday_type: 'federal',
+        is_recurring: values.is_recurring || false,
+      });
+      messageApi.success('Custom Federal Holiday added');
+      federalForm.resetFields();
+      setAddFederalModalOpen(false);
+      fetchData();
+    } catch (error) {
+      if (error && (error as any).errorFields) {
+        return;
+      }
+      messageApi.error('Failed to create custom federal holiday');
+    }
+  };
+
   const handleDelete = async (id: number) => {
     try {
       await deleteHoliday(id);
@@ -449,8 +485,6 @@ const Holidays = () => {
     }
   };
 
-  const allSelected = sortedHolidays.length > 0 && selectedIds.length === sortedHolidays.length;
-  const someSelected = selectedIds.length > 0 && selectedIds.length < sortedHolidays.length;
 
   const handleBulkDelete = () => {
     Modal.confirm({
@@ -512,8 +546,34 @@ const Holidays = () => {
     } else {
       setEditingItem({ isBulk: true, items: [] });
     }
-    
     setEditModalOpen(true);
+  };
+
+  const handleToggleFederalHoliday = async (holidayName: string, dateStr: string, isObserved: boolean) => {
+    if (!userSettings) return;
+    
+    try {
+      let ignoredList = userSettings.ignored_federal_holidays || [];
+      
+      if (!isObserved) {
+        // Add to ignored list
+        if (!ignoredList.includes(holidayName) && !ignoredList.includes(dateStr)) {
+          ignoredList = [...ignoredList, holidayName];
+        }
+      } else {
+        // Remove from ignored list
+        ignoredList = ignoredList.filter(name => name !== holidayName && name !== dateStr);
+      }
+      
+      await updateUserSettings({ ignored_federal_holidays: ignoredList });
+      messageApi.success(`${holidayName} is now ${isObserved ? 'observed' : 'ignored'}`);
+      
+      // Refetch to get updated lists
+      fetchData();
+    } catch (error) {
+      messageApi.error('Failed to update federal holiday settings');
+      console.error(error);
+    }
   };
 
   const handleToggleLockGroup = async (groupItem: any) => {
@@ -793,31 +853,129 @@ const Holidays = () => {
       children: (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Card>
-            <Space align="start">
-              <LockOutlined style={{ fontSize: 20, color: '#1890ff' }} />
-              <div>
-                <Text strong>Federal Holidays are Automatic</Text>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+              <Space align="start">
+                <LockOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 4 }} />
                 <div>
-                  <Text type="secondary">
-                    These are automatically excluded from availability. You don't need to add them.
-                  </Text>
+                  <Text strong>Federal Holidays are Automatic</Text>
+                  <div>
+                    <Text type="secondary">
+                      These are automatically excluded from availability. You don't need to add them.
+                    </Text>
+                  </div>
                 </div>
-              </div>
-            </Space>
+              </Space>
+              
+              <Space direction="vertical" align="end" size={2}>
+                <Space size={16}>
+                  {isAdvancedMode && (
+                    <Button 
+                      type="primary" 
+                      icon={<PlusOutlined />} 
+                      onClick={() => setAddFederalModalOpen(true)}
+                    >
+                      Add Federal Holiday
+                    </Button>
+                  )}
+                  <Space>
+                    <Text strong>Advanced Options</Text>
+                    <Switch checked={isAdvancedMode} onChange={setIsAdvancedMode} />
+                  </Space>
+                </Space>
+                {isAdvancedMode && (
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    Toggle specific holidays on or off or add custom ones
+                  </Text>
+                )}
+              </Space>
+            </div>
           </Card>
           <List
+            grid={{ gutter: 24, column: 3, xs: 1, sm: 1, md: 2, lg: 3, xl: 3, xxl: 3 }}
             loading={loading}
-            grid={{ gutter: 16, column: 2 }}
             dataSource={sortedFederalHolidays}
             renderItem={(item) => (
-              <List.Item>
-                <Card size="small">
-                  <List.Item.Meta
-                    avatar={<CalendarOutlined style={{ color: '#8c8c8c' }} />}
-                    title={dayjs(item.date).format('YYYY-MM-DD')}
-                    description={item.description}
-                  />
-                </Card>
+              <List.Item style={{ height: '100%', width: '100%' }}>
+                <div
+                  className={`flex flex-col rounded-xl border p-5 transition-all duration-300 w-full ${
+                    !isAdvancedMode
+                      ? 'bg-gray-50 border-gray-200 opacity-60 grayscale cursor-default'
+                      : item.is_ignored
+                        ? 'bg-gray-100 border-dashed border-gray-300 opacity-60 grayscale-[70%]'
+                        : 'bg-white border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300'
+                  }`}
+                  style={{ height: isAdvancedMode ? 220 : 166 }}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      {item.is_ignored ? (
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                          <CalendarOutlined className="text-lg" />
+                        </div>
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isAdvancedMode ? 'bg-blue-50 text-blue-500' : 'bg-gray-100 text-gray-400'}`}>
+                          <CalendarOutlined className="text-lg" />
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <Text 
+                          strong 
+                          delete={item.is_ignored} 
+                          className={`text-base ${item.is_ignored ? 'text-gray-400' : 'text-gray-800'}`}
+                        >
+                          {dayjs(item.date).format('MMMM D, YYYY')}
+                        </Text>
+                        <Text className={`text-xs ${item.is_ignored ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {dayjs(item.date).format('dddd')}
+                        </Text>
+                      </div>
+                    </div>
+                    <Space>
+                      {item.is_ignored ? (
+                        <Tag className="m-0 border-gray-300 text-gray-500 bg-gray-100 px-3 py-1 rounded-full" color="default">
+                          Ignored
+                        </Tag>
+                      ) : (
+                        <Tag className={`m-0 px-3 py-1 rounded-full ${isAdvancedMode ? 'border-blue-200 text-blue-600 bg-blue-50' : 'border-gray-200 text-gray-500 bg-gray-100'}`} color={isAdvancedMode ? "blue" : "default"}>
+                          Observed
+                        </Tag>
+                      )}
+                      {isAdvancedMode && item.holiday_type === 'federal' && (
+                         <Popconfirm
+                           title="Delete custom federal holiday?"
+                           onConfirm={() => handleDelete(item.id)}
+                           okText="Yes"
+                           cancelText="No"
+                         >
+                           <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                         </Popconfirm>
+                      )}
+                    </Space>
+                  </div>
+                  
+                  <div className="flex-grow mb-4 h-10 overflow-hidden">
+                    <Text 
+                      className={`text-sm line-clamp-2 ${item.is_ignored ? 'text-gray-400 line-through' : 'text-gray-600'}`} 
+                      title={item.description}
+                    >
+                      {item.description}
+                    </Text>
+                  </div>
+
+                  {isAdvancedMode && (
+                    <div className={`mt-auto pt-4 border-t flex justify-between items-center ${
+                      item.is_ignored ? 'border-gray-200' : 'border-blue-50'
+                    }`}>
+                      <Text className={`text-xs font-medium ${item.is_ignored ? 'text-gray-400' : 'text-blue-400'}`}>
+                        Observance Status
+                      </Text>
+                      <Switch 
+                        checked={!item.is_ignored} 
+                        onChange={(checked) => handleToggleFederalHoliday(item.description, item.date, checked)}
+                      />
+                    </div>
+                  )}
+                </div>
               </List.Item>
             )}
           />
@@ -884,6 +1042,38 @@ const Holidays = () => {
             type="file"
             onChange={(e) => setImportFile(e.target.files ? e.target.files[0] : null)}
           />
+        </Modal>
+
+        {/* Add Federal Holiday Modal */}
+        <Modal
+          title="Add Custom Federal Holiday"
+          open={addFederalModalOpen}
+          onCancel={() => setAddFederalModalOpen(false)}
+          onOk={handleAddFederal}
+          okText="Add"
+        >
+          <Form form={federalForm} layout="vertical">
+             <div className="mb-4 text-gray-500 text-sm">
+               Custom federal holidays will appear globally in your federal holiday list alongside native federal holidays.
+             </div>
+             <Form.Item
+               name="date"
+               label="Date"
+               rules={[{ required: true, message: 'Please select a date' }]}
+             >
+               <DatePicker className="w-full" />
+             </Form.Item>
+             <Form.Item
+               name="description"
+               label="Holiday Name"
+               rules={[{ required: true, message: 'Please enter a name' }]}
+             >
+               <Input placeholder="E.g., Company Founders Day" />
+             </Form.Item>
+             <Form.Item name="is_recurring" valuePropName="checked">
+               <Checkbox>Recurring (Yearly)</Checkbox>
+             </Form.Item>
+          </Form>
         </Modal>
       </div>
     </>
