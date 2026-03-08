@@ -114,49 +114,60 @@ const GroupedHolidayItem = ({
           </Space>
         }
         description={
-          <div className="mt-2 w-full">
+          <div className="mt-2 w-full" style={{ marginLeft: -8 }}>
             <Collapse 
               ghost 
               size="small" 
-              style={{ marginLeft: -16 }}
+              className="bg-transparent"
+              style={{ padding: 0 }}
               onChange={(keys) => setIsExpanded(keys.length > 0)}
             >
-              <Collapse.Panel header={<Text type="secondary">{item.description || 'Date Range Details'}</Text>} key="1">
-                <List
-                  size="small"
-                  dataSource={item.items}
-                  renderItem={(subItem: any) => (
-                    <List.Item 
-                      style={{ 
-                        padding: '12px 16px',
-                        backgroundColor: '#fafafa',
-                        marginBottom: '8px',
-                        borderRadius: '8px',
-                        border: '1px solid #f0f0f0'
-                      }}
-                      actions={[
-                        <RowActions
-                          key={`actions-${subItem.id}`}
-                          size="small"
-                          isLocked={subItem.is_locked}
-                          onToggleLock={() => toggleLock(subItem)}
-                          onDelete={() => handleDelete(subItem.id)}
-                          onEdit={() => handleEditItem(subItem)}
-                          disableDelete={subItem.is_locked}
-                        />,
-                      ]}
-                    >
-                      <Space>
-                        <Checkbox 
-                          checked={selectedIds.includes(subItem.id)}
-                          onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
-                        />
-                        <div className="w-2 h-2 rounded-full bg-blue-400 ml-2" />
-                        <Text strong>{dayjs(subItem.date).format('dddd, MMMM D, YYYY')}</Text>
-                      </Space>
-                    </List.Item>
-                  )}
-                />
+              <Collapse.Panel 
+                header={<Text type="secondary" className="hover:text-blue-500 transition-colors">{item.description || 'View Individual Days'}</Text>} 
+                key="1"
+              >
+                <div className="pl-4 border-l-2 border-dashed border-gray-200 ml-1 mt-2">
+                  <List
+                    size="small"
+                    split={false}
+                    dataSource={item.items}
+                    renderItem={(subItem: any) => (
+                      <List.Item 
+                        className="group hover:bg-gray-50 transition-colors rounded-lg mb-1 relative"
+                        style={{ padding: '8px 12px' }}
+                        actions={[
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                            <RowActions
+                              key={`actions-${subItem.id}`}
+                              size="small"
+                              isLocked={subItem.is_locked}
+                              onToggleLock={() => toggleLock(subItem)}
+                              onDelete={() => handleDelete(subItem.id)}
+                              onEdit={() => handleEditItem(subItem)}
+                              disableDelete={subItem.is_locked}
+                            />
+                          </div>,
+                        ]}
+                      >
+                        {/* Tree Branch Connector */}
+                        <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
+                        
+                        <Space size="middle" className="pl-2">
+                          <Checkbox 
+                            checked={selectedIds.includes(subItem.id)}
+                            onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
+                          />
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-300" />
+                            <Text className="text-gray-600 font-medium">
+                              {dayjs(subItem.date).format('dddd, MMMM D, YYYY')}
+                            </Text>
+                          </div>
+                        </Space>
+                      </List.Item>
+                    )}
+                  />
+                </div>
               </Collapse.Panel>
             </Collapse>
           </div>
