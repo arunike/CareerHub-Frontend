@@ -89,9 +89,13 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 - **EventCalendar.tsx**: Weekly availability calendar
   - Mark days as available/unavailable
-  - Federal holiday indicators
-  - Interview event badges
+  - Full U.S. Federal Holiday integration
+  - Interactive interview event badges
   - Date navigation (prev/next week)
+- **Holiday Management (Holidays/index.tsx)**:
+  - **Custom Holidays**: Group multi-day trips into collapsible UI collections
+  - **Federal Holidays**: View native holidays, toggle observance (Ignore/Observe) via Advanced Options
+  - **Custom Federal Holidays**: Manually inject company-specific block-out dates into the global federal list
 - **Availability Text + Booking Link**:
   - generate/copy availability text
   - generate/copy/deactivate public booking link
@@ -110,8 +114,9 @@ The **Frontend** is a React-based single-page application that provides an intui
   - Export all data (ZIP)
 - **Analytics/index.tsx**: Comprehensive job search analytics
   - **Availability Analytics**: Track meeting/interview volume and duration over time
-  - **Job Hunt Analytics**: visualize application funnel, active interviews, and outcomes
-  - **Custom Widgets**: Create personalized metrics and charts using natural language queries (e.g., "Applications by status", "Events this month")
+  - **Job Hunt Analytics**: Visualize application funnel, active interviews, and outcomes
+  - **Custom Widgets Engine**: Create personalized metrics and charts using natural language queries (e.g., "Applications by status", "Events this month")
+  - **Drag-and-Drop Dashboards**: Full DnD support for reordering and saving widget layouts using `dnd-kit`
 
 ## 🛠 Tech Stack
 
