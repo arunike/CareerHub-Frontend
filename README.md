@@ -105,6 +105,10 @@ The **Frontend** is a React-based single-page application that provides an intui
   - Link events to applications
   - Dual-timezone display
   - Event type tags
+- **⚡ Real-Time Conflict Alerts (WebSocket)**:
+  - Connects to `ws://localhost:8000/ws/conflicts/` on load
+  - Backend (`ConflictAlertConsumer`) pushes an instant notification when an event conflict is detected
+  - No polling — alerts arrive in milliseconds via Django Channels + Redis
 
 ### ⚙️ Settings & Analytics
 
@@ -315,8 +319,22 @@ export const exportApplications = (format: 'csv' | 'json' | 'xlsx') =>
 ```
 
 Career endpoints are served under `/api/career/*` (for example `/api/career/applications/`, `/api/career/offers/`, `/api/career/documents/`, `/api/career/tasks/`).
-Availability endpoints are served under `/api/*` (for example `/api/availability/generate/`, `/api/share-links/generate/`, `/api/booking/:uuid/slots/`).
+Availability endpoints are served under `/api/availability/*` (for example `/api/availability/generate/`, `/api/share-links/generate/`, `/api/booking/:uuid/slots/`).
 Public booking page route: `/book/:uuid`.
+
+### WebSocket
+
+The frontend connects to the backend WebSocket for real-time conflict alerts:
+
+```typescript
+const ws = new WebSocket('ws://localhost:8000/ws/conflicts/');
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  // data.message, data.conflicting_events, data.event_names
+  showConflictAlert(data);
+};
+```
 
 ## 🎯 Key Features Explained
 
