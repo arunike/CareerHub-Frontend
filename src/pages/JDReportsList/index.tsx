@@ -3,15 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Modal, Checkbox, Space, Tooltip, Input } from 'antd';
 import {
   DeleteOutlined,
-  EyeOutlined,
   FileTextOutlined,
   LockOutlined,
-  UnlockOutlined,
   EditOutlined,
 } from '@ant-design/icons';
 import { getAllReports, deleteReport, deleteAllReports, toggleReportLock, updateReportTitle } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
+import RowActions from '../../components/RowActions';
 
 const getScoreMeta = (score: number) => {
   if (score >= 85) return { label: 'Excellent', color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0', text: '#065f46' };
@@ -279,42 +278,16 @@ const JDReportsListPage: React.FC = () => {
                       <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> {report.matched_skills?.length ?? 0} strengths</span>
                       <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-orange-400" /> {report.missing_skills?.length ?? 0} gaps</span>
                     </div>
-                    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1 pr-2 border-r border-gray-200">
-                        <Tooltip title={report.isLocked ? "Unlock to delete" : "Lock report"}>
-                          <button
-                            onClick={() => handleToggleLock(report.id)}
-                            className={`transition-all p-1.5 rounded-lg border ${
-                              report.isLocked 
-                                ? 'text-amber-500 bg-amber-50 border-amber-200 shadow-inner' 
-                                : 'text-gray-400 hover:text-gray-600 bg-white border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            {report.isLocked ? <LockOutlined /> : <UnlockOutlined />}
-                          </button>
-                        </Tooltip>
-                        <Tooltip title={report.isLocked ? "Locked items cannot be deleted" : "Delete Report"}>
-                          <button
-                            onClick={() => !report.isLocked && setDeletingId(report.id)}
-                            disabled={report.isLocked}
-                            className={`transition-all p-1.5 rounded-lg border ${
-                              report.isLocked 
-                                ? 'text-gray-200 bg-gray-50 border-gray-100 cursor-not-allowed' 
-                                : 'text-gray-400 hover:text-red-500 bg-white border-gray-200 hover:border-red-200 hover:bg-red-50'
-                            }`}
-                          >
-                            <DeleteOutlined />
-                          </button>
-                        </Tooltip>
-                      </div>
-                      <Button
-                        type="primary"
-                        icon={<EyeOutlined />}
-                        onClick={() => navigate(`/jd-report/${report.id}`)}
-                        className="bg-indigo-600 hover:!bg-indigo-500 border-transparent rounded-xl px-4 font-bold shadow-md shadow-indigo-100"
-                      >
-                        Details
-                      </Button>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <RowActions
+                        isLocked={report.isLocked}
+                        onToggleLock={() => handleToggleLock(report.id)}
+                        onView={() => navigate(`/jd-report/${report.id}`)}
+                        onDelete={() => setDeletingId(report.id)}
+                        disableDelete={report.isLocked}
+                        deleteButtonTooltip={report.isLocked ? 'Unlock to delete' : undefined}
+                        confirmDelete={false}
+                      />
                     </div>
                   </div>
                 </div>

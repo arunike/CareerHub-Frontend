@@ -71,3 +71,6 @@ export interface JDMatchResult {
 }
 
 export const matchJobDescription = (text: string) => api.post<JDMatchResult>('/career/match-jd/', { text });
+
+export const generateCoverLetter = (applicationId: number, jdText: string) =>
+  api.post<{ cover_letter: string }>(`/career/applications/${applicationId}/generate-cover-letter/`, { jd_text: jdText });

@@ -28,6 +28,7 @@ import {
   LockOutlined,
   UnlockOutlined,
   DeleteOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
@@ -47,6 +48,7 @@ import type { CareerApplication } from '../../types/application';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
+import CoverLetterModal from './CoverLetterModal';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 
@@ -67,6 +69,7 @@ const Applications = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [coverLetterApp, setCoverLetterApp] = useState<CareerApplication | null>(null);
 
   // Bulk Selection State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -348,14 +351,23 @@ const Applications = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: CareerApplication) => (
-        <RowActions
-          size="middle"
-          isLocked={record.is_locked}
-          onToggleLock={() => toggleLock(record)}
-          onEdit={() => openEditModal(record)}
-          onDelete={() => handleDelete(record.id)}
-          disableDelete={record.is_locked}
-        />
+        <Space>
+          <Tooltip title="Generate Cover Letter">
+            <Button
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={() => setCoverLetterApp(record)}
+            />
+          </Tooltip>
+          <RowActions
+            size="middle"
+            isLocked={record.is_locked}
+            onToggleLock={() => toggleLock(record)}
+            onEdit={() => openEditModal(record)}
+            onDelete={() => handleDelete(record.id)}
+            disableDelete={record.is_locked}
+          />
+        </Space>
       ),
     },
   ];
@@ -536,6 +548,15 @@ const Applications = () => {
           </div>
         </Form>
       </Modal>
+
+      {/* Cover Letter Modal */}
+      {coverLetterApp && (
+        <CoverLetterModal
+          application={coverLetterApp}
+          open={!!coverLetterApp}
+          onClose={() => setCoverLetterApp(null)}
+        />
+      )}
 
       {/* Import Modal */}
       <Modal
