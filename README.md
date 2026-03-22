@@ -2,7 +2,7 @@
 
 A modern React application powering the user interface of the CareerHub job search platform.
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white) ![Ant Design](https://img.shields.io/badge/Ant_Design-0170FE?style=for-the-badge&logo=ant-design&logoColor=white)
 
 ## 📋 Table of Contents
 
@@ -17,146 +17,119 @@ A modern React application powering the user interface of the CareerHub job sear
 
 ## 🌟 Overview
 
-The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS, it offers a modern UX for tracking applications, comparing offers, managing interview availability, and visualizing your job search progress.
+The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS + Ant Design, it covers the full job search lifecycle: tracking applications, comparing offers, managing interview availability, running AI career tools, and visualizing progress.
 
 **Key Capabilities:**
 
-- 📊 **Interactive Dashboards**: Visualize job applications, offers, and availability with dynamic charts and tables
-- 💰 **Offer Comparison**: Side-by-side compensation analysis with "Diff vs Current" calculations
-- 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection
-- 📥 **Import/Export**: Bulk upload applications via CSV/XLSX and export data in multiple formats
-- 🎨 **Modern UI**: Clean, responsive design with Tailwind CSS and Lucide icons
+- 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
+- 🤖 **AI Career Suite**: JD matching, cover letter generation, and offer negotiation advisor — all powered by LLM
+- 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
+- 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
+- 📥 **Import/Export**: Bulk upload via CSV/XLSX; export data in CSV, JSON, or XLSX formats
+- 🎨 **Consistent UI**: Shared components (`PageActionToolbar`, `BulkActionHeader`, `RowActions`, `ExportButton`) used across all pages
 
 ## ✨ Features
 
-### 🏢 Application Tracking Dashboard
+### 🏢 Application Tracker (`/applications`)
 
-- **ApplicationList.tsx**: Comprehensive job application manager
-  - Create, edit, delete applications with modal forms
-  - Status badges color-coded by stage (Applied, Screen, Interview, Offer, etc.)
-  - Filter applications by status
-  - Bulk import from CSV/XLSX files
-  - Export to CSV, JSON, or XLSX
-  - Auto-ghosted detection with visual indicators
+- Create, edit, delete applications with modal forms
+- Status badges color-coded by stage (Applied, OA, Screen, Onsite, Offer, Rejected, Accepted, Ghosted)
+- Filter by status and search by company/role
+- Year filter with persisted state
+- Bulk select → bulk lock / unlock / delete
+- Import from CSV/XLSX; export to CSV, JSON, XLSX
+- Lock/unlock individual applications
+- **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
 
-### 💎 Offer Comparison Tool
+### 💎 Offer Comparison (`/offers`)
 
-- **OfferComparison.tsx**: Advanced offer analysis interface
-  - **Interactive Chart**: Recharts-powered stacked bar chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
-  - **Offer Details Table**: Multi-column table displaying:
-    - Company Name & Role Title (bold/gray styling)
-    - Location & RTO Policy (color-coded badges)
-    - Salary components (Base, Bonus, Equity, Sign-On)
-    - After-tax breakdown (base/bonus/equity)
-    - Total Compensation (calculated)
-    - PTO/Holiday day counts
-    - **Diff vs Current**: Automatic percentage and dollar difference vs. marked "Current" role (green = higher, red = lower)
-  - **Offer Adjustments Panel**:
-    - Adjusted comparison by tax/COL/rent/work setup
-    - Per-offer tax-rate and rent override support
-    - US city list and marital-status inputs
-    - Custom offers with view/edit/delete actions
-    - Saves adjustments locally (browser storage)
-  - **Offer Form (shared for real/custom offers)**:
-    - Bonus input with `$` / `%` toggle
-    - Equity input with `/yr` and `total + vesting %` mode
-    - Benefit items (monthly/yearly) with annualized roll-up
-    - Work mode, RTO days, commute and food-perk annualization
-    - PTO days and holiday days
-    - Distinct `View` (read-only) and `Edit` modes
-  - **Add Current Job**: Quick action to add your current employer as a baseline
+- **Interactive Bar Chart**: Recharts stacked chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
+- **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
+- **⚡ Negotiation Advisor**: per-row "Negotiate" button (non-current offers) opens `NegotiationAdvisorModal`:
+  - Centered offer snapshot header (Base, Bonus, Equity/yr, Sign-On, PTO)
+  - **Suggested Counter-Ask** — concrete numbers (base, sign-on, equity, PTO) with rationale
+  - **Leverage Points** (green) — strengths to cite
+  - **Talking Points & Scripts** (amber) — ready-to-use scripts
+  - **Watch Out For** (red) — risks and cautions
+  - Regenerate button; auto-saves result to localStorage with "Saved" indicator + "View Full Report" link
+- **Adjustments Panel**: Tax/COL/rent/commute/food-perk adjustments; per-offer overrides; persisted locally
+- **Edit Offer Modal**: Shared form for real and scenario offers (bonus $/% toggle, equity total+vesting mode, benefit items)
+- **Add Current Job**: Quick baseline creation
 
-### 📄 Document Vault
+### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
-- **Document management table** with:
-  - file type icon, title link, category, linked application, upload date
-  - row actions: lock/unlock, view, edit, delete
-- **Versioning support**:
-  - version badge (`v1`, `v2`, ...)
-  - version history modal per document
-  - upload a new version while preserving version chain
-- **Page actions**:
-  - year filter
-  - add/upload document
-  - import
-  - export
-  - delete all (locked documents are preserved by backend rules)
-- **Edit modal**:
-  - update title/type
-  - optional link to application
+> All AI features require `LLM_API_KEY` set in `api/.env`. See backend README.
 
-### 📑 AI JD Matcher & Reports
+Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsible section:
 
-> **🤖 Note on AI Features:** The JD Matcher relies on the backend's LLM API configuration. You must set your free Gemini API key (`LLM_API_KEY`) in the `api/.env` file. See the backend README for quick setup instructions.
+- **JD Reports** (`/jd-reports`): Card list of all past JD evaluations with score badge, skill tags, lock/delete/rename. Uses `RowActions` + `BulkActionHeader` + `PageActionToolbar`.
+- **JD Report Detail** (`/jd-report/:id`): Full standalone page with progress ring, strengths/gaps columns, recommendations, PDF download. Top bar uses `BulkActionHeader`.
+- **Cover Letters** (`/ai-tools?tab=cover-letters`): Auto-saved whenever a cover letter is generated from the Applications page. Card list with view modal (serif font, Copy to Clipboard), rename, lock/delete, bulk actions, CSV/JSON export.
+- **Negotiation Results** (`/ai-tools?tab=negotiation-results`): Auto-saved whenever the Negotiation Advisor runs. Card list showing offer snapshot chips, advice summary counts, lock/delete, bulk actions, CSV/JSON export, and "View Full Report" link.
+- **Negotiation Result Detail** (`/negotiation-result/:id`): Full standalone page mirroring `JDReport` layout — offer snapshot, Suggested Counter-Ask panel, Leverage Points, Talking Points & Scripts, Watch Out For. Top bar uses `BulkActionHeader`.
 
-- **JD Matcher Modal**: Instantly evaluate any job description against your profile using AI to receive a detailed breakdown of strengths and gaps.
-- **JD Reports Management**:
-  - **Reports List**: View all past match reports as distinct cards with key metrics.
-  - **Custom Titles**: Customize and inline-edit report titles for better organization.
-  - **Bulk Actions**: Select multiple reports for bulk deletion, with locking mechanisms to prevent accidental removal of important evaluations.
-- **Detailed Analysis Page**:
-  - **Document-Centric Layout**: A premium, left-aligned layout detailing the overall match score, executive summary, strengths, missing skills, and actionable recommendations.
-  - **PDF Export**: Generate and download a beautifully formatted PDF of the complete evaluation report.
+### 📄 Document Vault (`/documents`)
+
+- File upload with type classification (Resume, Cover Letter, Portfolio, Other)
+- Versioning: version badge, version history modal, upload new version while preserving chain
+- Optional link to an application
+- Lock/unlock, year filter, export, delete all (locked preserved)
+
+### 👤 Experience (`/experience`)
+
+- Full CRUD for work experience entries (title, company, dates, description, skills)
+- Skills auto-extracted by backend NLP on save
+- Inline skill tag editing
+- JD Matcher modal accessible from this page
 
 ### 📅 Availability & Events
 
-- **EventCalendar.tsx**: Weekly availability calendar
-  - Mark days as available/unavailable
-  - Full U.S. Federal Holiday integration
-  - Interactive interview event badges
-  - Date navigation (prev/next week)
-- **Holiday Management (Holidays/index.tsx)**:
-  - **Custom Holidays**: Group multi-day trips into collapsible UI collections
-  - **Federal Holidays**: View native holidays, toggle observance (Ignore/Observe) via Advanced Options
-  - **Custom Federal Holidays**: Manually inject company-specific block-out dates into the global federal list
-- **Availability Text + Booking Link**:
-  - generate/copy availability text
-  - generate/copy/deactivate public booking link
-  - booking page only exposes available slots, not private events/holidays
-- **EventList.tsx**: Interview event management
-  - Create/edit/delete events with modal
-  - Link events to applications
-  - Dual-timezone display
-  - Event type tags
-- **⚡ Real-Time Conflict Alerts (WebSocket)**:
-  - Connects to `ws://localhost:8000/ws/conflicts/` on load
-  - Backend (`ConflictAlertConsumer`) pushes an instant notification when an event conflict is detected
-  - No polling — alerts arrive in milliseconds via Django Channels + Redis
+- **Availability** (`/`): Weekly calendar with availability text generation, federal holiday integration, event badges, date navigation, public booking card
+- **Events** (`/events`): Create/edit/delete interview events; link to applications; timezone display; event type tags
+- **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays
+- **⚡ Real-Time Conflict Alerts**: `NotificationBell` connects to `ws://localhost:8000/ws/conflicts/` — alerts arrive in milliseconds via Django Channels + Redis, no polling
 
-### ⚙️ Settings & Analytics
+### 📊 Analytics (`/analytics`)
 
-- **Settings.tsx**: User preferences panel
-  - Ghosting threshold configuration
-  - Timezone selector
-  - Export all data (ZIP)
-- **Analytics/index.tsx**: Comprehensive job search analytics
-  - **Availability Analytics**: Track meeting/interview volume and duration over time
-  - **Job Hunt Analytics**: Visualize application funnel, active interviews, and outcomes
-  - **Custom Widgets Engine**: Create personalized metrics and charts using natural language queries (e.g., "Applications by status", "Events this month")
-  - **Drag-and-Drop Dashboards**: Full DnD support for reordering and saving widget layouts using `dnd-kit`
+- **Availability Analytics**: Meeting/interview volume and duration tracking
+- **Job Hunt Analytics**: Application funnel and outcome visualization
+- **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — unrecognized queries are now answered by the LLM fallback
+- **Drag-and-Drop Dashboard**: Reorder and save widget layouts with `dnd-kit`
+
+### ✅ Action Items (`/tasks`)
+
+- Kanban-style task board with TODO / IN_PROGRESS / DONE columns
+- Drag-and-drop reordering within and between columns
+- Priority levels (Low, Medium, High) and due dates
+
+### ⚙️ Settings (`/settings`)
+
+- Ghosting threshold configuration
+- Timezone and work hours
+- Data export (ZIP)
 
 ## 🛠 Tech Stack
 
-### Core Framework
-
-- **React 18** - UI library with hooks
-- **TypeScript** - Type safety and better developer experience
-- **Vite** - Lightning-fast build tool and dev server
-
-### Routing & HTTP
-
-- **React Router DOM** - Client-side routing
-- **Axios** - Promise-based HTTP client for API integration
+### Core
+- **React 18** — UI library with hooks
+- **TypeScript** — Type safety
+- **Vite** — Fast build tool and dev server
+- **React Router DOM** — Client-side routing
 
 ### UI & Styling
+- **Ant Design** — Component library (Table, Modal, Form, Button, Select, etc.)
+- **Tailwind CSS** — Utility-first CSS
+- **clsx** — Conditional className management
+- **Lucide React** — Icon library
 
-- **Tailwind CSS** - Utility-first CSS framework
-- **Lucide React** - Modern icon library (Plus, Trash2, Edit, Calendar, DollarSign, etc.)
-- **clsx** - Conditional className management
+### Data & State
+- **Axios** — HTTP client
+- **localStorage** — Persisted state for JD reports, cover letters, offer adjustments, widget layouts
+- **Custom hooks**: `usePersistedState`, `useCustomWidgets`, `useOfferAdjustmentsPersistence`, `useScenarioRows`
 
 ### Data Visualization
-
-- **Recharts** - Composable charting library for offer comparison
+- **Recharts** — Composable charting (Bar, Pie)
+- **dnd-kit** — Drag-and-drop for widget and task reordering
 
 ## 🚀 Getting Started
 
@@ -168,13 +141,11 @@ The **Frontend** is a React-based single-page application that provides an intui
 ### Installation
 
 1. **Navigate to frontend directory**
-
    ```bash
    cd frontend
    ```
 
 2. **Install Dependencies**
-
    ```bash
    npm install
    ```
@@ -184,25 +155,20 @@ The **Frontend** is a React-based single-page application that provides an intui
    npm run dev
    ```
 
-The app will be available at `http://localhost:5173` and will connect to the backend at `http://localhost:8000`.
+The app will be available at `http://localhost:5173` and proxies API calls to `http://localhost:8000`.
 
 If backend models changed, run backend migrations before using the app:
-
 ```bash
-cd ../api
-python manage.py migrate
+cd ../api && python manage.py migrate
 ```
 
 ### Build for Production
-
 ```bash
 npm run build
 ```
-
-Production-ready files will be in the `dist/` directory.
+Output in `dist/`.
 
 ### Run Linter
-
 ```bash
 npm run lint
 ```
@@ -212,191 +178,101 @@ npm run lint
 ```
 frontend/
 ├── src/
-│   ├── components/              # Reusable UI components
+│   ├── components/                  # Shared reusable components
+│   │   ├── Layout.tsx               # Sidebar navigation + mobile toggle
+│   │   ├── PageActionToolbar.tsx    # Page header with title, year filter, export, import, primary action
+│   │   ├── BulkActionHeader.tsx     # Selection count + bulk actions bar
+│   │   ├── RowActions.tsx           # Per-row lock / view / edit / delete buttons
+│   │   ├── ExportButton.tsx         # CSV / XLSX / JSON dropdown export
+│   │   ├── NotificationBell.tsx     # Real-time WebSocket conflict alerts
 │   │   ├── AvailabilityAnalytics.tsx
-│   │   ├── CustomWidgetCard.tsx # Renderer for custom metrics/charts
-│   │   ├── ExportButton.tsx
 │   │   ├── JobHuntAnalytics.tsx
-│   │   ├── Layout.tsx           # Main app layout with navigation
+│   │   ├── CustomWidgetCard.tsx     # Metric / chart widget renderer
 │   │   └── ...
 │   │
-│   ├── pages/                   # Page components (routed)
-│   │   ├── Analytics/           # Analytics dashboard
-│   │   ├── Applications/        # Application tracker
-│   │   ├── Availability/        # Availability calendar
-│   │   ├── Documents/           # Document vault + versioning
-│   │   ├── Events/              # Event management
-│   │   ├── Holidays/            # Holiday management
-│   │   ├── OfferComparison/     # Offer comparison tool
-│   │   ├── PublicBooking/       # Public booking page (/book/:uuid)
-│   │   ├── Tasks/               # Action items / Kanban + checklist
-│   │   └── Settings/            # User settings
+│   ├── pages/
+│   │   ├── Applications/
+│   │   │   ├── index.tsx            # Application tracker page
+│   │   │   └── CoverLetterModal.tsx # AI cover letter generator (auto-saves)
+│   │   ├── CoverLetters/
+│   │   │   └── index.tsx            # Cover letters management page
+│   │   ├── OfferComparison/
+│   │   │   ├── index.tsx            # Offer comparison page
+│   │   │   ├── OfferDetailsTable.tsx
+│   │   │   ├── NegotiationAdvisorModal.tsx  # AI negotiation advisor (auto-saves result)
+│   │   │   ├── OfferAdjustmentsPanel.tsx
+│   │   │   ├── EditOfferModal.tsx
+│   │   │   └── ...
+│   │   ├── Experience/
+│   │   │   ├── index.tsx            # Experience management
+│   │   │   └── JDMatcherModal.tsx   # AI JD evaluation modal
+│   │   ├── JDReportsList/
+│   │   │   └── index.tsx            # Saved JD match reports list
+│   │   ├── JDReport/
+│   │   │   └── index.tsx            # JD report detail + PDF export (standalone)
+│   │   ├── AITools/
+│   │   │   ├── index.tsx            # Route handler — renders tab by ?tab= param
+│   │   │   ├── CoverLettersTab.tsx  # Cover letters management
+│   │   │   └── NegotiationResultsTab.tsx  # Negotiation results management
+│   │   ├── NegotiationResult/
+│   │   │   └── index.tsx            # Negotiation advisory detail page (standalone)
+│   │   ├── Availability/            # Availability calendar
+│   │   ├── Events/                  # Interview event management
+│   │   ├── Holidays/                # Holiday management
+│   │   ├── Documents/               # Document vault + versioning
+│   │   ├── Tasks/                   # Action items / Kanban board
+│   │   ├── Analytics/               # Custom widget dashboard
+│   │   ├── Settings/                # User preferences
+│   │   └── PublicBooking/           # Public booking page (/book/:uuid)
 │   │
-│   ├── hooks/                   # Custom React hooks
-│   │   └── useCustomWidgets.ts  # Hook for managing custom analytics widgets
+│   ├── api/
+│   │   ├── client.ts                # Axios instance
+│   │   ├── career.ts                # Career, offers, experience, AI endpoints
+│   │   ├── availability.ts          # Events, holidays, booking endpoints
+│   │   └── index.ts                 # Re-exports
 │   │
-│   ├── context/                 # React Contexts
-│   ├── utils/                   # Helper functions
-│   ├── api.ts                   # Axios API client
-│   ├── App.tsx                  # Main app component
-│   └── main.tsx                 # Entry point
+│   ├── utils/
+│   │   ├── reportStorage.ts         # localStorage CRUD for JD match reports
+│   │   ├── coverLetterStorage.ts    # localStorage CRUD for cover letters
+│   │   ├── negotiationStorage.ts    # localStorage CRUD for negotiation results
+│   │   ├── yearFilter.ts            # Year filter helpers
+│   │   └── ...
+│   │
+│   ├── hooks/
+│   │   ├── usePersistedState.ts
+│   │   ├── useCustomWidgets.ts
+│   │   └── ...
+│   │
+│   ├── types/                       # Shared TypeScript types
+│   ├── App.tsx                      # Router + route definitions
+│   └── main.tsx                     # Entry point
 │
-├── public/                      # Static assets
-├── package.json                 # Dependencies & scripts
-├── vite.config.ts               # Vite configuration
-└── tailwind.config.js           # Tailwind CSS customization
+├── public/                          # Static assets
+├── package.json
+├── vite.config.ts
+└── tailwind.config.js
 ```
 
-## 🎨 Design System
+## 📡 Routes
 
-### Color Palette
-
-- **Primary**: Indigo (`indigo-600`, `indigo-700` for hover)
-- **Success**: Green (`green-600`)
-- **Warning**: Yellow (`yellow-500`)
-- **Error**: Red (`red-600`)
-- **Neutral**: Gray shades (`gray-50` to `gray-900`)
-
-### Common Patterns
-
-#### Cards
-
-```tsx
-<div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">{/* Content */}</div>
-```
-
-#### Buttons
-
-```tsx
-// Primary
-<button className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg">
-  Action
-</button>
-
-// Secondary
-<button className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg">
-  Cancel
-</button>
-```
-
-#### Page Headers
-
-```tsx
-<PageActionToolbar
-  title="JD Reports"
-  subtitle="Manage and analyze your job description match evaluations"
-  icon={FileTextOutlined}
-/>
-```
-
-#### Status Badges
-
-```tsx
-// Application Status
-<span className={clsx(
-  "px-2 py-1 rounded-full text-xs font-medium",
-  status === 'OFFER' && "bg-green-100 text-green-800",
-  status === 'REJECTED' && "bg-red-100 text-red-800",
-  // ...
-)}>
-  {status}
-</span>
-
-// RTO Policy
-<span className={clsx(
-  "px-2 py-1 rounded-full text-xs font-medium",
-  rto === 'REMOTE' && "bg-green-100 text-green-800",
-  rto === 'ONSITE' && "bg-red-100 text-red-800",
-  rto === 'HYBRID' && "bg-yellow-100 text-yellow-800"
-)}>
-  {rto}
-</span>
-```
-
-## 🔗 API Integration
-
-All API calls are centralized in `src/api.ts` using Axios:
-
-```typescript
-const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
-});
-
-// Example functions
-export const getApplications = () => api.get('/career/applications/');
-export const createApplication = (data) => api.post('/career/applications/', data);
-export const updateApplication = (id, data) => api.patch(`/career/applications/${id}/`, data);
-export const deleteApplication = (id) => api.delete(`/career/applications/${id}/`);
-
-export const importApplications = (file: File) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  return api.post('/career/import/', formData, {
-    headers: { 'Content-Type': undefined },
-  });
-};
-
-export const exportApplications = (format: 'csv' | 'json' | 'xlsx') =>
-  api.get(`/career/applications/export/?fmt=${format}`, { responseType: 'blob' });
-```
-
-Career endpoints are served under `/api/career/*` (for example `/api/career/applications/`, `/api/career/offers/`, `/api/career/documents/`, `/api/career/tasks/`).
-Availability endpoints are served under `/api/availability/*` (for example `/api/availability/generate/`, `/api/share-links/generate/`, `/api/booking/:uuid/slots/`).
-Public booking page route: `/book/:uuid`.
-
-### WebSocket
-
-The frontend connects to the backend WebSocket for real-time conflict alerts:
-
-```typescript
-const ws = new WebSocket('ws://localhost:8000/ws/conflicts/');
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  // data.message, data.conflicting_events, data.event_names
-  showConflictAlert(data);
-};
-```
-
-## 🎯 Key Features Explained
-
-### File Download Pattern
-
-```typescript
-const handleExport = async (format: 'csv' | 'json' | 'xlsx') => {
-  const response = await exportApplications(format);
-  const blob = new Blob([response.data]);
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `applications.${format}`;
-  link.click();
-  URL.revokeObjectURL(url);
-};
-```
-
-### Custom Analytics Engine
-
-The dashboard features a **Natural Language Query** engine that allows you to create custom widgets:
-
-1.  **Ask a question**: "Total offers in 2024" or "Events by category"
-2.  **Backend Processing**: The Django backend parses the query using regex and date logic (see `api/analytics/custom_widgets.py`).
-3.  **Dynamic Rendering**:
-    -   **Metrics**: Single value cards (e.g., "5 Offers")
-    -   **Charts**: Recharts visualizations (Bar/Pie) automatically selected based on data type
-
-No SQL knowledge required!
-
-### Currency & Percentage Formatting
-
-```typescript
-// Currency
-const formatted = Number(value).toLocaleString(); // $150,000
-
-// Percentage
-const percent = ((value / total) * 100).toFixed(1); // 15.2%
-```
+| Path | Page | Description |
+|---|---|---|
+| `/` | Availability | Weekly calendar + availability text generator |
+| `/events` | Events | Interview event management |
+| `/holidays` | Holidays | Federal + custom holiday management |
+| `/applications` | Applications | Application tracker with AI cover letter |
+| `/offers` | Offer Comparison | Offer analysis with AI negotiation advisor |
+| `/documents` | Documents | Document vault with versioning |
+| `/tasks` | Action Items | Kanban task board |
+| `/experience` | Experience | Work history + AI JD matcher |
+| `/jd-reports` | JD Reports | Saved AI JD match report history |
+| `/ai-tools?tab=cover-letters` | Cover Letters | Saved AI cover letter history |
+| `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history |
+| `/analytics` | Analytics | Custom widget dashboard |
+| `/settings` | Settings | User preferences |
+| `/book/:uuid` | Public Booking | Public-facing booking page (no auth) |
+| `/jd-report/:id` | JD Report Detail | Full JD match report with PDF export |
+| `/negotiation-result/:id` | Negotiation Detail | Full negotiation advisory report |
 
 ## 🔗 Backend
 
