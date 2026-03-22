@@ -14,6 +14,7 @@ import {
   FileTextOutlined,
   CheckSquareOutlined,
   TrophyOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
@@ -78,6 +79,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
         { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Action Items' },
         { key: '/experience', icon: <TrophyOutlined />, label: 'Experience' },
+        { key: '/jd-reports', icon: <RobotOutlined />, label: 'JD Reports' },
       ],
     },
     {

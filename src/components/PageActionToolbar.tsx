@@ -52,10 +52,29 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   return (
     <div className={`page-toolbar ${singleRowDesktop ? 'page-toolbar-single-row' : ''}`.trim()}>
       <div className="page-toolbar-heading">
-        <Typography.Title level={2} style={{ margin: 0 }}>
-          {title}
-        </Typography.Title>
-        {subtitle ? <Typography.Text type="secondary">{subtitle}</Typography.Text> : null}
+        <div className="flex items-center gap-4">
+          <div className="min-w-0">
+            <Typography.Title
+              level={2}
+              style={{
+                margin: 0,
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.2,
+              }}
+            >
+              {title}
+            </Typography.Title>
+            {subtitle ? (
+              <Typography.Text
+                type="secondary"
+                style={{ fontSize: '14px', display: 'block', marginTop: '2px' }}
+              >
+                {subtitle}
+              </Typography.Text>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <div className="page-toolbar-actions">

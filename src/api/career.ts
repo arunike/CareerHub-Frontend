@@ -61,3 +61,13 @@ export const createExperience = (data: Partial<Experience>) => api.post<Experien
 export const updateExperience = (id: number, data: Partial<Experience>) =>
   api.patch<Experience>(`/career/experiences/${id}/`, data);
 export const deleteExperience = (id: number) => api.delete(`/career/experiences/${id}/`);
+
+export interface JDMatchResult {
+  score: number;
+  summary: string;
+  matched_skills: string[];
+  missing_skills: string[];
+  recommendations: string[];
+}
+
+export const matchJobDescription = (text: string) => api.post<JDMatchResult>('/career/match-jd/', { text });
