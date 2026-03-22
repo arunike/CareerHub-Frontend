@@ -14,6 +14,7 @@ import ExperiencePage from './pages/Experience';
 import PublicBookingPage from './pages/PublicBooking';
 import JDReportPage from './pages/JDReport';
 import JDReportsListPage from './pages/JDReportsList';
+import CoverLettersPage from './pages/CoverLetters';
 
 function AppRoutes() {
   const location = useLocation();
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/experience" element={<ExperiencePage />} />
         <Route path="/jd-reports" element={<JDReportsListPage />} />
+        <Route path="/cover-letters" element={<CoverLettersPage />} />
       </Routes>
     </Layout>
   );

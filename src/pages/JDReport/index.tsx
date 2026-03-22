@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { getReportById } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
+import BulkActionHeader from '../../components/BulkActionHeader';
 
 const getScoreMeta = (score: number) => {
   if (score >= 85) return { label: 'Excellent Match', stroke: '#10b981', ringBg: '#f0fdf4', barColor: '#10b981', badgeBg: '#d1fae5', badgeText: '#065f46' };
@@ -58,40 +59,46 @@ const JDReportPage: React.FC = () => {
       `}</style>
 
       {/* Top Bar */}
-      <div className="no-print sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm">
-        <div className="px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/jd-reports')}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 text-sm font-medium transition-all"
-            >
-              <ArrowLeftOutlined /> All Reports
-            </button>
-            <span className="text-gray-200 select-none">|</span>
-            <div className="flex items-center gap-2">
-              <RobotOutlined style={{ color: '#6366f1', fontSize: 15 }} />
-              <span className="text-sm font-semibold text-gray-700">AI Resume Evaluator</span>
+      <div className="no-print sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm px-6 py-3">
+        <BulkActionHeader
+          selectedCount={0}
+          totalCount={0}
+          title={
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/jd-reports')}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 text-sm font-medium transition-all"
+              >
+                <ArrowLeftOutlined /> All Reports
+              </button>
+              <span className="text-gray-200 select-none">|</span>
+              <div className="flex items-center gap-2">
+                <RobotOutlined style={{ color: '#6366f1', fontSize: 15 }} />
+                <span className="text-sm font-semibold text-gray-700">AI Resume Evaluator</span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              icon={<UnorderedListOutlined />}
-              onClick={() => navigate('/jd-reports')}
-              className="rounded-lg"
-            >
-              Reports
-            </Button>
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
-              onClick={() => window.print()}
-              className="rounded-lg"
-              style={{ background: '#4f46e5', borderColor: '#4f46e5' }}
-            >
-              Download PDF
-            </Button>
-          </div>
-        </div>
+          }
+          defaultActions={
+            <>
+              <Button
+                icon={<UnorderedListOutlined />}
+                onClick={() => navigate('/jd-reports')}
+                className="rounded-lg"
+              >
+                Reports
+              </Button>
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                onClick={() => window.print()}
+                className="rounded-lg"
+                style={{ background: '#4f46e5', borderColor: '#4f46e5' }}
+              >
+                Download PDF
+              </Button>
+            </>
+          }
+        />
       </div>
 
       {/* Page */}

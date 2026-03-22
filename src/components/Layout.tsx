@@ -15,6 +15,7 @@ import {
   CheckSquareOutlined,
   TrophyOutlined,
   RobotOutlined,
+  FormOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
@@ -80,6 +81,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Action Items' },
         { key: '/experience', icon: <TrophyOutlined />, label: 'Experience' },
         { key: '/jd-reports', icon: <RobotOutlined />, label: 'JD Reports' },
+        { key: '/cover-letters', icon: <FormOutlined />, label: 'Cover Letters' },
       ],
     },
     {
