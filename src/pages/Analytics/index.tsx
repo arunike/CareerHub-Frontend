@@ -234,9 +234,9 @@ const Analytics: React.FC = () => {
         </div>
       </div>
 
-      {activeTab === 'availability' ? (
-        <AvailabilityAnalytics stats={availabilityStats} />
-      ) : (
+      {activeTab === 'availability' && <AvailabilityAnalytics stats={availabilityStats} />}
+
+      {activeTab === 'career' && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <JobHuntAnalytics applications={applications} />
 

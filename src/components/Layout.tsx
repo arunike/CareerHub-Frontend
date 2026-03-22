@@ -13,6 +13,7 @@ import {
   CloseOutlined,
   FileTextOutlined,
   CheckSquareOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
@@ -76,6 +77,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         { key: '/offers', icon: <DollarOutlined />, label: 'Offers' },
         { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
         { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Action Items' },
+        { key: '/experience', icon: <TrophyOutlined />, label: 'Experience' },
       ],
     },
     {

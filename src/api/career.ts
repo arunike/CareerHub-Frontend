@@ -1,4 +1,4 @@
-import type { Task, WeeklyReview } from '../types';
+import type { Task, Document, Experience } from '../types';
 import api from './client';
 
 export const getCompanies = () => api.get('/career/companies/');
@@ -55,3 +55,9 @@ export const getWeeklyReview = (startDate?: string, endDate?: string) =>
 export const getCareerReferenceData = () => api.get('/career/reference-data/');
 export const getCareerRentEstimate = (city: string) =>
   api.get('/career/rent-estimate/', { params: { city } });
+
+export const getExperiences = () => api.get<Experience[]>('/career/experiences/');
+export const createExperience = (data: Partial<Experience>) => api.post<Experience>('/career/experiences/', data);
+export const updateExperience = (id: number, data: Partial<Experience>) =>
+  api.patch<Experience>(`/career/experiences/${id}/`, data);
+export const deleteExperience = (id: number) => api.delete(`/career/experiences/${id}/`);

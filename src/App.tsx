@@ -10,6 +10,7 @@ import Applications from './pages/Applications';
 import OfferComparison from './pages/OfferComparison';
 import Documents from './pages/Documents';
 import Tasks from './pages/Tasks';
+import ExperiencePage from './pages/Experience';
 import PublicBookingPage from './pages/PublicBooking';
 
 function AppRoutes() {
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/offers" element={<OfferComparison />} />
         <Route path="/documents" element={<Documents />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/experience" element={<ExperiencePage />} />
       </Routes>
     </Layout>
   );

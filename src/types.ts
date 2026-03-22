@@ -195,3 +195,17 @@ export interface BookingDayAvailability {
   readable_date: string;
   slots: BookingSlot[];
 }
+
+export interface Experience {
+  id?: number;
+  title: string;
+  company: string;
+  location?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current: boolean;
+  description?: string;
+  skills?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
