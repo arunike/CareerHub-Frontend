@@ -12,15 +12,19 @@ import Documents from './pages/Documents';
 import Tasks from './pages/Tasks';
 import ExperiencePage from './pages/Experience';
 import PublicBookingPage from './pages/PublicBooking';
+import JDReportPage from './pages/JDReport';
+import JDReportsListPage from './pages/JDReportsList';
 
 function AppRoutes() {
   const location = useLocation();
   const isPublicBooking = location.pathname.startsWith('/book/');
+  const isStandalone = isPublicBooking || location.pathname.startsWith('/jd-report/');
 
-  if (isPublicBooking) {
+  if (isStandalone) {
     return (
       <Routes>
         <Route path="/book/:uuid" element={<PublicBookingPage />} />
+        <Route path="/jd-report/:id" element={<JDReportPage />} />
       </Routes>
     );
   }
@@ -38,6 +42,7 @@ function AppRoutes() {
         <Route path="/documents" element={<Documents />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/experience" element={<ExperiencePage />} />
+        <Route path="/jd-reports" element={<JDReportsListPage />} />
       </Routes>
     </Layout>
   );

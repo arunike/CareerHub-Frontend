@@ -1002,6 +1002,7 @@ const Holidays = () => {
         <div className="mb-6">
           <PageActionToolbar
             title="Holiday Manager"
+            subtitle="Plan your time off and track federal holidays."
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}

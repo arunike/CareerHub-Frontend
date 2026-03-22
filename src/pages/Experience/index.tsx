@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Typography, Spin, message, Empty, Popconfirm, Avatar, Tooltip, Tag, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, FireFilled } from '@ant-design/icons';
+import { Button, Typography, Spin, message, Empty, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col, Statistic, Space } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, FireFilled, ClockCircleOutlined, CodeOutlined, RobotOutlined, RocketOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getExperiences, createExperience, updateExperience, deleteExperience } from '../../api/career';
 import type { Experience } from '../../types';
 import ExperienceModal from './ExperienceModal';
+import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 
 const { Title, Text } = Typography;
@@ -30,6 +31,8 @@ const ExperiencePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
+  const [jdModalOpen, setJdModalOpen] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
   useEffect(() => {
     fetchExperiences();
@@ -173,17 +176,122 @@ const ExperiencePage: React.FC = () => {
     return elements;
   };
 
+  const calculateTotalCareerDuration = () => {
+    if (experiences.length === 0) return '0 yrs';
+    
+    const sortedStarts = [...experiences].sort((a, b) => dayjs(a.start_date).diff(dayjs(b.start_date)));
+    const earliestStart = dayjs(sortedStarts[0].start_date);
+    
+    const latestEnd = experiences.some(e => !e.end_date) 
+      ? dayjs() 
+      : dayjs(Math.max(...experiences.map(e => dayjs(e.end_date).valueOf())));
+      
+    const totalMonths = latestEnd.diff(earliestStart, 'month');
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    
+    if (years === 0) return `${months} mos`;
+    return `${years} yrs ${months} mos`;
+  };
+
+  const totalCompanies = new Set(experiences.map(e => e.company)).size;
+
+  const allSkills = experiences.flatMap(e => e.skills || []);
+  const skillCounts = allSkills.reduce((acc, skill) => {
+    acc[skill] = (acc[skill] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topSkills = Object.entries(skillCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(entry => entry[0]);
+    
+  const uniqueUserSkills = Object.keys(skillCounts);
+
+  const filteredExperiences = selectedSkill 
+    ? experiences.filter(exp => exp.skills?.includes(selectedSkill))
+    : experiences;
+
   return (
     <div style={{ padding: 0, width: '100%' }} className="animate-in fade-in duration-500">
       <div style={{ marginBottom: 24 }}>
         <PageActionToolbar
           title={<span className="whitespace-nowrap">Career Journey</span>}
           subtitle="Your professional timeline, skills, and historic achievements."
+          extraActions={
+            <Button 
+              size="large"
+              icon={<RobotOutlined />} 
+              onClick={() => setJdModalOpen(true)}
+              className="toolbar-btn text-indigo-600 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 shadow-sm"
+            >
+              Match JD
+            </Button>
+          }
           onPrimaryAction={openAddModal}
           primaryActionLabel="Add Experience"
           primaryActionIcon={<PlusOutlined />}
         />
       </div>
+
+      {/* Analytics Dashboard */}
+      {experiences.length > 0 && (
+        <Card style={{ marginBottom: 48 }} className="rounded-2xl border-gray-100 shadow-sm" bodyStyle={{ padding: '20px 24px' }}>
+          <Row gutter={[24, 24]} align="middle">
+            <Col xs={24} md={8}>
+              <div className="flex items-center gap-4 border-r border-gray-100 pr-4">
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+                  <ClockCircleOutlined className="text-xl" />
+                </div>
+                <Statistic title="Total Experience" value={calculateTotalCareerDuration()} valueStyle={{ fontWeight: 600, fontSize: '20px' }} />
+              </div>
+            </Col>
+            <Col xs={24} md={6}>
+              <div className="flex items-center gap-4 md:border-r border-gray-100 pr-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+                  <BankOutlined className="text-xl" />
+                </div>
+                <Statistic title="Companies" value={totalCompanies} valueStyle={{ fontWeight: 600, fontSize: '20px' }} />
+              </div>
+            </Col>
+            <Col xs={24} md={10}>
+              <div className="pl-2">
+                <div className="text-xs text-gray-400 mb-2 uppercase font-semibold letter-spacing-1 flex items-center gap-1">
+                  <CodeOutlined /> Top Skills
+                  {selectedSkill && (
+                    <span 
+                      className="ml-2 text-blue-500 cursor-pointer hover:underline lowercase normal-case" 
+                      onClick={() => setSelectedSkill(null)}
+                    >
+                      (Clear filter)
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {topSkills.map(skill => {
+                    const isSelected = selectedSkill === skill;
+                    return (
+                      <Tag.CheckableTag
+                        key={skill}
+                        checked={isSelected}
+                        onChange={(checked) => setSelectedSkill(checked ? skill : null)}
+                        className={`m-0 px-3 py-1 rounded-md border transition-all ${
+                          isSelected 
+                            ? 'bg-blue-600 text-white border-blue-600' 
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-500'
+                        }`}
+                      >
+                        {skill} <span className="opacity-50 text-xs ml-1">{skillCounts[skill]}</span>
+                      </Tag.CheckableTag>
+                    );
+                  })}
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </Card>
+      )}
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -204,7 +312,15 @@ const ExperiencePage: React.FC = () => {
           <div className="absolute top-10 bottom-0 left-12 w-0.5 bg-gradient-to-b from-blue-100 via-gray-100 to-transparent z-0 hidden md:block" />
 
           <div className="space-y-10 relative z-10">
-            {experiences.map((exp, idx) => {
+            {filteredExperiences.length === 0 && selectedSkill && (
+              <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
+                <Text className="text-gray-500">No timeline events match the selected skill filter.</Text>
+                <div className="mt-2">
+                  <Button type="link" onClick={() => setSelectedSkill(null)}>Clear Filter</Button>
+                </div>
+              </div>
+            )}
+            {filteredExperiences.map((exp, idx) => {
               const skills = exp.skills || [];
               
               return (
@@ -314,6 +430,11 @@ const ExperiencePage: React.FC = () => {
         onCancel={() => setModalOpen(false)}
         onSave={handleCreateOrUpdate}
         experience={editingExp}
+      />
+
+      <JDMatcherModal 
+        open={jdModalOpen}
+        onCancel={() => setJdModalOpen(false)}
       />
     </div>
   );
