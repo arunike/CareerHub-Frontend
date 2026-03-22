@@ -28,6 +28,7 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 import OfferDetailsTable from './OfferDetailsTable';
 import AddCurrentJobModal from './AddCurrentJobModal';
 import EditOfferModal from './EditOfferModal';
+import NegotiationAdvisorModal from './NegotiationAdvisorModal';
 import {
   type ApplicationLike as Application,
   type BenefitItem,
@@ -67,6 +68,7 @@ const OfferComparison = () => {
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
   const [adjustedByOfferId, setAdjustedByOfferId] = useState<Record<number, AdjustedOfferMetrics>>({});
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'offersSelectedYear',
@@ -432,6 +434,7 @@ const OfferComparison = () => {
         adjustedByOfferId={adjustedByOfferId}
         onEditClick={handleEditClick}
         onToggleCurrent={toggleCurrent}
+        onNegotiateClick={setNegotiatingOffer}
       />
 
       <AddCurrentJobModal
@@ -460,6 +463,15 @@ const OfferComparison = () => {
         }}
         onSave={handleSaveEdit}
       />
+
+      {negotiatingOffer && (
+        <NegotiationAdvisorModal
+          offer={negotiatingOffer}
+          application={applicationsById[negotiatingOffer.application]}
+          open={!!negotiatingOffer}
+          onClose={() => setNegotiatingOffer(null)}
+        />
+      )}
 
     </div>
   );

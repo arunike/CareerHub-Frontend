@@ -74,3 +74,19 @@ export const matchJobDescription = (text: string) => api.post<JDMatchResult>('/c
 
 export const generateCoverLetter = (applicationId: number, jdText: string) =>
   api.post<{ cover_letter: string }>(`/career/applications/${applicationId}/generate-cover-letter/`, { jd_text: jdText });
+
+export interface NegotiationAdvice {
+  talking_points: string[];
+  leverage_points: string[];
+  caution_points: string[];
+  suggested_ask: {
+    base_salary: number | null;
+    sign_on: number | null;
+    equity: number | null;
+    pto_days: number | null;
+    notes: string;
+  };
+}
+
+export const getNegotiationAdvice = (offerId: number) =>
+  api.post<NegotiationAdvice>(`/career/offers/${offerId}/negotiation-advice/`);

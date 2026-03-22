@@ -9,6 +9,7 @@ type Props = {
   adjustedByOfferId: Record<number, AdjustedOfferMetrics>;
   onEditClick: (offer: Offer) => void;
   onToggleCurrent: (offer: Offer) => void;
+  onNegotiateClick: (offer: Offer) => void;
 };
 
 const OfferDetailsTable = ({
@@ -18,6 +19,7 @@ const OfferDetailsTable = ({
   adjustedByOfferId,
   onEditClick,
   onToggleCurrent,
+  onNegotiateClick,
 }: Props) => {
   const currentOffer = offers.find((o) => o.is_current);
   const currentTotal = currentOffer
@@ -198,6 +200,14 @@ const OfferDetailsTable = ({
                     >
                       {isCurrent ? 'Unmark' : 'Mark Current'}
                     </button>
+                    {!isCurrent && (
+                      <button
+                        onClick={() => onNegotiateClick(offer)}
+                        className="text-indigo-600 hover:text-indigo-900 font-medium"
+                      >
+                        Negotiate
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

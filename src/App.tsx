@@ -14,18 +14,23 @@ import ExperiencePage from './pages/Experience';
 import PublicBookingPage from './pages/PublicBooking';
 import JDReportPage from './pages/JDReport';
 import JDReportsListPage from './pages/JDReportsList';
-import CoverLettersPage from './pages/CoverLetters';
+import AIToolsPage from './pages/AITools';
+import NegotiationResultPage from './pages/NegotiationResult';
 
 function AppRoutes() {
   const location = useLocation();
   const isPublicBooking = location.pathname.startsWith('/book/');
-  const isStandalone = isPublicBooking || location.pathname.startsWith('/jd-report/');
+  const isStandalone =
+    isPublicBooking ||
+    location.pathname.startsWith('/jd-report/') ||
+    location.pathname.startsWith('/negotiation-result/');
 
   if (isStandalone) {
     return (
       <Routes>
         <Route path="/book/:uuid" element={<PublicBookingPage />} />
         <Route path="/jd-report/:id" element={<JDReportPage />} />
+        <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
       </Routes>
     );
   }
@@ -44,7 +49,8 @@ function AppRoutes() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/experience" element={<ExperiencePage />} />
         <Route path="/jd-reports" element={<JDReportsListPage />} />
-        <Route path="/cover-letters" element={<CoverLettersPage />} />
+        <Route path="/cover-letters" element={<AIToolsPage />} />
+        <Route path="/ai-tools" element={<AIToolsPage />} />
       </Routes>
     </Layout>
   );
