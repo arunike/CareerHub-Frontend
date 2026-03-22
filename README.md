@@ -85,6 +85,19 @@ The **Frontend** is a React-based single-page application that provides an intui
   - update title/type
   - optional link to application
 
+### 📑 AI JD Matcher & Reports
+
+> **🤖 Note on AI Features:** The JD Matcher relies on the backend's LLM API configuration. You must set your free Gemini API key (`LLM_API_KEY`) in the `api/.env` file. See the backend README for quick setup instructions.
+
+- **JD Matcher Modal**: Instantly evaluate any job description against your profile using AI to receive a detailed breakdown of strengths and gaps.
+- **JD Reports Management**:
+  - **Reports List**: View all past match reports as distinct cards with key metrics.
+  - **Custom Titles**: Customize and inline-edit report titles for better organization.
+  - **Bulk Actions**: Select multiple reports for bulk deletion, with locking mechanisms to prevent accidental removal of important evaluations.
+- **Detailed Analysis Page**:
+  - **Document-Centric Layout**: A premium, left-aligned layout detailing the overall match score, executive summary, strengths, missing skills, and actionable recommendations.
+  - **PDF Export**: Generate and download a beautifully formatted PDF of the complete evaluation report.
+
 ### 📅 Availability & Events
 
 - **EventCalendar.tsx**: Weekly availability calendar
@@ -264,6 +277,16 @@ frontend/
 <button className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg">
   Cancel
 </button>
+```
+
+#### Page Headers
+
+```tsx
+<PageActionToolbar
+  title="JD Reports"
+  subtitle="Manage and analyze your job description match evaluations"
+  icon={FileTextOutlined}
+/>
 ```
 
 #### Status Badges
