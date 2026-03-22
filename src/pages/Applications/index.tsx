@@ -354,6 +354,7 @@ const Applications = () => {
         <Space>
           <Tooltip title="Generate Cover Letter">
             <Button
+              type="text"
               size="small"
               icon={<ThunderboltOutlined />}
               onClick={() => setCoverLetterApp(record)}

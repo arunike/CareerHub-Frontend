@@ -89,7 +89,6 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
 
       <Button
         type="primary"
-        icon={<ThunderboltOutlined />}
         onClick={handleGenerate}
         loading={loading}
         style={{ marginBottom: 20 }}
