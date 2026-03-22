@@ -15,7 +15,6 @@ import {
   CheckSquareOutlined,
   TrophyOutlined,
   RobotOutlined,
-  FormOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
@@ -80,8 +79,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
         { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Action Items' },
         { key: '/experience', icon: <TrophyOutlined />, label: 'Experience' },
-        { key: '/jd-reports', icon: <RobotOutlined />, label: 'JD Reports' },
-        { key: '/cover-letters', icon: <FormOutlined />, label: 'Cover Letters' },
+        {
+          key: 'intelligence',
+          icon: <RobotOutlined />,
+          label: 'Intelligence',
+          children: [
+            { key: '/jd-reports', label: 'JD Reports' },
+            { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
+            { key: '/ai-tools?tab=negotiation-results', label: 'Negotiation Results' },
+          ],
+        },
       ],
     },
     {
@@ -110,8 +117,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    navigate(key);
+    if (key.startsWith('/')) {
+      navigate(key);
+    }
   };
+
+  const activeKey = location.pathname + location.search;
+  const intelligencePaths = ['/jd-reports', '/ai-tools', '/cover-letters'];
+  const isIntelligence = intelligencePaths.some((p) => location.pathname.startsWith(p));
+  const selectedKey =
+    location.pathname === '/cover-letters' || activeKey === '/ai-tools'
+      ? '/ai-tools?tab=cover-letters'
+      : activeKey;
 
   const SidebarContent = (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
@@ -145,7 +162,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         >
           <Menu
             mode="inline"
-            selectedKeys={[location.pathname]}
+            selectedKeys={[selectedKey]}
+            defaultOpenKeys={isIntelligence ? ['intelligence'] : []}
             items={menuItems}
             onClick={handleMenuClick}
             style={{ borderRight: 0 }}
