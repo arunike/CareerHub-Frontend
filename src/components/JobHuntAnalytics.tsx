@@ -296,6 +296,44 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       .sort((a, b) => a.roundNum - b.roundNum)
       .map(({ name, count }) => ({ name, count }));
 
+    // 5. Funnel & Avg Days
+    let daysToOfferSum = 0;
+    let daysToOfferCount = 0;
+    const funnelSteps = { APPLIED: 0, OA: 0, SCREEN: 0, ONSITE: 0, OFFER: 0, ACCEPTED: 0 };
+
+    applications.forEach((a) => {
+      const status = a.status as string;
+      if (Object.prototype.hasOwnProperty.call(funnelSteps, status)) {
+        funnelSteps[status as keyof typeof funnelSteps]++;
+      }
+
+      if (['OFFER', 'ACCEPTED'].includes(status) && a.offer && a.date_applied) {
+        try {
+          const offerDate = new Date((a.offer as any).created_at);
+          const appliedDate = new Date(a.date_applied as string);
+          if (!isNaN(offerDate.getTime()) && !isNaN(appliedDate.getTime())) {
+            const days = Math.floor((offerDate.getTime() - appliedDate.getTime()) / (1000 * 3600 * 24));
+            if (days >= 0) {
+              daysToOfferSum += days;
+              daysToOfferCount++;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+
+    const avgDaysToOffer = daysToOfferCount > 0 ? Math.round(daysToOfferSum / daysToOfferCount) : null;
+    const funnel = [
+      { label: 'Applied', value: funnelSteps.APPLIED, color: 'bg-blue-100 border-blue-300 text-blue-700' },
+      { label: 'OA', value: funnelSteps.OA, color: 'bg-indigo-100 border-indigo-300 text-indigo-700' },
+      { label: 'Screen', value: funnelSteps.SCREEN, color: 'bg-purple-100 border-purple-300 text-purple-700' },
+      { label: 'Onsite', value: funnelSteps.ONSITE, color: 'bg-pink-100 border-pink-300 text-pink-700' },
+      { label: 'Offer', value: funnelSteps.OFFER, color: 'bg-green-100 border-green-300 text-green-700' },
+      { label: 'Accepted', value: funnelSteps.ACCEPTED, color: 'bg-emerald-100 border-emerald-300 text-emerald-700' },
+    ];
+
     return {
       total,
       rejections,
@@ -306,6 +344,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       interviewRate,
       locations,
       rounds,
+      funnel,
+      avgDaysToOffer,
     };
   }, [applications]);
 

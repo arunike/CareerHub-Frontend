@@ -22,6 +22,8 @@ export type JobHuntStats = {
   interviewRate: string;
   locations: { name: string; count: number }[];
   rounds: { name: string; count: number }[];
+  funnel: { label: string; value: number; color: string }[];
+  avgDaysToOffer: number | null;
 };
 
 export const renderJobHuntWidget = (
@@ -190,6 +192,43 @@ export const renderJobHuntWidget = (
           </div>
         </div>
       );
+    case 'funnel': {
+      const funnelMax = Math.max(...stats.funnel.map(s => s.value), 1);
+      return (
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full flex flex-col justify-between">
+          <p className="text-sm font-medium text-gray-500 mb-4">Application Funnel</p>
+          <div className="flex flex-col md:flex-row gap-4 items-stretch justify-between w-full overflow-x-auto pb-2 flex-grow">
+            {stats.funnel.map((step, idx) => {
+              const heightPercent = Math.max((step.value / funnelMax) * 100, 5); // min 5% height
+              return (
+                <div key={idx} className="flex-1 flex flex-col justify-end min-w-[60px]">
+                  <div className="text-center mb-2">
+                    <span className="font-bold text-gray-900 block">{step.value}</span>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-tighter truncate block" title={step.label}>{step.label}</span>
+                  </div>
+                  <div className={`w-full rounded-t-lg border-t-2 opacity-80 ${step.color}`} style={{ height: `${heightPercent}px`, minHeight: '4px' }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    case 'avg_days_to_offer':
+      return (
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Avg Days to Offer</p>
+            <p className="text-3xl font-bold text-purple-600">
+              {stats.avgDaysToOffer !== null ? stats.avgDaysToOffer : '-'}
+            </p>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-gray-500">
+            <ClockCircleOutlined className="mr-1.5 text-base" />
+            <span>Average duration</span>
+          </div>
+        </div>
+      );
     default: {
       const customWidget = customWidgets.find((w) => w.id === id);
       if (customWidget) {
@@ -208,7 +247,7 @@ export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[
       : 'col-span-1';
   }
 
-  if (['locations', 'rounds'].includes(id)) {
+  if (['locations', 'rounds', 'funnel'].includes(id)) {
     return 'col-span-1 md:col-span-2 lg:col-span-2';
   }
   return 'col-span-1';

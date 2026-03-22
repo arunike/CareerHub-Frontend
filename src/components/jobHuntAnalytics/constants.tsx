@@ -5,6 +5,8 @@ import {
   ClockCircleOutlined,
   QuestionCircleOutlined,
   TrophyOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import type { WidgetDefinition } from './types';
 
@@ -56,5 +58,21 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
     icon: <AimOutlined />,
     defaultEnabled: true,
     category: 'chart',
+  },
+  {
+    id: 'funnel',
+    name: 'Application Funnel',
+    description: 'Pipeline visualization',
+    icon: <BarChartOutlined />,
+    defaultEnabled: true,
+    category: 'chart',
+  },
+  {
+    id: 'avg_days_to_offer',
+    name: 'Avg Days to Offer',
+    description: 'Average time to land an offer',
+    icon: <CalendarOutlined />,
+    defaultEnabled: true,
+    category: 'statistic',
   },
 ];
