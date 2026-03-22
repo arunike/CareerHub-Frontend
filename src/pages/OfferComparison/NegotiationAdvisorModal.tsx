@@ -238,7 +238,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
-            <Button size="small" onClick={handleGenerate}>
+            <Button onClick={handleGenerate}>
               Regenerate
             </Button>
             {savedId && (
