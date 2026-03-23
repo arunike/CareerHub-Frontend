@@ -59,18 +59,102 @@ function AppRoutes() {
 function App() {
   return (
     <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: '#1890ff',
-            borderRadius: 8,
-            fontSize: 18,
+      theme={{
+        token: {
+          colorPrimary: '#6366f1',
+          colorPrimaryHover: '#4f46e5',
+          colorPrimaryActive: '#4338ca',
+          colorLink: '#6366f1',
+          colorLinkHover: '#4f46e5',
+          borderRadius: 10,
+          borderRadiusLG: 14,
+          borderRadiusSM: 6,
+          fontSize: 14,
+          fontSizeLG: 15,
+          fontFamily: `-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif`,
+          colorBgContainer: '#ffffff',
+          colorBgLayout: '#f8fafc',
+          colorBorder: '#e2e8f0',
+          colorBorderSecondary: '#f1f5f9',
+          colorTextBase: '#0f172a',
+          colorTextSecondary: '#64748b',
+          colorTextTertiary: '#94a3b8',
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07)',
+          boxShadowSecondary: '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07)',
+          controlHeight: 38,
+          controlHeightLG: 44,
+          controlHeightSM: 30,
+          lineHeight: 1.6,
+        },
+        components: {
+          Button: {
+            fontWeight: 500,
+            primaryShadow: 'none',
+            defaultShadow: 'none',
+            dangerShadow: 'none',
           },
-        }}
-      >
-        <Router>
-          <AppRoutes />
-        </Router>
-      </ConfigProvider>
+          Table: {
+            headerBg: '#f8fafc',
+            headerColor: '#475569',
+            headerSplitColor: 'transparent',
+            borderColor: '#f1f5f9',
+            rowHoverBg: '#fafbff',
+            cellPaddingBlock: 14,
+            cellPaddingInline: 16,
+            headerBorderRadius: 0,
+            fontSize: 14,
+          },
+          Card: {
+            paddingLG: 24,
+            boxShadowTertiary: 'none',
+          },
+          Input: {
+            activeShadow: '0 0 0 3px rgba(99,102,241,0.12)',
+            paddingInline: 14,
+          },
+          Select: {
+            optionSelectedBg: '#eef2ff',
+            optionActiveBg: '#f5f3ff',
+          },
+          Menu: {
+            activeBarBorderWidth: 0,
+            itemSelectedBg: '#eef2ff',
+            itemSelectedColor: '#6366f1',
+            itemHoverBg: '#f8fafc',
+            subMenuItemBg: '#fafafa',
+            groupTitleColor: '#94a3b8',
+            groupTitleFontSize: 11,
+          },
+          Modal: {
+            titleFontSize: 16,
+            titleLineHeight: 1.5,
+          },
+          Tag: {
+            borderRadiusSM: 20,
+          },
+          Tabs: {
+            inkBarColor: '#6366f1',
+            itemSelectedColor: '#6366f1',
+            itemHoverColor: '#4f46e5',
+            titleFontSizeLG: 14,
+          },
+          Progress: {
+            defaultColor: '#6366f1',
+          },
+          Badge: {
+            colorPrimary: '#6366f1',
+          },
+          Tooltip: {
+            borderRadius: 8,
+            fontSize: 13,
+          },
+        },
+      }}
+    >
+      <Router>
+        <AppRoutes />
+      </Router>
+    </ConfigProvider>
   );
 }
 

@@ -1,17 +1,65 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-gray-50: #f9fafb;
-  --color-gray-900: #111827;
+  --color-gray-50: #f8fafc;
+  --color-gray-900: #0f172a;
 }
 
 html {
-  font-size: 20px;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background-color: var(--color-gray-50);
-  color: var(--color-gray-900);
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Premium scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Smooth transitions on interactive elements */
+.ant-btn, .ant-select-selector, .ant-input, .ant-menu-item {
+  transition: all 0.18s ease !important;
+}
+
+/* Table refinements */
+.ant-table-thead > tr > th {
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 11px !important;
+}
+
+.ant-table-row {
+  transition: background 0.15s ease;
+}
+
+/* Card refinements */
+.ant-card {
+  border-color: #e2e8f0 !important;
+}
+
+/* Better focus ring */
+.ant-input:focus,
+.ant-input-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* Ant Design Menu group title */
+.ant-menu-item-group-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
 }
 
 .event-timepicker-dropdown .ant-picker-time-panel {
@@ -81,14 +129,14 @@ body {
 
 .toolbar-btn.ant-btn,
 .toolbar-native-btn {
-  min-height: 40px;
-  height: 40px;
-  border-radius: 8px;
+  min-height: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  padding: 8px 16px;
+  padding: 8px 18px;
 }
 
 .toolbar-select.ant-select {
@@ -96,8 +144,8 @@ body {
 }
 
 .toolbar-select.ant-select .ant-select-selector {
-  min-height: 40px !important;
-  height: 40px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   padding-inline: 16px !important;
   display: flex;
   align-items: center;

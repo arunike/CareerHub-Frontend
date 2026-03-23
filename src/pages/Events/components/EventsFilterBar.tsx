@@ -36,6 +36,7 @@ const EventsFilterBar = ({
         <Col xs={24} sm={8} md={6}>
           <Select
             style={{ width: '100%' }}
+            size="large"
             placeholder="All Categories"
             value={categoryFilter}
             onChange={onCategoryFilterChange}
@@ -49,6 +50,7 @@ const EventsFilterBar = ({
         <Col xs={24} sm={10} md={8}>
           <RangePicker
             style={{ width: '100%' }}
+            size="large"
             value={dateRange}
             onChange={(dates) => onDateRangeChange((dates as DateRangeValue) ?? null)}
           />
@@ -56,6 +58,7 @@ const EventsFilterBar = ({
         <Col xs={24} sm={6} md={6}>
           <Select
             style={{ width: '100%' }}
+            size="large"
             value={sortBy}
             onChange={onSortByChange}
             options={[
@@ -66,6 +69,7 @@ const EventsFilterBar = ({
         </Col>
         <Col flex="auto" style={{ textAlign: 'right' }}>
           <Button
+            size="large"
             icon={sortOrder === 'asc' ? <FilterOutlined /> : <FilterOutlined rotate={180} />}
             onClick={onSortOrderToggle}
           >
