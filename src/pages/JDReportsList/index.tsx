@@ -139,8 +139,8 @@ const JDReportsListPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen">
-      <div className="py-8">
+    <div style={{ padding: 0, width: '100%' }}>
+      <div style={{ marginBottom: 24 }}>
         <PageActionToolbar
           title="Analysis Reports"
           subtitle={`${reports.length} report${reports.length !== 1 ? 's' : ''} saved from your AI matching sessions.`}
@@ -153,7 +153,7 @@ const JDReportsListPage: React.FC = () => {
           primaryActionIcon={<PlusOutlined />}
         />
 
-        <div className="mt-8 flex flex-col gap-6">
+        <div className="flex flex-col gap-6">
           {selectedIds.length > 0 && (
             <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm animate-in fade-in slide-in-from-top-2">
               <BulkActionHeader
@@ -294,7 +294,6 @@ const JDReportsListPage: React.FC = () => {
               );
             })}
           </div>
-        </div>
       </div>
 
       {/* Delete confirm modal */}

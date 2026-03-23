@@ -7,10 +7,8 @@ import {
   Modal,
   Form,
   Space,
-  Tag,
   Upload,
   message,
-  Card,
   Typography,
   Row,
   Col,
@@ -296,6 +294,29 @@ const Applications = () => {
     setSelectedYear(year);
   };
 
+  const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    APPLIED:  { label: 'Applied',    color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+    OA:       { label: 'OA',         color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
+    SCREEN:   { label: 'Screen',     color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd' },
+    ONSITE:   { label: 'Onsite',     color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+    OFFER:    { label: 'Offer',      color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0' },
+    REJECTED: { label: 'Rejected',   color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
+    ACCEPTED: { label: 'Accepted',   color: '#059669', bg: '#ecfdf5', border: '#6ee7b7' },
+    GHOSTED:  { label: 'Ghosted',    color: '#9ca3af', bg: '#f9fafb', border: '#e5e7eb' },
+  };
+
+  const StatusBadge = ({ status }: { status: string }) => {
+    const m = STATUS_META[status] ?? { label: status, color: '#6b7280', bg: '#f3f4f6', border: '#e5e7eb' };
+    return (
+      <span
+        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+        style={{ color: m.color, background: m.bg, borderColor: m.border }}
+      >
+        {m.label}
+      </span>
+    );
+  };
+
   const columns = [
     {
       title: 'Company',
@@ -330,20 +351,13 @@ const Applications = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
-        let color = 'default';
-        if (status === 'OFFER') color = 'success';
-        if (status === 'REJECTED') color = 'error';
-        if (status === 'APPLIED') color = 'blue';
-        if (status === 'OA' || status === 'SCREEN') color = 'processing';
-        return <Tag color={color}>{status}</Tag>;
-      },
+      render: (status: string) => <StatusBadge status={status} />,
     },
     {
       title: 'Date Applied',
       dataIndex: 'date_applied',
       key: 'date_applied',
-      render: (date: string) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+      render: (date: string) => (date ? dayjs(date).format('MMM D, YYYY') : '—'),
       sorter: (a: CareerApplication, b: CareerApplication) =>
         dayjs(a.date_applied).diff(dayjs(b.date_applied)),
     },
@@ -356,7 +370,7 @@ const Applications = () => {
             <Button
               type="text"
               size="small"
-              icon={<ThunderboltOutlined />}
+              icon={<ThunderboltOutlined style={{ color: '#6366f1' }} />}
               onClick={() => setCoverLetterApp(record)}
             />
           </Tooltip>
@@ -396,8 +410,9 @@ const Applications = () => {
         />
       </div>
 
-      <Card
-        title={selectedRowKeys.length > 0 ? (
+      {/* Bulk action bar */}
+      {selectedRowKeys.length > 0 && (
+        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-4 animate-in fade-in slide-in-from-top-2">
           <BulkActionHeader
             selectedCount={selectedRowKeys.length}
             totalCount={filteredData.length}
@@ -405,53 +420,56 @@ const Applications = () => {
             onCancelSelection={() => setSelectedRowKeys([])}
             bulkActions={
               <>
-                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
-                  Lock
-                </Button>
-                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
-                  Unlock
-                </Button>
-                <Tooltip title={isAnySelectedLocked ? "Cannot delete while locked items are selected" : ""}>
-                  <Button 
-                    danger 
-                    onClick={handleBulkDelete} 
-                    icon={<DeleteOutlined />}
-                    disabled={isAnySelectedLocked}
-                  >
+                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>Lock</Button>
+                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>Unlock</Button>
+                <Tooltip title={isAnySelectedLocked ? 'Unlock selected items before deleting' : ''}>
+                  <Button danger onClick={handleBulkDelete} icon={<DeleteOutlined />} disabled={isAnySelectedLocked}>
                     Delete
                   </Button>
                 </Tooltip>
               </>
             }
           />
-        ) : null}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-[300px_200px] gap-3 mb-4">
-          <Input
-            placeholder="Search company or role"
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: '100%' }}
-          />
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            style={{ width: '100%' }}
-            suffixIcon={<FilterOutlined />}
-          >
-            <Option value="ALL">All Statuses</Option>
-            <Option value="APPLIED">Applied</Option>
-            <Option value="OA">Online Assessment</Option>
-            <Option value="SCREEN">Phone Screen</Option>
-            <Option value="ONSITE">Onsite</Option>
-            <Option value="OFFER">Offer</Option>
-            <Option value="REJECTED">Rejected</Option>
-            <Option value="ACCEPTED">Accepted</Option>
-            <Option value="GHOSTED">Ghosted</Option>
-          </Select>
         </div>
+      )}
 
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        <Input
+          size="large"
+          placeholder="Search company or role"
+          prefix={<SearchOutlined className="text-gray-400" />}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          style={{ maxWidth: 340 }}
+          allowClear
+        />
+        <Select
+          size="large"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          style={{ width: 200 }}
+          suffixIcon={<FilterOutlined />}
+        >
+          <Option value="ALL">All Statuses</Option>
+          <Option value="APPLIED">Applied</Option>
+          <Option value="OA">Online Assessment</Option>
+          <Option value="SCREEN">Phone Screen</Option>
+          <Option value="ONSITE">Onsite</Option>
+          <Option value="OFFER">Offer</Option>
+          <Option value="REJECTED">Rejected</Option>
+          <Option value="ACCEPTED">Accepted</Option>
+          <Option value="GHOSTED">Ghosted</Option>
+        </Select>
+        {(searchText || statusFilter !== 'ALL') && (
+          <Text type="secondary" className="self-center text-sm">
+            {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+          </Text>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <Table
           rowSelection={{
             selectedRowKeys,
@@ -461,10 +479,10 @@ const Applications = () => {
           columns={columns}
           dataSource={filteredData}
           rowKey="id"
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, showSizeChanger: false }}
           scroll={{ x: 900 }}
         />
-      </Card>
+      </div>
 
       {/* Add/Edit Modal */}
       <Modal
