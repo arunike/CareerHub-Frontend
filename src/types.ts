@@ -206,6 +206,10 @@ export interface Experience {
   is_current: boolean;
   description?: string;
   skills?: string[];
+  logo?: string | null;
+  employment_type?: 'full_time' | 'part_time' | 'internship' | 'contract' | 'freelance';
+  is_promotion?: boolean;
+  is_locked?: boolean;
   created_at?: string;
   updated_at?: string;
 }

@@ -1,30 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select, Upload, Avatar, AutoComplete } from 'antd';
+import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Experience } from '../../types';
+
+const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  try { return new URL(url).pathname; } catch { return url; }
+};
 
 interface ExperienceModalProps {
   open: boolean;
   onCancel: () => void;
-  onSave: (data: Partial<Experience>) => Promise<void>;
+  onSave: (data: Partial<Experience>, logoFile?: File | null, removeLogo?: boolean) => Promise<void>;
   experience?: Experience | null;
+  experiences?: Experience[];
 }
 
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 
-const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience }) => {
+const getAvatarStyle = (name: string) => {
+  const gradients = [
+    'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+    'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+    'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+    'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+  ];
+  let hash = 0;
+  const safeName = name || '';
+  for (let i = 0; i < safeName.length; i++) {
+    hash = safeName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return { backgroundImage: gradients[Math.abs(hash) % gradients.length], color: '#fff', border: 'none' };
+};
+
+const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [] }) => {
   const [form] = Form.useForm();
   const [importForm] = Form.useForm();
   const [activeTab, setActiveTab] = useState('manual');
   const [saving, setSaving] = useState(false);
   const [isCurrent, setIsCurrent] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [companyName, setCompanyName] = useState('');
 
   useEffect(() => {
     if (open) {
       if (experience) {
         setActiveTab('manual');
         setIsCurrent(!!experience.is_current);
+        setCompanyName(experience.company || '');
         form.setFieldsValue({
           title: experience.title,
           company: experience.company,
@@ -34,37 +61,118 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             experience.end_date ? dayjs(experience.end_date) : undefined
           ] : undefined,
           is_current: experience.is_current,
+          employment_type: experience.employment_type || 'full_time',
           description: experience.description,
           skills: experience.skills || [],
+          is_promotion: experience.is_promotion || false,
         });
       } else {
         form.resetFields();
         importForm.resetFields();
         setIsCurrent(false);
+        setCompanyName('');
       }
+      setLogoFile(null);
+      setLogoPreview(null);
+      setRemoveLogo(false);
     }
   }, [open, experience, form, importForm]);
+
+  // Revoke object URL on cleanup
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+    };
+  }, [logoPreview]);
+
+  const companyOptions = useMemo(() => {
+    const seen = new Map<string, { name: string; logo: string | null }>();
+    for (const exp of experiences) {
+      if (exp.id === experience?.id) continue;
+      const key = exp.company.toLowerCase();
+      const logo = toRelativeMediaUrl(exp.logo);
+      if (!seen.has(key)) {
+        seen.set(key, { name: exp.company, logo });
+      } else if (logo && !seen.get(key)!.logo) {
+        seen.set(key, { ...seen.get(key)!, logo });
+      }
+    }
+    return Array.from(seen.values()).map(({ name, logo }) => ({
+      value: name,   // plain string → shown in input after selection
+      logoUrl: logo, // extra data used by optionRender and onSelect
+    }));
+  }, [experiences, experience]);
+
+  const isExistingCompany = useMemo(() => {
+    if (!companyName) return false;
+    return companyOptions.some(opt => opt.value.toLowerCase() === companyName.toLowerCase());
+  }, [companyName, companyOptions]);
+
+  const handleCompanySelect = async (_value: string, option: any) => {
+    const logoUrl: string | null = option.logoUrl ?? null;
+    if (!logoUrl || logoFile) return; // don't overwrite a manually chosen logo
+    try {
+      const res = await fetch(logoUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'company-logo', { type: blob.type });
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(blob));
+      setRemoveLogo(false);
+    } catch {
+      console.error('Failed to fetch company logo from URL:', logoUrl);
+    }
+  };
+
+  const handleLogoSelect = (file: File) => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+    setRemoveLogo(false);
+    return false; // prevent auto-upload
+  };
+
+  const handleRemoveLogo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setRemoveLogo(true);
+  };
+
+  const currentLogoSrc = logoPreview || (!removeLogo && toRelativeMediaUrl(experience?.logo)) || null;
 
   const handleSubmit = async () => {
     try {
       setSaving(true);
       if (activeTab === 'manual') {
         const values = await form.validateFields();
-        const start_date = values.dates?.[0] ? values.dates[0].format('YYYY-MM-DD') : null;
-        const end_date = !values.is_current && values.dates?.[1] ? values.dates[1].format('YYYY-MM-DD') : null;
-        
-        await onSave({
-          title: values.title,
-          company: values.company,
-          location: values.location,
-          start_date,
-          end_date,
-          skills: values.skills,
-          is_current: values.is_current || false,
-          description: values.description,
-        });
+
+        const datesVal = values.dates;
+        const start_date = datesVal
+          ? (dayjs.isDayjs(datesVal) ? datesVal.format('YYYY-MM-DD') : datesVal[0]?.format('YYYY-MM-DD') ?? null)
+          : null;
+        const end_date = !values.is_current && Array.isArray(datesVal) && datesVal[1]
+          ? datesVal[1].format('YYYY-MM-DD')
+          : null;
+
+        await onSave(
+          {
+            title: values.title,
+            company: values.company,
+            location: values.location,
+            employment_type: values.employment_type || 'full_time',
+            start_date,
+            end_date,
+            skills: values.skills,
+            is_current: values.is_current || false,
+            description: values.description,
+            is_promotion: values.is_promotion || false,
+          },
+          logoFile,
+          removeLogo,
+        );
       } else {
-        // Fallback if they click save immediately in Quick Import without auto-parsing firing
         const values = await importForm.validateFields();
         await onSave({
           title: 'Imported Role',
@@ -125,7 +233,6 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
       i++;
     }
 
-    // Try parsing dates into dayjs
     let dateValues: any = undefined;
     let isCurrentVal = false;
     if (parsedDates) {
@@ -139,14 +246,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
               dateValues = [start, undefined];
             } else {
               let end = dayjs(parts[1]);
-              if (end.isValid()) {
-                dateValues = [start, end];
-              } else {
-                dateValues = [start, undefined];
-              }
+              dateValues = end.isValid() ? [start, end] : [start, undefined];
             }
           } else {
-            // single date or unstructured dates
             dateValues = [start, undefined];
           }
         }
@@ -161,8 +263,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
       dates: dateValues || form.getFieldValue('dates'),
       is_current: isCurrentVal || form.getFieldValue('is_current'),
     });
-    
+
     if (isCurrentVal) setIsCurrent(true);
+    if (parsedCompany) setCompanyName(parsedCompany);
 
     importForm.resetFields();
     setActiveTab('manual');
@@ -192,7 +295,65 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
       )}
 
       {activeTab === 'manual' && (
-        <Form form={form} layout="vertical" className="mt-4">
+        <Form
+          form={form}
+          layout="vertical"
+          className="mt-4"
+          onValuesChange={(changed) => {
+            if (changed.company !== undefined) setCompanyName(changed.company || '');
+          }}
+        >
+          {/* Logo Upload */}
+          <div className="flex justify-center mb-6">
+            <div className="relative group/logo">
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                beforeUpload={handleLogoSelect}
+              >
+                <div className="cursor-pointer">
+                  {currentLogoSrc ? (
+                    <Avatar
+                      size={72}
+                      src={currentLogoSrc}
+                      className="shadow-md border-4 border-white ring-2 ring-gray-100"
+                    />
+                  ) : (
+                    <Avatar
+                      size={72}
+                      style={getAvatarStyle(companyName)}
+                      className="font-bold text-2xl shadow-md border-4 border-white ring-2 ring-gray-100"
+                    >
+                      {companyName?.charAt(0)?.toUpperCase() || <BankOutlined />}
+                    </Avatar>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity">
+                    <CameraOutlined className="text-white text-lg" />
+                  </div>
+                </div>
+              </Upload>
+
+              {/* Remove button */}
+              {currentLogoSrc && (
+                <button
+                  onClick={handleRemoveLogo}
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
+                  title="Remove logo"
+                >
+                  <DeleteOutlined style={{ fontSize: 10 }} />
+                </button>
+              )}
+            </div>
+            <div className="ml-3 flex flex-col justify-center">
+              <Upload accept="image/*" showUploadList={false} beforeUpload={handleLogoSelect}>
+                <Button size="small" icon={<CameraOutlined />} type="link" className="p-0 text-gray-500 hover:text-blue-500">
+                  {currentLogoSrc ? 'Change logo' : 'Upload logo'}
+                </Button>
+              </Upload>
+              <span className="text-xs text-gray-400">PNG, JPG up to 2MB</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="title"
@@ -201,18 +362,53 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             >
               <Input placeholder="e.g. Software Engineer" />
             </Form.Item>
+            <Form.Item name="employment_type" label="Employment Type">
+              <Select>
+                <Select.Option value="full_time">Full-time</Select.Option>
+                <Select.Option value="internship">Internship</Select.Option>
+                <Select.Option value="contract">Contract</Select.Option>
+                <Select.Option value="part_time">Part-time</Select.Option>
+                <Select.Option value="freelance">Freelance</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="company"
               label="Company"
               rules={[{ required: true, message: 'Please enter company name' }]}
             >
-              <Input placeholder="e.g. Google" />
+              <AutoComplete
+                options={companyOptions}
+                optionRender={(option) => (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {option.data.logoUrl
+                      ? <Avatar size={18} src={option.data.logoUrl} />
+                      : <Avatar size={18} style={getAvatarStyle(option.value as string)}>
+                          {(option.value as string).charAt(0).toUpperCase()}
+                        </Avatar>
+                    }
+                    <span>{option.value as string}</span>
+                  </div>
+                )}
+                onSelect={handleCompanySelect}
+                onChange={(val) => {
+                  const name = val || '';
+                  setCompanyName(name);
+                  const matches = companyOptions.some(opt => opt.value.toLowerCase() === name.toLowerCase());
+                  if (!matches) form.setFieldValue('is_promotion', false);
+                }}
+                filterOption={(input, option) =>
+                  (option?.value as string)?.toLowerCase().includes(input.toLowerCase())
+                }
+                placeholder="e.g. Google"
+              />
+            </Form.Item>
+            <Form.Item name="location" label="Location">
+              <Input placeholder="e.g. San Francisco, CA (Remote)" />
             </Form.Item>
           </div>
-          
-          <Form.Item name="location" label="Location">
-            <Input placeholder="e.g. San Francisco, CA (Remote)" />
-          </Form.Item>
 
           <div className="flex items-center gap-4 mb-4">
             <Form.Item name="is_current" valuePropName="checked" className="mb-0">
@@ -253,13 +449,29 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             />
           </Form.Item>
 
-          <Form.Item 
-            name="skills" 
-            label="Skills" 
+          <Form.Item
+            name="skills"
+            label="Skills"
             tooltip="Auto-extracted from your description, but you can manually add, edit, or remove them at any time. Type and press Enter."
           >
             <Select mode="tags" style={{ width: '100%' }} placeholder="e.g. React, Docker, Python" />
           </Form.Item>
+
+          {/* Promotion toggle — only shown when company matches an existing one */}
+          {isExistingCompany && <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100 mt-1">
+            <Form.Item name="is_promotion" valuePropName="checked" className="mb-0 mt-0.5">
+              <Switch size="small" />
+            </Form.Item>
+            <div>
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-800">
+                <RiseOutlined />
+                Promotion / role change at the same company
+              </div>
+              <div className="text-xs text-amber-600 mt-0.5">
+                Mark this on your <strong>new</strong> role — groups it with your previous role at the same company
+              </div>
+            </div>
+          </div>}
         </Form>
       )}
 
@@ -271,9 +483,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             help="Paste the full block for a single role (Title, Company, Dates, and Bullets). We'll automatically build the form for you!"
             rules={[{ required: true, message: 'Please paste your experience text' }]}
           >
-            <TextArea 
-              rows={10} 
-              placeholder="Job Title&#10;Company Name&#10;San Jose, CA&#10;Start Date - End Date&#10;- Bullet point 1&#10;- Bullet point 2&#10;- Bullet point 3..." 
+            <TextArea
+              rows={10}
+              placeholder="Job Title&#10;Company Name&#10;San Jose, CA&#10;Start Date - End Date&#10;- Bullet point 1&#10;- Bullet point 2&#10;- Bullet point 3..."
               onChange={handleTextPaste}
             />
           </Form.Item>

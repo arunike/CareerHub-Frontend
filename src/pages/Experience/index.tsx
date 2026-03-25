@@ -1,14 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Typography, Spin, message, Empty, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col, Statistic, Space } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, FireFilled, ClockCircleOutlined, CodeOutlined, RobotOutlined, RocketOutlined } from '@ant-design/icons';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col } from 'antd';
+import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getExperiences, createExperience, updateExperience, deleteExperience } from '../../api/career';
+import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo } from '../../api/career';
+import RowActions from '../../components/RowActions';
 import type { Experience } from '../../types';
 import ExperienceModal from './ExperienceModal';
 import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 
 const { Title, Text } = Typography;
+
+// DRF returns absolute URLs (http://127.0.0.1:8000/media/...) — strip host so
+// the request goes through the Vite /media proxy instead of directly to Django.
+const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  try {
+    return new URL(url).pathname; // → /media/experience_logos/file.jpg
+  } catch {
+    return url; // already relative
+  }
+};
+
+const EMPLOYMENT_LABELS: Record<string, { label: string; color: string }> = {
+  full_time:   { label: 'Full-time',   color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  internship:  { label: 'Internship',  color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  contract:    { label: 'Contract',    color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  part_time:   { label: 'Part-time',   color: 'bg-teal-50 text-teal-700 border-teal-200' },
+  freelance:   { label: 'Freelance',   color: 'bg-orange-50 text-orange-700 border-orange-200' },
+};
+
+const EmploymentBadge: React.FC<{ type?: string }> = ({ type }) => {
+  if (!type || type === 'full_time') return null;
+  const meta = EMPLOYMENT_LABELS[type];
+  if (!meta) return null;
+  return (
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.color}`}>
+      {meta.label}
+    </span>
+  );
+};
 
 const getAvatarStyle = (name: string) => {
   const gradients = [
@@ -42,11 +73,12 @@ const ExperiencePage: React.FC = () => {
     try {
       setLoading(true);
       const res = await getExperiences();
-      // sort by start_date descending
+      
       const sorted = res.data.sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
-        return dateB - dateA;
+        if (dateB !== dateA) return dateB - dateA;
+        return (b.id || 0) - (a.id || 0);
       });
       setExperiences(sorted);
     } catch (err: any) {
@@ -56,15 +88,29 @@ const ExperiencePage: React.FC = () => {
     }
   };
 
-  const handleCreateOrUpdate = async (data: Partial<Experience>) => {
+  const handleCreateOrUpdate = async (data: Partial<Experience>, logoFile?: File | null, removeLogo?: boolean) => {
     try {
+      let expId: number | undefined;
       if (editingExp && editingExp.id) {
         await updateExperience(editingExp.id, data);
+        expId = editingExp.id;
         message.success('Experience updated successfully');
       } else {
-        await createExperience(data);
+        const res = await createExperience(data);
+        expId = res.data.id;
         message.success('Experience added successfully');
       }
+
+      if (expId) {
+        if (logoFile) {
+          const fd = new FormData();
+          fd.append('logo', logoFile);
+          await uploadExperienceLogo(expId, fd);
+        } else if (removeLogo) {
+          await removeExperienceLogo(expId);
+        }
+      }
+
       fetchExperiences();
     } catch (err: any) {
       message.error(err.response?.data?.detail || 'Failed to save experience');
@@ -77,8 +123,38 @@ const ExperiencePage: React.FC = () => {
       await deleteExperience(id);
       message.success('Experience deleted');
       fetchExperiences();
+    } catch (err: any) {
+      message.error(err.response?.data?.error || 'Failed to delete experience');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await deleteAllExperiences();
+      message.success('All experiences deleted');
+      fetchExperiences();
     } catch (err) {
-      message.error('Failed to delete experience');
+      message.error('Failed to delete all experiences');
+    }
+  };
+
+  const handleDeleteGroup = async (group: Experience[]) => {
+    try {
+      await Promise.all(group.filter(e => !e.is_locked && e.id).map(e => deleteExperience(e.id!)));
+      message.success(`Deleted ${group.filter(e => !e.is_locked).length} role(s) at ${group[0].company}`);
+      fetchExperiences();
+    } catch (err: any) {
+      message.error(err.response?.data?.error || 'Failed to delete company experiences');
+    }
+  };
+
+  const handleToggleLock = async (exp: Experience) => {
+    if (!exp.id) return;
+    try {
+      await updateExperience(exp.id, { is_locked: !exp.is_locked });
+      fetchExperiences();
+    } catch (err) {
+      message.error('Failed to update lock status');
     }
   };
 
@@ -178,23 +254,84 @@ const ExperiencePage: React.FC = () => {
 
   const calculateTotalCareerDuration = () => {
     if (experiences.length === 0) return '0 yrs';
-    
-    const sortedStarts = [...experiences].sort((a, b) => dayjs(a.start_date).diff(dayjs(b.start_date)));
-    const earliestStart = dayjs(sortedStarts[0].start_date);
-    
-    const latestEnd = experiences.some(e => !e.end_date) 
-      ? dayjs() 
-      : dayjs(Math.max(...experiences.map(e => dayjs(e.end_date).valueOf())));
-      
-    const totalMonths = latestEnd.diff(earliestStart, 'month');
-    const years = Math.floor(totalMonths / 12);
-    const months = totalMonths % 12;
-    
-    if (years === 0) return `${months} mos`;
-    return `${years} yrs ${months} mos`;
+    let totalDays = 0;
+    for (const exp of experiences) {
+      const start = exp.start_date ? dayjs(exp.start_date) : null;
+      const end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+      if (start && end) totalDays += end.diff(start, 'day');
+    }
+    return fmtDays(totalDays, true);
   };
 
   const totalCompanies = new Set(experiences.map(e => e.company)).size;
+
+  const durationByType = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const exp of experiences) {
+      const type = exp.employment_type || 'full_time';
+      const start = exp.start_date ? dayjs(exp.start_date) : null;
+      const end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+      if (!start || !end) continue;
+      result[type] = (result[type] || 0) + end.diff(start, 'day');
+    }
+    return result;
+  }, [experiences]);
+
+  const companiesByType = useMemo(() => {
+    const seen = new Map<string, string>(); // company key → first-seen type
+    for (const exp of [...experiences].sort((a, b) =>
+      (b.start_date ?? '').localeCompare(a.start_date ?? '')
+    )) {
+      const key = exp.company.toLowerCase();
+      if (!seen.has(key)) seen.set(key, exp.employment_type || 'full_time');
+    }
+    const result: Record<string, number> = {};
+    for (const type of seen.values()) result[type] = (result[type] || 0) + 1;
+    return result;
+  }, [experiences]);
+
+  const fmtDays = (totalDays: number, showDaysCount = false): string => {
+    const yrs = Math.floor(totalDays / 365);
+    const mos = Math.floor((totalDays % 365) / 30);
+    const parts: string[] = [];
+    if (yrs > 0) parts.push(`${yrs} yr${yrs !== 1 ? 's' : ''}`);
+    if (mos > 0) parts.push(`${mos} mo${mos !== 1 ? 's' : ''}`);
+    if (parts.length === 0) parts.push(`${totalDays} day${totalDays !== 1 ? 's' : ''}`);
+    const base = parts.join(' ');
+    return showDaysCount ? `${base} (${totalDays} days)` : base;
+  };
+
+  const fmtMonths = fmtDays;
+
+  const TYPE_DISPLAY: Record<string, { label: string; dot: string }> = {
+    full_time:  { label: 'Full-time',  dot: 'bg-blue-400' },
+    internship: { label: 'Internship', dot: 'bg-amber-400' },
+    contract:   { label: 'Contract',   dot: 'bg-purple-400' },
+    part_time:  { label: 'Part-time',  dot: 'bg-teal-400' },
+    freelance:  { label: 'Freelance',  dot: 'bg-orange-400' },
+  };
+
+  const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): string => {
+    const start = exp.start_date ? dayjs(exp.start_date) : null;
+    const end = overrideEndDate
+      ? dayjs(overrideEndDate)
+      : exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+    const startStr = start ? start.format('MMM YYYY') : '—';
+    const endStr = overrideEndDate
+      ? dayjs(overrideEndDate).format('MMM YYYY')
+      : exp.is_current ? 'Present' : (end ? end.format('MMM YYYY') : '—');
+    const dur = start && end ? ` · ${fmtDays(end.diff(start, 'day'), true)}` : '';
+    return `${startStr} – ${endStr}${dur}`;
+  };
+
+  const getGroupTenure = (group: Experience[]): string => {
+    const oldest = group[group.length - 1];
+    const newest = group[0];
+    const start = oldest.start_date ? dayjs(oldest.start_date) : null;
+    const end = newest.is_current ? dayjs() : (newest.end_date ? dayjs(newest.end_date) : null);
+    if (!start || !end) return '';
+    return fmtDays(end.diff(start, 'day'), true);
+  };
 
   const allSkills = experiences.flatMap(e => e.skills || []);
   const skillCounts = allSkills.reduce((acc, skill) => {
@@ -209,9 +346,35 @@ const ExperiencePage: React.FC = () => {
     
   const uniqueUserSkills = Object.keys(skillCounts);
 
-  const filteredExperiences = selectedSkill 
+  const filteredExperiences = selectedSkill
     ? experiences.filter(exp => exp.skills?.includes(selectedSkill))
     : experiences;
+
+  const groupedExperiences = useMemo((): Experience[][] => {
+    const seen = new Set<number>();
+    const groups: Experience[][] = [];
+
+    for (let i = 0; i < filteredExperiences.length; i++) {
+      const exp = filteredExperiences[i];
+      if (seen.has(exp.id!)) continue;
+
+      const company = exp.company.toLowerCase();
+      const group: Experience[] = [exp];
+      seen.add(exp.id!);
+
+      for (let j = i + 1; j < filteredExperiences.length; j++) {
+        const other = filteredExperiences[j];
+        if (!seen.has(other.id!) && other.company.toLowerCase() === company) {
+          group.push(other);
+          seen.add(other.id!);
+        }
+      }
+
+      groups.push(group);
+    }
+
+    return groups;
+  }, [filteredExperiences]);
 
   return (
     <div style={{ padding: 0, width: '100%' }} className="animate-in fade-in duration-500">
@@ -229,6 +392,11 @@ const ExperiencePage: React.FC = () => {
               Match JD
             </Button>
           }
+          onDeleteAll={handleDeleteAll}
+          deleteAllLabel="Delete All"
+          deleteAllDisabled={experiences.length === 0}
+          deleteAllConfirmTitle="Delete all experiences?"
+          deleteAllConfirmDescription="This will permanently delete all unlocked experiences."
           onPrimaryAction={openAddModal}
           primaryActionLabel="Add Experience"
           primaryActionIcon={<PlusOutlined />}
@@ -240,19 +408,47 @@ const ExperiencePage: React.FC = () => {
         <Card style={{ marginBottom: 48 }} className="rounded-2xl border-gray-100 shadow-sm" bodyStyle={{ padding: '20px 24px' }}>
           <Row gutter={[24, 24]} align="middle">
             <Col xs={24} md={8}>
-              <div className="flex items-center gap-4 border-r border-gray-100 pr-4">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+              <div className="flex items-start gap-4 border-r border-gray-100 pr-4">
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0 mt-0.5">
                   <ClockCircleOutlined className="text-xl" />
                 </div>
-                <Statistic title="Total Experience" value={calculateTotalCareerDuration()} valueStyle={{ fontWeight: 600, fontSize: '20px' }} />
+                <div>
+                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Total Experience</div>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-xl font-semibold text-gray-900">{calculateTotalCareerDuration()}</span>
+                    {Object.entries(durationByType)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([type, months]) => (
+                        <span key={type} className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${TYPE_DISPLAY[type]?.dot ?? 'bg-gray-400'}`} />
+                          <span className="font-medium text-gray-700">{fmtMonths(months, true)}</span>
+                          <span>{TYPE_DISPLAY[type]?.label ?? type}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
               </div>
             </Col>
             <Col xs={24} md={6}>
-              <div className="flex items-center gap-4 md:border-r border-gray-100 pr-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+              <div className="flex items-start gap-4 md:border-r border-gray-100 pr-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0 mt-0.5">
                   <BankOutlined className="text-xl" />
                 </div>
-                <Statistic title="Companies" value={totalCompanies} valueStyle={{ fontWeight: 600, fontSize: '20px' }} />
+                <div>
+                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Companies</div>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-xl font-semibold text-gray-900">{totalCompanies}</span>
+                    {Object.entries(companiesByType)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([type, count]) => (
+                        <span key={type} className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${TYPE_DISPLAY[type]?.dot ?? 'bg-gray-400'}`} />
+                          <span className="font-medium text-gray-700">{count}</span>
+                          <span>{TYPE_DISPLAY[type]?.label ?? type}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
               </div>
             </Col>
             <Col xs={24} md={10}>
@@ -320,48 +516,41 @@ const ExperiencePage: React.FC = () => {
                 </div>
               </div>
             )}
-            {filteredExperiences.map((exp, idx) => {
-              const skills = exp.skills || [];
-              
-              return (
-                <div key={exp.id} className="group flex flex-col md:flex-row gap-6 w-full">
-                  
-                  {/* Timeline Avatar column */}
-                  <div className="flex-shrink-0 relative z-10 hidden md:flex flex-col items-center">
-                    <Avatar 
-                      size={52} 
-                      style={getAvatarStyle(exp.company)}
-                      className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
-                    >
-                      {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
-                    </Avatar>
-                  </div>
-                  
-                  {/* Content Card */}
-                  <div className="flex-grow min-w-0 bg-white/80 backdrop-blur-sm p-7 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group-hover:border-blue-100">
-                    <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-300 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
+            {groupedExperiences.map((group, groupIdx) => {
+              const primary = group[0];
+              const isMulti = group.length > 1;
+              const logoSrc = toRelativeMediaUrl(primary.logo);
+
+              const groupAvatar = logoSrc ? (
+                <Avatar size={52} src={logoSrc} className="shadow-md border-4 border-white ring-1 ring-gray-100 z-10" />
+              ) : (
+                <Avatar size={52} style={getAvatarStyle(primary.company)} className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 z-10">
+                  {primary.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
+                </Avatar>
+              );
+
+              const renderSingleRole = (exp: Experience) => {
+                const skills = exp.skills || [];
+                return (
+                  <div className="p-7">
                     <div className="flex justify-between items-start mb-5">
                       <div>
-                        {/* Mobile Avatar (shows only on small screens) */}
                         <div className="flex md:hidden items-center gap-3 mb-3">
-                          <Avatar 
-                            size={40} 
-                            style={getAvatarStyle(exp.company)}
-                            className="font-bold shadow-sm"
-                          >
-                            {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
-                          </Avatar>
+                          {logoSrc
+                            ? <Avatar size={40} src={logoSrc} className="shadow-sm" />
+                            : <Avatar size={40} style={getAvatarStyle(exp.company)} className="font-bold shadow-sm">
+                                {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
+                              </Avatar>
+                          }
                           <div className="text-lg font-bold text-gray-800 tracking-tight">{exp.company}</div>
                         </div>
-
-                        <Title level={3} className="!mb-1 text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight">
-                          {exp.title}
-                        </Title>
-                        <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">
-                          {exp.company}
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <Title level={3} className="!mb-0 text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight">
+                            {exp.title}
+                          </Title>
+                          <EmploymentBadge type={exp.employment_type} />
                         </div>
-                        
+                        <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">{exp.company}</div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100">
                           <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50/80 border border-indigo-100/50 px-2 py-0.5 rounded-md">
                             <CalendarOutlined />
@@ -375,48 +564,147 @@ const ExperiencePage: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      
-                      {/* Actions */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex gap-1 shrink-0 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm absolute right-4 top-4">
-                        <Tooltip title="Edit Role">
-                          <Button type="text" icon={<EditOutlined />} size="small" className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg" onClick={() => openEditModal(exp)} />
-                        </Tooltip>
-                        <Popconfirm
-                          title="Delete Experience"
-                          description="Are you sure you want to remove this role?"
-                          onConfirm={() => exp.id && handleDelete(exp.id)}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{ danger: true, className: "rounded-lg" }}
-                          cancelButtonProps={{ className: "rounded-lg" }}
-                        >
-                          <Tooltip title="Delete">
-                            <Button type="text" danger icon={<DeleteOutlined />} size="small" className="rounded-lg hover:bg-red-50" />
-                          </Tooltip>
-                        </Popconfirm>
+                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0">
+                        <RowActions
+                          isLocked={exp.is_locked}
+                          onToggleLock={() => handleToggleLock(exp)}
+                          onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                          onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
+                          deleteTitle="Delete Experience"
+                          deleteDescription="Are you sure you want to remove this role?"
+                          disableEdit={exp.is_locked}
+                          disableDelete={exp.is_locked}
+                        />
                       </div>
                     </div>
-                    
-                    {/* Description */}
-                    {exp.description && (
-                      <div className="mt-6 text-[15px]">
-                        {renderDescription(exp.description)}
-                      </div>
-                    )}
-
-                    {/* Auto-extracted Skills */}
+                    {exp.description && <div className="mt-6 text-[15px]">{renderDescription(exp.description)}</div>}
                     {skills.length > 0 && (
                       <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
                         {skills.map(skill => (
-                          <Tag 
-                            key={skill} 
-                            className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium hover:bg-blue-50 transition-colors"
-                          >
-                            {skill}
-                          </Tag>
+                          <Tag key={skill} className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium hover:bg-blue-50 transition-colors">{skill}</Tag>
                         ))}
                       </div>
                     )}
+                  </div>
+                );
+              };
+
+              const renderMultiRoles = () => {
+                const tenure = getGroupTenure(group);
+                return (
+                  <div className="p-7">
+                    {/* Company header — LinkedIn style */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex md:hidden shrink-0">
+                          {logoSrc
+                            ? <Avatar size={44} src={logoSrc} className="shadow-sm" />
+                            : <Avatar size={44} style={getAvatarStyle(primary.company)} className="font-bold shadow-sm">{primary.company?.charAt(0)?.toUpperCase()}</Avatar>
+                          }
+                        </div>
+                        <div>
+                          <div className="text-xl font-bold text-gray-900 tracking-tight">{primary.company}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-500">{group.length} roles</span>
+                            {tenure && (
+                              <>
+                                <span className="text-gray-300">·</span>
+                                <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{tenure} total</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Group-level delete */}
+                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0">
+                        <Tooltip title={`Delete all roles at ${primary.company}`}>
+                          <Popconfirm
+                            title={`Delete all ${primary.company} roles?`}
+                            description={`This will delete ${group.filter(e => !e.is_locked).length} unlocked role(s).`}
+                            onConfirm={() => handleDeleteGroup(group)}
+                            okText="Delete"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+                          </Popconfirm>
+                        </Tooltip>
+                      </div>
+                    </div>
+
+                    {/* Roles — left-border timeline with dots */}
+                    <div className="relative pl-6" style={{ borderLeft: '2px solid #e5e7eb' }}>
+                      {group.map((exp, roleIdx) => {
+                        const skills = exp.skills || [];
+                        return (
+                          <div key={exp.id} className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}>
+                            {/* Timeline dot */}
+                            <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                              <div className="w-2 h-2 rounded-full bg-gray-400" />
+                            </div>
+
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-[15px] text-gray-900 leading-snug">{exp.title}</span>
+                                  {exp.is_promotion && (
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
+                                      <RiseOutlined style={{ fontSize: 9 }} /> Promoted
+                                    </span>
+                                  )}
+                                  <EmploymentBadge type={exp.employment_type} />
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-3 mt-1 text-sm text-gray-500">
+                                  <span className="flex items-center gap-1.5">
+                                    <CalendarOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
+                                    {/* Older roles auto-derive end date from the next role's start date */}
+                                    {formatRoleDateRange(exp, roleIdx > 0 ? group[roleIdx - 1].start_date : null)}
+                                  </span>
+                                  {exp.location && (
+                                    <span className="flex items-center gap-1.5">
+                                      <EnvironmentOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
+                                      {exp.location}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 ml-2">
+                                <RowActions
+                                  isLocked={exp.is_locked}
+                                  onToggleLock={() => handleToggleLock(exp)}
+                                  onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                                  onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
+                                  deleteTitle="Delete Role"
+                                  deleteDescription="Are you sure you want to remove this role?"
+                                  disableEdit={exp.is_locked}
+                                  disableDelete={exp.is_locked}
+                                />
+                              </div>
+                            </div>
+
+                            {exp.description && <div className="mt-4 text-[14px]">{renderDescription(exp.description)}</div>}
+                            {skills.length > 0 && (
+                              <div className="mt-4 flex flex-wrap gap-1.5">
+                                {skills.map(skill => (
+                                  <Tag key={skill} className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-xs hover:bg-blue-50 transition-colors">{skill}</Tag>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div key={`group-${groupIdx}`} className="group flex flex-col md:flex-row gap-6 w-full">
+                  <div className="flex-shrink-0 relative z-10 hidden md:flex flex-col items-center">
+                    {groupAvatar}
+                  </div>
+                  <div className="flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group-hover:border-blue-100">
+                    <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-300 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
                   </div>
                 </div>
               );
@@ -430,6 +718,7 @@ const ExperiencePage: React.FC = () => {
         onCancel={() => setModalOpen(false)}
         onSave={handleCreateOrUpdate}
         experience={editingExp}
+        experiences={experiences}
       />
 
       <JDMatcherModal 
