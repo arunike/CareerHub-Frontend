@@ -61,6 +61,11 @@ export const createExperience = (data: Partial<Experience>) => api.post<Experien
 export const updateExperience = (id: number, data: Partial<Experience>) =>
   api.patch<Experience>(`/career/experiences/${id}/`, data);
 export const deleteExperience = (id: number) => api.delete(`/career/experiences/${id}/`);
+export const deleteAllExperiences = () => api.delete('/career/experiences/delete_all/');
+export const uploadExperienceLogo = (id: number, formData: FormData) =>
+  api.post<Experience>(`/career/experiences/${id}/upload-logo/`, formData, { headers: { 'Content-Type': undefined } });
+export const removeExperienceLogo = (id: number) =>
+  api.delete<Experience>(`/career/experiences/${id}/remove-logo/`);
 
 export interface JDMatchResult {
   score: number;
