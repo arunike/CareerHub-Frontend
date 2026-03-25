@@ -295,6 +295,7 @@ const JDReportsListPage: React.FC = () => {
             })}
           </div>
       </div>
+      </div>
 
       {/* Delete confirm modal */}
       <Modal
