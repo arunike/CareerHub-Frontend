@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { Modal, Button, Input, Typography, Space, message, Spin } from 'antd';
-import { CopyOutlined, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
+import { Modal, Button, Input, Typography, Space, message, Tag } from 'antd';
+import {
+  CopyOutlined,
+  ThunderboltOutlined,
+  SaveOutlined,
+  ReloadOutlined,
+  CheckOutlined,
+} from '@ant-design/icons';
 import { generateCoverLetter } from '../../api/career';
 import { saveCoverLetter } from '../../utils/coverLetterStorage';
 import type { CareerApplication } from '../../types/application';
 
 const { TextArea } = Input;
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 interface Props {
   application: CareerApplication;
@@ -14,17 +20,22 @@ interface Props {
   onClose: () => void;
 }
 
+const wordCount = (text: string) =>
+  text.trim() ? text.trim().split(/\s+/).length : 0;
+
 const CoverLetterModal = ({ application, open, onClose }: Props) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [jdText, setJdText] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
     setCoverLetter('');
     setSaved(false);
+    setCopied(false);
     try {
       const res = await generateCoverLetter(application.id, jdText);
       const letter = res.data.cover_letter;
@@ -46,15 +57,19 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(coverLetter);
-    messageApi.success('Copied to clipboard');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleClose = () => {
     setJdText('');
     setCoverLetter('');
     setSaved(false);
+    setCopied(false);
     onClose();
   };
+
+  const hasLetter = coverLetter && !loading;
 
   return (
     <Modal
@@ -62,7 +77,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
         <Space>
           <ThunderboltOutlined style={{ color: '#6366f1' }} />
           <span>
-            Generate Cover Letter — {application.role_title} at{' '}
+            Cover Letter — {application.role_title} at{' '}
             {application.company_details?.name}
           </span>
         </Space>
@@ -71,75 +86,113 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
       onCancel={handleClose}
       footer={null}
       width={760}
+      afterClose={handleClose}
     >
       {contextHolder}
 
+      {/* JD Input */}
       <div style={{ marginBottom: 16 }}>
-        <Text type="secondary">
-          Paste the job description for a tailored letter, or leave blank for a general one.
-        </Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Paste the job description for a tailored letter, or leave blank for a general one.
+          </Text>
+          {jdText && (
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              {wordCount(jdText).toLocaleString()} words
+            </Text>
+          )}
+        </div>
         <TextArea
           rows={5}
           placeholder="Paste job description here (optional)..."
           value={jdText}
           onChange={(e) => setJdText(e.target.value)}
-          style={{ marginTop: 8 }}
+          style={{ borderRadius: 8, fontSize: 13, resize: 'none' }}
         />
       </div>
 
+      {/* Generate / Regenerate button */}
       <Button
         type="primary"
+        icon={hasLetter ? <ReloadOutlined /> : <ThunderboltOutlined />}
         onClick={handleGenerate}
         loading={loading}
-        style={{ marginBottom: 20 }}
+        block
+        style={{
+          height: 44,
+          borderRadius: 10,
+          background: '#4f46e5',
+          borderColor: '#4f46e5',
+          fontWeight: 600,
+          fontSize: 14,
+          marginBottom: 20,
+        }}
       >
-        Generate
+        {loading ? 'Writing…' : hasLetter ? 'Regenerate' : 'Generate Cover Letter'}
       </Button>
 
+      {/* Loading skeleton */}
       {loading && (
-        <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <Spin tip="Writing your cover letter..." />
+        <div style={{
+          background: 'linear-gradient(135deg, #f5f3ff, #eef2ff)',
+          border: '1px solid #e0e7ff',
+          borderRadius: 12,
+          padding: '32px 24px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 28, marginBottom: 12 }}>✍️</div>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Crafting your cover letter…
+          </Text>
         </div>
       )}
 
-      {coverLetter && !loading && (
+      {/* Result */}
+      {hasLetter && (
         <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <Space>
-              <Text strong>Generated Cover Letter</Text>
+          {/* Result header */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 10,
+          }}>
+            <Space size={8}>
+              <Text strong style={{ fontSize: 13 }}>Generated Cover Letter</Text>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                {wordCount(coverLetter).toLocaleString()} words
+              </Text>
               {saved && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  <SaveOutlined style={{ marginRight: 4 }} />
-                  Saved to Cover Letters
-                </Text>
+                <Tag color="green" icon={<SaveOutlined />} style={{ fontSize: 11, lineHeight: '18px' }}>
+                  Saved
+                </Tag>
               )}
             </Space>
-            <Button size="small" icon={<CopyOutlined />} onClick={handleCopy}>
-              Copy
+            <Button
+              size="small"
+              icon={copied ? <CheckOutlined /> : <CopyOutlined />}
+              onClick={handleCopy}
+              style={copied ? { color: '#059669', borderColor: '#059669' } : {}}
+            >
+              {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
-          <div
-            style={{
-              background: '#f9f9f9',
-              border: '1px solid #e8e8e8',
-              borderRadius: 6,
-              padding: '16px 20px',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'Georgia, serif',
-              lineHeight: 1.8,
-              fontSize: 14,
-              maxHeight: 420,
-              overflowY: 'auto',
-            }}
-          >
-            <Paragraph style={{ marginBottom: 0, whiteSpace: 'pre-wrap' }}>{coverLetter}</Paragraph>
+
+          {/* Letter body */}
+          <div style={{
+            background: '#fafafa',
+            border: '1px solid #e8e8e8',
+            borderRadius: 10,
+            padding: '20px 24px',
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'Georgia, serif',
+            lineHeight: 1.85,
+            fontSize: 14,
+            color: '#1f2937',
+            maxHeight: 420,
+            overflowY: 'auto',
+          }}>
+            {coverLetter}
           </div>
         </div>
       )}
