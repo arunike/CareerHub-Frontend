@@ -39,14 +39,13 @@ import {
   getFederalHolidays,
   createHoliday,
   deleteHoliday,
-  deleteAllHolidays,
   updateHoliday,
   exportHolidays,
   importData,
   getUserSettings,
   updateUserSettings,
 } from '../../api';
-import type { Holiday, UserSettings } from '../../types';
+import type { Holiday, UserSettings, HolidayTab } from '../../types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
@@ -188,6 +187,9 @@ const Holidays = () => {
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(false);
   
+  // Tab state
+  const [activeTab, setActiveTab] = useState('custom');
+
   // Advanced Mode State
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
@@ -242,8 +244,17 @@ const Holidays = () => {
     fetchData();
   }, []);
 
-  // Computed - Filter by year then sort
-  const sortedHolidays = filterByYear(holidays, selectedYear, 'date').sort((a, b) => {
+  const customTabs: HolidayTab[] = userSettings?.holiday_tabs || [];
+
+  const activeTabHolidays = React.useMemo(() => {
+    if (activeTab === 'custom') {
+      return holidays.filter(h => !h.tab || !customTabs.some(t => t.id === h.tab));
+    }
+    if (activeTab === 'federal') return [];
+    return holidays.filter(h => h.tab === activeTab);
+  }, [holidays, activeTab, customTabs]);
+
+  const sortedHolidays = filterByYear(activeTabHolidays, selectedYear, 'date').sort((a, b) => {
     let comparison = 0;
     if (sortBy === 'date') {
       comparison = dayjs(a.date).diff(dayjs(b.date));
@@ -279,7 +290,6 @@ const Holidays = () => {
       }
     });
 
-    // Check lock status for groups
     groups.forEach((g) => {
       if (g.isGroup) {
         g.is_locked = g.items.every((i: any) => i.is_locked);
@@ -300,19 +310,17 @@ const Holidays = () => {
     dayjs(a.date).diff(dayjs(b.date))
   );
 
-  // Get available years
   const availableYears = getAvailableYears(holidays, 'date');
 
-  // Handle year change
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
   };
 
-  // Handlers
   const handleAdd = async (values: any) => {
     const description = values.name || 'Custom Holiday';
     const isRecurring = values.is_recurring;
-    
+    const tabValue = activeTab === 'custom' ? undefined : activeTab;
+
     if (isRangeMode && values.dateRange) {
       const [start, end] = values.dateRange;
       if (end.isBefore(start)) {
@@ -323,13 +331,14 @@ const Holidays = () => {
       const groupId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
       const promises = [];
       let current = start.clone();
-      
+
       while (current.isBefore(end) || current.isSame(end, 'day')) {
         promises.push(createHoliday({
           date: current.format('YYYY-MM-DD'),
           group_id: groupId,
           description,
           is_recurring: isRecurring,
+          tab: tabValue,
         }));
         current = current.add(1, 'day');
       }
@@ -348,6 +357,7 @@ const Holidays = () => {
           date: values.date.format('YYYY-MM-DD'),
           description,
           is_recurring: isRecurring,
+          tab: tabValue,
         });
         messageApi.success('Holiday added');
         form.resetFields();
@@ -390,24 +400,14 @@ const Holidays = () => {
     }
   };
 
-  const handleDeleteAll = async () => {
-    try {
-      await deleteAllHolidays();
-      messageApi.success('All unlocked holidays deleted');
-      fetchData();
-    } catch (error) {
-      messageApi.error('Failed to delete all');
-      console.error(error);
-    }
-  };
 
   const handleEditClick = (item: any) => {
     setEditingItem(item);
-    // If it's a group, populate form with the first item's properties
     const sampleItem = item.isGroup ? item.items[0] : item;
     editForm.setFieldsValue({
       description: sampleItem.description,
       is_recurring: sampleItem.is_recurring,
+      tab: sampleItem.tab || '',
     });
     setEditModalOpen(true);
   };
@@ -427,12 +427,13 @@ const Holidays = () => {
 
       await Promise.all(
         itemsToUpdate.map((i: any) => {
-          // If bulk editing and name is left blank when they originally had different names, ignore description update
           const updatePayload: any = { is_recurring: values.is_recurring };
+          if (values.tab !== '__unchanged__') {
+            updatePayload.tab = values.tab || null;
+          }
           if (values.description !== undefined && values.description !== '') {
             updatePayload.description = values.description;
           } else if (!(editingItem.isBulk && !editingItem.allSameDesc)) {
-            // Only force description save if it's NOT the special mixed-bag scenario
             updatePayload.description = values.description;
           }
           return updateHoliday(i.id, updatePayload);
@@ -488,7 +489,6 @@ const Holidays = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      // Select all IDs from the currently visible/sorted holidays
       const allIds = sortedHolidays.map(h => h.id);
       setSelectedIds(allIds);
     } else {
@@ -506,7 +506,6 @@ const Holidays = () => {
       cancelText: 'No',
       onOk: async () => {
         try {
-          // Filter out locked ones if you want, or just let API fail. We'll disable delete if all selected are locked
           await Promise.all(selectedIds.map(id => deleteHoliday(id)));
           messageApi.success(`${selectedIds.length} holidays deleted`);
           setSelectedIds([]);
@@ -534,7 +533,6 @@ const Holidays = () => {
   const handleBulkEditClick = () => {
     editForm.resetFields();
 
-    // Find the actual holiday objects for the selected IDs
     const selectedHolidays = selectedIds.map(id => holidays.find(h => h.id === id)).filter(Boolean) as Holiday[];
 
     if (selectedHolidays.length > 0) {
@@ -544,13 +542,17 @@ const Holidays = () => {
       const firstRecur = selectedHolidays[0].is_recurring;
       const allSameRecur = selectedHolidays.every(h => h.is_recurring === firstRecur);
 
+      const firstTab = selectedHolidays[0].tab || '';
+      const allSameTab = selectedHolidays.every(h => (h.tab || '') === firstTab);
+
       editForm.setFieldsValue({
         description: allSameDesc ? firstDesc : undefined,
         is_recurring: allSameRecur ? firstRecur : false,
+        tab: allSameTab ? firstTab : '__unchanged__',
       });
-      
-      setEditingItem({ 
-        isBulk: true, 
+
+      setEditingItem({
+        isBulk: true,
         items: selectedHolidays,
         allSameDesc,
       });
@@ -567,19 +569,16 @@ const Holidays = () => {
       let ignoredList = userSettings.ignored_federal_holidays || [];
       
       if (!isObserved) {
-        // Add to ignored list
         if (!ignoredList.includes(holidayName) && !ignoredList.includes(dateStr)) {
           ignoredList = [...ignoredList, holidayName];
         }
       } else {
-        // Remove from ignored list
         ignoredList = ignoredList.filter(name => name !== holidayName && name !== dateStr);
       }
       
       await updateUserSettings({ ignored_federal_holidays: ignoredList });
       messageApi.success(`${holidayName} is now ${isObserved ? 'observed' : 'ignored'}`);
       
-      // Refetch to get updated lists
       fetchData();
     } catch (error) {
       messageApi.error('Failed to update federal holiday settings');
@@ -644,12 +643,7 @@ const Holidays = () => {
     };
   };
 
-  // Tabs Items
-  const items = [
-    {
-      key: 'custom',
-      label: 'Manage Custom',
-      children: (
+  const renderHolidayListTab = (_tabKey: string, tabLabel: string) => (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* Add Form */}
           <Card title="Add New Holiday">
@@ -722,7 +716,7 @@ const Holidays = () => {
                 totalCount={sortedHolidays.length}
                 onSelectAll={handleSelectAll}
                 onCancelSelection={() => setSelectedIds([])}
-                title={`My Time Off (${holidays.length})`}
+                title={`${tabLabel} (${activeTabHolidays.length})`}
                 bulkActions={
                   <>
                     <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
@@ -765,13 +759,20 @@ const Holidays = () => {
                     />
                     <Popconfirm
                       title="Delete All Unlocked?"
-                      description="This will delete all custom holidays that are not locked. This cannot be undone."
+                      description={`This will delete all unlocked holidays in "${tabLabel}". This cannot be undone.`}
                       okText="Delete All"
                       okType="danger"
-                      onConfirm={handleDeleteAll}
-                      disabled={holidays.length === 0}
+                      onConfirm={async () => {
+                        try {
+                          const toDelete = activeTabHolidays.filter(h => !h.is_locked);
+                          await Promise.all(toDelete.map(h => deleteHoliday(h.id)));
+                          messageApi.success('All unlocked holidays deleted');
+                          fetchData();
+                        } catch (e) { messageApi.error('Failed to delete all'); }
+                      }}
+                      disabled={activeTabHolidays.length === 0}
                     >
-                      <Button danger disabled={holidays.length === 0} icon={<DeleteOutlined />}>
+                      <Button danger disabled={activeTabHolidays.length === 0} icon={<DeleteOutlined />}>
                         Delete All
                       </Button>
                     </Popconfirm>
@@ -856,8 +857,11 @@ const Holidays = () => {
             />
           </Card>
         </Space>
-      ),
-    },
+  );
+
+  const items = [
+    { key: 'custom', label: 'Manage Custom', children: renderHolidayListTab('custom', 'Manage Custom') },
+    ...customTabs.map(t => ({ key: t.id, label: t.name, children: renderHolidayListTab(t.id, t.name) })),
     {
       key: 'federal',
       label: 'View Federal',
@@ -1012,7 +1016,12 @@ const Holidays = () => {
           />
         </div>
 
-        <Tabs defaultActiveKey="custom" items={items} type="card" />
+        <Tabs
+          activeKey={activeTab}
+          onChange={key => { setActiveTab(key); setSelectedIds([]); }}
+          items={items}
+          type="card"
+        />
 
         {/* Edit Modal */}
         <Modal
@@ -1038,6 +1047,19 @@ const Holidays = () => {
             <Form.Item name="is_recurring" valuePropName="checked">
               <Checkbox>Recurring (Yearly)</Checkbox>
             </Form.Item>
+            {customTabs.length > 0 && (
+              <Form.Item name="tab" label="Tab">
+                <Select>
+                  {editingItem?.isBulk && (
+                    <Select.Option value="__unchanged__"><span className="text-gray-400 italic">Leave unchanged</span></Select.Option>
+                  )}
+                  <Select.Option value="">Manage Custom (default)</Select.Option>
+                  {customTabs.map(t => (
+                    <Select.Option key={t.id} value={t.id}>{t.name}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            )}
           </Form>
         </Modal>
 
