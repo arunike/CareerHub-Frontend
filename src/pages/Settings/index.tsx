@@ -5,24 +5,26 @@ import {
   getCategories,
   createCategory,
   updateCategory,
+  patchCategory,
   deleteCategory,
   exportAllData,
 } from '../../api';
 import type { EventCategory, UserSettings, EmploymentType, HolidayTab } from '../../types';
 import {
-  SettingOutlined,
   SaveOutlined,
   PlusOutlined,
-  DeleteOutlined,
   CloseOutlined,
   DownloadOutlined,
-  EditOutlined,
+  LockOutlined,
+  UnlockOutlined,
 } from '@ant-design/icons';
-import { message, TimePicker } from 'antd';
+import { Button, message, TimePicker } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
 import CategoryBadge from '../../components/CategoryBadge';
+import PageActionToolbar from '../../components/PageActionToolbar';
+import LockableListItem from '../../components/LockableListItem';
 
 dayjs.extend(customParseFormat);
 
@@ -33,6 +35,10 @@ const Settings: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
+  const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
+  const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
   const originalSettingsRef = useRef<string>('');
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
@@ -236,7 +242,6 @@ const Settings: React.FC = () => {
     }
   }, [successMessage]);
 
-  // Track dirty state whenever settings change
   useEffect(() => {
     if (!settings || !originalSettingsRef.current) return;
     setIsDirty(JSON.stringify(settings) !== originalSettingsRef.current);
@@ -386,25 +391,34 @@ const Settings: React.FC = () => {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SettingOutlined className="text-2xl text-gray-700" />
-          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={!isDirty || saving}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
-            isDirty
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <SaveOutlined className="text-sm" />
-          {saving ? 'Saving…' : 'Save Settings'}
-        </button>
-      </div>
+      <PageActionToolbar
+        title="Settings"
+        singleRowDesktop
+        extraActions={
+          <>
+            <Button
+              size="large"
+              icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+              onClick={() => setIsLocked(l => !l)}
+              className="toolbar-btn"
+            >
+              {isLocked ? 'Locked' : 'Lock'}
+            </Button>
+            <Button
+              size="large"
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSave}
+              disabled={!isDirty || saving || isLocked}
+              className="toolbar-btn"
+            >
+              {saving ? 'Saving…' : 'Save Settings'}
+            </Button>
+          </>
+        }
+      />
 
+      <div className={`space-y-6 ${isLocked ? 'pointer-events-none select-none opacity-60' : ''}`}>
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Availability</h3>
 
@@ -674,26 +688,37 @@ const Settings: React.FC = () => {
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center border-b pb-4 mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Manage Categories</h3>
-          <button
-            onClick={() => {
-              if (isAddingCategory) {
-                handleCancelEdit();
-              } else {
-                setIsAddingCategory(true);
-              }
-            }}
-            className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
-          >
-            {isAddingCategory ? (
-              <CloseOutlined className="text-base" />
-            ) : (
-              <PlusOutlined className="text-base" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCategoriesLocked(l => !l)}
+              className={`p-1.5 rounded-lg transition ${isCategoriesLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+              title={isCategoriesLocked ? 'Unlock section' : 'Lock section'}
+            >
+              {isCategoriesLocked ? <LockOutlined className="text-base" /> : <UnlockOutlined className="text-base" />}
+            </button>
+            {!isCategoriesLocked && (
+              <button
+                onClick={() => {
+                  if (isAddingCategory) {
+                    handleCancelEdit();
+                  } else {
+                    setIsAddingCategory(true);
+                  }
+                }}
+                className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+              >
+                {isAddingCategory ? (
+                  <CloseOutlined className="text-base" />
+                ) : (
+                  <PlusOutlined className="text-base" />
+                )}
+                {isAddingCategory ? 'Cancel' : 'Add Category'}
+              </button>
             )}
-            {isAddingCategory ? 'Cancel' : 'Add Category'}
-          </button>
+          </div>
         </div>
 
-        {isAddingCategory && (
+        {isAddingCategory && !isCategoriesLocked && (
           <form
             onSubmit={handleSaveCategory}
             className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2"
@@ -742,30 +767,27 @@ const Settings: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {categories.map((cat) => (
-                <div
+                <LockableListItem
                   key={cat.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
+                  isLocked={!!cat.is_locked}
+                  sectionLocked={isCategoriesLocked}
+                  onToggleLock={async () => {
+                    const newLocked = !cat.is_locked;
+                    
+                    setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, is_locked: newLocked } : c));
+                    
+                    try {
+                      await patchCategory(cat.id, { is_locked: newLocked });
+                    } catch {
+                      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, is_locked: !newLocked } : c));
+                      messageApi.error('Failed to update lock');
+                    }
+                  }}
+                  onEdit={() => handleEditCategory(cat)}
+                  onDelete={() => handleDeleteCategory(cat.id)}
                 >
-                  <div className="flex items-center gap-3">
-                    <CategoryBadge category={cat} />
-                  </div>
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
-                    <button
-                      onClick={() => handleEditCategory(cat)}
-                      className="text-gray-400 hover:text-blue-600 p-1 mr-1"
-                      title="Edit Category"
-                    >
-                      <EditOutlined className="text-base" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCategory(cat.id)}
-                      className="text-gray-400 hover:text-red-600 p-1"
-                      title="Delete Category"
-                    >
-                      <DeleteOutlined className="text-base" />
-                    </button>
-                  </div>
-                </div>
+                  <CategoryBadge category={cat} />
+                </LockableListItem>
               ))}
             </div>
           )}
@@ -779,26 +801,37 @@ const Settings: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">Employment Types</h3>
             <p className="text-xs text-gray-400 mt-0.5">Used in Experience — saved with Settings</p>
           </div>
-          <button
-            onClick={() => {
-              if (isAddingEmpType) {
-                handleCancelEmpType();
-              } else {
-                setIsAddingEmpType(true);
-              }
-            }}
-            className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
-          >
-            {isAddingEmpType ? (
-              <CloseOutlined className="text-base" />
-            ) : (
-              <PlusOutlined className="text-base" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEmpTypesLocked(l => !l)}
+              className={`p-1.5 rounded-lg transition ${isEmpTypesLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+              title={isEmpTypesLocked ? 'Unlock section' : 'Lock section'}
+            >
+              {isEmpTypesLocked ? <LockOutlined className="text-base" /> : <UnlockOutlined className="text-base" />}
+            </button>
+            {!isEmpTypesLocked && (
+              <button
+                onClick={() => {
+                  if (isAddingEmpType) {
+                    handleCancelEmpType();
+                  } else {
+                    setIsAddingEmpType(true);
+                  }
+                }}
+                className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+              >
+                {isAddingEmpType ? (
+                  <CloseOutlined className="text-base" />
+                ) : (
+                  <PlusOutlined className="text-base" />
+                )}
+                {isAddingEmpType ? 'Cancel' : 'Add Type'}
+              </button>
             )}
-            {isAddingEmpType ? 'Cancel' : 'Add Type'}
-          </button>
+          </div>
         </div>
 
-        {isAddingEmpType && (
+        {isAddingEmpType && !isEmpTypesLocked && (
           <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
             <div className="flex gap-3 items-end">
               <div className="flex-1">
@@ -847,36 +880,28 @@ const Settings: React.FC = () => {
           {getEmpTypes().map(t => {
             const colorOpt = EMP_COLOR_OPTIONS.find(c => c.value === t.color);
             return (
-              <div
+              <LockableListItem
                 key={t.value}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
+                isLocked={!!t.locked}
+                sectionLocked={isEmpTypesLocked}
+                onToggleLock={() => {
+                  const current = getEmpTypes();
+                  setSettings(prev => prev ? {
+                    ...prev,
+                    employment_types: current.map(x => x.value === t.value ? { ...x, locked: !t.locked } : x),
+                  } : null);
+                }}
+                onEdit={() => handleEditEmpType(t)}
+                onDelete={() => handleDeleteEmpType(t.value)}
               >
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{ backgroundColor: colorOpt?.bg, color: colorOpt?.text }}
-                    className="text-xs font-bold px-2.5 py-0.5 rounded-full border border-transparent"
-                  >
-                    {t.label}
-                  </span>
-                  <span className="text-xs text-gray-400 font-mono">{t.value}</span>
-                </div>
-                <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    onClick={() => handleEditEmpType(t)}
-                    className="text-gray-400 hover:text-blue-600 p-1 mr-1"
-                    title="Edit"
-                  >
-                    <EditOutlined className="text-base" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEmpType(t.value)}
-                    className="text-gray-400 hover:text-red-600 p-1"
-                    title="Delete"
-                  >
-                    <DeleteOutlined className="text-base" />
-                  </button>
-                </div>
-              </div>
+                <span
+                  style={{ backgroundColor: colorOpt?.bg, color: colorOpt?.text }}
+                  className="text-xs font-bold px-2.5 py-0.5 rounded-full border border-transparent"
+                >
+                  {t.label}
+                </span>
+                <span className="text-xs text-gray-400 font-mono">{t.value}</span>
+              </LockableListItem>
             );
           })}
         </div>
@@ -889,26 +914,37 @@ const Settings: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">Holiday Manager Tabs</h3>
             <p className="text-xs text-gray-400 mt-0.5">Custom tabs in Holiday Manager — saved with Settings</p>
           </div>
-          <button
-            onClick={() => {
-              if (isAddingHolidayTab) {
-                handleCancelHolidayTab();
-              } else {
-                setIsAddingHolidayTab(true);
-              }
-            }}
-            className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
-          >
-            {isAddingHolidayTab ? (
-              <CloseOutlined className="text-base" />
-            ) : (
-              <PlusOutlined className="text-base" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsHolidayTabsLocked(l => !l)}
+              className={`p-1.5 rounded-lg transition ${isHolidayTabsLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+              title={isHolidayTabsLocked ? 'Unlock section' : 'Lock section'}
+            >
+              {isHolidayTabsLocked ? <LockOutlined className="text-base" /> : <UnlockOutlined className="text-base" />}
+            </button>
+            {!isHolidayTabsLocked && (
+              <button
+                onClick={() => {
+                  if (isAddingHolidayTab) {
+                    handleCancelHolidayTab();
+                  } else {
+                    setIsAddingHolidayTab(true);
+                  }
+                }}
+                className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+              >
+                {isAddingHolidayTab ? (
+                  <CloseOutlined className="text-base" />
+                ) : (
+                  <PlusOutlined className="text-base" />
+                )}
+                {isAddingHolidayTab ? 'Cancel' : 'Add Tab'}
+              </button>
             )}
-            {isAddingHolidayTab ? 'Cancel' : 'Add Tab'}
-          </button>
+          </div>
         </div>
 
-        {isAddingHolidayTab && (
+        {isAddingHolidayTab && !isHolidayTabsLocked && (
           <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
             <div className="flex gap-3 items-end">
               <div className="flex-1">
@@ -942,37 +978,29 @@ const Settings: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {getHolidayTabs().map(t => (
-              <div
+              <LockableListItem
                 key={t.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
+                isLocked={!!t.locked}
+                sectionLocked={isHolidayTabsLocked}
+                onToggleLock={() => {
+                  const current = getHolidayTabs();
+                  setSettings(prev => prev ? {
+                    ...prev,
+                    holiday_tabs: current.map(x => x.id === t.id ? { ...x, locked: !t.locked } : x),
+                  } : null);
+                }}
+                onEdit={() => handleEditHolidayTab(t)}
+                onDelete={() => handleDeleteHolidayTab(t.id)}
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-800">{t.name}</span>
-                  <span className="text-xs text-gray-400 font-mono">{t.id}</span>
-                </div>
-                <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    onClick={() => handleEditHolidayTab(t)}
-                    className="text-gray-400 hover:text-blue-600 p-1 mr-1"
-                    title="Rename"
-                  >
-                    <EditOutlined className="text-base" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteHolidayTab(t.id)}
-                    className="text-gray-400 hover:text-red-600 p-1"
-                    title="Delete"
-                  >
-                    <DeleteOutlined className="text-base" />
-                  </button>
-                </div>
-              </div>
+                <span className="font-medium text-gray-800">{t.name}</span>
+                <span className="text-xs text-gray-400 font-mono">{t.id}</span>
+              </LockableListItem>
             ))}
           </div>
         )}
         <p className="text-xs text-gray-400 mt-3">Deleting a tab moves its holidays back to <em>Manage Custom</em>.</p>
       </div>
-
+      </div>
     </div>
   );
 };
