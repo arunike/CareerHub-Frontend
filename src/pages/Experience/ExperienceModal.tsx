@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select, Upload, Avatar, AutoComplete } from 'antd';
 import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import type { Experience } from '../../types';
+import type { Experience, EmploymentType } from '../../types';
 
 const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
@@ -15,6 +15,7 @@ interface ExperienceModalProps {
   onSave: (data: Partial<Experience>, logoFile?: File | null, removeLogo?: boolean) => Promise<void>;
   experience?: Experience | null;
   experiences?: Experience[];
+  employmentTypes?: EmploymentType[];
 }
 
 const { TextArea } = Input;
@@ -35,7 +36,16 @@ const getAvatarStyle = (name: string) => {
   return { backgroundImage: gradients[Math.abs(hash) % gradients.length], color: '#fff', border: 'none' };
 };
 
-const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [] }) => {
+const DEFAULT_EMP_TYPES: EmploymentType[] = [
+  { value: 'full_time', label: 'Full-time', color: 'blue' },
+  { value: 'part_time', label: 'Part-time', color: 'teal' },
+  { value: 'internship', label: 'Internship', color: 'amber' },
+  { value: 'contract', label: 'Contract', color: 'purple' },
+  { value: 'freelance', label: 'Freelance', color: 'orange' },
+];
+
+const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [], employmentTypes }) => {
+  const empTypes = (employmentTypes && employmentTypes.length > 0) ? employmentTypes : DEFAULT_EMP_TYPES;
   const [form] = Form.useForm();
   const [importForm] = Form.useForm();
   const [activeTab, setActiveTab] = useState('manual');
@@ -364,11 +374,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             </Form.Item>
             <Form.Item name="employment_type" label="Employment Type">
               <Select>
-                <Select.Option value="full_time">Full-time</Select.Option>
-                <Select.Option value="internship">Internship</Select.Option>
-                <Select.Option value="contract">Contract</Select.Option>
-                <Select.Option value="part_time">Part-time</Select.Option>
-                <Select.Option value="freelance">Freelance</Select.Option>
+                {empTypes.map(t => (
+                  <Select.Option key={t.value} value={t.value}>{t.label}</Select.Option>
+                ))}
               </Select>
             </Form.Item>
           </div>

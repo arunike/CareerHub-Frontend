@@ -1,3 +1,14 @@
+export interface HolidayTab {
+  id: string;
+  name: string;
+}
+
+export interface EmploymentType {
+  value: string;
+  label: string;
+  color: string;
+}
+
 export interface RecurrenceRule {
   frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval: number;
@@ -63,6 +74,7 @@ export interface Holiday {
   is_recurring: boolean;
   is_locked: boolean;
   is_ignored?: boolean;
+  tab?: string | null;
 }
 
 export interface Availability {
@@ -86,6 +98,8 @@ export interface UserSettings {
   ghosting_threshold_days: number;
   default_event_category?: number | null;
   ignored_federal_holidays?: string[];
+  employment_types?: EmploymentType[];
+  holiday_tabs?: HolidayTab[];
   created_at: string;
   updated_at: string;
 }

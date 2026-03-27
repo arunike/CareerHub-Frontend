@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   getUserSettings,
   updateUserSettings,
@@ -8,7 +8,7 @@ import {
   deleteCategory,
   exportAllData,
 } from '../../api';
-import type { EventCategory, UserSettings } from '../../types';
+import type { EventCategory, UserSettings, EmploymentType, HolidayTab } from '../../types';
 import {
   SettingOutlined,
   SaveOutlined,
@@ -31,6 +31,9 @@ const Settings: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const originalSettingsRef = useRef<string>('');
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -39,6 +42,134 @@ const Settings: React.FC = () => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
+
+  // Employment type editor state
+  const DEFAULT_EMP_TYPES: EmploymentType[] = [
+    { value: 'full_time', label: 'Full-time', color: 'blue' },
+    { value: 'part_time', label: 'Part-time', color: 'teal' },
+    { value: 'internship', label: 'Internship', color: 'amber' },
+    { value: 'contract', label: 'Contract', color: 'purple' },
+    { value: 'freelance', label: 'Freelance', color: 'orange' },
+  ];
+  const EMP_COLOR_OPTIONS = [
+    { value: 'blue',   label: 'Blue',   bg: '#dbeafe', text: '#1d4ed8' },
+    { value: 'teal',   label: 'Teal',   bg: '#ccfbf1', text: '#0f766e' },
+    { value: 'amber',  label: 'Amber',  bg: '#fef3c7', text: '#b45309' },
+    { value: 'purple', label: 'Purple', bg: '#ede9fe', text: '#7c3aed' },
+    { value: 'orange', label: 'Orange', bg: '#ffedd5', text: '#c2410c' },
+    { value: 'green',  label: 'Green',  bg: '#dcfce7', text: '#15803d' },
+    { value: 'red',    label: 'Red',    bg: '#fee2e2', text: '#b91c1c' },
+    { value: 'pink',   label: 'Pink',   bg: '#fce7f3', text: '#be185d' },
+    { value: 'indigo', label: 'Indigo', bg: '#e0e7ff', text: '#4338ca' },
+    { value: 'gray',   label: 'Gray',   bg: '#f3f4f6', text: '#374151' },
+  ];
+  const [isAddingEmpType, setIsAddingEmpType] = useState(false);
+  const [editingEmpType, setEditingEmpType] = useState<EmploymentType | null>(null);
+  const [newEmpLabel, setNewEmpLabel] = useState('');
+  const [newEmpColor, setNewEmpColor] = useState('blue');
+
+  const getEmpTypes = (): EmploymentType[] =>
+    (settings?.employment_types && settings.employment_types.length > 0)
+      ? settings.employment_types
+      : DEFAULT_EMP_TYPES;
+
+  const toSlug = (s: string) =>
+    s.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+  const handleSaveEmpType = () => {
+    if (!newEmpLabel.trim() || !settings) return;
+    const current = getEmpTypes();
+    if (editingEmpType) {
+      setSettings(prev => prev ? {
+        ...prev,
+        employment_types: current.map(t =>
+          t.value === editingEmpType.value ? { ...t, label: newEmpLabel, color: newEmpColor } : t
+        ),
+      } : null);
+    } else {
+      const value = toSlug(newEmpLabel);
+      if (current.some(t => t.value === value)) return;
+      setSettings(prev => prev ? {
+        ...prev,
+        employment_types: [...current, { value, label: newEmpLabel, color: newEmpColor }],
+      } : null);
+    }
+    setIsAddingEmpType(false);
+    setEditingEmpType(null);
+    setNewEmpLabel('');
+    setNewEmpColor('blue');
+  };
+
+  const handleEditEmpType = (t: EmploymentType) => {
+    setEditingEmpType(t);
+    setNewEmpLabel(t.label);
+    setNewEmpColor(t.color);
+    setIsAddingEmpType(true);
+  };
+
+  const handleDeleteEmpType = (value: string) => {
+    const current = getEmpTypes();
+    setSettings(prev => prev ? {
+      ...prev,
+      employment_types: current.filter(t => t.value !== value),
+    } : null);
+  };
+
+  const handleCancelEmpType = () => {
+    setIsAddingEmpType(false);
+    setEditingEmpType(null);
+    setNewEmpLabel('');
+    setNewEmpColor('blue');
+  };
+
+  const [isAddingHolidayTab, setIsAddingHolidayTab] = useState(false);
+  const [editingHolidayTab, setEditingHolidayTab] = useState<HolidayTab | null>(null);
+  const [newTabName, setNewTabName] = useState('');
+
+  const getHolidayTabs = (): HolidayTab[] => settings?.holiday_tabs || [];
+
+  const toTabId = (s: string) =>
+    s.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+  const handleSaveHolidayTab = () => {
+    if (!newTabName.trim() || !settings) return;
+    const current = getHolidayTabs();
+    if (editingHolidayTab) {
+      setSettings(prev => prev ? {
+        ...prev,
+        holiday_tabs: current.map(t => t.id === editingHolidayTab.id ? { ...t, name: newTabName } : t),
+      } : null);
+    } else {
+      const id = toTabId(newTabName);
+      if (current.some(t => t.id === id)) return;
+      setSettings(prev => prev ? {
+        ...prev,
+        holiday_tabs: [...current, { id, name: newTabName }],
+      } : null);
+    }
+    setIsAddingHolidayTab(false);
+    setEditingHolidayTab(null);
+    setNewTabName('');
+  };
+
+  const handleEditHolidayTab = (t: HolidayTab) => {
+    setEditingHolidayTab(t);
+    setNewTabName(t.name);
+    setIsAddingHolidayTab(true);
+  };
+
+  const handleDeleteHolidayTab = (id: string) => {
+    setSettings(prev => prev ? {
+      ...prev,
+      holiday_tabs: getHolidayTabs().filter(t => t.id !== id),
+    } : null);
+  };
+
+  const handleCancelHolidayTab = () => {
+    setIsAddingHolidayTab(false);
+    setEditingHolidayTab(null);
+    setNewTabName('');
+  };
 
   const resetMeridiemColumnScroll = (open: boolean) => {
     if (!open) return;
@@ -62,7 +193,19 @@ const Settings: React.FC = () => {
       if (!data.work_days || data.work_days.length === 0) {
         data.work_days = [0, 1, 2, 3, 4];
       }
+      
+      if (!data.employment_types || data.employment_types.length === 0) {
+        data.employment_types = [
+          { value: 'full_time', label: 'Full-time', color: 'blue' },
+          { value: 'part_time', label: 'Part-time', color: 'teal' },
+          { value: 'internship', label: 'Internship', color: 'amber' },
+          { value: 'contract', label: 'Contract', color: 'purple' },
+          { value: 'freelance', label: 'Freelance', color: 'orange' },
+        ];
+      }
+      originalSettingsRef.current = JSON.stringify(data);
       setSettings(data);
+      setIsDirty(false);
     } catch (error) {
       messageApi.error('Failed to fetch settings');
       console.error('Error fetching settings:', error);
@@ -86,24 +229,32 @@ const Settings: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Auto-hide success message
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
 
+  // Track dirty state whenever settings change
+  useEffect(() => {
+    if (!settings || !originalSettingsRef.current) return;
+    setIsDirty(JSON.stringify(settings) !== originalSettingsRef.current);
+  }, [settings]);
+
   const handleSave = async () => {
     if (!settings) return;
+    setSaving(true);
     try {
       await updateUserSettings(settings);
-      setSuccessMessage('Settings saved successfully!');
+      originalSettingsRef.current = JSON.stringify(settings);
+      setIsDirty(false);
+      setSuccessMessage('Settings saved!');
     } catch (error) {
       messageApi.error('Failed to save settings');
       console.error('Error saving settings:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -235,9 +386,23 @@ const Settings: React.FC = () => {
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <SettingOutlined className="text-2xl text-gray-700" />
-        <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <SettingOutlined className="text-2xl text-gray-700" />
+          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={!isDirty || saving}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition ${
+            isDirty
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          <SaveOutlined className="text-sm" />
+          {saving ? 'Saving…' : 'Save Settings'}
+        </button>
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
@@ -443,13 +608,6 @@ const Settings: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleSave}
-          className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
-        >
-          <SaveOutlined className="text-base" />
-          Save Settings
-        </button>
       </div>
 
       {/* Data Management */}
@@ -613,6 +771,208 @@ const Settings: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Employment Types Manager */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center border-b pb-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Employment Types</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Used in Experience — saved with Settings</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isAddingEmpType) {
+                handleCancelEmpType();
+              } else {
+                setIsAddingEmpType(true);
+              }
+            }}
+            className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+          >
+            {isAddingEmpType ? (
+              <CloseOutlined className="text-base" />
+            ) : (
+              <PlusOutlined className="text-base" />
+            )}
+            {isAddingEmpType ? 'Cancel' : 'Add Type'}
+          </button>
+        </div>
+
+        {isAddingEmpType && (
+          <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Label</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Co-op, Volunteer"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newEmpLabel}
+                  onChange={e => setNewEmpLabel(e.target.value)}
+                  autoFocus
+                />
+                {!editingEmpType && newEmpLabel && (
+                  <p className="text-xs text-gray-400 mt-1">Value: <code>{toSlug(newEmpLabel)}</code></p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                  {EMP_COLOR_OPTIONS.map(c => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setNewEmpColor(c.value)}
+                      title={c.label}
+                      style={{ backgroundColor: c.bg, color: c.text }}
+                      className={`w-7 h-7 rounded-full text-xs font-bold border-2 transition ${newEmpColor === c.value ? 'border-gray-700 scale-110' : 'border-transparent hover:border-gray-300'}`}
+                    >
+                      {c.label[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={handleSaveEmpType}
+                disabled={!newEmpLabel.trim()}
+                className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editingEmpType ? 'Update' : 'Add'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {getEmpTypes().map(t => {
+            const colorOpt = EMP_COLOR_OPTIONS.find(c => c.value === t.color);
+            return (
+              <div
+                key={t.value}
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{ backgroundColor: colorOpt?.bg, color: colorOpt?.text }}
+                    className="text-xs font-bold px-2.5 py-0.5 rounded-full border border-transparent"
+                  >
+                    {t.label}
+                  </span>
+                  <span className="text-xs text-gray-400 font-mono">{t.value}</span>
+                </div>
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    onClick={() => handleEditEmpType(t)}
+                    className="text-gray-400 hover:text-blue-600 p-1 mr-1"
+                    title="Edit"
+                  >
+                    <EditOutlined className="text-base" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteEmpType(t.value)}
+                    className="text-gray-400 hover:text-red-600 p-1"
+                    title="Delete"
+                  >
+                    <DeleteOutlined className="text-base" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Holiday Tabs Manager */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center border-b pb-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Holiday Manager Tabs</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Custom tabs in Holiday Manager — saved with Settings</p>
+          </div>
+          <button
+            onClick={() => {
+              if (isAddingHolidayTab) {
+                handleCancelHolidayTab();
+              } else {
+                setIsAddingHolidayTab(true);
+              }
+            }}
+            className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+          >
+            {isAddingHolidayTab ? (
+              <CloseOutlined className="text-base" />
+            ) : (
+              <PlusOutlined className="text-base" />
+            )}
+            {isAddingHolidayTab ? 'Cancel' : 'Add Tab'}
+          </button>
+        </div>
+
+        {isAddingHolidayTab && (
+          <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Tab Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Inauspicious Days, Lucky Days"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newTabName}
+                  onChange={e => setNewTabName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSaveHolidayTab()}
+                  autoFocus
+                />
+                {!editingHolidayTab && newTabName && (
+                  <p className="text-xs text-gray-400 mt-1">ID: <code>{toTabId(newTabName)}</code></p>
+                )}
+              </div>
+              <button
+                onClick={handleSaveHolidayTab}
+                disabled={!newTabName.trim()}
+                className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editingHolidayTab ? 'Update' : 'Add'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {getHolidayTabs().length === 0 ? (
+          <p className="text-gray-500 text-sm text-center py-4">No custom tabs defined. Add one to get started.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {getHolidayTabs().map(t => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-800">{t.name}</span>
+                  <span className="text-xs text-gray-400 font-mono">{t.id}</span>
+                </div>
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    onClick={() => handleEditHolidayTab(t)}
+                    className="text-gray-400 hover:text-blue-600 p-1 mr-1"
+                    title="Rename"
+                  >
+                    <EditOutlined className="text-base" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteHolidayTab(t.id)}
+                    className="text-gray-400 hover:text-red-600 p-1"
+                    title="Delete"
+                  >
+                    <DeleteOutlined className="text-base" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-3">Deleting a tab moves its holidays back to <em>Manage Custom</em>.</p>
+      </div>
+
     </div>
   );
 };

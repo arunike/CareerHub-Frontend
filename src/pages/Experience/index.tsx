@@ -3,8 +3,9 @@ import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Ca
 import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo } from '../../api/career';
+import { getUserSettings } from '../../api/availability';
 import RowActions from '../../components/RowActions';
-import type { Experience } from '../../types';
+import type { Experience, EmploymentType } from '../../types';
 import ExperienceModal from './ExperienceModal';
 import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -22,20 +23,49 @@ const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
   }
 };
 
-const EMPLOYMENT_LABELS: Record<string, { label: string; color: string }> = {
-  full_time:   { label: 'Full-time',   color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  internship:  { label: 'Internship',  color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  contract:    { label: 'Contract',    color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  part_time:   { label: 'Part-time',   color: 'bg-teal-50 text-teal-700 border-teal-200' },
-  freelance:   { label: 'Freelance',   color: 'bg-orange-50 text-orange-700 border-orange-200' },
+const DEFAULT_EMP_TYPES: EmploymentType[] = [
+  { value: 'full_time', label: 'Full-time', color: 'blue' },
+  { value: 'part_time', label: 'Part-time', color: 'teal' },
+  { value: 'internship', label: 'Internship', color: 'amber' },
+  { value: 'contract', label: 'Contract', color: 'purple' },
+  { value: 'freelance', label: 'Freelance', color: 'orange' },
+];
+
+const BADGE_CLASSES: Record<string, string> = {
+  blue:   'bg-blue-50 text-blue-700 border-blue-200',
+  teal:   'bg-teal-50 text-teal-700 border-teal-200',
+  amber:  'bg-amber-50 text-amber-700 border-amber-200',
+  purple: 'bg-purple-50 text-purple-700 border-purple-200',
+  orange: 'bg-orange-50 text-orange-700 border-orange-200',
+  green:  'bg-green-50 text-green-700 border-green-200',
+  red:    'bg-red-50 text-red-700 border-red-200',
+  pink:   'bg-pink-50 text-pink-700 border-pink-200',
+  indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  gray:   'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-const EmploymentBadge: React.FC<{ type?: string }> = ({ type }) => {
-  if (!type || type === 'full_time') return null;
-  const meta = EMPLOYMENT_LABELS[type];
+const DOT_CLASSES: Record<string, string> = {
+  blue:   'bg-blue-400',
+  teal:   'bg-teal-400',
+  amber:  'bg-amber-400',
+  purple: 'bg-purple-400',
+  orange: 'bg-orange-400',
+  green:  'bg-green-400',
+  red:    'bg-red-400',
+  pink:   'bg-pink-400',
+  indigo: 'bg-indigo-400',
+  gray:   'bg-gray-400',
+};
+
+const EmploymentBadge: React.FC<{ type?: string; empTypes: EmploymentType[] }> = ({ type, empTypes }) => {
+  if (!type) return null;
+  const meta = empTypes.find(t => t.value === type);
   if (!meta) return null;
+  // Show badge for all non-first types; first in list is considered "default" (full_time)
+  if (type === empTypes[0]?.value) return null;
+  const cls = BADGE_CLASSES[meta.color] ?? 'bg-gray-50 text-gray-700 border-gray-200';
   return (
-    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.color}`}>
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${cls}`}>
       {meta.label}
     </span>
   );
@@ -64,9 +94,14 @@ const ExperiencePage: React.FC = () => {
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
   const [jdModalOpen, setJdModalOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [empTypes, setEmpTypes] = useState<EmploymentType[]>(DEFAULT_EMP_TYPES);
 
   useEffect(() => {
     fetchExperiences();
+    getUserSettings().then(res => {
+      const types = res.data.employment_types;
+      if (types && types.length > 0) setEmpTypes(types);
+    }).catch(() => {/* use defaults */});
   }, []);
 
   const fetchExperiences = async () => {
@@ -303,12 +338,13 @@ const ExperiencePage: React.FC = () => {
 
   const fmtMonths = fmtDays;
 
-  const TYPE_DISPLAY: Record<string, { label: string; dot: string }> = {
-    full_time:  { label: 'Full-time',  dot: 'bg-blue-400' },
-    internship: { label: 'Internship', dot: 'bg-amber-400' },
-    contract:   { label: 'Contract',   dot: 'bg-purple-400' },
-    part_time:  { label: 'Part-time',  dot: 'bg-teal-400' },
-    freelance:  { label: 'Freelance',  dot: 'bg-orange-400' },
+  const getTypeDisplay = (value: string) => {
+    const t = empTypes.find(t => t.value === value);
+    return {
+      label: t?.label ?? value,
+      dot: DOT_CLASSES[t?.color ?? 'gray'] ?? 'bg-gray-400',
+      badge: BADGE_CLASSES[t?.color ?? 'gray'] ?? 'bg-gray-50 text-gray-700 border-gray-200',
+    };
   };
 
   const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): string => {
@@ -420,9 +456,9 @@ const ExperiencePage: React.FC = () => {
                       .sort((a, b) => b[1] - a[1])
                       .map(([type, months]) => (
                         <span key={type} className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${TYPE_DISPLAY[type]?.dot ?? 'bg-gray-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDisplay(type).dot}`} />
                           <span className="font-medium text-gray-700">{fmtMonths(months, true)}</span>
-                          <span>{TYPE_DISPLAY[type]?.label ?? type}</span>
+                          <span>{getTypeDisplay(type).label}</span>
                         </span>
                       ))}
                   </div>
@@ -442,9 +478,9 @@ const ExperiencePage: React.FC = () => {
                       .sort((a, b) => b[1] - a[1])
                       .map(([type, count]) => (
                         <span key={type} className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${TYPE_DISPLAY[type]?.dot ?? 'bg-gray-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDisplay(type).dot}`} />
                           <span className="font-medium text-gray-700">{count}</span>
-                          <span>{TYPE_DISPLAY[type]?.label ?? type}</span>
+                          <span>{getTypeDisplay(type).label}</span>
                         </span>
                       ))}
                   </div>
@@ -548,7 +584,7 @@ const ExperiencePage: React.FC = () => {
                           <Title level={3} className="!mb-0 text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight">
                             {exp.title}
                           </Title>
-                          <EmploymentBadge type={exp.employment_type} />
+                          <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
                         </div>
                         <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">{exp.company}</div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100">
@@ -651,7 +687,7 @@ const ExperiencePage: React.FC = () => {
                                       <RiseOutlined style={{ fontSize: 9 }} /> Promoted
                                     </span>
                                   )}
-                                  <EmploymentBadge type={exp.employment_type} />
+                                  <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-3 mt-1 text-sm text-gray-500">
                                   <span className="flex items-center gap-1.5">
@@ -719,6 +755,7 @@ const ExperiencePage: React.FC = () => {
         onSave={handleCreateOrUpdate}
         experience={editingExp}
         experiences={experiences}
+        employmentTypes={empTypes}
       />
 
       <JDMatcherModal 
