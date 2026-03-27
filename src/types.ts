@@ -1,12 +1,14 @@
 export interface HolidayTab {
   id: string;
   name: string;
+  locked?: boolean;
 }
 
 export interface EmploymentType {
   value: string;
   label: string;
   color: string;
+  locked?: boolean;
 }
 
 export interface RecurrenceRule {
@@ -32,6 +34,7 @@ export interface EventCategory {
   name: string;
   color: string;
   icon?: string;
+  is_locked?: boolean;
 }
 
 export interface Event {
