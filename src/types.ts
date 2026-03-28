@@ -117,6 +117,7 @@ export interface UserSettings {
   ignored_federal_holidays?: string[];
   employment_types?: EmploymentType[];
   holiday_tabs?: HolidayTab[];
+  hidden_nav_items?: string[];
   created_at: string;
   updated_at: string;
 }

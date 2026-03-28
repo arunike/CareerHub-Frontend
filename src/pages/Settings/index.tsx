@@ -36,6 +36,7 @@ const Settings: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [activeTab, setActiveTab] = useState<'general' | 'organize' | 'navigation' | 'data'>('general');
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
@@ -255,6 +256,7 @@ const Settings: React.FC = () => {
       originalSettingsRef.current = JSON.stringify(settings);
       setIsDirty(false);
       setSuccessMessage('Settings saved!');
+      window.dispatchEvent(new CustomEvent('settings-saved', { detail: settings }));
     } catch (error) {
       messageApi.error('Failed to save settings');
       console.error('Error saving settings:', error);
@@ -418,8 +420,30 @@ const Settings: React.FC = () => {
         }
       />
 
+      {/* Tab Bar */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+        {([
+          { key: 'general', label: 'General' },
+          { key: 'organize', label: 'Organize' },
+          { key: 'navigation', label: 'Navigation' },
+          { key: 'data', label: 'Data' },
+        ] as const).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === tab.key
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className={`space-y-6 ${isLocked ? 'pointer-events-none select-none opacity-60' : ''}`}>
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+      {activeTab === 'general' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Availability</h3>
 
         {/* Work Hours */}
@@ -622,10 +646,10 @@ const Settings: React.FC = () => {
           </p>
         </div>
 
-      </div>
+      </div>}
 
       {/* Data Management */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      {activeTab === 'data' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-4 mb-4">Data Management</h3>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="min-w-0">
@@ -681,11 +705,10 @@ const Settings: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Category Manager */}
-
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center border-b pb-4 mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Manage Categories</h3>
           <div className="flex items-center gap-2">
@@ -792,10 +815,10 @@ const Settings: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Employment Types Manager */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center border-b pb-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Employment Types</h3>
@@ -905,10 +928,10 @@ const Settings: React.FC = () => {
             );
           })}
         </div>
-      </div>
+      </div>}
 
       {/* Holiday Tabs Manager */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center border-b pb-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Holiday Manager Tabs</h3>
@@ -999,7 +1022,123 @@ const Settings: React.FC = () => {
           </div>
         )}
         <p className="text-xs text-gray-400 mt-3">Deleting a tab moves its holidays back to <em>Manage Custom</em>.</p>
-      </div>
+      </div>}
+
+      {/* Navigation Visibility */}
+      {activeTab === 'navigation' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="border-b pb-4 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Navigation Visibility</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Toggle which pages appear in the sidebar</p>
+        </div>
+        {(() => {
+          const groups = [
+            {
+              label: 'Schedule',
+              items: [
+                { key: '/', label: 'Availability' },
+                { key: '/events', label: 'Events' },
+                { key: '/holidays', label: 'Holidays' },
+              ],
+            },
+            {
+              label: 'Career & Growth',
+              items: [
+                { key: '/applications', label: 'Applications' },
+                { key: '/offers', label: 'Offers' },
+                { key: '/documents', label: 'Documents' },
+                { key: '/tasks', label: 'Action Items' },
+                { key: '/experience', label: 'Experience' },
+                {
+                  key: 'intelligence',
+                  label: 'Intelligence',
+                  children: [
+                    { key: '/jd-reports', label: 'JD Reports' },
+                    { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
+                    { key: '/ai-tools?tab=negotiation-results', label: 'Negotiation Results' },
+                  ],
+                },
+              ],
+            },
+            {
+              label: 'Insights',
+              items: [{ key: '/analytics', label: 'Analytics' }],
+            },
+          ];
+
+          const hiddenKeys = settings?.hidden_nav_items || [];
+          const toggleKey = (key: string) => {
+            setSettings(prev => {
+              if (!prev) return prev;
+              const current = prev.hidden_nav_items || [];
+              return {
+                ...prev,
+                hidden_nav_items: current.includes(key)
+                  ? current.filter(k => k !== key)
+                  : [...current, key],
+              };
+            });
+          };
+
+          const Toggle = ({ itemKey }: { itemKey: string }) => {
+            const visible = !hiddenKeys.includes(itemKey);
+            return (
+              <button
+                onClick={() => toggleKey(itemKey)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                  visible ? 'bg-indigo-500' : 'bg-gray-200'
+                }`}
+                role="switch"
+                aria-checked={visible}
+              >
+                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
+                  visible ? 'translate-x-4' : 'translate-x-0'
+                }`} />
+              </button>
+            );
+          };
+
+          return (
+            <div className="space-y-6">
+              {groups.map(group => (
+                <div key={group.label}>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{group.label}</p>
+                  <div className="rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                    {group.items.map(item => {
+                      const isParent = 'children' in item && item.children;
+                      const hidden = hiddenKeys.includes(item.key);
+                      return (
+                        <React.Fragment key={item.key}>
+                          <div className={`flex items-center justify-between px-4 py-3 transition-colors ${hidden ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60'}`}>
+                            <span className={`text-sm font-medium ${hidden ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                              {item.label}
+                            </span>
+                            {!isParent && <Toggle itemKey={item.key} />}
+                            {isParent && <span className="text-[10px] text-gray-300 font-medium uppercase tracking-wide">group</span>}
+                          </div>
+                          {isParent && item.children?.map(child => {
+                            const childHidden = hiddenKeys.includes(child.key);
+                            return (
+                              <div key={child.key} className={`flex items-center justify-between pl-8 pr-4 py-2.5 transition-colors ${childHidden ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60'}`}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-200 text-xs">╰</span>
+                                  <span className={`text-sm ${childHidden ? 'text-gray-400 line-through' : 'text-gray-600'}`}>{child.label}</span>
+                                </div>
+                                <Toggle itemKey={child.key} />
+                              </div>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-gray-400">Settings and the current page are always visible.</p>
+            </div>
+          );
+        })()}
+      </div>}
+
       </div>
     </div>
   );
