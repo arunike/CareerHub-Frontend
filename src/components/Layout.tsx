@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
+import { getUserSettings } from '../api/availability';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -25,8 +26,24 @@ const { useBreakpoint } = Grid;
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const screens = useBreakpoint();
   const [collapsed, setCollapsed] = useState(true);
+  const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    getUserSettings().then(res => {
+      setHiddenNavItems(res.data.hidden_nav_items || []);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setHiddenNavItems(detail?.hidden_nav_items || []);
+    };
+    window.addEventListener('settings-saved', handler);
+    return () => window.removeEventListener('settings-saved', handler);
+  }, []);
 
   // Close sidebar on route change for mobile
   useEffect(() => {
@@ -116,6 +133,24 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     },
   ];
 
+  const isVisible = (key: string) =>
+    key === '/settings' || location.pathname === key || !hiddenNavItems.includes(key);
+
+  const filterChildren = (items: typeof menuItems[0]['children']) =>
+    items?.filter(item => !('children' in item) || isVisible(item.key)
+      ? isVisible(item.key)
+      : false
+    ).map(item =>
+      'children' in item && item.children
+        ? { ...item, children: item.children.filter(c => isVisible(c.key)) }
+        : item
+    );
+
+  const visibleMenuItems = menuItems.map(group => ({
+    ...group,
+    children: filterChildren(group.children),
+  })).filter(group => (group.children?.length ?? 0) > 0);
+
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key.startsWith('/')) {
       navigate(key);
@@ -164,7 +199,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             mode="inline"
             selectedKeys={[selectedKey]}
             defaultOpenKeys={isIntelligence ? ['intelligence'] : []}
-            items={menuItems}
+            items={visibleMenuItems}
             onClick={handleMenuClick}
             style={{ borderRight: 0 }}
             className="border-none bg-transparent"
