@@ -29,6 +29,8 @@ import OfferDetailsTable from './OfferDetailsTable';
 import AddCurrentJobModal from './AddCurrentJobModal';
 import EditOfferModal from './EditOfferModal';
 import NegotiationAdvisorModal from './NegotiationAdvisorModal';
+import RaiseHistoryModal from './RaiseHistoryModal';
+import type { RaiseEntry } from '../../types';
 import {
   type ApplicationLike as Application,
   type BenefitItem,
@@ -69,6 +71,7 @@ const OfferComparison = () => {
   const [newJobName, setNewJobName] = useState('Current Employer');
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
+  const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
   const [adjustedByOfferId, setAdjustedByOfferId] = useState<Record<number, AdjustedOfferMetrics>>({});
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'offersSelectedYear',
@@ -247,6 +250,15 @@ const OfferComparison = () => {
       messageApi.error('Failed to update status');
       console.error(error);
     }
+  };
+
+  const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
+    if (!raiseHistoryOffer?.id) return;
+    await updateOffer(raiseHistoryOffer.id, { ...raiseHistoryOffer, raise_history: entries });
+    setOffers((prev) =>
+      prev.map((o) => (o.id === raiseHistoryOffer.id ? { ...o, raise_history: entries } : o))
+    );
+    setRaiseHistoryOffer((prev) => (prev ? { ...prev, raise_history: entries } : prev));
   };
 
   const handleAddCurrentJob = async (e: React.FormEvent) => {
@@ -435,6 +447,7 @@ const OfferComparison = () => {
         onEditClick={handleEditClick}
         onToggleCurrent={toggleCurrent}
         onNegotiateClick={setNegotiatingOffer}
+        onRaiseHistoryClick={setRaiseHistoryOffer}
       />
 
       <AddCurrentJobModal
@@ -463,6 +476,17 @@ const OfferComparison = () => {
         }}
         onSave={handleSaveEdit}
       />
+
+      {raiseHistoryOffer && (
+        <RaiseHistoryModal
+          open={!!raiseHistoryOffer}
+          onClose={() => setRaiseHistoryOffer(null)}
+          offer={raiseHistoryOffer}
+          companyName={applicationsById[raiseHistoryOffer.application]?.company_name ?? 'Current Job'}
+          roleTitle={applicationsById[raiseHistoryOffer.application]?.role_title ?? ''}
+          onSave={handleSaveRaiseHistory}
+        />
+      )}
 
       {negotiatingOffer && (
         <NegotiationAdvisorModal

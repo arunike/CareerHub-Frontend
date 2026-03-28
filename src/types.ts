@@ -1,3 +1,17 @@
+export interface RaiseEntry {
+  id: string;
+  date: string;
+  type: 'merit' | 'cola' | 'market' | 'retention' | 'other';
+  label?: string;
+  base_before: number;
+  base_after: number;
+  bonus_before: number;
+  bonus_after: number;
+  equity_before: number;
+  equity_after: number;
+  notes?: string;
+}
+
 export interface HolidayTab {
   id: string;
   name: string;
@@ -227,6 +241,11 @@ export interface Experience {
   employment_type?: 'full_time' | 'part_time' | 'internship' | 'contract' | 'freelance';
   is_promotion?: boolean;
   is_locked?: boolean;
+  offer?: number | null;
+  hourly_rate?: number | null;
+  base_salary?: number | null;
+  bonus?: number | null;
+  equity?: number | null;
   created_at?: string;
   updated_at?: string;
 }
