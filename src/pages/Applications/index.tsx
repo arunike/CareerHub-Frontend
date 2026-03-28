@@ -41,7 +41,8 @@ import {
   getDocuments,
   patchDocument,
 } from '../../api';
-import type { Document } from '../../types';
+import { getUserSettings } from '../../api/availability';
+import type { Document, EmploymentType } from '../../types';
 import type { CareerApplication } from '../../types/application';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
@@ -62,6 +63,13 @@ const Applications = () => {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
+  const [empTypes, setEmpTypes] = useState<EmploymentType[]>([
+    { value: 'full_time', label: 'Full-time', color: 'blue' },
+    { value: 'part_time', label: 'Part-time', color: 'teal' },
+    { value: 'internship', label: 'Internship', color: 'amber' },
+    { value: 'contract', label: 'Contract', color: 'purple' },
+    { value: 'freelance', label: 'Freelance', color: 'orange' },
+  ]);
 
   // View State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -75,6 +83,7 @@ const Applications = () => {
   // Filter State
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [empTypeFilter, setEmpTypeFilter] = useState('ALL');
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'applicationsSelectedYear',
     getCurrentYear(),
@@ -100,6 +109,10 @@ const Applications = () => {
 
   useEffect(() => {
     fetchData();
+    getUserSettings().then(res => {
+      const types = res.data.employment_types;
+      if (types && types.length > 0) setEmpTypes(types);
+    }).catch(() => {});
   }, []);
 
   const handleExportWrapper = async (format: string) => {
@@ -232,6 +245,7 @@ const Applications = () => {
     form.resetFields();
     form.setFieldsValue({
       status: 'APPLIED',
+      employment_type: 'full_time',
       date_applied: dayjs(),
       rto_policy: 'UNKNOWN',
       current_round: 0,
@@ -246,6 +260,7 @@ const Applications = () => {
       company: app.company_details?.name,
       role_title: app.role_title,
       status: app.status,
+      employment_type: app.employment_type || 'full_time',
       site_link: app.job_link,
       salary_range: app.salary_range,
       location: app.location,
@@ -279,13 +294,13 @@ const Applications = () => {
     },
   };
 
-  // Filtered Data - Apply year filter first
   const filteredData = filterByYear(applications, selectedYear, 'date_applied').filter((app) => {
     const matchesSearch =
       (app.company_details?.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
       (app.role_title || '').toLowerCase().includes(searchText.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesEmpType = empTypeFilter === 'ALL' || app.employment_type === empTypeFilter;
+    return matchesSearch && matchesStatus && matchesEmpType;
   });
 
   // Get available years and handle year change
@@ -317,6 +332,31 @@ const Applications = () => {
     );
   };
 
+  const EMP_TYPE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+    blue:   { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
+    teal:   { bg: '#f0fdfa', color: '#14b8a6', border: '#99f6e4' },
+    amber:  { bg: '#fffbeb', color: '#f59e0b', border: '#fde68a' },
+    purple: { bg: '#f5f3ff', color: '#8b5cf6', border: '#ddd6fe' },
+    orange: { bg: '#fff7ed', color: '#f97316', border: '#fed7aa' },
+    green:  { bg: '#f0fdf4', color: '#22c55e', border: '#bbf7d0' },
+    gray:   { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb' },
+  };
+
+  const EmploymentTypeBadge = ({ type }: { type?: string | null }) => {
+    if (!type || type === 'full_time') return null;
+    const meta = empTypes.find(t => t.value === type);
+    if (!meta) return null;
+    const c = EMP_TYPE_COLORS[meta.color] ?? EMP_TYPE_COLORS.gray;
+    return (
+      <span
+        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+        style={{ color: c.color, background: c.bg, borderColor: c.border }}
+      >
+        {meta.label}
+      </span>
+    );
+  };
+
   const columns = [
     {
       title: 'Company',
@@ -337,8 +377,11 @@ const Applications = () => {
       dataIndex: 'role_title',
       key: 'role',
       render: (text: string, record: CareerApplication) => (
-        <Space direction="vertical" size={0}>
-          <Text>{text}</Text>
+        <Space direction="vertical" size={2}>
+          <Space size={6} align="center">
+            <Text>{text}</Text>
+            <EmploymentTypeBadge type={record.employment_type} />
+          </Space>
           {record.job_link && (
             <Link href={record.job_link} target="_blank" style={{ fontSize: 12 }}>
               <GlobalOutlined /> Link
@@ -461,7 +504,19 @@ const Applications = () => {
           <Option value="ACCEPTED">Accepted</Option>
           <Option value="GHOSTED">Ghosted</Option>
         </Select>
-        {(searchText || statusFilter !== 'ALL') && (
+        <Select
+          size="large"
+          value={empTypeFilter}
+          onChange={setEmpTypeFilter}
+          style={{ width: 180 }}
+          suffixIcon={<FilterOutlined />}
+        >
+          <Option value="ALL">All Types</Option>
+          {empTypes.map(t => (
+            <Option key={t.value} value={t.value}>{t.label}</Option>
+          ))}
+        </Select>
+        {(searchText || statusFilter !== 'ALL' || empTypeFilter !== 'ALL') && (
           <Text type="secondary" className="self-center text-sm">
             {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
           </Text>
@@ -514,6 +569,15 @@ const Applications = () => {
                   <Option value="OFFER">Offer</Option>
                   <Option value="REJECTED">Rejected</Option>
                   <Option value="ACCEPTED">Accepted</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="employment_type" label="Employment Type">
+                <Select>
+                  {empTypes.map(t => (
+                    <Option key={t.value} value={t.value}>{t.label}</Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
