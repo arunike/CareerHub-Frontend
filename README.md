@@ -26,7 +26,6 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
 - 📥 **Import/Export**: Bulk upload via CSV/XLSX; export data in CSV, JSON, or XLSX formats
-- 🎨 **Consistent UI**: Shared components (`PageActionToolbar`, `BulkActionHeader`, `RowActions`, `ExportButton`) used across all pages
 
 ## ✨ Features
 
@@ -81,12 +80,14 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - Skills auto-extracted by backend NLP on save
 - Inline skill tag editing
 - JD Matcher modal accessible from this page
+- **Employment type badges** — dynamically driven by user-configured types from Settings (10 color options); first type (Full-time) hidden by default
+- **Exact duration display** — all date ranges and tenure stats show `(N days)` alongside human-readable duration
 
 ### 📅 Availability & Events
 
 - **Availability** (`/`): Weekly calendar with availability text generation, federal holiday integration, event badges, date navigation, public booking card
 - **Events** (`/events`): Create/edit/delete interview events; link to applications; timezone display; event type tags
-- **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays
+- **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
 - **⚡ Real-Time Conflict Alerts**: `NotificationBell` connects to `ws://localhost:8000/ws/conflicts/` — alerts arrive in milliseconds via Django Channels + Redis, no polling
 
 ### 📊 Analytics (`/analytics`)
@@ -104,9 +105,11 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### ⚙️ Settings (`/settings`)
 
-- Ghosting threshold configuration
-- Timezone and work hours
-- Data export (ZIP)
+- **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
+- **Data Management**: export all data as ZIP (JSON, CSV, or Excel)
+- **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
+- **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
+- **Holiday Manager Tabs**: define custom tabs (name → auto-generated ID) that appear as tabs in the Holiday Manager; per-item lock; section-level lock; saved with Settings
 
 ## 🛠 Tech Stack
 
@@ -117,7 +120,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **React Router DOM** — Client-side routing
 
 ### UI & Styling
-- **Ant Design** — Component library (Table, Modal, Form, Button, Select, etc.)
+- **Ant Design** — Component library (Table, Modal, Form, Button, Select, Tabs, Tooltip, etc.)
 - **Tailwind CSS** — Utility-first CSS
 - **clsx** — Conditional className management
 - **Lucide React** — Icon library
@@ -183,8 +186,11 @@ frontend/
 │   │   ├── PageActionToolbar.tsx    # Page header with title, year filter, export, import, primary action
 │   │   ├── BulkActionHeader.tsx     # Selection count + bulk actions bar
 │   │   ├── RowActions.tsx           # Per-row lock / view / edit / delete buttons
+│   │   ├── LockableListItem.tsx     # Per-item row with lock / edit / delete (used in Settings)
 │   │   ├── ExportButton.tsx         # CSV / XLSX / JSON dropdown export
 │   │   ├── NotificationBell.tsx     # Real-time WebSocket conflict alerts
+│   │   ├── CategoryBadge.tsx        # Event category color + icon badge
+│   │   ├── IconPicker.tsx           # Icon selector for event categories
 │   │   ├── AvailabilityAnalytics.tsx
 │   │   ├── JobHuntAnalytics.tsx
 │   │   ├── CustomWidgetCard.tsx     # Metric / chart widget renderer
@@ -204,7 +210,7 @@ frontend/
 │   │   │   ├── EditOfferModal.tsx
 │   │   │   └── ...
 │   │   ├── Experience/
-│   │   │   ├── index.tsx            # Experience management
+│   │   │   ├── index.tsx            # Experience management with dynamic employment types
 │   │   │   └── JDMatcherModal.tsx   # AI JD evaluation modal
 │   │   ├── JDReportsList/
 │   │   │   └── index.tsx            # Saved JD match reports list
@@ -218,17 +224,17 @@ frontend/
 │   │   │   └── index.tsx            # Negotiation advisory detail page (standalone)
 │   │   ├── Availability/            # Availability calendar
 │   │   ├── Events/                  # Interview event management
-│   │   ├── Holidays/                # Holiday management
+│   │   ├── Holidays/                # Holiday management with custom tabs
 │   │   ├── Documents/               # Document vault + versioning
 │   │   ├── Tasks/                   # Action items / Kanban board
 │   │   ├── Analytics/               # Custom widget dashboard
-│   │   ├── Settings/                # User preferences
+│   │   ├── Settings/                # User preferences with layered locking
 │   │   └── PublicBooking/           # Public booking page (/book/:uuid)
 │   │
 │   ├── api/
 │   │   ├── client.ts                # Axios instance
 │   │   ├── career.ts                # Career, offers, experience, AI endpoints
-│   │   ├── availability.ts          # Events, holidays, booking endpoints
+│   │   ├── availability.ts          # Events, holidays, settings, booking endpoints
 │   │   └── index.ts                 # Re-exports
 │   │
 │   ├── utils/
@@ -243,7 +249,7 @@ frontend/
 │   │   ├── useCustomWidgets.ts
 │   │   └── ...
 │   │
-│   ├── types/                       # Shared TypeScript types
+│   ├── types/                       # Shared TypeScript types (EventCategory, Holiday, UserSettings, EmploymentType, HolidayTab, …)
 │   ├── App.tsx                      # Router + route definitions
 │   └── main.tsx                     # Entry point
 │
@@ -259,17 +265,17 @@ frontend/
 |---|---|---|
 | `/` | Availability | Weekly calendar + availability text generator |
 | `/events` | Events | Interview event management |
-| `/holidays` | Holidays | Federal + custom holiday management |
+| `/holidays` | Holidays | Federal + custom holiday management with custom tabs |
 | `/applications` | Applications | Application tracker with AI cover letter |
 | `/offers` | Offer Comparison | Offer analysis with AI negotiation advisor |
 | `/documents` | Documents | Document vault with versioning |
 | `/tasks` | Action Items | Kanban task board |
-| `/experience` | Experience | Work history + AI JD matcher |
+| `/experience` | Experience | Work history + AI JD matcher + employment type badges |
 | `/jd-reports` | JD Reports | Saved AI JD match report history |
 | `/ai-tools?tab=cover-letters` | Cover Letters | Saved AI cover letter history |
 | `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history |
 | `/analytics` | Analytics | Custom widget dashboard |
-| `/settings` | Settings | User preferences |
+| `/settings` | Settings | User preferences with layered locking |
 | `/book/:uuid` | Public Booking | Public-facing booking page (no auth) |
 | `/jd-report/:id` | JD Report Detail | Full JD match report with PDF export |
 | `/negotiation-result/:id` | Negotiation Detail | Full negotiation advisory report |
