@@ -47,6 +47,7 @@ export interface SimulatedOffer {
 export interface OfferLike {
   id?: number;
   application: number;
+  application_details?: { company: string; role_title: string };
   base_salary: number;
   bonus: number;
   equity: number;

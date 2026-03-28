@@ -1,13 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select, Upload, Avatar, AutoComplete } from 'antd';
-import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined } from '@ant-design/icons';
+import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select, Upload, Avatar, AutoComplete, Tooltip } from 'antd';
+import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined, LinkOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Experience, EmploymentType } from '../../types';
+import CompensationFields, { type CompValue } from '../../components/CompensationFields';
 
 const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   try { return new URL(url).pathname; } catch { return url; }
 };
+
+interface OfferOption {
+  value: number;
+  label: string;
+  base_salary?: number;
+  bonus?: number;
+  equity?: number;
+}
 
 interface ExperienceModalProps {
   open: boolean;
@@ -16,6 +25,7 @@ interface ExperienceModalProps {
   experience?: Experience | null;
   experiences?: Experience[];
   employmentTypes?: EmploymentType[];
+  offers?: OfferOption[];
 }
 
 const { TextArea } = Input;
@@ -44,13 +54,14 @@ const DEFAULT_EMP_TYPES: EmploymentType[] = [
   { value: 'freelance', label: 'Freelance', color: 'orange' },
 ];
 
-const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [], employmentTypes }) => {
+const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [], employmentTypes, offers = [] }) => {
   const empTypes = (employmentTypes && employmentTypes.length > 0) ? employmentTypes : DEFAULT_EMP_TYPES;
   const [form] = Form.useForm();
   const [importForm] = Form.useForm();
   const [activeTab, setActiveTab] = useState('manual');
   const [saving, setSaving] = useState(false);
   const [isCurrent, setIsCurrent] = useState(false);
+  const [employmentType, setEmploymentType] = useState<string>('full_time');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [removeLogo, setRemoveLogo] = useState(false);
@@ -62,6 +73,8 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
         setActiveTab('manual');
         setIsCurrent(!!experience.is_current);
         setCompanyName(experience.company || '');
+        const empType = experience.employment_type || 'full_time';
+        setEmploymentType(empType);
         form.setFieldsValue({
           title: experience.title,
           company: experience.company,
@@ -71,22 +84,43 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             experience.end_date ? dayjs(experience.end_date) : undefined
           ] : undefined,
           is_current: experience.is_current,
-          employment_type: experience.employment_type || 'full_time',
+          employment_type: empType,
           description: experience.description,
           skills: experience.skills || [],
           is_promotion: experience.is_promotion || false,
+          offer: experience.offer ?? null,
+          hourly_rate: experience.hourly_rate ?? null,
+          comp: {
+            base_salary: experience.base_salary ?? null,
+            bonus: experience.bonus ?? null,
+            equity: experience.equity ?? null,
+          } as CompValue,
         });
+        
+        if (experience.offer) {
+          const linked = offers.find(o => o.value === experience.offer);
+          if (linked) {
+            form.setFieldsValue({
+              comp: {
+                base_salary: linked.base_salary ?? null,
+                bonus: linked.bonus ?? null,
+                equity: linked.equity ?? null,
+              } as CompValue,
+            });
+          }
+        }
       } else {
         form.resetFields();
         importForm.resetFields();
         setIsCurrent(false);
+        setEmploymentType('full_time');
         setCompanyName('');
       }
       setLogoFile(null);
       setLogoPreview(null);
       setRemoveLogo(false);
     }
-  }, [open, experience, form, importForm]);
+  }, [open, experience, form, importForm, offers]);
 
   // Revoke object URL on cleanup
   useEffect(() => {
@@ -178,6 +212,11 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             is_current: values.is_current || false,
             description: values.description,
             is_promotion: values.is_promotion || false,
+            offer: values.offer ?? null,
+            hourly_rate: values.hourly_rate ?? null,
+            base_salary: (values.comp as CompValue)?.base_salary ?? null,
+            bonus: (values.comp as CompValue)?.bonus ?? null,
+            equity: (values.comp as CompValue)?.equity ?? null,
           },
           logoFile,
           removeLogo,
@@ -311,6 +350,19 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           className="mt-4"
           onValuesChange={(changed) => {
             if (changed.company !== undefined) setCompanyName(changed.company || '');
+            if (changed.employment_type !== undefined) setEmploymentType(changed.employment_type);
+            if (changed.offer !== undefined) {
+              const linked = offers.find(o => o.value === changed.offer);
+              if (linked) {
+                form.setFieldsValue({
+                  comp: {
+                    base_salary: linked.base_salary ?? null,
+                    bonus: linked.bonus ?? null,
+                    equity: linked.equity ?? null,
+                  } as CompValue,
+                });
+              }
+            }
           }}
         >
           {/* Logo Upload */}
@@ -464,6 +516,41 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           >
             <Select mode="tags" style={{ width: '100%' }} placeholder="e.g. React, Docker, Python" />
           </Form.Item>
+
+          {/* Compensation */}
+          {employmentType === 'internship' ? (
+            <Form.Item name="hourly_rate" label="Hourly Rate">
+              <Input prefix="$" suffix="/hr" type="number" min={0} step={0.01} placeholder="e.g. 45.00" style={{ width: '50%' }} />
+            </Form.Item>
+          ) : (
+            <Form.Item name="comp" label="Compensation">
+              <CompensationFields />
+            </Form.Item>
+          )}
+
+          {/* Link Offer — for raise history tracking */}
+          {offers.length > 0 && (
+            <Form.Item
+              name="offer"
+              label={
+                <span className="flex items-center gap-1.5">
+                  <LinkOutlined className="text-blue-400" />
+                  Link Offer
+                  <Tooltip title="Link a compensation offer to enable raise history tracking for this role. Raise history is stored on the offer.">
+                    <span className="text-gray-400 cursor-help text-xs">(optional)</span>
+                  </Tooltip>
+                </span>
+              }
+            >
+              <Select
+                allowClear
+                placeholder="Select an offer to link raise tracking…"
+                options={offers}
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
+          )}
 
           {/* Promotion toggle — only shown when company matches an existing one */}
           {isExistingCompany && <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100 mt-1">

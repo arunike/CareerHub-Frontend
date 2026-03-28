@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo } from '../../api/career';
+import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo, getOffers, updateOffer } from '../../api/career';
 import { getUserSettings } from '../../api/availability';
 import RowActions from '../../components/RowActions';
 import type { Experience, EmploymentType } from '../../types';
 import ExperienceModal from './ExperienceModal';
 import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
+import type { OfferLike as Offer } from '../OfferComparison/calculations';
+import type { RaiseEntry } from '../../types';
 
 const { Title, Text } = Typography;
 
@@ -61,7 +64,7 @@ const EmploymentBadge: React.FC<{ type?: string; empTypes: EmploymentType[] }> =
   if (!type) return null;
   const meta = empTypes.find(t => t.value === type);
   if (!meta) return null;
-  // Show badge for all non-first types; first in list is considered "default" (full_time)
+  
   if (type === empTypes[0]?.value) return null;
   const cls = BADGE_CLASSES[meta.color] ?? 'bg-gray-50 text-gray-700 border-gray-200';
   return (
@@ -95,6 +98,8 @@ const ExperiencePage: React.FC = () => {
   const [jdModalOpen, setJdModalOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [empTypes, setEmpTypes] = useState<EmploymentType[]>(DEFAULT_EMP_TYPES);
+  const [allOffers, setAllOffers] = useState<Offer[]>([]);
+  const [raiseHistoryExp, setRaiseHistoryExp] = useState<Experience | null>(null);
 
   useEffect(() => {
     fetchExperiences();
@@ -102,6 +107,9 @@ const ExperiencePage: React.FC = () => {
       const types = res.data.employment_types;
       if (types && types.length > 0) setEmpTypes(types);
     }).catch(() => {/* use defaults */});
+    getOffers().then(res => {
+      setAllOffers(res.data as Offer[]);
+    }).catch(() => {/* no offer data */});
   }, []);
 
   const fetchExperiences = async () => {
@@ -143,6 +151,18 @@ const ExperiencePage: React.FC = () => {
           await uploadExperienceLogo(expId, fd);
         } else if (removeLogo) {
           await removeExperienceLogo(expId);
+        }
+      }
+
+      if (data.offer && (data.base_salary != null || data.bonus != null || data.equity != null)) {
+        const linkedOffer = allOffers.find(o => o.id === data.offer);
+        if (linkedOffer) {
+          const patch: Record<string, unknown> = { ...linkedOffer as Record<string, unknown> };
+          if (data.base_salary != null) patch.base_salary = data.base_salary;
+          if (data.bonus != null) patch.bonus = data.bonus;
+          if (data.equity != null) patch.equity = data.equity;
+          await updateOffer(linkedOffer.id!, patch);
+          setAllOffers(prev => prev.map(o => o.id === linkedOffer.id ? { ...o, ...patch } : o));
         }
       }
 
@@ -191,6 +211,21 @@ const ExperiencePage: React.FC = () => {
     } catch (err) {
       message.error('Failed to update lock status');
     }
+  };
+
+  const getLinkedOffer = (exp: Experience): Offer | undefined =>
+    exp.offer ? allOffers.find(o => o.id === exp.offer) : undefined;
+
+  const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
+    if (!raiseHistoryExp) return;
+    const offer = getLinkedOffer(raiseHistoryExp);
+    if (!offer?.id) return;
+    await updateOffer(offer.id, { ...offer as Record<string, unknown>, raise_history: entries });
+    setAllOffers(prev => prev.map(o => o.id === offer.id ? { ...o, raise_history: entries } : o));
+  };
+
+  const handleRaiseHistoryClick = (exp: Experience) => {
+    setRaiseHistoryExp(exp);
   };
 
   const openAddModal = () => {
@@ -313,7 +348,7 @@ const ExperiencePage: React.FC = () => {
   }, [experiences]);
 
   const companiesByType = useMemo(() => {
-    const seen = new Map<string, string>(); // company key → first-seen type
+    const seen = new Map<string, string>();
     for (const exp of [...experiences].sort((a, b) =>
       (b.start_date ?? '').localeCompare(a.start_date ?? '')
     )) {
@@ -368,6 +403,23 @@ const ExperiencePage: React.FC = () => {
     if (!start || !end) return '';
     return fmtDays(end.diff(start, 'day'), true);
   };
+
+  const offerSelectOptions = useMemo(() => {
+    return allOffers.map(o => {
+      const company = o.application_details?.company;
+      const role = o.application_details?.role_title;
+      const label = company && role
+        ? `${company} — ${role}${o.is_current ? ' (current)' : ''}`
+        : `Offer #${o.id} — $${Number(o.base_salary).toLocaleString()} base${o.is_current ? ' (current)' : ''}`;
+      return {
+        value: o.id as number,
+        label,
+        base_salary: Number(o.base_salary),
+        bonus: Number(o.bonus),
+        equity: Number(o.equity),
+      };
+    });
+  }, [allOffers]);
 
   const allSkills = experiences.flatMap(e => e.skills || []);
   const skillCounts = allSkills.reduce((acc, skill) => {
@@ -598,19 +650,49 @@ const ExperiencePage: React.FC = () => {
                               <span>{exp.location}</span>
                             </div>
                           )}
+                          {exp.employment_type === 'internship' && exp.hourly_rate != null && (
+                            <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                              <DollarOutlined />
+                              <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
+                            </div>
+                          )}
+                          {exp.employment_type !== 'internship' && exp.base_salary != null && (
+                            <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                              <DollarOutlined />
+                              <span>${Number(exp.base_salary).toLocaleString()} base</span>
+                              {exp.bonus != null && exp.bonus > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.bonus).toLocaleString()} bonus</span>}
+                              {exp.equity != null && exp.equity > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.equity).toLocaleString()} RSU/yr</span>}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0">
-                        <RowActions
-                          isLocked={exp.is_locked}
-                          onToggleLock={() => handleToggleLock(exp)}
-                          onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
-                          onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
-                          deleteTitle="Delete Experience"
-                          deleteDescription="Are you sure you want to remove this role?"
-                          disableEdit={exp.is_locked}
-                          disableDelete={exp.is_locked}
-                        />
+                      <div className="flex items-center gap-2 shrink-0">
+                        {getLinkedOffer(exp) && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            <Tooltip title="View / edit raise history for this role">
+                              <Button
+                                size="small"
+                                icon={<TrophyOutlined />}
+                                onClick={() => handleRaiseHistoryClick(exp)}
+                                className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700"
+                              >
+                                Raise History
+                              </Button>
+                            </Tooltip>
+                          </div>
+                        )}
+                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <RowActions
+                            isLocked={exp.is_locked}
+                            onToggleLock={() => handleToggleLock(exp)}
+                            onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                            onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
+                            deleteTitle="Delete Experience"
+                            deleteDescription="Are you sure you want to remove this role?"
+                            disableEdit={exp.is_locked}
+                            disableDelete={exp.is_locked}
+                          />
+                        </div>
                       </div>
                     </div>
                     {exp.description && <div className="mt-6 text-[15px]">{renderDescription(exp.description)}</div>}
@@ -701,19 +783,58 @@ const ExperiencePage: React.FC = () => {
                                       {exp.location}
                                     </span>
                                   )}
+                                  {exp.employment_type === 'internship' && exp.hourly_rate != null && (
+                                    <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                                      <DollarOutlined style={{ fontSize: 11 }} />
+                                      ${Number(exp.hourly_rate).toFixed(2)}/hr
+                                    </span>
+                                  )}
+                                  {exp.employment_type !== 'internship' && exp.base_salary != null && (
+                                    <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                                      <DollarOutlined style={{ fontSize: 11 }} />
+                                      ${Number(exp.base_salary).toLocaleString()} base
+                                      {exp.bonus != null && exp.bonus > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.bonus).toLocaleString()} bonus</span>}
+                                      {exp.equity != null && exp.equity > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.equity).toLocaleString()} RSU/yr</span>}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 ml-2">
-                                <RowActions
-                                  isLocked={exp.is_locked}
-                                  onToggleLock={() => handleToggleLock(exp)}
-                                  onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
-                                  onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
-                                  deleteTitle="Delete Role"
-                                  deleteDescription="Are you sure you want to remove this role?"
-                                  disableEdit={exp.is_locked}
-                                  disableDelete={exp.is_locked}
-                                />
+                              <div className="flex items-center gap-2 shrink-0 ml-2">
+                                {getLinkedOffer(exp) ? (
+                                  <Tooltip title="View / edit raise history for this role">
+                                    <Button
+                                      size="small"
+                                      icon={<TrophyOutlined />}
+                                      onClick={() => handleRaiseHistoryClick(exp)}
+                                      className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700"
+                                    >
+                                      Raise History
+                                    </Button>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip title="Open Edit to link an offer and track raises">
+                                    <Button
+                                      size="small"
+                                      icon={<LinkOutlined />}
+                                      onClick={() => openEditModal(exp)}
+                                      className="text-gray-400 border-gray-200 hover:!text-blue-600 hover:!border-blue-300"
+                                    >
+                                      Link Offer
+                                    </Button>
+                                  </Tooltip>
+                                )}
+                                <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                  <RowActions
+                                    isLocked={exp.is_locked}
+                                    onToggleLock={() => handleToggleLock(exp)}
+                                    onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                                    onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
+                                    deleteTitle="Delete Role"
+                                    deleteDescription="Are you sure you want to remove this role?"
+                                    disableEdit={exp.is_locked}
+                                    disableDelete={exp.is_locked}
+                                  />
+                                </div>
                               </div>
                             </div>
 
@@ -749,6 +870,17 @@ const ExperiencePage: React.FC = () => {
         </div>
       )}
 
+      {raiseHistoryExp && getLinkedOffer(raiseHistoryExp) && (
+        <RaiseHistoryModal
+          open={!!raiseHistoryExp}
+          onClose={() => setRaiseHistoryExp(null)}
+          offer={getLinkedOffer(raiseHistoryExp)!}
+          companyName={raiseHistoryExp.company}
+          roleTitle={raiseHistoryExp.title}
+          onSave={handleSaveRaiseHistory}
+        />
+      )}
+
       <ExperienceModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
@@ -756,6 +888,7 @@ const ExperiencePage: React.FC = () => {
         experience={editingExp}
         experiences={experiences}
         employmentTypes={empTypes}
+        offers={offerSelectOptions}
       />
 
       <JDMatcherModal 
