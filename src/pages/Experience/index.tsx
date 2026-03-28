@@ -656,14 +656,20 @@ const ExperiencePage: React.FC = () => {
                               <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
                             </div>
                           )}
-                          {exp.employment_type !== 'internship' && exp.base_salary != null && (
-                            <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                              <DollarOutlined />
-                              <span>${Number(exp.base_salary).toLocaleString()} base</span>
-                              {exp.bonus != null && exp.bonus > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.bonus).toLocaleString()} bonus</span>}
-                              {exp.equity != null && exp.equity > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.equity).toLocaleString()} RSU/yr</span>}
-                            </div>
-                          )}
+                          {exp.employment_type !== 'internship' && (() => {
+                            const linkedOffer = getLinkedOffer(exp);
+                            const base = linkedOffer ? Number(linkedOffer.base_salary) : (exp.base_salary != null ? Number(exp.base_salary) : null);
+                            const bonus = linkedOffer ? Number(linkedOffer.bonus) : (exp.bonus != null ? Number(exp.bonus) : null);
+                            const equity = linkedOffer ? Number(linkedOffer.equity) : (exp.equity != null ? Number(exp.equity) : null);
+                            return base != null ? (
+                              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                                <DollarOutlined />
+                                <span>${base.toLocaleString()} base</span>
+                                {bonus != null && bonus > 0 && <span className="text-gray-400 font-normal">+ ${bonus.toLocaleString()} bonus</span>}
+                                {equity != null && equity > 0 && <span className="text-gray-400 font-normal">+ ${equity.toLocaleString()} RSU/yr</span>}
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -789,14 +795,20 @@ const ExperiencePage: React.FC = () => {
                                       ${Number(exp.hourly_rate).toFixed(2)}/hr
                                     </span>
                                   )}
-                                  {exp.employment_type !== 'internship' && exp.base_salary != null && (
-                                    <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                      <DollarOutlined style={{ fontSize: 11 }} />
-                                      ${Number(exp.base_salary).toLocaleString()} base
-                                      {exp.bonus != null && exp.bonus > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.bonus).toLocaleString()} bonus</span>}
-                                      {exp.equity != null && exp.equity > 0 && <span className="text-gray-400 font-normal">+ ${Number(exp.equity).toLocaleString()} RSU/yr</span>}
-                                    </span>
-                                  )}
+                                  {exp.employment_type !== 'internship' && (() => {
+                                    const linkedOffer = getLinkedOffer(exp);
+                                    const base = linkedOffer ? Number(linkedOffer.base_salary) : (exp.base_salary != null ? Number(exp.base_salary) : null);
+                                    const bonus = linkedOffer ? Number(linkedOffer.bonus) : (exp.bonus != null ? Number(exp.bonus) : null);
+                                    const equity = linkedOffer ? Number(linkedOffer.equity) : (exp.equity != null ? Number(exp.equity) : null);
+                                    return base != null ? (
+                                      <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                                        <DollarOutlined style={{ fontSize: 11 }} />
+                                        ${base.toLocaleString()} base
+                                        {bonus != null && bonus > 0 && <span className="text-gray-400 font-normal">+ ${bonus.toLocaleString()} bonus</span>}
+                                        {equity != null && equity > 0 && <span className="text-gray-400 font-normal">+ ${equity.toLocaleString()} RSU/yr</span>}
+                                      </span>
+                                    ) : null;
+                                  })()}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0 ml-2">

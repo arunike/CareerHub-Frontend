@@ -96,7 +96,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             equity: experience.equity ?? null,
           } as CompValue,
         });
-        
+
         if (experience.offer) {
           const linked = offers.find(o => o.value === experience.offer);
           if (linked) {

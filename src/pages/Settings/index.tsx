@@ -799,7 +799,7 @@ const Settings: React.FC = () => {
         <div className="flex justify-between items-center border-b pb-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Employment Types</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Used in Experience — saved with Settings</p>
+            <p className="text-xs text-gray-400 mt-0.5">Used in Experience & Applications — saved with Settings</p>
           </div>
           <div className="flex items-center gap-2">
             <button
