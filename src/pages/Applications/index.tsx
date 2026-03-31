@@ -149,7 +149,7 @@ const Applications = () => {
     try {
       await updateApplication(app.id, { is_locked: !app.is_locked });
       messageApi.success(app.is_locked ? 'Application unlocked' : 'Application locked');
-      fetchData();
+      setApplications(prev => prev.map(a => a.id === app.id ? { ...a, is_locked: !app.is_locked } : a));
     } catch (error) {
       messageApi.error('Failed to toggle lock');
       console.error(error);

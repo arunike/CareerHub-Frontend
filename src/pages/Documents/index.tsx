@@ -110,7 +110,7 @@ const Documents: React.FC = () => {
     try {
       await patchDocument(record.id, { is_locked: !record.is_locked });
       message.success(record.is_locked ? 'Document unlocked' : 'Document locked');
-      fetchDocuments();
+      setDocuments(prev => prev.map(d => d.id === record.id ? { ...d, is_locked: !record.is_locked } : d));
     } catch (error: any) {
       message.error(error?.response?.data?.error || 'Failed to update lock status');
       console.error(error);
