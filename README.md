@@ -82,6 +82,8 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - JD Matcher modal accessible from this page
 - **Employment type badges** — dynamically driven by user-configured types from Settings (10 color options); first type (Full-time) hidden by default
 - **Exact duration display** — all date ranges and tenure stats show `(N days)` alongside human-readable duration
+- **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; stored in `media/experience_logos/`
+- **Raise History Modal** — accessible from experience entries linked to an offer; log raise events (date, type, before/after base/bonus/equity) with optional label and notes; persisted on the linked Offer record
 
 ### 📅 Availability & Events
 
@@ -102,6 +104,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - Kanban-style task board with TODO / IN_PROGRESS / DONE columns
 - Drag-and-drop reordering within and between columns
 - Priority levels (Low, Medium, High) and due dates
+- **Weekly Review panel** — sidebar card showing current week's application activity, interviews done, and next actions; auto-refreshes on tab focus and task updates
 
 ### ⚙️ Settings (`/settings`)
 
