@@ -207,7 +207,7 @@ const ExperiencePage: React.FC = () => {
     if (!exp.id) return;
     try {
       await updateExperience(exp.id, { is_locked: !exp.is_locked });
-      fetchExperiences();
+      setExperiences(prev => prev.map(e => e.id === exp.id ? { ...e, is_locked: !exp.is_locked } : e));
     } catch (err) {
       message.error('Failed to update lock status');
     }
