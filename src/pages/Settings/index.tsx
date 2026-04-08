@@ -200,6 +200,9 @@ const Settings: React.FC = () => {
       if (!data.work_days || data.work_days.length === 0) {
         data.work_days = [0, 1, 2, 3, 4];
       }
+      if (!data.work_time_ranges) {
+        data.work_time_ranges = [];
+      }
       
       if (!data.employment_types || data.employment_types.length === 0) {
         data.employment_types = [
@@ -447,60 +450,106 @@ const Settings: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Availability</h3>
 
         {/* Work Hours */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-            <TimePicker
-              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-              format="h:mm a"
-              value={
-                settings.work_start_time
-                  ? dayjs(settings.work_start_time, 'HH:mm:ss')
-                  : dayjs('09:00:00', 'HH:mm:ss')
-              }
-              onChange={(time) => {
-                if (time) {
-                  setSettings((prev) =>
-                    prev ? { ...prev, work_start_time: time.format('HH:mm:ss') } : null
-                  );
-                }
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">Available Time Ranges</label>
+            <button
+              type="button"
+              onClick={() => {
+                const ranges = settings.work_time_ranges || [];
+                setSettings((prev) =>
+                  prev ? { ...prev, work_time_ranges: [...ranges, { start: '09:00:00', end: '17:00:00' }] } : null
+                );
               }}
-              minuteStep={1}
-              use12Hours
-              inputReadOnly={false}
-              needConfirm={false}
-              allowClear={false}
-              popupClassName="event-timepicker-dropdown"
-              onOpenChange={resetMeridiemColumnScroll}
-            />
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              <PlusOutlined /> Add Range
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-            <TimePicker
-              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-              format="h:mm a"
-              value={
-                settings.work_end_time
-                  ? dayjs(settings.work_end_time, 'HH:mm:ss')
-                  : dayjs('17:00:00', 'HH:mm:ss')
-              }
-              onChange={(time) => {
-                if (time) {
-                  setSettings((prev) =>
-                    prev ? { ...prev, work_end_time: time.format('HH:mm:ss') } : null
-                  );
-                }
-              }}
-              minuteStep={1}
-              use12Hours
-              inputReadOnly={false}
-              needConfirm={false}
-              allowClear={false}
-              popupClassName="event-timepicker-dropdown"
-              onOpenChange={resetMeridiemColumnScroll}
-            />
-          </div>
+          {(settings.work_time_ranges?.length ?? 0) === 0 ? (
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Start</label>
+                <TimePicker
+                  className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+                  format="h:mm a"
+                  value={settings.work_start_time ? dayjs(settings.work_start_time, 'HH:mm:ss') : dayjs('09:00:00', 'HH:mm:ss')}
+                  onChange={(time) => {
+                    if (time) setSettings((prev) => prev ? { ...prev, work_start_time: time.format('HH:mm:ss') } : null);
+                  }}
+                  minuteStep={1} use12Hours inputReadOnly={false} needConfirm={false} allowClear={false}
+                  popupClassName="event-timepicker-dropdown" onOpenChange={resetMeridiemColumnScroll}
+                />
+              </div>
+              <span className="text-gray-400 mt-5">–</span>
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">End</label>
+                <TimePicker
+                  className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+                  format="h:mm a"
+                  value={settings.work_end_time ? dayjs(settings.work_end_time, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')}
+                  onChange={(time) => {
+                    if (time) setSettings((prev) => prev ? { ...prev, work_end_time: time.format('HH:mm:ss') } : null);
+                  }}
+                  minuteStep={1} use12Hours inputReadOnly={false} needConfirm={false} allowClear={false}
+                  popupClassName="event-timepicker-dropdown" onOpenChange={resetMeridiemColumnScroll}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {settings.work_time_ranges.map((range, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    {idx === 0 && <label className="block text-xs text-gray-500 mb-1">Start</label>}
+                    <TimePicker
+                      className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+                      format="h:mm a"
+                      value={range.start ? dayjs(range.start, 'HH:mm:ss') : dayjs('09:00:00', 'HH:mm:ss')}
+                      onChange={(time) => {
+                        if (time) {
+                          const updated = [...settings.work_time_ranges];
+                          updated[idx] = { ...updated[idx], start: time.format('HH:mm:ss') };
+                          setSettings((prev) => prev ? { ...prev, work_time_ranges: updated } : null);
+                        }
+                      }}
+                      minuteStep={1} use12Hours inputReadOnly={false} needConfirm={false} allowClear={false}
+                      popupClassName="event-timepicker-dropdown" onOpenChange={resetMeridiemColumnScroll}
+                    />
+                  </div>
+                  <span className={`text-gray-400 ${idx === 0 ? 'mt-5' : ''}`}>–</span>
+                  <div className="flex-1">
+                    {idx === 0 && <label className="block text-xs text-gray-500 mb-1">End</label>}
+                    <TimePicker
+                      className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+                      format="h:mm a"
+                      value={range.end ? dayjs(range.end, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')}
+                      onChange={(time) => {
+                        if (time) {
+                          const updated = [...settings.work_time_ranges];
+                          updated[idx] = { ...updated[idx], end: time.format('HH:mm:ss') };
+                          setSettings((prev) => prev ? { ...prev, work_time_ranges: updated } : null);
+                        }
+                      }}
+                      minuteStep={1} use12Hours inputReadOnly={false} needConfirm={false} allowClear={false}
+                      popupClassName="event-timepicker-dropdown" onOpenChange={resetMeridiemColumnScroll}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = settings.work_time_ranges.filter((_, i) => i !== idx);
+                      setSettings((prev) => prev ? { ...prev, work_time_ranges: updated } : null);
+                    }}
+                    className={`text-gray-400 hover:text-red-500 transition-colors ${idx === 0 ? 'mt-5' : ''}`}
+                  >
+                    <CloseOutlined />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Work Days */}
