@@ -979,9 +979,6 @@ const ExperiencePage: React.FC = () => {
         </div>
       ) : (
         <div className="relative pl-6 md:pl-8">
-          {/* Vertical Timeline Line */}
-          <div className="absolute top-10 bottom-0 left-12 w-0.5 bg-gradient-to-b from-blue-100 via-gray-100 to-transparent z-0 hidden md:block" />
-
           <div className="space-y-10 relative z-10">
             {filteredExperiences.length === 0 && selectedSkill && (
               <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
@@ -1411,8 +1408,16 @@ const ExperiencePage: React.FC = () => {
 
               return (
                 <div key={`group-${groupIdx}`} className="group flex flex-col md:flex-row gap-6 w-full">
-                  <div className="flex-shrink-0 relative z-10 hidden md:flex flex-col items-center">
-                    {groupAvatar}
+                  <div className="flex-shrink-0 relative z-10 hidden md:flex w-[52px] justify-center">
+                    {groupIdx < groupedExperiences.length - 1 && (
+                      <div
+                        className="absolute left-1/2 w-0.5 -translate-x-1/2 bg-gradient-to-b from-blue-100 via-gray-100 to-gray-200"
+                        style={{ top: 26, bottom: 'calc(-2.5rem - 26px)' }}
+                      />
+                    )}
+                    <div className="relative z-10">
+                      {groupAvatar}
+                    </div>
                   </div>
                   <div className={`flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border shadow-sm transition-all duration-300 relative overflow-hidden ${
                     primary.is_pinned
