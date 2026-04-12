@@ -367,6 +367,8 @@ const HourlyBreakdown = ({
   const hasAdvancedDefault = overtimeHours > 0 || totalEarningsOverride != null || overtimeRate != null || overtimeMultiplier !== 1.5;
   const [showOverrides, setShowOverrides] = useState(hasAdvancedDefault);
   const previousAutoHoursRef = useRef<number | null>(null);
+  const isAggregateDisplay = displayMode === 'aggregate';
+  const useLiveSnapshot = !isMultiPhase && !isAggregateDisplay;
 
   useEffect(() => {
     setDraftHourlyRate(toInputValue(hourlyRate));
@@ -423,24 +425,24 @@ const HourlyBreakdown = ({
     });
   }, [draftHourlyRate, draftHoursPerDay, draftOvertimeHours, draftOvertimeMultiplier, draftOvertimeRate, draftWorkingDaysPerWeek, draftTotalEarningsOverride, draftTotalHoursWorked, endDate, isCurrent, startDate]);
 
-  const displayCalculationMode = liveSnapshot?.calculationMode ?? calculationMode;
-  const displayHoursPerDay = isMultiPhase ? hoursPerDay : (liveSnapshot?.hoursPerDay ?? hoursPerDay);
-  const displayWorkingDaysPerWeek = isMultiPhase ? workingDaysPerWeek : (liveSnapshot?.workingDaysPerWeek ?? workingDaysPerWeek);
-  const displayEstimatedHours = isMultiPhase ? estimatedHours : (liveSnapshot?.estimatedHours ?? estimatedHours);
-  const displayWeekdaysWorked = isMultiPhase ? weekdaysWorked : (liveSnapshot?.weekdaysWorked ?? weekdaysWorked);
-  const displayAutoCalculatedHours = isMultiPhase ? autoCalculatedHours : (liveSnapshot?.autoCalculatedHours ?? autoCalculatedHours);
-  const displayDateRangeLabel = isMultiPhase ? dateRangeLabel : (liveSnapshot?.dateRangeLabel ?? dateRangeLabel);
-  const displayHourlyRate = isMultiPhase ? hourlyRate : (liveSnapshot?.hourlyRate ?? hourlyRate);
-  const displayRegularPay = isMultiPhase ? regularPay : (liveSnapshot?.regularPay ?? regularPay);
+  const displayCalculationMode = useLiveSnapshot ? (liveSnapshot?.calculationMode ?? calculationMode) : calculationMode;
+  const displayHoursPerDay = useLiveSnapshot ? (liveSnapshot?.hoursPerDay ?? hoursPerDay) : hoursPerDay;
+  const displayWorkingDaysPerWeek = useLiveSnapshot ? (liveSnapshot?.workingDaysPerWeek ?? workingDaysPerWeek) : workingDaysPerWeek;
+  const displayEstimatedHours = useLiveSnapshot ? (liveSnapshot?.estimatedHours ?? estimatedHours) : estimatedHours;
+  const displayWeekdaysWorked = useLiveSnapshot ? (liveSnapshot?.weekdaysWorked ?? weekdaysWorked) : weekdaysWorked;
+  const displayAutoCalculatedHours = useLiveSnapshot ? (liveSnapshot?.autoCalculatedHours ?? autoCalculatedHours) : autoCalculatedHours;
+  const displayDateRangeLabel = useLiveSnapshot ? (liveSnapshot?.dateRangeLabel ?? dateRangeLabel) : dateRangeLabel;
+  const displayHourlyRate = useLiveSnapshot ? (liveSnapshot?.hourlyRate ?? hourlyRate) : hourlyRate;
+  const displayRegularPay = useLiveSnapshot ? (liveSnapshot?.regularPay ?? regularPay) : regularPay;
 
   // Simplified and corrected live fields:
-  const displayOvertimeHours = isMultiPhase ? overtimeHours : (liveSnapshot?.overtimeHours ?? overtimeHours);
-  const displayOvertimeRate = isMultiPhase ? overtimeRate : (liveSnapshot?.overtimeRate ?? overtimeRate);
-  const displayOvertimeMultiplier = isMultiPhase ? overtimeMultiplier : (liveSnapshot?.overtimeMultiplier ?? overtimeMultiplier);
-  const displayEffectiveOvertimeRate = isMultiPhase ? effectiveOvertimeRate : (liveSnapshot?.effectiveOvertimeRate ?? effectiveOvertimeRate);
-  const displayOvertimePay = isMultiPhase ? overtimePay : (liveSnapshot?.overtimePay ?? overtimePay);
-  const displayTotalOverride = isMultiPhase ? totalEarningsOverride : (liveSnapshot?.totalEarningsOverride ?? totalEarningsOverride);
-  const displayTotal = isMultiPhase ? total : (liveSnapshot?.total ?? total);
+  const displayOvertimeHours = useLiveSnapshot ? (liveSnapshot?.overtimeHours ?? overtimeHours) : overtimeHours;
+  const displayOvertimeRate = useLiveSnapshot ? (liveSnapshot?.overtimeRate ?? overtimeRate) : overtimeRate;
+  const displayOvertimeMultiplier = useLiveSnapshot ? (liveSnapshot?.overtimeMultiplier ?? overtimeMultiplier) : overtimeMultiplier;
+  const displayEffectiveOvertimeRate = useLiveSnapshot ? (liveSnapshot?.effectiveOvertimeRate ?? effectiveOvertimeRate) : effectiveOvertimeRate;
+  const displayOvertimePay = useLiveSnapshot ? (liveSnapshot?.overtimePay ?? overtimePay) : overtimePay;
+  const displayTotalOverride = useLiveSnapshot ? (liveSnapshot?.totalEarningsOverride ?? totalEarningsOverride) : totalEarningsOverride;
+  const displayTotal = useLiveSnapshot ? (liveSnapshot?.total ?? total) : total;
   const hasValidDraft = [
     toNullableNumber(draftHourlyRate),
     toNullableNumber(draftHoursPerDay),
@@ -519,8 +521,6 @@ const HourlyBreakdown = ({
   const advancedOptionsCta = canEditHourlyInputs
     ? 'Edit Advanced Pay Options (Overtime & Totals)'
     : 'Show Advanced Pay Options';
-  const isAggregateDisplay = displayMode === 'aggregate';
-
   return (
     <div className="mt-2 space-y-4">
       <div className={isAggregateDisplay ? 'grid gap-5' : 'grid gap-5 md:grid-cols-[320px,1fr]'}>

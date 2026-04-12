@@ -223,6 +223,7 @@ export const getExperienceCompensationSnapshot = (
         const aggregatedEstimatedHours = phaseSnapshots.reduce((sum, s) => sum + s.estimatedHours, 0);
         const aggregatedOvertimeHours = phaseSnapshots.reduce((sum, s) => sum + s.overtimeHours, 0);
         const aggregatedOvertimePay = phaseSnapshots.reduce((sum, s) => sum + s.overtimePay, 0);
+        const aggregatedTotal = phaseSnapshots.reduce((sum, s) => sum + s.total, 0);
         const aggregatedManualTotalHours = phaseSnapshots.some(s => s.totalHoursWorked != null)
           ? phaseSnapshots.reduce((sum, s) => sum + (s.totalHoursWorked ?? 0), 0)
           : null;
@@ -243,13 +244,11 @@ export const getExperienceCompensationSnapshot = (
           effectiveOvertimeRate: effectiveAggregatedOvertimeRate,
           regularPay: aggregatedRegularPay,
           overtimePay: aggregatedOvertimePay,
-          totalEarningsOverride: exp.total_earnings_override ?? null,
+          totalEarningsOverride: null,
           autoCalculatedHours: phaseSnapshots.reduce((sum, s) => sum + s.autoCalculatedHours, 0),
           estimatedHours: aggregatedEstimatedHours,
           weekdaysWorked: phaseSnapshots.reduce((sum, s) => sum + s.weekdaysWorked, 0),
-          total: exp.total_earnings_override != null 
-            ? exp.total_earnings_override 
-            : phaseSnapshots.reduce((sum, s) => sum + s.total, 0),
+          total: aggregatedTotal,
           calculationMode: 'auto',
           dateRangeLabel: `Aggregated ${phaseSnapshots.length} phases`,
           isMultiPhase: true,

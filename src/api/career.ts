@@ -111,6 +111,10 @@ export const updateExperience = (id: number, data: Partial<Experience>) =>
   api.patch<Experience>(`/career/experiences/${id}/`, normalizeExperiencePayload(data));
 export const deleteExperience = (id: number) => api.delete(`/career/experiences/${id}/`);
 export const deleteAllExperiences = () => api.delete('/career/experiences/delete_all/');
+export const importExperiences = (formData: FormData) =>
+  api.post('/career/experiences/import/', formData, { headers: { 'Content-Type': undefined } });
+export const exportExperiences = (format: string = 'csv') =>
+  api.get('/career/experiences/export/', { params: { fmt: format }, responseType: 'blob' });
 export const uploadExperienceLogo = (id: number, formData: FormData) =>
   api.post<Experience>(`/career/experiences/${id}/upload-logo/`, formData, { headers: { 'Content-Type': undefined } });
 export const removeExperienceLogo = (id: number) =>
