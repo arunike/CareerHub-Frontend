@@ -1,3 +1,14 @@
+export interface TeamEntry {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date?: string | null;
+  is_current: boolean;
+  norms: string;
+  manager?: string;
+  is_locked?: boolean;
+}
+
 export interface RaiseEntry {
   id: string;
   date: string;
@@ -243,11 +254,13 @@ export interface Experience {
   employment_type?: 'full_time' | 'part_time' | 'internship' | 'contract' | 'freelance';
   is_promotion?: boolean;
   is_locked?: boolean;
+  is_pinned?: boolean;
   offer?: number | null;
   hourly_rate?: number | null;
   base_salary?: number | null;
   bonus?: number | null;
   equity?: number | null;
+  team_history?: TeamEntry[];
   created_at?: string;
   updated_at?: string;
 }
