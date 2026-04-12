@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select, Upload, Avatar, AutoComplete, Tooltip } from 'antd';
 import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined, LinkOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 import type { Experience, EmploymentType } from '../../types';
 import CompensationFields, { type CompValue } from '../../components/CompensationFields';
 
@@ -54,6 +54,12 @@ const DEFAULT_EMP_TYPES: EmploymentType[] = [
   { value: 'freelance', label: 'Freelance', color: 'orange' },
 ];
 
+const toNullableNumber = (value: unknown): number | null => {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [], employmentTypes, offers = [] }) => {
   const empTypes = (employmentTypes && employmentTypes.length > 0) ? employmentTypes : DEFAULT_EMP_TYPES;
   const [form] = Form.useForm();
@@ -66,6 +72,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [removeLogo, setRemoveLogo] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const roleContext = Form.useWatch('role_context', form) ?? 'none';
 
   useEffect(() => {
     if (open) {
@@ -88,8 +95,14 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           description: experience.description,
           skills: experience.skills || [],
           is_promotion: experience.is_promotion || false,
+          is_return_offer: experience.is_return_offer || false,
+          role_context: experience.is_promotion ? 'promotion' : experience.is_return_offer ? 'return_offer' : 'none',
           offer: experience.offer ?? null,
           hourly_rate: experience.hourly_rate ?? null,
+          hours_per_day: experience.hours_per_day ?? (empType === 'internship' ? 8 : null),
+          working_days_per_week: experience.working_days_per_week ?? (empType === 'internship' ? 5 : null),
+          total_hours_worked: experience.total_hours_worked ?? null,
+          total_earnings_override: experience.total_earnings_override ?? null,
           comp: {
             base_salary: experience.base_salary ?? null,
             bonus: experience.bonus ?? null,
@@ -115,6 +128,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
         setIsCurrent(false);
         setEmploymentType('full_time');
         setCompanyName('');
+        form.setFieldsValue({ role_context: 'none' });
       }
       setLogoFile(null);
       setLogoPreview(null);
@@ -152,7 +166,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     return companyOptions.some(opt => opt.value.toLowerCase() === companyName.toLowerCase());
   }, [companyName, companyOptions]);
 
-  const handleCompanySelect = async (_value: string, option: any) => {
+  const handleCompanySelect = async (_value: string, option: { logoUrl?: string | null }) => {
     const logoUrl: string | null = option.logoUrl ?? null;
     if (!logoUrl || logoFile) return; // don't overwrite a manually chosen logo
     try {
@@ -199,21 +213,32 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
         const end_date = !values.is_current && Array.isArray(datesVal) && datesVal[1]
           ? datesVal[1].format('YYYY-MM-DD')
           : null;
+        const selectedEmploymentType = values.employment_type || 'full_time';
+        const isInternship = selectedEmploymentType === 'internship';
+        const normalizedHourlyRate = toNullableNumber(values.hourly_rate);
 
         await onSave(
           {
             title: values.title,
             company: values.company,
             location: values.location,
-            employment_type: values.employment_type || 'full_time',
+            employment_type: selectedEmploymentType,
             start_date,
             end_date,
             skills: values.skills,
             is_current: values.is_current || false,
             description: values.description,
-            is_promotion: values.is_promotion || false,
+            is_promotion: values.role_context === 'promotion',
+            is_return_offer: values.role_context === 'return_offer',
             offer: values.offer ?? null,
-            hourly_rate: values.hourly_rate ?? null,
+            hourly_rate: isInternship ? normalizedHourlyRate : null,
+            hours_per_day: isInternship ? (experience?.hours_per_day ?? null) : null,
+            working_days_per_week: isInternship ? (experience?.working_days_per_week ?? null) : null,
+            total_hours_worked: isInternship ? (experience?.total_hours_worked ?? null) : null,
+            overtime_hours: isInternship ? (experience?.overtime_hours ?? null) : null,
+            overtime_rate: isInternship ? (experience?.overtime_rate ?? null) : null,
+            overtime_multiplier: isInternship ? (experience?.overtime_multiplier ?? null) : null,
+            total_earnings_override: isInternship ? (experience?.total_earnings_override ?? null) : null,
             base_salary: (values.comp as CompValue)?.base_salary ?? null,
             bonus: (values.comp as CompValue)?.bonus ?? null,
             equity: (values.comp as CompValue)?.equity ?? null,
@@ -282,19 +307,19 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
       i++;
     }
 
-    let dateValues: any = undefined;
+    let dateValues: [Dayjs, Dayjs?] | undefined;
     let isCurrentVal = false;
     if (parsedDates) {
       const parts = parsedDates.split(/-|–|to/i).map(s => s.trim());
       if (parts.length > 0) {
-        let start = dayjs(parts[0]);
+        const start = dayjs(parts[0]);
         if (start.isValid()) {
           if (parts.length > 1) {
             if (parts[1].toLowerCase().includes('present') || parts[1].toLowerCase().includes('current')) {
               isCurrentVal = true;
               dateValues = [start, undefined];
             } else {
-              let end = dayjs(parts[1]);
+              const end = dayjs(parts[1]);
               dateValues = end.isValid() ? [start, end] : [start, undefined];
             }
           } else {
@@ -350,7 +375,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           className="mt-4"
           onValuesChange={(changed) => {
             if (changed.company !== undefined) setCompanyName(changed.company || '');
-            if (changed.employment_type !== undefined) setEmploymentType(changed.employment_type);
+            if (changed.employment_type !== undefined) {
+              setEmploymentType(changed.employment_type);
+            }
             if (changed.offer !== undefined) {
               const linked = offers.find(o => o.value === changed.offer);
               if (linked) {
@@ -519,9 +546,19 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
 
           {/* Compensation */}
           {employmentType === 'internship' ? (
-            <Form.Item name="hourly_rate" label="Hourly Rate">
-              <Input prefix="$" suffix="/hr" type="number" min={0} step={0.01} placeholder="e.g. 45.00" style={{ width: '50%' }} />
-            </Form.Item>
+            <div className="space-y-3">
+              <Form.Item
+                name="hourly_rate"
+                label="Hourly Rate"
+                rules={[{ required: true, message: 'Please enter hourly rate for this internship' }]}
+              >
+                <Input prefix="$" suffix="/hr" type="number" min={0} step={0.01} placeholder="e.g. 45.00" />
+              </Form.Item>
+
+              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                Advanced internship earnings inputs like hours per day, working days per week, total hours, overtime, and direct total override can be edited from the role's `Internship Earnings Breakdown` after you save.
+              </div>
+            </div>
           ) : (
             <Form.Item name="comp" label="Compensation">
               <CompensationFields />
@@ -552,21 +589,63 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             </Form.Item>
           )}
 
-          {/* Promotion toggle — only shown when company matches an existing one */}
-          {isExistingCompany && <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl border border-amber-100 mt-1">
-            <Form.Item name="is_promotion" valuePropName="checked" className="mb-0 mt-0.5">
-              <Switch size="small" />
-            </Form.Item>
-            <div>
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-800">
-                <RiseOutlined />
-                Promotion / role change at the same company
-              </div>
-              <div className="text-xs text-amber-600 mt-0.5">
-                Mark this on your <strong>new</strong> role — groups it with your previous role at the same company
-              </div>
+          {/* Role context — custom card selector */}
+          {/* Hidden Form.Item keeps the value registered with the form */}
+          <Form.Item name="role_context" className="hidden mb-0"><Input /></Form.Item>
+          <div className="mt-4">
+            <div className="text-sm font-medium text-gray-700 mb-2">Role Context</div>
+            <div className="grid grid-cols-3 gap-2">
+              {/* Standard */}
+              <button
+                type="button"
+                onClick={() => form.setFieldValue('role_context', 'none')}
+                className={`flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150 cursor-pointer ${
+                  roleContext === 'none'
+                    ? 'border-gray-400 bg-gray-50 text-gray-700 shadow-sm'
+                    : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-600'
+                }`}
+              >
+                <span className="text-base">🏷️</span>
+                <span>Standard</span>
+              </button>
+
+              {/* Promotion */}
+              <button
+                type="button"
+                onClick={() => isExistingCompany && form.setFieldValue('role_context', 'promotion')}
+                disabled={!isExistingCompany}
+                className={`flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150 ${
+                  !isExistingCompany
+                    ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-60'
+                    : roleContext === 'promotion'
+                    ? 'border-amber-400 bg-amber-50 text-amber-700 shadow-sm cursor-pointer'
+                    : 'border-gray-200 bg-white text-gray-400 hover:border-amber-300 hover:text-amber-600 cursor-pointer'
+                }`}
+              >
+                <RiseOutlined className="text-base" />
+                <span>Promotion</span>
+              </button>
+
+              {/* Return Offer */}
+              <button
+                type="button"
+                onClick={() => form.setFieldValue('role_context', 'return_offer')}
+                className={`flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150 cursor-pointer ${
+                  roleContext === 'return_offer'
+                    ? 'border-blue-400 bg-blue-50 text-blue-700 shadow-sm'
+                    : 'border-gray-200 bg-white text-gray-400 hover:border-blue-300 hover:text-blue-600'
+                }`}
+              >
+                <LinkOutlined className="text-base" />
+                <span>Return Offer</span>
+              </button>
             </div>
-          </div>}
+            {!isExistingCompany && (
+              <div className="text-xs text-gray-400 mt-1.5">
+                "Promotion" requires matching an existing company in your experience.
+              </div>
+            )}
+          </div>
         </Form>
       )}
 

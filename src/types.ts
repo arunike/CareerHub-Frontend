@@ -240,6 +240,22 @@ export interface BookingDayAvailability {
   slots: BookingSlot[];
 }
 
+export interface SchedulePhase {
+  id: string;
+  name: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current?: boolean;
+  hourly_rate?: number | null;
+  hours_per_day?: number | null;
+  working_days_per_week?: number | null;
+  total_hours_worked?: number | null;
+  overtime_hours?: number | null;
+  overtime_rate?: number | null;
+  overtime_multiplier?: number | null;
+  total_earnings_override?: number | null;
+}
+
 export interface Experience {
   id?: number;
   title: string;
@@ -253,14 +269,23 @@ export interface Experience {
   logo?: string | null;
   employment_type?: 'full_time' | 'part_time' | 'internship' | 'contract' | 'freelance';
   is_promotion?: boolean;
+  is_return_offer?: boolean;
   is_locked?: boolean;
   is_pinned?: boolean;
   offer?: number | null;
   hourly_rate?: number | null;
+  hours_per_day?: number | null;
+  working_days_per_week?: number | null;
+  total_hours_worked?: number | null;
+  overtime_hours?: number | null;
+  overtime_rate?: number | null;
+  overtime_multiplier?: number | null;
+  total_earnings_override?: number | null;
   base_salary?: number | null;
   bonus?: number | null;
   equity?: number | null;
   team_history?: TeamEntry[];
+  schedule_phases?: SchedulePhase[];
   created_at?: string;
   updated_at?: string;
 }
