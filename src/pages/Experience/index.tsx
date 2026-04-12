@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined, TeamOutlined, PushpinOutlined, PushpinFilled, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col, Modal, Upload } from 'antd';
+import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined, TeamOutlined, PushpinOutlined, PushpinFilled, LockOutlined, UnlockOutlined, InboxOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo, getOffers, updateOffer } from '../../api/career';
+import type { UploadProps } from 'antd';
+import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, importExperiences, exportExperiences, uploadExperienceLogo, removeExperienceLogo, getOffers, updateOffer } from '../../api/career';
 import { getUserSettings } from '../../api/availability';
 import RowActions from '../../components/RowActions';
 import type { Experience, EmploymentType } from '../../types';
@@ -18,6 +19,7 @@ import type { RaiseEntry, TeamEntry } from '../../types';
 import { buildHourlyCompensationSnapshot, getExperienceCompensationSnapshot } from './compensation';
 
 const { Title, Text } = Typography;
+const { Dragger } = Upload;
 
 // DRF returns absolute URLs (http://127.0.0.1:8000/media/...) — strip host so
 // the request goes through the Vite /media proxy instead of directly to Django.
@@ -39,6 +41,14 @@ const toNullableNumber = (value: number | string | null | undefined): number | n
 const roundCompNumber = (value: number | null | undefined) => {
   if (value == null) return null;
   return Number(value.toFixed(2));
+};
+
+const parseExperienceDate = (value: string | null | undefined) => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  const normalized = /^\d{4}-\d{2}-\d{2}/.test(trimmed) ? trimmed.slice(0, 10) : trimmed;
+  const parsed = dayjs(normalized);
+  return parsed.isValid() ? parsed : null;
 };
 
 const nearlyEqual = (a: number | null | undefined, b: number | null | undefined, epsilon = 0.01) => {
@@ -125,6 +135,16 @@ const ExperiencePage: React.FC = () => {
   const [compBreakdownExp, setCompBreakdownExp] = useState<Experience | null>(null);
   const [overallCompBreakdownOpen, setOverallCompBreakdownOpen] = useState(false);
   const [overallInternshipBreakdownOpen, setOverallInternshipBreakdownOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const fetchOffersData = async () => {
+    try {
+      const res = await getOffers();
+      setAllOffers(res.data as Offer[]);
+    } catch {
+      /* no offer data */
+    }
+  };
 
   useEffect(() => {
     fetchExperiences();
@@ -132,9 +152,7 @@ const ExperiencePage: React.FC = () => {
       const types = res.data.employment_types;
       if (types && types.length > 0) setEmpTypes(types);
     }).catch(() => {/* use defaults */});
-    getOffers().then(res => {
-      setAllOffers(res.data as Offer[]);
-    }).catch(() => {/* no offer data */});
+    fetchOffersData();
   }, []);
 
   const fetchExperiences = async () => {
@@ -143,8 +161,8 @@ const ExperiencePage: React.FC = () => {
       const res = await getExperiences();
       
       const sorted = res.data.sort((a, b) => {
-        const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
-        const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+        const dateA = parseExperienceDate(a.start_date)?.valueOf() ?? 0;
+        const dateB = parseExperienceDate(b.start_date)?.valueOf() ?? 0;
         if (dateB !== dateA) return dateB - dateA;
         return (b.id || 0) - (a.id || 0);
       });
@@ -216,6 +234,34 @@ const ExperiencePage: React.FC = () => {
     } catch (err) {
       message.error('Failed to delete all experiences');
     }
+  };
+
+  const handleExportWrapper = async (format: string) => {
+    const response = await exportExperiences(format);
+    return {
+      data: response.data,
+      headers: response.headers as unknown as Record<string, string>,
+    };
+  };
+
+  const importProps: UploadProps = {
+    name: 'file',
+    multiple: false,
+    accept: '.json,.csv,.xlsx',
+    beforeUpload: (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      importExperiences(formData)
+        .then(async (response) => {
+          message.success(response.data?.message || 'Import successful');
+          setIsImportModalOpen(false);
+          await Promise.all([fetchExperiences(), fetchOffersData()]);
+        })
+        .catch((err) => {
+          message.error(err.response?.data?.error || 'Import failed');
+        });
+      return false;
+    },
   };
 
   const handleDeleteGroup = async (group: Experience[]) => {
@@ -395,8 +441,8 @@ const ExperiencePage: React.FC = () => {
   };
 
   const formatDuration = (exp: Experience) => {
-    const start = exp.start_date ? dayjs(exp.start_date) : null;
-    let end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+    const start = parseExperienceDate(exp.start_date);
+    let end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
     
     const startStr = start ? start.format('MMM D, YYYY') : 'Unknown';
     const endStr = exp.is_current ? 'Present' : (end ? end.format('MMM D, YYYY') : 'Unknown');
@@ -502,8 +548,8 @@ const ExperiencePage: React.FC = () => {
     if (experiences.length === 0) return '0 yrs';
     const intervals: [number, number][] = [];
     for (const exp of experiences) {
-      const start = exp.start_date ? dayjs(exp.start_date) : null;
-      const end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+      const start = parseExperienceDate(exp.start_date);
+      const end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
       if (start && end) intervals.push([start.valueOf(), end.valueOf()]);
     }
     const totalDays = Math.round(mergedDays(intervals) / 86400000);
@@ -516,8 +562,8 @@ const ExperiencePage: React.FC = () => {
     const byType: Record<string, [number, number][]> = {};
     for (const exp of experiences) {
       const type = exp.employment_type || 'full_time';
-      const start = exp.start_date ? dayjs(exp.start_date) : null;
-      const end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+      const start = parseExperienceDate(exp.start_date);
+      const end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
       if (!start || !end) continue;
       if (!byType[type]) byType[type] = [];
       byType[type].push([start.valueOf(), end.valueOf()]);
@@ -573,14 +619,12 @@ const ExperiencePage: React.FC = () => {
   };
 
   const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): string => {
-    const start = exp.start_date ? dayjs(exp.start_date) : null;
-    const end = overrideEndDate
-      ? dayjs(overrideEndDate)
-      : exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
+    const start = parseExperienceDate(exp.start_date);
+    const explicitEnd = parseExperienceDate(exp.end_date);
+    const fallbackEnd = parseExperienceDate(overrideEndDate ?? null);
+    const end = exp.is_current ? dayjs() : (explicitEnd ?? fallbackEnd);
     const startStr = start ? start.format('MMM YYYY') : '—';
-    const endStr = overrideEndDate
-      ? dayjs(overrideEndDate).format('MMM YYYY')
-      : exp.is_current ? 'Present' : (end ? end.format('MMM YYYY') : '—');
+    const endStr = exp.is_current ? 'Present' : (end ? end.format('MMM YYYY') : '—');
     const dur = start && end ? ` · ${fmtDays(end.diff(start, 'day'), true)}` : '';
     return `${startStr} – ${endStr}${dur}`;
   };
@@ -588,8 +632,8 @@ const ExperiencePage: React.FC = () => {
   const getGroupTenure = (group: Experience[]): string => {
     const oldest = group[group.length - 1];
     const newest = group[0];
-    const start = oldest.start_date ? dayjs(oldest.start_date) : null;
-    const end = newest.is_current ? dayjs() : (newest.end_date ? dayjs(newest.end_date) : null);
+    const start = parseExperienceDate(oldest.start_date);
+    const end = newest.is_current ? dayjs() : parseExperienceDate(newest.end_date);
     if (!start || !end) return '';
     return fmtDays(end.diff(start, 'day'), true);
   };
@@ -643,23 +687,32 @@ const ExperiencePage: React.FC = () => {
     };
   }, [experiences, allOffers]);
 
-  const internshipCompSummary = useMemo(() => {
-    const internshipRoles = experiences.filter(exp => exp.employment_type === 'internship');
-    const trackedComp = internshipRoles
+  const internshipCompSnapshots = useMemo(() => {
+    return experiences
+      .filter(exp => exp.employment_type === 'internship')
       .map(exp => getCompensationSnapshot(exp))
       .filter((comp): comp is Extract<NonNullable<ReturnType<typeof getCompensationSnapshot>>, { kind: 'hourly' }> => comp !== null && comp.kind === 'hourly');
+  }, [experiences, allOffers]);
+
+  const internshipCompSummary = useMemo(() => {
+    const internshipRoles = experiences.filter(exp => exp.employment_type === 'internship');
+    const trackedComp = internshipCompSnapshots;
 
     const estimatedHours = trackedComp.reduce((sum, comp) => sum + (comp.calculationMode === 'manual_total' ? 0 : comp.estimatedHours), 0);
+    const regularPay = trackedComp.reduce((sum, comp) => sum + comp.regularPay, 0);
+    const overtimePay = trackedComp.reduce((sum, comp) => sum + comp.overtimePay, 0);
 
     return {
       roleCount: internshipRoles.length,
       trackedRoleCount: trackedComp.length,
       estimatedHours,
+      regularPay,
+      overtimePay,
       total: trackedComp.reduce((sum, comp) => sum + comp.total, 0),
       manualHoursRoleCount: trackedComp.filter(comp => comp.calculationMode === 'manual_hours').length,
       customTotalRoleCount: trackedComp.filter(comp => comp.calculationMode === 'manual_total').length,
     };
-  }, [experiences, allOffers]);
+  }, [experiences, internshipCompSnapshots]);
 
   const groupedExperiences = useMemo((): Experience[][] => {
     const seen = new Set<number>();
@@ -712,6 +765,9 @@ const ExperiencePage: React.FC = () => {
           deleteAllDisabled={experiences.length === 0}
           deleteAllConfirmTitle="Delete all experiences?"
           deleteAllConfirmDescription="This will permanently delete all unlocked experiences."
+          onExport={handleExportWrapper}
+          exportFilename="experiences"
+          onImport={() => setIsImportModalOpen(true)}
           onPrimaryAction={openAddModal}
           primaryActionLabel="Add Experience"
           primaryActionIcon={<PlusOutlined />}
@@ -1454,16 +1510,8 @@ const ExperiencePage: React.FC = () => {
       )}
 
       {overallInternshipBreakdownOpen && internshipCompSummary.trackedRoleCount > 0 && (() => {
-        // Build an aggregate hourly snapshot for all internship roles
-        const internshipRoles = experiences.filter(exp => exp.employment_type === 'internship');
-        const snapshots = internshipRoles
-          .map(exp => getCompensationSnapshot(exp))
-          .filter((s): s is Extract<NonNullable<ReturnType<typeof getCompensationSnapshot>>, { kind: 'hourly' }> => s !== null && s.kind === 'hourly');
-        const aggTotal = snapshots.reduce((sum, s) => sum + s.total, 0);
-        const aggRegularPay = snapshots.reduce((sum, s) => sum + s.regularPay, 0);
-        const aggOvertimePay = snapshots.reduce((sum, s) => sum + s.overtimePay, 0);
-        const aggHours = snapshots.reduce((sum, s) => sum + s.estimatedHours, 0);
-        const aggOTHours = snapshots.reduce((sum, s) => sum + s.overtimeHours, 0);
+        const aggHours = internshipCompSnapshots.reduce((sum, s) => sum + s.estimatedHours, 0);
+        const aggOTHours = internshipCompSnapshots.reduce((sum, s) => sum + s.overtimeHours, 0);
         return (
           <CompensationBreakdownModal
             open={overallInternshipBreakdownOpen}
@@ -1473,11 +1521,11 @@ const ExperiencePage: React.FC = () => {
             totalLabel="Combined Internship Earnings"
             totalHint="Sum of all tracked internship earnings across roles."
             kind="hourly"
-            total={aggTotal}
-            regularPay={aggRegularPay}
-            overtimePay={aggOvertimePay}
+            total={internshipCompSummary.total}
+            regularPay={internshipCompSummary.regularPay}
+            overtimePay={internshipCompSummary.overtimePay}
             estimatedHours={aggHours}
-            hourlyRate={aggHours > 0 ? aggTotal / aggHours : 0}
+            hourlyRate={aggHours > 0 ? internshipCompSummary.total / aggHours : 0}
             hoursPerDay={8}
             workingDaysPerWeek={5}
             totalHoursWorked={null}
@@ -1488,7 +1536,7 @@ const ExperiencePage: React.FC = () => {
             autoCalculatedHours={aggHours}
             weekdaysWorked={0}
             calculationMode="manual_hours"
-            dateRangeLabel={`${snapshots.length} roles combined`}
+            dateRangeLabel={`${internshipCompSnapshots.length} roles combined`}
             totalEarningsOverride={null}
             isMultiPhase={false}
             hourlyDisplayMode="aggregate"
@@ -1510,6 +1558,24 @@ const ExperiencePage: React.FC = () => {
         open={jdModalOpen}
         onCancel={() => setJdModalOpen(false)}
       />
+
+      <Modal
+        title="Import Experiences"
+        open={isImportModalOpen}
+        onCancel={() => setIsImportModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Dragger {...importProps}>
+          <p className="ant-upload-drag-icon">
+            <InboxOutlined />
+          </p>
+          <p className="ant-upload-text">Click or drag an export file here to import everything back</p>
+          <p className="ant-upload-hint">
+            Supports JSON, CSV, and XLSX. JSON is best for the most complete round-trip, including logos, linked offer snapshots, team history, and schedule phases.
+          </p>
+        </Dragger>
+      </Modal>
     </div>
   );
 };
