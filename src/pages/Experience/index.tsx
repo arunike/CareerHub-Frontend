@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined, TeamOutlined, PushpinOutlined, PushpinFilled } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined, TeamOutlined, PushpinOutlined, PushpinFilled, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo, getOffers, updateOffer } from '../../api/career';
 import { getUserSettings } from '../../api/availability';
@@ -11,8 +11,11 @@ import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
 import TeamHistoryModal from './TeamHistoryModal';
+import SchedulePhasesModal from './SchedulePhasesModal';
+import CompensationBreakdownModal from './CompensationBreakdownModal';
 import type { OfferLike as Offer } from '../OfferComparison/calculations';
 import type { RaiseEntry, TeamEntry } from '../../types';
+import { buildHourlyCompensationSnapshot, getExperienceCompensationSnapshot } from './compensation';
 
 const { Title, Text } = Typography;
 
@@ -25,6 +28,22 @@ const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
   } catch {
     return url;
   }
+};
+
+const toNullableNumber = (value: number | string | null | undefined): number | null => {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const roundCompNumber = (value: number | null | undefined) => {
+  if (value == null) return null;
+  return Number(value.toFixed(2));
+};
+
+const nearlyEqual = (a: number | null | undefined, b: number | null | undefined, epsilon = 0.01) => {
+  if (a == null || b == null) return false;
+  return Math.abs(a - b) < epsilon;
 };
 
 const DEFAULT_EMP_TYPES: EmploymentType[] = [
@@ -102,6 +121,10 @@ const ExperiencePage: React.FC = () => {
   const [allOffers, setAllOffers] = useState<Offer[]>([]);
   const [raiseHistoryExp, setRaiseHistoryExp] = useState<Experience | null>(null);
   const [teamHistoryExp, setTeamHistoryExp] = useState<Experience | null>(null);
+  const [schedulePhasesExp, setSchedulePhasesExp] = useState<Experience | null>(null);
+  const [compBreakdownExp, setCompBreakdownExp] = useState<Experience | null>(null);
+  const [overallCompBreakdownOpen, setOverallCompBreakdownOpen] = useState(false);
+  const [overallInternshipBreakdownOpen, setOverallInternshipBreakdownOpen] = useState(false);
 
   useEffect(() => {
     fetchExperiences();
@@ -215,6 +238,17 @@ const ExperiencePage: React.FC = () => {
     }
   };
 
+  const handleToggleGroupLock = async (group: Experience[]) => {
+    const isAnyUnlocked = group.some(e => !e.is_locked);
+    const targetState = isAnyUnlocked;
+    try {
+      await Promise.all(group.map(e => updateExperience(e.id!, { is_locked: targetState })));
+      setExperiences(prev => prev.map(e => group.some(g => g.id === e.id) ? { ...e, is_locked: targetState } : e));
+    } catch {
+      message.error('Failed to update group lock status');
+    }
+  };
+
   const handleTogglePin = async (exp: Experience) => {
     if (!exp.id) return;
     try {
@@ -227,6 +261,10 @@ const ExperiencePage: React.FC = () => {
 
   const getLinkedOffer = (exp: Experience): Offer | undefined =>
     exp.offer ? allOffers.find(o => o.id === exp.offer) : undefined;
+
+  const getCompensationSnapshot = (exp: Experience) => {
+    return getExperienceCompensationSnapshot(exp, getLinkedOffer(exp));
+  };
 
   const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
     if (!raiseHistoryExp) return;
@@ -247,6 +285,17 @@ const ExperiencePage: React.FC = () => {
     setTeamHistoryExp(prev => prev ? { ...prev, team_history: entries } : null);
   };
 
+  const handleSaveSchedulePhases = async (phases: any[]) => {
+    if (!schedulePhasesExp?.id) return;
+    await updateExperience(schedulePhasesExp.id, { schedule_phases: phases } as Partial<Experience>);
+    setExperiences(prev => prev.map(e => e.id === schedulePhasesExp.id ? { ...e, schedule_phases: phases } : e));
+    setSchedulePhasesExp(prev => prev ? { ...prev, schedule_phases: phases } : null);
+    
+    if (compBreakdownExp?.id === schedulePhasesExp.id) {
+      setCompBreakdownExp(prev => prev ? { ...prev, schedule_phases: phases } : null);
+    }
+  };
+
   const openAddModal = () => {
     setEditingExp(null);
     setModalOpen(true);
@@ -255,6 +304,94 @@ const ExperiencePage: React.FC = () => {
   const openEditModal = (exp: Experience) => {
     setEditingExp(exp);
     setModalOpen(true);
+  };
+
+  const handleEditFromCompBreakdown = () => {
+    if (!compBreakdownExp || compBreakdownExp.is_locked) return;
+    const exp = compBreakdownExp;
+    setCompBreakdownExp(null);
+    openEditModal(exp);
+  };
+
+  const handleSaveInternshipCompInputs = async (updates: {
+    hourly_rate: number | null;
+    hours_per_day: number | null;
+    working_days_per_week: number | null;
+    total_hours_worked: number | null;
+    overtime_hours: number | null;
+    overtime_rate: number | null;
+    overtime_multiplier: number | null;
+    total_earnings_override: number | null;
+  }) => {
+    if (!compBreakdownExp?.id) return;
+    const currentExp = compBreakdownExp;
+
+    const normalizedHourlyRate = roundCompNumber(toNullableNumber(updates.hourly_rate));
+    const normalizedHoursPerDay = roundCompNumber(toNullableNumber(updates.hours_per_day));
+    const normalizedWorkingDaysPerWeek = roundCompNumber(toNullableNumber(updates.working_days_per_week));
+    const rawTotalHoursWorked = roundCompNumber(toNullableNumber(updates.total_hours_worked));
+    const normalizedOvertimeHours = roundCompNumber(Math.max(0, toNullableNumber(updates.overtime_hours) ?? 0)) || null;
+    const normalizedOvertimeRate = (() => {
+      const value = roundCompNumber(toNullableNumber(updates.overtime_rate));
+      return value != null && value > 0 ? value : null;
+    })();
+    const normalizedOvertimeMultiplier = (() => {
+      const value = roundCompNumber(toNullableNumber(updates.overtime_multiplier));
+      return value != null && value > 0 && !nearlyEqual(value, 1.5) ? value : null;
+    })();
+    const rawTotalEarningsOverride = roundCompNumber(toNullableNumber(updates.total_earnings_override));
+
+    const autoSnapshot = buildHourlyCompensationSnapshot({
+      startDate: currentExp.start_date,
+      endDate: currentExp.end_date,
+      isCurrent: currentExp.is_current,
+      hourlyRate: normalizedHourlyRate,
+      hoursPerDay: normalizedHoursPerDay,
+      workingDaysPerWeek: normalizedWorkingDaysPerWeek,
+      totalHoursWorked: null,
+      overtimeHours: null,
+      overtimeRate: normalizedOvertimeRate,
+      overtimeMultiplier: normalizedOvertimeMultiplier,
+      totalEarningsOverride: null,
+    });
+
+    const normalizedTotalHoursWorked = rawTotalHoursWorked != null && autoSnapshot && nearlyEqual(rawTotalHoursWorked, autoSnapshot.autoCalculatedHours)
+      ? null
+      : rawTotalHoursWorked;
+
+    const calculatedTotal = buildHourlyCompensationSnapshot({
+      startDate: currentExp.start_date,
+      endDate: currentExp.end_date,
+      isCurrent: currentExp.is_current,
+      hourlyRate: normalizedHourlyRate,
+      hoursPerDay: normalizedHoursPerDay,
+      workingDaysPerWeek: normalizedWorkingDaysPerWeek,
+      totalHoursWorked: normalizedTotalHoursWorked,
+      overtimeHours: normalizedOvertimeHours,
+      overtimeRate: normalizedOvertimeRate,
+      overtimeMultiplier: normalizedOvertimeMultiplier,
+      totalEarningsOverride: null,
+    })?.total ?? null;
+
+    const normalizedTotalEarningsOverride = rawTotalEarningsOverride != null && calculatedTotal != null && nearlyEqual(rawTotalEarningsOverride, calculatedTotal)
+      ? null
+      : rawTotalEarningsOverride;
+
+    const patch: Partial<Experience> = {
+      hourly_rate: normalizedHourlyRate,
+      hours_per_day: normalizedHoursPerDay,
+      working_days_per_week: normalizedWorkingDaysPerWeek,
+      total_hours_worked: normalizedTotalHoursWorked,
+      overtime_hours: normalizedOvertimeHours,
+      overtime_rate: normalizedOvertimeRate,
+      overtime_multiplier: normalizedOvertimeMultiplier,
+      total_earnings_override: normalizedTotalEarningsOverride,
+    };
+
+    await updateExperience(currentExp.id, patch);
+    setExperiences(prev => prev.map(exp => exp.id === currentExp.id ? { ...exp, ...patch } : exp));
+    setCompBreakdownExp(prev => prev && prev.id === currentExp.id ? { ...prev, ...patch } : prev);
+    message.success('Internship earnings inputs updated');
   };
 
   const formatDuration = (exp: Experience) => {
@@ -484,12 +621,45 @@ const ExperiencePage: React.FC = () => {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12)
     .map(entry => entry[0]);
-    
-  const uniqueUserSkills = Object.keys(skillCounts);
 
   const filteredExperiences = selectedSkill
     ? experiences.filter(exp => exp.skills?.includes(selectedSkill))
     : experiences;
+
+  const compBreakdownSnapshot = compBreakdownExp ? getCompensationSnapshot(compBreakdownExp) : null;
+  const fullTimeCompSummary = useMemo(() => {
+    const fullTimeRoles = experiences.filter(exp => exp.employment_type === 'full_time');
+    const trackedComp = fullTimeRoles
+      .map(exp => getCompensationSnapshot(exp))
+      .filter((comp): comp is Extract<NonNullable<ReturnType<typeof getCompensationSnapshot>>, { kind: 'salary' }> => comp !== null && comp.kind === 'salary');
+
+    return {
+      roleCount: fullTimeRoles.length,
+      trackedRoleCount: trackedComp.length,
+      base: trackedComp.reduce((sum, comp) => sum + comp.base, 0),
+      bonus: trackedComp.reduce((sum, comp) => sum + comp.bonus, 0),
+      equity: trackedComp.reduce((sum, comp) => sum + comp.equity, 0),
+      total: trackedComp.reduce((sum, comp) => sum + comp.total, 0),
+    };
+  }, [experiences, allOffers]);
+
+  const internshipCompSummary = useMemo(() => {
+    const internshipRoles = experiences.filter(exp => exp.employment_type === 'internship');
+    const trackedComp = internshipRoles
+      .map(exp => getCompensationSnapshot(exp))
+      .filter((comp): comp is Extract<NonNullable<ReturnType<typeof getCompensationSnapshot>>, { kind: 'hourly' }> => comp !== null && comp.kind === 'hourly');
+
+    const estimatedHours = trackedComp.reduce((sum, comp) => sum + (comp.calculationMode === 'manual_total' ? 0 : comp.estimatedHours), 0);
+
+    return {
+      roleCount: internshipRoles.length,
+      trackedRoleCount: trackedComp.length,
+      estimatedHours,
+      total: trackedComp.reduce((sum, comp) => sum + comp.total, 0),
+      manualHoursRoleCount: trackedComp.filter(comp => comp.calculationMode === 'manual_hours').length,
+      customTotalRoleCount: trackedComp.filter(comp => comp.calculationMode === 'manual_total').length,
+    };
+  }, [experiences, allOffers]);
 
   const groupedExperiences = useMemo((): Experience[][] => {
     const seen = new Set<number>();
@@ -514,7 +684,6 @@ const ExperiencePage: React.FC = () => {
       groups.push(group);
     }
 
-    // Pinned groups float to the top (a group is pinned if its primary role is pinned)
     return groups.sort((a, b) => {
       const aPinned = a[0].is_pinned ? 1 : 0;
       const bPinned = b[0].is_pinned ? 1 : 0;
@@ -551,21 +720,23 @@ const ExperiencePage: React.FC = () => {
 
       {/* Analytics Dashboard */}
       {experiences.length > 0 && (
-        <Card style={{ marginBottom: 48 }} className="rounded-2xl border-gray-100 shadow-sm" bodyStyle={{ padding: '20px 24px' }}>
-          <Row gutter={[24, 24]} align="middle">
-            <Col xs={24} md={8}>
-              <div className="flex items-start gap-4 border-r border-gray-100 pr-4">
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0 mt-0.5">
-                  <ClockCircleOutlined className="text-xl" />
+        <Card style={{ marginBottom: 28 }} className="rounded-2xl border-gray-100 shadow-sm" bodyStyle={{ padding: '14px 18px' }}>
+          <Row gutter={[16, 14]} align="top">
+            <Col xs={24} md={12} xl={6}>
+              <div className="h-full xl:border-r border-gray-100 xl:pr-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+                    <ClockCircleOutlined className="text-sm" />
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">Total Experience</div>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Total Experience</div>
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="text-xl font-semibold text-gray-900">{calculateTotalCareerDuration()}</span>
+                <div className="mt-3 min-w-0">
+                  <div className="text-[24px] leading-none font-semibold text-gray-900">{calculateTotalCareerDuration()}</div>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                     {Object.entries(durationByType)
                       .sort((a, b) => b[1] - a[1])
                       .map(([type, months]) => (
-                        <span key={type} className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                        <span key={type} className="flex items-center gap-1 text-[11px] text-gray-500 whitespace-nowrap">
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDisplay(type).dot}`} />
                           <span className="font-medium text-gray-700">{fmtMonths(months, true)}</span>
                           <span>{getTypeDisplay(type).label}</span>
@@ -575,19 +746,22 @@ const ExperiencePage: React.FC = () => {
                 </div>
               </div>
             </Col>
-            <Col xs={24} md={6}>
-              <div className="flex items-start gap-4 md:border-r border-gray-100 pr-4">
-                <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0 mt-0.5">
-                  <BankOutlined className="text-xl" />
+
+            <Col xs={24} md={12} xl={5}>
+              <div className="h-full xl:border-r border-gray-100 xl:pr-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+                    <BankOutlined className="text-sm" />
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">Companies</div>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Companies</div>
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="text-xl font-semibold text-gray-900">{totalCompanies}</span>
+                <div className="mt-3 min-w-0">
+                  <div className="text-[24px] leading-none font-semibold text-gray-900">{totalCompanies}</div>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                     {Object.entries(companiesByType)
                       .sort((a, b) => b[1] - a[1])
                       .map(([type, count]) => (
-                        <span key={type} className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                        <span key={type} className="flex items-center gap-1 text-[11px] text-gray-500 whitespace-nowrap">
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDisplay(type).dot}`} />
                           <span className="font-medium text-gray-700">{count}</span>
                           <span>{getTypeDisplay(type).label}</span>
@@ -597,37 +771,136 @@ const ExperiencePage: React.FC = () => {
                 </div>
               </div>
             </Col>
-            <Col xs={24} md={10}>
-              <div className="pl-2">
-                <div className="text-xs text-gray-400 mb-2 uppercase font-semibold letter-spacing-1 flex items-center gap-1">
-                  <CodeOutlined /> Top Skills
+
+            <Col xs={24} md={12} xl={7}>
+              <div className="h-full xl:border-r border-gray-100 xl:pr-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+                    <DollarOutlined className="text-sm" />
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">Earnings</div>
+                </div>
+                <div className="mt-3 min-w-0">
+                  <div className="space-y-2.5">
+                    <div className="min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Full-Time</span>
+                            <span className="text-[17px] leading-none font-semibold text-gray-900">
+                              {fullTimeCompSummary.trackedRoleCount > 0 ? `$${fullTimeCompSummary.total.toLocaleString()}` : 'No pay data'}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-[11px] leading-relaxed text-gray-500">
+                            {fullTimeCompSummary.trackedRoleCount > 0 ? (
+                              <>
+                                {fullTimeCompSummary.trackedRoleCount} tracked
+                                {fullTimeCompSummary.base > 0 && ` • Base $${fullTimeCompSummary.base.toLocaleString()}`}
+                                {fullTimeCompSummary.roleCount > fullTimeCompSummary.trackedRoleCount &&
+                                  ` • ${fullTimeCompSummary.roleCount - fullTimeCompSummary.trackedRoleCount} missing`}
+                              </>
+                            ) : (
+                              'Add base, bonus, or equity to see the total.'
+                            )}
+                          </div>
+                        </div>
+                        {fullTimeCompSummary.trackedRoleCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setOverallCompBreakdownOpen(true)}
+                            title="View overall pay structure breakdown"
+                            className="shrink-0 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full hover:bg-emerald-100 transition-colors"
+                          >
+                            Breakdown
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-2.5 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">Internship</span>
+                            <span className="text-[17px] leading-none font-semibold text-gray-900">
+                              {internshipCompSummary.trackedRoleCount > 0
+                                ? `$${internshipCompSummary.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                : 'No estimate yet'}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-[11px] leading-relaxed text-gray-500">
+                            {internshipCompSummary.trackedRoleCount > 0 ? (
+                              <>
+                                {internshipCompSummary.trackedRoleCount} tracked
+                                {internshipCompSummary.estimatedHours > 0 &&
+                                  ` • ${internshipCompSummary.estimatedHours.toLocaleString(undefined, { maximumFractionDigits: 2 })} hrs`}
+                                {internshipCompSummary.roleCount > internshipCompSummary.trackedRoleCount
+                                  ? ` • ${internshipCompSummary.roleCount - internshipCompSummary.trackedRoleCount} missing`
+                                  : internshipCompSummary.customTotalRoleCount > 0
+                                    ? ` • ${internshipCompSummary.customTotalRoleCount} custom total`
+                                    : internshipCompSummary.manualHoursRoleCount > 0
+                                      ? ` • ${internshipCompSummary.manualHoursRoleCount} manual hrs`
+                                      : ' • Auto estimated'}
+                              </>
+                            ) : (
+                              'Add hourly rate, dates, or a total override to calculate internship earnings.'
+                            )}
+                          </div>
+                        </div>
+                        {internshipCompSummary.trackedRoleCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setOverallInternshipBreakdownOpen(true)}
+                            title="View internship earnings breakdown"
+                            className="shrink-0 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors"
+                          >
+                            Breakdown
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Col>
+
+            <Col xs={24} md={12} xl={6}>
+              <div className="h-full">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shrink-0">
+                    <CodeOutlined className="text-sm" />
+                  </div>
+                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">Top Skills</div>
                   {selectedSkill && (
-                    <span 
-                      className="ml-2 text-blue-500 cursor-pointer hover:underline lowercase normal-case" 
+                    <button
+                      type="button"
                       onClick={() => setSelectedSkill(null)}
+                      className="text-[11px] text-blue-500 hover:text-blue-600 transition-colors"
                     >
-                      (Clear filter)
-                    </span>
+                      Clear filter
+                    </button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {topSkills.map(skill => {
-                    const isSelected = selectedSkill === skill;
-                    return (
-                      <Tag.CheckableTag
-                        key={skill}
-                        checked={isSelected}
-                        onChange={(checked) => setSelectedSkill(checked ? skill : null)}
-                        className={`m-0 px-3 py-1 rounded-md border transition-all ${
-                          isSelected 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-500'
-                        }`}
-                      >
-                        {skill} <span className="opacity-50 text-xs ml-1">{skillCounts[skill]}</span>
-                      </Tag.CheckableTag>
-                    );
-                  })}
+                <div className="mt-3 min-w-0">
+                  <div className="flex flex-wrap gap-1.5">
+                    {topSkills.map(skill => {
+                      const isSelected = selectedSkill === skill;
+                      return (
+                        <Tag.CheckableTag
+                          key={skill}
+                          checked={isSelected}
+                          onChange={(checked) => setSelectedSkill(checked ? skill : null)}
+                          className={`m-0 px-2 py-0.5 rounded-md border text-[11px] leading-5 transition-all ${
+                            isSelected
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-500'
+                          }`}
+                        >
+                          {skill} <span className="opacity-50 ml-1">{skillCounts[skill]}</span>
+                        </Tag.CheckableTag>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </Col>
@@ -677,6 +950,9 @@ const ExperiencePage: React.FC = () => {
 
               const renderSingleRole = (exp: Experience) => {
                 const skills = exp.skills || [];
+                const comp = getCompensationSnapshot(exp);
+                const internshipComp = comp?.kind === 'hourly' ? comp : null;
+                const salaryComp = comp?.kind === 'salary' ? comp : null;
                 return (
                   <div className="p-7">
                     <div className="flex justify-between items-start mb-5">
@@ -695,6 +971,11 @@ const ExperiencePage: React.FC = () => {
                             {exp.title}
                           </Title>
                           <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
+                          {exp.is_return_offer && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
+                              <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
+                            </span>
+                          )}
                           {exp.is_pinned && (
                             <Tooltip title="Click to unpin">
                               <button
@@ -707,7 +988,7 @@ const ExperiencePage: React.FC = () => {
                           )}
                         </div>
                         <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">{exp.company}</div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100">
+                        <div className="flex flex-nowrap shrink-0 items-center gap-x-4 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100 max-w-full overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                           <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50/80 border border-indigo-100/50 px-2 py-0.5 rounded-md">
                             <CalendarOutlined />
                             <span className="font-semibold">{formatDuration(exp)}</span>
@@ -727,23 +1008,44 @@ const ExperiencePage: React.FC = () => {
                               </div>
                             ) : null;
                           })()}
-                          {exp.employment_type === 'internship' && exp.hourly_rate != null && (
+                          {exp.employment_type === 'internship' && internshipComp && (
+                            <button
+                              type="button"
+                              onClick={() => setCompBreakdownExp(exp)}
+                              title="View internship earnings breakdown"
+                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors"
+                            >
+                              <DollarOutlined />
+                              <span>${internshipComp.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} total earnings</span>
+                            </button>
+                          )}
+                          {exp.employment_type === 'internship' && !internshipComp && exp.hourly_rate != null && (
                             <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                               <DollarOutlined />
                               <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
                             </div>
                           )}
                           {exp.employment_type !== 'internship' && (() => {
-                            const linkedOffer = getLinkedOffer(exp);
-                            const base = linkedOffer ? Number(linkedOffer.base_salary) : (exp.base_salary != null ? Number(exp.base_salary) : null);
-                            const bonus = linkedOffer ? Number(linkedOffer.bonus) : (exp.bonus != null ? Number(exp.bonus) : null);
-                            const equity = linkedOffer ? Number(linkedOffer.equity) : (exp.equity != null ? Number(exp.equity) : null);
-                            return base != null ? (
-                              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                <DollarOutlined />
-                                <span>${base.toLocaleString()} base</span>
-                                {bonus != null && bonus > 0 && <span className="text-gray-400 font-normal">+ ${bonus.toLocaleString()} bonus</span>}
-                                {equity != null && equity > 0 && <span className="text-gray-400 font-normal">+ ${equity.toLocaleString()} RSU/yr</span>}
+                            return salaryComp ? (
+                              <div className="flex items-center flex-wrap">
+                                {exp.employment_type === 'full_time' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setCompBreakdownExp(exp)}
+                                    title="View pay structure breakdown"
+                                    className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors"
+                                  >
+                                    <DollarOutlined />
+                                    <span>${salaryComp.total.toLocaleString()} total earnings</span>
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                                    <DollarOutlined />
+                                    <span>${salaryComp.base.toLocaleString()} base</span>
+                                    {salaryComp.bonus > 0 && <span className="text-gray-400 font-normal">+ ${salaryComp.bonus.toLocaleString()} bonus</span>}
+                                    {salaryComp.equity > 0 && <span className="text-gray-400 font-normal">+ ${salaryComp.equity.toLocaleString()} RSU/yr</span>}
+                                  </div>
+                                )}
                               </div>
                             ) : null;
                           })()}
@@ -770,6 +1072,7 @@ const ExperiencePage: React.FC = () => {
                               Team Norms
                             </Button>
                           </Tooltip>
+                          {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
                         </div>
                         {getLinkedOffer(exp) && (
                           <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
@@ -785,7 +1088,7 @@ const ExperiencePage: React.FC = () => {
                             </Tooltip>
                           </div>
                         )}
-                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <div className={`transition-all duration-200 ${exp.is_locked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                           <RowActions
                             isLocked={exp.is_locked}
                             onToggleLock={() => handleToggleLock(exp)}
@@ -857,7 +1160,16 @@ const ExperiencePage: React.FC = () => {
                             </Tooltip>
                           </div>
                         )}
-                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1">
+                          <Tooltip title={group.some(e => !e.is_locked) ? "Lock all roles" : "Unlock all roles"}>
+                            <Button 
+                              type="text" 
+                              size="small" 
+                              icon={group.some(e => !e.is_locked) ? <UnlockOutlined /> : <LockOutlined />} 
+                              onClick={() => handleToggleGroupLock(group)} 
+                              className={group.some(e => !e.is_locked) ? "text-gray-400 hover:text-gray-600" : "text-amber-500 hover:text-amber-600"}
+                            />
+                          </Tooltip>
                           <Tooltip title={`Delete all roles at ${primary.company}`}>
                             <Popconfirm
                               title={`Delete all ${primary.company} roles?`}
@@ -877,6 +1189,9 @@ const ExperiencePage: React.FC = () => {
                     <div className="relative pl-6" style={{ borderLeft: '2px solid #e5e7eb' }}>
                       {group.map((exp, roleIdx) => {
                         const skills = exp.skills || [];
+                        const comp = getCompensationSnapshot(exp);
+                        const internshipComp = comp?.kind === 'hourly' ? comp : null;
+                        const salaryComp = comp?.kind === 'salary' ? comp : null;
                         return (
                           <div key={exp.id} className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}>
                             {/* Timeline dot */}
@@ -894,46 +1209,71 @@ const ExperiencePage: React.FC = () => {
                                     </span>
                                   )}
                                   <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-                                </div>
-                                <div className="flex flex-wrap items-center gap-x-3 mt-1 text-[15px] text-gray-500">
-                                  <span className="flex items-center gap-1.5">
-                                    <CalendarOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
-                                    {/* Older roles auto-derive end date from the next role's start date */}
-                                    {formatRoleDateRange(exp, roleIdx > 0 ? group[roleIdx - 1].start_date : null)}
-                                  </span>
-                                  {exp.location && (
-                                    <span className="flex items-center gap-1.5">
-                                      <EnvironmentOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
-                                      {exp.location}
+                                  {exp.is_return_offer && (
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
+                                      <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
                                     </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-nowrap shrink-0 items-center gap-x-4 mt-1 text-sm text-gray-500 font-medium bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 w-fit max-w-full overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                  <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50/80 border border-indigo-100/50 px-2 py-0.5 rounded-md shrink-0">
+                                    <CalendarOutlined style={{ fontSize: 11 }} />
+                                    <span className="font-semibold">{formatRoleDateRange(exp, roleIdx > 0 ? group[roleIdx - 1].start_date : null)}</span>
+                                  </div>
+                                  {exp.location && (
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <EnvironmentOutlined className="text-gray-400" />
+                                      <span>{exp.location}</span>
+                                    </div>
                                   )}
                                   {exp.employment_type === 'internship' && (() => {
                                     const team = getLatestTeam(exp);
                                     return team ? (
-                                      <span className="flex items-center gap-1.5">
-                                        <TeamOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        <TeamOutlined className="text-gray-400" />
                                         {team.name}
-                                      </span>
+                                      </div>
                                     ) : null;
                                   })()}
-                                  {exp.employment_type === 'internship' && exp.hourly_rate != null && (
-                                    <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                      <DollarOutlined style={{ fontSize: 11 }} />
+                                  {exp.employment_type === 'internship' && internshipComp && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setCompBreakdownExp(exp)}
+                                      title="View internship earnings breakdown"
+                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shrink-0"
+                                    >
+                                      <DollarOutlined />
+                                      ${internshipComp.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} total earnings
+                                    </button>
+                                  )}
+                                  {exp.employment_type === 'internship' && !internshipComp && exp.hourly_rate != null && (
+                                    <div className="flex items-center gap-1.5 text-emerald-600 font-semibold shrink-0">
+                                      <DollarOutlined />
                                       ${Number(exp.hourly_rate).toFixed(2)}/hr
-                                    </span>
+                                    </div>
                                   )}
                                   {exp.employment_type !== 'internship' && (() => {
-                                    const linkedOffer = getLinkedOffer(exp);
-                                    const base = linkedOffer ? Number(linkedOffer.base_salary) : (exp.base_salary != null ? Number(exp.base_salary) : null);
-                                    const bonus = linkedOffer ? Number(linkedOffer.bonus) : (exp.bonus != null ? Number(exp.bonus) : null);
-                                    const equity = linkedOffer ? Number(linkedOffer.equity) : (exp.equity != null ? Number(exp.equity) : null);
-                                    return base != null ? (
-                                      <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                        <DollarOutlined style={{ fontSize: 11 }} />
-                                        ${base.toLocaleString()} base
-                                        {bonus != null && bonus > 0 && <span className="text-gray-400 font-normal">+ ${bonus.toLocaleString()} bonus</span>}
-                                        {equity != null && equity > 0 && <span className="text-gray-400 font-normal">+ ${equity.toLocaleString()} RSU/yr</span>}
-                                      </span>
+                                    return salaryComp ? (
+                                      <>
+                                        {exp.employment_type === 'full_time' ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => setCompBreakdownExp(exp)}
+                                            title="View pay structure breakdown"
+                                            className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shrink-0"
+                                          >
+                                            <DollarOutlined />
+                                            ${salaryComp.total.toLocaleString()} total earnings
+                                          </button>
+                                        ) : (
+                                          <div className="flex items-center gap-1.5 text-emerald-600 font-semibold shrink-0">
+                                            <DollarOutlined />
+                                            ${salaryComp.base.toLocaleString()} base
+                                            {salaryComp.bonus > 0 && <span className="text-gray-400 font-normal">+ ${salaryComp.bonus.toLocaleString()} bonus</span>}
+                                            {salaryComp.equity > 0 && <span className="text-gray-400 font-normal">+ ${salaryComp.equity.toLocaleString()} RSU/yr</span>}
+                                          </div>
+                                        )}
+                                      </>
                                     ) : null;
                                   })()}
                                 </div>
@@ -947,7 +1287,7 @@ const ExperiencePage: React.FC = () => {
                                   ) : null;
                                 })()}
                               </div>
-                              <div className="flex items-center gap-2 shrink-0 ml-2">
+                              <div className="flex items-center gap-2 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                                 <Tooltip title="View / edit team norms for this role">
                                   <Button
                                     size="small"
@@ -958,6 +1298,7 @@ const ExperiencePage: React.FC = () => {
                                     Team Norms
                                   </Button>
                                 </Tooltip>
+                                  {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
                                 {getLinkedOffer(exp) ? (
                                   <Tooltip title="View / edit raise history for this role">
                                     <Button
@@ -981,7 +1322,7 @@ const ExperiencePage: React.FC = () => {
                                     </Button>
                                   </Tooltip>
                                 )}
-                                <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                <div className={`transition-all duration-200 ${exp.is_locked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                   <RowActions
                                     isLocked={exp.is_locked}
                                     onToggleLock={() => handleToggleLock(exp)}
@@ -1017,8 +1358,16 @@ const ExperiencePage: React.FC = () => {
                   <div className="flex-shrink-0 relative z-10 hidden md:flex flex-col items-center">
                     {groupAvatar}
                   </div>
-                  <div className={`flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group-hover:border-blue-100 ${primary.is_pinned ? 'border-amber-200 ring-1 ring-amber-100' : 'border-gray-100'}`}>
-                    <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-300 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className={`flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border shadow-sm transition-all duration-300 relative overflow-hidden ${
+                    primary.is_pinned
+                      ? 'border-amber-200 ring-1 ring-amber-100 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
+                      : 'border-gray-100 hover:border-blue-100 hover:shadow-md'
+                  }`}>
+                    <div className={`absolute top-0 left-0 w-2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                      primary.is_pinned
+                        ? 'bg-gradient-to-b from-amber-300 to-orange-400'
+                        : 'bg-gradient-to-b from-blue-300 to-indigo-400'
+                    }`} />
                     {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
                   </div>
                 </div>
@@ -1052,6 +1401,100 @@ const ExperiencePage: React.FC = () => {
           expIsCurrent={teamHistoryExp.is_current}
         />
       )}
+
+      {schedulePhasesExp && (
+        <SchedulePhasesModal
+          open={!!schedulePhasesExp}
+          onClose={() => setSchedulePhasesExp(null)}
+          experienceName={`${schedulePhasesExp.title} @ ${schedulePhasesExp.company}`}
+          phases={schedulePhasesExp.schedule_phases || []}
+          onSave={handleSaveSchedulePhases}
+          expStartDate={schedulePhasesExp.start_date}
+          expEndDate={schedulePhasesExp.end_date}
+          expIsCurrent={schedulePhasesExp.is_current}
+          expHourlyRate={schedulePhasesExp.hourly_rate}
+          expHoursPerDay={schedulePhasesExp.hours_per_day}
+          expWorkingDaysPerWeek={schedulePhasesExp.working_days_per_week}
+          expOvertimeRate={schedulePhasesExp.overtime_rate}
+          expOvertimeMultiplier={schedulePhasesExp.overtime_multiplier}
+        />
+      )}
+
+      {compBreakdownExp && compBreakdownSnapshot && (
+        <CompensationBreakdownModal
+          open={!!compBreakdownExp}
+          onClose={() => setCompBreakdownExp(null)}
+          companyName={compBreakdownExp.company}
+          roleTitle={compBreakdownExp.title}
+          onEdit={compBreakdownExp.employment_type === 'internship' || compBreakdownExp.is_locked ? undefined : handleEditFromCompBreakdown}
+          editLabel="Edit role"
+          hourlyStartDate={compBreakdownExp.start_date}
+          hourlyEndDate={compBreakdownExp.end_date}
+          hourlyIsCurrent={compBreakdownExp.is_current}
+          onSaveHourlyInputs={compBreakdownExp.employment_type === 'internship' && !compBreakdownExp.is_locked ? handleSaveInternshipCompInputs : undefined}
+          openSchedulePhases={() => { setSchedulePhasesExp(compBreakdownExp); }}
+          {...compBreakdownSnapshot}
+        />
+      )}
+
+      {overallCompBreakdownOpen && fullTimeCompSummary.trackedRoleCount > 0 && (
+        <CompensationBreakdownModal
+          open={overallCompBreakdownOpen}
+          onClose={() => setOverallCompBreakdownOpen(false)}
+          titleText="Overall Full-Time Pay Breakdown"
+          contextLabel={`Across ${fullTimeCompSummary.trackedRoleCount} full-time role${fullTimeCompSummary.trackedRoleCount !== 1 ? 's' : ''}`}
+          totalLabel="Combined Annual Earnings"
+          totalHint="Sum of base salary, bonus, and equity across your tracked full-time roles."
+          kind="salary"
+          total={fullTimeCompSummary.total}
+          base={fullTimeCompSummary.base}
+          bonus={fullTimeCompSummary.bonus}
+          equity={fullTimeCompSummary.equity}
+        />
+      )}
+
+      {overallInternshipBreakdownOpen && internshipCompSummary.trackedRoleCount > 0 && (() => {
+        // Build an aggregate hourly snapshot for all internship roles
+        const internshipRoles = experiences.filter(exp => exp.employment_type === 'internship');
+        const snapshots = internshipRoles
+          .map(exp => getCompensationSnapshot(exp))
+          .filter((s): s is Extract<NonNullable<ReturnType<typeof getCompensationSnapshot>>, { kind: 'hourly' }> => s !== null && s.kind === 'hourly');
+        const aggTotal = snapshots.reduce((sum, s) => sum + s.total, 0);
+        const aggRegularPay = snapshots.reduce((sum, s) => sum + s.regularPay, 0);
+        const aggOvertimePay = snapshots.reduce((sum, s) => sum + s.overtimePay, 0);
+        const aggHours = snapshots.reduce((sum, s) => sum + s.estimatedHours, 0);
+        const aggOTHours = snapshots.reduce((sum, s) => sum + s.overtimeHours, 0);
+        return (
+          <CompensationBreakdownModal
+            open={overallInternshipBreakdownOpen}
+            onClose={() => setOverallInternshipBreakdownOpen(false)}
+            titleText="Overall Internship Earnings Breakdown"
+            contextLabel={`Across ${internshipCompSummary.trackedRoleCount} internship role${internshipCompSummary.trackedRoleCount !== 1 ? 's' : ''}`}
+            totalLabel="Combined Internship Earnings"
+            totalHint="Sum of all tracked internship earnings across roles."
+            kind="hourly"
+            total={aggTotal}
+            regularPay={aggRegularPay}
+            overtimePay={aggOvertimePay}
+            estimatedHours={aggHours}
+            hourlyRate={aggHours > 0 ? aggTotal / aggHours : 0}
+            hoursPerDay={8}
+            workingDaysPerWeek={5}
+            totalHoursWorked={null}
+            overtimeHours={aggOTHours}
+            overtimeRate={null}
+            overtimeMultiplier={1.5}
+            effectiveOvertimeRate={0}
+            autoCalculatedHours={aggHours}
+            weekdaysWorked={0}
+            calculationMode="manual_hours"
+            dateRangeLabel={`${snapshots.length} roles combined`}
+            totalEarningsOverride={null}
+            isMultiPhase={false}
+            hourlyDisplayMode="aggregate"
+          />
+        );
+      })()}
 
       <ExperienceModal
         open={modalOpen}
