@@ -95,7 +95,7 @@ const LocationTaxSection = ({
               </div>
               <input
                 type="range"
-                min={15}
+                min={0}
                 max={55}
                 value={Number(value)}
                 onChange={(e) =>
@@ -108,6 +108,9 @@ const LocationTaxSection = ({
               />
             </div>
           ))}
+          <p className="text-xs text-gray-500">
+            Set a rate to `0%` when that pay type does not apply, like offers with no bonus or no equity.
+          </p>
         </div>
       )}
 

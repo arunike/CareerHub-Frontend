@@ -261,9 +261,22 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     ).length;
 
     const interviewRate = total > 0 ? ((totalInterviews / total) * 100).toFixed(1) : '0.0';
+    const respondedCount = applications.filter((a) =>
+      ['OA', 'SCREEN', 'ONSITE', 'OFFER', 'ACCEPTED', 'REJECTED'].includes(a.status)
+    ).length;
+    const responseRate = total > 0 ? ((respondedCount / total) * 100).toFixed(1) : '0.0';
+    const offerRate = total > 0 ? ((offers / total) * 100).toFixed(1) : '0.0';
 
     // 3. Dynamic Location Stats
     const locationCounts: Record<string, number> = {};
+    const companyCounts: Record<string, number> = {};
+    const workModeCounts: Record<string, number> = {
+      Remote: 0,
+      Hybrid: 0,
+      Onsite: 0,
+      Unknown: 0,
+    };
+
     applications.forEach((a) => {
       let loc = (a.location || '').trim();
       if (!loc) loc = 'Unknown';
@@ -271,11 +284,32 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       if (loc.toLowerCase().includes('remote')) loc = 'Remote';
       loc = loc.charAt(0).toUpperCase() + loc.slice(1);
       locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+
+      const companyName = (a.company_details?.name || 'Unknown').trim() || 'Unknown';
+      companyCounts[companyName] = (companyCounts[companyName] || 0) + 1;
+
+      const workMode = (() => {
+        const value = (a.rto_policy || 'UNKNOWN').toString().toUpperCase();
+        if (value === 'REMOTE') return 'Remote';
+        if (value === 'HYBRID') return 'Hybrid';
+        if (value === 'ONSITE') return 'Onsite';
+        return 'Unknown';
+      })();
+      workModeCounts[workMode] = (workModeCounts[workMode] || 0) + 1;
     });
 
     const locations = Object.entries(locationCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
+    const topCompanies = Object.entries(companyCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+    const workModes = [
+      { name: 'Remote', count: workModeCounts.Remote, color: 'bg-emerald-500' },
+      { name: 'Hybrid', count: workModeCounts.Hybrid, color: 'bg-amber-500' },
+      { name: 'Onsite', count: workModeCounts.Onsite, color: 'bg-rose-500' },
+      { name: 'Unknown', count: workModeCounts.Unknown, color: 'bg-slate-400' },
+    ];
 
     // 4. Dynamic Round Stats
     const roundCounts: Record<string, number> = {};
@@ -300,6 +334,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     let daysToOfferSum = 0;
     let daysToOfferCount = 0;
     const funnelSteps = { APPLIED: 0, OA: 0, SCREEN: 0, ONSITE: 0, OFFER: 0, ACCEPTED: 0 };
+    const now = Date.now();
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const recentApplications30d = applications.filter((a) => {
+      const sourceDate = a.date_applied || a.created_at;
+      if (!sourceDate) return false;
+      const timestamp = new Date(sourceDate).getTime();
+      return !Number.isNaN(timestamp) && now - timestamp <= THIRTY_DAYS_MS;
+    }).length;
 
     applications.forEach((a) => {
       const status = a.status as string;
@@ -342,10 +384,17 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       activeInterviews,
       totalInterviews,
       interviewRate,
+      responseRate,
+      respondedCount,
+      offerRate,
+      recentApplications30d,
       locations,
+      topCompanies,
+      workModes,
       rounds,
       funnel,
       avgDaysToOffer,
+      avgDaysToOfferSampleSize: daysToOfferCount,
     };
   }, [applications]);
 

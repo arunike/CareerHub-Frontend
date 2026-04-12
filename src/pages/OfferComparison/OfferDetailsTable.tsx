@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import type { ApplicationLike as Application, OfferLike as Offer } from './calculations';
 import type { AdjustedOfferMetrics } from './types';
+import { formatPtoLabel } from '../../utils/offerTimeOff';
 
 type Props = {
   offers: Offer[];
@@ -68,7 +69,7 @@ const OfferDetailsTable = ({
                 Adjusted Value
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                PTO Days
+                PTO
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Holiday Days
@@ -159,7 +160,9 @@ const OfferDetailsTable = ({
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                     {adjusted ? `$${Math.round(adjusted.adjustedValue).toLocaleString()}` : '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{offer.pto_days || 0} days</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatPtoLabel(offer.pto_days, !!offer.is_unlimited_pto)}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {offer.holiday_days ?? 11} days
                   </td>

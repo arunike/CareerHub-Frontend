@@ -14,6 +14,7 @@ import { getNegotiationAdvice } from '../../api/career';
 import type { NegotiationAdvice } from '../../api/career';
 import type { OfferLike as Offer, ApplicationLike as Application } from './calculations';
 import { saveNegotiationResult } from '../../utils/negotiationStorage';
+import { formatPtoLabel } from '../../utils/offerTimeOff';
 
 const { Text } = Typography;
 
@@ -89,6 +90,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           equity: Number(offer.equity),
           sign_on: Number(offer.sign_on),
           pto_days: offer.pto_days ?? 0,
+          is_unlimited_pto: !!offer.is_unlimited_pto,
         },
         data,
       );
@@ -130,7 +132,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           { label: 'Bonus', value: fmt(Number(offer.bonus)) },
           { label: 'Equity/yr', value: fmt(Number(offer.equity)) },
           { label: 'Sign-On', value: fmt(Number(offer.sign_on)) },
-          { label: 'PTO', value: `${offer.pto_days} days` },
+          { label: 'PTO', value: formatPtoLabel(offer.pto_days, !!offer.is_unlimited_pto) },
         ].map(({ label, value }) => (
           <div key={label} className="flex flex-col items-center min-w-[72px]">
             <Text type="secondary" className="text-xs uppercase tracking-wider">{label}</Text>

@@ -13,6 +13,7 @@ export interface StoredNegotiationResult {
     equity: number;
     sign_on: number;
     pto_days: number;
+    is_unlimited_pto?: boolean;
   };
   advice: NegotiationAdvice;
   title?: string;

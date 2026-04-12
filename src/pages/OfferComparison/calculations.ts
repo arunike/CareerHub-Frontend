@@ -37,6 +37,7 @@ export interface SimulatedOffer {
   free_food_perk_value: number;
   free_food_perk_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   pto_days: number;
+  is_unlimited_pto?: boolean;
   holiday_days: number;
   tax_base_rate?: number;
   tax_bonus_rate?: number;
@@ -57,6 +58,7 @@ export interface OfferLike {
   benefits_value: number;
   benefit_items?: BenefitItem[];
   pto_days: number;
+  is_unlimited_pto?: boolean;
   holiday_days?: number;
   is_current: boolean;
   created_at?: string;

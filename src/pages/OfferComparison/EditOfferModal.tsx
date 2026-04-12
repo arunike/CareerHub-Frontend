@@ -138,6 +138,8 @@ const EditOfferModal = ({
               enableCompModeToggles
               ptoDays={Number(editingOffer.pto_days) || 0}
               onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}
+              isUnlimitedPto={!!editingOffer.is_unlimited_pto}
+              onIsUnlimitedPtoChange={(value) => setEditingOfferField('is_unlimited_pto', value)}
               holidayDays={Number(editingOffer.holiday_days ?? 11)}
               onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
               locationPlaceholder="e.g. San Jose, CA"

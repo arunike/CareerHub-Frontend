@@ -13,6 +13,7 @@ import {
 import { getNegotiationResultById } from '../../utils/negotiationStorage';
 import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
+import { formatPtoLabel } from '../../utils/offerTimeOff';
 
 const { Text } = Typography;
 
@@ -165,7 +166,10 @@ const NegotiationResultPage: React.FC = () => {
                 { label: 'Bonus', value: fmt(snap.bonus) },
                 { label: 'Equity / yr', value: fmt(snap.equity) },
                 { label: 'Sign-On', value: fmt(snap.sign_on) },
-                { label: 'PTO', value: snap.pto_days ? `${snap.pto_days} days` : null },
+                {
+                  label: 'PTO',
+                  value: snap.is_unlimited_pto ? 'Unlimited' : snap.pto_days ? formatPtoLabel(snap.pto_days) : null,
+                },
               ]
                 .filter((x) => x.value)
                 .map(({ label, value }) => (

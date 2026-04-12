@@ -164,7 +164,7 @@ const OfferComparison = () => {
           }
         : null
     );
-    setEditingOffer({ ...offer });
+    setEditingOffer({ ...offer, is_unlimited_pto: !!offer.is_unlimited_pto });
     const benefitItems =
       Array.isArray(offer.benefit_items) && offer.benefit_items.length > 0
         ? offer.benefit_items.map((item, idx) =>
@@ -284,6 +284,7 @@ const OfferComparison = () => {
         benefits_value: 0,
         benefit_items: [],
         pto_days: 15,
+        is_unlimited_pto: false,
         holiday_days: 11,
       });
 

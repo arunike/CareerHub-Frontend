@@ -1,5 +1,6 @@
 import RowActions from '../../components/RowActions';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
+import { formatTimeOffSummary } from '../../utils/offerTimeOff';
 
 type Props = {
   scenarioRows: ScenarioRow[];
@@ -39,7 +40,7 @@ const AdjustedComparisonTable = ({
               Category Deltas
             </th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-              PTO + Holidays (Days)
+              Time Off
             </th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
               Adjusted Value
@@ -103,15 +104,24 @@ const AdjustedComparisonTable = ({
                   )}
                 </td>
                 <td className="px-4 py-2 text-xs text-gray-700">
-                  <div>{Math.round(row.pto_holiday_days)} days</div>
-                  {!isCurrent && (
+                  <div className="font-medium text-gray-800">
+                    {row.is_unlimited_pto ? 'Unlimited PTO' : `${Math.round(row.pto_holiday_days ?? 0)} days`}
+                  </div>
+                  {!isCurrent && row.deltaPtoHolidayDays != null && (
                     <div className={row.deltaPtoHolidayDays >= 0 ? 'text-green-600' : 'text-red-500'}>
                       {row.deltaPtoHolidayDays >= 0 ? '+' : ''}
                       {Math.round(row.deltaPtoHolidayDays)} days vs current
                     </div>
                   )}
+                  {!isCurrent && row.deltaPtoHolidayDays == null && (
+                    <div className="text-amber-600">Unlimited PTO is not normalized into a day delta</div>
+                  )}
                   <div className="text-gray-400">
-                    {row.pto_days} PTO days + {row.holiday_days} holidays
+                    {formatTimeOffSummary({
+                      ptoDays: row.pto_days,
+                      holidayDays: row.holiday_days,
+                      isUnlimitedPto: row.is_unlimited_pto,
+                    })}
                   </div>
                 </td>
                 <td className="px-4 py-2 text-sm font-semibold text-gray-900">
