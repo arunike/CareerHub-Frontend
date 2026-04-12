@@ -278,7 +278,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     };
 
     applications.forEach((a) => {
-      let loc = (a.location || '').trim();
+      let loc = ((a.office_location || a.location) || '').trim();
       if (!loc) loc = 'Unknown';
       loc = loc.split(',')[0].trim();
       if (loc.toLowerCase().includes('remote')) loc = 'Remote';

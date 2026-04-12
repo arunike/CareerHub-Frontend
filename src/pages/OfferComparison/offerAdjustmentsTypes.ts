@@ -29,6 +29,7 @@ export interface ScenarioRow {
   offer: { id?: number | string; is_current?: boolean };
   appName: string;
   locationLabel: string;
+  homeLocationLabel: string;
   colIndex: number;
   monthlyRent: number;
   work_mode: string;

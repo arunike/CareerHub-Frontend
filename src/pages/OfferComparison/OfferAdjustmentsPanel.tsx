@@ -17,6 +17,7 @@ import {
 import {
   type OfferAdjustmentsPanelProps,
 } from './offerAdjustmentsTypes';
+import { getEffectiveTaxLocation } from '../../utils/applicationLocation';
 
 const OFFER_ADJUSTMENT_SETTINGS_KEY = 'careerhub.offerAdjustments.v1';
 
@@ -26,6 +27,7 @@ const defaultScenarioDraft = (): SimulatedOffer => ({
   custom_company_name: '',
   custom_role_title: '',
   location: 'San Francisco, CA, United States',
+  office_location: '',
   base_salary: 100000,
   bonus: 20000,
   equity: 20000,
@@ -88,9 +90,10 @@ const OfferAdjustmentsPanel = ({
     const current = filteredOffers.find((offer) => offer.is_current) || filteredOffers[0];
     if (current) {
       const currentApp = applications.find((app) => app.id === current.application);
-      if (currentApp?.location?.trim()) return currentApp.location;
+      const currentLocation = getEffectiveTaxLocation(currentApp);
+      if (currentLocation) return currentLocation;
     }
-    const anyLocation = applications.find((app) => app.location?.trim())?.location;
+    const anyLocation = applications.map((app) => getEffectiveTaxLocation(app)).find(Boolean);
     return anyLocation || 'San Francisco, CA, United States';
   }, [filteredOffers, applications]);
 
@@ -331,7 +334,7 @@ const OfferAdjustmentsPanel = ({
                 <span className="text-sm font-semibold text-gray-900">Per-offer</span>
               </div>
               <p className="text-xs text-gray-500">
-                Tax/COL/Rent are configured on each offer form. No centralized city/rate/rent control.
+                Tax/COL/Rent use each offer&apos;s home location. Office location is tracked separately for context.
               </p>
               <p className="text-xs text-gray-500">
                 Baseline rent source for non-custom offers: {rentEstimate?.provider || 'HUD FMR API'}

@@ -29,7 +29,7 @@ const AdjustedComparisonTable = ({
         <thead className="bg-white">
           <tr>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Offer</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Locations</th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">COL</th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rent / Mo</th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tax (B/Bn/Eq)</th>
@@ -60,7 +60,12 @@ const AdjustedComparisonTable = ({
                   <div className="font-medium text-gray-900">{row.appName}</div>
                   <div className="text-xs text-gray-500">{row.kind === 'real' ? 'Real Offer' : 'Custom Offer'}</div>
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">{row.locationLabel}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">
+                  <div>{row.locationLabel}</div>
+                  {row.homeLocationLabel !== row.locationLabel && (
+                    <div className="text-xs text-gray-400">Tax/COL: {row.homeLocationLabel}</div>
+                  )}
+                </td>
                 <td className="px-4 py-2 text-sm text-gray-700">{Math.round(row.colIndex)}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">${Math.round(row.monthlyRent).toLocaleString()}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">

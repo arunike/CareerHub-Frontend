@@ -3,9 +3,11 @@ import {
   getOffers,
   createOffer,
   updateOffer,
+  deleteOffer,
   getApplications,
   createApplication,
   updateApplication,
+  deleteApplication,
 } from '../../api';
 import {
   BarChart,
@@ -207,6 +209,7 @@ const OfferComparison = () => {
           company_name: editingApp.company_name,
           role_title: editingApp.role_title,
           location: editingApp.location,
+          office_location: editingApp.office_location || '',
           rto_policy: editingApp.rto_policy,
           rto_days_per_week: editingApp.rto_days_per_week ?? 0,
           commute_cost_value: editingApp.commute_cost_value ?? 0,
@@ -252,6 +255,40 @@ const OfferComparison = () => {
     }
   };
 
+  const handleDeleteOffer = async (offer: Offer) => {
+    try {
+      const linkedApplication = applicationsById[offer.application];
+
+      if (linkedApplication?.id) {
+        await deleteApplication(linkedApplication.id);
+        messageApi.success('Application and linked offer deleted');
+      } else if (offer.id) {
+        await deleteOffer(offer.id);
+        messageApi.success('Offer deleted');
+      } else {
+        messageApi.error('Unable to find the linked application for this offer');
+        return;
+      }
+
+      if (editingOffer?.id === offer.id) {
+        setEditingOffer(null);
+        setEditingApp(null);
+        setOfferModalMode('edit');
+      }
+      if (negotiatingOffer?.id === offer.id) {
+        setNegotiatingOffer(null);
+      }
+      if (raiseHistoryOffer?.id === offer.id) {
+        setRaiseHistoryOffer(null);
+      }
+
+      fetchData();
+    } catch (error) {
+      messageApi.error('Failed to delete linked application');
+      console.error(error);
+    }
+  };
+
   const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
     if (!raiseHistoryOffer?.id) return;
     await updateOffer(raiseHistoryOffer.id, { ...raiseHistoryOffer, raise_history: entries });
@@ -271,6 +308,7 @@ const OfferComparison = () => {
         role_title: 'Current Role',
         status: 'ACCEPTED',
         date_applied: new Date().toISOString().split('T')[0],
+        office_location: '',
       });
       const appId = appResp.data.id;
 
@@ -449,6 +487,7 @@ const OfferComparison = () => {
         onToggleCurrent={toggleCurrent}
         onNegotiateClick={setNegotiatingOffer}
         onRaiseHistoryClick={setRaiseHistoryOffer}
+        onDeleteClick={handleDeleteOffer}
       />
 
       <AddCurrentJobModal

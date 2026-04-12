@@ -70,6 +70,8 @@ const EditOfferModal = ({
               onRoleTitleChange={(value) => patchEditingApp({ role_title: value })}
               location={editingApp?.location || ''}
               onLocationChange={(value) => patchEditingApp({ location: value })}
+              officeLocation={editingApp?.office_location || ''}
+              onOfficeLocationChange={(value) => patchEditingApp({ office_location: value })}
               locationOptions={allUsCityOptions}
               taxRatePreview={{
                 baseTaxRate,
