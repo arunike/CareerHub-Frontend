@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Button, Typography, Spin, message, Popconfirm, Avatar, Tooltip, Tag, Card, Row, Col } from 'antd';
-import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EnvironmentOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined, CodeOutlined, RobotOutlined, RiseOutlined, TrophyOutlined, LinkOutlined, DollarOutlined, TeamOutlined, PushpinOutlined, PushpinFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getExperiences, createExperience, updateExperience, deleteExperience, deleteAllExperiences, uploadExperienceLogo, removeExperienceLogo, getOffers, updateOffer } from '../../api/career';
 import { getUserSettings } from '../../api/availability';
@@ -10,8 +10,9 @@ import ExperienceModal from './ExperienceModal';
 import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
+import TeamHistoryModal from './TeamHistoryModal';
 import type { OfferLike as Offer } from '../OfferComparison/calculations';
-import type { RaiseEntry } from '../../types';
+import type { RaiseEntry, TeamEntry } from '../../types';
 
 const { Title, Text } = Typography;
 
@@ -22,7 +23,7 @@ const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
   try {
     return new URL(url).pathname; // → /media/experience_logos/file.jpg
   } catch {
-    return url; // already relative
+    return url;
   }
 };
 
@@ -100,6 +101,7 @@ const ExperiencePage: React.FC = () => {
   const [empTypes, setEmpTypes] = useState<EmploymentType[]>(DEFAULT_EMP_TYPES);
   const [allOffers, setAllOffers] = useState<Offer[]>([]);
   const [raiseHistoryExp, setRaiseHistoryExp] = useState<Experience | null>(null);
+  const [teamHistoryExp, setTeamHistoryExp] = useState<Experience | null>(null);
 
   useEffect(() => {
     fetchExperiences();
@@ -213,6 +215,16 @@ const ExperiencePage: React.FC = () => {
     }
   };
 
+  const handleTogglePin = async (exp: Experience) => {
+    if (!exp.id) return;
+    try {
+      await updateExperience(exp.id, { is_pinned: !exp.is_pinned });
+      setExperiences(prev => prev.map(e => e.id === exp.id ? { ...e, is_pinned: !exp.is_pinned } : e));
+    } catch {
+      message.error('Failed to update pin status');
+    }
+  };
+
   const getLinkedOffer = (exp: Experience): Offer | undefined =>
     exp.offer ? allOffers.find(o => o.id === exp.offer) : undefined;
 
@@ -226,6 +238,13 @@ const ExperiencePage: React.FC = () => {
 
   const handleRaiseHistoryClick = (exp: Experience) => {
     setRaiseHistoryExp(exp);
+  };
+
+  const handleSaveTeamHistory = async (entries: TeamEntry[]) => {
+    if (!teamHistoryExp?.id) return;
+    await updateExperience(teamHistoryExp.id, { team_history: entries } as Partial<Experience>);
+    setExperiences(prev => prev.map(e => e.id === teamHistoryExp.id ? { ...e, team_history: entries } : e));
+    setTeamHistoryExp(prev => prev ? { ...prev, team_history: entries } : null);
   };
 
   const openAddModal = () => {
@@ -322,27 +341,53 @@ const ExperiencePage: React.FC = () => {
     return elements;
   };
 
+  const mergedDays = (intervals: [number, number][]): number => {
+    if (intervals.length === 0) return 0;
+    const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
+    let total = 0;
+    let curStart = sorted[0][0];
+    let curEnd = sorted[0][1];
+    for (let i = 1; i < sorted.length; i++) {
+      const [s, e] = sorted[i];
+      if (s <= curEnd) {
+        curEnd = Math.max(curEnd, e);
+      } else {
+        total += curEnd - curStart;
+        curStart = s;
+        curEnd = e;
+      }
+    }
+    total += curEnd - curStart;
+    return total;
+  };
+
   const calculateTotalCareerDuration = () => {
     if (experiences.length === 0) return '0 yrs';
-    let totalDays = 0;
+    const intervals: [number, number][] = [];
     for (const exp of experiences) {
       const start = exp.start_date ? dayjs(exp.start_date) : null;
       const end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
-      if (start && end) totalDays += end.diff(start, 'day');
+      if (start && end) intervals.push([start.valueOf(), end.valueOf()]);
     }
+    const totalDays = Math.round(mergedDays(intervals) / 86400000);
     return fmtDays(totalDays, true);
   };
 
   const totalCompanies = new Set(experiences.map(e => e.company)).size;
 
   const durationByType = useMemo(() => {
-    const result: Record<string, number> = {};
+    const byType: Record<string, [number, number][]> = {};
     for (const exp of experiences) {
       const type = exp.employment_type || 'full_time';
       const start = exp.start_date ? dayjs(exp.start_date) : null;
       const end = exp.is_current ? dayjs() : (exp.end_date ? dayjs(exp.end_date) : null);
       if (!start || !end) continue;
-      result[type] = (result[type] || 0) + end.diff(start, 'day');
+      if (!byType[type]) byType[type] = [];
+      byType[type].push([start.valueOf(), end.valueOf()]);
+    }
+    const result: Record<string, number> = {};
+    for (const [type, intervals] of Object.entries(byType)) {
+      result[type] = Math.round(mergedDays(intervals) / 86400000);
     }
     return result;
   }, [experiences]);
@@ -380,6 +425,14 @@ const ExperiencePage: React.FC = () => {
       dot: DOT_CLASSES[t?.color ?? 'gray'] ?? 'bg-gray-400',
       badge: BADGE_CLASSES[t?.color ?? 'gray'] ?? 'bg-gray-50 text-gray-700 border-gray-200',
     };
+  };
+
+  const getLatestTeam = (exp: Experience) => {
+    const teams = exp.team_history;
+    if (!teams || teams.length === 0) return null;
+    const current = teams.find(t => t.is_current);
+    if (current) return current;
+    return [...teams].sort((a, b) => (b.start_date ?? '').localeCompare(a.start_date ?? ''))[0];
   };
 
   const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): string => {
@@ -461,7 +514,12 @@ const ExperiencePage: React.FC = () => {
       groups.push(group);
     }
 
-    return groups;
+    // Pinned groups float to the top (a group is pinned if its primary role is pinned)
+    return groups.sort((a, b) => {
+      const aPinned = a[0].is_pinned ? 1 : 0;
+      const bPinned = b[0].is_pinned ? 1 : 0;
+      return bPinned - aPinned;
+    });
   }, [filteredExperiences]);
 
   return (
@@ -637,6 +695,16 @@ const ExperiencePage: React.FC = () => {
                             {exp.title}
                           </Title>
                           <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
+                          {exp.is_pinned && (
+                            <Tooltip title="Click to unpin">
+                              <button
+                                onClick={() => handleTogglePin(exp)}
+                                className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full cursor-pointer hover:bg-amber-100 transition-colors"
+                              >
+                                <PushpinFilled style={{ fontSize: 10 }} /> Pinned
+                              </button>
+                            </Tooltip>
+                          )}
                         </div>
                         <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">{exp.company}</div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100">
@@ -650,6 +718,15 @@ const ExperiencePage: React.FC = () => {
                               <span>{exp.location}</span>
                             </div>
                           )}
+                          {exp.employment_type === 'internship' && (() => {
+                            const team = getLatestTeam(exp);
+                            return team ? (
+                              <div className="flex items-center gap-1.5">
+                                <TeamOutlined className="text-gray-400" />
+                                <span>{team.name}</span>
+                              </div>
+                            ) : null;
+                          })()}
                           {exp.employment_type === 'internship' && exp.hourly_rate != null && (
                             <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                               <DollarOutlined />
@@ -671,8 +748,29 @@ const ExperiencePage: React.FC = () => {
                             ) : null;
                           })()}
                         </div>
+                        {exp.employment_type !== 'internship' && (() => {
+                          const team = getLatestTeam(exp);
+                          return team ? (
+                            <div className="flex items-center gap-1.5 text-sm text-gray-500 font-medium mt-2">
+                              <TeamOutlined className="text-gray-400" />
+                              <span>{team.name}</span>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Tooltip title="View / edit team norms for this role">
+                            <Button
+                              size="small"
+                              icon={<TeamOutlined />}
+                              onClick={() => setTeamHistoryExp(exp)}
+                              className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700"
+                            >
+                              Team Norms
+                            </Button>
+                          </Tooltip>
+                        </div>
                         {getLinkedOffer(exp) && (
                           <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
                             <Tooltip title="View / edit raise history for this role">
@@ -691,6 +789,8 @@ const ExperiencePage: React.FC = () => {
                           <RowActions
                             isLocked={exp.is_locked}
                             onToggleLock={() => handleToggleLock(exp)}
+                            isPinned={exp.is_pinned}
+                            onTogglePin={() => handleTogglePin(exp)}
                             onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
                             onDelete={exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)}
                             deleteTitle="Delete Experience"
@@ -729,29 +829,47 @@ const ExperiencePage: React.FC = () => {
                         <div>
                           <div className="text-xl font-bold text-gray-900 tracking-tight">{primary.company}</div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm text-gray-500">{group.length} roles</span>
+                            <span className="text-[15px] text-gray-500">{group.length} roles</span>
                             {tenure && (
                               <>
                                 <span className="text-gray-300">·</span>
-                                <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{tenure} total</span>
+                                <span className="text-[15px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{tenure} total</span>
                               </>
                             )}
                           </div>
                         </div>
                       </div>
-                      {/* Group-level delete */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0">
-                        <Tooltip title={`Delete all roles at ${primary.company}`}>
-                          <Popconfirm
-                            title={`Delete all ${primary.company} roles?`}
-                            description={`This will delete ${group.filter(e => !e.is_locked).length} unlocked role(s).`}
-                            onConfirm={() => handleDeleteGroup(group)}
-                            okText="Delete"
-                            okButtonProps={{ danger: true }}
-                          >
-                            <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-                          </Popconfirm>
-                        </Tooltip>
+                      {/* Group-level actions: pin + delete */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {primary.is_pinned ? (
+                          <Tooltip title="Click to unpin">
+                            <button
+                              onClick={() => handleTogglePin(primary)}
+                              className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full cursor-pointer hover:bg-amber-100 transition-colors"
+                            >
+                              <PushpinFilled style={{ fontSize: 10 }} /> Pinned
+                            </button>
+                          </Tooltip>
+                        ) : (
+                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            <Tooltip title="Pin to top">
+                              <Button type="text" size="small" icon={<PushpinOutlined />} onClick={() => handleTogglePin(primary)} className="text-gray-400 hover:text-amber-500" />
+                            </Tooltip>
+                          </div>
+                        )}
+                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Tooltip title={`Delete all roles at ${primary.company}`}>
+                            <Popconfirm
+                              title={`Delete all ${primary.company} roles?`}
+                              description={`This will delete ${group.filter(e => !e.is_locked).length} unlocked role(s).`}
+                              onConfirm={() => handleDeleteGroup(group)}
+                              okText="Delete"
+                              okButtonProps={{ danger: true }}
+                            >
+                              <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+                            </Popconfirm>
+                          </Tooltip>
+                        </div>
                       </div>
                     </div>
 
@@ -769,7 +887,7 @@ const ExperiencePage: React.FC = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-semibold text-[15px] text-gray-900 leading-snug">{exp.title}</span>
+                                  <span className="font-semibold text-[17px] text-gray-900 leading-snug">{exp.title}</span>
                                   {exp.is_promotion && (
                                     <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
                                       <RiseOutlined style={{ fontSize: 9 }} /> Promoted
@@ -777,7 +895,7 @@ const ExperiencePage: React.FC = () => {
                                   )}
                                   <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
                                 </div>
-                                <div className="flex flex-wrap items-center gap-x-3 mt-1 text-sm text-gray-500">
+                                <div className="flex flex-wrap items-center gap-x-3 mt-1 text-[15px] text-gray-500">
                                   <span className="flex items-center gap-1.5">
                                     <CalendarOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
                                     {/* Older roles auto-derive end date from the next role's start date */}
@@ -789,6 +907,15 @@ const ExperiencePage: React.FC = () => {
                                       {exp.location}
                                     </span>
                                   )}
+                                  {exp.employment_type === 'internship' && (() => {
+                                    const team = getLatestTeam(exp);
+                                    return team ? (
+                                      <span className="flex items-center gap-1.5">
+                                        <TeamOutlined style={{ fontSize: 11, color: '#9ca3af' }} />
+                                        {team.name}
+                                      </span>
+                                    ) : null;
+                                  })()}
                                   {exp.employment_type === 'internship' && exp.hourly_rate != null && (
                                     <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                                       <DollarOutlined style={{ fontSize: 11 }} />
@@ -810,8 +937,27 @@ const ExperiencePage: React.FC = () => {
                                     ) : null;
                                   })()}
                                 </div>
+                                {exp.employment_type !== 'internship' && (() => {
+                                  const team = getLatestTeam(exp);
+                                  return team ? (
+                                    <div className="flex items-center gap-1.5 mt-1 text-[15px] text-gray-500">
+                                      <TeamOutlined style={{ fontSize: 12, color: '#9ca3af' }} />
+                                      <span>{team.name}</span>
+                                    </div>
+                                  ) : null;
+                                })()}
                               </div>
                               <div className="flex items-center gap-2 shrink-0 ml-2">
+                                <Tooltip title="View / edit team norms for this role">
+                                  <Button
+                                    size="small"
+                                    icon={<TeamOutlined />}
+                                    onClick={() => setTeamHistoryExp(exp)}
+                                    className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700"
+                                  >
+                                    Team Norms
+                                  </Button>
+                                </Tooltip>
                                 {getLinkedOffer(exp) ? (
                                   <Tooltip title="View / edit raise history for this role">
                                     <Button
@@ -850,11 +996,11 @@ const ExperiencePage: React.FC = () => {
                               </div>
                             </div>
 
-                            {exp.description && <div className="mt-4 text-[14px]">{renderDescription(exp.description)}</div>}
+                            {exp.description && <div className="mt-4 text-[15px]">{renderDescription(exp.description)}</div>}
                             {skills.length > 0 && (
                               <div className="mt-4 flex flex-wrap gap-1.5">
                                 {skills.map(skill => (
-                                  <Tag key={skill} className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-xs hover:bg-blue-50 transition-colors">{skill}</Tag>
+                                  <Tag key={skill} className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-sm hover:bg-blue-50 transition-colors">{skill}</Tag>
                                 ))}
                               </div>
                             )}
@@ -871,7 +1017,7 @@ const ExperiencePage: React.FC = () => {
                   <div className="flex-shrink-0 relative z-10 hidden md:flex flex-col items-center">
                     {groupAvatar}
                   </div>
-                  <div className="flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group-hover:border-blue-100">
+                  <div className={`flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group-hover:border-blue-100 ${primary.is_pinned ? 'border-amber-200 ring-1 ring-amber-100' : 'border-gray-100'}`}>
                     <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-300 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
                   </div>
@@ -890,6 +1036,20 @@ const ExperiencePage: React.FC = () => {
           companyName={raiseHistoryExp.company}
           roleTitle={raiseHistoryExp.title}
           onSave={handleSaveRaiseHistory}
+        />
+      )}
+
+      {teamHistoryExp && (
+        <TeamHistoryModal
+          open={!!teamHistoryExp}
+          onClose={() => setTeamHistoryExp(null)}
+          experienceName={`${teamHistoryExp.title} @ ${teamHistoryExp.company}`}
+          entries={teamHistoryExp.team_history || []}
+          onSave={handleSaveTeamHistory}
+          isIntern={teamHistoryExp.employment_type === 'internship'}
+          expStartDate={teamHistoryExp.start_date}
+          expEndDate={teamHistoryExp.end_date}
+          expIsCurrent={teamHistoryExp.is_current}
         />
       )}
 

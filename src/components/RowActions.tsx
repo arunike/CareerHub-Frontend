@@ -1,10 +1,12 @@
 import React from 'react';
 import { Button, Popconfirm, Space, Tooltip } from 'antd';
-import { DeleteOutlined, EditOutlined, EyeOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, EyeOutlined, LockOutlined, UnlockOutlined, PushpinOutlined, PushpinFilled } from '@ant-design/icons';
 
 interface RowActionsProps {
   isLocked?: boolean;
   onToggleLock?: () => void;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
   onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -23,6 +25,8 @@ interface RowActionsProps {
 const RowActions: React.FC<RowActionsProps> = ({
   isLocked = false,
   onToggleLock,
+  isPinned = false,
+  onTogglePin,
   onView,
   onEdit,
   onDelete,
@@ -64,6 +68,17 @@ const RowActions: React.FC<RowActionsProps> = ({
       {onEdit ? (
         <Tooltip title={editTitle}>
           <Button type="text" size={size} icon={<EditOutlined />} onClick={stopAndRun(onEdit)} disabled={disableEdit} />
+        </Tooltip>
+      ) : null}
+
+      {onTogglePin ? (
+        <Tooltip title={isPinned ? 'Unpin' : 'Pin to top'}>
+          <Button
+            type="text"
+            size={size}
+            icon={isPinned ? <PushpinFilled className="text-amber-500" /> : <PushpinOutlined />}
+            onClick={stopAndRun(onTogglePin)}
+          />
         </Tooltip>
       ) : null}
 
