@@ -24,8 +24,9 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
 - 🤖 **AI Career Suite**: JD matching, cover letter generation, and offer negotiation advisor — all powered by LLM
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
+- 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
-- 📥 **Import/Export**: Bulk upload via CSV/XLSX; export data in CSV, JSON, or XLSX formats
+- 📥 **Import/Export**: Bulk upload via CSV/XLSX plus full-fidelity Experience import/export in CSV, JSON, or XLSX formats (JSON recommended for logos + linked snapshots)
 
 ## ✨ Features
 
@@ -84,6 +85,12 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Exact duration display** — all date ranges and tenure stats show `(N days)` alongside human-readable duration
 - **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; stored in `media/experience_logos/`
 - **Raise History Modal** — accessible from experience entries linked to an offer; log raise events (date, type, before/after base/bonus/equity) with optional label and notes; persisted on the linked Offer record
+- **Team History / Team Norms** — internship and full-time roles can track structured team history in a dedicated modal
+- **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
+- **Overall Earnings Panels** — combined Full-Time and Internship summaries with breakdown modals; internship totals now include overtime pay across tracked roles
+- **Schedule Phases** — split an internship into multiple schedule phases with per-phase rate, schedule, overtime, and total-hours inputs
+- **Quick Import Weekly Schedule** — paste weekly timesheet-style text into the Schedule Phases modal to auto-generate merged phases from dates, hours, and overtime rows
+- **Experience Import / Export** — toolbar supports import/export for the entire Experience page; JSON round-trips the richest payload, including logos, linked offer/application snapshots, team history, and schedule phases
 
 ### 📅 Availability & Events
 
@@ -214,8 +221,13 @@ frontend/
 │   │   │   ├── EditOfferModal.tsx
 │   │   │   └── ...
 │   │   ├── Experience/
-│   │   │   ├── index.tsx            # Experience management with dynamic employment types
-│   │   │   └── JDMatcherModal.tsx   # AI JD evaluation modal
+│   │   │   ├── index.tsx            # Experience management, analytics cards, import/export, overall pay breakdowns
+│   │   │   ├── ExperienceModal.tsx  # Manual entry + quick-import parsing for experience records
+│   │   │   ├── JDMatcherModal.tsx   # AI JD evaluation modal
+│   │   │   ├── TeamHistoryModal.tsx # Team history / norms editor
+│   │   │   ├── SchedulePhasesModal.tsx # Internship multi-phase schedule editor + weekly quick import
+│   │   │   ├── CompensationBreakdownModal.tsx # Per-role and overall earnings breakdown UI
+│   │   │   └── compensation.ts      # Compensation snapshot and hourly/salary calculation helpers
 │   │   ├── JDReportsList/
 │   │   │   └── index.tsx            # Saved JD match reports list
 │   │   ├── JDReport/
@@ -274,7 +286,7 @@ frontend/
 | `/offers` | Offer Comparison | Offer analysis with AI negotiation advisor |
 | `/documents` | Documents | Document vault with versioning |
 | `/tasks` | Action Items | Kanban task board |
-| `/experience` | Experience | Work history + AI JD matcher + employment type badges |
+| `/experience` | Experience | Work history, team history, schedule phases, internship earnings breakdowns, import/export, and AI JD matcher |
 | `/jd-reports` | JD Reports | Saved AI JD match report history |
 | `/ai-tools?tab=cover-letters` | Cover Letters | Saved AI cover letter history |
 | `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history |
