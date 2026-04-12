@@ -21,6 +21,7 @@ import {
   updateNegotiationResultTitle,
 } from '../../utils/negotiationStorage';
 import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
+import { formatPtoLabel } from '../../utils/offerTimeOff';
 
 const { Text } = Typography;
 
@@ -145,7 +146,7 @@ const NegotiationResultsTab: React.FC = () => {
         r.offerSnapshot.bonus,
         r.offerSnapshot.equity,
         r.offerSnapshot.sign_on,
-        r.offerSnapshot.pto_days,
+        r.offerSnapshot.is_unlimited_pto ? 'Unlimited' : r.offerSnapshot.pto_days,
         escape(r.advice.leverage_points.join('; ')),
         escape(r.advice.talking_points.join('; ')),
         escape(r.advice.caution_points.join('; ')),
@@ -307,7 +308,15 @@ const NegotiationResultsTab: React.FC = () => {
                       { label: 'Bonus', value: fmt(snap.bonus) },
                       { label: 'Equity/yr', value: fmt(snap.equity) },
                       { label: 'Sign-On', value: fmt(snap.sign_on) },
-                      { label: 'PTO', value: snap.pto_days ? `${snap.pto_days}d` : null },
+                      {
+                        label: 'PTO',
+                        value:
+                          snap.is_unlimited_pto
+                            ? 'Unlimited'
+                            : snap.pto_days
+                              ? formatPtoLabel(snap.pto_days, false, true)
+                              : null,
+                      },
                     ]
                       .filter((x) => x.value)
                       .map(({ label, value }) => (

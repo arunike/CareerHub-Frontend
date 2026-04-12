@@ -34,8 +34,9 @@ export interface ScenarioRow {
   work_mode: string;
   rto_days_per_week: number;
   pto_days: number;
+  is_unlimited_pto: boolean;
   holiday_days: number;
-  pto_holiday_days: number;
+  pto_holiday_days: number | null;
   total_comp: number;
   adjustedValue: number;
   lifestyleAdjustment: number;
@@ -44,7 +45,7 @@ export interface ScenarioRow {
   deltaBaseAfterTax: number;
   deltaBonusAfterTax: number;
   deltaEquityAfterTax: number;
-  deltaPtoHolidayDays: number;
+  deltaPtoHolidayDays: number | null;
   afterTaxBase: number;
   afterTaxBonus: number;
   afterTaxEquity: number;

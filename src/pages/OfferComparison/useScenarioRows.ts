@@ -105,6 +105,7 @@ export const useScenarioRows = ({
         equityTaxRate: rowTax.equityTaxRate,
         costOfLivingIndex: rowColIndex,
       });
+      const isUnlimitedPto = !!offer.is_unlimited_pto;
 
       return {
         kind: 'real' as const,
@@ -116,8 +117,11 @@ export const useScenarioRows = ({
         work_mode: workMode,
         rto_days_per_week: rtoDays,
         pto_days: Number(offer.pto_days || 0),
+        is_unlimited_pto: isUnlimitedPto,
         holiday_days: Number(offer.holiday_days ?? 11),
-        pto_holiday_days: Number(offer.pto_days || 0) + Number(offer.holiday_days ?? 11),
+        pto_holiday_days: isUnlimitedPto
+          ? null
+          : Number(offer.pto_days || 0) + Number(offer.holiday_days ?? 11),
         total_comp:
           Number(offer.base_salary) +
           Number(offer.bonus) +
@@ -183,6 +187,7 @@ export const useScenarioRows = ({
         equityTaxRate: rowTax.equityTaxRate,
         costOfLivingIndex: rowColIndex,
       });
+      const isUnlimitedPto = !!offer.is_unlimited_pto;
 
       const appName =
         offer.application && applications.find((a) => a.id === offer.application)
@@ -199,8 +204,11 @@ export const useScenarioRows = ({
         work_mode: offer.work_mode,
         rto_days_per_week: offer.rto_days_per_week,
         pto_days: Number(offer.pto_days || 0),
+        is_unlimited_pto: isUnlimitedPto,
         holiday_days: Number(offer.holiday_days ?? 11),
-        pto_holiday_days: Number(offer.pto_days || 0) + Number(offer.holiday_days ?? 11),
+        pto_holiday_days: isUnlimitedPto
+          ? null
+          : Number(offer.pto_days || 0) + Number(offer.holiday_days ?? 11),
         total_comp:
           Number(offer.base_salary) +
           Number(offer.bonus) +
@@ -228,7 +236,8 @@ export const useScenarioRows = ({
     const currentBaseAfterTax = current?.afterTaxBase || 0;
     const currentBonusAfterTax = current?.afterTaxBonus || 0;
     const currentEquityAfterTax = current?.afterTaxEquity || 0;
-    const currentPtoHolidayDays = current?.pto_holiday_days || 0;
+    const currentPtoHolidayDays = current?.pto_holiday_days ?? 0;
+    const currentHasUnlimitedPto = !!current?.is_unlimited_pto;
     const currentTotalComp = current?.total_comp || 0;
 
     return rows
@@ -239,7 +248,10 @@ export const useScenarioRows = ({
         deltaBaseAfterTax: row.offer.is_current ? 0 : row.afterTaxBase - currentBaseAfterTax,
         deltaBonusAfterTax: row.offer.is_current ? 0 : row.afterTaxBonus - currentBonusAfterTax,
         deltaEquityAfterTax: row.offer.is_current ? 0 : row.afterTaxEquity - currentEquityAfterTax,
-        deltaPtoHolidayDays: row.offer.is_current ? 0 : row.pto_holiday_days - currentPtoHolidayDays,
+        deltaPtoHolidayDays:
+          row.offer.is_current || row.is_unlimited_pto || currentHasUnlimitedPto || row.pto_holiday_days == null
+            ? null
+            : row.pto_holiday_days - currentPtoHolidayDays,
       }))
       .sort((a, b) => b.adjustedValue - a.adjustedValue);
   }, [

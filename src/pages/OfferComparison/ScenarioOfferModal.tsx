@@ -171,6 +171,8 @@ const ScenarioOfferModal = ({
                 enableCompModeToggles
                 ptoDays={Number(newScenario.pto_days) || 0}
                 onPtoDaysChange={(value) => setNewScenarioField('pto_days', value)}
+                isUnlimitedPto={!!newScenario.is_unlimited_pto}
+                onIsUnlimitedPtoChange={(value) => setNewScenarioField('is_unlimited_pto', value)}
                 holidayDays={Number(newScenario.holiday_days ?? 11)}
                 onHolidayDaysChange={(value) => setNewScenarioField('holiday_days', value)}
             />

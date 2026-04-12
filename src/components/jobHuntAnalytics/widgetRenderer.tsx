@@ -1,10 +1,13 @@
 import {
+  ApartmentOutlined,
   AimOutlined,
+  BankOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
+  LineChartOutlined,
   NumberOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
@@ -20,10 +23,17 @@ export type JobHuntStats = {
   activeInterviews: number;
   totalInterviews: number;
   interviewRate: string;
+  responseRate: string;
+  respondedCount: number;
+  offerRate: string;
+  recentApplications30d: number;
   locations: { name: string; count: number }[];
+  topCompanies: { name: string; count: number }[];
+  workModes: { name: string; count: number; color: string }[];
   rounds: { name: string; count: number }[];
   funnel: { label: string; value: number; color: string }[];
   avgDaysToOffer: number | null;
+  avgDaysToOfferSampleSize: number;
 };
 
 export const renderJobHuntWidget = (
@@ -50,17 +60,12 @@ export const renderJobHuntWidget = (
       return (
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Active Interviews</p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-bold text-gray-900">{stats.activeInterviews}</p>
-              <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                {stats.interviewRate}% Rate
-              </span>
-            </div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Active Pipeline</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.activeInterviews}</p>
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-500">
             <ClockCircleOutlined className="mr-1.5 text-blue-500 text-base" />
-            <span>In Pipeline</span>
+            <span>{stats.totalInterviews} reached interview stages</span>
           </div>
         </div>
       );
@@ -98,6 +103,45 @@ export const renderJobHuntWidget = (
           <div className="mt-4 flex items-center text-sm text-gray-500">
             <QuestionCircleOutlined className="mr-1.5 text-gray-400 text-base" />
             <span>Ghosted</span>
+          </div>
+        </div>
+      );
+    case 'response_rate':
+      return (
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Response Rate</p>
+            <p className="text-3xl font-bold text-sky-600">{stats.responseRate}%</p>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-gray-500">
+            <LineChartOutlined className="mr-1.5 text-sky-500 text-base" />
+            <span>{stats.respondedCount} responded</span>
+          </div>
+        </div>
+      );
+    case 'offer_rate':
+      return (
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Offer Rate</p>
+            <p className="text-3xl font-bold text-emerald-600">{stats.offerRate}%</p>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-gray-500">
+            <CheckCircleOutlined className="mr-1.5 text-emerald-500 text-base" />
+            <span>{stats.offers} offer{stats.offers !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+      );
+    case 'recent_applications':
+      return (
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">Last 30 Days</p>
+            <p className="text-3xl font-bold text-indigo-600">{stats.recentApplications30d}</p>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-gray-500">
+            <ClockCircleOutlined className="mr-1.5 text-indigo-500 text-base" />
+            <span>Recent applications</span>
           </div>
         </div>
       );
@@ -140,6 +184,77 @@ export const renderJobHuntWidget = (
             ))}
             {stats.locations.length === 0 && (
               <div className="text-center py-8 text-gray-400">No location data found</div>
+            )}
+          </div>
+        </div>
+      );
+    case 'top_companies':
+      return (
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <BankOutlined className="text-xl text-gray-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Top Companies</h3>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {stats.topCompanies.slice(0, 8).map((company, idx) => (
+              <div key={company.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium shrink-0 ${
+                      idx === 0
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : idx === 1
+                          ? 'bg-indigo-50 text-indigo-600'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <span className="text-gray-700 font-medium truncate">{company.name}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-500 rounded-full"
+                      style={{ width: `${stats.total > 0 ? (company.count / stats.total) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-gray-900 font-bold">{company.count}</span>
+                </div>
+              </div>
+            ))}
+            {stats.topCompanies.length === 0 && (
+              <div className="text-center py-8 text-gray-400">No company data found</div>
+            )}
+          </div>
+        </div>
+      );
+    case 'work_modes':
+      return (
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <ApartmentOutlined className="text-xl text-gray-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Work Modes</h3>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {stats.workModes.map((mode) => (
+              <div key={mode.name} className="flex items-center justify-between gap-4">
+                <div className="min-w-[88px] text-sm font-medium text-gray-700">{mode.name}</div>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${mode.color}`}
+                    style={{ width: `${stats.total > 0 ? (mode.count / stats.total) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="w-10 text-right font-mono text-gray-900 font-bold">{mode.count}</div>
+              </div>
+            ))}
+            {stats.workModes.every((mode) => mode.count === 0) && (
+              <div className="text-center py-8 text-gray-400">No work-mode data found</div>
             )}
           </div>
         </div>
@@ -216,16 +331,25 @@ export const renderJobHuntWidget = (
     }
     case 'avg_days_to_offer':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Avg Days to Offer</p>
-            <p className="text-3xl font-bold text-purple-600">
-              {stats.avgDaysToOffer !== null ? stats.avgDaysToOffer : '-'}
-            </p>
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Avg Days to Offer</p>
+              <p className="text-4xl font-bold text-purple-600 leading-none">
+                {stats.avgDaysToOffer !== null ? stats.avgDaysToOffer : '-'}
+              </p>
+            </div>
+            <div className="shrink-0 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">
+              {stats.avgDaysToOfferSampleSize} offer{stats.avgDaysToOfferSampleSize !== 1 ? 's' : ''}
+            </div>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
+          <div className="mt-5 flex items-center text-sm text-gray-500">
             <ClockCircleOutlined className="mr-1.5 text-base" />
-            <span>Average duration</span>
+            <span>
+              {stats.avgDaysToOfferSampleSize > 0
+                ? 'Average days from application date to offer creation'
+                : 'Needs at least one application with both apply date and offer data'}
+            </span>
           </div>
         </div>
       );
@@ -247,7 +371,7 @@ export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[
       : 'col-span-1';
   }
 
-  if (['locations', 'rounds', 'funnel'].includes(id)) {
+  if (['locations', 'rounds', 'funnel', 'top_companies', 'work_modes', 'avg_days_to_offer'].includes(id)) {
     return 'col-span-1 md:col-span-2 lg:col-span-2';
   }
   return 'col-span-1';

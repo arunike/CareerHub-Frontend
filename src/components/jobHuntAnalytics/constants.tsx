@@ -7,6 +7,10 @@ import {
   TrophyOutlined,
   BarChartOutlined,
   CalendarOutlined,
+  LineChartOutlined,
+  ApartmentOutlined,
+  BankOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { WidgetDefinition } from './types';
 
@@ -21,8 +25,8 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
   },
   {
     id: 'active',
-    name: 'Active Applications',
-    description: 'Applications currently in progress',
+    name: 'Active Pipeline',
+    description: 'Applications currently in interview stages',
     icon: <ClockCircleOutlined />,
     defaultEnabled: true,
     category: 'statistic',
@@ -37,8 +41,8 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
   },
   {
     id: 'ghosted',
-    name: 'Ghosted Rate',
-    description: 'Percentage of applications ghosted',
+    name: 'No Response',
+    description: 'Applications that were ghosted or never responded to',
     icon: <QuestionCircleOutlined />,
     defaultEnabled: true,
     category: 'statistic',
@@ -74,5 +78,45 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
     icon: <CalendarOutlined />,
     defaultEnabled: true,
     category: 'statistic',
+  },
+  {
+    id: 'response_rate',
+    name: 'Response Rate',
+    description: 'Share of applications that received any response',
+    icon: <LineChartOutlined />,
+    defaultEnabled: false,
+    category: 'statistic',
+  },
+  {
+    id: 'offer_rate',
+    name: 'Offer Rate',
+    description: 'Offers as a percentage of total applications',
+    icon: <ThunderboltOutlined />,
+    defaultEnabled: false,
+    category: 'statistic',
+  },
+  {
+    id: 'recent_applications',
+    name: 'Last 30 Days',
+    description: 'Recent application volume over the last 30 days',
+    icon: <ClockCircleOutlined />,
+    defaultEnabled: false,
+    category: 'statistic',
+  },
+  {
+    id: 'top_companies',
+    name: 'Top Companies',
+    description: 'Companies you have applied to most often',
+    icon: <BankOutlined />,
+    defaultEnabled: false,
+    category: 'chart',
+  },
+  {
+    id: 'work_modes',
+    name: 'Work Modes',
+    description: 'Remote, hybrid, onsite, and unknown mix',
+    icon: <ApartmentOutlined />,
+    defaultEnabled: false,
+    category: 'chart',
   },
 ];

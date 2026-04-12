@@ -40,6 +40,7 @@ const defaultScenarioDraft = (): SimulatedOffer => ({
   free_food_perk_value: 0,
   free_food_perk_frequency: 'YEARLY',
   pto_days: 15,
+  is_unlimited_pto: false,
   holiday_days: 11,
   tax_base_rate: 32,
   tax_bonus_rate: 40,
@@ -113,6 +114,7 @@ const OfferAdjustmentsPanel = ({
           ...offer,
           benefit_items: benefitItems,
           benefits_value: computeBenefitsTotal(benefitItems),
+          is_unlimited_pto: !!offer.is_unlimited_pto,
         };
       }),
     []

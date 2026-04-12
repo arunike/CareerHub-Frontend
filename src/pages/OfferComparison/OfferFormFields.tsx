@@ -70,6 +70,8 @@ interface OfferFormFieldsProps {
 
   ptoDays?: number;
   onPtoDaysChange?: (value: number) => void;
+  isUnlimitedPto?: boolean;
+  onIsUnlimitedPtoChange?: (value: boolean) => void;
   holidayDays?: number;
   onHolidayDaysChange?: (value: number) => void;
 
@@ -131,6 +133,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   enableCompModeToggles = false,
   ptoDays,
   onPtoDaysChange,
+  isUnlimitedPto,
+  onIsUnlimitedPtoChange,
   holidayDays,
   onHolidayDaysChange,
   companyPlaceholder = 'e.g. Google',
@@ -253,6 +257,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
       <TimeOffSection
         ptoDays={ptoDays}
         onPtoDaysChange={onPtoDaysChange}
+        isUnlimitedPto={isUnlimitedPto}
+        onIsUnlimitedPtoChange={onIsUnlimitedPtoChange}
         holidayDays={holidayDays}
         onHolidayDaysChange={onHolidayDaysChange}
       />
