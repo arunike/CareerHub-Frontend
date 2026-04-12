@@ -11,6 +11,10 @@ import {
 } from './calculations';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import type { AdjustedOfferMetrics } from './types';
+import {
+  getEffectiveTaxLocation,
+  getPrimaryApplicationLocation,
+} from '../../utils/applicationLocation';
 
 type Params = {
   filteredOffers: OfferLike[];
@@ -47,7 +51,8 @@ export const useScenarioRows = ({
 
     const realRows = filteredOffers.map((offer) => {
       const app = applications.find((a) => a.id === offer.application);
-      const rowCity = app?.location?.trim() ? app.location : referenceLocation;
+      const homeLocation = getEffectiveTaxLocation(app) || referenceLocation;
+      const rowCity = homeLocation;
       const rowColIndex = estimateColIndexFromCity(rowCity, cityCostOfLiving, stateColBase, stateNameToAbbr);
       const rowMonthlyRent = Math.max(
         0,
@@ -111,7 +116,8 @@ export const useScenarioRows = ({
         kind: 'real' as const,
         offer,
         appName: getApplicationName(offer.application),
-        locationLabel: rowCity || '-',
+        locationLabel: getPrimaryApplicationLocation(app) || '-',
+        homeLocationLabel: homeLocation || '-',
         colIndex: rowColIndex,
         monthlyRent: rowMonthlyRent,
         work_mode: workMode,
@@ -144,7 +150,8 @@ export const useScenarioRows = ({
     });
 
     const simulatedRows = simulatedOffers.map((offer) => {
-      const rowCity = offer.location?.trim() ? offer.location : referenceLocation;
+      const homeLocation = getEffectiveTaxLocation(offer) || referenceLocation;
+      const rowCity = homeLocation;
       const rowColIndex = estimateColIndexFromCity(rowCity, cityCostOfLiving, stateColBase, stateNameToAbbr);
       const estimatedMonthlyRent = Math.round(baselineRent * (Math.max(1, rowColIndex) / baselineColIndex));
       const rowMonthlyRent = Math.max(0, Number(offer.monthly_rent ?? estimatedMonthlyRent));
@@ -198,7 +205,8 @@ export const useScenarioRows = ({
         kind: 'simulated' as const,
         offer: { ...offer, is_current: false },
         appName,
-        locationLabel: rowCity || '-',
+        locationLabel: getPrimaryApplicationLocation(offer) || '-',
+        homeLocationLabel: homeLocation || '-',
         colIndex: rowColIndex,
         monthlyRent: rowMonthlyRent,
         work_mode: offer.work_mode,

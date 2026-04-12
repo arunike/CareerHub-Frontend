@@ -121,6 +121,8 @@ const ScenarioOfferModal = ({
                 onRoleTitleChange={(value) => setNewScenarioField('custom_role_title', value)}
                 location={newScenario.location || ''}
                 onLocationChange={(value) => setNewScenarioField('location', value)}
+                officeLocation={newScenario.office_location || ''}
+                onOfficeLocationChange={(value) => setNewScenarioField('office_location', value)}
                 locationOptions={allUsCityOptions}
                 taxRatePreview={customFormTaxPreview}
                 editableTaxRates={{

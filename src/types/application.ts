@@ -9,6 +9,7 @@ export interface CareerApplication {
   job_link?: string;
   salary_range?: string;
   location?: string;
+  office_location?: string;
   rto_policy?: string;
   rto_days_per_week?: number;
   current_round?: number;

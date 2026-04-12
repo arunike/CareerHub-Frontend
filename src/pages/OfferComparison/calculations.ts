@@ -22,6 +22,7 @@ export interface SimulatedOffer {
   custom_company_name?: string;
   custom_role_title?: string;
   location?: string;
+  office_location?: string;
   base_salary: number;
   bonus: number;
   equity: number;
@@ -70,6 +71,8 @@ export interface ApplicationLike {
   company_name: string;
   role_title: string;
   location?: string;
+  office_location?: string;
+  is_locked?: boolean;
   rto_policy?: string;
   rto_days_per_week?: number;
   commute_cost_value?: number;

@@ -1,7 +1,13 @@
 import clsx from 'clsx';
+import { Popconfirm, Tooltip } from 'antd';
 import type { ApplicationLike as Application, OfferLike as Offer } from './calculations';
 import type { AdjustedOfferMetrics } from './types';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
+import {
+  getHomeLocation,
+  getPrimaryApplicationLocation,
+  hasDistinctOfficeLocation,
+} from '../../utils/applicationLocation';
 
 type Props = {
   offers: Offer[];
@@ -12,6 +18,7 @@ type Props = {
   onToggleCurrent: (offer: Offer) => void;
   onNegotiateClick: (offer: Offer) => void;
   onRaiseHistoryClick: (offer: Offer) => void;
+  onDeleteClick: (offer: Offer) => void;
 };
 
 const OfferDetailsTable = ({
@@ -23,6 +30,7 @@ const OfferDetailsTable = ({
   onToggleCurrent,
   onNegotiateClick,
   onRaiseHistoryClick,
+  onDeleteClick,
 }: Props) => {
   const currentOffer = offers.find((o) => o.is_current);
   const currentTotal = currentOffer
@@ -45,7 +53,7 @@ const OfferDetailsTable = ({
                 Company / Role
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Location
+                Locations
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 RTO
@@ -88,6 +96,7 @@ const OfferDetailsTable = ({
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredOffers.map((offer, idx) => {
               const app = applicationsById[offer.application];
+              const isDeleteDisabled = !!app?.is_locked;
               const total =
                 Number(offer.base_salary) +
                 Number(offer.bonus) +
@@ -117,7 +126,12 @@ const OfferDetailsTable = ({
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app?.location || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div>{getPrimaryApplicationLocation(app) || '-'}</div>
+                    {hasDistinctOfficeLocation(app) && (
+                      <div className="text-xs text-gray-400">Home/Tax: {getHomeLocation(app)}</div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span
                       className={clsx(
@@ -220,6 +234,22 @@ const OfferDetailsTable = ({
                       >
                         Negotiate
                       </button>
+                    )}
+                    {isDeleteDisabled ? (
+                      <Tooltip title="Unlock this application in Job Applications first.">
+                        <span className="text-gray-300 font-medium cursor-not-allowed">Delete</span>
+                      </Tooltip>
+                    ) : (
+                      <Popconfirm
+                        title="Delete linked application?"
+                        description="This will delete the application and remove this offer from comparison."
+                        okText="Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                        onConfirm={() => onDeleteClick(offer)}
+                      >
+                        <button className="text-red-500 hover:text-red-700 font-medium">Delete</button>
+                      </Popconfirm>
                     )}
                   </td>
                 </tr>

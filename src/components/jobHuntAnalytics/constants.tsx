@@ -50,7 +50,7 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
   {
     id: 'locations',
     name: 'Top Locations',
-    description: 'Most common application locations',
+    description: 'Most common office locations',
     icon: <EnvironmentOutlined />,
     defaultEnabled: true,
     category: 'chart',

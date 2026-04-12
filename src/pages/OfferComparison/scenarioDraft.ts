@@ -9,6 +9,7 @@ import {
   estimateColIndexFromCity,
   estimateTaxRatesByIncomeType,
 } from './calculations';
+import { getEffectiveTaxLocation, getOfficeLocation } from '../../utils/applicationLocation';
 
 type BuildLinkedScenarioParams = {
   prev: SimulatedOffer;
@@ -46,7 +47,8 @@ export const buildScenarioFromLinkedApplication = ({
       : linkedApp?.rto_policy === 'ONSITE'
         ? 'ONSITE'
         : prev.work_mode;
-  const nextLocation = linkedApp?.location || prev.location || referenceLocation;
+  const nextHomeLocation = getEffectiveTaxLocation(linkedApp) || prev.location || prev.office_location || referenceLocation;
+  const nextOfficeLocation = getOfficeLocation(linkedApp) || prev.office_location || '';
   const nextIncome =
     Number(prev.base_salary) +
     Number(prev.bonus) +
@@ -57,11 +59,11 @@ export const buildScenarioFromLinkedApplication = ({
   const estimatedTax = estimateTaxRatesByIncomeType(
     nextIncome,
     maritalStatus,
-    nextLocation,
+    nextHomeLocation,
     stateTaxRate,
     stateNameToAbbr,
   );
-  const col = estimateColIndexFromCity(nextLocation, cityCostOfLiving, stateColBase, stateNameToAbbr);
+  const col = estimateColIndexFromCity(nextHomeLocation, cityCostOfLiving, stateColBase, stateNameToAbbr);
   const estimatedRent = Math.round(
     Math.max(0, Number(effectiveMonthlyRent || 0)) * (Math.max(1, col) / Math.max(1, referenceColIndex)),
   );
@@ -69,7 +71,8 @@ export const buildScenarioFromLinkedApplication = ({
   return {
     ...prev,
     application: nextAppId,
-    location: nextLocation,
+    location: nextHomeLocation,
+    office_location: nextOfficeLocation,
     work_mode: linkedWorkMode,
     rto_days_per_week:
       typeof linkedApp?.rto_days_per_week === 'number'

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   Button,
   Input,
+  AutoComplete,
   Select,
   Modal,
   Form,
@@ -21,7 +22,6 @@ import {
   FilterOutlined,
   DollarOutlined,
   GlobalOutlined,
-  EnvironmentOutlined,
   InboxOutlined,
   LockOutlined,
   UnlockOutlined,
@@ -30,6 +30,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
+import { usaCities } from 'typed-usa-states';
 import {
   getApplications,
   createApplication,
@@ -50,6 +51,7 @@ import RowActions from '../../components/RowActions';
 import CoverLetterModal from './CoverLetterModal';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
+import { DEFAULT_STATE_NAME_TO_ABBR } from '../OfferComparison/calculations';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -92,6 +94,52 @@ const Applications = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
+  const officeLocationValue = Form.useWatch('office_location', form) || '';
+  const allUsCityOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          usaCities.map((city) => {
+            const abbr = DEFAULT_STATE_NAME_TO_ABBR[city.state] || city.state;
+            return `${city.name}, ${abbr}, United States`;
+          })
+        )
+      ),
+    []
+  );
+  const officeLocationOptions = useMemo(() => {
+    const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9,\s]/g, '');
+    const query = normalize(officeLocationValue).trim();
+    const queryTokens = query.split(/\s+/).filter(Boolean);
+
+    const scored = allUsCityOptions
+      .map((raw) => {
+        const candidate = normalize(raw);
+        let score = 0;
+
+        if (query.length === 0) score += 1;
+        if (candidate.startsWith(query) && query.length > 0) score += 10;
+        if (candidate.includes(query) && query.length > 0) score += 6;
+        if (queryTokens.length && queryTokens.every((token) => candidate.includes(token))) score += 4;
+        if (candidate === query && query.length > 0) score += 12;
+
+        return { value: raw, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score || a.value.localeCompare(b.value))
+      .slice(0, 80)
+      .map((item) => ({ value: item.value, label: item.value }));
+
+    const officeQuery = officeLocationValue.trim().toLowerCase();
+    if (
+      officeLocationValue.trim() &&
+      !scored.some((item) => item.value.toLowerCase() === officeQuery)
+    ) {
+      scored.unshift({ value: officeLocationValue, label: officeLocationValue });
+    }
+
+    return scored;
+  }, [allUsCityOptions, officeLocationValue]);
 
   const fetchData = async () => {
     try {
@@ -263,7 +311,7 @@ const Applications = () => {
       employment_type: app.employment_type || 'full_time',
       site_link: app.job_link,
       salary_range: app.salary_range,
-      location: app.location,
+      office_location: app.office_location || app.location,
       rto_policy: app.rto_policy || 'UNKNOWN',
       current_round: app.current_round || 0,
       date_applied: app.date_applied ? dayjs(app.date_applied) : null,
@@ -365,7 +413,7 @@ const Applications = () => {
         <Space direction="vertical" size={0}>
           <Text strong>{record.company_details?.name}</Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {record.location}
+            {record.office_location || record.location || '—'}
           </Text>
         </Space>
       ),
@@ -587,8 +635,17 @@ const Applications = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="location" label="Location">
-                <Input prefix={<EnvironmentOutlined />} placeholder="New York" />
+              <Form.Item name="office_location" label="Location">
+                <AutoComplete
+                  className="w-full"
+                  value={officeLocationValue}
+                  options={officeLocationOptions}
+                  onChange={(value) => form.setFieldValue('office_location', value)}
+                  onSearch={(value) => form.setFieldValue('office_location', value)}
+                  placeholder="San Jose, CA"
+                  allowClear
+                  filterOption={false}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>

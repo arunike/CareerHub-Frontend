@@ -5,6 +5,8 @@ import type { EditableTaxRates, TaxRatePreview } from './types';
 type LocationTaxSectionProps = {
   location: string;
   onLocationChange: (value: string) => void;
+  officeLocation?: string;
+  onOfficeLocationChange?: (value: string) => void;
   locationOptions: string[];
   locationPlaceholder: string;
   taxRatePreview?: TaxRatePreview;
@@ -17,6 +19,8 @@ type LocationTaxSectionProps = {
 const LocationTaxSection = ({
   location,
   onLocationChange,
+  officeLocation = '',
+  onOfficeLocationChange,
   locationOptions,
   locationPlaceholder,
   taxRatePreview,
@@ -25,11 +29,10 @@ const LocationTaxSection = ({
   editableMonthlyRent,
   onEditableMonthlyRentChange,
 }: LocationTaxSectionProps) => {
-  const locationQuery = location.trim().toLowerCase();
-
-  const locationDropdownOptions = useMemo(() => {
+  const buildLocationDropdownOptions = useMemo(() => (inputValue: string) => {
+    const locationQuery = inputValue.trim().toLowerCase();
     const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9,\s]/g, '');
-    const query = normalize(location).trim();
+    const query = normalize(inputValue).trim();
     const queryTokens = query.split(/\s+/).filter(Boolean);
 
     const scored = locationOptions
@@ -50,21 +53,49 @@ const LocationTaxSection = ({
       .slice(0, 80)
       .map((item) => ({ value: item.value, label: item.value }));
 
-    if (location.trim() && !scored.some((item) => item.value.toLowerCase() === locationQuery)) {
-      scored.unshift({ value: location, label: location });
+    if (inputValue.trim() && !scored.some((item) => item.value.toLowerCase() === locationQuery)) {
+      scored.unshift({ value: inputValue, label: inputValue });
     }
 
     return scored;
-  }, [location, locationOptions, locationQuery]);
+  }, [locationOptions]);
+
+  const homeLocationOptions = useMemo(
+    () => buildLocationDropdownOptions(location),
+    [buildLocationDropdownOptions, location],
+  );
+  const officeLocationOptions = useMemo(
+    () => buildLocationDropdownOptions(officeLocation),
+    [buildLocationDropdownOptions, officeLocation],
+  );
 
   return (
     <>
+      {onOfficeLocationChange && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Office Location</label>
+          <AutoComplete
+            className="w-full"
+            value={officeLocation}
+            options={officeLocationOptions}
+            onChange={onOfficeLocationChange}
+            onSearch={onOfficeLocationChange}
+            placeholder="e.g. San Jose, CA"
+            allowClear
+            filterOption={false}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Used for work location context and display. Commute impact is configured separately below.
+          </p>
+        </div>
+      )}
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Home Location</label>
         <AutoComplete
           className="w-full"
           value={location}
-          options={locationDropdownOptions}
+          options={homeLocationOptions}
           onChange={onLocationChange}
           onSearch={onLocationChange}
           placeholder={locationPlaceholder}
@@ -78,6 +109,9 @@ const LocationTaxSection = ({
             {taxRatePreview.note ? ` • ${taxRatePreview.note}` : ''}
           </p>
         )}
+        <p className="text-xs text-gray-500 mt-1">
+          Used for tax, cost-of-living, and rent assumptions.
+        </p>
       </div>
 
       {editableTaxRates && onEditableTaxRatesChange && (

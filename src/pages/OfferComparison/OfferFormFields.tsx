@@ -25,6 +25,8 @@ interface OfferFormFieldsProps {
   onRoleTitleChange: (value: string) => void;
   location: string;
   onLocationChange: (value: string) => void;
+  officeLocation?: string;
+  onOfficeLocationChange?: (value: string) => void;
   locationOptions?: string[];
   taxRatePreview?: TaxRatePreview;
   editableTaxRates?: EditableTaxRates;
@@ -92,6 +94,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onRoleTitleChange,
   location,
   onLocationChange,
+  officeLocation,
+  onOfficeLocationChange,
   locationOptions = [],
   taxRatePreview,
   editableTaxRates,
@@ -195,6 +199,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
       <LocationTaxSection
         location={location}
         onLocationChange={onLocationChange}
+        officeLocation={officeLocation}
+        onOfficeLocationChange={onOfficeLocationChange}
         locationOptions={locationOptions}
         locationPlaceholder={locationPlaceholder}
         taxRatePreview={taxRatePreview}
