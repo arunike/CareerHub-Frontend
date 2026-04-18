@@ -17,6 +17,7 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import type { Event, Holiday } from '../types';
 import clsx from 'clsx';
 
@@ -173,13 +174,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
 
               {/* Events */}
               {dayEvents.map((e) => (
-                <div
-                  key={e.id}
-                  className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded truncate"
-                  title={`${e.name} (${e.start_time})`}
-                >
-                  {e.start_time.substring(0, 5)} {e.name}
-                </div>
+                <Tooltip key={e.id} title={`${e.name} (${e.start_time})`} mouseEnterDelay={0}>
+                  <div className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded truncate">
+                    {e.start_time.substring(0, 5)} {e.name}
+                  </div>
+                </Tooltip>
               ))}
             </div>
           </div>

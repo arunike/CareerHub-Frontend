@@ -21,15 +21,15 @@ const AvailabilityTextControls = ({ hasData, textMode, onTextModeChange, copiedI
         buttonClassName="flex-1 sm:flex-none px-3 py-1.5"
         options={[
           {
-            value: 'detailed',
-            label: 'Detailed',
-            icon: <UnorderedListOutlined className="text-base" />,
-            activeClassName: 'bg-blue-50 text-blue-600',
-          },
-          {
             value: 'combined',
             label: 'Combined',
             icon: <MenuOutlined className="text-base" />,
+            activeClassName: 'bg-blue-50 text-blue-600',
+          },
+          {
+            value: 'detailed',
+            label: 'Detailed',
+            icon: <UnorderedListOutlined className="text-base" />,
             activeClassName: 'bg-blue-50 text-blue-600',
           },
         ]}

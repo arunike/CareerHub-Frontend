@@ -1,4 +1,4 @@
-import { Card, Empty, Space, Tag, Typography } from 'antd';
+import { Card, Empty, Space, Tag, Tooltip, Typography } from 'antd';
 import {
   CalendarOutlined,
   ClockCircleOutlined,
@@ -65,9 +65,11 @@ const EventsGrid = ({
                   checked={selectedIds.includes(event.id)}
                   onChange={(e) => onSelectChange(event.id, e.target.checked)}
                 />
-                <Text strong ellipsis style={{ maxWidth: 150 }} title={event.name}>
-                  {event.name}
-                </Text>
+                <Tooltip title={event.name} mouseEnterDelay={0}>
+                  <Text strong ellipsis style={{ maxWidth: 150, display: 'inline-block' }}>
+                    {event.name}
+                  </Text>
+                </Tooltip>
                 {event.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
               </Space>
             }
