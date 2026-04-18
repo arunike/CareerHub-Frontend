@@ -33,7 +33,7 @@ const Availability = () => {
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
 
-  const [textMode, setTextMode] = useState<'detailed' | 'combined'>('detailed');
+  const [textMode, setTextMode] = useState<'detailed' | 'combined'>('combined');
   const [shareLink, setShareLink] = useState<ShareLink | null>(null);
   const [shareDuration, setShareDuration] = useState<number>(14);
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState<number>(30);

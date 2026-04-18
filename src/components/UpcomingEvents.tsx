@@ -4,7 +4,7 @@ import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { Event } from '../types';
-import { message } from 'antd';
+import { message, Tooltip } from 'antd';
 
 const UpcomingEvents: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -79,9 +79,9 @@ const UpcomingEvents: React.FC = () => {
               key={event.id}
               className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="font-medium text-sm text-gray-900 truncate" title={event.name}>
-                {event.name}
-              </div>
+              <Tooltip title={event.name} mouseEnterDelay={0}>
+                <div className="font-medium text-sm text-gray-900 truncate">{event.name}</div>
+              </Tooltip>
               <div className="flex items-center gap-2 mt-1.5">
                 <div
                   className={`text-xs px-1.5 py-0.5 rounded ${isToday(eventDate) ? 'bg-green-100 text-green-700 font-medium' : 'bg-white text-gray-500 border border-gray-200'}`}
