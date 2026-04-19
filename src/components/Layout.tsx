@@ -15,10 +15,12 @@ import {
   CheckSquareOutlined,
   TrophyOutlined,
   RobotOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
+import { useAuth } from '../context/AuthContext';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -26,9 +28,11 @@ const { useBreakpoint } = Grid;
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const screens = useBreakpoint();
   const [collapsed, setCollapsed] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     getUserSettings().then(res => {
@@ -50,7 +54,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     if (!screens.lg) {
       setCollapsed(true);
     }
-  }, [location]);
+  }, [location, screens.lg]);
 
   // Update collapsed state when screen size changes
   useEffect(() => {
@@ -142,7 +146,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       : false
     ).map(item =>
       'children' in item && item.children
-        ? { ...item, children: item.children.filter(c => isVisible(c.key)) }
+        ? {
+            ...item,
+            children: (item.children as Array<{ key: string }>).filter((child) => isVisible(child.key)),
+          }
         : item
     );
 
@@ -212,6 +219,29 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <span className="text-xs text-gray-400 font-medium">Notifications</span>
           <NotificationBell placement="top-left" />
         </div>
+        <div className="px-2 py-3 rounded-xl bg-slate-50 border border-slate-200 mb-3">
+          <p className="text-xs font-medium text-slate-500">Signed in as</p>
+          <p className="text-sm font-semibold text-slate-900 truncate">
+            {user?.full_name || user?.email || 'Authenticated User'}
+          </p>
+          <Button
+            type="text"
+            icon={<LogoutOutlined />}
+            loading={isLoggingOut}
+            onClick={async () => {
+              setIsLoggingOut(true);
+              try {
+                await logout();
+                navigate('/login', { replace: true });
+              } finally {
+                setIsLoggingOut(false);
+              }
+            }}
+            className="!px-0 !text-slate-500 hover:!text-slate-900"
+          >
+            Sign Out
+          </Button>
+        </div>
         <p className="text-[10px] text-gray-300 text-center mt-2">© 2026 CareerHub</p>
       </div>
     </div>
@@ -250,7 +280,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       <AntLayout className="min-h-screen bg-gray-50 transition-all duration-300">
         <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
-          {/* Mobile Toggle Button - Floating */}
           {!screens.lg && (
             <div className="fixed top-4 left-4 z-900">
               <Button
