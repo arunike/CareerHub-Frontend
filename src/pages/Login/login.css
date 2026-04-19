@@ -1,0 +1,345 @@
+.login-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* ── Shell ────────────────────────────────────────────── */
+
+.login-page__shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 460px);
+  align-items: center;
+  gap: 4rem;
+  max-width: 1120px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 2rem 2.5rem;
+}
+
+/* ── Hero (left) ──────────────────────────────────────── */
+
+.login-page__hero {
+  padding: 2rem 0;
+}
+
+.login-page__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  background: white;
+  color: #64748b;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.login-page__headline-wrap {
+  margin-top: 1.75rem;
+}
+
+.login-page__title.ant-typography {
+  margin-bottom: 1rem;
+  color: #0f172a;
+  font-size: clamp(2.6rem, 5.5vw, 4.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+}
+
+.login-page__title-accent {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-page__lead.ant-typography {
+  max-width: 28rem;
+  margin-bottom: 0;
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+/* ── Feature grid ─────────────────────────────────────── */
+
+.login-page__features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 2.25rem;
+}
+
+.login-page__feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.login-page__feature-item:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.login-page__feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.5rem;
+  background: #eef2ff;
+  color: #6366f1;
+  font-size: 0.88rem;
+}
+
+.login-page__feature-label {
+  margin: 0 0 0.15rem;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.login-page__feature-desc {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ── Panel (right) - REDESIGNED ───────────────────────── */
+
+.login-page__panel {
+  position: relative;
+}
+
+/* Completely redesigned seamless white card */
+.login-page__panel-inner {
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 20px 40px -10px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.login-page__panel-inner:hover {
+  box-shadow: 
+    0 8px 12px -2px rgba(0, 0, 0, 0.05),
+    0 24px 48px -12px rgba(0, 0, 0, 0.08),
+    0 0 1px rgba(0,0,0,0.1);
+}
+
+/* Clean unified card body instead of split top/bottom */
+.login-page__panel-top {
+  padding: 2.5rem 2.25rem 0rem;
+  background: transparent;
+}
+
+.login-page__panel-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.login-page__panel-brand-icon {
+  color: #6366f1;
+  font-size: 1rem;
+}
+
+.login-page__panel-title.ant-typography {
+  margin-bottom: 0.5rem;
+  color: #0f172a;
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.login-page__panel-subtitle {
+  margin: 0 0 1.5rem;
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.login-page__trust-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.login-page__trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.login-page__trust-pill .anticon-check-circle {
+  color: #10b981; /* beautiful emerald green success */
+}
+
+/* White body section */
+.login-page__panel-body {
+  padding: 2rem 2.25rem 2.5rem;
+}
+
+/* ── Mode switch ──────────────────────────────────────── */
+
+.login-page__mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  background: #f1f5f9;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+}
+
+.login-page__mode-switch button {
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #64748b;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.login-page__mode-switch button:hover:not(:disabled) {
+  color: #334155;
+}
+
+.login-page__mode-switch button.is-active {
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.02);
+}
+
+.login-page__mode-switch button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Form ─────────────────────────────────────────────── */
+
+.login-page__form .ant-form-item {
+  margin-bottom: 1.1rem;
+}
+
+.login-page__form .ant-form-item:last-child {
+  margin-bottom: 0;
+}
+
+.login-page__form :where(.ant-col.ant-form-item-label) {
+  padding-bottom: 4px;
+}
+
+.login-page__form :where(.ant-form-item-label > label) {
+  color: #334155;
+  font-size: 0.825rem;
+  font-weight: 600;
+  height: auto;
+}
+
+.login-page__form :where(.ant-input-affix-wrapper .ant-input-prefix) {
+  margin-right: 0.6rem;
+  color: #94a3b8;
+}
+
+.login-page__submit-wrap {
+  margin-top: 1.75rem;
+}
+
+.login-page__submit.ant-btn {
+  height: 3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.625rem;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  transition: all 0.2s ease;
+}
+
+.login-page__submit.ant-btn:not(:disabled):hover {
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+.login-page__footnote {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.login-page__empty-state {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .login-page__shell {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
+    align-items: start;
+    min-height: 100vh;
+  }
+
+  .login-page__hero {
+    padding: 1.5rem 0 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-page__shell {
+    padding: 1.25rem 1rem;
+  }
+
+  .login-page__features {
+    grid-template-columns: 1fr;
+  }
+
+  .login-page__panel-top,
+  .login-page__panel-body {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}

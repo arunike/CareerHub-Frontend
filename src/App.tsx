@@ -1,6 +1,8 @@
 import { ConfigProvider } from 'antd';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 import Availability from './pages/Availability';
 import Events from './pages/Events';
 import Holidays from './pages/Holidays';
@@ -15,6 +17,7 @@ import PublicBookingPage from './pages/PublicBooking';
 import JDReportPage from './pages/JDReport';
 import JDReportsListPage from './pages/JDReportsList';
 import AIToolsPage from './pages/AITools';
+import LoginPage from './pages/Login';
 import NegotiationResultPage from './pages/NegotiationResult';
 
 function AppRoutes() {
@@ -24,6 +27,7 @@ function AppRoutes() {
     isPublicBooking ||
     location.pathname.startsWith('/jd-report/') ||
     location.pathname.startsWith('/negotiation-result/');
+  const isLoginPage = location.pathname === '/login';
 
   if (isStandalone) {
     return (
@@ -35,24 +39,34 @@ function AppRoutes() {
     );
   }
 
-  return (
-    <Layout>
+  if (isLoginPage) {
+    return (
       <Routes>
-        <Route path="/" element={<Availability />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/holidays" element={<Holidays />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/applications" element={<Applications />} />
-        <Route path="/offers" element={<OfferComparison />} />
-        <Route path="/documents" element={<Documents />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/experience" element={<ExperiencePage />} />
-        <Route path="/jd-reports" element={<JDReportsListPage />} />
-        <Route path="/cover-letters" element={<AIToolsPage />} />
-        <Route path="/ai-tools" element={<AIToolsPage />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
-    </Layout>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Availability />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/holidays" element={<Holidays />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/applications" element={<Applications />} />
+          <Route path="/offers" element={<OfferComparison />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/experience" element={<ExperiencePage />} />
+          <Route path="/jd-reports" element={<JDReportsListPage />} />
+          <Route path="/cover-letters" element={<AIToolsPage />} />
+          <Route path="/ai-tools" element={<AIToolsPage />} />
+        </Routes>
+      </Layout>
+    </ProtectedRoute>
   );
 }
 
@@ -152,7 +166,9 @@ function App() {
       }}
     >
       <Router>
-        <AppRoutes />
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
       </Router>
     </ConfigProvider>
   );

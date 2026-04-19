@@ -1,0 +1,61 @@
+import axios from 'axios';
+import api from './client';
+
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  full_name: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+}
+
+interface AuthResponse {
+  user: AuthenticatedUser;
+}
+
+export interface SignupStatusResponse {
+  can_signup: boolean;
+  mode: 'public' | 'disabled';
+  has_users: boolean;
+  email_only: boolean;
+  message: string;
+}
+
+interface SignupPayload {
+  email: string;
+  full_name: string;
+  password: string;
+  confirm_password: string;
+}
+
+export const ensureCsrfCookie = () => api.get('/auth/csrf/');
+
+export const login = (email: string, password: string) =>
+  api.post<AuthResponse>('/auth/login/', {
+    email,
+    password,
+  });
+
+export const getSignupStatus = () => api.get<SignupStatusResponse>('/auth/signup-status/');
+
+export const signup = (payload: SignupPayload) => api.post<AuthResponse>('/auth/signup/', payload);
+
+export const logout = () => api.post('/auth/logout/');
+
+export const getCurrentUser = () => api.get<AuthResponse>('/auth/me/');
+
+export const isAuthenticationError = (error: unknown) => {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+  const detail =
+    typeof error.response?.data?.detail === 'string' ? error.response.data.detail.toLowerCase() : '';
+
+  return (
+    status === 401 ||
+    (status === 403 &&
+      (detail.includes('authentication credentials were not provided') || detail.includes('csrf')))
+  );
+};
