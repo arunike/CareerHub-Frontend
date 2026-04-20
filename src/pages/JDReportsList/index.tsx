@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, Checkbox, Space, Tooltip, Input } from 'antd';
+import { Button, Modal, Checkbox, Tooltip, Input } from 'antd';
 import {
   DeleteOutlined,
   FileTextOutlined,
@@ -336,4 +336,3 @@ const JDReportsListPage: React.FC = () => {
 };
 
 export default JDReportsListPage;
-

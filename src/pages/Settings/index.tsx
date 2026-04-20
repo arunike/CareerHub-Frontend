@@ -11,12 +11,14 @@ import {
 } from '../../api';
 import type { EventCategory, UserSettings, EmploymentType, HolidayTab } from '../../types';
 import {
+  ApiOutlined,
   SaveOutlined,
   PlusOutlined,
   CloseOutlined,
   DownloadOutlined,
   LockOutlined,
   UnlockOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { Button, message, TimePicker } from 'antd';
 import dayjs from 'dayjs';
@@ -25,6 +27,12 @@ import IconPicker from '../../components/IconPicker';
 import CategoryBadge from '../../components/CategoryBadge';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import LockableListItem from '../../components/LockableListItem';
+import {
+  clearStoredLocalLLMSettings,
+  getStoredLocalLLMSettings,
+  saveStoredLocalLLMSettings,
+  type LocalLLMSettings,
+} from '../../lib/llmSettings';
 
 dayjs.extend(customParseFormat);
 
@@ -36,10 +44,13 @@ const Settings: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'organize' | 'navigation' | 'data'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'organize' | 'navigation' | 'data'>('general');
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
+  const [aiSettings, setAiSettings] = useState<LocalLLMSettings>(() => getStoredLocalLLMSettings());
+  const [savedAiSettings, setSavedAiSettings] = useState<LocalLLMSettings>(() => getStoredLocalLLMSettings());
+  const [showAiApiKey, setShowAiApiKey] = useState(false);
   const originalSettingsRef = useRef<string>('');
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
@@ -322,6 +333,32 @@ const Settings: React.FC = () => {
     setDeletingCategoryId(id);
   };
 
+  const aiSettingsDirty = JSON.stringify(aiSettings) !== JSON.stringify(savedAiSettings);
+
+  const updateAiSetting = (field: keyof LocalLLMSettings, value: string) => {
+    setAiSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveAiSettings = () => {
+    saveStoredLocalLLMSettings(aiSettings);
+    const persisted = getStoredLocalLLMSettings();
+    setAiSettings(persisted);
+    setSavedAiSettings(persisted);
+    setSuccessMessage(
+      persisted.apiKey.trim()
+        ? 'AI provider saved locally.'
+        : 'AI provider preset saved. Add an API key to enable browser-side AI.'
+    );
+  };
+
+  const handleClearAiSettings = () => {
+    clearStoredLocalLLMSettings();
+    const cleared = getStoredLocalLLMSettings();
+    setAiSettings(cleared);
+    setSavedAiSettings(cleared);
+    setSuccessMessage('Local AI key cleared from this browser.');
+  };
+
   const confirmDeleteCategory = async () => {
     if (deletingCategoryId === null) return;
     try {
@@ -409,24 +446,27 @@ const Settings: React.FC = () => {
             >
               {isLocked ? 'Locked' : 'Lock'}
             </Button>
-            <Button
-              size="large"
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              disabled={!isDirty || saving || isLocked}
-              className="toolbar-btn"
-            >
-              {saving ? 'Saving…' : 'Save Settings'}
-            </Button>
+            {activeTab !== 'ai' && (
+              <Button
+                size="large"
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleSave}
+                disabled={!isDirty || saving || isLocked}
+                className="toolbar-btn"
+              >
+                {saving ? 'Saving…' : 'Save Settings'}
+              </Button>
+            )}
           </>
         }
       />
 
       {/* Tab Bar */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+      <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-xl">
         {([
           { key: 'general', label: 'General' },
+          { key: 'ai', label: 'AI Provider' },
           { key: 'organize', label: 'Organize' },
           { key: 'navigation', label: 'Navigation' },
           { key: 'data', label: 'Data' },
@@ -434,7 +474,7 @@ const Settings: React.FC = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.key
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -695,6 +735,110 @@ const Settings: React.FC = () => {
           </p>
         </div>
 
+      </div>}
+
+      {activeTab === 'ai' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">AI Provider</h3>
+
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+              <RobotOutlined className="text-lg" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm font-semibold text-gray-900">Browser-side BYOK</h4>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-indigo-200 text-indigo-700">
+                  OpenAI-compatible
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                Your endpoint, model, and API key are stored only in this browser&apos;s localStorage.
+                They are not sent to your backend or synced across devices.
+              </p>
+              <p className="text-xs text-amber-700 mt-2">
+                This is convenient, but not encrypted. Anyone with access to this browser profile can inspect the saved key.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Endpoint URL
+            </label>
+            <div className="relative">
+              <ApiOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="url"
+                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                value={aiSettings.endpoint}
+                onChange={(e) => updateAiSetting('endpoint', e.target.value)}
+                placeholder="https://.../chat/completions"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Model
+            </label>
+            <input
+              type="text"
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+              value={aiSettings.model}
+              onChange={(e) => updateAiSetting('model', e.target.value)}
+              placeholder="gemini-2.0-flash"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700">API Key</label>
+              <button
+                type="button"
+                onClick={() => setShowAiApiKey((current) => !current)}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                {showAiApiKey ? 'Hide key' : 'Show key'}
+              </button>
+            </div>
+            <input
+              type={showAiApiKey ? 'text' : 'password'}
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+              value={aiSettings.apiKey}
+              onChange={(e) => updateAiSetting('apiKey', e.target.value)}
+              placeholder="Paste your provider key"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Used by Cover Letter generation, JD Matcher, Negotiation Advisor, and Analytics custom widgets.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+            <div className="text-xs text-gray-500">
+              Default preset targets Google Gemini&apos;s OpenAI-compatible endpoint. You can swap in any browser-accessible compatible provider.
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleClearAiSettings}
+                className="px-3.5 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Clear Key
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAiSettings}
+                disabled={!aiSettingsDirty}
+                className="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Local Provider
+              </button>
+            </div>
+          </div>
+        </div>
       </div>}
 
       {/* Data Management */}

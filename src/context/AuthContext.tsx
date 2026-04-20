@@ -7,6 +7,7 @@ import {
   login as loginRequest,
   logout as logoutRequest,
   signup as signupRequest,
+  type AuthResponse,
   type AuthenticatedUser,
 } from '../api/auth';
 
@@ -20,7 +21,7 @@ interface AuthContextValue {
     full_name: string;
     password: string;
     confirm_password: string;
-  }) => Promise<void>;
+  }) => Promise<AuthResponse>;
   logout: () => Promise<void>;
 }
 
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await getCurrentUser();
         if (!cancelled) {
-          setUser(response.data.user);
+          setUser(response.data.user ?? null);
         }
       } catch (error) {
         if (!cancelled && isAuthenticationError(error)) {
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(email: string, password: string) {
     await ensureCsrfCookie();
     const response = await loginRequest(email, password);
-    setUser(response.data.user);
+    setUser(response.data.user ?? null);
   }
 
   async function signup(payload: {
@@ -74,7 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }) {
     await ensureCsrfCookie();
     const response = await signupRequest(payload);
-    setUser(response.data.user);
+    if (response.data.user && response.data.authenticated !== false) {
+      setUser(response.data.user);
+    } else {
+      setUser(null);
+    }
+    return response.data;
   }
 
   async function logout() {

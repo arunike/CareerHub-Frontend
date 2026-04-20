@@ -10,8 +10,9 @@ import {
   ArrowRightOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getNegotiationAdvice } from '../../api/career';
+import { getExperiences, getOffers } from '../../api/career';
 import type { NegotiationAdvice } from '../../api/career';
+import { generateNegotiationAdviceWithBrowserAI } from '../../lib/browserAi';
 import type { OfferLike as Offer, ApplicationLike as Application } from './calculations';
 import { saveNegotiationResult } from '../../utils/negotiationStorage';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
@@ -77,8 +78,20 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
     setAdvice(null);
     setSavedId(null);
     try {
-      const res = await getNegotiationAdvice(offer.id);
-      const data = res.data;
+      const [experiencesResponse, offersResponse] = await Promise.all([
+        getExperiences(),
+        getOffers(),
+      ]);
+      const currentOffer =
+        (offersResponse.data as Offer[]).find(
+          (candidate) => candidate.is_current && candidate.id !== offer.id
+        ) || null;
+      const data = await generateNegotiationAdviceWithBrowserAI({
+        offer,
+        application,
+        experiences: experiencesResponse.data,
+        currentOffer,
+      });
       setAdvice(data);
       const saved = saveNegotiationResult(
         offer.id,
@@ -95,8 +108,12 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
         data,
       );
       setSavedId(saved.id);
-    } catch {
-      setError('Failed to generate advice. Check your LLM configuration.');
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate advice. Check your browser AI provider settings.'
+      );
     } finally {
       setLoading(false);
     }
@@ -156,7 +173,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
               type="error"
               showIcon
               message="Generation Failed"
-              description="Could not reach the LLM. Make sure LLM_API_KEY is set in api/.env and the backend is running."
+              description={error}
               action={
                 <Button size="small" danger onClick={handleGenerate}>
                   Retry

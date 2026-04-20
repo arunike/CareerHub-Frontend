@@ -9,8 +9,12 @@ export interface AuthenticatedUser {
   is_superuser: boolean;
 }
 
-interface AuthResponse {
-  user: AuthenticatedUser;
+export interface AuthResponse {
+  user?: AuthenticatedUser;
+  authenticated?: boolean;
+  requires_login?: boolean;
+  message?: string;
+  mode?: 'public' | 'disabled';
 }
 
 export interface SignupStatusResponse {

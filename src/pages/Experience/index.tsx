@@ -369,7 +369,9 @@ const ExperiencePage: React.FC = () => {
     overtime_multiplier: number | null;
     total_earnings_override: number | null;
   }) => {
-    if (!compBreakdownExp?.id) return;
+    if (!compBreakdownExp) return;
+    const experienceId = compBreakdownExp?.id;
+    if (experienceId == null) return;
     const currentExp = compBreakdownExp;
 
     const normalizedHourlyRate = roundCompNumber(toNullableNumber(updates.hourly_rate));
@@ -434,9 +436,9 @@ const ExperiencePage: React.FC = () => {
       total_earnings_override: normalizedTotalEarningsOverride,
     };
 
-    await updateExperience(currentExp.id, patch);
-    setExperiences(prev => prev.map(exp => exp.id === currentExp.id ? { ...exp, ...patch } : exp));
-    setCompBreakdownExp(prev => prev && prev.id === currentExp.id ? { ...prev, ...patch } : prev);
+    await updateExperience(experienceId, patch);
+    setExperiences(prev => prev.map(exp => exp.id === experienceId ? { ...exp, ...patch } : exp));
+    setCompBreakdownExp(prev => prev && prev.id === experienceId ? { ...prev, ...patch } : prev);
     message.success('Internship earnings inputs updated');
   };
 

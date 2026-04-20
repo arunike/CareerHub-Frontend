@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Modal, Input, Button, Space, Alert, Progress } from 'antd';
 import { RobotOutlined, ExpandOutlined, ArrowLeftOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { matchJobDescription } from '../../api/career';
+import { getExperiences } from '../../api/career';
+import { matchJobDescriptionWithBrowserAI } from '../../lib/browserAi';
 import { saveReport } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
 
@@ -33,10 +34,14 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
     setAnalyzing(true);
     setErrorMsg(null);
     try {
-      const { data } = await matchJobDescription(jdText);
+      const experiencesResponse = await getExperiences();
+      const data = await matchJobDescriptionWithBrowserAI({
+        jdText,
+        experiences: experiencesResponse.data,
+      });
       setSavedReport(saveReport(data, jdText));
-    } catch (error: any) {
-      setErrorMsg(error?.response?.data?.error || 'Analysis failed. Please try again.');
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
