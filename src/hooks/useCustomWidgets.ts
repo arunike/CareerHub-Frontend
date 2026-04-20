@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
+import {
+  loadAnalyticsSourceData,
+  runAnalyticsWidgetQuery,
+} from '../lib/browserAi';
 
 export interface CustomWidget {
   id: string;
@@ -40,25 +44,28 @@ export const useCustomWidgets = (
   useEffect(() => {
     const refreshWidgets = async () => {
       if (customWidgets.length === 0) return;
-      
+
+      let sourceData;
+      try {
+        sourceData = await loadAnalyticsSourceData();
+      } catch (error) {
+        messageApi.error('Failed to load analytics data for custom widgets');
+        console.error('Failed to load analytics data for custom widgets', error);
+        return;
+      }
+
       let hasUpdates = false;
       const updatedWidgets = await Promise.all(customWidgets.map(async (widget) => {
         try {
-          const response = await fetch('http://localhost:8000/api/analytics/query/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: widget.query, context }),
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (JSON.stringify(widget.cachedData) !== JSON.stringify(data)) {
-              hasUpdates = true;
-              return { ...widget, cachedData: data };
-            }
+          const data = await runAnalyticsWidgetQuery(widget.query, context, sourceData);
+          if (JSON.stringify(widget.cachedData) !== JSON.stringify(data)) {
+            hasUpdates = true;
+            return { ...widget, cachedData: data };
           }
         } catch (error) {
-          messageApi.error(`Failed to refresh widget ${widget.name}`);
+          messageApi.error(
+            error instanceof Error ? error.message : `Failed to refresh widget ${widget.name}`
+          );
           console.error(`Failed to refresh widget ${widget.name}:`, error);
         }
         return widget;
@@ -88,14 +95,10 @@ export const useCustomWidgets = (
 
   const testQuery = async (query: string) => {
     try {
-      const response = await fetch('http://localhost:8000/api/analytics/query/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, context }),
-      });
-      return await response.json();
+      const sourceData = await loadAnalyticsSourceData();
+      return await runAnalyticsWidgetQuery(query, context, sourceData);
     } catch (error) {
-      messageApi.error('API Error');
+      messageApi.error(error instanceof Error ? error.message : 'AI query failed');
       console.error('API Error:', error);
       throw error;
     }

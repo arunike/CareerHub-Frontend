@@ -1,4 +1,4 @@
-import type { Task, Document, Experience } from '../types';
+import type { Task, Experience, WeeklyReview } from '../types';
 import api from './client';
 
 const EXPERIENCE_DECIMAL_FIELDS = [
@@ -128,11 +128,6 @@ export interface JDMatchResult {
   recommendations: string[];
 }
 
-export const matchJobDescription = (text: string) => api.post<JDMatchResult>('/career/match-jd/', { text });
-
-export const generateCoverLetter = (applicationId: number, jdText: string) =>
-  api.post<{ cover_letter: string }>(`/career/applications/${applicationId}/generate-cover-letter/`, { jd_text: jdText });
-
 export interface NegotiationAdvice {
   talking_points: string[];
   leverage_points: string[];
@@ -145,6 +140,3 @@ export interface NegotiationAdvice {
     notes: string;
   };
 }
-
-export const getNegotiationAdvice = (offerId: number) =>
-  api.post<NegotiationAdvice>(`/career/offers/${offerId}/negotiation-advice/`);

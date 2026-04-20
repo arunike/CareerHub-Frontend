@@ -430,7 +430,6 @@ const HourlyBreakdown = ({
   const displayWorkingDaysPerWeek = useLiveSnapshot ? (liveSnapshot?.workingDaysPerWeek ?? workingDaysPerWeek) : workingDaysPerWeek;
   const displayEstimatedHours = useLiveSnapshot ? (liveSnapshot?.estimatedHours ?? estimatedHours) : estimatedHours;
   const displayWeekdaysWorked = useLiveSnapshot ? (liveSnapshot?.weekdaysWorked ?? weekdaysWorked) : weekdaysWorked;
-  const displayAutoCalculatedHours = useLiveSnapshot ? (liveSnapshot?.autoCalculatedHours ?? autoCalculatedHours) : autoCalculatedHours;
   const displayDateRangeLabel = useLiveSnapshot ? (liveSnapshot?.dateRangeLabel ?? dateRangeLabel) : dateRangeLabel;
   const displayHourlyRate = useLiveSnapshot ? (liveSnapshot?.hourlyRate ?? hourlyRate) : hourlyRate;
   const displayRegularPay = useLiveSnapshot ? (liveSnapshot?.regularPay ?? regularPay) : regularPay;
@@ -441,7 +440,6 @@ const HourlyBreakdown = ({
   const displayOvertimeMultiplier = useLiveSnapshot ? (liveSnapshot?.overtimeMultiplier ?? overtimeMultiplier) : overtimeMultiplier;
   const displayEffectiveOvertimeRate = useLiveSnapshot ? (liveSnapshot?.effectiveOvertimeRate ?? effectiveOvertimeRate) : effectiveOvertimeRate;
   const displayOvertimePay = useLiveSnapshot ? (liveSnapshot?.overtimePay ?? overtimePay) : overtimePay;
-  const displayTotalOverride = useLiveSnapshot ? (liveSnapshot?.totalEarningsOverride ?? totalEarningsOverride) : totalEarningsOverride;
   const displayTotal = useLiveSnapshot ? (liveSnapshot?.total ?? total) : total;
   const hasValidDraft = [
     toNullableNumber(draftHourlyRate),
@@ -1048,19 +1046,6 @@ const MetricRow = ({
         <div className="text-[15px] font-bold text-gray-700">{value}</div>
       </div>
     </div>
-  </div>
-);
-
-const SummaryPill = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => (
-  <div className="rounded-full border border-gray-200 bg-gray-50 px-3 py-2">
-    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">{label}</div>
-    <div className="mt-1 text-sm font-bold text-gray-900">{value}</div>
   </div>
 );
 

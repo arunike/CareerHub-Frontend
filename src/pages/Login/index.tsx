@@ -61,6 +61,7 @@ export default function LoginPage() {
   const [statusLoading, setStatusLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const locationState = location.state as LoginLocationState | null;
 
   const redirectTo = typeof locationState?.from === 'string' ? locationState.from : '/';
@@ -125,6 +126,7 @@ export default function LoginPage() {
 
     setMode(nextMode);
     setErrorMessage('');
+    setSuccessMessage('');
     form.resetFields();
   }
 
@@ -135,15 +137,23 @@ export default function LoginPage() {
 
     setSubmitting(true);
     setErrorMessage('');
+    setSuccessMessage('');
 
     try {
       if (mode === 'signup') {
-        await signup({
+        const signupResult = await signup({
           email: values.email || '',
           full_name: values.full_name || '',
           password: values.password,
           confirm_password: values.confirm_password || '',
         });
+        if (signupResult.requires_login) {
+          setMode('login');
+          form.resetFields();
+          form.setFieldsValue({ email: values.email || '' });
+          setSuccessMessage(signupResult.message || 'Account created. Sign in to continue.');
+          return;
+        }
       } else {
         await login(values.email || '', values.password);
       }
@@ -318,6 +328,12 @@ export default function LoginPage() {
                   {errorMessage ? (
                     <Form.Item>
                       <Alert type="error" showIcon message={errorMessage} />
+                    </Form.Item>
+                  ) : null}
+
+                  {successMessage ? (
+                    <Form.Item>
+                      <Alert type="success" showIcon message={successMessage} />
                     </Form.Item>
                   ) : null}
 

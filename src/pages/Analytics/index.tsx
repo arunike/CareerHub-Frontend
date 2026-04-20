@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Event } from '../../types';
 import { getEvents, getApplications } from '../../api';
-import { RiseOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { RiseOutlined } from '@ant-design/icons';
 import {
   format,
   parseISO,

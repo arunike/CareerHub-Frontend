@@ -7,7 +7,8 @@ import {
   ReloadOutlined,
   CheckOutlined,
 } from '@ant-design/icons';
-import { generateCoverLetter } from '../../api/career';
+import { getExperiences } from '../../api/career';
+import { generateCoverLetterWithBrowserAI } from '../../lib/browserAi';
 import { saveCoverLetter } from '../../utils/coverLetterStorage';
 import type { CareerApplication } from '../../types/application';
 
@@ -37,8 +38,12 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
     setSaved(false);
     setCopied(false);
     try {
-      const res = await generateCoverLetter(application.id, jdText);
-      const letter = res.data.cover_letter;
+      const experiencesResponse = await getExperiences();
+      const letter = await generateCoverLetterWithBrowserAI({
+        application,
+        jdText,
+        experiences: experiencesResponse.data,
+      });
       setCoverLetter(letter);
       saveCoverLetter(
         application.id,
@@ -48,8 +53,12 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
         jdText,
       );
       setSaved(true);
-    } catch {
-      messageApi.error('Failed to generate cover letter. Check your LLM configuration.');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate cover letter. Check your browser AI provider settings.';
+      messageApi.error(message);
     } finally {
       setLoading(false);
     }
