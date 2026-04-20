@@ -17,12 +17,12 @@ A modern React application powering the user interface of the CareerHub job sear
 
 ## 🌟 Overview
 
-The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS + Ant Design, it covers the full job search lifecycle: tracking applications, comparing offers, managing interview availability, running browser-side AI career tools, and visualizing progress.
+The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS + Ant Design, it covers the full job search lifecycle: tracking applications, comparing offers, managing interview availability, running AI career tools, and visualizing progress.
 
 **Key Capabilities:**
 
 - 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
-- 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, and custom widgets powered by your own browser-side provider config
+- 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, and custom widgets powered by your own provider config with encrypted backend key storage
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
@@ -58,7 +58,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
-> AI features are configured in `Settings` → `AI Provider` and stored only in the current browser's localStorage.
+> AI features are configured in `Settings` → `AI Provider`. The endpoint/model are tied to your account, and the API key is stored encrypted on the backend.
 
 Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsible section:
 
@@ -103,7 +103,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 - **Availability Analytics**: Meeting/interview volume and duration tracking
 - **Job Hunt Analytics**: Application funnel and outcome visualization
-- **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — common queries resolve locally and free-form queries call the configured browser-side provider with a frontend-built data summary
+- **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — common queries resolve locally and free-form queries send a frontend-built data summary through the authenticated backend AI relay
 - **Drag-and-Drop Dashboard**: Reorder and save widget layouts with `dnd-kit`
 
 ### ✅ Action Items (`/tasks`)
@@ -116,7 +116,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### ⚙️ Settings (`/settings`)
 
 - **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
-- **AI Provider**: configure an OpenAI-compatible endpoint, model, and personal API key for browser-side cover letters, JD matching, negotiation advice, and analytics widgets; stored locally in the browser
+- **AI Provider**: configure an OpenAI-compatible endpoint, model, and personal API key for cover letters, JD matching, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows per day (e.g., 11am–12pm and 2pm–5pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
 - **Data Management**: export all data as ZIP (JSON, CSV, or Excel)
 - **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
@@ -139,7 +139,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### Data & State
 - **Axios** — HTTP client
-- **localStorage** — Persisted state for JD reports, cover letters, offer adjustments, widget layouts, and the local AI provider config
+- **localStorage** — Persisted state for JD reports, cover letters, offer adjustments, and widget layouts
 - **Custom hooks**: `usePersistedState`, `useCustomWidgets`, `useOfferAdjustmentsPersistence`, `useScenarioRows`
 
 ### Data Visualization
@@ -171,6 +171,8 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
    ```
 
 The app will be available at `http://localhost:5173` and proxies API calls to `http://localhost:8000`.
+
+For local backend startup, copy `api/.env.development.example` to `api/.env.development` before running Django or Docker Compose.
 
 If backend models changed, run backend migrations before using the app:
 ```bash
@@ -255,8 +257,8 @@ frontend/
 │   │   └── index.ts                 # Re-exports
 │   │
 │   ├── lib/
-│   │   ├── llmSettings.ts           # Browser-local AI provider storage helpers
-│   │   ├── llmClient.ts             # OpenAI-compatible browser client
+│   │   ├── llmSettings.ts           # AI provider form helpers for backend-stored provider config
+│   │   ├── llmClient.ts             # Authenticated AI relay client
 │   │   └── browserAi.ts             # Prompt builders for cover letters, JD match, negotiation, analytics
 │   │
 │   ├── utils/
