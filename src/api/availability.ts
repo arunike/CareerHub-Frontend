@@ -41,6 +41,10 @@ export const deleteCategory = (id: number) => api.delete(`/categories/${id}/`);
 
 export const getUserSettings = () => api.get('/user-settings/current/');
 export const updateUserSettings = (data: Partial<UserSettings>) => api.put('/user-settings/current/', data);
+export const requestAIProviderChatCompletion = (data: {
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  temperature?: number;
+}) => api.post('/user-settings/ai-provider/chat-completions/', data);
 
 export const getRecurringInstances = (startDate: string, endDate: string) =>
   api.get('/events/recurring_instances/', { params: { start_date: startDate, end_date: endDate } });

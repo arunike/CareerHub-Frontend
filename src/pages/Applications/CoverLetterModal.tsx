@@ -57,7 +57,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
       const message =
         error instanceof Error
           ? error.message
-          : 'Failed to generate cover letter. Check your browser AI provider settings.';
+          : 'Failed to generate cover letter. Check Settings > AI Provider.';
       messageApi.error(message);
     } finally {
       setLoading(false);

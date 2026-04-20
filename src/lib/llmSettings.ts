@@ -1,49 +1,58 @@
-export interface LocalLLMSettings {
+import type { UserSettings } from '../types';
+
+export interface AIProviderSettings {
   endpoint: string;
   model: string;
   apiKey: string;
+  apiKeyConfigured: boolean;
+  apiKeyMasked: string;
 }
 
-export const LOCAL_LLM_SETTINGS_STORAGE_KEY = 'careerhub_local_llm_settings_v1';
-
-export const DEFAULT_LOCAL_LLM_SETTINGS: LocalLLMSettings = {
+export const DEFAULT_AI_PROVIDER_SETTINGS: AIProviderSettings = {
   endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
   model: 'gemini-2.0-flash',
   apiKey: '',
+  apiKeyConfigured: false,
+  apiKeyMasked: '',
 };
 
-export const getStoredLocalLLMSettings = (): LocalLLMSettings => {
-  try {
-    const raw = localStorage.getItem(LOCAL_LLM_SETTINGS_STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_LOCAL_LLM_SETTINGS };
-
-    const parsed = JSON.parse(raw) as Partial<LocalLLMSettings>;
-    return {
-      endpoint: parsed.endpoint?.trim() || DEFAULT_LOCAL_LLM_SETTINGS.endpoint,
-      model: parsed.model?.trim() || DEFAULT_LOCAL_LLM_SETTINGS.model,
-      apiKey: parsed.apiKey || '',
-    };
-  } catch (error) {
-    console.error('Failed to read local AI provider settings', error);
-    return { ...DEFAULT_LOCAL_LLM_SETTINGS };
+export const getAIProviderSettingsFromUserSettings = (
+  settings?: Partial<UserSettings> | null
+): AIProviderSettings => {
+  if (!settings) {
+    return { ...DEFAULT_AI_PROVIDER_SETTINGS };
   }
-};
 
-export const saveStoredLocalLLMSettings = (settings: LocalLLMSettings) => {
-  const normalized = {
-    endpoint: settings.endpoint.trim(),
-    model: settings.model.trim(),
-    apiKey: settings.apiKey,
+  return {
+    endpoint: settings.ai_provider_endpoint?.trim() || DEFAULT_AI_PROVIDER_SETTINGS.endpoint,
+    model: settings.ai_provider_model?.trim() || DEFAULT_AI_PROVIDER_SETTINGS.model,
+    apiKey: '',
+    apiKeyConfigured: Boolean(settings.ai_provider_api_key_configured),
+    apiKeyMasked: settings.ai_provider_api_key_masked?.trim() || '',
   };
-  localStorage.setItem(LOCAL_LLM_SETTINGS_STORAGE_KEY, JSON.stringify(normalized));
-  window.dispatchEvent(new CustomEvent('llm-settings-saved', { detail: normalized }));
 };
 
-export const clearStoredLocalLLMSettings = () => {
-  const cleared = { ...DEFAULT_LOCAL_LLM_SETTINGS, apiKey: '' };
-  localStorage.setItem(LOCAL_LLM_SETTINGS_STORAGE_KEY, JSON.stringify(cleared));
-  window.dispatchEvent(new CustomEvent('llm-settings-saved', { detail: cleared }));
+export const buildAIProviderSettingsPatch = (
+  settings: AIProviderSettings,
+  includeApiKey: boolean
+): Partial<UserSettings> => {
+  const patch: Partial<UserSettings> = {
+    ai_provider_endpoint: settings.endpoint.trim(),
+    ai_provider_model: settings.model.trim(),
+  };
+
+  if (includeApiKey) {
+    patch.ai_provider_api_key = settings.apiKey;
+  }
+
+  return patch;
 };
 
-export const hasConfiguredLocalLLMSettings = (settings: LocalLLMSettings = getStoredLocalLLMSettings()) =>
-  Boolean(settings.endpoint.trim() && settings.model.trim() && settings.apiKey.trim());
+export const hasConfiguredAIProviderSettings = (
+  settings: AIProviderSettings = DEFAULT_AI_PROVIDER_SETTINGS
+) =>
+  Boolean(
+    settings.endpoint.trim() &&
+      settings.model.trim() &&
+      (settings.apiKey.trim() || settings.apiKeyConfigured)
+  );

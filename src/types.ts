@@ -130,6 +130,11 @@ export interface UserSettings {
   employment_types?: EmploymentType[];
   holiday_tabs?: HolidayTab[];
   hidden_nav_items?: string[];
+  ai_provider_endpoint?: string;
+  ai_provider_model?: string;
+  ai_provider_api_key?: string;
+  ai_provider_api_key_configured?: boolean;
+  ai_provider_api_key_masked?: string;
   created_at: string;
   updated_at: string;
 }
