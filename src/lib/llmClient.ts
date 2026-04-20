@@ -1,8 +1,6 @@
-import {
-  getStoredLocalLLMSettings,
-  hasConfiguredLocalLLMSettings,
-  type LocalLLMSettings,
-} from './llmSettings';
+import { AxiosError } from 'axios';
+
+import { requestAIProviderChatCompletion } from '../api';
 
 type ChatRole = 'system' | 'user' | 'assistant';
 
@@ -14,7 +12,6 @@ interface ChatMessage {
 interface ChatCompletionOptions {
   messages: ChatMessage[];
   temperature?: number;
-  settings?: LocalLLMSettings;
 }
 
 export class LLMConfigurationError extends Error {
@@ -34,71 +31,58 @@ export class LLMRequestError extends Error {
 const stripCodeFences = (value: string) =>
   value.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 
-const extractErrorMessage = (payload: unknown) => {
-  if (!payload || typeof payload !== 'object') return 'The provider returned an unknown error.';
-
-  const maybeError = (payload as { error?: unknown }).error;
-  if (typeof maybeError === 'string') return maybeError;
-  if (maybeError && typeof maybeError === 'object') {
-    const message = (maybeError as { message?: unknown }).message;
-    if (typeof message === 'string' && message.trim()) return message;
-  }
-
-  const message = (payload as { message?: unknown }).message;
-  if (typeof message === 'string' && message.trim()) return message;
-  return 'The provider returned an unknown error.';
-};
-
 export const isLLMConfigurationError = (error: unknown): error is LLMConfigurationError =>
   error instanceof LLMConfigurationError;
+
+const extractAxiosErrorMessage = (error: AxiosError) => {
+  const payload = error.response?.data as
+    | { detail?: unknown; error?: unknown; message?: unknown }
+    | undefined;
+
+  if (typeof payload?.detail === 'string' && payload.detail.trim()) return payload.detail;
+  if (typeof payload?.error === 'string' && payload.error.trim()) return payload.error;
+  if (typeof payload?.message === 'string' && payload.message.trim()) return payload.message;
+  return '';
+};
 
 export const requestChatCompletion = async ({
   messages,
   temperature = 0.2,
-  settings = getStoredLocalLLMSettings(),
 }: ChatCompletionOptions): Promise<string> => {
-  if (!hasConfiguredLocalLLMSettings(settings)) {
-    throw new LLMConfigurationError(
-      'AI provider is not configured. Add your endpoint, model, and API key in Settings > General > AI Provider.'
-    );
-  }
-
-  const response = await fetch(settings.endpoint.trim(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${settings.apiKey.trim()}`,
-    },
-    body: JSON.stringify({
-      model: settings.model.trim(),
+  try {
+    const response = await requestAIProviderChatCompletion({
       messages,
       temperature,
-    }),
-  });
+    });
+    const payload: unknown = response.data;
 
-  let payload: unknown = null;
-  try {
-    payload = await response.json();
-  } catch (error) {
-    if (!response.ok) {
-      throw new LLMRequestError(`Provider request failed with status ${response.status}.`);
+    const content = (payload as {
+      choices?: Array<{ message?: { content?: unknown } }>;
+    }).choices?.[0]?.message?.content;
+
+    if (typeof content !== 'string' || !content.trim()) {
+      throw new LLMRequestError('Provider returned an empty completion.');
     }
-    throw new LLMRequestError('Provider returned a non-JSON response.');
+
+    return stripCodeFences(content);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      const message = extractAxiosErrorMessage(error);
+      if (error.response?.status === 400) {
+        throw new LLMConfigurationError(
+          message ||
+            'AI provider is not configured. Add your endpoint, model, and API key in Settings > AI Provider.'
+        );
+      }
+      throw new LLMRequestError(message || 'Provider request failed.');
+    }
+    if (error instanceof LLMRequestError || error instanceof LLMConfigurationError) {
+      throw error;
+    }
+    throw new LLMRequestError(
+      error instanceof Error ? error.message : 'Provider request failed.'
+    );
   }
-
-  if (!response.ok) {
-    throw new LLMRequestError(extractErrorMessage(payload));
-  }
-
-  const content = (payload as {
-    choices?: Array<{ message?: { content?: unknown } }>;
-  }).choices?.[0]?.message?.content;
-
-  if (typeof content !== 'string' || !content.trim()) {
-    throw new LLMRequestError('Provider returned an empty completion.');
-  }
-
-  return stripCodeFences(content);
 };
 
 export const requestJsonCompletion = async <T,>(options: ChatCompletionOptions): Promise<T> => {

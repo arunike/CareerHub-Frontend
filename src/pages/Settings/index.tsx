@@ -28,10 +28,9 @@ import CategoryBadge from '../../components/CategoryBadge';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import LockableListItem from '../../components/LockableListItem';
 import {
-  clearStoredLocalLLMSettings,
-  getStoredLocalLLMSettings,
-  saveStoredLocalLLMSettings,
-  type LocalLLMSettings,
+  buildAIProviderSettingsPatch,
+  getAIProviderSettingsFromUserSettings,
+  type AIProviderSettings,
 } from '../../lib/llmSettings';
 
 dayjs.extend(customParseFormat);
@@ -48,8 +47,13 @@ const Settings: React.FC = () => {
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
-  const [aiSettings, setAiSettings] = useState<LocalLLMSettings>(() => getStoredLocalLLMSettings());
-  const [savedAiSettings, setSavedAiSettings] = useState<LocalLLMSettings>(() => getStoredLocalLLMSettings());
+  const [aiSettings, setAiSettings] = useState<AIProviderSettings>(() =>
+    getAIProviderSettingsFromUserSettings(null)
+  );
+  const [savedAiSettings, setSavedAiSettings] = useState<AIProviderSettings>(() =>
+    getAIProviderSettingsFromUserSettings(null)
+  );
+  const [aiApiKeyChanged, setAiApiKeyChanged] = useState(false);
   const [showAiApiKey, setShowAiApiKey] = useState(false);
   const originalSettingsRef = useRef<string>('');
 
@@ -204,6 +208,14 @@ const Settings: React.FC = () => {
     setTimeout(reset, 120);
   };
 
+  const syncAiSettings = (nextSettings: Partial<UserSettings> | null | undefined) => {
+    const normalized = getAIProviderSettingsFromUserSettings(nextSettings);
+    setAiSettings(normalized);
+    setSavedAiSettings(normalized);
+    setAiApiKeyChanged(false);
+    setShowAiApiKey(false);
+  };
+
   const fetchSettings = async () => {
     try {
       const resp = await getUserSettings();
@@ -226,6 +238,7 @@ const Settings: React.FC = () => {
       }
       originalSettingsRef.current = JSON.stringify(data);
       setSettings(data);
+      syncAiSettings(data);
       setIsDirty(false);
     } catch (error) {
       messageApi.error('Failed to fetch settings');
@@ -333,30 +346,84 @@ const Settings: React.FC = () => {
     setDeletingCategoryId(id);
   };
 
-  const aiSettingsDirty = JSON.stringify(aiSettings) !== JSON.stringify(savedAiSettings);
+  const aiSettingsDirty =
+    aiSettings.endpoint.trim() !== savedAiSettings.endpoint.trim() ||
+    aiSettings.model.trim() !== savedAiSettings.model.trim() ||
+    aiApiKeyChanged;
 
-  const updateAiSetting = (field: keyof LocalLLMSettings, value: string) => {
+  const mergeAiSettingsIntoSettings = (nextAiSettings: Partial<UserSettings>) => {
+    setSettings((prev) => (prev ? { ...prev, ...nextAiSettings } : prev));
+  };
+
+  const mergeAiSettingsIntoOriginalRef = (nextAiSettings: Partial<UserSettings>) => {
+    if (!originalSettingsRef.current) return;
+    try {
+      const parsed = JSON.parse(originalSettingsRef.current) as UserSettings;
+      originalSettingsRef.current = JSON.stringify({ ...parsed, ...nextAiSettings });
+    } catch (error) {
+      console.error('Failed to sync AI settings snapshot', error);
+    }
+  };
+
+  const updateAiSetting = (field: keyof AIProviderSettings, value: string) => {
+    if (field === 'apiKey') {
+      setAiApiKeyChanged(true);
+    }
     setAiSettings((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveAiSettings = () => {
-    saveStoredLocalLLMSettings(aiSettings);
-    const persisted = getStoredLocalLLMSettings();
-    setAiSettings(persisted);
-    setSavedAiSettings(persisted);
-    setSuccessMessage(
-      persisted.apiKey.trim()
-        ? 'AI provider saved locally.'
-        : 'AI provider preset saved. Add an API key to enable browser-side AI.'
-    );
+  const handleSaveAiSettings = async () => {
+    try {
+      const response = await updateUserSettings(
+        buildAIProviderSettingsPatch(aiSettings, aiApiKeyChanged)
+      );
+      const nextSettings = response.data as UserSettings;
+      mergeAiSettingsIntoSettings({
+        ai_provider_endpoint: nextSettings.ai_provider_endpoint,
+        ai_provider_model: nextSettings.ai_provider_model,
+        ai_provider_api_key_configured: nextSettings.ai_provider_api_key_configured,
+        ai_provider_api_key_masked: nextSettings.ai_provider_api_key_masked,
+        updated_at: nextSettings.updated_at,
+      });
+      mergeAiSettingsIntoOriginalRef({
+        ai_provider_endpoint: nextSettings.ai_provider_endpoint,
+        ai_provider_model: nextSettings.ai_provider_model,
+        ai_provider_api_key_configured: nextSettings.ai_provider_api_key_configured,
+        ai_provider_api_key_masked: nextSettings.ai_provider_api_key_masked,
+        updated_at: nextSettings.updated_at,
+      });
+      syncAiSettings(nextSettings);
+      setSuccessMessage(
+        nextSettings.ai_provider_api_key_configured
+          ? 'AI provider saved with an encrypted server-side key.'
+          : 'AI provider preset saved. Add an API key to enable AI features.'
+      );
+    } catch (error) {
+      messageApi.error('Failed to save AI provider');
+      console.error('Error saving AI provider:', error);
+    }
   };
 
-  const handleClearAiSettings = () => {
-    clearStoredLocalLLMSettings();
-    const cleared = getStoredLocalLLMSettings();
-    setAiSettings(cleared);
-    setSavedAiSettings(cleared);
-    setSuccessMessage('Local AI key cleared from this browser.');
+  const handleClearAiSettings = async () => {
+    try {
+      const response = await updateUserSettings({ ai_provider_api_key: '' });
+      const nextSettings = response.data as UserSettings;
+      mergeAiSettingsIntoSettings({
+        ai_provider_api_key_configured: nextSettings.ai_provider_api_key_configured,
+        ai_provider_api_key_masked: nextSettings.ai_provider_api_key_masked,
+        updated_at: nextSettings.updated_at,
+      });
+      mergeAiSettingsIntoOriginalRef({
+        ai_provider_api_key_configured: nextSettings.ai_provider_api_key_configured,
+        ai_provider_api_key_masked: nextSettings.ai_provider_api_key_masked,
+        updated_at: nextSettings.updated_at,
+      });
+      syncAiSettings(nextSettings);
+      setSuccessMessage('Stored AI key cleared from the server.');
+    } catch (error) {
+      messageApi.error('Failed to clear AI key');
+      console.error('Error clearing AI key:', error);
+    }
   };
 
   const confirmDeleteCategory = async () => {
@@ -747,17 +814,18 @@ const Settings: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-sm font-semibold text-gray-900">Browser-side BYOK</h4>
+                <h4 className="text-sm font-semibold text-gray-900">Encrypted Server-side BYOK</h4>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-indigo-200 text-indigo-700">
                   OpenAI-compatible
                 </span>
               </div>
               <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                Your endpoint, model, and API key are stored only in this browser&apos;s localStorage.
-                They are not sent to your backend or synced across devices.
+                Your endpoint and model are stored with your account. Your API key is encrypted at
+                rest on the backend and used only by the authenticated server-side relay.
               </p>
-              <p className="text-xs text-amber-700 mt-2">
-                This is convenient, but not encrypted. Anyone with access to this browser profile can inspect the saved key.
+              <p className="text-xs text-emerald-700 mt-2">
+                After save, the full key is not returned to the browser. You&apos;ll only see a masked
+                confirmation that a key is on file.
               </p>
             </div>
           </div>
@@ -807,26 +875,37 @@ const Settings: React.FC = () => {
               className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
               value={aiSettings.apiKey}
               onChange={(e) => updateAiSetting('apiKey', e.target.value)}
-              placeholder="Paste your provider key"
+              placeholder={
+                aiSettings.apiKeyConfigured && aiSettings.apiKeyMasked
+                  ? `Stored key: ${aiSettings.apiKeyMasked}`
+                  : 'Paste your provider key'
+              }
               autoComplete="off"
               spellCheck={false}
             />
             <p className="text-xs text-gray-500 mt-2">
               Used by Cover Letter generation, JD Matcher, Negotiation Advisor, and Analytics custom widgets.
             </p>
+            {aiSettings.apiKeyConfigured && !aiSettings.apiKey && (
+              <p className="text-xs text-indigo-600 mt-1">
+                A key is already stored securely for this account: {aiSettings.apiKeyMasked || 'Saved key'}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
             <div className="text-xs text-gray-500">
-              Default preset targets Google Gemini&apos;s OpenAI-compatible endpoint. You can swap in any browser-accessible compatible provider.
+              Default preset targets Google Gemini&apos;s OpenAI-compatible endpoint. You can swap in
+              any compatible provider that your backend deployment allows.
             </div>
             <div className="flex gap-2 shrink-0">
               <button
                 type="button"
                 onClick={handleClearAiSettings}
+                disabled={!aiSettings.apiKeyConfigured}
                 className="px-3.5 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                Clear Key
+                Clear Stored Key
               </button>
               <button
                 type="button"
@@ -834,7 +913,7 @@ const Settings: React.FC = () => {
                 disabled={!aiSettingsDirty}
                 className="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Local Provider
+                Save Provider
               </button>
             </div>
           </div>

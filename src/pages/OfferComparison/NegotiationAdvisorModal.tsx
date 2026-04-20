@@ -112,7 +112,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
       setError(
         error instanceof Error
           ? error.message
-          : 'Failed to generate advice. Check your browser AI provider settings.'
+          : 'Failed to generate advice. Check Settings > AI Provider.'
       );
     } finally {
       setLoading(false);
