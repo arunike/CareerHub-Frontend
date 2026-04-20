@@ -17,12 +17,12 @@ A modern React application powering the user interface of the CareerHub job sear
 
 ## 🌟 Overview
 
-The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS + Ant Design, it covers the full job search lifecycle: tracking applications, comparing offers, managing interview availability, running AI career tools, and visualizing progress.
+The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS + Ant Design, it covers the full job search lifecycle: tracking applications, comparing offers, managing interview availability, running browser-side AI career tools, and visualizing progress.
 
 **Key Capabilities:**
 
 - 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
-- 🤖 **AI Career Suite**: JD matching, cover letter generation, and offer negotiation advisor — all powered by LLM
+- 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, and custom widgets powered by your own browser-side provider config
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
@@ -58,7 +58,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
-> All AI features require `LLM_API_KEY` set in `api/.env`. See backend README.
+> AI features are configured in `Settings` → `AI Provider` and stored only in the current browser's localStorage.
 
 Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsible section:
 
@@ -103,7 +103,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 - **Availability Analytics**: Meeting/interview volume and duration tracking
 - **Job Hunt Analytics**: Application funnel and outcome visualization
-- **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — unrecognized queries are now answered by the LLM fallback
+- **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — common queries resolve locally and free-form queries call the configured browser-side provider with a frontend-built data summary
 - **Drag-and-Drop Dashboard**: Reorder and save widget layouts with `dnd-kit`
 
 ### ✅ Action Items (`/tasks`)
@@ -116,6 +116,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### ⚙️ Settings (`/settings`)
 
 - **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
+- **AI Provider**: configure an OpenAI-compatible endpoint, model, and personal API key for browser-side cover letters, JD matching, negotiation advice, and analytics widgets; stored locally in the browser
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows per day (e.g., 11am–12pm and 2pm–5pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
 - **Data Management**: export all data as ZIP (JSON, CSV, or Excel)
 - **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
@@ -138,7 +139,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### Data & State
 - **Axios** — HTTP client
-- **localStorage** — Persisted state for JD reports, cover letters, offer adjustments, widget layouts
+- **localStorage** — Persisted state for JD reports, cover letters, offer adjustments, widget layouts, and the local AI provider config
 - **Custom hooks**: `usePersistedState`, `useCustomWidgets`, `useOfferAdjustmentsPersistence`, `useScenarioRows`
 
 ### Data Visualization
@@ -249,9 +250,14 @@ frontend/
 │   │
 │   ├── api/
 │   │   ├── client.ts                # Axios instance
-│   │   ├── career.ts                # Career, offers, experience, AI endpoints
+│   │   ├── career.ts                # Career, offers, experience, and shared AI result types
 │   │   ├── availability.ts          # Events, holidays, settings, booking endpoints
 │   │   └── index.ts                 # Re-exports
+│   │
+│   ├── lib/
+│   │   ├── llmSettings.ts           # Browser-local AI provider storage helpers
+│   │   ├── llmClient.ts             # OpenAI-compatible browser client
+│   │   └── browserAi.ts             # Prompt builders for cover letters, JD match, negotiation, analytics
 │   │
 │   ├── utils/
 │   │   ├── reportStorage.ts         # localStorage CRUD for JD match reports
