@@ -277,6 +277,7 @@ const JDReportsListPage: React.FC = () => {
                     <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-gray-400">
                       <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> {report.matched_skills?.length ?? 0} strengths</span>
                       <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-orange-400" /> {report.missing_skills?.length ?? 0} gaps</span>
+                      <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> {report.tailored_bullets?.length ?? 0} rewrites</span>
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                       <RowActions

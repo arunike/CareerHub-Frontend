@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Input, Button, Space, Alert, Progress } from 'antd';
-import { RobotOutlined, ExpandOutlined, ArrowLeftOutlined, CheckCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { RobotOutlined, ExpandOutlined, ArrowLeftOutlined, CheckCircleOutlined, WarningOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getExperiences } from '../../api/career';
 import { matchJobDescriptionWithBrowserAI } from '../../lib/browserAi';
@@ -165,12 +165,24 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
               </div>
             </div>
             <div style={{ flex: 1, background: '#fffbeb', borderRadius: 10, padding: '12px 14px', border: '1px solid #fde68a' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>💡 Tips</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>Tailor</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#78350f', marginTop: 4 }}>
-                {savedReport.recommendations?.length ?? 0}
+                {(savedReport.tailored_bullets?.length ?? 0) || (savedReport.recommendations?.length ?? 0)}
               </div>
             </div>
           </div>
+
+          {((savedReport.tailored_bullets?.length ?? 0) > 0 || (savedReport.keyword_suggestions?.length ?? 0) > 0) && (
+            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '14px 16px', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                <EditOutlined /> Resume Tailoring Added
+              </div>
+              <p style={{ margin: 0, color: '#64748b', fontSize: 12, lineHeight: 1.6 }}>
+                Full report includes {savedReport.tailored_bullets?.length ?? 0} bullet rewrite suggestion{(savedReport.tailored_bullets?.length ?? 0) === 1 ? '' : 's'}
+                {(savedReport.keyword_suggestions?.length ?? 0) > 0 ? ` and ${savedReport.keyword_suggestions?.length ?? 0} supported JD keyword${(savedReport.keyword_suggestions?.length ?? 0) === 1 ? '' : 's'} to weave into your resume.` : '.'}
+              </p>
+            </div>
+          )}
 
           {/* CTAs */}
           <Button

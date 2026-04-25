@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Progress } from 'antd';
 import {
@@ -7,11 +7,13 @@ import {
   WarningOutlined,
   BulbOutlined,
   DownloadOutlined,
+  EditOutlined,
+  ProfileOutlined,
   RobotOutlined,
+  TagsOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { getReportById } from '../../utils/reportStorage';
-import type { StoredReport } from '../../utils/reportStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 
 const getScoreMeta = (score: number) => {
@@ -25,11 +27,7 @@ const getScoreMeta = (score: number) => {
 const JDReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [report, setReport] = useState<StoredReport | null>(null);
-
-  useEffect(() => {
-    if (id) setReport(getReportById(id));
-  }, [id]);
+  const report = id ? getReportById(id) : null;
 
   if (!report) {
     return (
@@ -48,6 +46,10 @@ const JDReportPage: React.FC = () => {
   const date = new Date(report.savedAt).toLocaleString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
+  const resumeGaps = report.resume_gaps ?? [];
+  const keywordSuggestions = report.keyword_suggestions ?? [];
+  const tailoredBullets = report.tailored_bullets ?? [];
+  const bestExperiences = report.best_experiences ?? [];
 
   return (
     <>
@@ -211,6 +213,123 @@ const JDReportPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {(resumeGaps.length > 0 || keywordSuggestions.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {resumeGaps.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center">
+                      <WarningOutlined className="text-orange-600 text-sm" />
+                    </div>
+                    <span className="font-semibold text-gray-800 text-sm">Resume Evidence Gaps</span>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {resumeGaps.map((gap, index) => (
+                      <div key={index} className="rounded-xl border border-orange-100 bg-orange-50/60 p-4">
+                        <p className="text-sm text-orange-900 leading-relaxed m-0">{gap}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {keywordSuggestions.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
+                      <TagsOutlined className="text-indigo-600 text-sm" />
+                    </div>
+                    <span className="font-semibold text-gray-800 text-sm">Supported JD Keywords</span>
+                  </div>
+                  <p className="text-xs text-gray-500 leading-relaxed m-0">
+                    Keywords below should only be woven into bullets where your saved experience already supports them.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {keywordSuggestions.map((keyword, index) => (
+                      <span key={index} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tailoredBullets.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <EditOutlined className="text-blue-600 text-sm" />
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">Resume Bullet Rewrite Suggestions</span>
+              </div>
+              <div className="flex flex-col gap-4">
+                {tailoredBullets.map((bullet, index) => (
+                  <div key={index} className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/70 to-white p-5 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full">
+                        Suggestion {index + 1}
+                      </span>
+                      {bullet.experience && (
+                        <span className="text-[11px] font-semibold text-gray-400 truncate">
+                          {bullet.experience}
+                        </span>
+                      )}
+                    </div>
+
+                    {bullet.original && (
+                      <div className="rounded-xl bg-white/70 border border-gray-100 p-4">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Original</div>
+                        <p className="text-sm text-gray-500 leading-relaxed m-0">{bullet.original}</p>
+                      </div>
+                    )}
+
+                    <div className="rounded-xl bg-white border border-blue-100 p-4 shadow-sm">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Tailored Rewrite</div>
+                      <p className="text-sm text-gray-800 leading-relaxed m-0 font-medium">{bullet.revised}</p>
+                    </div>
+
+                    <p className="text-xs text-gray-500 leading-relaxed m-0">
+                      <span className="font-bold text-gray-600">Why it helps:</span> {bullet.reason}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {bestExperiences.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <ProfileOutlined className="text-slate-600 text-sm" />
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">Best Experience Evidence</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bestExperiences.map((experience, index) => (
+                  <div key={index} className="rounded-2xl border border-gray-100 bg-slate-50/70 p-5 flex flex-col gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900 m-0">{experience.title}</h3>
+                      <p className="text-xs font-semibold text-gray-400 m-0 mt-1">{experience.company}</p>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed m-0">{experience.relevance}</p>
+                    {(experience.matched_requirements?.length ?? 0) > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {experience.matched_requirements?.map((requirement, requirementIndex) => (
+                          <span key={requirementIndex} className="text-[11px] font-medium px-2 py-1 rounded-lg bg-white text-slate-600 border border-slate-200">
+                            {requirement}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Recommendations */}
           {report.recommendations?.length > 0 && (
