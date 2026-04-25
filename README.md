@@ -22,7 +22,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 **Key Capabilities:**
 
 - 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
-- 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, and custom widgets powered by your own provider config with encrypted backend key storage
+- 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, skill refinement, and custom widgets powered by your own provider config with encrypted backend key storage
 - 🔐 **JWT Auth Flow**: Login, refresh, and protected-route bootstrapping now use Bearer tokens so the frontend can talk to a separate `*.vercel.app` backend without shared cookies
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
@@ -80,7 +80,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### 👤 Experience (`/experience`)
 
 - Full CRUD for work experience entries (title, company, dates, description, skills)
-- Skills auto-extracted by backend NLP on save
+- Skills auto-extracted by backend fallback logic, then AI-refined after save when an API key is configured in Settings
 - Inline skill tag editing
 - JD Matcher modal accessible from this page
 - **Employment type badges** — dynamically driven by user-configured types from Settings (10 color options); first type (Full-time) hidden by default
