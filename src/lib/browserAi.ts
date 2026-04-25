@@ -54,6 +54,21 @@ Respond ONLY with a valid JSON object using exactly this structure:
   "recommendations": ["<actionable resume tip>", ...]
 }`;
 
+const SKILL_REFINEMENT_SYSTEM_PROMPT = `You are an expert resume parser and technical recruiter.
+Extract the most relevant hard skills from a single experience entry.
+
+Rules:
+- Only include skills that are directly supported by the title, company context, description, or existing skill list
+- Prefer concise normalized labels such as "React", "Python", "CI/CD", "Machine Learning", "Stakeholder Management"
+- Include technical tools, frameworks, platforms, methods, and meaningful domain skills
+- Exclude company names, job titles, locations, dates, generic soft skills, and vague words like "experience" or "team"
+- Return only the skills with clear supporting evidence
+
+Respond ONLY with valid JSON using exactly this structure:
+{
+  "skills": ["<skill>", ...]
+}`;
+
 const NEGOTIATION_SYSTEM_PROMPT = `You are an expert compensation negotiation coach helping a candidate negotiate a job offer.
 Analyze the offer against the candidate's background and current compensation (if provided), then give concrete, actionable negotiation advice prioritized by impact.
 
@@ -90,6 +105,28 @@ const parseRecordDate = (value: string | undefined) => {
   if (!value) return null;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const normalizeSkillList = (skills: unknown): string[] => {
+  if (!Array.isArray(skills)) return [];
+
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const skill of skills) {
+    if (typeof skill !== 'string') continue;
+    const trimmed = skill.replace(/\s+/g, ' ').trim();
+    if (!trimmed || trimmed.length > 50) continue;
+
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(trimmed);
+
+    if (normalized.length >= 20) break;
+  }
+
+  return normalized;
 };
 
 const buildResumeContext = (experiences: Experience[]) => {
@@ -196,6 +233,32 @@ ${buildResumeContext(experiences)}`,
       },
     ],
   });
+};
+
+export const refineExperienceSkillsWithBrowserAI = async ({
+  experience,
+}: {
+  experience: Pick<Experience, 'title' | 'company' | 'description' | 'skills' | 'employment_type'>;
+}) => {
+  const result = await requestJsonCompletion<{ skills?: unknown }>({
+    temperature: 0.1,
+    messages: [
+      { role: 'system', content: SKILL_REFINEMENT_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `EXPERIENCE ENTRY:
+Title: ${experience.title || 'Unknown'}
+Company: ${experience.company || 'Unknown'}
+Employment Type: ${experience.employment_type || 'Unknown'}
+Existing Skills: ${(experience.skills || []).join(', ') || 'None'}
+
+Description:
+${experience.description?.trim() || 'No description provided.'}`,
+      },
+    ],
+  });
+
+  return normalizeSkillList(result.skills);
 };
 
 export const generateNegotiationAdviceWithBrowserAI = async ({

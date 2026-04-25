@@ -222,33 +222,37 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
         const selectedEmploymentType = values.employment_type || 'full_time';
         const isInternship = selectedEmploymentType === 'internship';
         const normalizedHourlyRate = toNullableNumber(values.hourly_rate);
+        const payload: Partial<Experience> = {
+          title: values.title,
+          company: values.company,
+          location: values.location,
+          employment_type: selectedEmploymentType,
+          start_date,
+          end_date,
+          is_current: values.is_current || false,
+          description: values.description,
+          is_promotion: values.role_context === 'promotion',
+          is_return_offer: values.role_context === 'return_offer',
+          offer: values.offer ?? null,
+          hourly_rate: isInternship ? normalizedHourlyRate : null,
+          hours_per_day: isInternship ? (experience?.hours_per_day ?? null) : null,
+          working_days_per_week: isInternship ? (experience?.working_days_per_week ?? null) : null,
+          total_hours_worked: isInternship ? (experience?.total_hours_worked ?? null) : null,
+          overtime_hours: isInternship ? (experience?.overtime_hours ?? null) : null,
+          overtime_rate: isInternship ? (experience?.overtime_rate ?? null) : null,
+          overtime_multiplier: isInternship ? (experience?.overtime_multiplier ?? null) : null,
+          total_earnings_override: isInternship ? (experience?.total_earnings_override ?? null) : null,
+          base_salary: (values.comp as CompValue)?.base_salary ?? null,
+          bonus: (values.comp as CompValue)?.bonus ?? null,
+          equity: (values.comp as CompValue)?.equity ?? null,
+        };
+
+        if (form.isFieldTouched('skills')) {
+          payload.skills = values.skills || [];
+        }
 
         await onSave(
-          {
-            title: values.title,
-            company: values.company,
-            location: values.location,
-            employment_type: selectedEmploymentType,
-            start_date,
-            end_date,
-            skills: values.skills,
-            is_current: values.is_current || false,
-            description: values.description,
-            is_promotion: values.role_context === 'promotion',
-            is_return_offer: values.role_context === 'return_offer',
-            offer: values.offer ?? null,
-            hourly_rate: isInternship ? normalizedHourlyRate : null,
-            hours_per_day: isInternship ? (experience?.hours_per_day ?? null) : null,
-            working_days_per_week: isInternship ? (experience?.working_days_per_week ?? null) : null,
-            total_hours_worked: isInternship ? (experience?.total_hours_worked ?? null) : null,
-            overtime_hours: isInternship ? (experience?.overtime_hours ?? null) : null,
-            overtime_rate: isInternship ? (experience?.overtime_rate ?? null) : null,
-            overtime_multiplier: isInternship ? (experience?.overtime_multiplier ?? null) : null,
-            total_earnings_override: isInternship ? (experience?.total_earnings_override ?? null) : null,
-            base_salary: (values.comp as CompValue)?.base_salary ?? null,
-            bonus: (values.comp as CompValue)?.bonus ?? null,
-            equity: (values.comp as CompValue)?.equity ?? null,
-          },
+          payload,
           logoFile,
           removeLogo,
         );
