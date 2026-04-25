@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ensureCsrfCookie, getSignupStatus, type SignupStatusResponse } from '../../api/auth';
+import { getSignupStatus, type SignupStatusResponse } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import './login.css';
 
@@ -37,7 +37,7 @@ const features = [
   { icon: <SafetyCertificateOutlined />, label: 'Career analytics', desc: 'Earnings, growth, timeline' },
 ];
 
-const trustPills = ['Private dashboard', 'Session secured', 'CSRF protected'];
+const trustPills = ['Private dashboard', 'Token secured', 'JWT auth'];
 
 function extractErrorMessage(error: unknown, fallback: string) {
   if (!axios.isAxiosError(error)) {
@@ -46,6 +46,10 @@ function extractErrorMessage(error: unknown, fallback: string) {
 
   if (typeof error.response?.data?.error === 'string') {
     return error.response.data.error;
+  }
+
+  if (typeof error.response?.data?.detail === 'string') {
+    return error.response.data.detail;
   }
 
   return fallback;
@@ -88,7 +92,6 @@ export default function LoginPage() {
 
     async function bootstrapPage() {
       try {
-        await ensureCsrfCookie();
         const response = await getSignupStatus();
         if (!cancelled) {
           setSignupStatus(response.data);

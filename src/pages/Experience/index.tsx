@@ -17,20 +17,10 @@ import CompensationBreakdownModal from './CompensationBreakdownModal';
 import type { OfferLike as Offer } from '../OfferComparison/calculations';
 import type { RaiseEntry, TeamEntry } from '../../types';
 import { buildHourlyCompensationSnapshot, getExperienceCompensationSnapshot } from './compensation';
+import { getMediaUrl } from '../../lib/runtimeConfig';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
-
-// DRF returns absolute URLs (http://127.0.0.1:8000/media/...) — strip host so
-// the request goes through the Vite /media proxy instead of directly to Django.
-const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  try {
-    return new URL(url).pathname; // → /media/experience_logos/file.jpg
-  } catch {
-    return url;
-  }
-};
 
 const toNullableNumber = (value: number | string | null | undefined): number | null => {
   if (value == null || value === '') return null;
@@ -993,7 +983,7 @@ const ExperiencePage: React.FC = () => {
             {groupedExperiences.map((group, groupIdx) => {
               const primary = group[0];
               const isMulti = group.length > 1;
-              const logoSrc = toRelativeMediaUrl(primary.logo);
+              const logoSrc = getMediaUrl(primary.logo);
 
               const groupAvatar = logoSrc ? (
                 <Avatar size={52} src={logoSrc} className="shadow-md border-4 border-white ring-1 ring-gray-100 z-10" />

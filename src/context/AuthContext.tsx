@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
-  ensureCsrfCookie,
   getCurrentUser,
   isAuthenticationError,
   login as loginRequest,
@@ -10,6 +9,13 @@ import {
   type AuthResponse,
   type AuthenticatedUser,
 } from '../api/auth';
+import {
+  AUTH_TOKENS_UPDATED_EVENT,
+  clearAuthTokens,
+  getStoredRefreshToken,
+  hasStoredAuthTokens,
+  storeAuthTokens,
+} from '../lib/authTokens';
 
 interface AuthContextValue {
   user: AuthenticatedUser | null;
@@ -35,6 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function bootstrapAuth() {
+      if (!hasStoredAuthTokens()) {
+        if (!cancelled) {
+          setUser(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       try {
         const response = await getCurrentUser();
         if (!cancelled) {
@@ -42,10 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         if (!cancelled && isAuthenticationError(error)) {
+          clearAuthTokens();
           setUser(null);
         }
         if (!cancelled && !isAuthenticationError(error)) {
-          console.error('Unable to restore session state.', error);
+          console.error('Unable to restore auth state.', error);
         }
       } finally {
         if (!cancelled) {
@@ -56,14 +71,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void bootstrapAuth();
 
+    const handleTokenEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ type?: 'updated' | 'cleared' }>;
+      if (customEvent.detail?.type === 'cleared') {
+        setUser(null);
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleTokenEvent as EventListener);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(AUTH_TOKENS_UPDATED_EVENT, handleTokenEvent as EventListener);
     };
   }, []);
 
   async function login(email: string, password: string) {
-    await ensureCsrfCookie();
     const response = await loginRequest(email, password);
+    if (response.data.access && response.data.refresh) {
+      storeAuthTokens({
+        access: response.data.access,
+        refresh: response.data.refresh,
+      });
+    }
     setUser(response.data.user ?? null);
   }
 
@@ -73,9 +104,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string;
     confirm_password: string;
   }) {
-    await ensureCsrfCookie();
     const response = await signupRequest(payload);
-    if (response.data.user && response.data.authenticated !== false) {
+    if (
+      response.data.user &&
+      response.data.authenticated !== false &&
+      response.data.access &&
+      response.data.refresh
+    ) {
+      storeAuthTokens({
+        access: response.data.access,
+        refresh: response.data.refresh,
+      });
       setUser(response.data.user);
     } else {
       setUser(null);
@@ -84,10 +123,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    const refreshToken = getStoredRefreshToken();
     try {
-      await ensureCsrfCookie();
-      await logoutRequest();
+      await logoutRequest(refreshToken || undefined);
     } finally {
+      clearAuthTokens();
       setUser(null);
     }
   }

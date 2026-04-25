@@ -89,6 +89,8 @@ export const createDocumentVersion = (id: number, formData: FormData) =>
   api.post(`/career/documents/${id}/add_version/`, formData, {
     headers: { 'Content-Type': undefined },
   });
+export const downloadDocument = (id: number) =>
+  api.get(`/career/documents/${id}/download/`, { responseType: 'blob' });
 
 export const getTasks = () => api.get('/career/tasks/');
 export const createTask = (data: Partial<Task>) => api.post('/career/tasks/', data);

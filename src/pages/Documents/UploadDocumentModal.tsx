@@ -12,6 +12,22 @@ interface UploadDocumentModalProps {
 
 const { Dragger } = Upload;
 const { Option } = Select;
+const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
+const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.doc', '.docx', '.txt'];
+
+const validateDocumentFile = (file: File) => {
+  const lowerName = file.name.toLowerCase();
+  const isAllowed = ALLOWED_DOCUMENT_EXTENSIONS.some((extension) => lowerName.endsWith(extension));
+  if (!isAllowed) {
+    message.error('Document must be a PDF, DOC, DOCX, or TXT file.');
+    return false;
+  }
+  if (file.size > MAX_DOCUMENT_FILE_BYTES) {
+    message.error('Document must be smaller than 4 MB.');
+    return false;
+  }
+  return true;
+};
 
 const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   visible,
@@ -85,6 +101,9 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       setFileList(newFileList);
     },
     beforeUpload: (file) => {
+      if (!validateDocumentFile(file)) {
+        return Upload.LIST_IGNORE;
+      }
       setFileList([file as UploadFile]);
       return false;
     },
@@ -153,7 +172,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
             </p>
             <p className="ant-upload-text">Click or drag file to this area to upload</p>
             <p className="ant-upload-hint">
-              Support for a single PDF, DOCX, or text file.
+              Support for a single PDF, DOC, DOCX, or TXT file up to 4 MB.
             </p>
           </Dragger>
         </Form.Item>
