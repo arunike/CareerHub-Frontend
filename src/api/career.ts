@@ -128,6 +128,20 @@ export interface JDMatchResult {
   matched_skills: string[];
   missing_skills: string[];
   recommendations: string[];
+  resume_gaps?: string[];
+  keyword_suggestions?: string[];
+  tailored_bullets?: Array<{
+    original?: string | null;
+    revised: string;
+    reason: string;
+    experience?: string | null;
+  }>;
+  best_experiences?: Array<{
+    title: string;
+    company: string;
+    relevance: string;
+    matched_requirements?: string[];
+  }>;
 }
 
 export interface NegotiationAdvice {

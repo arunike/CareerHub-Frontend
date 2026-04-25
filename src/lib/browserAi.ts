@@ -38,6 +38,8 @@ Additional rules:
 const JD_MATCH_SYSTEM_PROMPT = `You are an expert technical recruiter and ATS system.
 Holistically evaluate the Candidate's Professional Experience against the Job Description.
 Do NOT just keyword-match; assess whether the candidate's actual trajectory, achievements, and seniority level align with the role.
+Also act as a resume tailoring coach: identify where the resume evidence is weak and suggest truthful bullet rewrites that better express the candidate's existing experience.
+Do not invent companies, projects, tools, metrics, or responsibilities that are not supported by the provided experience text.
 
 Scoring rubric:
 90-100: Strong match — would shortlist immediately
@@ -51,7 +53,25 @@ Respond ONLY with a valid JSON object using exactly this structure:
   "summary": "<2-3 sentences on overall fit and whether the candidate's seniority matches the role>",
   "matched_skills": ["<strength or matched area>", ...],
   "missing_skills": ["<critical gap>", ...],
-  "recommendations": ["<actionable resume tip>", ...]
+  "recommendations": ["<actionable resume tip>", ...],
+  "resume_gaps": ["<specific resume evidence gap or weak positioning>", ...],
+  "keyword_suggestions": ["<JD keyword or phrase that is supported by the candidate's experience>", ...],
+  "tailored_bullets": [
+    {
+      "experience": "<role/company this bullet belongs to, or null>",
+      "original": "<existing bullet or sentence being improved, or null if creating from existing context>",
+      "revised": "<truthful resume bullet rewritten to align with the JD>",
+      "reason": "<why this rewrite improves alignment>"
+    }
+  ],
+  "best_experiences": [
+    {
+      "title": "<candidate role title>",
+      "company": "<candidate company>",
+      "relevance": "<why this experience maps to the JD>",
+      "matched_requirements": ["<JD requirement supported by this experience>", ...]
+    }
+  ]
 }`;
 
 const SKILL_REFINEMENT_SYSTEM_PROMPT = `You are an expert resume parser and technical recruiter.
