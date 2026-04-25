@@ -23,6 +23,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 - 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
 - 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, and custom widgets powered by your own provider config with encrypted backend key storage
+- 🔐 **JWT Auth Flow**: Login, refresh, and protected-route bootstrapping now use Bearer tokens so the frontend can talk to a separate `*.vercel.app` backend without shared cookies
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
@@ -72,6 +73,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 - File upload with type classification (Resume, Cover Letter, Portfolio, Other)
 - Versioning: version badge, version history modal, upload new version while preserving chain
+- Authenticated open/download flow: the UI fetches document bytes with the user's JWT, so private Blob-backed files still open correctly from a separate frontend domain
 - Optional link to an application
 - Lock/unlock, year filter, export, delete all (locked preserved)
 
@@ -83,7 +85,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - JD Matcher modal accessible from this page
 - **Employment type badges** — dynamically driven by user-configured types from Settings (10 color options); first type (Full-time) hidden by default
 - **Exact duration display** — all date ranges and tenure stats show `(N days)` alongside human-readable duration
-- **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; stored in `media/experience_logos/`
+- **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; persisted through the backend upload API and stored in Vercel Blob on hosted deployments
 - **Raise History Modal** — accessible from experience entries linked to an offer; log raise events (date, type, before/after base/bonus/equity) with optional label and notes; persisted on the linked Offer record
 - **Team History / Team Norms** — internship and full-time roles can track structured team history in a dedicated modal
 - **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
@@ -97,7 +99,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Availability** (`/`): Weekly calendar with availability text generation, federal holiday integration, event badges, date navigation, public booking card
 - **Events** (`/events`): Create/edit/delete interview events; link to applications; timezone display; event type tags
 - **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
-- **⚡ Real-Time Conflict Alerts**: `NotificationBell` connects to `ws://localhost:8000/ws/conflicts/` — alerts arrive in milliseconds via Django Channels + Redis, no polling
+- **⚡ Conflict Radar**: `NotificationBell` refreshes unresolved conflicts, upcoming events, and task deadlines through the standard API flow, which keeps the UI compatible with local dev, Docker, and Vercel deployments
 
 ### 📊 Analytics (`/analytics`)
 
@@ -123,10 +125,15 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
 - **Holiday Manager Tabs**: define custom tabs (name → auto-generated ID) that appear as tabs in the Holiday Manager; per-item lock; section-level lock; saved with Settings
 
+### 🔐 Authentication
+
+- **Bearer token bootstrapping**: the app restores auth state from stored access/refresh tokens and automatically refreshes expired access tokens before retrying protected API calls
+- **Zero-domain-cost deployment support**: works with separate Vercel frontend/backend projects on `*.vercel.app` without depending on shared session cookies
+
 ## 🛠 Tech Stack
 
 ### Core
-- **React 18** — UI library with hooks
+- **React 19** — UI library with hooks
 - **TypeScript** — Type safety
 - **Vite** — Fast build tool and dev server
 - **React Router DOM** — Client-side routing
@@ -150,7 +157,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js 20.19+ or 22.12+
 - npm
 
 ### Installation
@@ -170,7 +177,19 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
    npm run dev
    ```
 
-The app will be available at `http://localhost:5173` and proxies API calls to `http://localhost:8000`.
+The app will be available at `http://localhost:5173` and proxies API/media calls to `http://localhost:8000` when `VITE_API_BASE_URL` is unset.
+
+For deployed environments:
+```bash
+cp .env.example .env.local
+```
+
+Then set:
+```bash
+VITE_API_BASE_URL=https://your-api-project.vercel.app/api
+# Optional if uploaded files are served from a different origin
+VITE_MEDIA_BASE_URL=https://your-api-project.vercel.app
+```
 
 For local backend startup, copy `api/.env.development.example` to `api/.env.development` before running Django or Docker Compose.
 
@@ -178,6 +197,15 @@ If backend models changed, run backend migrations before using the app:
 ```bash
 cd ../api && python manage.py migrate
 ```
+
+### Vercel Deployment
+
+Frontend deploys as its own Vercel project:
+
+1. Set the Root Directory to `frontend`
+2. Add `VITE_API_BASE_URL=https://your-api-project.vercel.app/api` in Vercel Project Settings, replacing the host with your own backend deployment
+3. Optionally add `VITE_MEDIA_BASE_URL`
+4. Deploy normally; `frontend/vercel.json` already rewrites SPA routes back to `index.html`
 
 ### Build for Production
 ```bash
@@ -202,7 +230,7 @@ frontend/
 │   │   ├── RowActions.tsx           # Per-row lock / view / edit / delete buttons
 │   │   ├── LockableListItem.tsx     # Per-item row with lock / edit / delete (used in Settings)
 │   │   ├── ExportButton.tsx         # CSV / XLSX / JSON dropdown export
-│   │   ├── NotificationBell.tsx     # Real-time WebSocket conflict alerts
+│   │   ├── NotificationBell.tsx     # Conflict / deadline radar fed by standard API polling
 │   │   ├── CategoryBadge.tsx        # Event category color + icon badge
 │   │   ├── IconPicker.tsx           # Icon selector for event categories
 │   │   ├── AvailabilityAnalytics.tsx
@@ -251,7 +279,7 @@ frontend/
 │   │   └── PublicBooking/           # Public booking page (/book/:uuid)
 │   │
 │   ├── api/
-│   │   ├── client.ts                # Axios instance
+│   │   ├── client.ts                # Axios instance (env-aware API base URL)
 │   │   ├── career.ts                # Career, offers, experience, and shared AI result types
 │   │   ├── availability.ts          # Events, holidays, settings, booking endpoints
 │   │   └── index.ts                 # Re-exports
@@ -259,6 +287,7 @@ frontend/
 │   ├── lib/
 │   │   ├── llmSettings.ts           # AI provider form helpers for backend-stored provider config
 │   │   ├── llmClient.ts             # Authenticated AI relay client
+│   │   ├── runtimeConfig.ts         # API/media origin helpers for local + deployed environments
 │   │   └── browserAi.ts             # Prompt builders for cover letters, JD match, negotiation, analytics
 │   │
 │   ├── utils/
@@ -278,7 +307,9 @@ frontend/
 │   └── main.tsx                     # Entry point
 │
 ├── public/                          # Static assets
+├── .env.example                     # Frontend deployment env template
 ├── package.json
+├── vercel.json                      # SPA rewrite config for Vercel
 ├── vite.config.ts
 └── tailwind.config.js
 ```
