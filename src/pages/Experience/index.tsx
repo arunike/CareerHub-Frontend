@@ -18,6 +18,8 @@ import type { OfferLike as Offer } from '../OfferComparison/calculations';
 import type { RaiseEntry, TeamEntry } from '../../types';
 import { buildHourlyCompensationSnapshot, getExperienceCompensationSnapshot } from './compensation';
 import { getMediaUrl } from '../../lib/runtimeConfig';
+import { refineExperienceSkillsWithBrowserAI } from '../../lib/browserAi';
+import { isLLMConfigurationError } from '../../lib/llmClient';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
@@ -126,6 +128,7 @@ const ExperiencePage: React.FC = () => {
   const [overallCompBreakdownOpen, setOverallCompBreakdownOpen] = useState(false);
   const [overallInternshipBreakdownOpen, setOverallInternshipBreakdownOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [aiProviderConfigured, setAiProviderConfigured] = useState(false);
 
   const fetchOffersData = async () => {
     try {
@@ -141,6 +144,7 @@ const ExperiencePage: React.FC = () => {
     getUserSettings().then(res => {
       const types = res.data.employment_types;
       if (types && types.length > 0) setEmpTypes(types);
+      setAiProviderConfigured(Boolean(res.data.ai_provider_api_key_configured));
     }).catch(() => {/* use defaults */});
     fetchOffersData();
   }, []);
@@ -164,15 +168,44 @@ const ExperiencePage: React.FC = () => {
     }
   };
 
+  const maybeRefineSkillsWithAI = async (experience: Experience, skillsManuallyEdited: boolean) => {
+    if (!aiProviderConfigured || skillsManuallyEdited || !experience.id || !experience.description?.trim()) {
+      return;
+    }
+
+    try {
+      const refinedSkills = await refineExperienceSkillsWithBrowserAI({ experience });
+      if (refinedSkills.length === 0) return;
+
+      const currentSkills = experience.skills || [];
+      const unchanged =
+        refinedSkills.length === currentSkills.length &&
+        refinedSkills.every((skill, index) => skill === currentSkills[index]);
+      if (unchanged) return;
+
+      const response = await updateExperience(experience.id, { skills: refinedSkills });
+      setExperiences(prev => prev.map(exp => exp.id === experience.id ? response.data : exp));
+    } catch (error) {
+      // AI skill refinement is best-effort. Deterministic backend extraction remains the fallback.
+      if (!isLLMConfigurationError(error)) {
+        console.debug('AI skill refinement skipped:', error);
+      }
+    }
+  };
+
   const handleCreateOrUpdate = async (data: Partial<Experience>, logoFile?: File | null, removeLogo?: boolean) => {
     try {
       let expId: number | undefined;
+      let savedExperience: Experience | null = null;
+      const skillsManuallyEdited = Object.prototype.hasOwnProperty.call(data, 'skills');
       if (editingExp && editingExp.id) {
-        await updateExperience(editingExp.id, data);
+        const response = await updateExperience(editingExp.id, data);
+        savedExperience = response.data;
         expId = editingExp.id;
         message.success('Experience updated successfully');
       } else {
         const res = await createExperience(data);
+        savedExperience = res.data;
         expId = res.data.id;
         message.success('Experience added successfully');
       }
@@ -181,9 +214,11 @@ const ExperiencePage: React.FC = () => {
         if (logoFile) {
           const fd = new FormData();
           fd.append('logo', logoFile);
-          await uploadExperienceLogo(expId, fd);
+          const response = await uploadExperienceLogo(expId, fd);
+          savedExperience = response.data;
         } else if (removeLogo) {
-          await removeExperienceLogo(expId);
+          const response = await removeExperienceLogo(expId);
+          savedExperience = response.data;
         }
       }
 
@@ -199,7 +234,10 @@ const ExperiencePage: React.FC = () => {
         }
       }
 
-      fetchExperiences();
+      await fetchExperiences();
+      if (savedExperience) {
+        void maybeRefineSkillsWithAI(savedExperience, skillsManuallyEdited);
+      }
     } catch (err: any) {
       message.error(err.response?.data?.detail || 'Failed to save experience');
       throw err;
