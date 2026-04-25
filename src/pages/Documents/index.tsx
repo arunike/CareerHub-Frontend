@@ -10,6 +10,7 @@ import {
   patchDocument,
   getDocumentVersions,
   createDocumentVersion,
+  downloadDocument,
 } from '../../api';
 import type { Document } from '../../types';
 import UploadDocumentModal from './UploadDocumentModal';
@@ -17,6 +18,7 @@ import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import RowActions from '../../components/RowActions';
 import { usePersistedState } from '../../hooks/usePersistedState';
+const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 
 const Documents: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -151,10 +153,29 @@ const Documents: React.FC = () => {
     }
   };
 
-  const getFileIcon = (fileName: string) => {
-    if (fileName.endsWith('.pdf')) return <FilePdfOutlined className="text-red-500 text-lg" />;
-    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return <FileWordOutlined className="text-blue-500 text-lg" />;
+  const getFileIcon = (fileName: string | null | undefined) => {
+    const normalized = (fileName || '').toLowerCase();
+    if (normalized.endsWith('.pdf')) return <FilePdfOutlined className="text-red-500 text-lg" />;
+    if (normalized.endsWith('.doc') || normalized.endsWith('.docx')) return <FileWordOutlined className="text-blue-500 text-lg" />;
     return <FileOutlined className="text-gray-500 text-lg" />;
+  };
+
+  const openDocument = async (record: Document) => {
+    try {
+      const response = await downloadDocument(record.id);
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (error) {
+      message.error('Failed to open document');
+      console.error(error);
+    }
   };
 
   const getTypeColor = (type: string) => {
@@ -214,7 +235,7 @@ const Documents: React.FC = () => {
       title: 'Type',
       key: 'icon',
       width: 50,
-      render: (_: any, record: Document) => getFileIcon(record.file),
+      render: (_: any, record: Document) => getFileIcon(record.file_name),
     },
     {
       title: 'Title',
@@ -222,9 +243,13 @@ const Documents: React.FC = () => {
       key: 'title',
       render: (text: string, record: Document) => (
         <div className="flex items-center gap-2">
-          <a href={record.file} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
+          <button
+            type="button"
+            onClick={() => openDocument(record)}
+            className="font-medium text-blue-600 hover:underline"
+          >
             {text}
-          </a>
+          </button>
           {record.is_locked ? <LockOutlined className="text-amber-500" /> : null}
         </div>
       ),
@@ -272,7 +297,7 @@ const Documents: React.FC = () => {
           size="middle"
           isLocked={record.is_locked}
           onToggleLock={() => handleToggleLock(record)}
-          onView={() => window.open(record.file, '_blank', 'noopener,noreferrer')}
+          onView={() => openDocument(record)}
           onEdit={() => openEditModal(record)}
           disableEdit={Boolean(record.is_locked)}
           onDelete={() => handleDelete(record.id)}
@@ -392,7 +417,16 @@ const Documents: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 type="file"
-                onChange={(e) => setNewVersionFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  if (file && file.size > MAX_DOCUMENT_FILE_BYTES) {
+                    message.error('Document must be smaller than 4 MB.');
+                    e.target.value = '';
+                    setNewVersionFile(null);
+                    return;
+                  }
+                  setNewVersionFile(file);
+                }}
               />
               <Button type="primary" loading={uploadingVersion} onClick={handleUploadNewVersion}>
                 Upload Version
@@ -421,9 +455,13 @@ const Documents: React.FC = () => {
                 title: 'File',
                 key: 'file',
                 render: (_: any, row: Document) => (
-                  <a href={row.file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    {row.title}
-                  </a>
+                  <button
+                    type="button"
+                    onClick={() => openDocument(row)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {row.file_name || row.title}
+                  </button>
                 ),
               },
               {

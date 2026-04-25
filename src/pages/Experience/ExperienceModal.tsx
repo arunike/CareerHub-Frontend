@@ -4,11 +4,7 @@ import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined, LinkOutline
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Experience, EmploymentType } from '../../types';
 import CompensationFields, { type CompValue } from '../../components/CompensationFields';
-
-const toRelativeMediaUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  try { return new URL(url).pathname; } catch { return url; }
-};
+import { getMediaUrl } from '../../lib/runtimeConfig';
 
 interface OfferOption {
   value: number;
@@ -53,6 +49,8 @@ const DEFAULT_EMP_TYPES: EmploymentType[] = [
   { value: 'contract', label: 'Contract', color: 'purple' },
   { value: 'freelance', label: 'Freelance', color: 'orange' },
 ];
+
+const MAX_LOGO_FILE_BYTES = 4 * 1024 * 1024;
 
 const toNullableNumber = (value: unknown): number | null => {
   if (value == null || value === '') return null;
@@ -148,7 +146,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     for (const exp of experiences) {
       if (exp.id === experience?.id) continue;
       const key = exp.company.toLowerCase();
-      const logo = toRelativeMediaUrl(exp.logo);
+      const logo = getMediaUrl(exp.logo);
       if (!seen.has(key)) {
         seen.set(key, { name: exp.company, logo });
       } else if (logo && !seen.get(key)!.logo) {
@@ -183,6 +181,14 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
   };
 
   const handleLogoSelect = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      message.error('Logo must be an image file.');
+      return Upload.LIST_IGNORE;
+    }
+    if (file.size > MAX_LOGO_FILE_BYTES) {
+      message.error('Logo must be smaller than 4 MB.');
+      return Upload.LIST_IGNORE;
+    }
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
@@ -198,7 +204,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     setRemoveLogo(true);
   };
 
-  const currentLogoSrc = logoPreview || (!removeLogo && toRelativeMediaUrl(experience?.logo)) || null;
+  const currentLogoSrc = logoPreview || (!removeLogo && getMediaUrl(experience?.logo)) || null;
 
   const handleSubmit = async () => {
     try {

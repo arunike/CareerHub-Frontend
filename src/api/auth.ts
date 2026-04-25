@@ -15,6 +15,8 @@ export interface AuthResponse {
   requires_login?: boolean;
   message?: string;
   mode?: 'public' | 'disabled';
+  access?: string;
+  refresh?: string;
 }
 
 export interface SignupStatusResponse {
@@ -32,19 +34,20 @@ interface SignupPayload {
   confirm_password: string;
 }
 
-export const ensureCsrfCookie = () => api.get('/auth/csrf/');
-
 export const login = (email: string, password: string) =>
   api.post<AuthResponse>('/auth/login/', {
     email,
     password,
   });
 
+export const refreshAccessToken = (refresh: string) =>
+  api.post<Pick<AuthResponse, 'access' | 'refresh'>>('/auth/refresh/', { refresh });
+
 export const getSignupStatus = () => api.get<SignupStatusResponse>('/auth/signup-status/');
 
 export const signup = (payload: SignupPayload) => api.post<AuthResponse>('/auth/signup/', payload);
 
-export const logout = () => api.post('/auth/logout/');
+export const logout = (refresh?: string) => api.post('/auth/logout/', refresh ? { refresh } : {});
 
 export const getCurrentUser = () => api.get<AuthResponse>('/auth/me/');
 

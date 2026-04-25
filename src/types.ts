@@ -152,7 +152,8 @@ export interface ConflictAlert {
 export interface Document {
   id: number;
   title: string;
-  file: string;
+  file: string | null;
+  file_name?: string | null;
   document_type: 'RESUME' | 'COVER_LETTER' | 'PORTFOLIO' | 'OTHER';
   application?: number | null;
   root_document?: number | null;
