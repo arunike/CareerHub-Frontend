@@ -1,4 +1,4 @@
-import type { Task, Experience, WeeklyReview } from '../types';
+import type { ApplicationTimelineEntry, Task, Experience, WeeklyReview } from '../types';
 import api from './client';
 
 const EXPERIENCE_DECIMAL_FIELDS = [
@@ -62,6 +62,12 @@ export const updateApplication = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/applications/${id}/`, data);
 export const deleteApplication = (id: number) => api.delete(`/career/applications/${id}/`);
 export const deleteAllApplications = () => api.delete('/career/applications/delete_all/');
+export const getApplicationTimeline = (applicationId: number) =>
+  api.get<ApplicationTimelineEntry[]>('/career/application-timeline/', { params: { application: applicationId } });
+export const createApplicationTimelineEntry = (data: Partial<ApplicationTimelineEntry>) =>
+  api.post<ApplicationTimelineEntry>('/career/application-timeline/', data);
+export const updateApplicationTimelineEntry = (id: number, data: Partial<ApplicationTimelineEntry>) =>
+  api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const importApplications = (formData: FormData) =>
   api.post('/career/import/', formData, { headers: { 'Content-Type': undefined } });
 export const exportApplications = (format: string = 'csv') =>

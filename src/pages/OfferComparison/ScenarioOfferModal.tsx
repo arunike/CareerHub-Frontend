@@ -90,6 +90,7 @@ const ScenarioOfferModal = ({
         <div className="flex-1 min-h-0 overflow-y-auto">
           <fieldset disabled={scenarioModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
             <OfferFormFields
+                key={`${editingScenarioId ?? 'new'}-${newScenario.application ?? 'custom'}`}
                 showLinkApplication
                 linkedApplicationId={newScenario.application ?? null}
                 onLinkedApplicationChange={(nextAppId) =>

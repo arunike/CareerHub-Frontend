@@ -4,6 +4,16 @@ export type MaritalStatus =
   | 'MARRIED_FILING_SEPARATELY'
   | 'HEAD_OF_HOUSEHOLD';
 
+export type VisaSponsorshipStatus =
+  | ''
+  | 'UNKNOWN'
+  | 'NOT_NEEDED'
+  | 'AVAILABLE'
+  | 'TRANSFER_ONLY'
+  | 'NOT_AVAILABLE';
+
+export type DayOneGcStatus = '' | 'UNKNOWN' | 'YES' | 'NO' | 'NOT_APPLICABLE';
+
 export interface MaritalStatusOption {
   code: MaritalStatus;
   label: string;
@@ -83,6 +93,12 @@ export interface ApplicationLike {
   tax_bonus_rate?: number;
   tax_equity_rate?: number;
   monthly_rent_override?: number;
+  visa_sponsorship?: VisaSponsorshipStatus;
+  day_one_gc?: DayOneGcStatus;
+  growth_score?: number | null;
+  work_life_score?: number | null;
+  brand_score?: number | null;
+  team_score?: number | null;
 }
 
 export const DEFAULT_MARITAL_STATUS_OPTIONS: MaritalStatusOption[] = [

@@ -28,6 +28,7 @@ import OfferAdjustmentsPanel from './OfferAdjustmentsPanel';
 import { useSafeNullableFormState } from './useSafeFormState';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import OfferDetailsTable from './OfferDetailsTable';
+import OfferDecisionScorecard from './OfferDecisionScorecard';
 import AddCurrentJobModal from './AddCurrentJobModal';
 import EditOfferModal from './EditOfferModal';
 import NegotiationAdvisorModal from './NegotiationAdvisorModal';
@@ -48,6 +49,11 @@ const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): B
   amount: Number(item.amount) || 0,
   frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
 });
+
+const normalizeDecisionScore = (value: unknown) => {
+  const parsed = Number(value);
+  return parsed >= 1 && parsed <= 5 ? parsed : null;
+};
 
 const OfferComparison = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -120,7 +126,6 @@ const OfferComparison = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -163,6 +168,12 @@ const OfferComparison = () => {
             tax_equity_rate: app.tax_equity_rate != null ? Number(app.tax_equity_rate) : undefined,
             monthly_rent_override:
               app.monthly_rent_override != null ? Number(app.monthly_rent_override) : undefined,
+            visa_sponsorship: app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN' ? app.visa_sponsorship : '',
+            day_one_gc: app.day_one_gc && app.day_one_gc !== 'UNKNOWN' ? app.day_one_gc : '',
+            growth_score: normalizeDecisionScore(app.growth_score),
+            work_life_score: normalizeDecisionScore(app.work_life_score),
+            brand_score: normalizeDecisionScore(app.brand_score),
+            team_score: normalizeDecisionScore(app.team_score),
           }
         : null
     );
@@ -220,6 +231,12 @@ const OfferComparison = () => {
           tax_bonus_rate: editingApp.tax_bonus_rate ?? null,
           tax_equity_rate: editingApp.tax_equity_rate ?? null,
           monthly_rent_override: editingApp.monthly_rent_override ?? null,
+          visa_sponsorship: editingApp.visa_sponsorship && editingApp.visa_sponsorship !== 'UNKNOWN' ? editingApp.visa_sponsorship : '',
+          day_one_gc: editingApp.day_one_gc && editingApp.day_one_gc !== 'UNKNOWN' ? editingApp.day_one_gc : '',
+          growth_score: editingApp.growth_score ?? null,
+          work_life_score: editingApp.work_life_score ?? null,
+          brand_score: editingApp.brand_score ?? null,
+          team_score: editingApp.team_score ?? null,
         });
       }
 
@@ -309,6 +326,8 @@ const OfferComparison = () => {
         status: 'ACCEPTED',
         date_applied: new Date().toISOString().split('T')[0],
         office_location: '',
+        visa_sponsorship: '',
+        day_one_gc: '',
       });
       const appId = appResp.data.id;
 
@@ -476,6 +495,12 @@ const OfferComparison = () => {
         onViewRealOffer={handleViewFromAdjusted}
         onEditRealOffer={handleEditFromAdjusted}
         onRealAdjustedChange={handleRealAdjustedChange}
+      />
+
+      <OfferDecisionScorecard
+        filteredOffers={filteredOffers}
+        applicationsById={applicationsById}
+        adjustedByOfferId={adjustedByOfferId}
       />
 
       <OfferDetailsTable

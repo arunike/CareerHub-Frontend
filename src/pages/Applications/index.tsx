@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Table,
   Button,
@@ -15,6 +15,7 @@ import {
   Col,
   DatePicker,
   Tooltip,
+  Collapse,
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,9 +28,11 @@ import {
   UnlockOutlined,
   DeleteOutlined,
   ThunderboltOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
+import type { Dayjs } from 'dayjs';
 import { usaCities } from 'typed-usa-states';
 import {
   getApplications,
@@ -49,6 +52,7 @@ import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import CoverLetterModal from './CoverLetterModal';
+import ApplicationTimelineModal from './ApplicationTimelineModal';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { DEFAULT_STATE_NAME_TO_ABBR } from '../OfferComparison/calculations';
@@ -56,6 +60,26 @@ import { DEFAULT_STATE_NAME_TO_ABBR } from '../OfferComparison/calculations';
 const { Text, Link } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
+
+type ApplicationFormValues = {
+  company?: string;
+  role_title?: string;
+  status?: string;
+  employment_type?: string;
+  site_link?: string;
+  salary_range?: string;
+  office_location?: string;
+  visa_sponsorship?: string;
+  day_one_gc?: string;
+  growth_score?: number;
+  work_life_score?: number;
+  brand_score?: number;
+  team_score?: number;
+  current_round?: number;
+  date_applied?: Dayjs | null;
+  notes?: string;
+  linked_document_ids?: number[];
+};
 
 const Applications = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -72,12 +96,26 @@ const Applications = () => {
     { value: 'contract', label: 'Contract', color: 'purple' },
     { value: 'freelance', label: 'Freelance', color: 'orange' },
   ]);
+  const [appStages, setAppStages] = useState<any[]>([
+    { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
+    { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
+    { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
+    { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
+    { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
+    { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
+    { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
+    { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
+    { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
+    { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
+    { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
+  ]);
 
   // View State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [coverLetterApp, setCoverLetterApp] = useState<CareerApplication | null>(null);
+  const [timelineApp, setTimelineApp] = useState<CareerApplication | null>(null);
 
   // Bulk Selection State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -141,7 +179,7 @@ const Applications = () => {
     return scored;
   }, [allUsCityOptions, officeLocationValue]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [appsResp, docsResp] = await Promise.all([getApplications(), getDocuments()]);
@@ -153,15 +191,17 @@ const Applications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
     fetchData();
     getUserSettings().then(res => {
       const types = res.data.employment_types;
       if (types && types.length > 0) setEmpTypes(types);
+      const stages = res.data.application_stages;
+      if (stages && stages.length > 0) setAppStages(stages);
     }).catch(() => {});
-  }, []);
+  }, [fetchData]);
 
   const handleExportWrapper = async (format: string) => {
     const response = await exportApplications(format);
@@ -217,7 +257,7 @@ const Applications = () => {
           messageApi.success(`${selectedRowKeys.length} applications deleted`);
           setSelectedRowKeys([]);
           fetchData();
-        } catch (error) {
+        } catch {
           messageApi.error('Failed to delete some applications');
           fetchData();
         }
@@ -231,7 +271,7 @@ const Applications = () => {
       messageApi.success(`${selectedRowKeys.length} applications ${lock ? 'locked' : 'unlocked'}`);
       setSelectedRowKeys([]);
       fetchData();
-    } catch (error) {
+    } catch {
       messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some applications`);
       fetchData();
     }
@@ -242,14 +282,24 @@ const Applications = () => {
     return app?.is_locked;
   });
 
-  const handleAddEdit = async (values: any) => {
+  const handleAddEdit = async (values: ApplicationFormValues) => {
     try {
       const selectedDocumentIds: number[] = values.linked_document_ids || [];
-      const payload = {
+      const payload: Record<string, unknown> = {
         ...values,
         company_name: values.company, // API expects company_name
+        job_link: values.site_link,
         date_applied: values.date_applied ? values.date_applied.format('YYYY-MM-DD') : undefined,
       };
+      ['growth_score', 'work_life_score', 'brand_score', 'team_score'].forEach((field) => {
+        if (payload[field] === undefined) payload[field] = null;
+      });
+      payload.visa_sponsorship = values.visa_sponsorship && values.visa_sponsorship !== 'UNKNOWN'
+        ? values.visa_sponsorship
+        : '';
+      payload.day_one_gc = values.day_one_gc && values.day_one_gc !== 'UNKNOWN' ? values.day_one_gc : '';
+      delete payload.company;
+      delete payload.site_link;
       delete payload.linked_document_ids;
 
       if (editingId) {
@@ -296,6 +346,8 @@ const Applications = () => {
       employment_type: 'full_time',
       date_applied: dayjs(),
       rto_policy: 'UNKNOWN',
+      visa_sponsorship: undefined,
+      day_one_gc: undefined,
       current_round: 0,
       linked_document_ids: [],
     });
@@ -313,6 +365,12 @@ const Applications = () => {
       salary_range: app.salary_range,
       office_location: app.office_location || app.location,
       rto_policy: app.rto_policy || 'UNKNOWN',
+      visa_sponsorship: app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN' ? app.visa_sponsorship : undefined,
+      day_one_gc: app.day_one_gc && app.day_one_gc !== 'UNKNOWN' ? app.day_one_gc : undefined,
+      growth_score: app.growth_score ?? null,
+      work_life_score: app.work_life_score ?? null,
+      brand_score: app.brand_score ?? null,
+      team_score: app.team_score ?? null,
       current_round: app.current_round || 0,
       date_applied: app.date_applied ? dayjs(app.date_applied) : null,
       notes: app.notes,
@@ -357,25 +415,34 @@ const Applications = () => {
     setSelectedYear(year);
   };
 
-  const STATUS_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    APPLIED:  { label: 'Applied',    color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
-    OA:       { label: 'OA',         color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
-    SCREEN:   { label: 'Screen',     color: '#0ea5e9', bg: '#f0f9ff', border: '#bae6fd' },
-    ONSITE:   { label: 'Onsite',     color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-    OFFER:    { label: 'Offer',      color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0' },
-    REJECTED: { label: 'Rejected',   color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
-    ACCEPTED: { label: 'Accepted',   color: '#059669', bg: '#ecfdf5', border: '#6ee7b7' },
-    GHOSTED:  { label: 'Ghosted',    color: '#9ca3af', bg: '#f9fafb', border: '#e5e7eb' },
+  const APP_STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+    blue:   { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+    violet: { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
+    sky:    { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+    amber:  { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
+    emerald:{ bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+    rose:   { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
+    green:  { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+    slate:  { bg: '#f8fafc', color: '#334155', border: '#e2e8f0' },
+    gray:   { bg: '#f9fafb', color: '#374151', border: '#e5e7eb' },
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
-    const m = STATUS_META[status] ?? { label: status, color: '#6b7280', bg: '#f3f4f6', border: '#e5e7eb' };
+    const stage = appStages.find(s => s.key === status);
+    let c = APP_STAGE_COLORS.gray;
+    if (stage) {
+      const colorMatch = stage.tone.match(/bg-([a-z]+)-\d+/);
+      if (colorMatch && APP_STAGE_COLORS[colorMatch[1]]) {
+        c = APP_STAGE_COLORS[colorMatch[1]];
+      }
+    }
+    const label = stage ? stage.label : status;
     return (
       <span
         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
-        style={{ color: m.color, background: m.bg, borderColor: m.border }}
+        style={{ color: c.color, background: c.bg, borderColor: c.border }}
       >
-        {m.label}
+        {label}
       </span>
     );
   };
@@ -409,7 +476,7 @@ const Applications = () => {
     {
       title: 'Company',
       key: 'company',
-      render: (_: any, record: CareerApplication) => (
+      render: (_: unknown, record: CareerApplication) => (
         <Space direction="vertical" size={0}>
           <Text strong>{record.company_details?.name}</Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
@@ -455,7 +522,7 @@ const Applications = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: CareerApplication) => (
+      render: (_: unknown, record: CareerApplication) => (
         <Space>
           <Tooltip title="Generate Cover Letter">
             <Button
@@ -463,6 +530,14 @@ const Applications = () => {
               size="small"
               icon={<ThunderboltOutlined style={{ color: '#6366f1' }} />}
               onClick={() => setCoverLetterApp(record)}
+            />
+          </Tooltip>
+          <Tooltip title="Timeline">
+            <Button
+              type="text"
+              size="small"
+              icon={<ClockCircleOutlined style={{ color: '#0f766e' }} />}
+              onClick={() => setTimelineApp(record)}
             />
           </Tooltip>
           <RowActions
@@ -543,14 +618,9 @@ const Applications = () => {
           suffixIcon={<FilterOutlined />}
         >
           <Option value="ALL">All Statuses</Option>
-          <Option value="APPLIED">Applied</Option>
-          <Option value="OA">Online Assessment</Option>
-          <Option value="SCREEN">Phone Screen</Option>
-          <Option value="ONSITE">Onsite</Option>
-          <Option value="OFFER">Offer</Option>
-          <Option value="REJECTED">Rejected</Option>
-          <Option value="ACCEPTED">Accepted</Option>
-          <Option value="GHOSTED">Ghosted</Option>
+          {appStages.map(stage => (
+            <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+          ))}
         </Select>
         <Select
           size="large"
@@ -610,13 +680,9 @@ const Applications = () => {
             <Col span={12}>
               <Form.Item name="status" label="Status">
                 <Select>
-                  <Option value="APPLIED">Applied</Option>
-                  <Option value="OA">Online Assessment</Option>
-                  <Option value="SCREEN">Phone Screen</Option>
-                  <Option value="ONSITE">Onsite</Option>
-                  <Option value="OFFER">Offer</Option>
-                  <Option value="REJECTED">Rejected</Option>
-                  <Option value="ACCEPTED">Accepted</Option>
+                  {appStages.map(stage => (
+                    <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -652,6 +718,91 @@ const Applications = () => {
               <Form.Item name="salary_range" label="Salary Range">
                 <Input prefix={<DollarOutlined />} placeholder="150k - 200k" />
               </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Collapse
+                ghost
+                items={[
+                  {
+                    key: 'advanced-decision-signals',
+                    label: (
+                      <div>
+                        <div className="text-sm font-semibold text-slate-800">Advanced decision signals</div>
+                        <div className="text-xs text-slate-500">
+                          Optional. Blank fields are not included in the offer scorecard.
+                        </div>
+                      </div>
+                    ),
+                    children: (
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item name="visa_sponsorship" label="Visa Sponsorship">
+                            <Select allowClear placeholder="Not scored">
+                              <Option value="NOT_NEEDED">Not needed</Option>
+                              <Option value="AVAILABLE">Sponsorship available</Option>
+                              <Option value="TRANSFER_ONLY">Transfer only</Option>
+                              <Option value="NOT_AVAILABLE">No sponsorship</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item name="day_one_gc" label="Day 1 GC">
+                            <Select allowClear placeholder="Not scored">
+                              <Option value="YES">Yes</Option>
+                              <Option value="NO">No</Option>
+                              <Option value="NOT_APPLICABLE">Not applicable</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item name="growth_score" label="Growth Score">
+                            <Select allowClear placeholder="Not scored">
+                              <Option value={1}>1 - Weak</Option>
+                              <Option value={2}>2 - Below avg</Option>
+                              <Option value={3}>3 - Solid</Option>
+                              <Option value={4}>4 - Strong</Option>
+                              <Option value={5}>5 - Excellent</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item name="work_life_score" label="Work-Life Score">
+                            <Select allowClear placeholder="Not scored">
+                              <Option value={1}>1 - Weak</Option>
+                              <Option value={2}>2 - Below avg</Option>
+                              <Option value={3}>3 - Solid</Option>
+                              <Option value={4}>4 - Strong</Option>
+                              <Option value={5}>5 - Excellent</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item name="brand_score" label="Brand Score">
+                            <Select allowClear placeholder="Not scored">
+                              <Option value={1}>1 - Weak</Option>
+                              <Option value={2}>2 - Below avg</Option>
+                              <Option value={3}>3 - Solid</Option>
+                              <Option value={4}>4 - Strong</Option>
+                              <Option value={5}>5 - Excellent</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item name="team_score" label="Manager / Team Score">
+                            <Select allowClear placeholder="Not scored">
+                              <Option value={1}>1 - Weak</Option>
+                              <Option value={2}>2 - Below avg</Option>
+                              <Option value={3}>3 - Solid</Option>
+                              <Option value={4}>4 - Strong</Option>
+                              <Option value={5}>5 - Excellent</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    ),
+                  },
+                ]}
+              />
             </Col>
             <Col span={24}>
               <Form.Item name="site_link" label="Job Link">
@@ -697,6 +848,14 @@ const Applications = () => {
           onClose={() => setCoverLetterApp(null)}
         />
       )}
+
+      <ApplicationTimelineModal
+        application={timelineApp}
+        documents={documents}
+        open={!!timelineApp}
+        onClose={() => setTimelineApp(null)}
+        appStages={appStages}
+      />
 
       {/* Import Modal */}
       <Modal

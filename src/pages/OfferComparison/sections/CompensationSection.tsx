@@ -5,23 +5,13 @@ type CompensationSectionProps = {
   onBaseSalaryChange: (value: number) => void;
   bonus: number;
   onBonusChange: (value: number) => void;
-  bonusMode: '$' | '%';
-  setBonusMode: (value: '$' | '%') => void;
-  bonusPercentInput: string;
-  setBonusPercentInput: (value: string) => void;
   equity: number;
   onEquityChange: (value: number) => void;
-  equityMode: 'annual' | 'total';
-  setEquityMode: (value: 'annual' | 'total') => void;
-  equityTotalGrantInput: string;
-  setEquityTotalGrantInput: (value: string) => void;
-  onEquityTotalGrantChange?: (value: number) => void;
   effectiveEquityVestingPercent: number;
   setEquityVestingPercentInternal: (value: number) => void;
   onEquityVestingPercentChange?: (value: number) => void;
   signOn: number;
   onSignOnChange: (value: number) => void;
-  enableCompModeToggles: boolean;
 };
 
 const CompensationSection = ({
