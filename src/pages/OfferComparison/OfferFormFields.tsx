@@ -210,6 +210,23 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         rolePlaceholder={rolePlaceholder}
       />
 
+      <WorkSetupSection
+        workMode={workMode}
+        onWorkModeChange={onWorkModeChange}
+        showRtoDays={showRtoDays}
+        rtoDaysPerWeek={rtoDaysPerWeek}
+        onRtoDaysPerWeekChange={onRtoDaysPerWeekChange}
+        showCommuteAndPerks={showCommuteAndPerks}
+        commuteCostValue={commuteCostValue}
+        commuteCostFrequency={commuteCostFrequency}
+        onCommuteCostValueChange={onCommuteCostValueChange}
+        onCommuteCostFrequencyChange={onCommuteCostFrequencyChange}
+        freeFoodPerkValue={freeFoodPerkValue}
+        freeFoodPerkFrequency={freeFoodPerkFrequency}
+        onFreeFoodPerkValueChange={onFreeFoodPerkValueChange}
+        onFreeFoodPerkFrequencyChange={onFreeFoodPerkFrequencyChange}
+      />
+
       <LocationTaxSection
         location={location}
         onLocationChange={onLocationChange}
@@ -222,6 +239,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onEditableTaxRatesChange={onEditableTaxRatesChange}
         editableMonthlyRent={editableMonthlyRent}
         onEditableMonthlyRentChange={onEditableMonthlyRentChange}
+        workMode={workMode}
       />
 
       <CompensationSection
@@ -245,23 +263,6 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onRemoveBenefitItem={onRemoveBenefitItem}
         computeBenefitsTotal={computeBenefitsTotal}
         benefitsValue={benefitsValue}
-      />
-
-      <WorkSetupSection
-        workMode={workMode}
-        onWorkModeChange={onWorkModeChange}
-        showRtoDays={showRtoDays}
-        rtoDaysPerWeek={rtoDaysPerWeek}
-        onRtoDaysPerWeekChange={onRtoDaysPerWeekChange}
-        showCommuteAndPerks={showCommuteAndPerks}
-        commuteCostValue={commuteCostValue}
-        commuteCostFrequency={commuteCostFrequency}
-        onCommuteCostValueChange={onCommuteCostValueChange}
-        onCommuteCostFrequencyChange={onCommuteCostFrequencyChange}
-        freeFoodPerkValue={freeFoodPerkValue}
-        freeFoodPerkFrequency={freeFoodPerkFrequency}
-        onFreeFoodPerkValueChange={onFreeFoodPerkValueChange}
-        onFreeFoodPerkFrequencyChange={onFreeFoodPerkFrequencyChange}
       />
 
       {decisionSignalHandlers && (

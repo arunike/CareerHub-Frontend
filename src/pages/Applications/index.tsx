@@ -15,7 +15,6 @@ import {
   Col,
   DatePicker,
   Tooltip,
-  Collapse,
 } from 'antd';
 import {
   PlusOutlined,
@@ -719,91 +718,7 @@ const Applications = () => {
                 <Input prefix={<DollarOutlined />} placeholder="150k - 200k" />
               </Form.Item>
             </Col>
-            <Col span={24}>
-              <Collapse
-                ghost
-                items={[
-                  {
-                    key: 'advanced-decision-signals',
-                    label: (
-                      <div>
-                        <div className="text-sm font-semibold text-slate-800">Advanced decision signals</div>
-                        <div className="text-xs text-slate-500">
-                          Optional. Blank fields are not included in the offer scorecard.
-                        </div>
-                      </div>
-                    ),
-                    children: (
-                      <Row gutter={16}>
-                        <Col span={12}>
-                          <Form.Item name="visa_sponsorship" label="Visa Sponsorship">
-                            <Select allowClear placeholder="Not scored">
-                              <Option value="NOT_NEEDED">Not needed</Option>
-                              <Option value="AVAILABLE">Sponsorship available</Option>
-                              <Option value="TRANSFER_ONLY">Transfer only</Option>
-                              <Option value="NOT_AVAILABLE">No sponsorship</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item name="day_one_gc" label="Day 1 GC">
-                            <Select allowClear placeholder="Not scored">
-                              <Option value="YES">Yes</Option>
-                              <Option value="NO">No</Option>
-                              <Option value="NOT_APPLICABLE">Not applicable</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item name="growth_score" label="Growth Score">
-                            <Select allowClear placeholder="Not scored">
-                              <Option value={1}>1 - Weak</Option>
-                              <Option value={2}>2 - Below avg</Option>
-                              <Option value={3}>3 - Solid</Option>
-                              <Option value={4}>4 - Strong</Option>
-                              <Option value={5}>5 - Excellent</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item name="work_life_score" label="Work-Life Score">
-                            <Select allowClear placeholder="Not scored">
-                              <Option value={1}>1 - Weak</Option>
-                              <Option value={2}>2 - Below avg</Option>
-                              <Option value={3}>3 - Solid</Option>
-                              <Option value={4}>4 - Strong</Option>
-                              <Option value={5}>5 - Excellent</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item name="brand_score" label="Brand Score">
-                            <Select allowClear placeholder="Not scored">
-                              <Option value={1}>1 - Weak</Option>
-                              <Option value={2}>2 - Below avg</Option>
-                              <Option value={3}>3 - Solid</Option>
-                              <Option value={4}>4 - Strong</Option>
-                              <Option value={5}>5 - Excellent</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                          <Form.Item name="team_score" label="Manager / Team Score">
-                            <Select allowClear placeholder="Not scored">
-                              <Option value={1}>1 - Weak</Option>
-                              <Option value={2}>2 - Below avg</Option>
-                              <Option value={3}>3 - Solid</Option>
-                              <Option value={4}>4 - Strong</Option>
-                              <Option value={5}>5 - Excellent</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                      </Row>
-                    ),
-                  },
-                ]}
-              />
-            </Col>
+
             <Col span={24}>
               <Form.Item name="site_link" label="Job Link">
                 <Input prefix={<GlobalOutlined />} placeholder="https://..." />

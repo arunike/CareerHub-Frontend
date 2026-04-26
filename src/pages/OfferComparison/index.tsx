@@ -22,12 +22,15 @@ import {
 import { PlusOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
-import { message } from 'antd';
+import { message, Select } from 'antd';
 import { usaCities } from 'typed-usa-states';
-import OfferAdjustmentsPanel from './OfferAdjustmentsPanel';
-import { useSafeNullableFormState } from './useSafeFormState';
+import { useSafeNullableFormState, useSafeFormState } from './useSafeFormState';
+import { useScenarioRows } from './useScenarioRows';
+import { useOfferReferenceData } from './useOfferReferenceData';
+import { useOfferAdjustmentsPersistence } from './useOfferAdjustmentsPersistence';
+import ScenarioOfferModal from './ScenarioOfferModal';
+import { getEffectiveTaxLocation } from '../../utils/applicationLocation';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import OfferDetailsTable from './OfferDetailsTable';
 import OfferDecisionScorecard from './OfferDecisionScorecard';
 import AddCurrentJobModal from './AddCurrentJobModal';
 import EditOfferModal from './EditOfferModal';
@@ -39,9 +42,10 @@ import {
   type BenefitItem,
   DEFAULT_STATE_NAME_TO_ABBR,
   type OfferLike as Offer,
+  type SimulatedOffer,
   computeBenefitsTotal,
+  estimateColIndexFromCity,
 } from './calculations';
-import type { AdjustedOfferMetrics } from './types';
 
 const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
   id: item.id || fallbackId,
@@ -54,6 +58,37 @@ const normalizeDecisionScore = (value: unknown) => {
   const parsed = Number(value);
   return parsed >= 1 && parsed <= 5 ? parsed : null;
 };
+
+const OFFER_ADJUSTMENT_SETTINGS_KEY = 'careerhub.offerAdjustments.v1';
+
+const defaultScenarioDraft = (): SimulatedOffer => ({
+  id: '',
+  application: null,
+  custom_company_name: '',
+  custom_role_title: '',
+  location: 'San Francisco, CA, United States',
+  office_location: '',
+  base_salary: 100000,
+  bonus: 20000,
+  equity: 20000,
+  equity_total_grant: 80000,
+  equity_vesting_percent: 25,
+  sign_on: 10000,
+  benefits_value: 12000,
+  work_mode: 'HYBRID',
+  rto_days_per_week: 3,
+  commute_cost_value: 200,
+  commute_cost_frequency: 'MONTHLY',
+  free_food_perk_value: 0,
+  free_food_perk_frequency: 'YEARLY',
+  pto_days: 15,
+  is_unlimited_pto: false,
+  holiday_days: 11,
+  tax_base_rate: 32,
+  tax_bonus_rate: 40,
+  tax_equity_rate: 42,
+  monthly_rent: 3500,
+});
 
 const OfferComparison = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -77,10 +112,23 @@ const OfferComparison = () => {
 
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
-  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
   const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
-  const [adjustedByOfferId, setAdjustedByOfferId] = useState<Record<number, AdjustedOfferMetrics>>({});
+  
+  const [isAddScenarioOpen, setIsAddScenarioOpen] = useState(false);
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
+  const [scenarioModalMode, setScenarioModalMode] = useState<'add' | 'view' | 'edit'>('add');
+  const [scenarioBenefitItems, setScenarioBenefitItems] = useState<BenefitItem[]>([
+    { id: 'benefit-gym', label: 'Gym Reimbursement', amount: 100, frequency: 'MONTHLY' },
+    { id: 'benefit-phone', label: 'Cellphone Reimbursement', amount: 100, frequency: 'MONTHLY' },
+  ]);
+
+  const {
+    state: newScenario,
+    setState: setNewScenario,
+    patch: patchNewScenario,
+    setField: setNewScenarioField,
+  } = useSafeFormState<SimulatedOffer>(defaultScenarioDraft());
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'offersSelectedYear',
     getCurrentYear(),
@@ -89,6 +137,7 @@ const OfferComparison = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
+  const [visibleOfferIds, setVisibleOfferIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const allUsCityOptions = useMemo(
     () =>
@@ -198,17 +247,7 @@ const OfferComparison = () => {
     openOfferModal(offer, 'edit');
   };
 
-  const handleViewFromAdjusted = (offerId: number) => {
-    const offer = offers.find((o) => o.id === offerId);
-    if (!offer) return;
-    openOfferModal(offer, 'view');
-  };
 
-  const handleEditFromAdjusted = (offerId: number) => {
-    const offer = offers.find((o) => o.id === offerId);
-    if (!offer) return;
-    openOfferModal(offer, 'edit');
-  };
 
   const handleSaveEdit = async () => {
     if (!editingOffer) return;
@@ -362,25 +401,202 @@ const OfferComparison = () => {
     setSelectedYear(year);
   };
 
-  // Prepare Chart Data
-  const chartData = filteredOffers.map((offer) => {
-    const appName = getApplicationName(offer.application);
-    const totalComp =
-      Number(offer.base_salary) +
-      Number(offer.bonus) +
-      Number(offer.equity) +
-      Number(offer.sign_on);
+  const normalizeSimulatedOffers = useCallback(
+    (offersToNormalize: SimulatedOffer[]) =>
+      offersToNormalize.map((offer) => {
+        const benefitItems =
+          Array.isArray(offer.benefit_items) && offer.benefit_items.length > 0
+            ? offer.benefit_items.map((item, idx) =>
+                normalizeBenefitItem(item, `scenario-benefit-${offer.id || 'saved'}-${idx}`)
+              )
+            : [
+                {
+                  id: `scenario-benefit-legacy-${offer.id || Date.now()}`,
+                  label: 'Benefits',
+                  amount: Number(offer.benefits_value || 0),
+                  frequency: 'YEARLY' as const,
+                },
+              ];
+        return {
+          ...offer,
+          benefit_items: benefitItems,
+          benefits_value: computeBenefitsTotal(benefitItems),
+          is_unlimited_pto: !!offer.is_unlimited_pto,
+        };
+      }),
+    []
+  );
 
-    return {
-      name: appName,
-      Base: Number(offer.base_salary),
-      Bonus: Number(offer.bonus),
-      Equity: Number(offer.equity),
-      SignOn: Number(offer.sign_on),
-      Benefits: Number(offer.benefits_value),
-      Total: totalComp,
-    };
+  const {
+    maritalStatus,
+    setMaritalStatus,
+    simulatedOffers,
+    setSimulatedOffers,
+    isSettingsHydrated,
+    saveAdjustments,
+  } = useOfferAdjustmentsPersistence({
+    storageKey: OFFER_ADJUSTMENT_SETTINGS_KEY,
+    normalizeSimulatedOffers,
   });
+
+  const referenceLocation = useMemo(() => {
+    const current = filteredOffers.find((offer) => offer.is_current) || filteredOffers[0];
+    if (current) {
+      const currentApp = applications.find((app) => app.id === current.application);
+      const currentLocation = getEffectiveTaxLocation(currentApp);
+      if (currentLocation) return currentLocation;
+    }
+    const anyLocation = applications.map((app) => getEffectiveTaxLocation(app)).find(Boolean);
+    return anyLocation || 'San Francisco, CA, United States';
+  }, [filteredOffers, applications]);
+
+  const {
+    cityCostOfLiving,
+    stateColBase,
+    stateTaxRate,
+    stateNameToAbbr,
+    maritalStatusOptions,
+    rentEstimate,
+  } = useOfferReferenceData({ referenceLocation, isSettingsHydrated });
+  const effectiveMonthlyRent = Number(rentEstimate?.monthly_rent_estimate || 0);
+
+  const referenceColIndex = useMemo(
+    () => estimateColIndexFromCity(referenceLocation, cityCostOfLiving, stateColBase, stateNameToAbbr),
+    [referenceLocation, cityCostOfLiving, stateColBase, stateNameToAbbr]
+  );
+
+  const { scenarioRows, realAdjustedByOfferId: adjustedByOfferId } = useScenarioRows({
+    filteredOffers,
+    applications,
+    simulatedOffers,
+    getApplicationName,
+    referenceColIndex,
+    effectiveMonthlyRent,
+    referenceLocation,
+    cityCostOfLiving,
+    stateColBase,
+    stateNameToAbbr,
+    maritalStatus,
+    stateTaxRate,
+  });
+
+  const customFormTaxPreview = useMemo(() => {
+    const tax = {
+      baseTaxRate: Number(newScenario.tax_base_rate ?? 32),
+      bonusTaxRate: Number(newScenario.tax_bonus_rate ?? 40),
+      equityTaxRate: Number(newScenario.tax_equity_rate ?? 42),
+    };
+    return {
+      ...tax,
+      note: 'Per-offer manual',
+    };
+  }, [newScenario.tax_base_rate, newScenario.tax_bonus_rate, newScenario.tax_equity_rate]);
+
+  const resetScenarioDraft = () => {
+    setNewScenario(defaultScenarioDraft());
+    setScenarioBenefitItems([
+      { id: 'benefit-gym', label: 'Gym Reimbursement', amount: 100, frequency: 'MONTHLY' },
+      { id: 'benefit-phone', label: 'Cellphone Reimbursement', amount: 100, frequency: 'MONTHLY' },
+    ]);
+    setEditingScenarioId(null);
+    setScenarioModalMode('add');
+  };
+
+  const addScenarioBenefitItem = () => {
+    setScenarioBenefitItems((prev) => [
+      ...prev,
+      { id: `scenario-benefit-${Date.now()}`, label: '', amount: 0, frequency: 'MONTHLY' },
+    ]);
+  };
+
+  const updateScenarioBenefitItem = (id: string, patch: Partial<BenefitItem>) => {
+    setScenarioBenefitItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
+
+  const removeScenarioBenefitItem = (id: string) => {
+    setScenarioBenefitItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const addScenarioOffer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (scenarioModalMode === 'view') return;
+    const hasLinkedApp = typeof newScenario.application === 'number';
+    const hasCustomName =
+      (newScenario.custom_company_name || '').trim().length > 0 &&
+      (newScenario.custom_role_title || '').trim().length > 0;
+
+    if (!hasLinkedApp && !hasCustomName) {
+      messageApi.error('Select an application or enter custom company and role');
+      return;
+    }
+
+    const payload: SimulatedOffer = {
+      ...newScenario,
+      benefit_items: scenarioBenefitItems,
+      benefits_value: computeBenefitsTotal(scenarioBenefitItems),
+      id: editingScenarioId || `sim-${Date.now()}`,
+    };
+    setSimulatedOffers((prev) =>
+      editingScenarioId
+        ? prev.map((offer) => (String(offer.id) === editingScenarioId ? payload : offer))
+        : [...prev, payload]
+    );
+
+    setIsAddScenarioOpen(false);
+    resetScenarioDraft();
+    messageApi.success(editingScenarioId ? 'Custom offer updated' : 'Custom offer added');
+  };
+
+  const displayOffers = visibleOfferIds.length > 0 
+    ? filteredOffers.filter((o) => visibleOfferIds.includes(`real-${o.id}`))
+    : filteredOffers;
+
+  const displaySimulatedOffers = visibleOfferIds.length > 0
+    ? simulatedOffers.filter((o) => visibleOfferIds.includes(`sim-${o.id}`))
+    : simulatedOffers;
+
+  // Prepare Chart Data
+  const chartData = [
+    ...displayOffers.map((offer) => {
+      const appName = getApplicationName(offer.application);
+      const totalComp =
+        Number(offer.base_salary) +
+        Number(offer.bonus) +
+        Number(offer.equity) +
+        Number(offer.sign_on);
+
+      return {
+        name: appName,
+        Base: Number(offer.base_salary),
+        Bonus: Number(offer.bonus),
+        Equity: Number(offer.equity),
+        SignOn: Number(offer.sign_on),
+        Benefits: Number(offer.benefits_value),
+        Total: totalComp,
+      };
+    }),
+    ...displaySimulatedOffers.map((offer) => {
+      const simName = typeof offer.application === 'number'
+        ? `${getApplicationName(offer.application)} (Scenario)`
+        : `${offer.custom_company_name} (Custom)`;
+      
+      const totalComp =
+        Number(offer.base_salary) +
+        Number(offer.bonus) +
+        Number(offer.equity) +
+        Number(offer.sign_on);
+
+      return {
+        name: simName,
+        Base: Number(offer.base_salary),
+        Bonus: Number(offer.bonus),
+        Equity: Number(offer.equity),
+        SignOn: Number(offer.sign_on),
+        Benefits: Number(offer.benefits_value),
+        Total: totalComp,
+      };
+    }),
+  ];
 
   const updateEditingBenefits = (items: BenefitItem[]) => {
     setEditingBenefitItems(items);
@@ -406,35 +622,7 @@ const OfferComparison = () => {
     updateEditingBenefits(editingBenefitItems.filter((item) => item.id !== id));
   };
 
-  const handleRealAdjustedChange = useCallback(
-    (next: Record<number, AdjustedOfferMetrics>) => {
-      setAdjustedByOfferId((prev) => {
-        const prevKeys = Object.keys(prev);
-        const nextKeys = Object.keys(next);
-        if (prevKeys.length !== nextKeys.length) return next;
-        for (const key of nextKeys) {
-          const prevRow = prev[Number(key)];
-          const nextRow = next[Number(key)];
-          if (!prevRow || !nextRow) return next;
-          if (
-            Math.round(prevRow.adjustedValue) !== Math.round(nextRow.adjustedValue) ||
-            Math.round(prevRow.adjustedDiff) !== Math.round(nextRow.adjustedDiff) ||
-            Math.round(prevRow.afterTaxBase) !== Math.round(nextRow.afterTaxBase) ||
-            Math.round(prevRow.afterTaxBonus) !== Math.round(nextRow.afterTaxBonus) ||
-            Math.round(prevRow.afterTaxEquity) !== Math.round(nextRow.afterTaxEquity) ||
-            Math.round(prevRow.usedBaseTaxRate) !== Math.round(nextRow.usedBaseTaxRate) ||
-            Math.round(prevRow.usedBonusTaxRate) !== Math.round(nextRow.usedBonusTaxRate) ||
-            Math.round(prevRow.usedEquityTaxRate) !== Math.round(nextRow.usedEquityTaxRate) ||
-            Math.round(prevRow.monthlyRent) !== Math.round(nextRow.monthlyRent)
-          ) {
-            return next;
-          }
-        }
-        return prev;
-      });
-    },
-    []
-  );
+
 
   const applicationsById = useMemo(
     () =>
@@ -459,14 +647,6 @@ const OfferComparison = () => {
         onPrimaryAction={() => setIsAddJobOpen(true)}
         primaryActionLabel="Add Current Job"
         primaryActionIcon={<PlusOutlined />}
-        extraActions={
-          <button
-            onClick={() => setIsSimulatorOpen((prev) => !prev)}
-            className="toolbar-native-btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm shadow-sm"
-          >
-            {isSimulatorOpen ? 'Hide Offer Adjustments' : 'Open Offer Adjustments'}
-          </button>
-        }
       />
 
       {/* Chart Section */}
@@ -487,27 +667,85 @@ const OfferComparison = () => {
         </ResponsiveContainer>
       </div>
 
-      <OfferAdjustmentsPanel
-        isOpen={isSimulatorOpen}
-        filteredOffers={filteredOffers}
-        applications={applications}
-        getApplicationName={getApplicationName}
-        onViewRealOffer={handleViewFromAdjusted}
-        onEditRealOffer={handleEditFromAdjusted}
-        onRealAdjustedChange={handleRealAdjustedChange}
-      />
-
       <OfferDecisionScorecard
-        filteredOffers={filteredOffers}
+        extraHeaderNode={
+          <Select
+            mode="multiple"
+            placeholder="Compare specific offers..."
+            value={visibleOfferIds}
+            onChange={setVisibleOfferIds}
+            style={{ minWidth: 280, maxWidth: 450 }}
+            maxTagCount="responsive"
+            allowClear
+            options={[
+              {
+                label: 'Real Offers',
+                options: filteredOffers.map(o => ({
+                  value: `real-${o.id}`,
+                  label: getApplicationName(o.application)
+                }))
+              },
+              simulatedOffers.length > 0 ? {
+                label: 'Custom Scenarios',
+                options: simulatedOffers.map(o => ({
+                  value: `sim-${o.id}`,
+                  label: typeof o.application === 'number'
+                    ? `${getApplicationName(o.application)} (Scenario)`
+                    : `${o.custom_company_name} - ${o.custom_role_title}`
+                }))
+              } : null
+            ].filter(Boolean) as any}
+          />
+        }
+        filteredOffers={displayOffers}
         applicationsById={applicationsById}
         adjustedByOfferId={adjustedByOfferId}
-      />
-
-      <OfferDetailsTable
+        simulatedOffers={displaySimulatedOffers}
+        scenarioRows={scenarioRows}
+        maritalStatus={maritalStatus}
+        setMaritalStatus={setMaritalStatus}
+        maritalStatusOptions={maritalStatusOptions}
+        saveAdjustments={saveAdjustments}
+        onEditScenario={(id) => {
+          const target = simulatedOffers.find((offer) => String(offer.id) === id);
+          if (!target) return;
+          setScenarioModalMode('edit');
+          setEditingScenarioId(id);
+          setNewScenario({ ...target });
+          const benefitItems = Array.isArray(target.benefit_items) && target.benefit_items.length > 0
+            ? target.benefit_items.map((item, idx) =>
+                normalizeBenefitItem(item, `scenario-benefit-${Date.now()}-${idx}`)
+              )
+            : [
+                {
+                  id: `scenario-benefit-${Date.now()}`,
+                  label: 'Benefits',
+                  amount: Number(target.benefits_value || 0),
+                  frequency: 'YEARLY' as const,
+                },
+              ];
+          setScenarioBenefitItems(benefitItems);
+          setIsAddScenarioOpen(true);
+        }}
+        onDeleteScenario={(id) => {
+          setSimulatedOffers((prev) => prev.filter((offer) => String(offer.id) !== id));
+        }}
+        onAddScenario={() => {
+          resetScenarioDraft();
+          setScenarioModalMode('add');
+          setIsAddScenarioOpen(true);
+        }}
+        onScoreUpdate={async (appId, patch) => {
+          try {
+            await updateApplication(appId, patch);
+            await fetchData();
+            messageApi.success('Score updated');
+          } catch (error) {
+            messageApi.error('Failed to update score');
+            console.error(error);
+          }
+        }}
         offers={offers}
-        filteredOffers={filteredOffers}
-        applicationsById={applicationsById}
-        adjustedByOfferId={adjustedByOfferId}
         onEditClick={handleEditClick}
         onToggleCurrent={toggleCurrent}
         onNegotiateClick={setNegotiatingOffer}
@@ -552,6 +790,36 @@ const OfferComparison = () => {
           onSave={handleSaveRaiseHistory}
         />
       )}
+
+      <ScenarioOfferModal
+        isOpen={isAddScenarioOpen}
+        scenarioModalMode={scenarioModalMode}
+        editingScenarioId={editingScenarioId}
+        newScenario={newScenario}
+        applications={applications}
+        scenarioBenefitItems={scenarioBenefitItems}
+        customFormTaxPreview={customFormTaxPreview}
+        maritalStatus={maritalStatus}
+        stateTaxRate={stateTaxRate}
+        stateNameToAbbr={stateNameToAbbr}
+        cityCostOfLiving={cityCostOfLiving}
+        stateColBase={stateColBase}
+        effectiveMonthlyRent={effectiveMonthlyRent}
+        referenceColIndex={referenceColIndex}
+        referenceLocation={referenceLocation}
+        allUsCityOptions={allUsCityOptions}
+        onClose={() => {
+          setIsAddScenarioOpen(false);
+          resetScenarioDraft();
+        }}
+        onSubmit={addScenarioOffer}
+        setNewScenario={setNewScenario}
+        patchNewScenario={patchNewScenario}
+        setNewScenarioField={setNewScenarioField}
+        addScenarioBenefitItem={addScenarioBenefitItem}
+        updateScenarioBenefitItem={updateScenarioBenefitItem}
+        removeScenarioBenefitItem={removeScenarioBenefitItem}
+      />
 
       {negotiatingOffer && (
         <NegotiationAdvisorModal
