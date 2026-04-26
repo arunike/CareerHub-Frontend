@@ -89,6 +89,15 @@ export const useScenarioRows = ({
         equityTaxRate: Number(app?.tax_equity_rate ?? estimatedTax.equityTaxRate),
       };
 
+      const freeFoodAnnualValue = annualizeAmount(
+        Number(app?.free_food_perk_value || 0),
+        (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY',
+      );
+      const commuteAnnualCost = annualizeAmount(
+        Number(app?.commute_cost_value || 0),
+        (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY',
+      );
+
       const scenarioCalc = calculateScenarioValue({
         base_salary: Number(offer.base_salary),
         bonus: Number(offer.bonus),
@@ -97,14 +106,8 @@ export const useScenarioRows = ({
         equity: Number(offer.equity),
         work_mode: workMode,
         rto_days_per_week: rtoDays,
-        freeFoodPerkAnnual: annualizeAmount(
-          Number(app?.free_food_perk_value || 0),
-          (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY',
-        ),
-        commuteAnnualCost: annualizeAmount(
-          Number(app?.commute_cost_value || 0),
-          (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY',
-        ),
+        freeFoodPerkAnnual: freeFoodAnnualValue,
+        commuteAnnualCost,
         baseTaxRate: rowTax.baseTaxRate,
         bonusTaxRate: rowTax.bonusTaxRate,
         equityTaxRate: rowTax.equityTaxRate,
@@ -142,7 +145,10 @@ export const useScenarioRows = ({
         deltaPtoHolidayDays: 0,
         afterTaxBase: scenarioCalc.breakdown.taxedBase,
         afterTaxBonus: scenarioCalc.breakdown.taxedBonus,
+        afterTaxSignOn: scenarioCalc.breakdown.taxedSignOn,
         afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
+        commuteAnnualCost,
+        freeFoodAnnualValue,
         usedBaseTaxRate: rowTax.baseTaxRate,
         usedBonusTaxRate: rowTax.bonusTaxRate,
         usedEquityTaxRate: rowTax.equityTaxRate,
@@ -173,6 +179,14 @@ export const useScenarioRows = ({
         bonusTaxRate: Number(offer.tax_bonus_rate ?? estimatedTax.bonusTaxRate),
         equityTaxRate: Number(offer.tax_equity_rate ?? estimatedTax.equityTaxRate),
       };
+      const freeFoodAnnualValue = annualizeAmount(
+        Number(offer.free_food_perk_value || 0),
+        offer.free_food_perk_frequency || 'YEARLY',
+      );
+      const commuteAnnualCost = annualizeAmount(
+        Number(offer.commute_cost_value || 0),
+        offer.commute_cost_frequency || 'MONTHLY',
+      );
       const scenarioCalc = calculateScenarioValue({
         base_salary: Number(offer.base_salary),
         bonus: Number(offer.bonus),
@@ -181,14 +195,8 @@ export const useScenarioRows = ({
         equity: Number(offer.equity),
         work_mode: offer.work_mode,
         rto_days_per_week: offer.rto_days_per_week,
-        freeFoodPerkAnnual: annualizeAmount(
-          Number(offer.free_food_perk_value || 0),
-          offer.free_food_perk_frequency || 'YEARLY',
-        ),
-        commuteAnnualCost: annualizeAmount(
-          Number(offer.commute_cost_value || 0),
-          offer.commute_cost_frequency || 'MONTHLY',
-        ),
+        freeFoodPerkAnnual: freeFoodAnnualValue,
+        commuteAnnualCost,
         baseTaxRate: rowTax.baseTaxRate,
         bonusTaxRate: rowTax.bonusTaxRate,
         equityTaxRate: rowTax.equityTaxRate,
@@ -231,7 +239,10 @@ export const useScenarioRows = ({
         deltaPtoHolidayDays: 0,
         afterTaxBase: scenarioCalc.breakdown.taxedBase,
         afterTaxBonus: scenarioCalc.breakdown.taxedBonus,
+        afterTaxSignOn: scenarioCalc.breakdown.taxedSignOn,
         afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
+        commuteAnnualCost,
+        freeFoodAnnualValue,
         usedBaseTaxRate: rowTax.baseTaxRate,
         usedBonusTaxRate: rowTax.bonusTaxRate,
         usedEquityTaxRate: rowTax.equityTaxRate,

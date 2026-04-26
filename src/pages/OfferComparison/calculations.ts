@@ -38,6 +38,7 @@ export interface SimulatedOffer {
   equity: number;
   equity_total_grant?: number;
   equity_vesting_percent?: number;
+  equity_vesting_schedule?: number[];
   sign_on: number;
   benefits_value: number;
   benefit_items?: BenefitItem[];
@@ -65,6 +66,7 @@ export interface OfferLike {
   equity: number;
   equity_total_grant?: number;
   equity_vesting_percent?: number;
+  equity_vesting_schedule?: number[];
   sign_on: number;
   benefits_value: number;
   benefit_items?: BenefitItem[];

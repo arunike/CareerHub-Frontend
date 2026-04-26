@@ -3,6 +3,7 @@ export type AdjustedOfferMetrics = {
   adjustedDiff: number;
   afterTaxBase: number;
   afterTaxBonus: number;
+  afterTaxSignOn?: number;
   afterTaxEquity: number;
   usedBaseTaxRate: number;
   usedBonusTaxRate: number;

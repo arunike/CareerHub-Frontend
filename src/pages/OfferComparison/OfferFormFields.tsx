@@ -45,6 +45,8 @@ interface OfferFormFieldsProps {
   onEquityTotalGrantChange?: (value: number) => void;
   equityVestingPercent?: number;
   onEquityVestingPercentChange?: (value: number) => void;
+  equityVestingSchedule?: number[];
+  onEquityVestingScheduleChange?: (value: number[]) => void;
   defaultEquityMode?: 'annual' | 'total';
   signOn: number;
   onSignOnChange: (value: number) => void;
@@ -123,8 +125,13 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onBonusChange,
   equity,
   onEquityChange,
+  equityTotalGrant,
+  onEquityTotalGrantChange,
   equityVestingPercent,
   onEquityVestingPercentChange,
+  equityVestingSchedule,
+  onEquityVestingScheduleChange,
+  defaultEquityMode,
   signOn,
   onSignOnChange,
   benefitsValue,
@@ -249,9 +256,14 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onBonusChange={onBonusChange}
         equity={equity}
         onEquityChange={onEquityChange}
+        equityTotalGrant={equityTotalGrant}
+        onEquityTotalGrantChange={onEquityTotalGrantChange}
         effectiveEquityVestingPercent={effectiveEquityVestingPercent}
         setEquityVestingPercentInternal={setEquityVestingPercentInternal}
         onEquityVestingPercentChange={onEquityVestingPercentChange}
+        equityVestingSchedule={equityVestingSchedule}
+        onEquityVestingScheduleChange={onEquityVestingScheduleChange}
+        defaultEquityMode={defaultEquityMode}
         signOn={signOn}
         onSignOnChange={onSignOnChange}
       />
