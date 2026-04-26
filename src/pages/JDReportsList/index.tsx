@@ -13,12 +13,16 @@ import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 
 const getScoreMeta = (score: number) => {
-  if (score >= 85) return { label: 'Excellent', color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0', text: '#065f46' };
-  if (score >= 70) return { label: 'Strong',    color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af' };
-  if (score >= 55) return { label: 'Moderate',  color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e' };
-  if (score >= 40) return { label: 'Partial',   color: '#f97316', bg: '#fff7ed', border: '#fed7aa', text: '#7c2d12' };
-  return              { label: 'Low',         color: '#ef4444', bg: '#fef2f2', border: '#fecaca', text: '#7f1d1d' };
+  if (score >= 90) return { label: 'Strong', color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0', text: '#065f46' };
+  if (score >= 70) return { label: 'Good', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af' };
+  if (score >= 50) return { label: 'Partial', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e' };
+  return              { label: 'Poor', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', text: '#7f1d1d' };
 };
+
+const reportSkillName = (value: unknown) =>
+  value && typeof value === 'object' && !Array.isArray(value) && 'skill' in value
+    ? String((value as { skill?: unknown }).skill || '')
+    : String(value || '');
 
 const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   const meta = getScoreMeta(score);
@@ -258,7 +262,7 @@ const JDReportsListPage: React.FC = () => {
                       <div className="flex flex-wrap gap-1.5">
                         {report.matched_skills?.slice(0, 6).map((s, i) => (
                           <span key={i} className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold">
-                            {s}
+                            {reportSkillName(s)}
                           </span>
                         ))}
                         {(report.matched_skills?.length ?? 0) > 6 && (

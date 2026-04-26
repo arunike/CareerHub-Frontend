@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { createPublicBooking, getPublicBookingSlots } from '../../api';
-import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { CalendarOutlined, ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import type { BookingDayAvailability, BookingSlot } from '../../types';
-import SegmentedToggle from '../../components/SegmentedToggle';
 
 const PublicBookingPage = () => {
   const { uuid } = useParams<{ uuid: string }>();
   const [messageApi, contextHolder] = message.useMessage();
 
   const [title, setTitle] = useState('Book a time');
+  const [hostDisplayName, setHostDisplayName] = useState('');
+  const [hostEmail, setHostEmail] = useState('');
+  const [hostProfilePicture, setHostProfilePicture] = useState<string | null>(null);
+  const [publicNote, setPublicNote] = useState('');
+  const [bookingBlockMinutes, setBookingBlockMinutes] = useState(30);
   const [timezone, setTimezone] = useState<'PT' | 'MT' | 'CT' | 'ET'>('PT');
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [days, setDays] = useState<BookingDayAvailability[]>([]);
@@ -31,8 +35,22 @@ const PublicBookingPage = () => {
     try {
       const resp = await getPublicBookingSlots(uuid, anchorDate || selectedDate, timezone);
       setTitle(resp.data.title || 'Book a time');
+      setHostDisplayName(resp.data.host_display_name || '');
+      setHostEmail(resp.data.host_email || '');
+      setHostProfilePicture(resp.data.host_profile_picture || null);
+      setPublicNote(resp.data.public_note || '');
+      setBookingBlockMinutes(resp.data.booking_block_minutes || 30);
       setDays(resp.data.days || []);
       setLinkInvalid(false);
+
+      // Auto-advance to first available date if current one is empty
+      const currentDay = resp.data.days?.find((d: any) => d.date === (anchorDate || selectedDate));
+      if (!currentDay || currentDay.slots.length === 0) {
+        const firstAvailable = resp.data.days?.find((d: any) => d.slots.length > 0);
+        if (firstAvailable) {
+          setSelectedDate(firstAvailable.date);
+        }
+      }
     } catch (error) {
       console.error(error);
       setDays([]);
@@ -108,195 +126,285 @@ const PublicBookingPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+    <div className="min-h-screen bg-[#fbfcfd] p-4 sm:p-8 lg:p-12 selection:bg-blue-100 selection:text-blue-900">
       {contextHolder}
-      <div className="max-w-3xl mx-auto space-y-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
-          <p className="text-gray-600 text-sm">Choose a date and available slot. You will only see open times.</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <div className="relative">
-                <CalendarOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header Card */}
+        <div className="relative overflow-hidden rounded-[32px] bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-12">
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-blue-50 rounded-full blur-3xl opacity-50" />
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-6">
+                Booking Invitation
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">
+                {title}
+              </h1>
+              <p className="text-slate-500 text-lg max-w-xl leading-relaxed">
+                Please select a convenient time for our session. All times are automatically adjusted to your local
+                timezone.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <div className="bg-slate-50 rounded-[24px] p-6 border border-slate-100 min-w-[240px]">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Hosted by</div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-100">
+                    {hostProfilePicture ? (
+                      <img src={hostProfilePicture} alt={hostDisplayName} className="w-full h-full object-cover" />
+                    ) : (
+                      hostDisplayName?.charAt(0).toUpperCase() || 'C'
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900 text-lg">{hostDisplayName || 'CareerHub User'}</div>
+                    {hostEmail && <div className="text-xs text-slate-400 font-medium">{hostEmail}</div>}
+                  </div>
+                </div>
+                <div className="mt-5 pt-5 border-t border-slate-200/60 flex items-center gap-2 text-slate-600 text-sm font-semibold">
+                  <ClockCircleOutlined className="text-blue-500" />
+                  {bookingBlockMinutes} min session
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value as 'PT' | 'MT' | 'CT' | 'ET')}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
-              >
-                <option value="PT">Pacific Time (PT)</option>
-                <option value="MT">Mountain Time (MT)</option>
-                <option value="CT">Central Time (CT)</option>
-                <option value="ET">Eastern Time (ET)</option>
-              </select>
-            </div>
           </div>
-
-          <div className="mt-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-              <p className="text-sm font-medium text-gray-700">Available Slots</p>
-              <SegmentedToggle
-                value={slotView}
-                onChange={setSlotView}
-                wrapperClassName="w-full sm:w-auto"
-                options={[
-                  { value: 'list', label: 'List' },
-                  { value: 'calendar', label: 'Calendar' },
-                ]}
-              />
+          {publicNote && (
+            <div className="mt-10 p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-slate-700 text-sm leading-relaxed relative">
+              <div className="absolute top-0 left-6 -mt-2.5 px-2 bg-indigo-100 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded">Note</div>
+              {publicNote}
             </div>
-            {loading && days.length === 0 ? (
-              <p className="text-sm text-gray-500">Loading slots...</p>
-            ) : slotView === 'calendar' ? (
-              <div className="space-y-3">
-                {loading && days.length > 0 && (
-                  <p className="text-xs text-gray-500">Refreshing slots for selected timezone...</p>
-                )}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {days.map((day) => {
-                    const isSelected = day.date === selectedDate;
-                    const slotCount = day.slots.length;
-                    const disabled = slotCount === 0;
-                    return (
-                      <button
-                        key={day.date}
-                        type="button"
-                        onClick={() => {
-                          if (!disabled) setSelectedDate(day.date);
-                        }}
-                        disabled={disabled}
-                        className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                          disabled
-                            ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                            : isSelected
-                            ? 'border-blue-400 bg-blue-50'
-                            : 'border-gray-300 bg-white hover:border-blue-300'
-                        }`}
-                      >
-                        <div className={`text-xs ${disabled ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {day.day_name}
-                        </div>
-                        <div className={`text-sm font-medium ${disabled ? 'text-gray-400' : 'text-gray-900'}`}>
-                          {day.readable_date}
-                        </div>
-                        <div className={`text-xs mt-1 ${slotCount > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                          {slotCount > 0 ? `${slotCount} slots` : 'No slots'}
-                        </div>
-                      </button>
-                    );
-                  })}
+          )}
+        </div>
+
+        {/* Selection & Details Flow */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Left: Date & Time Selection (3 columns) */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="bg-white rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <CalendarOutlined className="text-blue-500" />
+                  1. Select Date & Time
+                </h2>
+                <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-slate-100">
+                  <button
+                    onClick={() => setSlotView('list')}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                      slotView === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    List
+                  </button>
+                  <button
+                    onClick={() => setSlotView('calendar')}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                      slotView === 'calendar' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    Calendar
+                  </button>
                 </div>
-                {!selectedDay || selectedDay.slots.length === 0 ? (
-                  <p className="text-sm text-gray-500">No available slots for this date.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDay.slots.map((slot) => {
-                      const active =
-                        selectedSlot?.start_time === slot.start_time &&
-                        selectedSlot?.end_time === slot.end_time;
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Timezone</label>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value as any)}
+                    className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat"
+                  >
+                    <option value="PT">Pacific Time (PT)</option>
+                    <option value="MT">Mountain Time (MT)</option>
+                    <option value="CT">Central Time (CT)</option>
+                    <option value="ET">Eastern Time (ET)</option>
+                  </select>
+                </div>
+              </div>
+
+              {loading && days.length === 0 ? (
+                <div className="py-16 text-center">
+                  <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-sm font-bold text-slate-400">Loading slots...</p>
+                </div>
+              ) : slotView === 'calendar' ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-7 gap-2">
+                    {days.map((day) => {
+                      const isSelected = day.date === selectedDate;
+                      const hasSlots = day.slots.length > 0;
                       return (
                         <button
-                          key={`${slot.start_time}-${slot.end_time}`}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`rounded-lg border px-3 py-2 text-sm flex items-center gap-2 ${
-                            active
-                              ? 'bg-blue-50 border-blue-400 text-blue-700'
-                              : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
+                          key={day.date}
+                          onClick={() => hasSlots && setSelectedDate(day.date)}
+                          disabled={!hasSlots}
+                          className={`flex flex-col items-center py-3 rounded-xl border transition-all ${
+                            isSelected
+                              ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-105'
+                              : hasSlots
+                              ? 'bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:bg-blue-50/30'
+                              : 'bg-slate-50/50 border-transparent text-slate-300 cursor-not-allowed opacity-40'
                           }`}
                         >
-                          <ClockCircleOutlined />
-                          {slot.label}
+                          <span className={`text-[9px] font-black uppercase mb-1 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                            {day.day_name.slice(0, 3)}
+                          </span>
+                          <span className="text-sm font-black">{day.date.split('-')[2]}</span>
                         </button>
                       );
                     })}
                   </div>
-                )}
-              </div>
-            ) : !selectedDay || selectedDay.slots.length === 0 ? (
-              <p className="text-sm text-gray-500">No available slots for this date.</p>
-            ) : (
-              <>
-                {loading && days.length > 0 && (
-                  <p className="text-xs text-gray-500 mb-2">Refreshing slots for selected timezone...</p>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {selectedDay.slots.map((slot) => {
-                    const active =
-                      selectedSlot?.start_time === slot.start_time &&
-                      selectedSlot?.end_time === slot.end_time;
-                    return (
-                      <button
-                        key={`${slot.start_time}-${slot.end_time}`}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`rounded-lg border px-3 py-2 text-sm flex items-center gap-2 ${
-                          active
-                            ? 'bg-blue-50 border-blue-400 text-blue-700'
-                            : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
-                        }`}
-                      >
-                        <ClockCircleOutlined />
-                        {slot.label}
-                      </button>
-                    );
-                  })}
+                  <div className="pt-4 border-t border-slate-50">
+                    {!selectedDay || selectedDay.slots.length === 0 ? (
+                      <div className="py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                        <p className="text-sm text-slate-400 font-bold">No slots for this date</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {selectedDay.slots.map((slot) => {
+                          const active = selectedSlot?.start_time === slot.start_time;
+                          return (
+                            <button
+                              key={slot.start_time}
+                              onClick={() => setSelectedSlot(slot)}
+                              className={`py-3 px-4 rounded-xl border text-sm font-bold transition-all ${
+                                active
+                                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100'
+                                  : 'bg-white border-slate-100 text-slate-600 hover:border-blue-300'
+                              }`}
+                            >
+                              {slot.label.split(' - ')[0]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </>
-            )}
+              ) : (
+                <div className="space-y-4">
+                  {!selectedDay || selectedDay.slots.length === 0 ? (
+                    <div className="py-16 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                      <p className="text-sm text-slate-400 font-bold">No available slots for this date</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedDay.slots.map((slot) => {
+                        const active = selectedSlot?.start_time === slot.start_time;
+                        return (
+                          <button
+                            key={slot.start_time}
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                              active
+                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 ring-2 ring-blue-600 ring-offset-2'
+                                : 'bg-white border-slate-100 text-slate-600 hover:border-blue-300 hover:bg-slate-50/30'
+                            }`}
+                          >
+                            <span className="text-sm font-black">{slot.label}</span>
+                            <ClockCircleOutlined className={active ? 'text-blue-200' : 'text-blue-500'} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder="you@example.com"
-              />
+          {/* Right: Details Form (2 columns) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sticky top-8">
+              <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2 mb-8">
+                <UserOutlined className="text-blue-500" />
+                2. Your Details
+              </h2>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your Name"
+                    className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Email Address <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Additional Notes
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Anything useful before the meeting..."
+                    className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold min-h-[100px] focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none"
+                  />
+                </div>
+
+                <div className="pt-6">
+                  {selectedSlot && (
+                    <div className="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-between animate-in zoom-in-95 duration-200">
+                      <div>
+                        <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Selected Slot</div>
+                        <div className="text-sm font-black text-blue-700">{selectedSlot.label}</div>
+                        <div className="text-[10px] font-bold text-blue-500">{new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                        <ClockCircleOutlined className="text-blue-500" />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <button
+                    onClick={handleBook}
+                    disabled={!selectedSlot || submitting}
+                    className="w-full py-4 px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-base font-black rounded-2xl shadow-xl shadow-blue-200/50 disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                        Confirming...
+                      </>
+                    ) : (
+                      'Confirm Booking'
+                    )}
+                  </button>
+                  <p className="mt-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                    By confirming, an invitation will be sent to both parties and added to the host's calendar.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm min-h-24"
-              placeholder="Anything to share before the meeting"
-            />
-          </div>
-          <button
-            onClick={handleBook}
-            disabled={!selectedSlot || submitting}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-60"
-          >
-            {submitting ? 'Booking...' : 'Confirm Booking'}
-          </button>
         </div>
       </div>
     </div>

@@ -16,6 +16,7 @@ import {
   TrophyOutlined,
   RobotOutlined,
   LogoutOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
@@ -30,6 +31,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -37,13 +40,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     getUserSettings().then(res => {
       setHiddenNavItems(res.data.hidden_nav_items || []);
+      setProfilePic(res.data.profile_picture);
+      setDisplayName(res.data.display_name || user?.full_name || '');
     }).catch(() => {});
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      setHiddenNavItems(detail?.hidden_nav_items || []);
+      if (detail) {
+        if (detail.hidden_nav_items !== undefined) setHiddenNavItems(detail.hidden_nav_items);
+        if (detail.profile_picture !== undefined) setProfilePic(detail.profile_picture);
+        if (detail.display_name !== undefined) setDisplayName(detail.display_name);
+      }
     };
     window.addEventListener('settings-saved', handler);
     return () => window.removeEventListener('settings-saved', handler);
@@ -219,16 +228,33 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <span className="text-xs text-gray-400 font-medium">Notifications</span>
           <NotificationBell placement="top-left" />
         </div>
-        <div className="px-2 py-3 rounded-xl bg-slate-50 border border-slate-200 mb-3">
-          <p className="text-xs font-medium text-slate-500">Signed in as</p>
-          <p className="text-sm font-semibold text-slate-900 truncate">
-            {user?.full_name || user?.email || 'Authenticated User'}
-          </p>
+        <div 
+          onClick={() => navigate('/profile')}
+          className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-100 shadow-sm group-hover:border-indigo-50 transition-colors">
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
+                  <UserOutlined />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Account</p>
+              <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
+                {displayName || 'CareerHub User'}
+              </p>
+            </div>
+          </div>
           <Button
             type="text"
             icon={<LogoutOutlined />}
             loading={isLoggingOut}
-            onClick={async () => {
+            onClick={async (e) => {
+              e.stopPropagation();
               setIsLoggingOut(true);
               try {
                 await logout();
@@ -237,7 +263,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 setIsLoggingOut(false);
               }
             }}
-            className="!px-0 !text-slate-500 hover:!text-slate-900"
+            className="w-full !flex !items-center !justify-center !h-9 !rounded-xl !bg-white !border !border-slate-100 !text-slate-400 hover:!text-rose-500 hover:!border-rose-100 hover:!bg-rose-50/30 !text-xs font-bold transition-all"
           >
             Sign Out
           </Button>

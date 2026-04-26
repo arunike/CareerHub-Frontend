@@ -14,6 +14,13 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function getStrictScoreLabel(score: number): JDMatchResult['score_label'] {
+  if (score >= 90) return 'Strong match';
+  if (score >= 70) return 'Good fit with minor gaps';
+  if (score >= 50) return 'Partial match';
+  return 'Poor match';
+}
+
 export function getAllReports(): StoredReport[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -26,6 +33,7 @@ export function getAllReports(): StoredReport[] {
 export function saveReport(report: JDMatchResult, jdText: string): StoredReport {
   const newReport: StoredReport = {
     ...report,
+    score_label: getStrictScoreLabel(Number(report.score) || 0),
     id: generateId(),
     savedAt: new Date().toISOString(),
     jdSnippet: jdText.replace(/\s+/g, ' ').trim().slice(0, 180),

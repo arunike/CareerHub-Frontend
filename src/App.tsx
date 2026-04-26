@@ -19,6 +19,7 @@ import JDReportsListPage from './pages/JDReportsList';
 import AIToolsPage from './pages/AITools';
 import LoginPage from './pages/Login';
 import NegotiationResultPage from './pages/NegotiationResult';
+import ProfilePage from './pages/Profile';
 
 function AppRoutes() {
   const location = useLocation();
@@ -64,6 +65,7 @@ function AppRoutes() {
           <Route path="/jd-reports" element={<JDReportsListPage />} />
           <Route path="/cover-letters" element={<AIToolsPage />} />
           <Route path="/ai-tools" element={<AIToolsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </Layout>
     </ProtectedRoute>

@@ -5,6 +5,8 @@ export interface AuthenticatedUser {
   id: number;
   email: string;
   full_name: string;
+  first_name: string;
+  last_name: string;
   is_staff: boolean;
   is_superuser: boolean;
 }
@@ -50,6 +52,12 @@ export const signup = (payload: SignupPayload) => api.post<AuthResponse>('/auth/
 export const logout = (refresh?: string) => api.post('/auth/logout/', refresh ? { refresh } : {});
 
 export const getCurrentUser = () => api.get<AuthResponse>('/auth/me/');
+
+export const updateProfile = (data: { first_name?: string; last_name?: string }) =>
+  api.patch<AuthResponse>('/auth/me/', data);
+
+export const changePassword = (data: { old_password?: string; new_password?: string }) =>
+  api.post('/auth/password-change/', data);
 
 export const isAuthenticationError = (error: unknown) => {
   if (!axios.isAxiosError(error)) {
