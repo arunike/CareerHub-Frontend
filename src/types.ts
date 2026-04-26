@@ -129,6 +129,13 @@ export interface UserSettings {
   ignored_federal_holidays?: string[];
   employment_types?: EmploymentType[];
   holiday_tabs?: HolidayTab[];
+  application_stages?: Array<{
+    key: string;
+    label: string;
+    shortLabel: string;
+    tone: string;
+    locked?: boolean;
+  }>;
   hidden_nav_items?: string[];
   ai_provider_endpoint?: string;
   ai_provider_model?: string;
@@ -167,6 +174,28 @@ export interface Document {
     company: string;
     role: string;
   };
+  created_at: string;
+  updated_at: string;
+}
+
+export type ApplicationTimelineStage = string;
+
+export interface ApplicationTimelineEntry {
+  id: number;
+  application: number;
+  stage: ApplicationTimelineStage;
+  stage_label: string;
+  stage_order: number;
+  event_date?: string | null;
+  notes: string;
+  documents: number[];
+  document_details?: Array<{
+    id: number;
+    title: string;
+    document_type: Document['document_type'];
+    file_name?: string | null;
+    application?: number | null;
+  }>;
   created_at: string;
   updated_at: string;
 }

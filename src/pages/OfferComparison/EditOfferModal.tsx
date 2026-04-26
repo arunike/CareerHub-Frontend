@@ -64,6 +64,7 @@ const EditOfferModal = ({
     >
       <fieldset disabled={offerModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
         <OfferFormFields
+              key={editingOffer.id ?? 'unsaved-offer'}
               companyName={editingApp?.company_name || ''}
               onCompanyNameChange={(value) => patchEditingApp({ company_name: value })}
               roleTitle={editingApp?.role_title || ''}
@@ -137,6 +138,19 @@ const EditOfferModal = ({
               onFreeFoodPerkValueChange={(value) => patchEditingApp({ free_food_perk_value: value })}
               onFreeFoodPerkFrequencyChange={(value) => patchEditingApp({ free_food_perk_frequency: value })}
               showCommuteAndPerks
+              showDecisionSignals
+              visaSponsorship={editingApp?.visa_sponsorship && editingApp.visa_sponsorship !== 'UNKNOWN' ? editingApp.visa_sponsorship : ''}
+              onVisaSponsorshipChange={(value) => patchEditingApp({ visa_sponsorship: value })}
+              dayOneGc={editingApp?.day_one_gc && editingApp.day_one_gc !== 'UNKNOWN' ? editingApp.day_one_gc : ''}
+              onDayOneGcChange={(value) => patchEditingApp({ day_one_gc: value })}
+              growthScore={editingApp?.growth_score ?? null}
+              onGrowthScoreChange={(value) => patchEditingApp({ growth_score: value })}
+              workLifeScore={editingApp?.work_life_score ?? null}
+              onWorkLifeScoreChange={(value) => patchEditingApp({ work_life_score: value })}
+              brandScore={editingApp?.brand_score ?? null}
+              onBrandScoreChange={(value) => patchEditingApp({ brand_score: value })}
+              teamScore={editingApp?.team_score ?? null}
+              onTeamScoreChange={(value) => patchEditingApp({ team_score: value })}
               enableCompModeToggles
               ptoDays={Number(editingOffer.pto_days) || 0}
               onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}

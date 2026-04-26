@@ -193,6 +193,71 @@ const Settings: React.FC = () => {
     setNewTabName('');
   };
 
+  const [isAppStagesLocked, setIsAppStagesLocked] = useState(true);
+  const [isAddingAppStage, setIsAddingAppStage] = useState(false);
+  const [editingAppStage, setEditingAppStage] = useState<any | null>(null);
+  const [newAppStageLabel, setNewAppStageLabel] = useState('');
+  const [newAppStageShortLabel, setNewAppStageShortLabel] = useState('');
+  const [newAppStageTone, setNewAppStageTone] = useState('bg-blue-500');
+
+  const getAppStages = () => settings?.application_stages || [];
+
+  const handleSaveAppStage = () => {
+    if (!newAppStageLabel.trim() || !newAppStageShortLabel.trim() || !settings) return;
+    const current = getAppStages();
+    if (editingAppStage) {
+      setSettings(prev => prev ? {
+        ...prev,
+        application_stages: current.map(t => t.key === editingAppStage.key ? { 
+          ...t, 
+          label: newAppStageLabel,
+          shortLabel: newAppStageShortLabel,
+          tone: newAppStageTone
+        } : t),
+      } : null);
+    } else {
+      const key = newAppStageLabel.toUpperCase().trim().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+      if (current.some(t => t.key === key)) return;
+      setSettings(prev => prev ? {
+        ...prev,
+        application_stages: [...current, { 
+          key, 
+          label: newAppStageLabel,
+          shortLabel: newAppStageShortLabel,
+          tone: newAppStageTone
+        }],
+      } : null);
+    }
+    setIsAddingAppStage(false);
+    setEditingAppStage(null);
+    setNewAppStageLabel('');
+    setNewAppStageShortLabel('');
+    setNewAppStageTone('bg-blue-500');
+  };
+
+  const handleEditAppStage = (t: any) => {
+    setEditingAppStage(t);
+    setNewAppStageLabel(t.label);
+    setNewAppStageShortLabel(t.shortLabel);
+    setNewAppStageTone(t.tone);
+    setIsAddingAppStage(true);
+  };
+
+  const handleDeleteAppStage = (key: string) => {
+    setSettings(prev => prev ? {
+      ...prev,
+      application_stages: getAppStages().filter(t => t.key !== key),
+    } : null);
+  };
+
+  const handleCancelAppStage = () => {
+    setIsAddingAppStage(false);
+    setEditingAppStage(null);
+    setNewAppStageLabel('');
+    setNewAppStageShortLabel('');
+    setNewAppStageTone('bg-blue-500');
+  };
+
   const resetMeridiemColumnScroll = (open: boolean) => {
     if (!open) return;
     const reset = () => {
@@ -234,6 +299,22 @@ const Settings: React.FC = () => {
           { value: 'internship', label: 'Internship', color: 'amber' },
           { value: 'contract', label: 'Contract', color: 'purple' },
           { value: 'freelance', label: 'Freelance', color: 'orange' },
+        ];
+      }
+      
+      if (!data.application_stages || data.application_stages.length === 0) {
+        data.application_stages = [
+          { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
+          { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
+          { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
+          { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
+          { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
+          { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
+          { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
+          { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
+          { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
+          { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
+          { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
         ];
       }
       originalSettingsRef.current = JSON.stringify(data);
@@ -1294,6 +1375,118 @@ const Settings: React.FC = () => {
           </div>
         )}
         <p className="text-xs text-gray-400 mt-3">Deleting a tab moves its holidays back to <em>Manage Custom</em>.</p>
+      </div>}
+
+      {/* Application Timeline Stages Manager */}
+      {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-6">
+        <div className="flex justify-between items-center border-b pb-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Application Timeline Stages</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Custom stages for your job applications pipeline</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAppStagesLocked(l => !l)}
+              className={`p-1.5 rounded-lg transition ${isAppStagesLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+              title={isAppStagesLocked ? 'Unlock section' : 'Lock section'}
+            >
+              {isAppStagesLocked ? <LockOutlined className="text-base" /> : <UnlockOutlined className="text-base" />}
+            </button>
+            {!isAppStagesLocked && (
+              <button
+                onClick={() => {
+                  if (isAddingAppStage) {
+                    handleCancelAppStage();
+                  } else {
+                    setIsAddingAppStage(true);
+                  }
+                }}
+                className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+              >
+                {isAddingAppStage ? (
+                  <CloseOutlined className="text-base" />
+                ) : (
+                  <PlusOutlined className="text-base" />
+                )}
+                {isAddingAppStage ? 'Cancel' : 'Add Stage'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {isAddingAppStage && !isAppStagesLocked && (
+          <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Label (e.g. Online Assessment)</label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newAppStageLabel}
+                  onChange={e => setNewAppStageLabel(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Short Label (e.g. OA)</label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newAppStageShortLabel}
+                  onChange={e => setNewAppStageShortLabel(e.target.value)}
+                />
+              </div>
+              <div className="w-full sm:w-auto">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Color Tone (Tailwind class)</label>
+                <input
+                  type="text"
+                  placeholder="bg-blue-500"
+                  className="w-full sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newAppStageTone}
+                  onChange={e => setNewAppStageTone(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={handleSaveAppStage}
+                disabled={!newAppStageLabel.trim() || !newAppStageShortLabel.trim()}
+                className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editingAppStage ? 'Update' : 'Add'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {getAppStages().length === 0 ? (
+          <p className="text-gray-500 text-sm text-center py-4">No custom stages defined. Add one to get started.</p>
+        ) : (
+          <div className="space-y-2">
+            {getAppStages().map((t: any) => (
+              <LockableListItem
+                key={t.key}
+                isLocked={!!t.locked}
+                sectionLocked={isAppStagesLocked}
+                onToggleLock={() => {
+                  const current = getAppStages();
+                  setSettings(prev => prev ? {
+                    ...prev,
+                    application_stages: current.map(x => x.key === t.key ? { ...x, locked: !t.locked } : x),
+                  } : null);
+                }}
+                onEdit={() => handleEditAppStage(t)}
+                onDelete={() => handleDeleteAppStage(t.key)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${t.tone}`}></div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-800 leading-tight">{t.label}</span>
+                    <span className="text-xs text-gray-400 font-mono mt-0.5">{t.key} · {t.shortLabel}</span>
+                  </div>
+                </div>
+              </LockableListItem>
+            ))}
+          </div>
+        )}
       </div>}
 
       {/* Navigation Visibility */}

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import type { BenefitItem } from './calculations';
+import React, { useState } from 'react';
+import type { BenefitItem, DayOneGcStatus, VisaSponsorshipStatus } from './calculations';
 import {
   BenefitsSection,
   CompensationSection,
+  DecisionSignalsSection,
   IdentitySection,
   LocationTaxSection,
   TimeOffSection,
@@ -70,6 +71,20 @@ interface OfferFormFieldsProps {
   showCommuteAndPerks?: boolean;
   enableCompModeToggles?: boolean;
 
+  showDecisionSignals?: boolean;
+  visaSponsorship?: VisaSponsorshipStatus;
+  onVisaSponsorshipChange?: (value: VisaSponsorshipStatus) => void;
+  dayOneGc?: DayOneGcStatus;
+  onDayOneGcChange?: (value: DayOneGcStatus) => void;
+  growthScore?: number | null;
+  onGrowthScoreChange?: (value: number | null) => void;
+  workLifeScore?: number | null;
+  onWorkLifeScoreChange?: (value: number | null) => void;
+  brandScore?: number | null;
+  onBrandScoreChange?: (value: number | null) => void;
+  teamScore?: number | null;
+  onTeamScoreChange?: (value: number | null) => void;
+
   ptoDays?: number;
   onPtoDaysChange?: (value: number) => void;
   isUnlimitedPto?: boolean;
@@ -108,11 +123,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onBonusChange,
   equity,
   onEquityChange,
-  equityTotalGrant,
-  onEquityTotalGrantChange,
   equityVestingPercent,
   onEquityVestingPercentChange,
-  defaultEquityMode,
   signOn,
   onSignOnChange,
   benefitsValue,
@@ -134,7 +146,19 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onFreeFoodPerkValueChange,
   onFreeFoodPerkFrequencyChange,
   showCommuteAndPerks = true,
-  enableCompModeToggles = false,
+  showDecisionSignals = false,
+  visaSponsorship = '',
+  onVisaSponsorshipChange,
+  dayOneGc = '',
+  onDayOneGcChange,
+  growthScore,
+  onGrowthScoreChange,
+  workLifeScore,
+  onWorkLifeScoreChange,
+  brandScore,
+  onBrandScoreChange,
+  teamScore,
+  onTeamScoreChange,
   ptoDays,
   onPtoDaysChange,
   isUnlimitedPto,
@@ -147,38 +171,28 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
 }) => {
   const shouldShowCompanyRole = !(hideCompanyRoleWhenLinked && linkedApplicationId);
   const showRtoDays = workMode === 'HYBRID' || workMode === 'ONSITE';
+  const decisionSignalHandlers =
+    showDecisionSignals &&
+    onVisaSponsorshipChange &&
+    onDayOneGcChange &&
+    onGrowthScoreChange &&
+    onWorkLifeScoreChange &&
+    onBrandScoreChange &&
+    onTeamScoreChange
+      ? {
+          onVisaSponsorshipChange,
+          onDayOneGcChange,
+          onGrowthScoreChange,
+          onWorkLifeScoreChange,
+          onBrandScoreChange,
+          onTeamScoreChange,
+        }
+      : null;
 
-  const [bonusMode, setBonusMode] = useState<'$' | '%'>('$');
-  const [bonusPercentInput, setBonusPercentInput] = useState<string>('');
-  const [equityMode, setEquityMode] = useState<'annual' | 'total'>(
-    defaultEquityMode || (Number(equityTotalGrant || 0) > 0 ? 'total' : 'annual')
-  );
-  const [equityTotalGrantInput, setEquityTotalGrantInput] = useState<string>(
-    Number(equityTotalGrant || 0) > 0 ? String(Number(equityTotalGrant || 0)) : ''
-  );
   const [equityVestingPercentInternal, setEquityVestingPercentInternal] = useState<number>(
     Number.isFinite(Number(equityVestingPercent)) ? Number(equityVestingPercent) : 25
   );
   const effectiveEquityVestingPercent = equityVestingPercentInternal;
-
-  useEffect(() => {
-    setEquityVestingPercentInternal(
-      Number.isFinite(Number(equityVestingPercent)) ? Number(equityVestingPercent) : 25
-    );
-    if (Number(equityTotalGrant || 0) > 0) {
-      setEquityTotalGrantInput(String(Number(equityTotalGrant || 0)));
-    } else {
-      setEquityTotalGrantInput('');
-    }
-  }, [equityTotalGrant, equityVestingPercent]);
-
-  useEffect(() => {
-    if (defaultEquityMode) {
-      setEquityMode(defaultEquityMode);
-      return;
-    }
-    setEquityMode(Number(equityTotalGrant || 0) > 0 ? 'total' : 'annual');
-  }, [defaultEquityMode, equityTotalGrant]);
 
   return (
     <div className="p-6 space-y-4">
@@ -215,23 +229,13 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onBaseSalaryChange={onBaseSalaryChange}
         bonus={bonus}
         onBonusChange={onBonusChange}
-        bonusMode={bonusMode}
-        setBonusMode={setBonusMode}
-        bonusPercentInput={bonusPercentInput}
-        setBonusPercentInput={setBonusPercentInput}
         equity={equity}
         onEquityChange={onEquityChange}
-        equityMode={equityMode}
-        setEquityMode={setEquityMode}
-        equityTotalGrantInput={equityTotalGrantInput}
-        setEquityTotalGrantInput={setEquityTotalGrantInput}
-        onEquityTotalGrantChange={onEquityTotalGrantChange}
         effectiveEquityVestingPercent={effectiveEquityVestingPercent}
         setEquityVestingPercentInternal={setEquityVestingPercentInternal}
         onEquityVestingPercentChange={onEquityVestingPercentChange}
         signOn={signOn}
         onSignOnChange={onSignOnChange}
-        enableCompModeToggles={enableCompModeToggles}
       />
 
       <BenefitsSection
@@ -259,6 +263,23 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onFreeFoodPerkValueChange={onFreeFoodPerkValueChange}
         onFreeFoodPerkFrequencyChange={onFreeFoodPerkFrequencyChange}
       />
+
+      {decisionSignalHandlers && (
+        <DecisionSignalsSection
+          visaSponsorship={visaSponsorship}
+          onVisaSponsorshipChange={decisionSignalHandlers.onVisaSponsorshipChange}
+          dayOneGc={dayOneGc}
+          onDayOneGcChange={decisionSignalHandlers.onDayOneGcChange}
+          growthScore={growthScore}
+          onGrowthScoreChange={decisionSignalHandlers.onGrowthScoreChange}
+          workLifeScore={workLifeScore}
+          onWorkLifeScoreChange={decisionSignalHandlers.onWorkLifeScoreChange}
+          brandScore={brandScore}
+          onBrandScoreChange={decisionSignalHandlers.onBrandScoreChange}
+          teamScore={teamScore}
+          onTeamScoreChange={decisionSignalHandlers.onTeamScoreChange}
+        />
+      )}
 
       <TimeOffSection
         ptoDays={ptoDays}
