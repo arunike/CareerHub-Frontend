@@ -143,6 +143,9 @@ export interface UserSettings {
   ai_provider_api_key?: string;
   ai_provider_api_key_configured?: boolean;
   ai_provider_api_key_masked?: string;
+  display_name?: string;
+  profile_picture?: string | null;
+  email?: string;
   created_at: string;
   updated_at: string;
 }
@@ -255,12 +258,33 @@ export interface ShareLink {
   id: number;
   uuid: string;
   title: string;
+  host_display_name?: string;
+  host_email?: string;
+  public_note?: string;
   duration_days: number;
   booking_block_minutes: number;
+  buffer_minutes: number;
+  max_bookings_per_day: number;
   created_at: string;
   expires_at: string;
   is_active: boolean;
   is_expired: boolean;
+  is_locked: boolean;
+}
+
+export interface PublicBooking {
+  id: number;
+  share_link: number;
+  share_link_title?: string;
+  name: string;
+  email: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  timezone: string;
+  notes: string;
+  is_locked: boolean;
+  created_at: string;
 }
 
 export interface BookingSlot {

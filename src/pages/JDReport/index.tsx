@@ -17,12 +17,24 @@ import { getReportById } from '../../utils/reportStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 
 const getScoreMeta = (score: number) => {
-  if (score >= 85) return { label: 'Excellent Match', stroke: '#10b981', ringBg: '#f0fdf4', barColor: '#10b981', badgeBg: '#d1fae5', badgeText: '#065f46' };
-  if (score >= 70) return { label: 'Strong Match',   stroke: '#3b82f6', ringBg: '#eff6ff', barColor: '#3b82f6', badgeBg: '#dbeafe', badgeText: '#1e40af' };
-  if (score >= 55) return { label: 'Moderate Match', stroke: '#f59e0b', ringBg: '#fffbeb', barColor: '#f59e0b', badgeBg: '#fef3c7', badgeText: '#92400e' };
-  if (score >= 40) return { label: 'Partial Match',  stroke: '#f97316', ringBg: '#fff7ed', barColor: '#f97316', badgeBg: '#ffedd5', badgeText: '#7c2d12' };
-  return              { label: 'Low Match',          stroke: '#ef4444', ringBg: '#fef2f2', barColor: '#ef4444', badgeBg: '#fee2e2', badgeText: '#7f1d1d' };
+  if (score >= 90) return { label: 'Strong match', stroke: '#10b981', ringBg: '#f0fdf4', barColor: '#10b981', badgeBg: '#d1fae5', badgeText: '#065f46' };
+  if (score >= 70) return { label: 'Good fit with minor gaps', stroke: '#3b82f6', ringBg: '#eff6ff', barColor: '#3b82f6', badgeBg: '#dbeafe', badgeText: '#1e40af' };
+  if (score >= 50) return { label: 'Partial match', stroke: '#f59e0b', ringBg: '#fffbeb', barColor: '#f59e0b', badgeBg: '#fef3c7', badgeText: '#92400e' };
+  return              { label: 'Poor match', stroke: '#ef4444', ringBg: '#fef2f2', barColor: '#ef4444', badgeBg: '#fee2e2', badgeText: '#7f1d1d' };
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value && typeof value === 'object' && !Array.isArray(value));
+
+const supportLabel = (value: unknown) =>
+  String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const skillName = (value: unknown) => (isRecord(value) ? String(value.skill || '') : String(value || ''));
+const missingSkillName = (value: unknown) => (isRecord(value) ? String(value.skill || '') : String(value || ''));
+const keywordName = (value: unknown) => (isRecord(value) ? String(value.keyword || '') : String(value || ''));
+const requirementName = (value: unknown) => (isRecord(value) ? String(value.requirement || '') : String(value || ''));
 
 const JDReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -145,7 +157,7 @@ const JDReportPage: React.FC = () => {
                 />
                 <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm bg-white"
                   style={{ color: meta.badgeText, border: `1px solid ${meta.stroke}44` }}>
-                  {meta.label}
+                  {report.score_label || meta.label}
                 </span>
               </div>
               <div className="flex flex-col gap-3.5 pt-1">
@@ -180,11 +192,23 @@ const JDReportPage: React.FC = () => {
                     {report.matched_skills.length}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-col gap-2">
                   {report.matched_skills.map((s, i) => (
-                    <span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                      {s}
-                    </span>
+                    <div key={i} className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold text-emerald-800">{skillName(s)}</span>
+                        {isRecord(s) && s.support_level && (
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 border border-emerald-100">
+                            {supportLabel(s.support_level)}
+                          </span>
+                        )}
+                      </div>
+                      {isRecord(s) && s.evidence && (
+                        <p className="mt-1 text-[11px] leading-relaxed text-emerald-900/75 m-0">
+                          Evidence: “{String(s.evidence)}”
+                        </p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -203,11 +227,26 @@ const JDReportPage: React.FC = () => {
                     {report.missing_skills.length}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-col gap-2">
                   {report.missing_skills.map((s, i) => (
-                    <span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-500 border border-red-100">
-                      {s}
-                    </span>
+                    <div key={i} className="rounded-xl border border-red-100 bg-red-50/60 px-3 py-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold text-red-700">{missingSkillName(s)}</span>
+                        {isRecord(s) && s.severity && (
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-500 border border-red-100">
+                            {String(s.severity)}
+                          </span>
+                        )}
+                      </div>
+                      {isRecord(s) && s.reason && (
+                        <p className="mt-1 text-[11px] leading-relaxed text-red-900/70 m-0">{String(s.reason)}</p>
+                      )}
+                      {isRecord(s) && s.resume_evidence_status && (
+                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-red-400 m-0">
+                          Evidence status: {String(s.resume_evidence_status)}
+                        </p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -227,7 +266,19 @@ const JDReportPage: React.FC = () => {
                   <div className="flex flex-col gap-3">
                     {resumeGaps.map((gap, index) => (
                       <div key={index} className="rounded-xl border border-orange-100 bg-orange-50/60 p-4">
-                        <p className="text-sm text-orange-900 leading-relaxed m-0">{gap}</p>
+                        <p className="text-sm font-semibold text-orange-950 leading-relaxed m-0">
+                          {isRecord(gap) ? String(gap.gap || '') : String(gap)}
+                        </p>
+                        {isRecord(gap) && gap.why_it_matters && (
+                          <p className="mt-2 text-xs text-orange-900/75 leading-relaxed m-0">
+                            Why it matters: {String(gap.why_it_matters)}
+                          </p>
+                        )}
+                        {isRecord(gap) && gap.fix && (
+                          <p className="mt-2 text-xs text-orange-900/75 leading-relaxed m-0">
+                            Fix: {String(gap.fix)}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -245,11 +296,23 @@ const JDReportPage: React.FC = () => {
                   <p className="text-xs text-gray-500 leading-relaxed m-0">
                     Keywords below should only be woven into bullets where your saved experience already supports them.
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-col gap-2">
                     {keywordSuggestions.map((keyword, index) => (
-                      <span key={index} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        {keyword}
-                      </span>
+                      <div key={index} className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold text-indigo-700">{keywordName(keyword)}</span>
+                          {isRecord(keyword) && keyword.support_level && (
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-600 border border-indigo-100">
+                              {supportLabel(keyword.support_level)}
+                            </span>
+                          )}
+                        </div>
+                        {isRecord(keyword) && keyword.where_to_use && (
+                          <p className="mt-1 text-[11px] leading-relaxed text-indigo-900/70 m-0">
+                            Use in: {String(keyword.where_to_use)}
+                          </p>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -277,6 +340,11 @@ const JDReportPage: React.FC = () => {
                           {bullet.experience}
                         </span>
                       )}
+                      {bullet.support_level && (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-white border border-blue-100 px-2 py-1 rounded-full">
+                          {supportLabel(bullet.support_level)}
+                        </span>
+                      )}
                     </div>
 
                     {bullet.original && (
@@ -294,6 +362,11 @@ const JDReportPage: React.FC = () => {
                     <p className="text-xs text-gray-500 leading-relaxed m-0">
                       <span className="font-bold text-gray-600">Why it helps:</span> {bullet.reason}
                     </p>
+                    {bullet.risk_note && (
+                      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 leading-relaxed m-0">
+                        <span className="font-bold">Verify before use:</span> {bullet.risk_note}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -320,11 +393,35 @@ const JDReportPage: React.FC = () => {
                       <div className="flex flex-wrap gap-1.5">
                         {experience.matched_requirements?.map((requirement, requirementIndex) => (
                           <span key={requirementIndex} className="text-[11px] font-medium px-2 py-1 rounded-lg bg-white text-slate-600 border border-slate-200">
-                            {requirement}
+                            {requirementName(requirement)}
                           </span>
                         ))}
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {report.overall_risk_assessment && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <WarningOutlined className="text-violet-600 text-sm" />
+                </div>
+                <span className="font-semibold text-gray-800 text-sm">Risk Assessment</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  ['Seniority', report.overall_risk_assessment.seniority_risk],
+                  ['Domain', report.overall_risk_assessment.domain_risk],
+                  ['Tech Stack', report.overall_risk_assessment.technical_stack_risk],
+                  ['Positioning', report.overall_risk_assessment.resume_positioning_risk],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl border border-violet-100 bg-violet-50/60 p-3">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-violet-400">{label}</div>
+                    <div className="mt-1 text-sm font-bold capitalize text-violet-900">{value}</div>
                   </div>
                 ))}
               </div>

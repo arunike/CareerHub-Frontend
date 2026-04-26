@@ -37,7 +37,7 @@ const features = [
   { icon: <SafetyCertificateOutlined />, label: 'Career analytics', desc: 'Earnings, growth, timeline' },
 ];
 
-const trustPills = ['Private dashboard', 'Token secured', 'JWT auth'];
+const trustPills = ['Private dashboard', 'Token secured', 'Encrypted passwords'];
 
 function extractErrorMessage(error: unknown, fallback: string) {
   if (!axios.isAxiosError(error)) {
@@ -361,8 +361,8 @@ export default function LoginPage() {
 
               <div className="login-page__footnote">
                 {mode === 'signup'
-                  ? 'Email is your account identity here. No separate username is required.'
-                  : 'Use the email attached to your account. If signup is enabled, you can create a new account from this same screen.'}
+                  ? 'Email is your account identity. Passwords are encrypted and never stored in plain text.'
+                  : 'Your data is secured with industry-standard encryption and private by default.'}
               </div>
             </div>
           </div>

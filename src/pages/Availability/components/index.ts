@@ -3,3 +3,4 @@ export { default as AvailabilityGeneratorCard } from './AvailabilityGeneratorCar
 export { default as AvailabilityBookingCard } from './AvailabilityBookingCard';
 export { default as AvailabilityTextControls } from './AvailabilityTextControls';
 export { default as AvailabilityGroups } from './AvailabilityGroups';
+export { default as PublicBookingManager } from './PublicBookingManager';

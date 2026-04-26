@@ -306,7 +306,12 @@ export const matchJobDescriptionWithBrowserAI = async ({
       { role: 'system', content: JD_MATCH_SYSTEM_PROMPT },
       {
         role: 'user',
-        content: `JOB DESCRIPTION:
+        content: `Evaluate only based on the provided Candidate Experience and Job Description.
+If a skill, tool, domain, metric, or responsibility is not explicitly present, do not assume it.
+For tailored bullets, preserve factual accuracy over keyword optimization.
+The textual score_label must strictly follow the scoring rubric for the numeric score.
+
+JOB DESCRIPTION:
 ${jdText.trim()}
 
 ---

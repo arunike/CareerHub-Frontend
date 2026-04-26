@@ -15,11 +15,10 @@ interface Props {
 }
 
 const getScoreMeta = (score: number) => {
-  if (score >= 85) return { label: 'Excellent Match', stroke: '#10b981', bg: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)', badgeBg: '#d1fae5', badgeText: '#065f46' };
-  if (score >= 70) return { label: 'Strong Match',   stroke: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff, #f0f7ff)', badgeBg: '#dbeafe', badgeText: '#1e40af' };
-  if (score >= 55) return { label: 'Moderate Match', stroke: '#f59e0b', bg: 'linear-gradient(135deg, #fffbeb, #fefce8)', badgeBg: '#fef3c7', badgeText: '#92400e' };
-  if (score >= 40) return { label: 'Partial Match',  stroke: '#f97316', bg: 'linear-gradient(135deg, #fff7ed, #fff1e6)', badgeBg: '#ffedd5', badgeText: '#7c2d12' };
-  return              { label: 'Low Match',          stroke: '#ef4444', bg: 'linear-gradient(135deg, #fef2f2, #fdf2f2)', badgeBg: '#fee2e2', badgeText: '#7f1d1d' };
+  if (score >= 90) return { label: 'Strong match', stroke: '#10b981', bg: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)', badgeBg: '#d1fae5', badgeText: '#065f46' };
+  if (score >= 70) return { label: 'Good fit with minor gaps', stroke: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff, #f0f7ff)', badgeBg: '#dbeafe', badgeText: '#1e40af' };
+  if (score >= 50) return { label: 'Partial match', stroke: '#f59e0b', bg: 'linear-gradient(135deg, #fffbeb, #fefce8)', badgeBg: '#fef3c7', badgeText: '#92400e' };
+  return              { label: 'Poor match', stroke: '#ef4444', bg: 'linear-gradient(135deg, #fef2f2, #fdf2f2)', badgeBg: '#fee2e2', badgeText: '#7f1d1d' };
 };
 
 const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
@@ -138,7 +137,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
                 padding: '3px 10px', borderRadius: 999,
                 background: meta!.badgeBg, color: meta!.badgeText,
               }}>
-                {meta!.label}
+                {savedReport.score_label || meta!.label}
               </span>
               <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.65 }}>
                 {savedReport.summary}

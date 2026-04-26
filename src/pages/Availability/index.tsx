@@ -2,16 +2,25 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   deactivateShareLink,
+  deactivateSpecificShareLink,
+  deletePublicBooking,
+  deleteShareLink,
   generateShareLink,
   getAvailability,
   getCurrentShareLink,
   getEvents,
   getFederalHolidays,
   getHolidays,
+  getPublicBookings,
+  getShareLinks,
+  updatePublicBooking,
+  updateShareLink,
+  getUserSettings,
 } from '../../api';
-import type { Availability as AvailabilityType, Event, Holiday } from '../../types';
+import type { Availability as AvailabilityType, Event, Holiday, PublicBooking } from '../../types';
 import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
 import CalendarView from '../../components/CalendarView';
+import PageActionToolbar from '../../components/PageActionToolbar';
 import { message } from 'antd';
 import type { ShareLink } from '../../types';
 import {
@@ -20,9 +29,12 @@ import {
   AvailabilityGroups,
   AvailabilityTextControls,
   AvailabilityViewToggle,
+  PublicBookingManager,
 } from './components';
+import { useAuth } from '../../context/AuthContext';
 
 const Availability = () => {
+  const { user } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
@@ -35,8 +47,16 @@ const Availability = () => {
 
   const [textMode, setTextMode] = useState<'detailed' | 'combined'>('combined');
   const [shareLink, setShareLink] = useState<ShareLink | null>(null);
+  const [shareLinks, setShareLinks] = useState<ShareLink[]>([]);
+  const [publicBookings, setPublicBookings] = useState<PublicBooking[]>([]);
+  const [shareTitle, setShareTitle] = useState('Book a time with me');
+  const [hostDisplayName, setHostDisplayName] = useState('');
+  const [hostEmail, setHostEmail] = useState('');
+  const [publicNote, setPublicNote] = useState('');
   const [shareDuration, setShareDuration] = useState<number>(14);
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState<number>(30);
+  const [bufferMinutes, setBufferMinutes] = useState<number>(10);
+  const [maxBookingsPerDay, setMaxBookingsPerDay] = useState<number>(3);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [deactivatingLink, setDeactivatingLink] = useState(false);
 
@@ -75,15 +95,48 @@ const Availability = () => {
 
   const fetchShareLink = async () => {
     try {
-      const resp = await getCurrentShareLink();
-      setShareLink(resp.data.active);
-      if (resp.data.active?.booking_block_minutes) {
-        setBookingBlockMinutes(resp.data.active.booking_block_minutes);
+      const [currentResp, linksResp, bookingsResp, settingsResp] = await Promise.all([
+        getCurrentShareLink(),
+        getShareLinks(),
+        getPublicBookings(),
+        getUserSettings(),
+      ]);
+      setShareLink(currentResp.data.active);
+      setShareLinks(linksResp.data);
+      setPublicBookings(bookingsResp.data);
+      
+      const activeLink = currentResp.data.active;
+      if (activeLink) {
+        if (activeLink.booking_block_minutes) {
+          setBookingBlockMinutes(activeLink.booking_block_minutes);
+        }
+        if (activeLink.host_display_name) {
+          setHostDisplayName(activeLink.host_display_name);
+        }
+        if (activeLink.host_email) {
+          setHostEmail(activeLink.host_email);
+        }
+      } else {
+        // Autofill from profile settings
+        if (settingsResp.data.display_name) {
+          setHostDisplayName(settingsResp.data.display_name);
+        }
+        if (settingsResp.data.email) {
+          setHostEmail(settingsResp.data.email);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch share link', error);
     }
   };
+
+  // Immediate prefill from auth user to avoid lag
+  useEffect(() => {
+    if (user) {
+      if (!hostDisplayName) setHostDisplayName(user.full_name || '');
+      if (!hostEmail) setHostEmail(user.email || '');
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchAvailability();
@@ -93,14 +146,25 @@ const Availability = () => {
   }, []);
 
   const handleGenerateShareLink = async () => {
+    if (!hostDisplayName.trim() || !hostEmail.trim()) {
+      messageApi.error('Display Name and Host Email are required.');
+      return;
+    }
+
     setGeneratingLink(true);
     try {
       const resp = await generateShareLink({
-        title: 'Book a time with me',
+        title: shareTitle.trim() || 'Book a time with me',
+        host_display_name: hostDisplayName.trim(),
+        host_email: hostEmail.trim(),
+        public_note: publicNote.trim(),
         duration_days: shareDuration,
         booking_block_minutes: bookingBlockMinutes,
+        buffer_minutes: bufferMinutes,
+        max_bookings_per_day: maxBookingsPerDay,
       });
       setShareLink(resp.data);
+      await fetchShareLink();
       messageApi.success('Booking link generated');
     } catch (error) {
       messageApi.error('Failed to generate booking link');
@@ -115,6 +179,8 @@ const Availability = () => {
     return `${window.location.origin}/book/${shareLink.uuid}`;
   };
 
+  const getAnyShareLinkUrl = (link: ShareLink) => `${window.location.origin}/book/${link.uuid}`;
+
   const handleCopyShareLink = async () => {
     if (!shareLink) return;
     const url = getShareLinkUrl();
@@ -127,12 +193,95 @@ const Availability = () => {
     try {
       await deactivateShareLink();
       setShareLink(null);
+      await fetchShareLink();
       messageApi.success('Booking link deactivated');
     } catch (error) {
       messageApi.error('Failed to deactivate link');
       console.error(error);
     } finally {
       setDeactivatingLink(false);
+    }
+  };
+
+  const handleCopySpecificShareLink = async (link: ShareLink) => {
+    await navigator.clipboard.writeText(getAnyShareLinkUrl(link));
+    messageApi.success('Booking link copied');
+  };
+
+  const handleDeactivateSpecificShareLink = async (id: number) => {
+    try {
+      await deactivateSpecificShareLink(id);
+      await fetchShareLink();
+      messageApi.success('Booking link deactivated');
+    } catch (error) {
+      messageApi.error('Failed to deactivate link');
+      console.error(error);
+    }
+  };
+
+  const handleBulkDeactivateLinks = async (ids: number[]) => {
+    try {
+      await Promise.all(ids.map((id) => deactivateSpecificShareLink(id)));
+      await fetchShareLink();
+      messageApi.success(`${ids.length} links deactivated`);
+    } catch (error) {
+      messageApi.error('Failed to deactivate some links');
+      console.error(error);
+    }
+  };
+
+  const handleBulkDeleteLinks = async (ids: number[]) => {
+    try {
+      await Promise.all(ids.map((id) => deleteShareLink(id)));
+      await fetchShareLink();
+      messageApi.success(`${ids.length} links deleted`);
+    } catch (error) {
+      messageApi.error('Failed to delete some links');
+      console.error(error);
+    }
+  };
+
+  const handleBulkDeleteBookings = async (ids: number[]) => {
+    try {
+      await Promise.all(ids.map((id) => deletePublicBooking(id)));
+      await fetchShareLink();
+      messageApi.success(`${ids.length} bookings deleted`);
+    } catch (error) {
+      messageApi.error('Failed to delete some bookings');
+      console.error(error);
+    }
+  };
+
+  const handleBulkToggleLockLinks = async (ids: number[], lock: boolean) => {
+    try {
+      await Promise.all(ids.map((id) => updateShareLink(id, { is_locked: lock })));
+      await fetchShareLink();
+      messageApi.success(`${ids.length} links ${lock ? 'locked' : 'unlocked'}`);
+    } catch (error) {
+      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some links`);
+      console.error(error);
+    }
+  };
+
+  const handleBulkToggleLockBookings = async (ids: number[], lock: boolean) => {
+    try {
+      await Promise.all(ids.map((id) => updatePublicBooking(id, { is_locked: lock })));
+      await fetchShareLink();
+      messageApi.success(`${ids.length} bookings ${lock ? 'locked' : 'unlocked'}`);
+    } catch (error) {
+      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some bookings`);
+      console.error(error);
+    }
+  };
+
+  const handleBulkUpdateLinks = async (ids: number[], updates: Partial<ShareLink>) => {
+    try {
+      await Promise.all(ids.map((id) => updateShareLink(id, updates)));
+      await fetchShareLink();
+      messageApi.success(`${ids.length} links updated`);
+    } catch (error) {
+      messageApi.error('Failed to update some links');
+      console.error(error);
     }
   };
 
@@ -257,15 +406,16 @@ const Availability = () => {
   return (
     <div className="space-y-6">
       {contextHolder}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-        </div>
-        <AvailabilityViewToggle
-          viewTab={viewTab}
-          onChange={(next) => setSearchParams({ view: next })}
-        />
-      </div>
+      <PageActionToolbar
+        title="Dashboard"
+        subtitle="Manage your availability and public booking links"
+        extraActions={
+          <AvailabilityViewToggle
+            viewTab={viewTab}
+            onChange={(next) => setSearchParams({ view: next })}
+          />
+        }
+      />
 
       {viewTab === 'calendar' ? (
         <CalendarView
@@ -286,16 +436,42 @@ const Availability = () => {
 
           <AvailabilityBookingCard
             shareLink={shareLink}
+            shareTitle={shareTitle}
+            onShareTitleChange={setShareTitle}
+            hostDisplayName={hostDisplayName}
+            onHostDisplayNameChange={setHostDisplayName}
+            hostEmail={hostEmail}
+            onHostEmailChange={setHostEmail}
+            publicNote={publicNote}
+            onPublicNoteChange={setPublicNote}
             shareDuration={shareDuration}
             onShareDurationChange={setShareDuration}
             bookingBlockMinutes={bookingBlockMinutes}
             onBookingBlockMinutesChange={setBookingBlockMinutes}
+            bufferMinutes={bufferMinutes}
+            onBufferMinutesChange={setBufferMinutes}
+            maxBookingsPerDay={maxBookingsPerDay}
+            onMaxBookingsPerDayChange={setMaxBookingsPerDay}
             generatingLink={generatingLink}
             onGenerateShareLink={handleGenerateShareLink}
             onCopyShareLink={handleCopyShareLink}
             deactivatingLink={deactivatingLink}
             onDeactivateShareLink={handleDeactivateShareLink}
             getShareLinkUrl={getShareLinkUrl}
+            onReset={() => setShareLink(null)}
+          />
+
+          <PublicBookingManager
+            links={shareLinks}
+            bookings={publicBookings}
+            onCopyLink={handleCopySpecificShareLink}
+            onDeactivateLink={handleDeactivateSpecificShareLink}
+            onDeactivateLinks={handleBulkDeactivateLinks}
+            onDeleteLinks={handleBulkDeleteLinks}
+            onDeleteBookings={handleBulkDeleteBookings}
+            onToggleLockLinks={handleBulkToggleLockLinks}
+            onToggleLockBookings={handleBulkToggleLockBookings}
+            onBulkUpdateLinks={handleBulkUpdateLinks}
           />
 
           <AvailabilityTextControls

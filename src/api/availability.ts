@@ -1,4 +1,4 @@
-import type { Event, Holiday, RecurrenceRule, ShareLink, UserSettings } from '../types';
+import type { Event, Holiday, PublicBooking, RecurrenceRule, ShareLink, UserSettings } from '../types';
 import api from './client';
 
 export const getEvents = (startDate?: string, endDate?: string) =>
@@ -40,7 +40,7 @@ export const patchCategory = (id: number, data: Partial<{ name: string; color: s
 export const deleteCategory = (id: number) => api.delete(`/categories/${id}/`);
 
 export const getUserSettings = () => api.get('/user-settings/current/');
-export const updateUserSettings = (data: Partial<UserSettings>) => api.put('/user-settings/current/', data);
+export const updateUserSettings = (data: Partial<UserSettings> | FormData) => api.put('/user-settings/current/', data);
 export const requestAIProviderChatCompletion = (data: {
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
   temperature?: number;
@@ -57,19 +57,37 @@ export const deleteRecurringInstance = (eventId: number, date: string) =>
   api.post(`/events/${eventId}/delete_instance/`, { date });
 
 export const getCurrentShareLink = () => api.get<{ active: ShareLink | null }>('/share-links/current/');
+export const getShareLinks = () => api.get<ShareLink[]>('/share-links/');
 export const generateShareLink = (data: {
   title?: string;
+  host_display_name?: string;
+  host_email?: string;
+  public_note?: string;
   duration_days?: number;
   booking_block_minutes?: number;
+  buffer_minutes?: number;
+  max_bookings_per_day?: number;
 }) =>
   api.post<ShareLink>('/share-links/generate/', data);
 export const deactivateShareLink = () => api.post('/share-links/deactivate/');
+export const deactivateSpecificShareLink = (id: number) => api.post<ShareLink>(`/share-links/${id}/deactivate_link/`);
+export const deleteShareLink = (id: number) => api.delete(`/share-links/${id}/`);
+export const updateShareLink = (id: number, data: Partial<ShareLink>) => api.patch<ShareLink>(`/share-links/${id}/`, data);
+export const getPublicBookings = () => api.get<PublicBooking[]>('/share-links/bookings/');
+export const deletePublicBooking = (id: number) => api.delete(`/public-bookings/${id}/`);
+export const updatePublicBooking = (id: number, data: Partial<PublicBooking>) => api.patch<PublicBooking>(`/public-bookings/${id}/`, data);
 export const getPublicBookingSlots = (uuid: string, date?: string, timezone: string = 'PT') =>
   api.get<{
     title: string;
+    host_display_name?: string;
+    host_email?: string;
+    host_profile_picture?: string;
+    public_note?: string;
     expires_at: string;
     timezone: string;
     booking_block_minutes: number;
+    buffer_minutes: number;
+    max_bookings_per_day: number;
     days: Array<{
       date: string;
       day_name: string;

@@ -6,6 +6,7 @@ import {
   login as loginRequest,
   logout as logoutRequest,
   signup as signupRequest,
+  updateProfile as updateProfileRequest,
   type AuthResponse,
   type AuthenticatedUser,
 } from '../api/auth';
@@ -29,6 +30,7 @@ interface AuthContextValue {
     confirm_password: string;
   }) => Promise<AuthResponse>;
   logout: () => Promise<void>;
+  updateProfile: (data: { first_name?: string; last_name?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -132,6 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function updateProfile(data: { first_name?: string; last_name?: string }) {
+    const response = await updateProfileRequest(data);
+    if (response.data.user) {
+      setUser(response.data.user);
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -141,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         signup,
         logout,
+        updateProfile,
       }}
     >
       {children}
