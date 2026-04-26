@@ -49,7 +49,10 @@ export interface ScenarioRow {
   deltaPtoHolidayDays: number | null;
   afterTaxBase: number;
   afterTaxBonus: number;
+  afterTaxSignOn: number;
   afterTaxEquity: number;
+  commuteAnnualCost: number;
+  freeFoodAnnualValue: number;
   usedBaseTaxRate: number;
   usedBonusTaxRate: number;
   usedEquityTaxRate: number;

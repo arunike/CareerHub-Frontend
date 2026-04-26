@@ -428,6 +428,7 @@ const Settings: React.FC = () => {
   };
 
   const aiSettingsDirty =
+    aiSettings.adapter !== savedAiSettings.adapter ||
     aiSettings.endpoint.trim() !== savedAiSettings.endpoint.trim() ||
     aiSettings.model.trim() !== savedAiSettings.model.trim() ||
     aiApiKeyChanged;
@@ -453,6 +454,37 @@ const Settings: React.FC = () => {
     setAiSettings((prev) => ({ ...prev, [field]: value }));
   };
 
+  const applyAiProviderPreset = (adapter: AIProviderSettings['adapter']) => {
+    const presets: Record<
+      AIProviderSettings['adapter'],
+      { endpoint: string; model: string }
+    > = {
+      claude: {
+        endpoint: 'https://api.anthropic.com',
+        model: 'claude-sonnet-4-20250514',
+      },
+      gemini: {
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta',
+        model: 'gemini-3-flash-preview',
+      },
+      openai: {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        model: 'gpt-4o-mini',
+      },
+      openrouter: {
+        endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+        model: 'openai/gpt-5.2',
+      },
+    };
+    const preset = presets[adapter];
+    setAiSettings((prev) => ({
+      ...prev,
+      adapter,
+      endpoint: preset.endpoint,
+      model: preset.model,
+    }));
+  };
+
   const handleSaveAiSettings = async () => {
     try {
       const response = await updateUserSettings(
@@ -460,6 +492,7 @@ const Settings: React.FC = () => {
       );
       const nextSettings = response.data as UserSettings;
       mergeAiSettingsIntoSettings({
+        ai_provider_adapter: nextSettings.ai_provider_adapter,
         ai_provider_endpoint: nextSettings.ai_provider_endpoint,
         ai_provider_model: nextSettings.ai_provider_model,
         ai_provider_api_key_configured: nextSettings.ai_provider_api_key_configured,
@@ -467,6 +500,7 @@ const Settings: React.FC = () => {
         updated_at: nextSettings.updated_at,
       });
       mergeAiSettingsIntoOriginalRef({
+        ai_provider_adapter: nextSettings.ai_provider_adapter,
         ai_provider_endpoint: nextSettings.ai_provider_endpoint,
         ai_provider_model: nextSettings.ai_provider_model,
         ai_provider_api_key_configured: nextSettings.ai_provider_api_key_configured,
@@ -897,7 +931,7 @@ const Settings: React.FC = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm font-semibold text-gray-900">Encrypted Server-side BYOK</h4>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-indigo-200 text-indigo-700">
-                  OpenAI-compatible
+                  Multi-provider
                 </span>
               </div>
               <p className="text-sm text-gray-600 mt-1 leading-relaxed">
@@ -913,6 +947,26 @@ const Settings: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Provider Adapter
+            </label>
+            <select
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+              value={aiSettings.adapter}
+              onChange={(e) => applyAiProviderPreset(e.target.value as AIProviderSettings['adapter'])}
+            >
+              <option value="claude">Claude</option>
+              <option value="gemini">Gemini</option>
+              <option value="openai">OpenAI</option>
+              <option value="openrouter">OpenRouter</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2">
+              CareerHub currently supports Claude, Gemini, OpenAI, and OpenRouter. Each option uses
+              that provider&apos;s expected request format behind the same app-level AI features.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Endpoint URL
             </label>
             <div className="relative">
@@ -922,7 +976,15 @@ const Settings: React.FC = () => {
                 className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
                 value={aiSettings.endpoint}
                 onChange={(e) => updateAiSetting('endpoint', e.target.value)}
-                placeholder="https://.../chat/completions"
+                placeholder={
+                  aiSettings.adapter === 'gemini'
+                    ? 'https://generativelanguage.googleapis.com/v1beta'
+                    : aiSettings.adapter === 'claude'
+                      ? 'https://api.anthropic.com'
+                      : aiSettings.adapter === 'openrouter'
+                        ? 'https://openrouter.ai/api/v1/chat/completions'
+                    : 'https://.../chat/completions'
+                }
               />
             </div>
           </div>
@@ -936,7 +998,15 @@ const Settings: React.FC = () => {
               className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
               value={aiSettings.model}
               onChange={(e) => updateAiSetting('model', e.target.value)}
-              placeholder="gemini-2.0-flash"
+              placeholder={
+                aiSettings.adapter === 'gemini'
+                  ? 'gemini-3-flash-preview'
+                  : aiSettings.adapter === 'claude'
+                    ? 'claude-sonnet-4-20250514'
+                    : aiSettings.adapter === 'openrouter'
+                      ? 'openai/gpt-5.2'
+                      : 'gpt-4o-mini'
+              }
             />
           </div>
 
@@ -965,7 +1035,7 @@ const Settings: React.FC = () => {
               spellCheck={false}
             />
             <p className="text-xs text-gray-500 mt-2">
-              Used by Cover Letter generation, JD Matcher, Negotiation Advisor, and Analytics custom widgets.
+              Used by Cover Letter generation, JD Matcher, job URL import, Negotiation Advisor, and Analytics custom widgets.
             </p>
             {aiSettings.apiKeyConfigured && !aiSettings.apiKey && (
               <p className="text-xs text-indigo-600 mt-1">
@@ -976,8 +1046,8 @@ const Settings: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
             <div className="text-xs text-gray-500">
-              Default preset targets Google Gemini&apos;s OpenAI-compatible endpoint. You can swap in
-              any compatible provider that your backend deployment allows.
+              Claude uses Messages, Gemini uses generateContent, and OpenAI/OpenRouter use chat
+              completions.
             </div>
             <div className="flex gap-2 shrink-0">
               <button

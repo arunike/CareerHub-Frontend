@@ -7,9 +7,14 @@ type CompensationSectionProps = {
   onBonusChange: (value: number) => void;
   equity: number;
   onEquityChange: (value: number) => void;
+  equityTotalGrant?: number;
+  onEquityTotalGrantChange?: (value: number) => void;
   effectiveEquityVestingPercent: number;
   setEquityVestingPercentInternal: (value: number) => void;
   onEquityVestingPercentChange?: (value: number) => void;
+  equityVestingSchedule?: number[];
+  onEquityVestingScheduleChange?: (value: number[]) => void;
+  defaultEquityMode?: 'annual' | 'total';
   signOn: number;
   onSignOnChange: (value: number) => void;
 };
@@ -21,8 +26,13 @@ const CompensationSection = ({
   onBonusChange,
   equity,
   onEquityChange,
+  equityTotalGrant,
+  onEquityTotalGrantChange,
   effectiveEquityVestingPercent,
   onEquityVestingPercentChange,
+  equityVestingSchedule,
+  onEquityVestingScheduleChange,
+  defaultEquityMode,
   setEquityVestingPercentInternal,
   signOn,
   onSignOnChange,
@@ -37,6 +47,11 @@ const CompensationSection = ({
           if (v.equity !== equity) onEquityChange(v.equity ?? 0);
         }}
         equityVestingPercent={effectiveEquityVestingPercent}
+        equityTotalGrant={equityTotalGrant}
+        onEquityTotalGrantChange={onEquityTotalGrantChange}
+        equityVestingSchedule={equityVestingSchedule}
+        onEquityVestingScheduleChange={onEquityVestingScheduleChange}
+        defaultEquityMode={defaultEquityMode}
         onEquityVestingPercentChange={v => {
           setEquityVestingPercentInternal(v);
           onEquityVestingPercentChange?.(v);

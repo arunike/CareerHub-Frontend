@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, DatePicker, Empty, Form, Input, Modal, Select, Tag, message } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, DatePicker, Empty, Form, Input, Modal, Select, Tag, Tooltip, message } from 'antd';
+import { BellOutlined, CheckCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Task, WeeklyReview } from '../../types';
 import { createTask, deleteTask, getTasks, getWeeklyReview, reorderTasks, updateTask } from '../../api';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
+import { parseSmartReminder } from '../../utils/smartReminder';
 
 type TaskStatus = Task['status'];
 const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
@@ -38,6 +39,13 @@ const Tasks: React.FC = () => {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [weeklyReview, setWeeklyReview] = useState<WeeklyReview | null>(null);
   const [weeklyReviewLoading, setWeeklyReviewLoading] = useState(true);
+  const [smartReminderText, setSmartReminderText] = useState('');
+  const [smartReminderSaving, setSmartReminderSaving] = useState(false);
+
+  const smartReminderDraft = useMemo(
+    () => parseSmartReminder(smartReminderText),
+    [smartReminderText]
+  );
 
   const fetchTasks = async () => {
     try {
@@ -236,6 +244,36 @@ const Tasks: React.FC = () => {
     }
   };
 
+  const handleCreateSmartReminder = async (sourceText = smartReminderText) => {
+    const draft = parseSmartReminder(sourceText);
+    if (!draft) {
+      messageApi.warning('Try a reminder with a date, like "follow up after 7 days" or "offer deadline in 3 days".');
+      return;
+    }
+
+    try {
+      setSmartReminderSaving(true);
+      const nextPosition = groupedTasks.TODO.length;
+      await createTask({
+        title: draft.title,
+        description: `Smart reminder created from: "${sourceText.trim()}"`,
+        status: 'TODO',
+        priority: draft.priority,
+        due_date: draft.dueDate.format('YYYY-MM-DD'),
+        position: nextPosition,
+      });
+      setSmartReminderText('');
+      messageApi.success(`Reminder set for ${draft.dueDate.format('MMM D')}`);
+      fetchTasks();
+      notifyTasksUpdated();
+    } catch (error) {
+      messageApi.error('Failed to create smart reminder');
+      console.error(error);
+    } finally {
+      setSmartReminderSaving(false);
+    }
+  };
+
   const handleDropStatus = async (targetStatus: TaskStatus) => {
     if (!draggingId) return;
     const dragged = tasks.find((task) => task.id === draggingId);
@@ -302,6 +340,68 @@ const Tasks: React.FC = () => {
         primaryActionLabel="Add Action Item"
         primaryActionIcon={<PlusOutlined />}
       />
+
+      <Card className="overflow-hidden border-indigo-100 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div className="flex items-start gap-3 lg:w-[280px]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <BellOutlined />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-slate-900">Smart reminders</div>
+              <div className="text-xs text-slate-500">Type a reminder in natural language.</div>
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <Input
+              size="large"
+              value={smartReminderText}
+              onChange={(event) => setSmartReminderText(event.target.value)}
+              onPressEnter={() => handleCreateSmartReminder()}
+              placeholder='e.g. Follow up after 7 days'
+              disabled={smartReminderSaving}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              {smartReminderDraft ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+                  <CheckCircleOutlined />
+                  {smartReminderDraft.dueDate.format('MMM D, YYYY')} · {smartReminderDraft.priority}
+                </span>
+              ) : (
+                <span className="text-slate-400">Understands tomorrow, after 7 days, in 3 days, next Friday.</span>
+              )}
+              {[
+                'Follow up after 7 days',
+                'Prepare for interview tomorrow',
+                'Offer deadline in 3 days',
+              ].map((example) => (
+                <Tooltip key={example} title="Use example">
+                  <button
+                    type="button"
+                    onClick={() => setSmartReminderText(example)}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                  >
+                    {example}
+                  </button>
+                </Tooltip>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            loading={smartReminderSaving}
+            disabled={!smartReminderText.trim()}
+            onClick={() => handleCreateSmartReminder()}
+            className="lg:self-start"
+          >
+            Set Reminder
+          </Button>
+        </div>
+      </Card>
 
       <div>
         <Card

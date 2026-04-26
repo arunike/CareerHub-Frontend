@@ -150,6 +150,8 @@ const ScenarioOfferModal = ({
                 onEquityTotalGrantChange={(value) => setNewScenarioField('equity_total_grant', value)}
                 equityVestingPercent={Number(newScenario.equity_vesting_percent ?? 25)}
                 onEquityVestingPercentChange={(value) => setNewScenarioField('equity_vesting_percent', value)}
+                equityVestingSchedule={newScenario.equity_vesting_schedule}
+                onEquityVestingScheduleChange={(value) => setNewScenarioField('equity_vesting_schedule', value)}
                 defaultEquityMode={Number(newScenario.equity_total_grant ?? 0) > 0 ? 'total' : 'annual'}
                 signOn={Number(newScenario.sign_on) || 0}
                 onSignOnChange={(value) => setNewScenarioField('sign_on', value)}

@@ -32,6 +32,7 @@ import {
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
 import type { Dayjs } from 'dayjs';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { usaCities } from 'typed-usa-states';
 import {
   getApplications,
@@ -39,11 +40,13 @@ import {
   updateApplication,
   deleteApplication,
   importApplications,
+  extractJobBoardPosting,
   deleteAllApplications,
   exportApplications,
   getDocuments,
   patchDocument,
 } from '../../api';
+import type { JobBoardImportResult } from '../../api';
 import { getUserSettings } from '../../api/availability';
 import type { Document, EmploymentType } from '../../types';
 import type { CareerApplication } from '../../types/application';
@@ -81,8 +84,11 @@ type ApplicationFormValues = {
 };
 
 const Applications = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
+  const [jobImportForm] = Form.useForm();
 
   // Data State
   const [applications, setApplications] = useState<CareerApplication[]>([]);
@@ -112,6 +118,11 @@ const Applications = () => {
   // View State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isJobImportModalOpen, setIsJobImportModalOpen] = useState(false);
+  const [jobImportUrl, setJobImportUrl] = useState('');
+  const [jobImportPreview, setJobImportPreview] = useState<JobBoardImportResult | null>(null);
+  const [jobImportLoading, setJobImportLoading] = useState(false);
+  const [jobImportSaving, setJobImportSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [coverLetterApp, setCoverLetterApp] = useState<CareerApplication | null>(null);
   const [timelineApp, setTimelineApp] = useState<CareerApplication | null>(null);
@@ -132,6 +143,10 @@ const Applications = () => {
     }
   );
   const officeLocationValue = Form.useWatch('office_location', form) || '';
+  const jobImportBookmarklet = useMemo(() => {
+    const target = `${window.location.origin}/applications?jobUrl=`;
+    return `javascript:(()=>{window.open(${JSON.stringify(target)}+encodeURIComponent(location.href),'_blank','noopener');})();`;
+  }, []);
   const allUsCityOptions = useMemo(
     () =>
       Array.from(
@@ -201,6 +216,15 @@ const Applications = () => {
       if (stages && stages.length > 0) setAppStages(stages);
     }).catch(() => {});
   }, [fetchData]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const jobUrl = params.get('jobUrl');
+    if (!jobUrl) return;
+    setJobImportUrl(jobUrl);
+    setIsJobImportModalOpen(true);
+    navigate('/applications', { replace: true });
+  }, [location.search, navigate]);
 
   const handleExportWrapper = async (format: string) => {
     const response = await exportApplications(format);
@@ -351,6 +375,79 @@ const Applications = () => {
       linked_document_ids: [],
     });
     setIsAddModalOpen(true);
+  };
+
+  const closeJobImportModal = () => {
+    setIsJobImportModalOpen(false);
+    setJobImportUrl('');
+    setJobImportPreview(null);
+    jobImportForm.resetFields();
+  };
+
+  const handleExtractJobPosting = async () => {
+    if (!jobImportUrl.trim()) {
+      messageApi.warning('Paste a public HTTPS job posting URL first');
+      return;
+    }
+
+    try {
+      setJobImportLoading(true);
+      const response = await extractJobBoardPosting(jobImportUrl.trim());
+      setJobImportPreview(response.data);
+      jobImportForm.setFieldsValue({
+        company: response.data.company,
+        role_title: response.data.role_title,
+        office_location: response.data.location,
+        job_description: response.data.job_description,
+      });
+      messageApi.success('Job details extracted');
+    } catch (error: any) {
+      messageApi.error(error?.response?.data?.error || 'Failed to extract this job posting');
+      console.error(error);
+    } finally {
+      setJobImportLoading(false);
+    }
+  };
+
+  const handleCreateFromJobImport = async () => {
+    if (!jobImportPreview) return;
+
+    try {
+      const values = await jobImportForm.validateFields();
+      setJobImportSaving(true);
+      await createApplication({
+        company_name: values.company,
+        role_title: values.role_title,
+        status: 'APPLIED',
+        employment_type: 'full_time',
+        job_link: jobImportPreview.source_url,
+        office_location: values.office_location || '',
+        location: values.office_location || '',
+        notes: values.job_description
+          ? `Job description imported from ${jobImportPreview.source_url}\n\n${values.job_description}`
+          : '',
+        date_applied: dayjs().format('YYYY-MM-DD'),
+      });
+      messageApi.success('Application imported');
+      closeJobImportModal();
+      fetchData();
+    } catch (error: any) {
+      if (error?.errorFields) return;
+      messageApi.error(error?.response?.data?.error || 'Failed to create imported application');
+      console.error(error);
+    } finally {
+      setJobImportSaving(false);
+    }
+  };
+
+  const copyJobImportBookmarklet = async () => {
+    try {
+      await navigator.clipboard.writeText(jobImportBookmarklet);
+      messageApi.success('Bookmarklet copied');
+    } catch (error) {
+      messageApi.error('Failed to copy bookmarklet');
+      console.error(error);
+    }
   };
 
   const openEditModal = (app: CareerApplication) => {
@@ -563,6 +660,11 @@ const Applications = () => {
           selectedYear={selectedYear}
           onYearChange={handleYearChange}
           availableYears={availableYears}
+          extraActions={
+            <Button className="toolbar-btn" size="large" icon={<GlobalOutlined />} onClick={() => setIsJobImportModalOpen(true)}>
+              Import URL
+            </Button>
+          }
           onDeleteAll={handleDeleteAll}
           deleteAllConfirmTitle="Delete All Applications?"
           deleteAllConfirmDescription="This will delete all unlocked applications. This cannot be undone."
@@ -771,6 +873,107 @@ const Applications = () => {
         onClose={() => setTimelineApp(null)}
         appStages={appStages}
       />
+
+      <Modal
+        title="Import from Job URL"
+        open={isJobImportModalOpen}
+        onCancel={closeJobImportModal}
+        width={760}
+        footer={[
+          <Button key="cancel" onClick={closeJobImportModal}>
+            Cancel
+          </Button>,
+          <Button
+            key="extract"
+            icon={<GlobalOutlined />}
+            loading={jobImportLoading}
+            onClick={handleExtractJobPosting}
+          >
+            Extract
+          </Button>,
+          <Button
+            key="create"
+            type="primary"
+            disabled={!jobImportPreview}
+            loading={jobImportSaving}
+            onClick={handleCreateFromJobImport}
+          >
+            Create Application
+          </Button>,
+        ]}
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Paste a supported job posting URL</div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Uses your saved AI provider when available, then falls back to the built-in parser. Extracted fields stay editable.
+                </div>
+              </div>
+              <Button size="small" onClick={copyJobImportBookmarklet}>
+                Copy Bookmarklet
+              </Button>
+            </div>
+          </div>
+
+          <Input
+            size="large"
+            prefix={<GlobalOutlined className="text-slate-400" />}
+            placeholder="https://company.wd1.myworkdayjobs.com/..."
+            value={jobImportUrl}
+            onChange={(event) => setJobImportUrl(event.target.value)}
+            onPressEnter={handleExtractJobPosting}
+          />
+
+          {jobImportPreview && (
+            <Form form={jobImportForm} layout="vertical">
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item name="company" label="Company" rules={[{ required: true, message: 'Company is required' }]}>
+                    <Input />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="role_title" label="Role Title" rules={[{ required: true, message: 'Role title is required' }]}>
+                    <Input />
+                  </Form.Item>
+                </Col>
+                <Col span={24}>
+                  <Form.Item name="office_location" label="Location">
+                    <Input placeholder="Remote, San Francisco, CA, ..." />
+                  </Form.Item>
+                </Col>
+                <Col span={24}>
+                  <Form.Item name="job_description" label="Job Description">
+                    <Input.TextArea rows={8} />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                <div>Source: {jobImportPreview.source_host}</div>
+                <div
+                  className={
+                    jobImportPreview.ai_status === 'success'
+                      ? 'mt-1 font-medium text-emerald-700'
+                      : jobImportPreview.ai_status === 'failed'
+                        ? 'mt-1 font-medium text-rose-700'
+                        : 'mt-1 font-medium text-amber-700'
+                  }
+                >
+                  AI status:{' '}
+                  {jobImportPreview.ai_status === 'success'
+                    ? 'Success'
+                    : jobImportPreview.ai_status === 'failed'
+                      ? 'Failed'
+                      : 'Not configured'}{' '}
+                  · {jobImportPreview.ai_message || 'Used the built-in parser.'}
+                </div>
+              </div>
+            </Form>
+          )}
+        </div>
+      </Modal>
 
       {/* Import Modal */}
       <Modal

@@ -100,6 +100,12 @@ const EditOfferModal = ({
               onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
               equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}
               onEquityVestingPercentChange={(value) => setEditingOfferField('equity_vesting_percent', value)}
+              equityVestingSchedule={
+                Array.isArray(editingOffer.equity_vesting_schedule)
+                  ? (editingOffer.equity_vesting_schedule as number[])
+                  : undefined
+              }
+              onEquityVestingScheduleChange={(value) => setEditingOfferField('equity_vesting_schedule', value)}
               defaultEquityMode={Number(editingOffer.equity_total_grant ?? 0) > 0 ? 'total' : 'annual'}
               signOn={Number(editingOffer.sign_on) || 0}
               onSignOnChange={(value) => setEditingOfferField('sign_on', value)}

@@ -1,6 +1,18 @@
 import type { ApplicationTimelineEntry, Task, Experience, WeeklyReview } from '../types';
 import api from './client';
 
+export interface JobBoardImportResult {
+  source_url: string;
+  source_host: string;
+  company: string;
+  role_title: string;
+  location: string;
+  job_description: string;
+  extraction_method?: 'ai' | 'rules';
+  ai_status?: 'success' | 'not_configured' | 'failed';
+  ai_message?: string;
+}
+
 const EXPERIENCE_DECIMAL_FIELDS = [
   'hourly_rate',
   'hours_per_day',
@@ -70,6 +82,8 @@ export const updateApplicationTimelineEntry = (id: number, data: Partial<Applica
   api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const importApplications = (formData: FormData) =>
   api.post('/career/import/', formData, { headers: { 'Content-Type': undefined } });
+export const extractJobBoardPosting = (url: string) =>
+  api.post<JobBoardImportResult>('/career/job-import/', { url });
 export const exportApplications = (format: string = 'csv') =>
   api.get('/career/applications/export/', { params: { fmt: format }, responseType: 'blob' });
 

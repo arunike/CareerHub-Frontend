@@ -36,6 +36,7 @@ import AddCurrentJobModal from './AddCurrentJobModal';
 import EditOfferModal from './EditOfferModal';
 import NegotiationAdvisorModal from './NegotiationAdvisorModal';
 import RaiseHistoryModal from './RaiseHistoryModal';
+import CompensationSimulator from './CompensationSimulator';
 import type { RaiseEntry } from '../../types';
 import {
   type ApplicationLike as Application,
@@ -73,6 +74,7 @@ const defaultScenarioDraft = (): SimulatedOffer => ({
   equity: 20000,
   equity_total_grant: 80000,
   equity_vesting_percent: 25,
+  equity_vesting_schedule: [25, 25, 25, 25],
   sign_on: 10000,
   benefits_value: 12000,
   work_mode: 'HYBRID',
@@ -555,6 +557,14 @@ const OfferComparison = () => {
     ? simulatedOffers.filter((o) => visibleOfferIds.includes(`sim-${o.id}`))
     : simulatedOffers;
 
+  const displayScenarioRows = useMemo(() => {
+    if (visibleOfferIds.length === 0) return scenarioRows;
+    return scenarioRows.filter((row) => {
+      if (row.kind === 'real') return visibleOfferIds.includes(`real-${row.offer.id}`);
+      return visibleOfferIds.includes(`sim-${row.offer.id}`);
+    });
+  }, [scenarioRows, visibleOfferIds]);
+
   // Prepare Chart Data
   const chartData = [
     ...displayOffers.map((offer) => {
@@ -701,7 +711,7 @@ const OfferComparison = () => {
         applicationsById={applicationsById}
         adjustedByOfferId={adjustedByOfferId}
         simulatedOffers={displaySimulatedOffers}
-        scenarioRows={scenarioRows}
+        scenarioRows={displayScenarioRows}
         maritalStatus={maritalStatus}
         setMaritalStatus={setMaritalStatus}
         maritalStatusOptions={maritalStatusOptions}
@@ -752,6 +762,8 @@ const OfferComparison = () => {
         onRaiseHistoryClick={setRaiseHistoryOffer}
         onDeleteClick={handleDeleteOffer}
       />
+
+      <CompensationSimulator scenarioRows={displayScenarioRows} />
 
       <AddCurrentJobModal
         isOpen={isAddJobOpen}
