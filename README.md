@@ -39,7 +39,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Year filter with persisted state
 - Bulk select → bulk lock / unlock / delete
 - Company timeline modal for Applied → OA → phone → onsite → offer/reject stages with per-stage notes and document attachments
-- Import from CSV/XLSX; export to CSV, JSON, XLSX
+- Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
 - Lock/unlock individual applications
 - **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
 
@@ -48,6 +48,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - **Interactive Bar Chart**: Recharts stacked chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
 - **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
 - **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled
+- **Compensation Simulator**: After-tax monthly take-home view with rent, commute, food budget, PTO value, and equity vesting scenarios for real offers and custom scenarios
 - **⚡ Negotiation Advisor**: per-row "Negotiate" button (non-current offers) opens `NegotiationAdvisorModal`:
   - Centered offer snapshot header (Base, Bonus, Equity/yr, Sign-On, PTO)
   - **Suggested Counter-Ask** — concrete numbers (base, sign-on, equity, PTO) with rationale
@@ -62,7 +63,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
-> AI features are configured in `Settings` → `AI Provider`. The endpoint/model are tied to your account, and the API key is stored encrypted on the backend.
+> AI features are configured in `Settings` → `AI Provider`. The provider adapter, endpoint, and model are tied to your account, and the API key is stored encrypted on the backend.
 
 Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsible section:
 
@@ -99,7 +100,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### 📅 Availability & Events
 
-- **Availability** (`/`): Weekly calendar with availability text generation, federal holiday integration, event badges, date navigation, public booking card
+- **Availability** (`/`): Weekly calendar with availability text generation, federal holiday integration, event badges, date navigation, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, and **instant auto-prefill** of host information from the user profile.
 - **Events** (`/events`): Create/edit/delete interview events; link to applications; timezone display; event type tags
 - **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
 - **⚡ Conflict Radar**: `NotificationBell` refreshes unresolved conflicts, upcoming events, and task deadlines through the standard API flow, which keeps the UI compatible with local dev, Docker, and Vercel deployments
@@ -116,21 +117,28 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - Kanban-style task board with TODO / IN_PROGRESS / DONE columns
 - Drag-and-drop reordering within and between columns
 - Priority levels (Low, Medium, High) and due dates
+- **Smart reminders** — natural-language composer creates task reminders such as "Follow up after 7 days", "Prepare for interview tomorrow", and "Offer deadline in 3 days"
 - **Weekly Review panel** — sidebar card showing current week's application activity, interviews done, and next actions; auto-refreshes on tab focus and task updates
 
 ### ⚙️ Settings (`/settings`)
 
 - **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
-- **AI Provider**: configure an OpenAI-compatible endpoint, model, and personal API key for cover letters, JD matching, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
+- **AI Provider**: configure Claude, Gemini, OpenAI, or OpenRouter for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows per day (e.g., 11am–12pm and 2pm–5pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
 - **Data Management**: export all data as ZIP (JSON, CSV, or Excel)
 - **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
 - **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
 - **Holiday Manager Tabs**: define custom tabs (name → auto-generated ID) that appear as tabs in the Holiday Manager; per-item lock; section-level lock; saved with Settings
+- **Profile & Identity** (`/profile`): Standalone management page for your professional identity:
+  - **Visual Identity**: Gradient-header profile card with avatar management (upload/delete via Vercel Blob).
+  - **Account Security**: Secure password change flow with automatic logout for session protection.
+  - **Personal Details**: Update first name, last name, and display name (syncs to public booking links).
+  - **Privacy Status**: Visual badges for account type and encryption status.
 
-### 🔐 Authentication
+### 🔐 Authentication & Security
 
 - **Bearer token bootstrapping**: the app restores auth state from stored access/refresh tokens and automatically refreshes expired access tokens before retrying protected API calls
+- **Password Safety**: Notice of encrypted storage throughout the login and profile flows; automatic session termination after security updates
 - **Zero-domain-cost deployment support**: works with separate Vercel frontend/backend projects on `*.vercel.app` without depending on shared session cookies
 
 ## 🛠 Tech Stack
@@ -252,6 +260,7 @@ frontend/
 │   │   │   ├── index.tsx            # Offer comparison page
 │   │   │   ├── OfferDetailsTable.tsx
 │   │   │   ├── OfferDecisionScorecard.tsx
+│   │   │   ├── CompensationSimulator.tsx # Monthly take-home, cost, PTO, and equity vesting simulator
 │   │   │   ├── NegotiationAdvisorModal.tsx  # AI negotiation advisor (auto-saves result)
 │   │   │   ├── OfferAdjustmentsPanel.tsx
 │   │   │   ├── EditOfferModal.tsx
@@ -326,16 +335,17 @@ frontend/
 | `/` | Availability | Weekly calendar + availability text generator |
 | `/events` | Events | Interview event management |
 | `/holidays` | Holidays | Federal + custom holiday management with custom tabs |
-| `/applications` | Applications | Application tracker with timeline view and AI cover letter |
+| `/applications` | Applications | Application tracker with timeline view, job URL import, and AI cover letter |
 | `/offers` | Offer Comparison | Offer analysis with weighted decision scorecard and AI negotiation advisor |
 | `/documents` | Documents | Document vault with versioning |
-| `/tasks` | Action Items | Kanban task board |
+| `/tasks` | Action Items | Kanban task board with smart reminder creation |
 | `/experience` | Experience | Work history, team history, schedule phases, internship earnings breakdowns, import/export, and AI JD matcher |
 | `/jd-reports` | JD Reports | Saved AI JD match report history |
 | `/ai-tools?tab=cover-letters` | Cover Letters | Saved AI cover letter history |
 | `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history |
 | `/analytics` | Analytics | Custom widget dashboard |
 | `/settings` | Settings | User preferences with layered locking |
+| `/profile` | Profile | Standalone identity and security management page |
 | `/book/:uuid` | Public Booking | Public-facing booking page (no auth) |
 | `/jd-report/:id` | JD Report Detail | Full JD match report with PDF export |
 | `/negotiation-result/:id` | Negotiation Detail | Full negotiation advisory report |
