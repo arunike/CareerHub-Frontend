@@ -24,7 +24,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
 - 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, skill refinement, and custom widgets powered by your own provider config with encrypted backend key storage
 - 🔐 **JWT Auth Flow**: Login, refresh, and protected-route bootstrapping now use Bearer tokens so the frontend can talk to a separate `*.vercel.app` backend without shared cookies
-- 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current"
+- 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current" and weighted decision scoring
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
 - 📥 **Import/Export**: Bulk upload via CSV/XLSX plus full-fidelity Experience import/export in CSV, JSON, or XLSX formats (JSON recommended for logos + linked snapshots)
@@ -38,6 +38,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Filter by status and search by company/role
 - Year filter with persisted state
 - Bulk select → bulk lock / unlock / delete
+- Company timeline modal for Applied → OA → phone → onsite → offer/reject stages with per-stage notes and document attachments
 - Import from CSV/XLSX; export to CSV, JSON, XLSX
 - Lock/unlock individual applications
 - **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
@@ -46,6 +47,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 - **Interactive Bar Chart**: Recharts stacked chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
 - **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
+- **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled
 - **⚡ Negotiation Advisor**: per-row "Negotiate" button (non-current offers) opens `NegotiationAdvisorModal`:
   - Centered offer snapshot header (Base, Bonus, Equity/yr, Sign-On, PTO)
   - **Suggested Counter-Ask** — concrete numbers (base, sign-on, equity, PTO) with rationale
@@ -55,6 +57,7 @@ The **Frontend** is a React-based single-page application that provides an intui
   - Regenerate button; auto-saves result to localStorage with "Saved" indicator + "View Full Report" link
 - **Adjustments Panel**: Tax/COL/rent/commute/food-perk adjustments; per-offer overrides; persisted locally
 - **Edit Offer Modal**: Shared form for real and scenario offers (bonus $/% toggle, equity total+vesting mode, benefit items)
+- **Advanced Decision Signals**: Collapsible optional inputs for visa sponsorship, Day 1 GC, growth, WLB, brand, and manager/team fit
 - **Add Current Job**: Quick baseline creation
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
@@ -64,7 +67,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsible section:
 
 - **JD Reports** (`/jd-reports`): Card list of all past JD evaluations with score badge, skill tags, lock/delete/rename. Uses `RowActions` + `BulkActionHeader` + `PageActionToolbar`.
-- **JD Report Detail** (`/jd-report/:id`): Full standalone page with progress ring, strengths/gaps columns, recommendations, PDF download. Top bar uses `BulkActionHeader`.
+- **JD Report Detail** (`/jd-report/:id`): Full standalone page with progress ring, strengths/gaps columns, resume evidence gaps, supported JD keywords, bullet rewrite suggestions, best matching experience evidence, recommendations, and PDF download. Top bar uses `BulkActionHeader`.
 - **Cover Letters** (`/ai-tools?tab=cover-letters`): Auto-saved whenever a cover letter is generated from the Applications page. Card list with view modal (serif font, Copy to Clipboard), rename, lock/delete, bulk actions, CSV/JSON export.
 - **Negotiation Results** (`/ai-tools?tab=negotiation-results`): Auto-saved whenever the Negotiation Advisor runs. Card list showing offer snapshot chips, advice summary counts, lock/delete, bulk actions, CSV/JSON export, and "View Full Report" link.
 - **Negotiation Result Detail** (`/negotiation-result/:id`): Full standalone page mirroring `JDReport` layout — offer snapshot, Suggested Counter-Ask panel, Leverage Points, Talking Points & Scripts, Watch Out For. Top bar uses `BulkActionHeader`.
@@ -82,7 +85,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - Full CRUD for work experience entries (title, company, dates, description, skills)
 - Skills auto-extracted by backend fallback logic, then AI-refined after save when an API key is configured in Settings
 - Inline skill tag editing
-- JD Matcher modal accessible from this page
+- JD Matcher modal accessible from this page; reports now include fit scoring plus resume tailoring suggestions
 - **Employment type badges** — dynamically driven by user-configured types from Settings (10 color options); first type (Full-time) hidden by default
 - **Exact duration display** — all date ranges and tenure stats show `(N days)` alongside human-readable duration
 - **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; persisted through the backend upload API and stored in Vercel Blob on hosted deployments
@@ -241,12 +244,14 @@ frontend/
 │   ├── pages/
 │   │   ├── Applications/
 │   │   │   ├── index.tsx            # Application tracker page
+│   │   │   ├── ApplicationTimelineModal.tsx # Per-company stage timeline with notes/docs
 │   │   │   └── CoverLetterModal.tsx # AI cover letter generator (auto-saves)
 │   │   ├── CoverLetters/
 │   │   │   └── index.tsx            # Cover letters management page
 │   │   ├── OfferComparison/
 │   │   │   ├── index.tsx            # Offer comparison page
 │   │   │   ├── OfferDetailsTable.tsx
+│   │   │   ├── OfferDecisionScorecard.tsx
 │   │   │   ├── NegotiationAdvisorModal.tsx  # AI negotiation advisor (auto-saves result)
 │   │   │   ├── OfferAdjustmentsPanel.tsx
 │   │   │   ├── EditOfferModal.tsx
@@ -321,8 +326,8 @@ frontend/
 | `/` | Availability | Weekly calendar + availability text generator |
 | `/events` | Events | Interview event management |
 | `/holidays` | Holidays | Federal + custom holiday management with custom tabs |
-| `/applications` | Applications | Application tracker with AI cover letter |
-| `/offers` | Offer Comparison | Offer analysis with AI negotiation advisor |
+| `/applications` | Applications | Application tracker with timeline view and AI cover letter |
+| `/offers` | Offer Comparison | Offer analysis with weighted decision scorecard and AI negotiation advisor |
 | `/documents` | Documents | Document vault with versioning |
 | `/tasks` | Action Items | Kanban task board |
 | `/experience` | Experience | Work history, team history, schedule phases, internship earnings breakdowns, import/export, and AI JD matcher |
