@@ -14,6 +14,7 @@ type LocationTaxSectionProps = {
   onEditableTaxRatesChange?: (next: EditableTaxRates) => void;
   editableMonthlyRent?: number;
   onEditableMonthlyRentChange?: (value: number) => void;
+  workMode?: 'REMOTE' | 'HYBRID' | 'ONSITE';
 };
 
 const LocationTaxSection = ({
@@ -28,6 +29,7 @@ const LocationTaxSection = ({
   onEditableTaxRatesChange,
   editableMonthlyRent,
   onEditableMonthlyRentChange,
+  workMode,
 }: LocationTaxSectionProps) => {
   const buildLocationDropdownOptions = useMemo(() => (inputValue: string) => {
     const locationQuery = inputValue.trim().toLowerCase();
@@ -71,7 +73,7 @@ const LocationTaxSection = ({
 
   return (
     <>
-      {onOfficeLocationChange && (
+      {onOfficeLocationChange && workMode !== 'REMOTE' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Office Location</label>
           <AutoComplete
