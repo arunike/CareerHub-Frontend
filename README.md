@@ -125,15 +125,14 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
 - **AI Provider**: configure Claude, Gemini, OpenAI, or OpenRouter for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows per day (e.g., 11am–12pm and 2pm–5pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
-- **Data Management**: export all data as ZIP (JSON, CSV, or Excel)
 - **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
 - **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
 - **Holiday Manager Tabs**: define custom tabs (name → auto-generated ID) that appear as tabs in the Holiday Manager; per-item lock; section-level lock; saved with Settings
 - **Profile & Identity** (`/profile`): Standalone management page for your professional identity:
-  - **Visual Identity**: Gradient-header profile card with avatar management (upload/delete via Vercel Blob).
+  - **Visual Identity**: Shared identity avatar with profile photo management (upload/delete via Vercel Blob), synced with sidebar and public booking defaults.
   - **Account Security**: Secure password change flow with automatic logout for session protection.
   - **Personal Details**: Update first name, last name, and display name (syncs to public booking links).
-  - **Privacy Status**: Visual badges for account type and encryption status.
+  - **Privacy & Export Center**: Download account exports, create browser-encrypted local exports, restore backups, and schedule account deletion with typed confirmation plus a 14-day login-to-cancel grace period.
 
 ### 🔐 Authentication & Security
 
