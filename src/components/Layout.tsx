@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider } from 'antd';
+import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider, Tooltip } from 'antd';
 import {
   DashboardOutlined,
   CalendarOutlined,
@@ -10,6 +10,8 @@ import {
   SolutionOutlined,
   DollarOutlined,
   MenuOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   CloseOutlined,
   FileTextOutlined,
   CheckSquareOutlined,
@@ -19,16 +21,22 @@ import {
 } from '@ant-design/icons';
 import IdentityAvatar from './IdentityAvatar';
 import NotificationBell from './NotificationBell';
+import logo from '../assets/logo.png';
 import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
 import { useAuth } from '../context/AuthContext';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'careerhub.sidebar.collapsed';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const screens = useBreakpoint();
   const [collapsed, setCollapsed] = useState(true);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true';
+  });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -36,6 +44,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const isDesktopSidebarCollapsed = Boolean(screens.lg && desktopCollapsed);
 
   useEffect(() => {
     getUserSettings().then(res => {
@@ -173,6 +182,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const toggleDesktopSidebar = () => {
+    setDesktopCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
+      return next;
+    });
+  };
+
   const activeKey = location.pathname + location.search;
   const intelligencePaths = ['/jd-reports', '/ai-tools', '/cover-letters'];
   const isIntelligence = intelligencePaths.some((p) => location.pathname.startsWith(p));
@@ -183,9 +200,29 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const SidebarContent = (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
-      <div className="px-6 py-5 flex items-center justify-between shrink-0 border-b border-gray-50">
-        <img src={logoWithText} alt="CareerHub" className="h-24" />
-        {!screens.lg && (
+      <div
+        className={`shrink-0 border-b border-gray-50 ${
+          isDesktopSidebarCollapsed
+            ? 'h-[116px] px-3 py-4 flex flex-col items-center justify-center gap-3'
+            : 'px-6 py-5 flex items-center justify-between'
+        }`}
+      >
+        <img
+          src={isDesktopSidebarCollapsed ? logo : logoWithText}
+          alt="CareerHub"
+          className={isDesktopSidebarCollapsed ? 'h-11 w-11 object-contain' : 'h-24'}
+        />
+        {screens.lg ? (
+          <Tooltip title={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right">
+            <Button
+              type="text"
+              icon={isDesktopSidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={toggleDesktopSidebar}
+              aria-label={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="!h-9 !w-9 !rounded-xl !text-slate-400 hover:!text-indigo-600 hover:!bg-indigo-50"
+            />
+          </Tooltip>
+        ) : (
           <Button
             type="text"
             icon={<CloseOutlined />}
@@ -203,6 +240,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 itemHeight: 48,
                 itemMarginInline: 16,
                 itemMarginBlock: 4,
+                collapsedWidth: 64,
                 collapsedIconSize: 20,
                 iconSize: 20,
                 iconMarginInlineEnd: 16,
@@ -215,6 +253,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             mode="inline"
             selectedKeys={[selectedKey]}
             defaultOpenKeys={isIntelligence ? ['intelligence'] : []}
+            inlineCollapsed={isDesktopSidebarCollapsed}
             items={visibleMenuItems}
             onClick={handleMenuClick}
             style={{ borderRight: 0 }}
@@ -224,43 +263,79 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="p-4 border-t border-gray-100">
-        <div className="flex items-center justify-between px-2 mb-2">
-          <span className="text-xs text-gray-400 font-medium">Notifications</span>
-          <NotificationBell placement="top-left" />
-        </div>
-        <div 
-          onClick={() => navigate('/profile')}
-          className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Account</p>
-              <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
-                {displayName || 'CareerHub User'}
-              </p>
-            </div>
+        {isDesktopSidebarCollapsed ? (
+          <div className="flex flex-col items-center gap-3">
+            <NotificationBell placement="top-left" />
+            <Tooltip title={displayName || user?.full_name || 'Profile'} placement="right">
+              <button
+                type="button"
+                onClick={() => navigate('/profile')}
+                aria-label="Open profile"
+                className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-500/5 transition-all"
+              >
+                <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
+              </button>
+            </Tooltip>
+            <Tooltip title="Sign out" placement="right">
+              <Button
+                type="text"
+                icon={<LogoutOutlined />}
+                loading={isLoggingOut}
+                onClick={async () => {
+                  setIsLoggingOut(true);
+                  try {
+                    await logout();
+                    navigate('/login', { replace: true });
+                  } finally {
+                    setIsLoggingOut(false);
+                  }
+                }}
+                aria-label="Sign out"
+                className="!h-10 !w-10 !rounded-xl !text-slate-400 hover:!text-rose-500 hover:!bg-rose-50"
+              />
+            </Tooltip>
           </div>
-          <Button
-            type="text"
-            icon={<LogoutOutlined />}
-            loading={isLoggingOut}
-            onClick={async (e) => {
-              e.stopPropagation();
-              setIsLoggingOut(true);
-              try {
-                await logout();
-                navigate('/login', { replace: true });
-              } finally {
-                setIsLoggingOut(false);
-              }
-            }}
-            className="w-full !flex !items-center !justify-center !h-9 !rounded-xl !bg-white !border !border-slate-100 !text-slate-400 hover:!text-rose-500 hover:!border-rose-100 hover:!bg-rose-50/30 !text-xs font-bold transition-all"
-          >
-            Sign Out
-          </Button>
-        </div>
-        <p className="text-[10px] text-gray-300 text-center mt-2">© 2026 CareerHub</p>
+        ) : (
+          <>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <span className="text-xs text-gray-400 font-medium">Notifications</span>
+              <NotificationBell placement="top-left" />
+            </div>
+            <div 
+              onClick={() => navigate('/profile')}
+              className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Account</p>
+                  <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
+                    {displayName || 'CareerHub User'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="text"
+                icon={<LogoutOutlined />}
+                loading={isLoggingOut}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setIsLoggingOut(true);
+                  try {
+                    await logout();
+                    navigate('/login', { replace: true });
+                  } finally {
+                    setIsLoggingOut(false);
+                  }
+                }}
+                className="w-full !flex !items-center !justify-center !h-9 !rounded-xl !bg-white !border !border-slate-100 !text-slate-400 hover:!text-rose-500 hover:!border-rose-100 hover:!bg-rose-50/30 !text-xs font-bold transition-all"
+              >
+                Sign Out
+              </Button>
+            </div>
+            <p className="text-[10px] text-gray-300 text-center mt-2">© 2026 CareerHub</p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -272,9 +347,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         width={260}
         theme="light"
         collapsible
-        collapsed={screens.lg ? false : collapsed}
+        collapsed={screens.lg ? desktopCollapsed : collapsed}
         trigger={null}
-        collapsedWidth={0}
+        collapsedWidth={screens.lg ? 76 : 0}
         style={{
           height: '100vh',
           position: screens.lg ? 'sticky' : 'fixed',

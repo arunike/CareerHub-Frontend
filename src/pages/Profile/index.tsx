@@ -3,6 +3,9 @@ import {
   getUserSettings,
   updateUserSettings,
   changePassword,
+  deleteAccount,
+  exportAccountData,
+  restoreAccountBackup,
 } from '../../api';
 import type { UserSettings } from '../../types';
 import {
@@ -15,8 +18,12 @@ import {
   IdcardOutlined,
   SafetyOutlined,
   CameraOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  FileProtectOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
-import { Button, message, Tooltip } from 'antd';
+import { Button, message, Modal, Tooltip } from 'antd';
 import IdentityAvatar from '../../components/IdentityAvatar';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { useAuth } from '../../context/AuthContext';
@@ -31,6 +38,113 @@ const getErrorMessage = (error: unknown, fallback: string) => {
     return (error as { response: { data: { error: string } } }).response.data.error;
   }
   return fallback;
+};
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+const bytesToBase64 = (bytes: Uint8Array) => {
+  let binary = '';
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return window.btoa(binary);
+};
+
+const base64ToBytes = (value: string) => Uint8Array.from(window.atob(value), (char) => char.charCodeAt(0));
+
+const formatDeletionDate = (value?: string | null) => {
+  if (!value) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+};
+
+const encryptExport = async (plainText: string, passphrase: string) => {
+  const encoder = new TextEncoder();
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const keyMaterial = await window.crypto.subtle.importKey(
+    'raw',
+    encoder.encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  );
+  const key = await window.crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: 210000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt'],
+  );
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encoder.encode(plainText),
+  );
+
+  return JSON.stringify(
+    {
+      schema: 'careerhub.encrypted_export.v1',
+      algorithm: 'AES-GCM',
+      kdf: 'PBKDF2-SHA256',
+      iterations: 210000,
+      salt: bytesToBase64(salt),
+      iv: bytesToBase64(iv),
+      ciphertext: bytesToBase64(new Uint8Array(encrypted)),
+    },
+    null,
+    2,
+  );
+};
+
+const decryptExport = async (payload: {
+  iterations: number;
+  salt: string;
+  iv: string;
+  ciphertext: string;
+}, passphrase: string) => {
+  const encoder = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    'raw',
+    encoder.encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  );
+  const key = await window.crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: base64ToBytes(payload.salt),
+      iterations: payload.iterations,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt'],
+  );
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: base64ToBytes(payload.iv) },
+    key,
+    base64ToBytes(payload.ciphertext),
+  );
+  return new TextDecoder().decode(decrypted);
 };
 
 const ProfilePage: React.FC = () => {
@@ -49,6 +163,15 @@ const ProfilePage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [encryptedExportPassphrase, setEncryptedExportPassphrase] = useState('');
+  const [restoreMode, setRestoreMode] = useState<'merge' | 'replace'>('merge');
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [restoring, setRestoring] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -119,6 +242,119 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const handlePlainExport = async (format: 'json' | 'zip') => {
+    setExporting(true);
+    try {
+      const resp = await exportAccountData(format);
+      const extension = format === 'zip' ? 'zip' : 'json';
+      downloadBlob(new Blob([resp.data]), `careerhub_account_export_${new Date().toISOString().slice(0, 10)}.${extension}`);
+      messageApi.success('Account export downloaded.');
+    } catch (error: unknown) {
+      messageApi.error(getErrorMessage(error, 'Failed to export account data'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleEncryptedExport = async () => {
+    if (encryptedExportPassphrase.trim().length < 8) {
+      messageApi.warning('Use at least 8 characters for the encryption passphrase.');
+      return;
+    }
+    setExporting(true);
+    try {
+      const resp = await exportAccountData('json');
+      const plainText = await new Blob([resp.data]).text();
+      const encrypted = await encryptExport(plainText, encryptedExportPassphrase);
+      downloadBlob(
+        new Blob([encrypted], { type: 'application/json' }),
+        `careerhub_account_export_encrypted_${new Date().toISOString().slice(0, 10)}.json`,
+      );
+      setEncryptedExportPassphrase('');
+      messageApi.success('Encrypted local export downloaded.');
+    } catch (error: unknown) {
+      messageApi.error(getErrorMessage(error, 'Failed to create encrypted export'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!restoreFile) {
+      messageApi.warning('Choose a CareerHub export file first.');
+      return;
+    }
+    setRestoring(true);
+    try {
+      const formData = new FormData();
+      let uploadFile: Blob = restoreFile;
+      let uploadName = restoreFile.name;
+      if (restoreFile.name.toLowerCase().endsWith('.json')) {
+        const rawText = await restoreFile.text();
+        const maybeEncrypted = JSON.parse(rawText);
+        if (maybeEncrypted.schema === 'careerhub.encrypted_export.v1') {
+          if (!restorePassphrase) {
+            messageApi.warning('Enter the passphrase for this encrypted export.');
+            return;
+          }
+          const plainText = await decryptExport(maybeEncrypted, restorePassphrase);
+          uploadFile = new Blob([plainText], { type: 'application/json' });
+          uploadName = restoreFile.name.replace(/\.json$/i, '.decrypted.json');
+        }
+      }
+      formData.append('file', uploadFile, uploadName);
+      formData.append('mode', restoreMode);
+      const resp = await restoreAccountBackup(formData);
+      setRestoreFile(null);
+      setRestorePassphrase('');
+      messageApi.success(resp.data?.message || 'Backup restored.');
+      fetchSettings();
+    } catch (error: unknown) {
+      messageApi.error(getErrorMessage(error, 'Failed to restore backup'));
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== 'DELETE') {
+      messageApi.warning('Type DELETE to confirm account deletion.');
+      return;
+    }
+    setDeleteModalOpen(false);
+    Modal.confirm({
+      title: 'Schedule account deletion?',
+      content: 'Your account will be scheduled for permanent deletion in 14 days. Sign in again before then to cancel the deletion.',
+      okText: 'Schedule deletion',
+      okButtonProps: { danger: true },
+      cancelText: 'Keep account',
+      onOk: async () => {
+        setDeleting(true);
+        try {
+          const resp = await deleteAccount('DELETE');
+          const scheduledFor = formatDeletionDate(resp.data?.account_deletion_scheduled_for);
+          messageApi.success(
+            scheduledFor
+              ? `Account deletion scheduled for ${scheduledFor}. Sign in before then to cancel.`
+              : 'Account deletion scheduled. Sign in within 14 days to cancel.',
+          );
+          try {
+            await logout();
+          } catch {
+            window.location.href = '/login';
+          }
+        } catch (error: unknown) {
+          messageApi.error(getErrorMessage(error, 'Failed to delete account'));
+        } finally {
+          setDeleting(false);
+        }
+      },
+      onCancel: () => {
+        setDeleteConfirm('');
+      },
+    });
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>;
   if (!settings) return <div className="text-center py-12 text-red-600">Failed to load profile</div>;
 
@@ -126,9 +362,36 @@ const ProfilePage: React.FC = () => {
     firstName || lastName
       ? `${firstName} ${lastName}`.trim()
       : settings.display_name || user?.full_name || 'Update Your Name';
+  const deletionScheduledFor = formatDeletionDate(settings.account_deletion_scheduled_for);
   return (
     <div className="max-w-6xl mx-auto pb-20">
       {contextHolder}
+      <Modal
+        title="Delete account"
+        open={deleteModalOpen}
+        okText="Continue"
+        okButtonProps={{ danger: true, disabled: deleteConfirm !== 'DELETE', loading: deleting }}
+        cancelText="Cancel"
+        onOk={handleDeleteAccount}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setDeleteConfirm('');
+        }}
+      >
+        <div className="space-y-4 pt-2">
+          <p className="text-sm leading-relaxed text-slate-600">
+            This schedules permanent account and server-side data deletion after a 14-day grace period.
+            Sign in again before the deadline to cancel it. Type DELETE to enable the next step.
+          </p>
+          <input
+            type="text"
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            placeholder="Type DELETE"
+            className="h-11 w-full rounded-xl border border-rose-200 bg-white px-3 text-sm font-semibold text-rose-950 focus:outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-400"
+          />
+        </div>
+      </Modal>
       
       <PageActionToolbar
         title="Profile Settings"
@@ -380,24 +643,134 @@ const ProfilePage: React.FC = () => {
             </div>
           </section>
 
-          {/* Delete Account */}
-          <div className="p-6 rounded-[24px] bg-rose-50/30 border border-rose-100 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-center md:text-left">
-              <h4 className="text-sm font-bold text-rose-900">Advanced Account Actions</h4>
-              <p className="text-xs text-rose-700/60 font-medium">To permanently delete your account and all data, please contact support.</p>
+          <section className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden">
+            <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+                <FileProtectOutlined />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Privacy & Export Center</h3>
+                <p className="text-xs font-medium text-slate-400 mt-0.5">Export, restore, or permanently remove account data.</p>
+              </div>
             </div>
-            <a 
-              href="mailto:richiezhouyjz@gmail.com"
-              onClick={() => {
-                // If mailto doesn't open, at least they have it on clipboard
-                navigator.clipboard.writeText('richiezhouyjz@gmail.com');
-                messageApi.success('Support email copied to clipboard!');
-              }}
-              className="font-bold text-xs bg-rose-100/50 hover:bg-rose-100 h-10 px-6 rounded-xl flex items-center justify-center text-rose-600 transition-all hover:text-rose-700 no-underline cursor-pointer"
-            >
-              Contact Support
-            </a>
-          </div>
+
+            <div className="p-8 space-y-6">
+              {deletionScheduledFor && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+                  <div className="flex items-start gap-3">
+                    <SafetyOutlined className="text-lg text-amber-700 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-black text-amber-950">Deletion grace period active</h4>
+                      <p className="text-xs text-amber-800/75 mt-1 leading-relaxed">
+                        This account is scheduled for permanent deletion on {deletionScheduledFor}. Signing in before that date cancels the deletion.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-5">
+                  <div className="flex items-start gap-3">
+                    <DownloadOutlined className="text-lg text-slate-700 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">Account export</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">Download a readable JSON or zipped backup of your CareerHub account.</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <Button loading={exporting} icon={<DownloadOutlined />} onClick={() => handlePlainExport('json')}>
+                      JSON
+                    </Button>
+                    <Button loading={exporting} icon={<DownloadOutlined />} onClick={() => handlePlainExport('zip')}>
+                      ZIP
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-5">
+                  <div className="flex items-start gap-3">
+                    <LockOutlined className="text-lg text-slate-700 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">Encrypted local export</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">Encrypts the export in your browser before the file is saved locally.</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="password"
+                      value={encryptedExportPassphrase}
+                      onChange={(e) => setEncryptedExportPassphrase(e.target.value)}
+                      placeholder="Encryption passphrase"
+                      className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500"
+                    />
+                    <Button loading={exporting} icon={<FileProtectOutlined />} onClick={handleEncryptedExport}>
+                      Encrypt
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="flex items-start gap-3">
+                  <UploadOutlined className="text-lg text-slate-700 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900">Backup restore</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">Restore a CareerHub account export. Merge keeps current records; replace clears current core data first. Encrypted JSON exports need their passphrase.</p>
+                  </div>
+                </div>
+                <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3">
+                  <input
+                    type="file"
+                    accept=".json,.zip,application/json,application/zip"
+                    onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+                    className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-xs file:font-bold file:text-slate-700"
+                  />
+                  <select
+                    value={restoreMode}
+                    onChange={(e) => setRestoreMode(e.target.value as 'merge' | 'replace')}
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"
+                  >
+                    <option value="merge">Merge</option>
+                    <option value="replace">Replace core data</option>
+                  </select>
+                  <Button loading={restoring} icon={<UploadOutlined />} onClick={handleRestore}>
+                    Restore
+                  </Button>
+                </div>
+                <input
+                  type="password"
+                  value={restorePassphrase}
+                  onChange={(e) => setRestorePassphrase(e.target.value)}
+                  placeholder="Passphrase for encrypted JSON restore (optional)"
+                  className="mt-3 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5">
+                <div className="flex items-start gap-3">
+                  <DeleteOutlined className="text-lg text-rose-600 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-black text-rose-950">Delete account</h4>
+                    <p className="text-xs text-rose-700/70 mt-1 leading-relaxed">
+                      Schedule permanent deletion after 14 days. Sign in again before then to cancel.
+                    </p>
+                  </div>
+                  <Button
+                    danger
+                    loading={deleting}
+                    icon={<DeleteOutlined />}
+                    onClick={() => {
+                      setDeleteConfirm('');
+                      setDeleteModalOpen(true);
+                    }}
+                  >
+                    Delete account
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
