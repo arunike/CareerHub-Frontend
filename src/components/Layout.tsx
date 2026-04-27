@@ -16,8 +16,8 @@ import {
   TrophyOutlined,
   RobotOutlined,
   LogoutOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
+import IdentityAvatar from './IdentityAvatar';
 import NotificationBell from './NotificationBell';
 import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
@@ -233,15 +233,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-slate-100 shadow-sm group-hover:border-indigo-50 transition-colors">
-              {profilePic ? (
-                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
-                  <UserOutlined />
-                </div>
-              )}
-            </div>
+            <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Account</p>
               <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
