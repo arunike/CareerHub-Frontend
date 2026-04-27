@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   getUserSettings,
   updateUserSettings,
@@ -17,8 +17,21 @@ import {
   CameraOutlined,
 } from '@ant-design/icons';
 import { Button, message, Tooltip } from 'antd';
+import IdentityAvatar from '../../components/IdentityAvatar';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { useAuth } from '../../context/AuthContext';
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { error?: unknown } } }).response?.data?.error === 'string'
+  ) {
+    return (error as { response: { data: { error: string } } }).response.data.error;
+  }
+  return fallback;
+};
 
 const ProfilePage: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -37,7 +50,7 @@ const ProfilePage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const resp = await getUserSettings();
       const data = resp.data;
@@ -45,12 +58,12 @@ const ProfilePage: React.FC = () => {
         data.display_name = user.full_name;
       }
       setSettings(data);
-    } catch (error) {
+    } catch {
       messageApi.error('Failed to fetch profile settings');
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi, user?.full_name]);
 
   useEffect(() => {
     fetchSettings();
@@ -58,7 +71,7 @@ const ProfilePage: React.FC = () => {
       setFirstName(user.first_name || '');
       setLastName(user.last_name || '');
     }
-  }, [user]);
+  }, [fetchSettings, user]);
 
   const handleSaveGeneral = async () => {
     if (!settings) return;
@@ -71,7 +84,7 @@ const ProfilePage: React.FC = () => {
         profile_picture: settings.profile_picture 
       }}));
       messageApi.success('Profile updated successfully!');
-    } catch (error) {
+    } catch {
       messageApi.error('Failed to update profile');
     } finally {
       setSaving(false);
@@ -99,8 +112,8 @@ const ProfilePage: React.FC = () => {
       setTimeout(() => {
         logout();
       }, 1500);
-    } catch (error: any) {
-      messageApi.error(error.response?.data?.error || 'Failed to change password');
+    } catch (error: unknown) {
+      messageApi.error(getErrorMessage(error, 'Failed to change password'));
     } finally {
       setPasswordSaving(false);
     }
@@ -109,6 +122,10 @@ const ProfilePage: React.FC = () => {
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>;
   if (!settings) return <div className="text-center py-12 text-red-600">Failed to load profile</div>;
 
+  const profileName =
+    firstName || lastName
+      ? `${firstName} ${lastName}`.trim()
+      : settings.display_name || user?.full_name || 'Update Your Name';
   return (
     <div className="max-w-6xl mx-auto pb-20">
       {contextHolder}
@@ -131,29 +148,31 @@ const ProfilePage: React.FC = () => {
 
       <div className="grid grid-cols-12 gap-8 mt-6">
         {/* Sidebar-style Profile Preview */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden sticky top-24">
-            {/* Branded Header */}
-            <div className="h-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 relative">
-              <div className="absolute inset-0 bg-black/10" />
-            </div>
-            
-            <div className="px-8 pb-8">
-              <div className="relative -mt-12 mb-6 flex flex-col items-center">
-                <div className="relative group">
-                  <div className="w-32 h-32 rounded-[32px] overflow-hidden bg-white border-4 border-white shadow-xl group-hover:shadow-2xl transition-all duration-500 transform group-hover:scale-[1.02]">
-                    {settings.profile_picture ? (
-                      <img src={settings.profile_picture} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                        <span className="text-4xl font-black text-indigo-500">
-                          {firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                    )}
-                    <label className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer">
-                      <CameraOutlined className="text-2xl text-white mb-1" />
-                      <span className="text-white text-[9px] font-black uppercase tracking-widest">Update</span>
+        <aside className="col-span-12 lg:col-span-4 lg:sticky lg:top-8 lg:self-start">
+          <div className="relative overflow-hidden rounded-[18px] border border-slate-200 bg-white">
+            <div className="absolute inset-x-0 top-0 h-px bg-slate-900/20" />
+
+            <div className="relative p-6">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <p className="text-[11px] font-bold uppercase text-slate-400">Identity</p>
+                <span className="text-[11px] font-bold uppercase text-slate-500">
+                  Signed in
+                </span>
+              </div>
+
+              <div className="mb-7 flex items-center gap-4">
+                <div className="relative shrink-0 group">
+                  <div className="h-20 w-20 overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 p-1 transition-colors duration-200 group-hover:border-slate-300">
+                    <IdentityAvatar
+                      imageUrl={settings.profile_picture}
+                      name={profileName}
+                      email={user?.email}
+                      alt="Profile"
+                      size="lg"
+                      className="h-full w-full border-0 p-0"
+                    />
+                    <label className="absolute inset-1 flex cursor-pointer items-center justify-center rounded-2xl bg-slate-950/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <CameraOutlined className="text-xl text-white" />
                       <input
                         type="file"
                         className="hidden"
@@ -172,7 +191,7 @@ const ProfilePage: React.FC = () => {
                                 profile_picture: resp.data.profile_picture 
                               }}));
                               messageApi.success('Photo updated!');
-                            } catch (err) { messageApi.error('Upload failed'); } finally { setSaving(false); }
+                            } catch { messageApi.error('Upload failed'); } finally { setSaving(false); }
                           }
                         }}
                       />
@@ -190,47 +209,49 @@ const ProfilePage: React.FC = () => {
                               display_name: resp.data.display_name,
                               profile_picture: resp.data.profile_picture 
                             }}));
-                          } catch (err) { messageApi.error('Error'); } finally { setSaving(false); }
+                          } catch { messageApi.error('Error'); } finally { setSaving(false); }
                         }}
-                        className="absolute -top-1 -right-1 bg-white p-1.5 rounded-full shadow-lg border border-slate-100 text-slate-400 hover:text-rose-500 transition-all hover:scale-110"
+                        className="absolute -top-1 -right-1 bg-white p-1.5 rounded-full border border-slate-200 text-slate-400 hover:text-rose-500 transition-all hover:scale-110"
                       >
                         <CloseOutlined className="text-[10px]" />
                       </button>
                     </Tooltip>
                   )}
                 </div>
-                
-                <div className="mt-4 text-center">
-                  <h2 className="text-lg font-bold text-slate-900 leading-tight">
-                    {firstName || lastName ? `${firstName} ${lastName}` : 'Update Your Name'}
+
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-xl font-black leading-tight text-slate-950">
+                    {profileName}
                   </h2>
-                  <p className="text-sm font-medium text-slate-400 mt-0.5">{user?.email}</p>
+                  <p className="mt-1 truncate text-sm font-medium text-slate-500">{user?.email}</p>
+                  <div className="mt-4 h-px w-14 bg-slate-900" />
                 </div>
               </div>
 
-              <div className="space-y-4 pt-6 border-t border-slate-100">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
-                  <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-indigo-500">
+              <div className="rounded-2xl border border-slate-200/80 bg-white">
+                <div className="grid grid-cols-[36px_1fr] items-center gap-3 border-b border-slate-100 px-4 py-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
                     <MailOutlined className="text-sm" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email</p>
-                    <p className="text-xs font-bold text-slate-600 truncate">{user?.email}</p>
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Email</p>
+                    <p className="truncate text-sm font-bold text-slate-800">{user?.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/50 border border-slate-100/50">
-                  <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-indigo-500">
+                <div className="grid grid-cols-[36px_1fr] items-center gap-3 px-4 py-4">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
                     <SafetyOutlined className="text-sm" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Account Type</p>
-                    <p className="text-xs font-bold text-slate-600">{user?.is_staff ? 'Administrator' : 'Standard User'}</p>
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Account Type</p>
+                    <p className="text-sm font-bold text-slate-800">{user?.is_staff ? 'Administrator' : 'Standard User'}</p>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
-        </div>
+        </aside>
 
         {/* Form Area */}
         <div className="col-span-12 lg:col-span-8 space-y-8">

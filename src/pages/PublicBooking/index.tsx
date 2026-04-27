@@ -3,7 +3,11 @@ import { useParams } from 'react-router-dom';
 import { createPublicBooking, getPublicBookingSlots } from '../../api';
 import { CalendarOutlined, ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { message } from 'antd';
+import IdentityAvatar from '../../components/IdentityAvatar';
 import type { BookingDayAvailability, BookingSlot } from '../../types';
+
+const timezones = ['PT', 'MT', 'CT', 'ET'] as const;
+type Timezone = (typeof timezones)[number];
 
 const PublicBookingPage = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -15,7 +19,7 @@ const PublicBookingPage = () => {
   const [hostProfilePicture, setHostProfilePicture] = useState<string | null>(null);
   const [publicNote, setPublicNote] = useState('');
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState(30);
-  const [timezone, setTimezone] = useState<'PT' | 'MT' | 'CT' | 'ET'>('PT');
+  const [timezone, setTimezone] = useState<Timezone>('PT');
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [days, setDays] = useState<BookingDayAvailability[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
@@ -44,9 +48,9 @@ const PublicBookingPage = () => {
       setLinkInvalid(false);
 
       // Auto-advance to first available date if current one is empty
-      const currentDay = resp.data.days?.find((d: any) => d.date === (anchorDate || selectedDate));
+      const currentDay = resp.data.days?.find((day: BookingDayAvailability) => day.date === (anchorDate || selectedDate));
       if (!currentDay || currentDay.slots.length === 0) {
-        const firstAvailable = resp.data.days?.find((d: any) => d.slots.length > 0);
+        const firstAvailable = resp.data.days?.find((day: BookingDayAvailability) => day.slots.length > 0);
         if (firstAvailable) {
           setSelectedDate(firstAvailable.date);
         }
@@ -149,13 +153,13 @@ const PublicBookingPage = () => {
               <div className="bg-slate-50 rounded-[24px] p-6 border border-slate-100 min-w-[240px]">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Hosted by</div>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-100">
-                    {hostProfilePicture ? (
-                      <img src={hostProfilePicture} alt={hostDisplayName} className="w-full h-full object-cover" />
-                    ) : (
-                      hostDisplayName?.charAt(0).toUpperCase() || 'C'
-                    )}
-                  </div>
+                  <IdentityAvatar
+                    imageUrl={hostProfilePicture}
+                    name={hostDisplayName || 'CareerHub User'}
+                    email={hostEmail}
+                    alt={hostDisplayName || 'Host'}
+                    size="md"
+                  />
                   <div>
                     <div className="font-bold text-slate-900 text-lg">{hostDisplayName || 'CareerHub User'}</div>
                     {hostEmail && <div className="text-xs text-slate-400 font-medium">{hostEmail}</div>}
@@ -220,7 +224,12 @@ const PublicBookingPage = () => {
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Timezone</label>
                   <select
                     value={timezone}
-                    onChange={(e) => setTimezone(e.target.value as any)}
+                    onChange={(e) => {
+                      const nextTimezone = e.target.value;
+                      if (timezones.includes(nextTimezone as Timezone)) {
+                        setTimezone(nextTimezone as Timezone);
+                      }
+                    }}
                     className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat"
                   >
                     <option value="PT">Pacific Time (PT)</option>
