@@ -143,6 +143,8 @@ export interface UserSettings {
   ai_provider_api_key?: string;
   ai_provider_api_key_configured?: boolean;
   ai_provider_api_key_masked?: string;
+  account_deletion_requested_at?: string | null;
+  account_deletion_scheduled_for?: string | null;
   display_name?: string;
   profile_picture?: string | null;
   email?: string;

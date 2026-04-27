@@ -9,6 +9,8 @@ export interface AuthenticatedUser {
   last_name: string;
   is_staff: boolean;
   is_superuser: boolean;
+  account_deletion_requested_at?: string | null;
+  account_deletion_scheduled_for?: string | null;
 }
 
 export interface AuthResponse {
@@ -19,6 +21,7 @@ export interface AuthResponse {
   mode?: 'public' | 'disabled';
   access?: string;
   refresh?: string;
+  account_deletion_cancelled?: boolean;
 }
 
 export interface SignupStatusResponse {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   getUserSettings,
   updateUserSettings,
@@ -7,7 +7,6 @@ import {
   updateCategory,
   patchCategory,
   deleteCategory,
-  exportAllData,
 } from '../../api';
 import type { EventCategory, UserSettings, EmploymentType, HolidayTab } from '../../types';
 import {
@@ -15,7 +14,6 @@ import {
   SaveOutlined,
   PlusOutlined,
   CloseOutlined,
-  DownloadOutlined,
   LockOutlined,
   UnlockOutlined,
   RobotOutlined,
@@ -35,6 +33,8 @@ import {
 
 dayjs.extend(customParseFormat);
 
+type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
+
 const Settings: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -43,7 +43,7 @@ const Settings: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'organize' | 'navigation' | 'data'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'organize' | 'navigation'>('general');
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
@@ -195,12 +195,12 @@ const Settings: React.FC = () => {
 
   const [isAppStagesLocked, setIsAppStagesLocked] = useState(true);
   const [isAddingAppStage, setIsAddingAppStage] = useState(false);
-  const [editingAppStage, setEditingAppStage] = useState<any | null>(null);
+  const [editingAppStage, setEditingAppStage] = useState<ApplicationStage | null>(null);
   const [newAppStageLabel, setNewAppStageLabel] = useState('');
   const [newAppStageShortLabel, setNewAppStageShortLabel] = useState('');
   const [newAppStageTone, setNewAppStageTone] = useState('bg-blue-500');
 
-  const getAppStages = () => settings?.application_stages || [];
+  const getAppStages = (): ApplicationStage[] => settings?.application_stages || [];
 
   const handleSaveAppStage = () => {
     if (!newAppStageLabel.trim() || !newAppStageShortLabel.trim() || !settings) return;
@@ -235,7 +235,7 @@ const Settings: React.FC = () => {
     setNewAppStageTone('bg-blue-500');
   };
 
-  const handleEditAppStage = (t: any) => {
+  const handleEditAppStage = (t: ApplicationStage) => {
     setEditingAppStage(t);
     setNewAppStageLabel(t.label);
     setNewAppStageShortLabel(t.shortLabel);
@@ -273,15 +273,15 @@ const Settings: React.FC = () => {
     setTimeout(reset, 120);
   };
 
-  const syncAiSettings = (nextSettings: Partial<UserSettings> | null | undefined) => {
+  const syncAiSettings = useCallback((nextSettings: Partial<UserSettings> | null | undefined) => {
     const normalized = getAIProviderSettingsFromUserSettings(nextSettings);
     setAiSettings(normalized);
     setSavedAiSettings(normalized);
     setAiApiKeyChanged(false);
     setShowAiApiKey(false);
-  };
+  }, []);
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const resp = await getUserSettings();
       const data = resp.data;
@@ -327,9 +327,9 @@ const Settings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi, syncAiSettings]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const resp = await getCategories();
       setCategories(resp.data);
@@ -337,12 +337,12 @@ const Settings: React.FC = () => {
       messageApi.error('Failed to fetch categories');
       console.error('Error fetching categories:', error);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
     fetchSettings();
     fetchCategories();
-  }, []);
+  }, [fetchCategories, fetchSettings]);
 
   useEffect(() => {
     if (successMessage) {
@@ -651,7 +651,6 @@ const Settings: React.FC = () => {
           { key: 'ai', label: 'AI Provider' },
           { key: 'organize', label: 'Organize' },
           { key: 'navigation', label: 'Navigation' },
-          { key: 'data', label: 'Data' },
         ] as const).map(tab => (
           <button
             key={tab.key}
@@ -1071,65 +1070,6 @@ const Settings: React.FC = () => {
         </div>
       </div>}
 
-      {/* Data Management */}
-      {activeTab === 'data' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 border-b pb-4 mb-4">Data Management</h3>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="min-w-0">
-            <h4 className="font-medium text-gray-900">Export All Data</h4>
-            <p className="text-sm text-gray-500">
-              Download a full backup of all your data (Events, Holidays, Applications, Settings) as
-              a ZIP file.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-            <select
-              className="w-full lg:w-auto px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              id="export-format"
-              defaultValue="json"
-            >
-              <option value="json">JSON Backup (ZIP)</option>
-              <option value="csv">CSV (ZIP)</option>
-              <option value="xlsx">Excel (Multi-sheet)</option>
-            </select>
-            <button
-              onClick={async () => {
-                const fmt = (document.getElementById('export-format') as HTMLSelectElement).value;
-                try {
-                  const response = await exportAllData(fmt);
-                  const contentType =
-                    fmt === 'xlsx'
-                      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                      : 'application/zip';
-                  const ext = fmt === 'xlsx' ? 'xlsx' : 'zip';
-
-                  const blob = new Blob([response.data], { type: contentType });
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.setAttribute(
-                    'download',
-                    `availability_manager_export_${new Date().toISOString().split('T')[0]}.${ext}`
-                  );
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                  setSuccessMessage('Backup downloaded successfully!');
-                } catch (error) {
-                  messageApi.error('Export failed');
-                  console.error('Export failed', error);
-                }
-              }}
-              className="w-full lg:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-lg shadow-sm text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              <DownloadOutlined className="text-base" />
-              <span>Export</span>
-            </button>
-          </div>
-        </div>
-      </div>}
-
       {/* Category Manager */}
       {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center border-b pb-4 mb-4">
@@ -1531,7 +1471,7 @@ const Settings: React.FC = () => {
           <p className="text-gray-500 text-sm text-center py-4">No custom stages defined. Add one to get started.</p>
         ) : (
           <div className="space-y-2">
-            {getAppStages().map((t: any) => (
+            {getAppStages().map((t) => (
               <LockableListItem
                 key={t.key}
                 isLocked={!!t.locked}

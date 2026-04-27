@@ -114,3 +114,14 @@ export const exportHolidays = (format: string = 'csv') =>
   api.get('/holidays/export/', { params: { fmt: format }, responseType: 'blob' });
 export const exportAllData = (format: string = 'json') =>
   api.get('/user-settings/export_all/', { params: { fmt: format }, responseType: 'blob' });
+export const exportAccountData = (format: 'json' | 'zip' = 'json') =>
+  api.get('/user-settings/account-export/', { params: { fmt: format }, responseType: 'blob' });
+export const restoreAccountBackup = (formData: FormData) =>
+  api.post('/user-settings/restore-backup/', formData, { headers: { 'Content-Type': undefined } });
+export const deleteAccount = (confirm: 'DELETE') =>
+  api.delete<{
+    message: string;
+    grace_days: number;
+    account_deletion_requested_at: string;
+    account_deletion_scheduled_for: string;
+  }>('/user-settings/account/', { data: { confirm } });
