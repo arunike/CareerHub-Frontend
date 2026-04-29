@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Form, Input, Modal, Select, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Grid, Input, Modal, Select, Table, Tag, message } from 'antd';
 import { PlusOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, LockOutlined } from '@ant-design/icons';
 import {
   getApplications,
@@ -19,8 +19,11 @@ import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yea
 import RowActions from '../../components/RowActions';
 import { usePersistedState } from '../../hooks/usePersistedState';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
+type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
 
 const Documents: React.FC = () => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -113,8 +116,9 @@ const Documents: React.FC = () => {
       await patchDocument(record.id, { is_locked: !record.is_locked });
       message.success(record.is_locked ? 'Document unlocked' : 'Document locked');
       setDocuments(prev => prev.map(d => d.id === record.id ? { ...d, is_locked: !record.is_locked } : d));
-    } catch (error: any) {
-      message.error(error?.response?.data?.error || 'Failed to update lock status');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      message.error(apiError?.response?.data?.error || 'Failed to update lock status');
       console.error(error);
     }
   };
@@ -144,9 +148,10 @@ const Documents: React.FC = () => {
       setEditingDocument(null);
       form.resetFields();
       fetchDocuments();
-    } catch (error: any) {
-      if (error?.errorFields) return;
-      message.error(error?.response?.data?.error || 'Failed to update document');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError?.errorFields) return;
+      message.error(apiError?.response?.data?.error || 'Failed to update document');
       console.error(error);
     } finally {
       setSaving(false);
@@ -222,8 +227,9 @@ const Documents: React.FC = () => {
       setVersionList(versionsResp.data);
       setNewVersionFile(null);
       fetchDocuments();
-    } catch (error: any) {
-      message.error(error?.response?.data?.error || 'Failed to upload new version');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      message.error(apiError?.response?.data?.error || 'Failed to upload new version');
       console.error(error);
     } finally {
       setUploadingVersion(false);
@@ -235,7 +241,7 @@ const Documents: React.FC = () => {
       title: 'Type',
       key: 'icon',
       width: 50,
-      render: (_: any, record: Document) => getFileIcon(record.file_name),
+      render: (_: unknown, record: Document) => getFileIcon(record.file_name),
     },
     {
       title: 'Title',
@@ -265,7 +271,7 @@ const Documents: React.FC = () => {
     {
       title: 'Version',
       key: 'version',
-      render: (_: any, record: Document) => (
+      render: (_: unknown, record: Document) => (
         <div className="flex items-center gap-2">
           <Tag color="geekblue">v{record.version_number || 1}</Tag>
           <Button type="link" size="small" onClick={() => openVersionsModal(record)}>
@@ -277,7 +283,7 @@ const Documents: React.FC = () => {
     {
       title: 'Linked Application',
       key: 'application',
-      render: (_: any, record: Document) => (
+      render: (_: unknown, record: Document) => (
         record.application_details 
           ? `${record.application_details.role} @ ${record.application_details.company}`
           : <span className="text-gray-400">None</span>
@@ -292,7 +298,7 @@ const Documents: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: Document) => (
+      render: (_: unknown, record: Document) => (
         <RowActions
           size="middle"
           isLocked={record.is_locked}
@@ -330,17 +336,87 @@ const Documents: React.FC = () => {
         primaryActionIcon={<PlusOutlined />}
       />
 
-      <Card className="shadow-sm border-gray-100 rounded-xl overflow-hidden">
-        <Table 
-          columns={columns} 
-          dataSource={filteredDocuments} 
-          rowKey="id" 
-          loading={loading}
-          pagination={{ pageSize: 10 }}
-          scroll={{ x: 900 }}
-          className="career-table"
-        />
-      </Card>
+      {isMobile ? (
+        <div className="space-y-3">
+          {loading ? (
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <div className="py-8 text-center text-sm text-gray-500">Loading documents...</div>
+            </Card>
+          ) : filteredDocuments.length === 0 ? (
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <div className="py-8 text-center text-sm text-gray-500">No documents found.</div>
+            </Card>
+          ) : (
+            filteredDocuments.map((record) => (
+              <Card key={record.id} className="rounded-3xl border-gray-100 shadow-sm">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 shrink-0">{getFileIcon(record.file_name)}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => openDocument(record)}
+                          className="min-w-0 text-left text-base font-semibold text-blue-600"
+                        >
+                          <span className="line-clamp-2">{record.title}</span>
+                        </button>
+                        {record.is_locked ? <LockOutlined className="mt-1 shrink-0 text-amber-500" /> : null}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Tag color={getTypeColor(record.document_type)}>{record.document_type.replace('_', ' ')}</Tag>
+                        <Tag color="geekblue">v{record.version_number || 1}</Tag>
+                        <Tag>{new Date(record.created_at).toLocaleDateString()}</Tag>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        {record.application_details
+                          ? `${record.application_details.role} @ ${record.application_details.company}`
+                          : 'Not linked to an application'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button size="large" onClick={() => openDocument(record)}>
+                      Open
+                    </Button>
+                    <Button size="large" onClick={() => openVersionsModal(record)}>
+                      History
+                    </Button>
+                    <Button size="large" disabled={Boolean(record.is_locked)} onClick={() => openEditModal(record)}>
+                      Edit
+                    </Button>
+                    <Button size="large" onClick={() => handleToggleLock(record)}>
+                      {record.is_locked ? 'Unlock' : 'Lock'}
+                    </Button>
+                    <Button
+                      danger
+                      size="large"
+                      className="col-span-2"
+                      disabled={Boolean(record.is_locked)}
+                      onClick={() => handleDelete(record.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : (
+        <Card className="overflow-hidden rounded-xl border-gray-100 shadow-sm">
+          <Table
+            columns={columns}
+            dataSource={filteredDocuments}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 900 }}
+            className="career-table"
+          />
+        </Card>
+      )}
 
       <UploadDocumentModal 
         visible={isUploadModalVisible}
@@ -445,7 +521,7 @@ const Documents: React.FC = () => {
                 title: 'Version',
                 key: 'version_number',
                 width: 110,
-                render: (_: any, row: Document) => (
+                render: (_: unknown, row: Document) => (
                   <Tag color={row.is_current ? 'success' : 'default'}>
                     v{row.version_number || 1}{row.is_current ? ' (current)' : ''}
                   </Tag>
@@ -454,7 +530,7 @@ const Documents: React.FC = () => {
               {
                 title: 'File',
                 key: 'file',
-                render: (_: any, row: Document) => (
+                render: (_: unknown, row: Document) => (
                   <button
                     type="button"
                     onClick={() => openDocument(row)}

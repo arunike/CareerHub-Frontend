@@ -377,7 +377,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
 
           {/* Date + Type + Label */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Date</label>
               <DatePicker
@@ -407,7 +407,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
 
           {/* Before / After grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-3">
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Before</div>
               {beforeInput('base_before',   'Base Salary')}
@@ -434,7 +434,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
 
           {/* Form actions */}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button onClick={cancelForm}>Cancel</Button>
             <Button type="primary" loading={saving} onClick={handleSubmit}>
               {editingId ? 'Update' : 'Add'}

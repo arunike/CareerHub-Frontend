@@ -403,7 +403,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           }}
         >
           {/* Logo Upload */}
-          <div className="flex justify-center mb-6">
+          <div className="mb-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <div className="relative group/logo">
               <Upload
                 accept="image/*"
@@ -443,7 +443,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
                 </button>
               )}
             </div>
-            <div className="ml-3 flex flex-col justify-center">
+            <div className="flex flex-col items-center justify-center sm:items-start">
               <Upload accept="image/*" showUploadList={false} beforeUpload={handleLogoSelect}>
                 <Button size="small" icon={<CameraOutlined />} type="link" className="p-0 text-gray-500 hover:text-blue-500">
                   {currentLogoSrc ? 'Change logo' : 'Upload logo'}
@@ -453,7 +453,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Form.Item
               name="title"
               label="Job Title"
@@ -470,7 +470,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             </Form.Item>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Form.Item
               name="company"
               label="Company"
@@ -604,7 +604,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           <Form.Item name="role_context" className="hidden mb-0"><Input /></Form.Item>
           <div className="mt-4">
             <div className="text-sm font-medium text-gray-700 mb-2">Role Context</div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {/* Standard */}
               <button
                 type="button"

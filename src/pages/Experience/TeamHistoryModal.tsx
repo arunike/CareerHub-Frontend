@@ -136,7 +136,7 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
         {/* Entry form */}
         {isFormEditing && (
           <div className="border border-blue-200 rounded-xl bg-blue-50/40 p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Team Name *</label>
                 <Input
@@ -156,7 +156,7 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Currently on this team</label>
                 <div className="flex items-center gap-2 h-8">
@@ -175,7 +175,7 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
                 Dates auto-filled from experience ({fmtDate(expStartDate)} – {expIsCurrent ? 'Present' : fmtDate(expEndDate)})
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
                 <DatePicker

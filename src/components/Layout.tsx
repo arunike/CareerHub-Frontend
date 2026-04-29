@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider, Tooltip } from 'antd';
 import {
+  AppstoreOutlined,
   DashboardOutlined,
   CalendarOutlined,
   ScheduleOutlined,
@@ -9,7 +10,6 @@ import {
   SettingOutlined,
   SolutionOutlined,
   DollarOutlined,
-  MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   CloseOutlined,
@@ -197,6 +197,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     location.pathname === '/cover-letters' || activeKey === '/ai-tools'
       ? '/ai-tools?tab=cover-letters'
       : activeKey;
+  const mobilePrimaryNavItems = [
+    { key: '/', label: 'Home', icon: <DashboardOutlined /> },
+    { key: '/applications', label: 'Apps', icon: <SolutionOutlined /> },
+    { key: '/offers', label: 'Offers', icon: <DollarOutlined /> },
+    { key: '/analytics', label: 'Insights', icon: <LineChartOutlined /> },
+  ];
+  const matchesNavKey = (key: string) =>
+    key === '/' ? location.pathname === '/' : location.pathname.startsWith(key);
+  const isMoreActive = !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
 
   const SidebarContent = (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
@@ -355,7 +364,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           position: screens.lg ? 'sticky' : 'fixed',
           top: 0,
           left: 0,
-          zIndex: 1000,
+          zIndex: 1005,
           boxShadow: !collapsed && !screens.lg ? '4px 0 24px rgba(0,0,0,0.1)' : 'none',
         }}
         className={!screens.lg && !collapsed ? 'fixed-sider-mobile' : ''}
@@ -366,30 +375,59 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Overlay (Darken background when menu is open) */}
       {!screens.lg && !collapsed && (
         <div
-          className="fixed inset-0 bg-black/40 z-999 animate-in fade-in"
+          className="fixed inset-0 z-[1004] bg-black/40 animate-in fade-in"
           onClick={() => setCollapsed(true)}
         />
       )}
 
       <AntLayout className="min-h-screen bg-gray-50 transition-all duration-300">
         <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
-          {!screens.lg && (
-            <div className="fixed top-4 left-4 z-900">
-              <Button
-                type="default"
-                icon={<MenuOutlined />}
-                onClick={() => setCollapsed(false)}
-                className="shadow-md border-gray-200 bg-white/90 backdrop-blur"
-                size="large"
-              />
-            </div>
-          )}
-
-          <div className={`p-4 md:p-6 lg:p-8 max-w-400 mx-auto ${!screens.lg ? 'pt-20' : ''}`}>
+          <div className={`max-w-400 mx-auto p-4 md:p-6 lg:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}>
             {children}
           </div>
         </Content>
       </AntLayout>
+
+      {!screens.lg ? (
+        <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200 bg-white/95 backdrop-blur">
+          <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-2 pt-2">
+            {mobilePrimaryNavItems.map((item) => {
+              const isActive = matchesNavKey(item.key);
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => navigate(item.key)}
+                  className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
+                    isActive
+                      ? 'bg-indigo-50 text-indigo-600'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setCollapsed(false)}
+              className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
+                isMoreActive || !collapsed
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+              aria-label="Open more navigation"
+            >
+              <span className="text-lg">
+                <AppstoreOutlined />
+              </span>
+              <span>More</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
     </AntLayout>
   );
 };

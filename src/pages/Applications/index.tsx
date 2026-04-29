@@ -15,6 +15,8 @@ import {
   Col,
   DatePicker,
   Tooltip,
+  Grid,
+  Checkbox,
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,12 +30,13 @@ import {
   DeleteOutlined,
   ThunderboltOutlined,
   ClockCircleOutlined,
+    DownOutlined,
+    UpOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { usaCities } from 'typed-usa-states';
 import {
   getApplications,
   createApplication,
@@ -57,7 +60,7 @@ import CoverLetterModal from './CoverLetterModal';
 import ApplicationTimelineModal from './ApplicationTimelineModal';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import { DEFAULT_STATE_NAME_TO_ABBR } from '../OfferComparison/calculations';
+import { loadUsCityOptions } from '../../lib/usCityOptions';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -83,12 +86,21 @@ type ApplicationFormValues = {
   linked_document_ids?: number[];
 };
 
+type ApplicationStage = {
+  key: string;
+  label: string;
+  shortLabel: string;
+  tone: string;
+};
+
 const Applications = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [jobImportForm] = Form.useForm();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   // Data State
   const [applications, setApplications] = useState<CareerApplication[]>([]);
@@ -101,7 +113,7 @@ const Applications = () => {
     { value: 'contract', label: 'Contract', color: 'purple' },
     { value: 'freelance', label: 'Freelance', color: 'orange' },
   ]);
-  const [appStages, setAppStages] = useState<any[]>([
+  const [appStages, setAppStages] = useState<ApplicationStage[]>([
     { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
     { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
     { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
@@ -129,6 +141,8 @@ const Applications = () => {
 
   // Bulk Selection State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
 
   // Filter State
   const [searchText, setSearchText] = useState('');
@@ -147,18 +161,6 @@ const Applications = () => {
     const target = `${window.location.origin}/applications?jobUrl=`;
     return `javascript:(()=>{window.open(${JSON.stringify(target)}+encodeURIComponent(location.href),'_blank','noopener');})();`;
   }, []);
-  const allUsCityOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          usaCities.map((city) => {
-            const abbr = DEFAULT_STATE_NAME_TO_ABBR[city.state] || city.state;
-            return `${city.name}, ${abbr}, United States`;
-          })
-        )
-      ),
-    []
-  );
   const officeLocationOptions = useMemo(() => {
     const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9,\s]/g, '');
     const query = normalize(officeLocationValue).trim();
@@ -215,6 +217,12 @@ const Applications = () => {
       const stages = res.data.application_stages;
       if (stages && stages.length > 0) setAppStages(stages);
     }).catch(() => {});
+
+    loadUsCityOptions()
+      .then(setAllUsCityOptions)
+      .catch((error) => {
+        console.error('Failed to load US city options', error);
+      });
   }, [fetchData]);
 
   useEffect(() => {
@@ -401,8 +409,9 @@ const Applications = () => {
         job_description: response.data.job_description,
       });
       messageApi.success('Job details extracted');
-    } catch (error: any) {
-      messageApi.error(error?.response?.data?.error || 'Failed to extract this job posting');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { error?: string } } };
+      messageApi.error(apiError?.response?.data?.error || 'Failed to extract this job posting');
       console.error(error);
     } finally {
       setJobImportLoading(false);
@@ -431,9 +440,10 @@ const Applications = () => {
       messageApi.success('Application imported');
       closeJobImportModal();
       fetchData();
-    } catch (error: any) {
-      if (error?.errorFields) return;
-      messageApi.error(error?.response?.data?.error || 'Failed to create imported application');
+    } catch (error: unknown) {
+      const formError = error as { errorFields?: unknown; response?: { data?: { error?: string } } };
+      if (formError?.errorFields) return;
+      messageApi.error(formError?.response?.data?.error || 'Failed to create imported application');
       console.error(error);
     } finally {
       setJobImportSaving(false);
@@ -509,6 +519,15 @@ const Applications = () => {
   const availableYears = getAvailableYears(applications, 'date_applied');
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
+  };
+
+  const toggleSelectedApplication = (id: number, checked: boolean) => {
+    setSelectedRowKeys((prev) => {
+      if (checked) {
+        return prev.includes(id) ? prev : [...prev, id];
+      }
+      return prev.filter((key) => key !== id);
+    });
   };
 
   const APP_STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
@@ -649,6 +668,10 @@ const Applications = () => {
     },
   ];
 
+  const activeFilterCount = Number(Boolean(searchText)) +
+    Number(statusFilter !== 'ALL') +
+    Number(empTypeFilter !== 'ALL');
+
   return (
     <div style={{ padding: 0, width: '100%' }}>
       {contextHolder}
@@ -701,62 +724,239 @@ const Applications = () => {
       )}
 
       {/* Filter bar */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <Input
-          size="large"
-          placeholder="Search company or role"
-          prefix={<SearchOutlined className="text-gray-400" />}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 340 }}
-          allowClear
-        />
-        <Select
-          size="large"
-          value={statusFilter}
-          onChange={setStatusFilter}
-          style={{ width: 200 }}
-          suffixIcon={<FilterOutlined />}
-        >
-          <Option value="ALL">All Statuses</Option>
-          {appStages.map(stage => (
-            <Option key={stage.key} value={stage.key}>{stage.label}</Option>
-          ))}
-        </Select>
-        <Select
-          size="large"
-          value={empTypeFilter}
-          onChange={setEmpTypeFilter}
-          style={{ width: 180 }}
-          suffixIcon={<FilterOutlined />}
-        >
-          <Option value="ALL">All Types</Option>
-          {empTypes.map(t => (
-            <Option key={t.value} value={t.value}>{t.label}</Option>
-          ))}
-        </Select>
-        {(searchText || statusFilter !== 'ALL' || empTypeFilter !== 'ALL') && (
-          <Text type="secondary" className="self-center text-sm">
-            {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
-          </Text>
-        )}
-      </div>
+      {isMobile ? (
+        <div className="mb-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Filters</div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {activeFilterCount > 0
+                    ? `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active`
+                    : 'Search, status, and type'}
+                </div>
+              </div>
+              <Button
+                size="large"
+                className="toolbar-native-btn"
+                icon={mobileFiltersOpen ? <UpOutlined /> : <DownOutlined />}
+                onClick={() => setMobileFiltersOpen((current) => !current)}
+              >
+                {mobileFiltersOpen ? 'Hide' : 'Show'}
+              </Button>
+            </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <Table
-          rowSelection={{
-            selectedRowKeys,
-            onChange: setSelectedRowKeys,
-          }}
-          loading={loading}
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="id"
-          pagination={{ pageSize: 10, showSizeChanger: false }}
-          scroll={{ x: 900 }}
-        />
-      </div>
+            {mobileFiltersOpen ? (
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                <Input
+                  size="large"
+                  placeholder="Search company or role"
+                  prefix={<SearchOutlined className="text-gray-400" />}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                />
+                <Select
+                  size="large"
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  suffixIcon={<FilterOutlined />}
+                >
+                  <Option value="ALL">All Statuses</Option>
+                  {appStages.map(stage => (
+                    <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+                  ))}
+                </Select>
+                <Select
+                  size="large"
+                  value={empTypeFilter}
+                  onChange={setEmpTypeFilter}
+                  suffixIcon={<FilterOutlined />}
+                >
+                  <Option value="ALL">All Types</Option>
+                  {empTypes.map(t => (
+                    <Option key={t.value} value={t.value}>{t.label}</Option>
+                  ))}
+                </Select>
+                <Text type="secondary" className="text-sm">
+                  {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+                </Text>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-3 mb-4">
+          <Input
+            size="large"
+            placeholder="Search company or role"
+            prefix={<SearchOutlined className="text-gray-400" />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ maxWidth: 340 }}
+            allowClear
+          />
+          <Select
+            size="large"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            style={{ width: 200 }}
+            suffixIcon={<FilterOutlined />}
+          >
+            <Option value="ALL">All Statuses</Option>
+            {appStages.map(stage => (
+              <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+            ))}
+          </Select>
+          <Select
+            size="large"
+            value={empTypeFilter}
+            onChange={setEmpTypeFilter}
+            style={{ width: 180 }}
+            suffixIcon={<FilterOutlined />}
+          >
+            <Option value="ALL">All Types</Option>
+            {empTypes.map(t => (
+              <Option key={t.value} value={t.value}>{t.label}</Option>
+            ))}
+          </Select>
+          {(searchText || statusFilter !== 'ALL' || empTypeFilter !== 'ALL') && (
+            <Text type="secondary" className="self-center text-sm">
+              {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+            </Text>
+          )}
+        </div>
+      )}
+
+      {/* Data list */}
+      {isMobile ? (
+        <div className="space-y-3">
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-sm">
+              Loading applications...
+            </div>
+          ) : filteredData.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center shadow-sm">
+              <div className="text-sm font-semibold text-slate-900">No applications found</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Adjust your filters or add a new application.
+              </div>
+            </div>
+          ) : (
+            filteredData.map((record) => {
+              const isSelected = selectedRowKeys.includes(record.id);
+              return (
+                <article
+                  key={record.id}
+                  className={`rounded-3xl border bg-white p-4 shadow-sm transition ${
+                    isSelected ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={(event) => toggleSelectedApplication(record.id, event.target.checked)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-base font-semibold text-slate-900">
+                            {record.company_details?.name || 'Unknown company'}
+                          </div>
+                          <div className="mt-1 text-sm text-slate-600">{record.role_title}</div>
+                        </div>
+                        <StatusBadge status={record.status} />
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                          Applied {record.date_applied ? dayjs(record.date_applied).format('MMM D, YYYY') : 'Unknown'}
+                        </span>
+                        {(record.office_location || record.location) ? (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                            {record.office_location || record.location}
+                          </span>
+                        ) : null}
+                        <EmploymentTypeBadge type={record.employment_type} />
+                        {record.is_locked ? (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                            Locked
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <Button
+                          size="large"
+                          icon={<ThunderboltOutlined />}
+                          onClick={() => setCoverLetterApp(record)}
+                        >
+                          Letter
+                        </Button>
+                        <Button
+                          size="large"
+                          icon={<ClockCircleOutlined />}
+                          onClick={() => setTimelineApp(record)}
+                        >
+                          Timeline
+                        </Button>
+                        <Button size="large" onClick={() => openEditModal(record)}>
+                          Edit
+                        </Button>
+                        <Button
+                          size="large"
+                          icon={record.is_locked ? <UnlockOutlined /> : <LockOutlined />}
+                          onClick={() => toggleLock(record)}
+                        >
+                          {record.is_locked ? 'Unlock' : 'Lock'}
+                        </Button>
+                      </div>
+
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {record.job_link ? (
+                          <Button
+                            size="large"
+                            icon={<GlobalOutlined />}
+                            onClick={() => window.open(record.job_link || '', '_blank', 'noopener,noreferrer')}
+                          >
+                            Open Link
+                          </Button>
+                        ) : (
+                          <div />
+                        )}
+                        <Button
+                          danger
+                          size="large"
+                          icon={<DeleteOutlined />}
+                          disabled={record.is_locked}
+                          onClick={() => handleDelete(record.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <Table
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+            }}
+            loading={loading}
+            columns={columns}
+            dataSource={filteredData}
+            rowKey="id"
+            pagination={{ pageSize: 10, showSizeChanger: false }}
+            scroll={{ x: 900 }}
+          />
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       <Modal
@@ -768,17 +968,17 @@ const Applications = () => {
       >
         <Form form={form} layout="vertical" onFinish={handleAddEdit}>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="company" label="Company" rules={[{ required: true }]}>
                 <Input placeholder="Google" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="role_title" label="Role Title" rules={[{ required: true }]}>
                 <Input placeholder="Software Engineer" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="status" label="Status">
                 <Select>
                   {appStages.map(stage => (
@@ -787,7 +987,7 @@ const Applications = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="employment_type" label="Employment Type">
                 <Select>
                   {empTypes.map(t => (
@@ -796,12 +996,12 @@ const Applications = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="date_applied" label="Date Applied">
                 <DatePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="office_location" label="Location">
                 <AutoComplete
                   className="w-full"
@@ -929,12 +1129,12 @@ const Applications = () => {
           {jobImportPreview && (
             <Form form={jobImportForm} layout="vertical">
               <Row gutter={16}>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item name="company" label="Company" rules={[{ required: true, message: 'Company is required' }]}>
                     <Input />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item name="role_title" label="Role Title" rules={[{ required: true, message: 'Role title is required' }]}>
                     <Input />
                   </Form.Item>

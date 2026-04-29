@@ -1,25 +1,33 @@
-import { ConfigProvider } from 'antd';
+import { lazy, Suspense } from 'react';
+import { ConfigProvider, Spin } from 'antd';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
-import Availability from './pages/Availability';
-import Events from './pages/Events';
-import Holidays from './pages/Holidays';
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
-import Applications from './pages/Applications';
-import OfferComparison from './pages/OfferComparison';
-import Documents from './pages/Documents';
-import Tasks from './pages/Tasks';
-import ExperiencePage from './pages/Experience';
-import PublicBookingPage from './pages/PublicBooking';
-import JDReportPage from './pages/JDReport';
-import JDReportsListPage from './pages/JDReportsList';
-import AIToolsPage from './pages/AITools';
-import LoginPage from './pages/Login';
-import NegotiationResultPage from './pages/NegotiationResult';
-import ProfilePage from './pages/Profile';
+
+const Availability = lazy(() => import('./pages/Availability'));
+const Events = lazy(() => import('./pages/Events'));
+const Holidays = lazy(() => import('./pages/Holidays'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Applications = lazy(() => import('./pages/Applications'));
+const OfferComparison = lazy(() => import('./pages/OfferComparison'));
+const Documents = lazy(() => import('./pages/Documents'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const ExperiencePage = lazy(() => import('./pages/Experience'));
+const PublicBookingPage = lazy(() => import('./pages/PublicBooking'));
+const JDReportPage = lazy(() => import('./pages/JDReport'));
+const JDReportsListPage = lazy(() => import('./pages/JDReportsList'));
+const AIToolsPage = lazy(() => import('./pages/AITools'));
+const LoginPage = lazy(() => import('./pages/Login'));
+const NegotiationResultPage = lazy(() => import('./pages/NegotiationResult'));
+const ProfilePage = lazy(() => import('./pages/Profile'));
+
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center">
+    <Spin size="large" />
+  </div>
+);
 
 function AppRoutes() {
   const location = useLocation();
@@ -32,41 +40,47 @@ function AppRoutes() {
 
   if (isStandalone) {
     return (
-      <Routes>
-        <Route path="/book/:uuid" element={<PublicBookingPage />} />
-        <Route path="/jd-report/:id" element={<JDReportPage />} />
-        <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/book/:uuid" element={<PublicBookingPage />} />
+          <Route path="/jd-report/:id" element={<JDReportPage />} />
+          <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (isLoginPage) {
     return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   return (
     <ProtectedRoute>
       <Layout>
-        <Routes>
-          <Route path="/" element={<Availability />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/holidays" element={<Holidays />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/applications" element={<Applications />} />
-          <Route path="/offers" element={<OfferComparison />} />
-          <Route path="/documents" element={<Documents />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/experience" element={<ExperiencePage />} />
-          <Route path="/jd-reports" element={<JDReportsListPage />} />
-          <Route path="/cover-letters" element={<AIToolsPage />} />
-          <Route path="/ai-tools" element={<AIToolsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Availability />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/holidays" element={<Holidays />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/applications" element={<Applications />} />
+            <Route path="/offers" element={<OfferComparison />} />
+            <Route path="/documents" element={<Documents />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/experience" element={<ExperiencePage />} />
+            <Route path="/jd-reports" element={<JDReportsListPage />} />
+            <Route path="/cover-letters" element={<AIToolsPage />} />
+            <Route path="/ai-tools" element={<AIToolsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Routes>
+        </Suspense>
       </Layout>
     </ProtectedRoute>
   );

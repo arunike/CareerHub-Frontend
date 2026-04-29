@@ -58,7 +58,7 @@ const AvailabilityBookingCard = ({
   const [showConfig, setShowConfig] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -88,7 +88,7 @@ const AvailabilityBookingCard = ({
             </>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                 <div className="flex flex-col">
                   <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
                     Page Title
@@ -129,7 +129,7 @@ const AvailabilityBookingCard = ({
                     required
                   />
                 </div>
-                <div className="md:col-span-2 lg:col-span-3 flex flex-col">
+                <div className="flex flex-col md:col-span-2 lg:col-span-3">
                   <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
                     Recruiter-facing Note
                   </label>
@@ -143,7 +143,7 @@ const AvailabilityBookingCard = ({
               </div>
 
               {showConfig && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="mt-4 grid grid-cols-1 gap-3 border-t border-gray-50 pt-4 animate-in fade-in slide-in-from-top-1 duration-200 sm:grid-cols-2 md:grid-cols-4">
                   <div className="flex flex-col">
                     <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
                       Expires In
@@ -219,12 +219,12 @@ const AvailabilityBookingCard = ({
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mt-4 lg:mt-8">
+        <div className="mt-2 flex w-full flex-col gap-3 sm:mt-4 sm:flex-row lg:mt-8 lg:w-auto">
           {!shareLink ? (
             <>
               <button
                 onClick={() => setShowConfig(!showConfig)}
-                className={`px-4 py-2 border text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                className={`min-h-11 px-4 py-2 border text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
                   showConfig
                     ? 'bg-gray-100 border-gray-300 text-gray-700'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
@@ -240,7 +240,7 @@ const AvailabilityBookingCard = ({
               <button
                 onClick={onGenerateShareLink}
                 disabled={generatingLink}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-70 shadow-sm transition-all active:scale-[0.98]"
+                className="min-h-11 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-70 shadow-sm transition-all active:scale-[0.98]"
               >
                 {generatingLink ? 'Generating...' : 'Generate Link'}
               </button>
@@ -249,20 +249,20 @@ const AvailabilityBookingCard = ({
             <>
               <button
                 onClick={onCopyShareLink}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm"
+                className="min-h-11 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm"
               >
                 Copy Link
               </button>
               <button
                 onClick={onReset}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+                className="min-h-11 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
               >
                 Create Another
               </button>
               <button
                 onClick={onDeactivateShareLink}
                 disabled={deactivatingLink}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-70 flex items-center justify-center gap-2"
+                className="min-h-11 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-70 flex items-center justify-center gap-2"
               >
                 <StopOutlined />
                 {deactivatingLink ? 'Deactivating...' : 'Deactivate'}

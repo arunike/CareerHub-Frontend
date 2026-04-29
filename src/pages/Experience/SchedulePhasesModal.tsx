@@ -520,7 +520,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
         {/* Entry form */}
         {isFormEditing && (
           <div className="border border-emerald-200 rounded-xl bg-emerald-50/40 p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Phase Name *</label>
                 <Input
@@ -543,7 +543,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
                 <DatePicker
@@ -564,7 +564,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-emerald-100">
+            <div className="grid grid-cols-1 gap-3 border-t border-emerald-100 pt-3 sm:grid-cols-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Hourly Rate</label>
                 <InputNumber

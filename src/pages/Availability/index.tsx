@@ -415,6 +415,8 @@ const Availability = () => {
             onChange={(next) => setSearchParams({ view: next })}
           />
         }
+        onPrimaryAction={viewTab === 'text' ? fetchAvailability : undefined}
+        primaryActionLabel="Generate Availability"
       />
 
       {viewTab === 'calendar' ? (

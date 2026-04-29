@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
+import ModalShell from './ModalShell';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -26,46 +27,27 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-100">
-      <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div
-            className={clsx(
-              'w-12 h-12 rounded-full flex items-center justify-center shrink-0',
-              type === 'danger' && 'bg-red-100',
-              type === 'warning' && 'bg-amber-100',
-              type === 'info' && 'bg-blue-100'
-            )}
-          >
-            <ExclamationCircleOutlined
-              className={clsx(
-                'text-2xl',
-                type === 'danger' && 'text-red-600',
-                type === 'warning' && 'text-amber-600',
-                type === 'info' && 'text-blue-600'
-              )}
-            />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{message}</p>
-        </div>
-
-        <div className="flex gap-3 justify-end">
+    <ModalShell
+      isOpen={isOpen}
+      title={title}
+      onClose={onCancel}
+      maxWidthClass="max-w-sm"
+      bodyClassName="overflow-y-auto px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6"
+      titleClassName="text-lg font-bold text-gray-900"
+      footer={
+        <>
           <button
+            type="button"
             onClick={onCancel}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium"
+            className="min-h-11 flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:flex-none"
           >
             {cancelText}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             className={clsx(
-              'px-4 py-2.5 rounded-lg text-white transition font-medium shadow-sm',
+              'min-h-11 flex-1 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition shadow-sm sm:flex-none',
               type === 'danger'
                 ? 'bg-red-600 hover:bg-red-700'
                 : type === 'warning'
@@ -75,9 +57,32 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           >
             {confirmText}
           </button>
+        </>
+      }
+    >
+      <div className="mb-1 flex items-start gap-3 sm:mb-0">
+        <div
+          className={clsx(
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-full',
+            type === 'danger' && 'bg-red-100',
+            type === 'warning' && 'bg-amber-100',
+            type === 'info' && 'bg-blue-100'
+          )}
+        >
+          <ExclamationCircleOutlined
+            className={clsx(
+              'text-2xl',
+              type === 'danger' && 'text-red-600',
+              type === 'warning' && 'text-amber-600',
+              type === 'info' && 'text-blue-600'
+            )}
+          />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">{message}</p>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 };
 

@@ -36,12 +36,12 @@ const EventViewModal = ({ event, onClose, onEdit }: EventViewModalProps) => {
     >
       {event && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Row>
-            <Col span={12}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12}>
               <Text type="secondary">Date</Text>
               <div>{dayjs(event.date).format('MMMM D, YYYY')}</div>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Text type="secondary">Time</Text>
               <div>
                 {event.start_time} - {event.end_time}
