@@ -153,7 +153,7 @@ const PublicBookingManager = ({
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] gap-5">
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+      <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-4">
           <BulkActionHeader
             title={
@@ -167,7 +167,7 @@ const PublicBookingManager = ({
             onSelectAll={handleSelectAllLinks}
             onCancelSelection={() => setSelectedLinkIds([])}
             bulkActions={
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button size="small" icon={<StopOutlined />} onClick={handleBulkDeactivateLinks}>
                   Deactivate
                 </Button>
@@ -281,7 +281,7 @@ const PublicBookingManager = ({
         )}
       </section>
 
-      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+      <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-4">
           <BulkActionHeader
             title={
@@ -295,7 +295,7 @@ const PublicBookingManager = ({
             onSelectAll={handleSelectAllBookings}
             onCancelSelection={() => setSelectedBookingIds([])}
             bulkActions={
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button size="small" icon={<LockOutlined />} onClick={() => handleBulkToggleLockBookings(true)}>
                   Lock
                 </Button>

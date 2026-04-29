@@ -10,6 +10,7 @@ import {
   Card,
   Tooltip,
   Button,
+  Grid,
 } from 'antd';
 import { PlusOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -46,7 +47,18 @@ dayjs.extend(customParseFormat);
 
 const { Text } = Typography;
 
+type EventFormValues = {
+  date: dayjs.Dayjs;
+  start_time: dayjs.Dayjs;
+  end_time: dayjs.Dayjs;
+  [key: string]: unknown;
+};
+
+type ApiError = { response?: { status?: number; data?: { conflict?: boolean } } };
+
 const Events = () => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -313,7 +325,7 @@ const Events = () => {
     setIsDeleteAllOpen(false);
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: EventFormValues) => {
     const payload = {
       ...values,
       date: values.date.format('YYYY-MM-DD'),
@@ -355,8 +367,9 @@ const Events = () => {
       }
       setIsFormOpen(false);
       fetchData();
-    } catch (error: any) {
-      if (error.response?.status === 400 && error.response?.data?.conflict) {
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.response?.status === 400 && apiError.response?.data?.conflict) {
         Modal.confirm({
           title: 'Schedule Conflict',
           content: 'Conflict detected. Force save?',
@@ -439,7 +452,7 @@ const Events = () => {
           messageApi.success(`${realIds.length} events deleted`);
           setSelectedIds([]);
           fetchData();
-        } catch (error) {
+        } catch {
           messageApi.error('Failed to delete some events');
           fetchData();
         }
@@ -454,7 +467,7 @@ const Events = () => {
       messageApi.success(`${realIds.length} events ${lock ? 'locked' : 'unlocked'}`);
       setSelectedIds([]);
       fetchData();
-    } catch (error) {
+    } catch {
       messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some events`);
       fetchData();
     }
@@ -542,6 +555,7 @@ const Events = () => {
           />
 
           <Card
+            className="rounded-2xl border-gray-100 shadow-sm"
             title={
               <BulkActionHeader
                 selectedCount={selectedIds.length}
@@ -550,7 +564,7 @@ const Events = () => {
                 onCancelSelection={() => setSelectedIds([])}
                 title="All Events"
                 bulkActions={
-                  <>
+                  <div className="flex flex-wrap gap-2">
                     <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
                       Lock
                     </Button>
@@ -567,7 +581,7 @@ const Events = () => {
                         Delete
                       </Button>
                     </Tooltip>
-                  </>
+                  </div>
                 }
               />
             }
@@ -640,6 +654,7 @@ const Events = () => {
         onOk={handleImportUpload}
         okText="Upload"
         confirmLoading={loading}
+        width={isMobile ? '100%' : undefined}
       >
         <Input
           type="file"
@@ -655,6 +670,7 @@ const Events = () => {
         onOk={handleDeleteAll}
         okType="danger"
         okText="Delete All"
+        width={isMobile ? '100%' : undefined}
       >
         <Text>Are you sure you want to delete all events? This cannot be undone.</Text>
       </Modal>

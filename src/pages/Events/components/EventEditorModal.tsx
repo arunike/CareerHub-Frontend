@@ -78,12 +78,12 @@ const EventEditorModal = ({
         </Form.Item>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="date" label="Date" rules={[{ required: true }]}>
               <DatePicker style={{ width: '100%' }} />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="timezone" label="Timezone">
               <Select options={['PT', 'MT', 'CT', 'ET'].map((t) => ({ label: t, value: t }))} />
             </Form.Item>
@@ -91,7 +91,7 @@ const EventEditorModal = ({
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="start_time" label="Start Time" rules={[{ required: true }]}>
               <TimePicker
                 use12Hours
@@ -109,7 +109,7 @@ const EventEditorModal = ({
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={12}>
             <Form.Item name="end_time" label="End Time" rules={[{ required: true }]}>
               <TimePicker
                 use12Hours

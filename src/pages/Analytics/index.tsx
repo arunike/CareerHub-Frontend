@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import type { Event } from '../../types';
 import { getEvents, getApplications } from '../../api';
-import { RiseOutlined } from '@ant-design/icons';
 import {
   format,
   parseISO,
@@ -13,12 +12,18 @@ import {
   subWeeks,
 } from 'date-fns';
 import type { CareerApplication } from '../../types/application';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-import JobHuntAnalytics from '../../components/JobHuntAnalytics';
-import AvailabilityAnalytics from '../../components/AvailabilityAnalytics';
-import { message } from 'antd';
+import { message, Spin } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
+
+const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
+const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
+const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
+
+const SectionFallback = () => (
+  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <Spin size="large" />
+  </div>
+);
 
 const Analytics: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -215,56 +220,41 @@ const Analytics: React.FC = () => {
   return (
     <div className="space-y-6 w-full">
       {contextHolder}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-        </div>
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+          </div>
 
-        <div className="w-full sm:w-auto">
-          <SegmentedToggle
-            value={activeTab}
-            onChange={setActiveTab}
-            wrapperClassName="grid grid-cols-2 sm:flex"
-            options={[
-              { value: 'availability', label: 'Availability', activeClassName: 'bg-white text-gray-900 shadow-sm' },
-              { value: 'career', label: 'Job Hunt', activeClassName: 'bg-white text-blue-600 shadow-sm' },
-            ]}
-          />
+          <div className="w-full sm:w-auto">
+            <SegmentedToggle
+              value={activeTab}
+              onChange={setActiveTab}
+              wrapperClassName="grid grid-cols-2 sm:flex"
+              options={[
+                { value: 'availability', label: 'Availability', activeClassName: 'bg-white text-gray-900 shadow-sm' },
+                { value: 'career', label: 'Job Hunt', activeClassName: 'bg-white text-blue-600 shadow-sm' },
+              ]}
+            />
+          </div>
         </div>
       </div>
 
-      {activeTab === 'availability' && <AvailabilityAnalytics stats={availabilityStats} />}
+      {activeTab === 'availability' && (
+        <Suspense fallback={<SectionFallback />}>
+          <AvailabilityAnalytics stats={availabilityStats} />
+        </Suspense>
+      )}
 
       {activeTab === 'career' && (
         <div className="space-y-6 animate-in fade-in duration-500">
-          <JobHuntAnalytics applications={applications} />
+          <Suspense fallback={<SectionFallback />}>
+            <JobHuntAnalytics applications={applications} />
+          </Suspense>
 
-          {/* Weekly Volume Chart - Kept as supplementary info */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <RiseOutlined className="text-xl text-gray-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Weekly Activity (Last 12 Weeks)
-              </h3>
-            </div>
-            <div className="h-75 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={careerStats.weeklyActivity}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: 'none',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                    }}
-                  />
-                  <Bar dataKey="count" name="Applications" fill="#1890ff" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          <Suspense fallback={<SectionFallback />}>
+            <WeeklyActivityChart data={careerStats.weeklyActivity} />
+          </Suspense>
         </div>
       )}
     </div>

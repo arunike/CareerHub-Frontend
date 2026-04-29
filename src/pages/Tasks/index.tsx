@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, DatePicker, Empty, Form, Input, Modal, Select, Tag, Tooltip, message } from 'antd';
+import { Button, Card, DatePicker, Empty, Form, Grid, Input, Modal, Select, Tag, Tooltip, message } from 'antd';
 import { BellOutlined, CheckCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -24,7 +24,11 @@ const PRIORITY_COLOR: Record<Task['priority'], string> = {
   HIGH: 'red',
 };
 
+type ApiError = { errorFields?: unknown; response?: { data?: { error?: string } } };
+
 const Tasks: React.FC = () => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const location = useLocation();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
@@ -212,9 +216,10 @@ const Tasks: React.FC = () => {
       form.resetFields();
       fetchTasks();
       notifyTasksUpdated();
-    } catch (error: any) {
-      if (error?.errorFields) return;
-      messageApi.error(error?.response?.data?.error || 'Failed to save action item');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError?.errorFields) return;
+      messageApi.error(apiError?.response?.data?.error || 'Failed to save action item');
       console.error(error);
     } finally {
       setSaving(false);
@@ -453,7 +458,7 @@ const Tasks: React.FC = () => {
       </div>
 
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={`grid grid-cols-1 gap-4 ${isMobile ? '' : 'md:grid-cols-3'}`}>
           {STATUS_META.map((column) => (
             <Card
               key={column.key}
@@ -623,6 +628,7 @@ const Tasks: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
     </div>
   );
 };

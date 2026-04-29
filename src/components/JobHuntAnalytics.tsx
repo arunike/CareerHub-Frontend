@@ -3,7 +3,7 @@ import {
   HolderOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { Typography, message } from 'antd';
+import { Grid, Typography, message } from 'antd';
 import {
   DndContext,
   closestCenter,
@@ -24,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
+import type { CustomWidget } from '../hooks/useCustomWidgets';
 import { AVAILABLE_WIDGETS } from './jobHuntAnalytics/constants';
 import DashboardCustomizeModal from './jobHuntAnalytics/DashboardCustomizeModal';
 import CreateCustomWidgetModal from './jobHuntAnalytics/CreateCustomWidgetModal';
@@ -39,6 +40,8 @@ const { Text } = Typography;
 interface AnalyticsProps {
   applications: CareerApplication[];
 }
+
+type ValidationResult = NonNullable<CustomWidget['cachedData']>;
 
 const SortableItem = ({
   id,
@@ -76,6 +79,8 @@ const SortableItem = ({
 
 const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
   const [messageApi, contextHolder] = message.useMessage();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [enabledWidgets, setEnabledWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem('job_hunt_analytics_enabled');
     if (saved) {
@@ -117,7 +122,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
   const [newWidgetName, setNewWidgetName] = useState('');
   const [newWidgetQuery, setNewWidgetQuery] = useState('');
   const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<any>(null);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [newWidgetIcon, setNewWidgetIcon] = useState('FileTextOutlined');
   const [newWidgetColor, setNewWidgetColor] = useState('blue');
 
@@ -211,7 +216,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       return;
     }
 
-    const customWidget: any = {
+    const customWidget: CustomWidget = {
       id: `custom-${Date.now()}`,
       name: newWidgetName.trim(),
       query: newWidgetQuery,
@@ -351,7 +356,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
 
       if (['OFFER', 'ACCEPTED'].includes(status) && a.offer && a.date_applied) {
         try {
-          const offerDate = new Date((a.offer as any).created_at);
+          const offer = a.offer as { created_at?: string };
+          const offerDate = new Date(offer.created_at || '');
           const appliedDate = new Date(a.date_applied as string);
           if (!isNaN(offerDate.getTime()) && !isNaN(appliedDate.getTime())) {
             const days = Math.floor((offerDate.getTime() - appliedDate.getTime()) / (1000 * 3600 * 24));
@@ -360,7 +366,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
               daysToOfferCount++;
             }
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -409,7 +415,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         </div>
         <button
           onClick={() => setIsCustomizeOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
+          className={`${isMobile ? 'flex w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm' : 'hidden sm:flex sm:w-auto'} items-center justify-center gap-2 text-sm font-medium transition-all hover:bg-gray-100 hover:text-gray-700`}
         >
           <SettingOutlined />
           Customize Dashboard
@@ -423,7 +429,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
             {widgetOrder.map((id) => (
               <SortableItem key={id} id={id} className={getJobHuntWidgetColSpan(id, customWidgets)}>
                 {renderJobHuntWidget(id, stats, customWidgets, deleteCustomWidget)}

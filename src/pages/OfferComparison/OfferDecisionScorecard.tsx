@@ -590,8 +590,8 @@ const OfferDecisionScorecard = ({
   const leader = rows[0];
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm mb-12">
-      <div className="border-b border-slate-100 bg-white px-6 py-6 sm:px-8 sm:py-8">
+    <section className="mb-12 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-white px-4 py-5 sm:px-8 sm:py-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
@@ -605,7 +605,7 @@ const OfferDecisionScorecard = ({
               Weighted beyond total comp. Advanced signals only count after you fill them in.
             </p>
           </div>
-          <div className="flex items-center gap-4 flex-wrap justify-end">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             {extraHeaderNode}
             <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
               <div>
@@ -622,12 +622,12 @@ const OfferDecisionScorecard = ({
         </div>
       </div>
 
-      <div className="grid items-start gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid items-start gap-6 p-4 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="grid gap-6 xl:grid-cols-2">
           {rows.map((row) => (
             <article key={row.id} className="relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md">
               {/* Card Header */}
-              <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-5">
+              <div className="border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -660,7 +660,7 @@ const OfferDecisionScorecard = ({
                 <div className="mt-4 flex flex-wrap gap-2">
                   {!row.isSimulated && (row.offer as Offer).is_current && (
                     <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
-                      ✦ Current
+                      Current
                     </span>
                   )}
                   {(row.hasImmigrationSignal
@@ -675,7 +675,7 @@ const OfferDecisionScorecard = ({
               </div>
 
               {/* Card Body - Scores */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
                   {row.categories.map((category) => {
                     const app = applicationsById[row.applicationId];
@@ -796,7 +796,7 @@ const OfferDecisionScorecard = ({
               </div>
 
               {/* Compensation Breakdown */}
-              <div className="border-t border-slate-100 bg-slate-50/30 px-6 py-5">
+              <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 sm:px-6 sm:py-5">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Compensation & Benefits</h4>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                   <div>
@@ -895,10 +895,10 @@ const OfferDecisionScorecard = ({
               </div>
 
               {/* Action Bar */}
-              <div className="mt-auto border-t border-slate-100 bg-white px-4 py-3 flex items-center justify-between gap-2">
+              <div className="mt-auto border-t border-slate-100 bg-white px-4 py-3">
                 {row.isSimulated ? (
-                  <>
-                    <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="grid grid-cols-2 gap-2 sm:flex">
                       <button onClick={() => onEditScenario(String(row.offer.id))} className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">Edit</button>
                     </div>
                     <div>
@@ -912,10 +912,10 @@ const OfferDecisionScorecard = ({
                         <button className="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
                       </Popconfirm>
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                       <button onClick={() => onEditClick(row.offer as Offer)} className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">Edit</button>
                       <button onClick={() => onToggleCurrent(row.offer as Offer)} className={clsx("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors", (row.offer as Offer).is_current ? "text-slate-400 hover:bg-slate-50" : "text-slate-600 hover:bg-slate-50")}>
                         {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
@@ -945,14 +945,14 @@ const OfferDecisionScorecard = ({
                         </Popconfirm>
                       )}
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </article>
           ))}
         </div>
 
-        <aside className="sticky top-6 flex h-fit flex-col gap-6">
+        <aside className="flex h-fit flex-col gap-6 lg:sticky lg:top-6">
           {/* Simulation Settings */}
           <div className="rounded-3xl border border-slate-200 bg-slate-50/50 p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">

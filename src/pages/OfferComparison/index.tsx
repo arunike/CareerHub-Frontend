@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getOffers,
   createOffer,
@@ -9,44 +9,41 @@ import {
   updateApplication,
   deleteApplication,
 } from '../../api';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
 import { PlusOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
-import { message, Select } from 'antd';
-import { usaCities } from 'typed-usa-states';
+import { Button, message, Select, Spin } from 'antd';
 import { useSafeNullableFormState, useSafeFormState } from './useSafeFormState';
 import { useScenarioRows } from './useScenarioRows';
 import { useOfferReferenceData } from './useOfferReferenceData';
 import { useOfferAdjustmentsPersistence } from './useOfferAdjustmentsPersistence';
-import ScenarioOfferModal from './ScenarioOfferModal';
 import { getEffectiveTaxLocation } from '../../utils/applicationLocation';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import OfferDecisionScorecard from './OfferDecisionScorecard';
-import AddCurrentJobModal from './AddCurrentJobModal';
-import EditOfferModal from './EditOfferModal';
-import NegotiationAdvisorModal from './NegotiationAdvisorModal';
-import RaiseHistoryModal from './RaiseHistoryModal';
-import CompensationSimulator from './CompensationSimulator';
+import { loadUsCityOptions } from '../../lib/usCityOptions';
 import type { RaiseEntry } from '../../types';
 import {
   type ApplicationLike as Application,
   type BenefitItem,
-  DEFAULT_STATE_NAME_TO_ABBR,
   type OfferLike as Offer,
   type SimulatedOffer,
   computeBenefitsTotal,
   estimateColIndexFromCity,
 } from './calculations';
+
+const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
+const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
+const AddCurrentJobModal = lazy(() => import('./AddCurrentJobModal'));
+const EditOfferModal = lazy(() => import('./EditOfferModal'));
+const NegotiationAdvisorModal = lazy(() => import('./NegotiationAdvisorModal'));
+const RaiseHistoryModal = lazy(() => import('./RaiseHistoryModal'));
+const CompensationSimulator = lazy(() => import('./CompensationSimulator'));
+
+const LazySectionFallback = () => (
+  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <Spin size="large" />
+  </div>
+);
 
 const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
   id: item.id || fallbackId,
@@ -141,18 +138,7 @@ const OfferComparison = () => {
   );
   const [visibleOfferIds, setVisibleOfferIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const allUsCityOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          usaCities.map((city) => {
-            const abbr = DEFAULT_STATE_NAME_TO_ABBR[city.state] || city.state;
-            return `${city.name}, ${abbr}, United States`;
-          })
-        )
-      ),
-    []
-  );
+  const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
 
   const fetchData = async () => {
     try {
@@ -177,6 +163,14 @@ const OfferComparison = () => {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    loadUsCityOptions()
+      .then(setAllUsCityOptions)
+      .catch((error) => {
+        console.error('Failed to load US city options', error);
+      });
   }, []);
 
   useEffect(() => {
@@ -645,6 +639,29 @@ const OfferComparison = () => {
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading offers...</div>;
 
+  const compareOptions = [
+    {
+      label: 'Real Offers',
+      options: filteredOffers.map(o => ({
+        value: `real-${o.id}`,
+        label: getApplicationName(o.application)
+      }))
+    },
+    ...(simulatedOffers.length > 0
+      ? [
+          {
+            label: 'Custom Scenarios',
+            options: simulatedOffers.map(o => ({
+              value: `sim-${o.id}`,
+              label: typeof o.application === 'number'
+                ? `${getApplicationName(o.application)} (Scenario)`
+                : `${o.custom_company_name} - ${o.custom_role_title}`
+            }))
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="space-y-6">
       {contextHolder}
@@ -654,28 +671,28 @@ const OfferComparison = () => {
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         availableYears={availableYears}
+        extraActions={
+          <Button
+            className="toolbar-btn"
+            size="large"
+            onClick={() => {
+              resetScenarioDraft();
+              setScenarioModalMode('add');
+              setIsAddScenarioOpen(true);
+            }}
+          >
+            Add Scenario
+          </Button>
+        }
         onPrimaryAction={() => setIsAddJobOpen(true)}
         primaryActionLabel="Add Current Job"
         primaryActionIcon={<PlusOutlined />}
+        singleRowDesktop
       />
 
-      {/* Chart Section */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-96">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={(val) => `$${val / 1000}k`} />
-            <Tooltip formatter={(val: number | undefined) => `$${(val || 0).toLocaleString()}`} />
-            <Legend />
-            <Bar dataKey="Base" stackId="a" fill="#1890ff" />
-            <Bar dataKey="Bonus" stackId="a" fill="#8b5cf6" />
-            <Bar dataKey="Equity" stackId="a" fill="#ec4899" />
-            <Bar dataKey="SignOn" stackId="a" fill="#14b8a6" />
-            <Bar dataKey="Benefits" stackId="a" fill="#f59e0b" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <Suspense fallback={<LazySectionFallback />}>
+        <OfferComparisonChart data={chartData} />
+      </Suspense>
 
       <OfferDecisionScorecard
         extraHeaderNode={
@@ -687,24 +704,7 @@ const OfferComparison = () => {
             style={{ minWidth: 280, maxWidth: 450 }}
             maxTagCount="responsive"
             allowClear
-            options={[
-              {
-                label: 'Real Offers',
-                options: filteredOffers.map(o => ({
-                  value: `real-${o.id}`,
-                  label: getApplicationName(o.application)
-                }))
-              },
-              simulatedOffers.length > 0 ? {
-                label: 'Custom Scenarios',
-                options: simulatedOffers.map(o => ({
-                  value: `sim-${o.id}`,
-                  label: typeof o.application === 'number'
-                    ? `${getApplicationName(o.application)} (Scenario)`
-                    : `${o.custom_company_name} - ${o.custom_role_title}`
-                }))
-              } : null
-            ].filter(Boolean) as any}
+            options={compareOptions}
           />
         }
         filteredOffers={displayOffers}
@@ -763,83 +763,101 @@ const OfferComparison = () => {
         onDeleteClick={handleDeleteOffer}
       />
 
-      <CompensationSimulator scenarioRows={displayScenarioRows} />
+      <Suspense fallback={<LazySectionFallback />}>
+        <CompensationSimulator scenarioRows={displayScenarioRows} />
+      </Suspense>
 
-      <AddCurrentJobModal
-        isOpen={isAddJobOpen}
-        newJobName={newJobName}
-        onNameChange={setNewJobName}
-        onClose={() => setIsAddJobOpen(false)}
-        onSubmit={handleAddCurrentJob}
-      />
+      {isAddJobOpen ? (
+        <Suspense fallback={null}>
+          <AddCurrentJobModal
+            isOpen={isAddJobOpen}
+            newJobName={newJobName}
+            onNameChange={setNewJobName}
+            onClose={() => setIsAddJobOpen(false)}
+            onSubmit={handleAddCurrentJob}
+          />
+        </Suspense>
+      ) : null}
 
-      <EditOfferModal
-        editingOffer={editingOffer}
-        editingApp={editingApp}
-        offerModalMode={offerModalMode}
-        allUsCityOptions={allUsCityOptions}
-        adjustedByOfferId={adjustedByOfferId}
-        editingBenefitItems={editingBenefitItems}
-        patchEditingApp={patchEditingApp}
-        setEditingOfferField={setEditingOfferField}
-        addEditingBenefitItem={addEditingBenefitItem}
-        updateEditingBenefitItem={updateEditingBenefitItem}
-        removeEditingBenefitItem={removeEditingBenefitItem}
-        onClose={() => {
-          setEditingOffer(null);
-          setOfferModalMode('edit');
-        }}
-        onSave={handleSaveEdit}
-      />
+      {editingOffer ? (
+        <Suspense fallback={null}>
+          <EditOfferModal
+            editingOffer={editingOffer}
+            editingApp={editingApp}
+            offerModalMode={offerModalMode}
+            allUsCityOptions={allUsCityOptions}
+            adjustedByOfferId={adjustedByOfferId}
+            editingBenefitItems={editingBenefitItems}
+            patchEditingApp={patchEditingApp}
+            setEditingOfferField={setEditingOfferField}
+            addEditingBenefitItem={addEditingBenefitItem}
+            updateEditingBenefitItem={updateEditingBenefitItem}
+            removeEditingBenefitItem={removeEditingBenefitItem}
+            onClose={() => {
+              setEditingOffer(null);
+              setOfferModalMode('edit');
+            }}
+            onSave={handleSaveEdit}
+          />
+        </Suspense>
+      ) : null}
 
       {raiseHistoryOffer && (
-        <RaiseHistoryModal
-          open={!!raiseHistoryOffer}
-          onClose={() => setRaiseHistoryOffer(null)}
-          offer={raiseHistoryOffer}
-          companyName={applicationsById[raiseHistoryOffer.application]?.company_name ?? 'Current Job'}
-          roleTitle={applicationsById[raiseHistoryOffer.application]?.role_title ?? ''}
-          onSave={handleSaveRaiseHistory}
-        />
+        <Suspense fallback={null}>
+          <RaiseHistoryModal
+            open={!!raiseHistoryOffer}
+            onClose={() => setRaiseHistoryOffer(null)}
+            offer={raiseHistoryOffer}
+            companyName={applicationsById[raiseHistoryOffer.application]?.company_name ?? 'Current Job'}
+            roleTitle={applicationsById[raiseHistoryOffer.application]?.role_title ?? ''}
+            onSave={handleSaveRaiseHistory}
+          />
+        </Suspense>
       )}
 
-      <ScenarioOfferModal
-        isOpen={isAddScenarioOpen}
-        scenarioModalMode={scenarioModalMode}
-        editingScenarioId={editingScenarioId}
-        newScenario={newScenario}
-        applications={applications}
-        scenarioBenefitItems={scenarioBenefitItems}
-        customFormTaxPreview={customFormTaxPreview}
-        maritalStatus={maritalStatus}
-        stateTaxRate={stateTaxRate}
-        stateNameToAbbr={stateNameToAbbr}
-        cityCostOfLiving={cityCostOfLiving}
-        stateColBase={stateColBase}
-        effectiveMonthlyRent={effectiveMonthlyRent}
-        referenceColIndex={referenceColIndex}
-        referenceLocation={referenceLocation}
-        allUsCityOptions={allUsCityOptions}
-        onClose={() => {
-          setIsAddScenarioOpen(false);
-          resetScenarioDraft();
-        }}
-        onSubmit={addScenarioOffer}
-        setNewScenario={setNewScenario}
-        patchNewScenario={patchNewScenario}
-        setNewScenarioField={setNewScenarioField}
-        addScenarioBenefitItem={addScenarioBenefitItem}
-        updateScenarioBenefitItem={updateScenarioBenefitItem}
-        removeScenarioBenefitItem={removeScenarioBenefitItem}
-      />
+      {isAddScenarioOpen ? (
+        <Suspense fallback={null}>
+          <ScenarioOfferModal
+            isOpen={isAddScenarioOpen}
+            scenarioModalMode={scenarioModalMode}
+            editingScenarioId={editingScenarioId}
+            newScenario={newScenario}
+            applications={applications}
+            scenarioBenefitItems={scenarioBenefitItems}
+            customFormTaxPreview={customFormTaxPreview}
+            maritalStatus={maritalStatus}
+            stateTaxRate={stateTaxRate}
+            stateNameToAbbr={stateNameToAbbr}
+            cityCostOfLiving={cityCostOfLiving}
+            stateColBase={stateColBase}
+            effectiveMonthlyRent={effectiveMonthlyRent}
+            referenceColIndex={referenceColIndex}
+            referenceLocation={referenceLocation}
+            allUsCityOptions={allUsCityOptions}
+            onClose={() => {
+              setIsAddScenarioOpen(false);
+              resetScenarioDraft();
+            }}
+            onSubmit={addScenarioOffer}
+            setNewScenario={setNewScenario}
+            patchNewScenario={patchNewScenario}
+            setNewScenarioField={setNewScenarioField}
+            addScenarioBenefitItem={addScenarioBenefitItem}
+            updateScenarioBenefitItem={updateScenarioBenefitItem}
+            removeScenarioBenefitItem={removeScenarioBenefitItem}
+          />
+        </Suspense>
+      ) : null}
 
       {negotiatingOffer && (
-        <NegotiationAdvisorModal
-          offer={negotiatingOffer}
-          application={applicationsById[negotiatingOffer.application]}
-          open={!!negotiatingOffer}
-          onClose={() => setNegotiatingOffer(null)}
-        />
+        <Suspense fallback={null}>
+          <NegotiationAdvisorModal
+            offer={negotiatingOffer}
+            application={applicationsById[negotiatingOffer.application]}
+            open={!!negotiatingOffer}
+            onClose={() => setNegotiatingOffer(null)}
+          />
+        </Suspense>
       )}
 
     </div>
