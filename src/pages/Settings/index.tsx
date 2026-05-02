@@ -30,6 +30,7 @@ import {
   getAIProviderSettingsFromUserSettings,
   type AIProviderSettings,
 } from '../../lib/llmSettings';
+import GoogleSheetsSettings from './GoogleSheetsSettings';
 
 dayjs.extend(customParseFormat);
 
@@ -43,7 +44,7 @@ const Settings: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'organize' | 'navigation'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'integrations' | 'organize' | 'navigation'>('general');
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
@@ -628,7 +629,7 @@ const Settings: React.FC = () => {
             >
               {isLocked ? 'Locked' : 'Lock'}
             </Button>
-            {activeTab !== 'ai' && (
+            {activeTab !== 'ai' && activeTab !== 'integrations' && (
               <Button
                 size="large"
                 type="primary"
@@ -649,6 +650,7 @@ const Settings: React.FC = () => {
         {([
           { key: 'general', label: 'General' },
           { key: 'ai', label: 'AI Provider' },
+          { key: 'integrations', label: 'Integrations' },
           { key: 'organize', label: 'Organize' },
           { key: 'navigation', label: 'Navigation' },
         ] as const).map(tab => (
@@ -1069,6 +1071,8 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>}
+
+      {activeTab === 'integrations' && <GoogleSheetsSettings />}
 
       {/* Category Manager */}
       {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

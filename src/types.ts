@@ -152,6 +152,41 @@ export interface UserSettings {
   updated_at: string;
 }
 
+export type GoogleSheetSyncTarget = 'APPLICATIONS' | 'EVENTS';
+export type GoogleSheetSyncStatus = 'IDLE' | 'SUCCESS' | 'ERROR';
+
+export interface GoogleSheetSyncConfig {
+  id: number;
+  name: string;
+  sheet_url: string;
+  spreadsheet_id: string;
+  worksheet_name: string;
+  gid: string;
+  target_type: GoogleSheetSyncTarget;
+  column_mapping: Record<string, string>;
+  enabled: boolean;
+  header_row: number;
+  last_synced_at?: string | null;
+  last_status: GoogleSheetSyncStatus;
+  last_error: string;
+  last_result: {
+    created?: number;
+    updated?: number;
+    skipped?: number;
+    scanned_rows?: number;
+    errors?: Array<{ row?: number; error: string }>;
+    [key: string]: unknown;
+  };
+  share_with_email?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GoogleSheetSyncPreview {
+  headers: string[];
+  rows: Array<Record<string, string>>;
+}
+
 export interface ConflictAlert {
   id: number;
   event1: number;

@@ -34,14 +34,72 @@ import {
   type JobHuntStats,
 } from './jobHuntAnalytics/widgetRenderer';
 
+import type { UserSettings } from '../types';
 import type { CareerApplication } from '../types/application';
 const { Text } = Typography;
 
+type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
+
 interface AnalyticsProps {
   applications: CareerApplication[];
+  applicationStages?: ApplicationStage[];
 }
 
 type ValidationResult = NonNullable<CustomWidget['cachedData']>;
+
+const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
+  { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
+  { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
+  { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
+  { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
+  { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
+  { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
+  { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
+  { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
+  { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
+  { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
+  { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
+];
+
+const NON_FUNNEL_STATUSES = new Set(['ACCEPTED', 'REJECTED', 'GHOSTED']);
+const INACTIVE_STATUSES = new Set(['APPLIED', 'REJECTED', 'GHOSTED', 'ACCEPTED']);
+const RESPONDED_EXCLUDE_STATUSES = new Set(['APPLIED', 'GHOSTED']);
+
+const toTitleCase = (value: string) =>
+  value
+    .toLowerCase()
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const getStageLabel = (stage: ApplicationStage) => {
+  if (/^ROUND_\d+$/.test(stage.key)) {
+    return stage.label || toTitleCase(stage.key);
+  }
+  return stage.shortLabel || stage.label || toTitleCase(stage.key);
+};
+
+const getStageColor = (stage: ApplicationStage) => {
+  const color = stage.tone?.match(/bg-([a-z]+)-/)?.[1] || 'gray';
+  const palette: Record<string, string> = {
+    blue: 'bg-blue-100 border-blue-300 text-blue-700',
+    violet: 'bg-violet-100 border-violet-300 text-violet-700',
+    purple: 'bg-purple-100 border-purple-300 text-purple-700',
+    sky: 'bg-sky-100 border-sky-300 text-sky-700',
+    cyan: 'bg-cyan-100 border-cyan-300 text-cyan-700',
+    amber: 'bg-amber-100 border-amber-300 text-amber-700',
+    orange: 'bg-orange-100 border-orange-300 text-orange-700',
+    red: 'bg-red-100 border-red-300 text-red-700',
+    rose: 'bg-rose-100 border-rose-300 text-rose-700',
+    pink: 'bg-pink-100 border-pink-300 text-pink-700',
+    emerald: 'bg-emerald-100 border-emerald-300 text-emerald-700',
+    green: 'bg-green-100 border-green-300 text-green-700',
+    slate: 'bg-slate-100 border-slate-300 text-slate-700',
+    gray: 'bg-gray-100 border-gray-300 text-gray-700',
+  };
+  return palette[color] || palette.gray;
+};
 
 const SortableItem = ({
   id,
@@ -77,7 +135,7 @@ const SortableItem = ({
   );
 };
 
-const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
+const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationStages = DEFAULT_APPLICATION_STAGES }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -249,25 +307,23 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     // 1. Basic Counts
     const total = applications.length;
     const rejections = applications.filter((a) => a.status === 'REJECTED').length;
-    const offers = applications.filter(
-      (a) => a.status === 'OFFER' || a.status === 'ACCEPTED'
-    ).length;
+    const offers = applications.filter((a) => a.status === 'OFFER').length;
     const ghosted = applications.filter((a) => a.status === 'GHOSTED').length;
 
     // 2. Interview Stats
     const activeInterviews = applications.filter((a) =>
-      ['SCREEN', 'OA', 'ONSITE'].includes(a.status)
+      !INACTIVE_STATUSES.has(a.status)
     ).length;
 
     const totalInterviews = applications.filter(
       (a) =>
-        ['SCREEN', 'OA', 'ONSITE', 'OFFER', 'ACCEPTED'].includes(a.status) ||
+        (!RESPONDED_EXCLUDE_STATUSES.has(a.status) && a.status !== 'REJECTED') ||
         (a.status === 'REJECTED' && (a.current_round || 0) > 0)
     ).length;
 
     const interviewRate = total > 0 ? ((totalInterviews / total) * 100).toFixed(1) : '0.0';
     const respondedCount = applications.filter((a) =>
-      ['OA', 'SCREEN', 'ONSITE', 'OFFER', 'ACCEPTED', 'REJECTED'].includes(a.status)
+      !RESPONDED_EXCLUDE_STATUSES.has(a.status)
     ).length;
     const responseRate = total > 0 ? ((respondedCount / total) * 100).toFixed(1) : '0.0';
     const offerRate = total > 0 ? ((offers / total) * 100).toFixed(1) : '0.0';
@@ -338,7 +394,29 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     // 5. Funnel & Avg Days
     let daysToOfferSum = 0;
     let daysToOfferCount = 0;
-    const funnelSteps = { APPLIED: 0, OA: 0, SCREEN: 0, ONSITE: 0, OFFER: 0, ACCEPTED: 0 };
+    const stageMap = new Map<string, ApplicationStage>();
+    const configuredStages = applicationStages.length ? applicationStages : DEFAULT_APPLICATION_STAGES;
+    configuredStages.forEach((stage) => {
+      if (stage.key && !stageMap.has(stage.key)) {
+        stageMap.set(stage.key, stage);
+      }
+    });
+
+    applications.forEach((a) => {
+      if (!stageMap.has(a.status)) {
+        stageMap.set(a.status, {
+          key: a.status,
+          label: toTitleCase(a.status),
+          shortLabel: toTitleCase(a.status),
+          tone: 'bg-gray-500',
+        });
+      }
+    });
+
+    const funnelSteps: Record<string, number> = {};
+    Array.from(stageMap.keys()).forEach((status) => {
+      funnelSteps[status] = 0;
+    });
     const now = Date.now();
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const recentApplications30d = applications.filter((a) => {
@@ -351,10 +429,10 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     applications.forEach((a) => {
       const status = a.status as string;
       if (Object.prototype.hasOwnProperty.call(funnelSteps, status)) {
-        funnelSteps[status as keyof typeof funnelSteps]++;
+        funnelSteps[status]++;
       }
 
-      if (['OFFER', 'ACCEPTED'].includes(status) && a.offer && a.date_applied) {
+      if (status === 'OFFER' && a.offer && a.date_applied) {
         try {
           const offer = a.offer as { created_at?: string };
           const offerDate = new Date(offer.created_at || '');
@@ -373,14 +451,13 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     });
 
     const avgDaysToOffer = daysToOfferCount > 0 ? Math.round(daysToOfferSum / daysToOfferCount) : null;
-    const funnel = [
-      { label: 'Applied', value: funnelSteps.APPLIED, color: 'bg-blue-100 border-blue-300 text-blue-700' },
-      { label: 'OA', value: funnelSteps.OA, color: 'bg-indigo-100 border-indigo-300 text-indigo-700' },
-      { label: 'Screen', value: funnelSteps.SCREEN, color: 'bg-purple-100 border-purple-300 text-purple-700' },
-      { label: 'Onsite', value: funnelSteps.ONSITE, color: 'bg-pink-100 border-pink-300 text-pink-700' },
-      { label: 'Offer', value: funnelSteps.OFFER, color: 'bg-green-100 border-green-300 text-green-700' },
-      { label: 'Accepted', value: funnelSteps.ACCEPTED, color: 'bg-emerald-100 border-emerald-300 text-emerald-700' },
-    ];
+    const funnel = Array.from(stageMap.values())
+      .filter((stage) => !NON_FUNNEL_STATUSES.has(stage.key) || (funnelSteps[stage.key] || 0) > 0)
+      .map((stage) => ({
+        label: getStageLabel(stage),
+        value: funnelSteps[stage.key] || 0,
+        color: getStageColor(stage),
+      }));
 
     return {
       total,
@@ -402,7 +479,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       avgDaysToOffer,
       avgDaysToOfferSampleSize: daysToOfferCount,
     };
-  }, [applications]);
+  }, [applications, applicationStages]);
 
   return (
     <>
