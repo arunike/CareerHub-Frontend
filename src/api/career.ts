@@ -1,4 +1,11 @@
-import type { ApplicationTimelineEntry, Task, Experience, WeeklyReview } from '../types';
+import type {
+  ApplicationTimelineEntry,
+  GoogleSheetSyncConfig,
+  GoogleSheetSyncPreview,
+  Task,
+  Experience,
+  WeeklyReview,
+} from '../types';
 import api from './client';
 
 export interface JobBoardImportResult {
@@ -86,6 +93,25 @@ export const extractJobBoardPosting = (url: string) =>
   api.post<JobBoardImportResult>('/career/job-import/', { url });
 export const exportApplications = (format: string = 'csv') =>
   api.get('/career/applications/export/', { params: { fmt: format }, responseType: 'blob' });
+
+export const getGoogleSheetSyncs = () => api.get<GoogleSheetSyncConfig[]>('/career/google-sheet-syncs/');
+export const createGoogleSheetSync = (data: Partial<GoogleSheetSyncConfig>) =>
+  api.post<GoogleSheetSyncConfig>('/career/google-sheet-syncs/', data);
+export const updateGoogleSheetSync = (id: number, data: Partial<GoogleSheetSyncConfig>) =>
+  api.patch<GoogleSheetSyncConfig>(`/career/google-sheet-syncs/${id}/`, data);
+export const deleteGoogleSheetSync = (id: number) => api.delete(`/career/google-sheet-syncs/${id}/`);
+export const previewGoogleSheetSync = (data: Partial<GoogleSheetSyncConfig>) =>
+  api.post<{ ok: true; preview: GoogleSheetSyncPreview }>('/career/google-sheet-syncs/preview/', data);
+export const testGoogleSheetSync = (id: number) =>
+  api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(`/career/google-sheet-syncs/${id}/test/`);
+export const runGoogleSheetSync = (id: number) =>
+  api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
+    `/career/google-sheet-syncs/${id}/sync-now/`,
+  );
+export const resyncGoogleSheetSync = (id: number) =>
+  api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
+    `/career/google-sheet-syncs/${id}/resync/`,
+  );
 
 export const getOffers = () => api.get('/career/offers/');
 export const createOffer = (data: Record<string, unknown>) => api.post('/career/offers/', data);

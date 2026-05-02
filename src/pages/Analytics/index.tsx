@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import type { Event } from '../../types';
-import { getEvents, getApplications } from '../../api';
+import type { Event, UserSettings } from '../../types';
+import { getEvents, getApplications, getUserSettings } from '../../api';
 import {
   format,
   parseISO,
@@ -18,6 +18,7 @@ import SegmentedToggle from '../../components/SegmentedToggle';
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
+type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
 
 const SectionFallback = () => (
   <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -32,6 +33,7 @@ const Analytics: React.FC = () => {
 
   // Data States
   const [applications, setApplications] = useState<CareerApplication[]>([]);
+  const [applicationStages, setApplicationStages] = useState<ApplicationStage[]>([]);
 
   // Derived Stats
   const [availabilityStats, setAvailabilityStats] = useState({
@@ -59,12 +61,18 @@ const Analytics: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const [eventsResp, appsResp] = await Promise.all([getEvents(), getApplications()]);
+      const [eventsResp, appsResp, settingsResp] = await Promise.all([
+        getEvents(),
+        getApplications(),
+        getUserSettings().catch(() => null),
+      ]);
 
       const eventsData = eventsResp.data;
       const appsData = appsResp.data;
+      const stages = settingsResp?.data.application_stages;
 
       setApplications(appsData);
+      setApplicationStages(stages && stages.length > 0 ? stages : []);
 
       processAvailabilityData(eventsData);
       processCareerData(appsData);
@@ -150,7 +158,6 @@ const Analytics: React.FC = () => {
       ONSITE: 0,
       OFFER: 0,
       REJECTED: 0,
-      ACCEPTED: 0,
     };
 
     let activeCount = 0;
@@ -173,12 +180,12 @@ const Analytics: React.FC = () => {
       { name: 'Online Assessment', value: stageCounts.OA, fill: '#8b5cf6' },
       { name: 'Phone Screen', value: stageCounts.SCREEN, fill: '#ec4899' },
       { name: 'Onsite', value: stageCounts.ONSITE, fill: '#10b981' },
-      { name: 'Offer', value: stageCounts.OFFER + stageCounts.ACCEPTED, fill: '#059669' },
+      { name: 'Offer', value: stageCounts.OFFER, fill: '#059669' },
     ].filter((item) => item.value > 0);
 
     // 2. Response Rate Calculation
     const positiveResponses =
-      stageCounts.SCREEN + stageCounts.ONSITE + stageCounts.OFFER + stageCounts.ACCEPTED;
+      stageCounts.SCREEN + stageCounts.ONSITE + stageCounts.OFFER;
     const totalApplications = data.length;
     const responseRate =
       totalApplications > 0 ? Math.round((positiveResponses / totalApplications) * 100) : 0;
@@ -207,7 +214,7 @@ const Analytics: React.FC = () => {
       totalApplications,
       responseRate,
       activeProcesses: activeCount,
-      offers: stageCounts.OFFER + stageCounts.ACCEPTED,
+      offers: stageCounts.OFFER,
       funnelData,
       weeklyActivity: weeks,
     });
@@ -249,7 +256,7 @@ const Analytics: React.FC = () => {
       {activeTab === 'career' && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <Suspense fallback={<SectionFallback />}>
-            <JobHuntAnalytics applications={applications} />
+            <JobHuntAnalytics applications={applications} applicationStages={applicationStages} />
           </Suspense>
 
           <Suspense fallback={<SectionFallback />}>
