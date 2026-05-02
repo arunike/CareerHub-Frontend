@@ -13,14 +13,26 @@ import { Button, message } from 'antd';
 import {
   createGoogleSheetSync,
   deleteGoogleSheetSync,
+  connectGoogleOAuth,
+  disconnectGoogleOAuth,
+  getGoogleOAuthStatus,
+  getGoogleSpreadsheetTabs,
   getGoogleSheetSyncs,
+  getGoogleSpreadsheets,
   previewGoogleSheetSync,
   resyncGoogleSheetSync,
   runGoogleSheetSync,
   testGoogleSheetSync,
   updateGoogleSheetSync,
 } from '../../api';
-import type { GoogleSheetSyncConfig, GoogleSheetSyncPreview, GoogleSheetSyncTarget } from '../../types';
+import type {
+  GoogleOAuthStatus,
+  GoogleSheetSyncConfig,
+  GoogleSheetSyncPreview,
+  GoogleSheetSyncTarget,
+  GoogleSpreadsheetFile,
+  GoogleSpreadsheetTab,
+} from '../../types';
 
 type Draft = {
   id?: number;
@@ -29,9 +41,36 @@ type Draft = {
   worksheet_name: string;
   target_type: GoogleSheetSyncTarget;
   enabled: boolean;
+  sync_time: string;
+  sync_timezone: string;
   header_row: number;
   column_mapping: Record<string, string>;
 };
+
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time' },
+  { value: 'America/Denver', label: 'Mountain Time' },
+  { value: 'America/Chicago', label: 'Central Time' },
+  { value: 'America/New_York', label: 'Eastern Time' },
+  { value: 'UTC', label: 'UTC' },
+];
+
+const normalizeTimeInput = (value?: string | null) => (value || '22:00').slice(0, 5);
+const formatTimeLabel = (value: string) => {
+  const [hourText, minuteText] = value.split(':');
+  const hour = Number(hourText);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minuteText} ${period}`;
+};
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
+  const totalMinutes = index * 15;
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  return { value, label: formatTimeLabel(value) };
+});
+const spreadsheetIdFromUrl = (url: string) => url.match(/\/spreadsheets\/d\/([^/?#]+)/)?.[1] || '';
 
 const FIELD_OPTIONS: Record<GoogleSheetSyncTarget, Array<{ key: string; label: string; required?: boolean }>> = {
   APPLICATIONS: [
@@ -95,6 +134,8 @@ const emptyDraft = (target: GoogleSheetSyncTarget = 'APPLICATIONS'): Draft => ({
   worksheet_name: '',
   target_type: target,
   enabled: true,
+  sync_time: '22:00',
+  sync_timezone: 'America/Los_Angeles',
   header_row: 1,
   column_mapping: {},
 });
@@ -106,6 +147,8 @@ const toDraft = (config: GoogleSheetSyncConfig): Draft => ({
   worksheet_name: config.worksheet_name || '',
   target_type: config.target_type,
   enabled: config.enabled,
+  sync_time: normalizeTimeInput(config.sync_time),
+  sync_timezone: config.sync_timezone || 'America/Los_Angeles',
   header_row: config.header_row || 1,
   column_mapping: config.column_mapping || {},
 });
@@ -180,16 +223,34 @@ const GoogleSheetsSettings: React.FC = () => {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [preview, setPreview] = useState<GoogleSheetSyncPreview | null>(null);
   const [fieldToAdd, setFieldToAdd] = useState('');
+  const [googleStatus, setGoogleStatus] = useState<GoogleOAuthStatus | null>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [spreadsheets, setSpreadsheets] = useState<GoogleSpreadsheetFile[]>([]);
+  const [spreadsheetsLoading, setSpreadsheetsLoading] = useState(false);
+  const [worksheetTabs, setWorksheetTabs] = useState<GoogleSpreadsheetTab[]>([]);
+  const [worksheetTabsLoading, setWorksheetTabsLoading] = useState(false);
 
   const fields = useMemo(() => FIELD_OPTIONS[draft.target_type], [draft.target_type]);
+  const requiredFields = useMemo(() => fields.filter((field) => field.required), [fields]);
   const activeFields = useMemo(
     () => fields.filter((field) => Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key)),
     [draft.column_mapping, fields],
   );
+  const visibleMappingFields = useMemo(() => {
+    const activeOptionalFields = activeFields.filter((field) => !field.required);
+    return [...requiredFields, ...activeOptionalFields];
+  }, [activeFields, requiredFields]);
   const unmappedFields = useMemo(
-    () => fields.filter((field) => !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key)),
+    () => fields.filter(
+      (field) => !field.required && !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key),
+    ),
     [draft.column_mapping, fields],
   );
+  const missingRequiredFields = useMemo(
+    () => requiredFields.filter((field) => !(draft.column_mapping[field.key] || '').trim()),
+    [draft.column_mapping, requiredFields],
+  );
+  const canSaveDraft = Boolean(draft.name.trim() && draft.sheet_url.trim() && missingRequiredFields.length === 0);
   const sheetMappingHeaders = useMemo(() => {
     const headers = preview?.headers.filter((header) => header.trim()) || [];
     const extraMappedHeaders = Object.values(draft.column_mapping)
@@ -199,8 +260,12 @@ const GoogleSheetsSettings: React.FC = () => {
 
   const fetchConfigs = useCallback(async () => {
     try {
-      const response = await getGoogleSheetSyncs();
-      setConfigs(response.data);
+      const [syncsResponse, oauthResponse] = await Promise.all([
+        getGoogleSheetSyncs(),
+        getGoogleOAuthStatus(),
+      ]);
+      setConfigs(syncsResponse.data);
+      setGoogleStatus(oauthResponse.data);
     } catch (error) {
       messageApi.error('Failed to load Google Sheet syncs');
       console.error('Failed to load Google Sheet syncs', error);
@@ -212,6 +277,71 @@ const GoogleSheetsSettings: React.FC = () => {
   useEffect(() => {
     fetchConfigs();
   }, [fetchConfigs]);
+
+  const fetchSpreadsheets = useCallback(async () => {
+    if (!googleStatus?.connected || !googleStatus.can_list_spreadsheets) {
+      setSpreadsheets([]);
+      return;
+    }
+    setSpreadsheetsLoading(true);
+    try {
+      const response = await getGoogleSpreadsheets();
+      setSpreadsheets(response.data.spreadsheets);
+    } catch (error) {
+      messageApi.error('Could not load your Google Sheets');
+      console.error('Failed to load Google spreadsheets', error);
+    } finally {
+      setSpreadsheetsLoading(false);
+    }
+  }, [googleStatus?.can_list_spreadsheets, googleStatus?.connected, messageApi]);
+
+  useEffect(() => {
+    fetchSpreadsheets();
+  }, [fetchSpreadsheets]);
+
+  const fetchWorksheetTabs = useCallback(async (sheetUrl: string) => {
+    const spreadsheetId = spreadsheetIdFromUrl(sheetUrl);
+    if (!spreadsheetId || !googleStatus?.connected) {
+      setWorksheetTabs([]);
+      return;
+    }
+    setWorksheetTabsLoading(true);
+    try {
+      const response = await getGoogleSpreadsheetTabs(spreadsheetId);
+      setWorksheetTabs(response.data.tabs);
+      setDraft((current) => {
+        if (!response.data.tabs.length || current.worksheet_name) {
+          return current;
+        }
+        return { ...current, worksheet_name: response.data.tabs[0].title };
+      });
+    } catch (error) {
+      setWorksheetTabs([]);
+      console.error('Failed to load worksheet tabs', error);
+    } finally {
+      setWorksheetTabsLoading(false);
+    }
+  }, [googleStatus?.connected]);
+
+  useEffect(() => {
+    fetchWorksheetTabs(draft.sheet_url);
+  }, [draft.sheet_url, fetchWorksheetTabs]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleResult = params.get('google');
+    if (!googleResult) return;
+    if (googleResult === 'connected') {
+      messageApi.success('Google connected');
+      fetchConfigs();
+    } else if (googleResult === 'error') {
+      messageApi.error(params.get('message') || 'Google connection failed');
+    }
+    params.delete('google');
+    params.delete('message');
+    const nextQuery = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`);
+  }, [fetchConfigs, messageApi]);
 
   const updateDraft = (patch: Partial<Draft>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -289,9 +419,11 @@ const GoogleSheetsSettings: React.FC = () => {
   const draftPayload = () => ({
     name: draft.name.trim() || 'Preview',
     sheet_url: draft.sheet_url.trim(),
-    worksheet_name: draft.worksheet_name.trim(),
+    worksheet_name: draft.worksheet_name.trim() || worksheetTabs[0]?.title || '',
     target_type: draft.target_type,
     enabled: draft.enabled,
+    sync_time: draft.sync_time,
+    sync_timezone: draft.sync_timezone,
     header_row: draft.header_row,
     column_mapping: draft.column_mapping,
   });
@@ -322,6 +454,10 @@ const GoogleSheetsSettings: React.FC = () => {
   const saveDraft = async () => {
     if (!draft.name.trim() || !draft.sheet_url.trim()) {
       messageApi.warning('Name and Google Sheet link are required');
+      return;
+    }
+    if (missingRequiredFields.length > 0) {
+      messageApi.warning(`Map required fields first: ${missingRequiredFields.map((field) => field.label).join(', ')}`);
       return;
     }
     setSaving(true);
@@ -404,6 +540,45 @@ const GoogleSheetsSettings: React.FC = () => {
     }
   };
 
+  const connectGoogle = async () => {
+    setGoogleBusy(true);
+    try {
+      const response = await connectGoogleOAuth(window.location.href);
+      window.location.href = response.data.authorization_url;
+    } catch (error) {
+      messageApi.error('Google OAuth is not configured yet');
+      console.error('Failed to start Google OAuth', error);
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
+  const selectSpreadsheet = (url: string) => {
+    const sheet = spreadsheets.find((candidate) => candidate.url === url);
+    setPreview(null);
+    setWorksheetTabs([]);
+    setDraft((current) => ({
+      ...current,
+      name: current.name || sheet?.name || '',
+      sheet_url: url,
+      worksheet_name: '',
+    }));
+  };
+
+  const disconnectGoogle = async () => {
+    setGoogleBusy(true);
+    try {
+      await disconnectGoogleOAuth();
+      messageApi.success('Google disconnected');
+      fetchConfigs();
+    } catch (error) {
+      messageApi.error('Failed to disconnect Google');
+      console.error('Failed to disconnect Google', error);
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {contextHolder}
@@ -418,6 +593,37 @@ const GoogleSheetsSettings: React.FC = () => {
           <Button icon={<PlusOutlined />} onClick={() => { setDraft(emptyDraft()); setPreview(null); }}>
             New Sync
           </Button>
+        </div>
+
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-gray-900">Private Google Sheets Access</div>
+            <div className="text-xs text-gray-600 mt-0.5">
+              {googleStatus?.connected
+                ? googleStatus.can_list_spreadsheets
+                  ? `Connected as ${googleStatus.email || 'Google account'} with read-only Sheets access.`
+                  : `Connected as ${googleStatus.email || 'Google account'}. Reconnect once to enable sheet selection.`
+                : googleStatus?.configured
+                  ? 'Connect Google to read private sheets without making them public.'
+                  : 'Google OAuth is not configured on the backend yet.'}
+            </div>
+          </div>
+          {googleStatus?.connected ? (
+            <div className="flex flex-wrap gap-2">
+              {!googleStatus.can_list_spreadsheets && (
+                <Button type="primary" loading={googleBusy} onClick={connectGoogle}>
+                  Reconnect Google
+                </Button>
+              )}
+              <Button loading={googleBusy} onClick={disconnectGoogle}>
+                Disconnect
+              </Button>
+            </div>
+          ) : (
+            <Button type="primary" loading={googleBusy} disabled={!googleStatus?.configured} onClick={connectGoogle}>
+              Connect Google
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -443,29 +649,71 @@ const GoogleSheetsSettings: React.FC = () => {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Google Sheet Link</label>
-          <div className="relative">
-            <LinkOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="url"
-              className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={draft.sheet_url}
-              onChange={(event) => updateDraft({ sheet_url: event.target.value })}
-              placeholder="https://docs.google.com/spreadsheets/d/..."
-            />
+        <div className="space-y-3">
+          {googleStatus?.connected && googleStatus.can_list_spreadsheets && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Choose from Google Sheets</label>
+              <select
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                value={spreadsheets.some((sheet) => sheet.url === draft.sheet_url) ? draft.sheet_url : ''}
+                onChange={(event) => selectSpreadsheet(event.target.value)}
+                disabled={spreadsheetsLoading}
+              >
+                <option value="">{spreadsheetsLoading ? 'Loading sheets...' : 'Select a spreadsheet'}</option>
+                {spreadsheets.map((sheet) => (
+                  <option key={sheet.id} value={sheet.url}>
+                    {sheet.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Google Sheet Link</label>
+            <div className="relative">
+              <LinkOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="url"
+                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                value={draft.sheet_url}
+                onChange={(event) => updateDraft({ sheet_url: event.target.value })}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+              />
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Worksheet Tab</label>
-            <input
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={draft.worksheet_name}
-              onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
-              placeholder="Sheet1"
-            />
+            {worksheetTabs.length > 0 ? (
+              <>
+                <select
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  value={draft.worksheet_name || worksheetTabs[0]?.title || ''}
+                  onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
+                  disabled={worksheetTabsLoading}
+                >
+                  {worksheetTabs.map((tab) => (
+                    <option key={tab.id} value={tab.title}>
+                      {tab.title}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {worksheetTabs.length === 1
+                    ? 'Using the only worksheet tab in this spreadsheet.'
+                    : `${worksheetTabs.length} worksheet tabs found. Pick the one to sync.`}
+                </p>
+              </>
+            ) : (
+              <input
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                value={draft.worksheet_name}
+                onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
+                placeholder={worksheetTabsLoading ? 'Loading tabs...' : 'Sheet1'}
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Header Row</label>
@@ -476,6 +724,40 @@ const GoogleSheetsSettings: React.FC = () => {
               value={draft.header_row}
               onChange={(event) => updateDraft({ header_row: Number(event.target.value) || 1 })}
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Daily Sync Time</label>
+            <select
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              value={draft.sync_time}
+              onChange={(event) => updateDraft({ sync_time: event.target.value })}
+            >
+              {TIME_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Vercel wakes this job once daily; this time controls which syncs are due during that run.
+            </p>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sync Timezone</label>
+            <select
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              value={draft.sync_timezone}
+              onChange={(event) => updateDraft({ sync_timezone: event.target.value })}
+            >
+              {TIMEZONE_OPTIONS.map((timezone) => (
+                <option key={timezone.value} value={timezone.value}>
+                  {timezone.label} ({timezone.value})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -510,6 +792,30 @@ const GoogleSheetsSettings: React.FC = () => {
               Auto-map
             </Button>
           </div>
+          {requiredFields.length > 0 && (
+            <div className="border-t border-gray-200 bg-amber-50/60 px-4 py-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                Required mappings
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {requiredFields.map((field) => {
+                  const mappedHeader = draft.column_mapping[field.key] || '';
+                  return (
+                    <span
+                      key={field.key}
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        mappedHeader
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-white text-amber-800 ring-1 ring-amber-200'
+                      }`}
+                    >
+                      {field.label}: {mappedHeader || 'needs column'}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {sheetMappingHeaders.length > 0 ? (
             <div className="divide-y divide-gray-100">
               {sheetMappingHeaders.map((sheetHeader) => {
@@ -520,7 +826,14 @@ const GoogleSheetsSettings: React.FC = () => {
                 return (
                   <div key={sheetHeader} className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.1fr_auto] gap-2 px-4 py-3 items-center">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">{sheetHeader}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{sheetHeader}</div>
+                        {selectedField && fields.find((field) => field.key === selectedField)?.required && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                            Required
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500">Google Sheet column</div>
                     </div>
                     <select
@@ -549,13 +862,13 @@ const GoogleSheetsSettings: React.FC = () => {
                 );
               })}
             </div>
-          ) : activeFields.length === 0 ? (
+          ) : visibleMappingFields.length === 0 ? (
             <div className="px-4 py-5 text-sm text-gray-500">
               Save and test the sheet to generate the mapping from its column headers.
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {activeFields.map((field) => (
+              {visibleMappingFields.map((field) => (
               <div key={field.key} className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 px-4 py-3 items-center">
                 <label className="text-sm text-gray-700">
                   {field.label}
@@ -622,9 +935,15 @@ const GoogleSheetsSettings: React.FC = () => {
               checked={draft.enabled}
               onChange={(event) => updateDraft({ enabled: event.target.checked })}
             />
-            Run this sync during daily maintenance
+            Run this sync automatically each day
           </label>
-          <Button type="primary" icon={<CheckCircleOutlined />} loading={saving} onClick={saveDraft}>
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            loading={saving}
+            disabled={!canSaveDraft}
+            onClick={saveDraft}
+          >
             {draft.id ? 'Update Sync' : 'Create Sync'}
           </Button>
         </div>
@@ -665,6 +984,9 @@ const GoogleSheetsSettings: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-1 truncate">{config.sheet_url}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Daily at {normalizeTimeInput(config.sync_time)} {config.sync_timezone || 'America/Los_Angeles'}
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {config.last_synced_at
                         ? `Last sync ${new Date(config.last_synced_at).toLocaleString()} - ${resultText(config)}`

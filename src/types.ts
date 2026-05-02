@@ -165,6 +165,8 @@ export interface GoogleSheetSyncConfig {
   target_type: GoogleSheetSyncTarget;
   column_mapping: Record<string, string>;
   enabled: boolean;
+  sync_time: string;
+  sync_timezone: string;
   header_row: number;
   last_synced_at?: string | null;
   last_status: GoogleSheetSyncStatus;
@@ -185,6 +187,27 @@ export interface GoogleSheetSyncConfig {
 export interface GoogleSheetSyncPreview {
   headers: string[];
   rows: Array<Record<string, string>>;
+}
+
+export interface GoogleOAuthStatus {
+  configured: boolean;
+  connected: boolean;
+  email: string;
+  scopes: string[];
+  can_list_spreadsheets: boolean;
+}
+
+export interface GoogleSpreadsheetFile {
+  id: string;
+  name: string;
+  url: string;
+  modified_time: string;
+}
+
+export interface GoogleSpreadsheetTab {
+  id: number;
+  title: string;
+  index: number;
 }
 
 export interface ConflictAlert {

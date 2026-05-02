@@ -306,6 +306,23 @@
   text-align: center;
 }
 
+.login-page__legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: #94a3b8;
+}
+
+.login-page__legal-links a {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.login-page__legal-links a:hover {
+  color: #4f46e5;
+}
+
 .login-page__empty-state {
   display: flex;
   justify-content: center;

@@ -11,7 +11,7 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { getSignupStatus, type SignupStatusResponse } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
@@ -363,6 +363,11 @@ export default function LoginPage() {
                 {mode === 'signup'
                   ? 'Email is your account identity. Passwords are encrypted and never stored in plain text.'
                   : 'Your data is secured with industry-standard encryption and private by default.'}
+                <div className="login-page__legal-links">
+                  <Link to="/privacy">Privacy Policy</Link>
+                  <span aria-hidden="true">·</span>
+                  <Link to="/terms">Terms of Service</Link>
+                </div>
               </div>
             </div>
           </div>

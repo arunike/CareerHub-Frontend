@@ -1,5 +1,8 @@
 import type {
   ApplicationTimelineEntry,
+  GoogleOAuthStatus,
+  GoogleSpreadsheetFile,
+  GoogleSpreadsheetTab,
   GoogleSheetSyncConfig,
   GoogleSheetSyncPreview,
   Task,
@@ -102,6 +105,16 @@ export const updateGoogleSheetSync = (id: number, data: Partial<GoogleSheetSyncC
 export const deleteGoogleSheetSync = (id: number) => api.delete(`/career/google-sheet-syncs/${id}/`);
 export const previewGoogleSheetSync = (data: Partial<GoogleSheetSyncConfig>) =>
   api.post<{ ok: true; preview: GoogleSheetSyncPreview }>('/career/google-sheet-syncs/preview/', data);
+export const getGoogleOAuthStatus = () => api.get<GoogleOAuthStatus>('/career/google-oauth/status/');
+export const connectGoogleOAuth = (redirectUrl: string) =>
+  api.post<{ authorization_url: string }>('/career/google-oauth/connect/', { redirect_url: redirectUrl });
+export const disconnectGoogleOAuth = () => api.post<{ ok: true }>('/career/google-oauth/disconnect/');
+export const getGoogleSpreadsheets = () =>
+  api.get<{ spreadsheets: GoogleSpreadsheetFile[] }>('/career/google-oauth/spreadsheets/');
+export const getGoogleSpreadsheetTabs = (spreadsheetId: string) =>
+  api.get<{ tabs: GoogleSpreadsheetTab[] }>('/career/google-oauth/spreadsheet-tabs/', {
+    params: { spreadsheet_id: spreadsheetId },
+  });
 export const testGoogleSheetSync = (id: number) =>
   api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(`/career/google-sheet-syncs/${id}/test/`);
 export const runGoogleSheetSync = (id: number) =>
