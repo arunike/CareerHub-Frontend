@@ -22,6 +22,7 @@ const AIToolsPage = lazy(() => import('./pages/AITools'));
 const LoginPage = lazy(() => import('./pages/Login'));
 const NegotiationResultPage = lazy(() => import('./pages/NegotiationResult'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
+const LegalPage = lazy(() => import('./pages/Legal'));
 
 const RouteFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center">
@@ -37,6 +38,7 @@ function AppRoutes() {
     location.pathname.startsWith('/jd-report/') ||
     location.pathname.startsWith('/negotiation-result/');
   const isLoginPage = location.pathname === '/login';
+  const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms';
 
   if (isStandalone) {
     return (
@@ -55,6 +57,17 @@ function AppRoutes() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
+  if (isLegalPage) {
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/privacy" element={<LegalPage type="privacy" />} />
+          <Route path="/terms" element={<LegalPage type="terms" />} />
         </Routes>
       </Suspense>
     );
