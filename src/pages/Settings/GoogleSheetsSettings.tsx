@@ -9,7 +9,8 @@ import {
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, message } from 'antd';
+import { Button, message, TimePicker } from 'antd';
+import dayjs from 'dayjs';
 import {
   createGoogleSheetSync,
   deleteGoogleSheetSync,
@@ -56,20 +57,7 @@ const TIMEZONE_OPTIONS = [
 ];
 
 const normalizeTimeInput = (value?: string | null) => (value || '22:00').slice(0, 5);
-const formatTimeLabel = (value: string) => {
-  const [hourText, minuteText] = value.split(':');
-  const hour = Number(hourText);
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minuteText} ${period}`;
-};
-const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
-  const totalMinutes = index * 15;
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-  const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  return { value, label: formatTimeLabel(value) };
-});
+const syncTimeValue = (value: string) => dayjs(`2000-01-01T${normalizeTimeInput(value)}:00`);
 const spreadsheetIdFromUrl = (url: string) => url.match(/\/spreadsheets\/d\/([^/?#]+)/)?.[1] || '';
 
 const FIELD_OPTIONS: Record<GoogleSheetSyncTarget, Array<{ key: string; label: string; required?: boolean }>> = {
@@ -345,6 +333,21 @@ const GoogleSheetsSettings: React.FC = () => {
 
   const updateDraft = (patch: Partial<Draft>) => {
     setDraft((current) => ({ ...current, ...patch }));
+  };
+
+  const resetMeridiemColumnScroll = (open: boolean) => {
+    if (!open) return;
+    const reset = () => {
+      const columns = document.querySelectorAll(
+        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]',
+      );
+      columns.forEach((column) => {
+        (column as HTMLElement).scrollTop = 0;
+      });
+    };
+
+    requestAnimationFrame(reset);
+    setTimeout(reset, 120);
   };
 
   const updateMapping = (key: string, value: string) => {
@@ -730,17 +733,21 @@ const GoogleSheetsSettings: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Daily Sync Time</label>
-            <select
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-              value={draft.sync_time}
-              onChange={(event) => updateDraft({ sync_time: event.target.value })}
-            >
-              {TIME_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <TimePicker
+              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+              format="h:mm a"
+              value={syncTimeValue(draft.sync_time)}
+              onChange={(time) => {
+                if (time) updateDraft({ sync_time: time.format('HH:mm') });
+              }}
+              minuteStep={1}
+              use12Hours
+              inputReadOnly={false}
+              needConfirm={false}
+              allowClear={false}
+              popupClassName="event-timepicker-dropdown"
+              onOpenChange={resetMeridiemColumnScroll}
+            />
             <p className="text-xs text-gray-500 mt-1">
               Vercel wakes this job once daily; this time controls which syncs are due during that run.
             </p>
