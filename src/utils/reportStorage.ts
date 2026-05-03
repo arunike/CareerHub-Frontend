@@ -43,6 +43,9 @@ export function saveReport(report: JDMatchResult, jdText: string): StoredReport 
   
   const updated = [newReport, ...existing].slice(0, 50);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  void import('./aiArtifactStorage')
+    .then(({ syncReportArtifact }) => syncReportArtifact(newReport))
+    .catch(() => {});
   return newReport;
 }
 

@@ -45,6 +45,15 @@ body {
   transition: background 0.15s ease;
 }
 
+.ant-table-thead > tr > th.ant-table-column-sort,
+.ant-table-tbody > tr > td.ant-table-column-sort {
+  background: transparent !important;
+}
+
+.ant-table-tbody > tr:hover > td.ant-table-column-sort {
+  background: #fafafa !important;
+}
+
 /* Card refinements */
 .ant-card {
   border-color: #e2e8f0 !important;

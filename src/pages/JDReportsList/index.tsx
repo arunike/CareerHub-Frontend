@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal, Checkbox, Tooltip, Input } from 'antd';
 import {
@@ -9,6 +9,13 @@ import {
 } from '@ant-design/icons';
 import { getAllReports, deleteReport, deleteAllReports, toggleReportLock, updateReportTitle } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
+import {
+  deleteAllArtifactsByType,
+  deleteArtifactByClientId,
+  loadReportsFromArtifacts,
+  setArtifactLock,
+  updateArtifactTitle,
+} from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 
@@ -46,18 +53,54 @@ const JDReportsListPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingReport, setEditingReport] = useState<{ id: string, title: string } | null>(null);
+  const [usingBackendArtifacts, setUsingBackendArtifacts] = useState(false);
 
-  const handleDelete = useCallback((id: string) => {
-    deleteReport(id);
-    setReports(getAllReports());
+  const refreshReports = useCallback(async () => {
+    try {
+      const backendReports = await loadReportsFromArtifacts();
+      setReports(backendReports);
+      setUsingBackendArtifacts(true);
+    } catch {
+      setReports(getAllReports());
+      setUsingBackendArtifacts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refreshReports();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refreshReports]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (usingBackendArtifacts) {
+      try {
+        await deleteArtifactByClientId('JD_REPORT', id);
+      } catch {
+        deleteReport(id);
+      }
+    } else {
+      deleteReport(id);
+    }
     setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
     setDeletingId(null);
-  }, []);
+    refreshReports();
+  }, [refreshReports, usingBackendArtifacts]);
 
-  const handleToggleLock = useCallback((id: string) => {
-    toggleReportLock(id);
-    setReports(getAllReports());
-  }, []);
+  const handleToggleLock = useCallback(async (id: string) => {
+    const report = reports.find((item) => item.id === id);
+    if (usingBackendArtifacts && report) {
+      try {
+        await setArtifactLock('JD_REPORT', id, !report.isLocked);
+      } catch {
+        toggleReportLock(id);
+      }
+    } else {
+      toggleReportLock(id);
+    }
+    refreshReports();
+  }, [refreshReports, reports, usingBackendArtifacts]);
 
   const selectedReports = useMemo(() => 
     reports.filter(r => selectedIds.includes(r.id)),
@@ -83,12 +126,15 @@ const JDReportsListPage: React.FC = () => {
       okText: 'Delete Selected',
       okType: 'danger',
       onOk: () => {
-        deletableIds.forEach(id => deleteReport(id));
-        setReports(getAllReports());
+        Promise.all(
+          deletableIds.map((id) =>
+            usingBackendArtifacts ? deleteArtifactByClientId('JD_REPORT', id) : Promise.resolve(deleteReport(id)),
+          ),
+        ).finally(refreshReports);
         setSelectedIds([]);
       },
     });
-  }, [selectedIds, reports]);
+  }, [selectedIds, reports, refreshReports, usingBackendArtifacts]);
 
   const handleClearAll = useCallback(() => {
     const isAnyLocked = reports.some(r => r.isLocked);
@@ -100,12 +146,12 @@ const JDReportsListPage: React.FC = () => {
       okText: 'Clear All',
       okType: 'danger',
       onOk: () => {
-        deleteAllReports();
-        setReports(getAllReports());
+        (usingBackendArtifacts ? deleteAllArtifactsByType('JD_REPORT') : Promise.resolve(deleteAllReports()))
+          .finally(refreshReports);
         setSelectedIds([]);
       },
     });
-  }, [reports]);
+  }, [reports, refreshReports, usingBackendArtifacts]);
 
   const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
@@ -123,10 +169,14 @@ const JDReportsListPage: React.FC = () => {
   
   const handleUpdateTitle = useCallback(() => {
     if (!editingReport) return;
-    updateReportTitle(editingReport.id, editingReport.title);
-    setReports(getAllReports());
-    setEditingReport(null);
-  }, [editingReport]);
+    (usingBackendArtifacts
+      ? updateArtifactTitle('JD_REPORT', editingReport.id, editingReport.title)
+      : Promise.resolve(updateReportTitle(editingReport.id, editingReport.title))
+    ).finally(() => {
+      refreshReports();
+      setEditingReport(null);
+    });
+  }, [editingReport, refreshReports, usingBackendArtifacts]);
 
   const bulkActions = (
     <Tooltip title={hasLockedItemsSelected ? "Unlock selected reports to delete them" : ""}>

@@ -54,6 +54,9 @@ export function saveNegotiationResult(
   const existing = getAllNegotiationResults();
   const updated = [entry, ...existing].slice(0, 100);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  void import('./aiArtifactStorage')
+    .then(({ syncNegotiationResultArtifact }) => syncNegotiationResultArtifact(entry))
+    .catch(() => {});
   return entry;
 }
 

@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 
 type ChartDatum = {
+  id?: string;
   name: string;
   Base: number;
   Bonus: number;
@@ -24,7 +25,14 @@ type Props = {
 
 const OfferComparisonChart = ({ data }: Props) => {
   return (
-    <div className="h-[320px] rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:h-96 sm:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-4">
+        <h3 className="text-sm font-bold text-slate-900">First-Year Compensation</h3>
+        <p className="mt-1 text-xs font-medium text-slate-500">
+          Year 1 salary, bonus, equity, sign-on, and benefits. Future-year compensation may change.
+        </p>
+      </div>
+      <div className="h-[280px] sm:h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -39,6 +47,7 @@ const OfferComparisonChart = ({ data }: Props) => {
           <Bar dataKey="Benefits" stackId="a" fill="#f59e0b" />
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 };

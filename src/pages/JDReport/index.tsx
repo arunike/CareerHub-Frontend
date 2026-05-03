@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Progress } from 'antd';
 import {
@@ -14,6 +14,8 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { getReportById } from '../../utils/reportStorage';
+import type { StoredReport } from '../../utils/reportStorage';
+import { getReportArtifactByClientId } from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 
 const getScoreMeta = (score: number) => {
@@ -39,7 +41,16 @@ const requirementName = (value: unknown) => (isRecord(value) ? String(value.requ
 const JDReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const report = id ? getReportById(id) : null;
+  const [report, setReport] = useState<StoredReport | null>(() => (id ? getReportById(id) : null));
+
+  useEffect(() => {
+    if (!id) return;
+    getReportArtifactByClientId(id)
+      .then((backendReport) => {
+        setReport(backendReport || getReportById(id));
+      })
+      .catch(() => setReport(getReportById(id)));
+  }, [id]);
 
   if (!report) {
     return (

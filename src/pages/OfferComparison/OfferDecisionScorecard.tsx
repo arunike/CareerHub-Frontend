@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   annualizeAmount,
   type ApplicationLike as Application,
@@ -25,6 +25,8 @@ type Props = {
   onToggleCurrent: (offer: Offer) => void;
   onNegotiateClick: (offer: Offer) => void;
   onRaiseHistoryClick: (offer: Offer) => void;
+  onSaveSnapshotClick: (offer: Offer, row: DecisionRow) => void;
+  onSnapshotsClick: (offer: Offer) => void;
   onDeleteClick: (offer: Offer) => void;
 
   simulatedOffers: SimulatedOffer[];
@@ -36,11 +38,12 @@ type Props = {
   onEditScenario: (id: string) => void;
   onDeleteScenario: (id: string) => void;
   onAddScenario: () => void;
+  onDecisionOrderChange?: (orderedIds: string[]) => void;
 };
 
 type CategoryKey = 'financial' | 'workLife' | 'growth' | 'location' | 'brand' | 'team';
 
-type CategoryScore = {
+export type CategoryScore = {
   key: CategoryKey | 'visa';
   label: string;
   weight: number;
@@ -49,7 +52,7 @@ type CategoryScore = {
   isScored: boolean;
 };
 
-type DecisionRow = {
+export type DecisionRow = {
   id: string;
   applicationId: number;
   company: string;
@@ -550,6 +553,8 @@ const OfferDecisionScorecard = ({
   onToggleCurrent,
   onNegotiateClick,
   onRaiseHistoryClick,
+  onSaveSnapshotClick,
+  onSnapshotsClick,
   onDeleteClick,
   simulatedOffers,
   scenarioRows,
@@ -560,6 +565,7 @@ const OfferDecisionScorecard = ({
   onEditScenario,
   onDeleteScenario,
   onAddScenario,
+  onDecisionOrderChange,
   extraHeaderNode,
 }: Props & { extraHeaderNode?: React.ReactNode }) => {
   const [weights, setWeights] = usePersistedState<Record<CategoryKey, number>>(
@@ -576,6 +582,12 @@ const OfferDecisionScorecard = ({
     () => buildRows(filteredOffers, applicationsById, adjustedByOfferId, weights, simulatedOffers, scenarioRows),
     [adjustedByOfferId, applicationsById, filteredOffers, weights, simulatedOffers, scenarioRows]
   );
+
+  useEffect(() => {
+    onDecisionOrderChange?.(
+      rows.map((row) => `${row.isSimulated ? 'sim' : 'real'}-${row.offer.id}`)
+    );
+  }, [onDecisionOrderChange, rows]);
 
   if (rows.length === 0) return null;
 
@@ -920,30 +932,41 @@ const OfferDecisionScorecard = ({
                       <button onClick={() => onToggleCurrent(row.offer as Offer)} className={clsx("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors", (row.offer as Offer).is_current ? "text-slate-400 hover:bg-slate-50" : "text-slate-600 hover:bg-slate-50")}>
                         {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
                       </button>
-                      {!(row.offer as Offer).is_current && (
-                        <button onClick={() => onNegotiateClick(row.offer as Offer)} className="px-3 py-1.5 text-xs font-semibold text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">Negotiate</button>
-                      )}
-                      {(row.offer as Offer).is_current && (
-                        <button onClick={() => onRaiseHistoryClick(row.offer as Offer)} className="px-3 py-1.5 text-xs font-semibold text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">Raise History</button>
-                      )}
-                    </div>
-                    <div>
-                      {applicationsById[row.applicationId]?.is_locked ? (
-                        <Tooltip title="Unlock this application in Job Applications first.">
-                          <span className="px-3 py-1.5 text-xs font-semibold text-slate-300 cursor-not-allowed">Delete</span>
-                        </Tooltip>
-                      ) : (
-                        <Popconfirm
-                          title="Delete linked application?"
-                          description="This will delete the application and remove this offer from comparison."
-                          okText="Delete"
-                          cancelText="Cancel"
-                          okButtonProps={{ danger: true }}
-                          onConfirm={() => onDeleteClick(row.offer as Offer)}
-                        >
-                          <button className="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
-                        </Popconfirm>
-                      )}
+                      <button onClick={() => onSnapshotsClick(row.offer as Offer)} className="px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Snapshots</button>
+                      <Popover
+                        trigger="click"
+                        placement="topRight"
+                        content={
+                          <div className="flex w-44 flex-col py-1">
+                            <button onClick={() => onSaveSnapshotClick(row.offer as Offer, row)} className="rounded-md px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50">Save Snapshot</button>
+                            {(row.offer as Offer).is_current ? (
+                              <button onClick={() => onRaiseHistoryClick(row.offer as Offer)} className="rounded-md px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50">Raise History</button>
+                            ) : (
+                              <button onClick={() => onNegotiateClick(row.offer as Offer)} className="rounded-md px-3 py-2 text-left text-xs font-semibold text-purple-700 hover:bg-purple-50">Negotiate</button>
+                            )}
+                            {applicationsById[row.applicationId]?.is_locked ? (
+                              <Tooltip title="Unlock this application in Job Applications first.">
+                                <span className="rounded-md px-3 py-2 text-xs font-semibold text-slate-300 cursor-not-allowed">Delete</span>
+                              </Tooltip>
+                            ) : (
+                              <Popconfirm
+                                title="Delete linked application?"
+                                description="This will delete the application and remove this offer from comparison."
+                                okText="Delete"
+                                cancelText="Cancel"
+                                okButtonProps={{ danger: true }}
+                                onConfirm={() => onDeleteClick(row.offer as Offer)}
+                              >
+                                <button className="rounded-md px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
+                              </Popconfirm>
+                            )}
+                          </div>
+                        }
+                      >
+                        <button className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 rounded-lg transition-colors">
+                          More
+                        </button>
+                      </Popover>
                     </div>
                   </div>
                 )}
