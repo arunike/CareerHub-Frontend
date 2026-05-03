@@ -22,6 +22,7 @@ export const loadUsCityOptions = async () => {
       })
     )
   );
+  cachedUsCityOptions.unshift('Remote');
 
   return cachedUsCityOptions;
 };

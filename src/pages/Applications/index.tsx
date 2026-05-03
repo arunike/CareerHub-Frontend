@@ -3,7 +3,6 @@ import {
   Table,
   Button,
   Input,
-  AutoComplete,
   Select,
   Modal,
   Form,
@@ -146,8 +145,10 @@ const Applications = () => {
 
   // Filter State
   const [searchText, setSearchText] = useState('');
+  const [locationSearchText, setLocationSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [empTypeFilter, setEmpTypeFilter] = useState('ALL');
+  const [locationFilter, setLocationFilter] = useState('ALL');
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'applicationsSelectedYear',
     getCurrentYear(),
@@ -156,14 +157,14 @@ const Applications = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
-  const officeLocationValue = Form.useWatch('office_location', form) || '';
   const jobImportBookmarklet = useMemo(() => {
     const target = `${window.location.origin}/applications?jobUrl=`;
     return `javascript:(()=>{window.open(${JSON.stringify(target)}+encodeURIComponent(location.href),'_blank','noopener');})();`;
   }, []);
+
   const officeLocationOptions = useMemo(() => {
     const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9,\s]/g, '');
-    const query = normalize(officeLocationValue).trim();
+    const query = normalize(locationSearchText).trim();
     const queryTokens = query.split(/\s+/).filter(Boolean);
 
     const scored = allUsCityOptions
@@ -184,16 +185,8 @@ const Applications = () => {
       .slice(0, 80)
       .map((item) => ({ value: item.value, label: item.value }));
 
-    const officeQuery = officeLocationValue.trim().toLowerCase();
-    if (
-      officeLocationValue.trim() &&
-      !scored.some((item) => item.value.toLowerCase() === officeQuery)
-    ) {
-      scored.unshift({ value: officeLocationValue, label: officeLocationValue });
-    }
-
     return scored;
-  }, [allUsCityOptions, officeLocationValue]);
+  }, [allUsCityOptions, locationSearchText]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -512,8 +505,19 @@ const Applications = () => {
       (app.role_title || '').toLowerCase().includes(searchText.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
     const matchesEmpType = empTypeFilter === 'ALL' || app.employment_type === empTypeFilter;
-    return matchesSearch && matchesStatus && matchesEmpType;
+    const appLocation = app.office_location || app.location || '';
+    const matchesLocation = locationFilter === 'ALL' || appLocation === locationFilter;
+    return matchesSearch && matchesStatus && matchesEmpType && matchesLocation;
   });
+
+  const uniqueLocations = useMemo(() => {
+    const locations = new Set<string>();
+    applications.forEach((app) => {
+      const loc = app.office_location || app.location;
+      if (loc) locations.add(loc);
+    });
+    return Array.from(locations).sort();
+  }, [applications]);
 
   // Get available years and handle year change
   const availableYears = getAvailableYears(applications, 'date_applied');
@@ -600,6 +604,7 @@ const Applications = () => {
       ),
       sorter: (a: CareerApplication, b: CareerApplication) =>
         (a.company_details?.name || '').localeCompare(b.company_details?.name || ''),
+      defaultSortOrder: 'ascend' as const,
     },
     {
       title: 'Role',
@@ -668,6 +673,7 @@ const Applications = () => {
   ];
 
   const activeFilterCount = Number(Boolean(searchText)) +
+    Number(statusFilter !== 'ALL') + Number(empTypeFilter !== 'ALL') + Number(locationFilter !== 'ALL');
     Number(statusFilter !== 'ALL') +
     Number(empTypeFilter !== 'ALL');
 
@@ -777,6 +783,20 @@ const Applications = () => {
                     <Option key={t.value} value={t.value}>{t.label}</Option>
                   ))}
                 </Select>
+                <Select
+                  size="large"
+                  value={locationFilter}
+                  onChange={setLocationFilter}
+                  suffixIcon={<GlobalOutlined />}
+                  showSearch
+                  allowClear
+                  onClear={() => setLocationFilter('ALL')}
+                >
+                  <Option value="ALL">All Locations</Option>
+                  {uniqueLocations.map(loc => (
+                    <Option key={loc} value={loc}>{loc}</Option>
+                  ))}
+                </Select>
                 <Text type="secondary" className="text-sm">
                   {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
                 </Text>
@@ -819,7 +839,22 @@ const Applications = () => {
               <Option key={t.value} value={t.value}>{t.label}</Option>
             ))}
           </Select>
-          {(searchText || statusFilter !== 'ALL' || empTypeFilter !== 'ALL') && (
+          <Select
+            size="large"
+            value={locationFilter}
+            onChange={setLocationFilter}
+            style={{ width: 200 }}
+            suffixIcon={<GlobalOutlined />}
+            showSearch
+            allowClear
+            onClear={() => setLocationFilter('ALL')}
+          >
+            <Option value="ALL">All Locations</Option>
+            {uniqueLocations.map(loc => (
+              <Option key={loc} value={loc}>{loc}</Option>
+            ))}
+          </Select>
+          {(searchText || statusFilter !== 'ALL' || empTypeFilter !== 'ALL' || locationFilter !== 'ALL') && (
             <Text type="secondary" className="self-center text-sm">
               {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
             </Text>
@@ -1002,13 +1037,17 @@ const Applications = () => {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item name="office_location" label="Location">
-                <AutoComplete
+                <Select
                   className="w-full"
-                  value={officeLocationValue}
+                  showSearch
                   options={officeLocationOptions}
-                  onChange={(value) => form.setFieldValue('office_location', value)}
-                  onSearch={(value) => form.setFieldValue('office_location', value)}
-                  placeholder="San Jose, CA"
+                  onSearch={(value) => setLocationSearchText(value)}
+                  onChange={(value) => {
+                    form.setFieldValue('office_location', value);
+                    setLocationSearchText('');
+                  }}
+                  onBlur={() => setLocationSearchText('')}
+                  placeholder="e.g. San Francisco, CA"
                   allowClear
                   filterOption={false}
                 />
