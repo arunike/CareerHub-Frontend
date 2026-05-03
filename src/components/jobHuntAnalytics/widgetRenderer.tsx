@@ -142,10 +142,10 @@ export const renderJobHuntWidget = (
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Last 30 Days</p>
-            <p className="text-3xl font-bold text-indigo-600">{stats.recentApplications30d}</p>
+            <p className="text-3xl font-bold text-sky-600">{stats.recentApplications30d}</p>
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-500">
-            <ClockCircleOutlined className="mr-1.5 text-indigo-500 text-base" />
+            <ClockCircleOutlined className="mr-1.5 text-sky-500 text-base" />
             <span>Recent applications</span>
           </div>
         </div>
@@ -209,9 +209,9 @@ export const renderJobHuntWidget = (
                   <span
                     className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium shrink-0 ${
                       idx === 0
-                        ? 'bg-indigo-100 text-indigo-700'
+                        ? 'bg-sky-100 text-sky-700'
                         : idx === 1
-                          ? 'bg-indigo-50 text-indigo-600'
+                          ? 'bg-sky-50 text-sky-600'
                           : 'bg-gray-100 text-gray-600'
                     }`}
                   >
@@ -222,7 +222,7 @@ export const renderJobHuntWidget = (
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-indigo-500 rounded-full"
+                      className="h-full bg-sky-500 rounded-full"
                       style={{ width: `${stats.total > 0 ? (company.count / stats.total) * 100 : 0}%` }}
                     />
                   </div>
@@ -292,11 +292,11 @@ export const renderJobHuntWidget = (
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                   />
-                  <Bar dataKey="count" name="Applications" fill="#8b5cf6" radius={[0, 4, 4, 0]}>
+                  <Bar dataKey="count" name="Applications" fill="#3b82f6" radius={[0, 4, 4, 0]}>
                     {stats.rounds.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={['#1890ff', '#8b5cf6', '#ec4899', '#f43f5e'][index % 4]}
+                        fill={['#1890ff', '#3b82f6', '#ec4899', '#f43f5e'][index % 4]}
                       />
                     ))}
                   </Bar>
@@ -346,21 +346,21 @@ export const renderJobHuntWidget = (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <NodeIndexOutlined className="text-lg text-indigo-600" />
+                  <NodeIndexOutlined className="text-lg text-sky-600" />
                   <h3 className="text-lg font-semibold text-gray-900">Timeline Analytics</h3>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">Synced status history, stage movement, and sheet outcomes</p>
               </div>
-              <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-500">Avg to Interview</p>
-                <p className="text-2xl font-bold text-indigo-700">
+              <div className="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500">Avg to Interview</p>
+                <p className="text-2xl font-bold text-sky-700">
                   {stats.timelineAnalyticsLoading
                     ? '...'
                     : analytics?.average_time_to_interview_days != null
                       ? `${analytics.average_time_to_interview_days}d`
                       : '-'}
                 </p>
-                <p className="text-xs text-indigo-500">
+                <p className="text-xs text-sky-500">
                   {analytics?.time_to_interview_sample_size || 0} sample{analytics?.time_to_interview_sample_size === 1 ? '' : 's'}
                 </p>
               </div>
@@ -413,7 +413,7 @@ export const renderJobHuntWidget = (
                           <span className="truncate text-sm font-medium text-gray-700" title={stage.label}>{stage.label}</span>
                           <div className="h-2 rounded-full bg-gray-100">
                             <div
-                              className="h-full rounded-full bg-indigo-500"
+                              className="h-full rounded-full bg-sky-500"
                               style={{ width: `${Math.max(stage.conversion_rate * 100, stage.reached_count > 0 ? 5 : 0)}%` }}
                             />
                           </div>

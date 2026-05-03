@@ -118,11 +118,11 @@ function App() {
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#6366f1',
-          colorPrimaryHover: '#4f46e5',
-          colorPrimaryActive: '#4338ca',
-          colorLink: '#6366f1',
-          colorLinkHover: '#4f46e5',
+          colorPrimary: '#0ea5e9',
+          colorPrimaryHover: '#0284c7',
+          colorPrimaryActive: '#0369a1',
+          colorLink: '#0ea5e9',
+          colorLinkHover: '#0284c7',
           borderRadius: 10,
           borderRadiusLG: 14,
           borderRadiusSM: 6,
@@ -166,17 +166,17 @@ function App() {
             boxShadowTertiary: 'none',
           },
           Input: {
-            activeShadow: '0 0 0 3px rgba(99,102,241,0.12)',
+            activeShadow: '0 0 0 3px rgba(14,165,233,0.12)',
             paddingInline: 14,
           },
           Select: {
-            optionSelectedBg: '#eef2ff',
-            optionActiveBg: '#f5f3ff',
+            optionSelectedBg: '#f0f9ff',
+            optionActiveBg: '#eff6ff',
           },
           Menu: {
             activeBarBorderWidth: 0,
-            itemSelectedBg: '#eef2ff',
-            itemSelectedColor: '#6366f1',
+            itemSelectedBg: '#f0f9ff',
+            itemSelectedColor: '#0ea5e9',
             itemHoverBg: '#f8fafc',
             subMenuItemBg: '#fafafa',
             groupTitleColor: '#94a3b8',
@@ -190,16 +190,16 @@ function App() {
             borderRadiusSM: 20,
           },
           Tabs: {
-            inkBarColor: '#6366f1',
-            itemSelectedColor: '#6366f1',
-            itemHoverColor: '#4f46e5',
+            inkBarColor: '#0ea5e9',
+            itemSelectedColor: '#0ea5e9',
+            itemHoverColor: '#0284c7',
             titleFontSizeLG: 14,
           },
           Progress: {
-            defaultColor: '#6366f1',
+            defaultColor: '#0ea5e9',
           },
           Badge: {
-            colorPrimary: '#6366f1',
+            colorPrimary: '#0ea5e9',
           },
           Tooltip: {
             borderRadius: 8,

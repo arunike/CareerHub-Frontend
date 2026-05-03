@@ -37,7 +37,7 @@ type Props = ExperienceCompensationSnapshot & {
 const SEGMENTS = [
   { key: 'base', label: 'Base Salary', color: '#2563eb' },
   { key: 'bonus', label: 'Bonus', color: '#10b981' },
-  { key: 'equity', label: 'Equity / RSU', color: '#8b5cf6' },
+  { key: 'equity', label: 'Equity / RSU', color: '#3b82f6' },
 ] as const;
 
 const fmtMoney = (value: number) =>
@@ -524,7 +524,7 @@ const HourlyBreakdown = ({
       <div className={isAggregateDisplay ? 'grid gap-5' : 'grid gap-5 md:grid-cols-[320px,1fr]'}>
         <div className={`rounded-2xl border p-5 ${
           isManualTotal
-            ? 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-blue-50'
+            ? 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-50'
             : 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-blue-50'
         }`}>
           <div className="flex items-start justify-between gap-3">
@@ -581,7 +581,7 @@ const HourlyBreakdown = ({
           {!isAggregateDisplay && (
             <div className={`mt-4 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
               isManualTotal
-                ? 'border-violet-200 bg-violet-50 text-violet-700'
+                ? 'border-blue-200 bg-blue-50 text-blue-700'
                 : displayCalculationMode === 'manual_hours'
                   ? 'border-amber-200 bg-amber-50 text-amber-700'
                   : 'border-emerald-200 bg-emerald-50 text-emerald-700'

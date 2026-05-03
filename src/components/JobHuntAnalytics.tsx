@@ -50,7 +50,7 @@ type ValidationResult = NonNullable<CustomWidget['cachedData']>;
 
 const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
   { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-  { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
+  { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
   { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
   { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
   { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
@@ -85,7 +85,6 @@ const getStageColor = (stage: ApplicationStage) => {
   const color = stage.tone?.match(/bg-([a-z]+)-/)?.[1] || 'gray';
   const palette: Record<string, string> = {
     blue: 'bg-blue-100 border-blue-300 text-blue-700',
-    violet: 'bg-violet-100 border-violet-300 text-violet-700',
     purple: 'bg-purple-100 border-purple-300 text-purple-700',
     sky: 'bg-sky-100 border-sky-300 text-sky-700',
     cyan: 'bg-cyan-100 border-cyan-300 text-cyan-700',

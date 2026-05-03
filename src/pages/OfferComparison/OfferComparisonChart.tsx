@@ -33,7 +33,7 @@ const OfferComparisonChart = ({ data }: Props) => {
           <Tooltip formatter={(val: number | undefined) => `$${(val || 0).toLocaleString()}`} />
           <Legend />
           <Bar dataKey="Base" stackId="a" fill="#1890ff" />
-          <Bar dataKey="Bonus" stackId="a" fill="#8b5cf6" />
+          <Bar dataKey="Bonus" stackId="a" fill="#3b82f6" />
           <Bar dataKey="Equity" stackId="a" fill="#ec4899" />
           <Bar dataKey="SignOn" stackId="a" fill="#14b8a6" />
           <Bar dataKey="Benefits" stackId="a" fill="#f59e0b" />

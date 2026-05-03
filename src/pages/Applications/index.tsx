@@ -115,7 +115,7 @@ const Applications = () => {
   ]);
   const [appStages, setAppStages] = useState<ApplicationStage[]>([
     { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-    { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
+    { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
     { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
     { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
     { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
@@ -532,7 +532,6 @@ const Applications = () => {
 
   const APP_STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
     blue:   { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-    violet: { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
     sky:    { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
     amber:  { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
     emerald:{ bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
@@ -566,7 +565,7 @@ const Applications = () => {
     blue:   { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
     teal:   { bg: '#f0fdfa', color: '#14b8a6', border: '#99f6e4' },
     amber:  { bg: '#fffbeb', color: '#f59e0b', border: '#fde68a' },
-    purple: { bg: '#f5f3ff', color: '#8b5cf6', border: '#ddd6fe' },
+    purple: { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
     orange: { bg: '#fff7ed', color: '#f97316', border: '#fed7aa' },
     green:  { bg: '#f0fdf4', color: '#22c55e', border: '#bbf7d0' },
     gray:   { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb' },
@@ -643,7 +642,7 @@ const Applications = () => {
             <Button
               type="text"
               size="small"
-              icon={<ThunderboltOutlined style={{ color: '#6366f1' }} />}
+              icon={<ThunderboltOutlined style={{ color: '#0ea5e9' }} />}
               onClick={() => setCoverLetterApp(record)}
             />
           </Tooltip>
@@ -702,7 +701,7 @@ const Applications = () => {
 
       {/* Bulk action bar */}
       {selectedRowKeys.length > 0 && (
-        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-4 animate-in fade-in slide-in-from-top-2">
+        <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm mb-4 animate-in fade-in slide-in-from-top-2">
           <BulkActionHeader
             selectedCount={selectedRowKeys.length}
             totalCount={filteredData.length}
@@ -849,7 +848,7 @@ const Applications = () => {
                 <article
                   key={record.id}
                   className={`rounded-3xl border bg-white p-4 shadow-sm transition ${
-                    isSelected ? 'border-indigo-200 ring-2 ring-indigo-100' : 'border-slate-200'
+                    isSelected ? 'border-sky-200 ring-2 ring-sky-100' : 'border-slate-200'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -1103,7 +1102,7 @@ const Applications = () => {
         ]}
       >
         <div className="space-y-4">
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
+          <div className="rounded-2xl border border-sky-100 bg-sky-50/50 px-4 py-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-sm font-semibold text-slate-900">Paste a supported job posting URL</div>

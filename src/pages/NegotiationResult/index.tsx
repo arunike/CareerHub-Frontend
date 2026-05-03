@@ -77,7 +77,7 @@ const NegotiationResultPage: React.FC = () => {
           type="primary"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/ai-tools?tab=negotiation-results')}
-          style={{ background: '#6366f1', borderColor: '#6366f1' }}
+          style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}
         >
           View All Results
         </Button>
@@ -113,7 +113,7 @@ const NegotiationResultPage: React.FC = () => {
               </button>
               <span className="text-gray-200 select-none">|</span>
               <div className="flex items-center gap-2">
-                <ThunderboltOutlined style={{ color: '#6366f1', fontSize: 15 }} />
+                <ThunderboltOutlined style={{ color: '#0ea5e9', fontSize: 15 }} />
                 <span className="text-sm font-semibold text-gray-700">Negotiation Advisor</span>
               </div>
             </div>
@@ -136,9 +136,9 @@ const NegotiationResultPage: React.FC = () => {
 
           {/* Header */}
           <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 mb-4 shadow-sm">
-              <ThunderboltOutlined className="text-indigo-500 text-xs" />
-              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-3 py-1 mb-4 shadow-sm">
+              <ThunderboltOutlined className="text-sky-500 text-xs" />
+              <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">
                 AI Negotiation Advisory Report
               </span>
             </div>
@@ -190,12 +190,12 @@ const NegotiationResultPage: React.FC = () => {
 
           {/* Suggested Counter-Ask */}
           {ask && (
-            <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-sky-100 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <DollarOutlined className="text-indigo-600 text-sm" />
+                <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
+                  <DollarOutlined className="text-sky-600 text-sm" />
                 </div>
-                <span className="font-semibold text-indigo-700 text-sm">Suggested Counter-Ask</span>
+                <span className="font-semibold text-sky-700 text-sm">Suggested Counter-Ask</span>
               </div>
               <div className="flex flex-wrap gap-4 mb-3">
                 {[
@@ -208,12 +208,12 @@ const NegotiationResultPage: React.FC = () => {
                   .map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex flex-col items-center bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 min-w-[90px]"
+                      className="flex flex-col items-center bg-sky-50 border border-sky-100 rounded-xl px-4 py-3 min-w-[90px]"
                     >
                       <Text type="secondary" className="text-[10px] uppercase tracking-wider mb-1">
                         {label}
                       </Text>
-                      <Text strong style={{ color: '#6366f1' }} className="text-base">
+                      <Text strong style={{ color: '#0ea5e9' }} className="text-base">
                         {value}
                       </Text>
                     </div>

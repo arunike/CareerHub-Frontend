@@ -31,7 +31,7 @@ const getAvatarStyle = (name: string) => {
   const gradients = [
     'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
     'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
-    'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+    'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
     'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
   ];
   let hash = 0;

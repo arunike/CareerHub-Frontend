@@ -177,7 +177,7 @@ const Analytics: React.FC = () => {
     // Construct Funnel (Simplified Pipeline View)
     const funnelData = [
       { name: 'Applied', value: stageCounts.APPLIED, fill: '#1890ff' },
-      { name: 'Online Assessment', value: stageCounts.OA, fill: '#8b5cf6' },
+      { name: 'Online Assessment', value: stageCounts.OA, fill: '#3b82f6' },
       { name: 'Phone Screen', value: stageCounts.SCREEN, fill: '#ec4899' },
       { name: 'Onsite', value: stageCounts.ONSITE, fill: '#10b981' },
       { name: 'Offer', value: stageCounts.OFFER, fill: '#059669' },

@@ -134,9 +134,9 @@ export default function LegalPage({ type }: LegalPageProps) {
   const alternateLabel = type === 'privacy' ? 'Terms of Service' : 'Privacy Policy';
 
   return (
-    <main className="relative min-h-screen bg-slate-50 text-slate-600 selection:bg-indigo-500/30 overflow-hidden">
+    <main className="relative min-h-screen bg-slate-50 text-slate-600 selection:bg-sky-500/30 overflow-hidden">
       {/* Subtle glowing ambient backgrounds for light mode */}
-      <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-400/20 opacity-50 blur-[100px]" />
+      <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
       <div className="pointer-events-none absolute right-0 top-1/4 h-[500px] w-[500px] translate-x-1/3 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 pt-24 pb-5 sm:px-8 sm:pt-32 lg:px-10">
@@ -145,7 +145,7 @@ export default function LegalPage({ type }: LegalPageProps) {
         <div className="mx-auto w-full max-w-6xl">
           <section className="grid gap-8 py-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:py-16">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">{copy.eyebrow}</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">{copy.eyebrow}</p>
               <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-6xl">
                 {copy.title}
               </h1>
@@ -156,9 +156,9 @@ export default function LegalPage({ type }: LegalPageProps) {
                   return (
                     <span
                       key={item.label}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-indigo-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-sky-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-sky-200 hover:shadow-md"
                     >
-                      <Icon className="text-indigo-600" />
+                      <Icon className="text-sky-600" />
                       {item.label}
                     </span>
                   );
@@ -166,8 +166,8 @@ export default function LegalPage({ type }: LegalPageProps) {
               </div>
             </div>
 
-            <aside className="rounded-[28px] border border-white/80 bg-white/70 p-8 shadow-xl shadow-indigo-900/5 backdrop-blur-xl">
-              <p className="text-[11px] font-black uppercase tracking-wider text-indigo-600">Quick summary</p>
+            <aside className="rounded-[28px] border border-white/80 bg-white/70 p-8 shadow-xl shadow-sky-900/5 backdrop-blur-xl">
+              <p className="text-[11px] font-black uppercase tracking-wider text-sky-600">Quick summary</p>
               <ul className="mt-5 space-y-4">
                 {copy.summary.map((item) => (
                   <li key={item} className="flex gap-3 text-sm font-medium leading-6 text-slate-700">
@@ -186,12 +186,12 @@ export default function LegalPage({ type }: LegalPageProps) {
             {copy.sections.map((section, index) => (
               <article
                 key={section.title}
-                className={`group rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur-sm transition-all hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 ${
+                className={`group rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur-sm transition-all hover:border-sky-200 hover:shadow-xl hover:shadow-sky-500/5 ${
                   index === 0 ? 'lg:col-span-2' : ''
                 }`}
               >
                 <div className="flex flex-col items-start gap-5 sm:flex-row">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-black text-indigo-600 shadow-inner transition-transform group-hover:scale-110">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-xl font-black text-sky-600 shadow-inner transition-transform group-hover:scale-110">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <div>
@@ -201,7 +201,7 @@ export default function LegalPage({ type }: LegalPageProps) {
                       <ul className="mt-5 space-y-3">
                         {section.bullets.map((bullet) => (
                           <li key={bullet} className="flex gap-3 text-sm font-medium leading-6 text-slate-600">
-                            <CheckCircleOutlined className="mt-1 shrink-0 text-indigo-500" />
+                            <CheckCircleOutlined className="mt-1 shrink-0 text-sky-500" />
                             <span>{bullet}</span>
                           </li>
                         ))}
