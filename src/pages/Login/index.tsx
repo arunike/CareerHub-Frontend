@@ -185,10 +185,10 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-page__shell">
         <section className="login-page__hero">
-          <div className="login-page__eyebrow">
+          <Link to="/" className="login-page__eyebrow" style={{ textDecoration: 'none' }}>
             <SafetyCertificateOutlined />
             CareerHub
-          </div>
+          </Link>
 
           <div className="login-page__headline-wrap">
             <Typography.Title level={1} className="login-page__title">
@@ -218,10 +218,10 @@ export default function LoginPage() {
         <section className="login-page__panel">
           <div className="login-page__panel-inner">
             <div className="login-page__panel-top">
-              <div className="login-page__panel-brand">
+              <Link to="/" className="login-page__panel-brand" style={{ textDecoration: 'none' }}>
                 <SafetyCertificateOutlined className="login-page__panel-brand-icon" />
                 <span>CareerHub</span>
-              </div>
+              </Link>
               <Typography.Title level={2} className="login-page__panel-title">
                 {modeLabel.title}
               </Typography.Title>
@@ -364,6 +364,8 @@ export default function LoginPage() {
                   ? 'Email is your account identity. Passwords are encrypted and never stored in plain text.'
                   : 'Your data is secured with industry-standard encryption and private by default.'}
                 <div className="login-page__legal-links">
+                  <Link to="/">Back to Home</Link>
+                  <span aria-hidden="true">·</span>
                   <Link to="/privacy">Privacy Policy</Link>
                   <span aria-hidden="true">·</span>
                   <Link to="/terms">Terms of Service</Link>

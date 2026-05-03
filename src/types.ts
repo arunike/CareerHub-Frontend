@@ -176,6 +176,18 @@ export interface GoogleSheetSyncConfig {
     updated?: number;
     skipped?: number;
     scanned_rows?: number;
+    history?: Array<{
+      type: string;
+      row?: number;
+      company_name?: string;
+      role_title?: string;
+      field?: string;
+      before?: string;
+      after?: string;
+      message: string;
+      local_object_id?: number | null;
+      created_at?: string;
+    }>;
     errors?: Array<{ row?: number; error: string }>;
     [key: string]: unknown;
   };
@@ -187,6 +199,48 @@ export interface GoogleSheetSyncConfig {
 export interface GoogleSheetSyncPreview {
   headers: string[];
   rows: Array<Record<string, string>>;
+}
+
+export type GoogleSheetImportReviewAction = 'create' | 'update' | 'status_change' | 'possible_duplicate';
+export type GoogleSheetDuplicateResolution = 'merge' | 'keep_separate' | 'intentional_duplicate';
+
+export interface GoogleSheetImportReviewItem {
+  id: string;
+  row: number;
+  external_key: string;
+  action: GoogleSheetImportReviewAction;
+  company_name: string;
+  role_title: string;
+  status: string;
+  salary_range: string;
+  location: string;
+  job_link: string;
+  local_object_id?: number | null;
+  duplicate_row?: number | null;
+  duplicate_candidate?: {
+    local_object_id?: number | null;
+    row?: number | null;
+    fields: Record<string, string>;
+  } | null;
+  incoming_fields?: Record<string, string>;
+  title: string;
+  detail: string;
+  changes: Record<string, { from: string; to: string }>;
+}
+
+export interface GoogleSheetImportReview {
+  target_type: GoogleSheetSyncTarget;
+  summary: {
+    new_applications: number;
+    status_changes: number;
+    possible_duplicates: number;
+    updates: number;
+    unchanged: number;
+    errors: number;
+  };
+  items: GoogleSheetImportReviewItem[];
+  errors: Array<{ row?: number; error: string }>;
+  scanned_rows: number;
 }
 
 export interface GoogleOAuthStatus {
@@ -262,6 +316,41 @@ export interface ApplicationTimelineEntry {
   }>;
   created_at: string;
   updated_at: string;
+}
+
+export interface ApplicationTimelineAnalytics {
+  average_time_to_interview_days: number | null;
+  time_to_interview_sample_size: number;
+  stage_conversion: Array<{
+    key: string;
+    label: string;
+    reached_count: number;
+    current_count: number;
+    conversion_rate: number;
+  }>;
+  stale_threshold_days: number;
+  stale_in_stage: Array<{
+    application_id: number;
+    company: string;
+    role_title: string;
+    status: string;
+    status_label: string;
+    days_in_stage: number;
+    last_stage_date?: string | null;
+    source: string;
+  }>;
+  offer_rate_by_source: Array<{
+    name: string;
+    total: number;
+    offers: number;
+    offer_rate: number;
+  }>;
+  offer_rate_by_company: Array<{
+    name: string;
+    total: number;
+    offers: number;
+    offer_rate: number;
+  }>;
 }
 
 export interface Task {

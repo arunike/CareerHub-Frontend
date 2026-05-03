@@ -1,9 +1,12 @@
 import type {
   ApplicationTimelineEntry,
+  ApplicationTimelineAnalytics,
   GoogleOAuthStatus,
   GoogleSpreadsheetFile,
   GoogleSpreadsheetTab,
+  GoogleSheetDuplicateResolution,
   GoogleSheetSyncConfig,
+  GoogleSheetImportReview,
   GoogleSheetSyncPreview,
   Task,
   Experience,
@@ -90,6 +93,8 @@ export const createApplicationTimelineEntry = (data: Partial<ApplicationTimeline
   api.post<ApplicationTimelineEntry>('/career/application-timeline/', data);
 export const updateApplicationTimelineEntry = (id: number, data: Partial<ApplicationTimelineEntry>) =>
   api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
+export const getApplicationTimelineAnalytics = () =>
+  api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
 export const importApplications = (formData: FormData) =>
   api.post('/career/import/', formData, { headers: { 'Content-Type': undefined } });
 export const extractJobBoardPosting = (url: string) =>
@@ -124,6 +129,21 @@ export const runGoogleSheetSync = (id: number) =>
 export const resyncGoogleSheetSync = (id: number) =>
   api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
     `/career/google-sheet-syncs/${id}/resync/`,
+  );
+export const getGoogleSheetImportReview = (id: number, force = false) =>
+  api.post<{ ok: true; review: GoogleSheetImportReview }>(
+    `/career/google-sheet-syncs/${id}/import-review/`,
+    { force },
+  );
+export const applyGoogleSheetImportReview = (
+  id: number,
+  approvedItemIds: string[],
+  duplicateResolutions: Record<string, GoogleSheetDuplicateResolution> = {},
+  force = false,
+) =>
+  api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
+    `/career/google-sheet-syncs/${id}/apply-import-review/`,
+    { approved_item_ids: approvedItemIds, duplicate_resolutions: duplicateResolutions, force },
   );
 
 export const getOffers = () => api.get('/career/offers/');

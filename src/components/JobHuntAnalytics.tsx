@@ -33,8 +33,9 @@ import {
   renderJobHuntWidget,
   type JobHuntStats,
 } from './jobHuntAnalytics/widgetRenderer';
+import { getApplicationTimelineAnalytics } from '../api/career';
 
-import type { UserSettings } from '../types';
+import type { ApplicationTimelineAnalytics, UserSettings } from '../types';
 import type { CareerApplication } from '../types/application';
 const { Text } = Typography;
 
@@ -169,6 +170,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
+  const [timelineAnalytics, setTimelineAnalytics] = useState<ApplicationTimelineAnalytics | null>(null);
+  const [timelineAnalyticsLoading, setTimelineAnalyticsLoading] = useState(false);
 
   const {
     customWidgets,
@@ -194,6 +197,41 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
       return updated;
     });
   }, [enabledWidgets]);
+
+  useEffect(() => {
+    const migrationKey = 'job_hunt_analytics_timeline_widget_added';
+    if (localStorage.getItem(migrationKey)) return;
+
+    setEnabledWidgets(prev => {
+      if (prev.includes('timeline_analytics')) return prev;
+      const updated = [...prev, 'timeline_analytics'];
+      localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(updated));
+      return updated;
+    });
+    localStorage.setItem(migrationKey, 'true');
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    setTimelineAnalyticsLoading(true);
+    getApplicationTimelineAnalytics()
+      .then((response) => {
+        if (mounted) {
+          setTimelineAnalytics(response.data);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load timeline analytics', error);
+      })
+      .finally(() => {
+        if (mounted) {
+          setTimelineAnalyticsLoading(false);
+        }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -478,8 +516,10 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
       funnel,
       avgDaysToOffer,
       avgDaysToOfferSampleSize: daysToOfferCount,
+      timelineAnalytics,
+      timelineAnalyticsLoading,
     };
-  }, [applications, applicationStages]);
+  }, [applications, applicationStages, timelineAnalytics, timelineAnalyticsLoading]);
 
   return (
     <>

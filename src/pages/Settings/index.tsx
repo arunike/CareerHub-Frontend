@@ -31,6 +31,7 @@ import {
   type AIProviderSettings,
 } from '../../lib/llmSettings';
 import GoogleSheetsSettings from './GoogleSheetsSettings';
+import SecurityDashboard from './SecurityDashboard';
 
 dayjs.extend(customParseFormat);
 
@@ -44,7 +45,7 @@ const Settings: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'integrations' | 'organize' | 'navigation'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'integrations' | 'security' | 'organize' | 'navigation'>('general');
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
@@ -629,7 +630,7 @@ const Settings: React.FC = () => {
             >
               {isLocked ? 'Locked' : 'Lock'}
             </Button>
-            {activeTab !== 'ai' && activeTab !== 'integrations' && (
+            {activeTab !== 'ai' && activeTab !== 'integrations' && activeTab !== 'security' && (
               <Button
                 size="large"
                 type="primary"
@@ -651,6 +652,7 @@ const Settings: React.FC = () => {
           { key: 'general', label: 'General' },
           { key: 'ai', label: 'AI Provider' },
           { key: 'integrations', label: 'Integrations' },
+          { key: 'security', label: 'Security' },
           { key: 'organize', label: 'Organize' },
           { key: 'navigation', label: 'Navigation' },
         ] as const).map(tab => (
@@ -1073,6 +1075,8 @@ const Settings: React.FC = () => {
       </div>}
 
       {activeTab === 'integrations' && <GoogleSheetsSettings />}
+
+      {activeTab === 'security' && <SecurityDashboard />}
 
       {/* Category Manager */}
       {activeTab === 'organize' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
