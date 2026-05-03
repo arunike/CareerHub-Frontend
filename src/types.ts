@@ -164,6 +164,7 @@ export interface GoogleSheetSyncConfig {
   gid: string;
   target_type: GoogleSheetSyncTarget;
   column_mapping: Record<string, string>;
+  overwrite_strategies?: Record<string, string>;
   enabled: boolean;
   sync_time: string;
   sync_timezone: string;
@@ -194,6 +195,23 @@ export interface GoogleSheetSyncConfig {
   share_with_email?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface GoogleSheetSyncRun {
+  id: number;
+  config: number;
+  status: 'SUCCESS' | 'ERROR' | 'ROLLED_BACK';
+  started_at: string;
+  completed_at?: string | null;
+  summary: Record<string, unknown>;
+  changes: Array<{
+    action: string;
+    row_number: number;
+    diff: Record<string, { old: string | null; new: string | null }>;
+    history_id?: number | null;
+    local_object_id?: number | null;
+  }>;
+  error_details?: string;
 }
 
 export interface GoogleSheetSyncPreview {

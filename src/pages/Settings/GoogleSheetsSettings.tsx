@@ -11,7 +11,7 @@ import {
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, Checkbox, Dropdown, Modal, Segmented, Tag, message, TimePicker } from 'antd';
+import { Button, Checkbox, Dropdown, Modal, Segmented, Tag, message, TimePicker, Tabs } from 'antd';
 import dayjs from 'dayjs';
 import {
   applyGoogleSheetImportReview,
@@ -22,10 +22,12 @@ import {
   getGoogleOAuthStatus,
   getGoogleSheetImportReview,
   getGoogleSpreadsheetTabs,
+  getGoogleSheetSyncRuns,
   getGoogleSheetSyncs,
   getGoogleSpreadsheets,
   previewGoogleSheetSync,
   resyncGoogleSheetSync,
+  rollbackGoogleSheetSyncRun,
   runGoogleSheetSync,
   testGoogleSheetSync,
   updateGoogleSheetSync,
@@ -40,6 +42,7 @@ import type {
   GoogleSheetSyncTarget,
   GoogleSpreadsheetFile,
   GoogleSpreadsheetTab,
+  GoogleSheetSyncRun,
 } from '../../types';
 
 type Draft = {
@@ -53,6 +56,7 @@ type Draft = {
   sync_timezone: string;
   header_row: number;
   column_mapping: Record<string, string>;
+  overwrite_strategies: Record<string, string>;
 };
 
 const TIMEZONE_OPTIONS = [
@@ -133,6 +137,7 @@ const emptyDraft = (target: GoogleSheetSyncTarget = 'APPLICATIONS'): Draft => ({
   sync_timezone: 'America/Los_Angeles',
   header_row: 1,
   column_mapping: {},
+  overwrite_strategies: {},
 });
 
 const toDraft = (config: GoogleSheetSyncConfig): Draft => ({
@@ -146,6 +151,7 @@ const toDraft = (config: GoogleSheetSyncConfig): Draft => ({
   sync_timezone: config.sync_timezone || 'America/Los_Angeles',
   header_row: config.header_row || 1,
   column_mapping: config.column_mapping || {},
+  overwrite_strategies: config.overwrite_strategies || {},
 });
 
 const HEADER_ALIASES: Record<GoogleSheetSyncTarget, Record<string, string[]>> = {
@@ -225,16 +231,7 @@ const reviewSummaryText = (review: GoogleSheetImportReview) => {
   ].join(' / ');
 };
 
-const historyTypeMeta: Record<string, { label: string; color: string }> = {
-  created: { label: 'Created', color: 'green' },
-  updated: { label: 'Updated', color: 'blue' },
-  status_changed: { label: 'Status', color: 'purple' },
-  date_applied_backfilled: { label: 'Date', color: 'cyan' },
-  custom_stage_created: { label: 'Stage', color: 'geekblue' },
-  duplicate_matched: { label: 'Duplicate', color: 'orange' },
-  field_changed: { label: 'Changed', color: 'blue' },
-  skipped: { label: 'Skipped', color: 'default' },
-};
+
 
 const syncHistory = (config: GoogleSheetSyncConfig) => config.last_result?.history || [];
 const duplicateCompareFields = [
@@ -272,6 +269,8 @@ const GoogleSheetsSettings: React.FC = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [applyingReview, setApplyingReview] = useState(false);
   const [historyConfig, setHistoryConfig] = useState<GoogleSheetSyncConfig | null>(null);
+  const [syncRuns, setSyncRuns] = useState<GoogleSheetSyncRun[]>([]);
+  const [syncRunsLoading, setSyncRunsLoading] = useState(false);
 
   const fields = useMemo(() => FIELD_OPTIONS[draft.target_type], [draft.target_type]);
   const requiredFields = useMemo(() => fields.filter((field) => field.required), [fields]);
@@ -412,6 +411,13 @@ const GoogleSheetsSettings: React.FC = () => {
     }));
   };
 
+  const updateStrategy = (key: string, value: string) => {
+    setDraft((current) => ({
+      ...current,
+      overwrite_strategies: { ...current.overwrite_strategies, [key]: value },
+    }));
+  };
+
   const updateSheetColumnMapping = (sheetHeader: string, fieldKey: string) => {
     setDraft((current) => {
       const nextMapping = { ...current.column_mapping };
@@ -484,6 +490,7 @@ const GoogleSheetsSettings: React.FC = () => {
     sync_timezone: draft.sync_timezone,
     header_row: draft.header_row,
     column_mapping: draft.column_mapping,
+    overwrite_strategies: draft.overwrite_strategies,
   });
 
   const previewDraft = async () => {
@@ -601,12 +608,37 @@ const GoogleSheetsSettings: React.FC = () => {
         messageApi.success('No import changes need review');
       }
     } catch (error) {
-      messageApi.error('Could not build import review');
-      console.error('Failed to build Google Sheet import review', error);
+      messageApi.error('Failed to analyze sheet for import');
+      console.error('Failed to load Google Sheet import review', error);
       setReviewConfig(null);
     } finally {
       setReviewLoading(false);
       setBusyId(null);
+    }
+  };
+
+  const openHistory = async (config: GoogleSheetSyncConfig) => {
+    setHistoryConfig(config);
+    setSyncRunsLoading(true);
+    setSyncRuns([]);
+    try {
+      const response = await getGoogleSheetSyncRuns(config.id);
+      setSyncRuns(response.data.runs);
+    } catch (error) {
+      messageApi.error('Failed to load sync runs');
+    } finally {
+      setSyncRunsLoading(false);
+    }
+  };
+
+  const rollbackRun = async (config: GoogleSheetSyncConfig, runId: number) => {
+    try {
+      await rollbackGoogleSheetSyncRun(config.id, runId);
+      messageApi.success('Run successfully rolled back');
+      openHistory(config);
+      fetchConfigs();
+    } catch (error: any) {
+      messageApi.error(error.response?.data?.error || 'Failed to rollback run');
     }
   };
 
@@ -900,165 +932,207 @@ const GoogleSheetsSettings: React.FC = () => {
           </Button>
         </div>
 
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <TableOutlined className="text-gray-500" />
-              <span className="text-sm font-semibold text-gray-800">Column Mapping</span>
-            </div>
-            <Button
-              size="small"
-              icon={<ThunderboltOutlined />}
-              disabled={!preview?.headers.length}
-              onClick={() => {
-                if (!preview?.headers.length) return;
-                applyAutoMapping(preview.headers);
-                messageApi.success('Mapping regenerated from sheet headers');
-              }}
-            >
-              Auto-map
-            </Button>
-          </div>
-          {requiredFields.length > 0 && (
-            <div className="border-t border-gray-200 bg-amber-50/60 px-4 py-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-                Required mappings
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {requiredFields.map((field) => {
-                  const mappedHeader = draft.column_mapping[field.key] || '';
-                  return (
-                    <span
-                      key={field.key}
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        mappedHeader
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-white text-amber-800 ring-1 ring-amber-200'
-                      }`}
-                    >
-                      {field.label}: {mappedHeader || 'needs column'}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {sheetMappingHeaders.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {sheetMappingHeaders.map((sheetHeader) => {
-                const selectedField = fieldForSheetHeader(sheetHeader);
-                const availableFields = fields.filter(
-                  (field) => field.key === selectedField || !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key),
-                );
-                return (
-                  <div key={sheetHeader} className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.1fr_auto] gap-2 px-4 py-3 items-center">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">{sheetHeader}</div>
-                        {selectedField && fields.find((field) => field.key === selectedField)?.required && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                            Required
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-gray-500">Google Sheet column</div>
-                    </div>
-                    <select
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={selectedField}
-                      onChange={(event) => updateSheetColumnMapping(sheetHeader, event.target.value)}
-                    >
-                      <option value="">Do not import</option>
-                      {availableFields.map((field) => (
-                        <option key={field.key} value={field.key}>
-                          {field.label}{field.required ? ' *' : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 truncate min-h-[38px] flex items-center">
-                      {sampleForHeader(sheetHeader) || 'No sample value'}
+        <Tabs
+          defaultActiveKey="mapping"
+          items={[
+            {
+              key: 'mapping',
+              label: 'Column Mapping',
+              children: (
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <TableOutlined className="text-gray-500" />
+                      <span className="text-sm font-semibold text-gray-800">Column Mapping</span>
                     </div>
                     <Button
                       size="small"
-                      danger
-                      icon={<DeleteOutlined />}
-                      disabled={!selectedField || fields.find((field) => field.key === selectedField)?.required}
-                      onClick={() => selectedField && removeMappingField(selectedField)}
-                    />
+                      icon={<ThunderboltOutlined />}
+                      disabled={!preview?.headers.length}
+                      onClick={() => {
+                        if (!preview?.headers.length) return;
+                        applyAutoMapping(preview.headers);
+                        messageApi.success('Mapping regenerated from sheet headers');
+                      }}
+                    >
+                      Auto-map
+                    </Button>
                   </div>
-                );
-              })}
-            </div>
-          ) : visibleMappingFields.length === 0 ? (
-            <div className="px-4 py-5 text-sm text-gray-500">
-              Save and test the sheet to generate the mapping from its column headers.
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {visibleMappingFields.map((field) => (
-              <div key={field.key} className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 px-4 py-3 items-center">
-                <label className="text-sm text-gray-700">
-                  {field.label}
-                  {field.required && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                <select
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={draft.column_mapping[field.key] || ''}
-                  onChange={(event) => updateMapping(field.key, event.target.value)}
-                >
-                  <option value="">Choose sheet column</option>
-                  {preview?.headers.length ? (
-                    preview.headers.map((header) => (
-                      <option key={header} value={header}>{header}</option>
-                    ))
-                  ) : (
-                    <option value={draft.column_mapping[field.key] || DEFAULT_MAPPING[draft.target_type][field.key]}>
-                      {draft.column_mapping[field.key] || DEFAULT_MAPPING[draft.target_type][field.key]}
-                    </option>
+                  {requiredFields.length > 0 && (
+                    <div className="border-t border-gray-200 bg-amber-50/60 px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                        Required mappings
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {requiredFields.map((field) => {
+                          const mappedHeader = draft.column_mapping[field.key] || '';
+                          return (
+                            <span
+                              key={field.key}
+                              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                mappedHeader
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-white text-amber-800 ring-1 ring-amber-200'
+                              }`}
+                            >
+                              {field.label}: {mappedHeader || 'needs column'}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                </select>
-                <Button
-                  size="small"
-                  danger
-                  icon={<DeleteOutlined />}
-                  disabled={field.required}
-                  onClick={() => removeMappingField(field.key)}
-                />
-              </div>
-              ))}
-            </div>
-          )}
-          {unmappedFields.length > 0 && (
-            <div className="bg-white px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
-              <select
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                value={fieldToAdd}
-                onChange={(event) => setFieldToAdd(event.target.value)}
-              >
-                <option value="">Add another field</option>
-                {unmappedFields.map((field) => (
-                  <option key={field.key} value={field.key}>
-                    {field.label}
-                  </option>
-                ))}
-              </select>
-              <Button icon={<PlusOutlined />} onClick={addMappingField} disabled={!fieldToAdd}>
-                Add Field
-              </Button>
-            </div>
-          )}
-          {preview?.headers.length ? (
-            <div className="bg-slate-50 border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
-              Showing {preview.headers.filter((header) => header.trim()).length} sheet columns. Columns set to "Do not import" are ignored during sync.
-            </div>
-          ) : null}
-        </div>
+                  {sheetMappingHeaders.length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                      {sheetMappingHeaders.map((sheetHeader) => {
+                        const selectedField = fieldForSheetHeader(sheetHeader);
+                        const availableFields = fields.filter(
+                          (field) => field.key === selectedField || !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key),
+                        );
+                        return (
+                          <div key={sheetHeader} className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.1fr_auto] gap-2 px-4 py-3 items-center">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 truncate">{sheetHeader}</div>
+                                {selectedField && fields.find((field) => field.key === selectedField)?.required && (
+                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                                    Required
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500">Google Sheet column</div>
+                            </div>
+                            <select
+                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              value={selectedField}
+                              onChange={(event) => updateSheetColumnMapping(sheetHeader, event.target.value)}
+                            >
+                              <option value="">Do not import</option>
+                              {availableFields.map((field) => (
+                                <option key={field.key} value={field.key}>
+                                  {field.label}{field.required ? ' *' : ''}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 truncate min-h-[38px] flex items-center">
+                              {sampleForHeader(sheetHeader) || 'No sample value'}
+                            </div>
+                            <Button
+                              size="small"
+                              danger
+                              icon={<DeleteOutlined />}
+                              disabled={!selectedField || !!fields.find((field) => field.key === selectedField)?.required}
+                              onClick={() => selectedField && removeMappingField(selectedField)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : visibleMappingFields.length === 0 ? (
+                    <div className="px-4 py-5 text-sm text-gray-500">
+                      Save and test the sheet to generate the mapping from its column headers.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100">
+                      {visibleMappingFields.map((field) => (
+                      <div key={field.key} className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 px-4 py-3 items-center">
+                        <label className="text-sm text-gray-700">
+                          {field.label}
+                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                        <select
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                          value={draft.column_mapping[field.key] || ''}
+                          onChange={(event) => updateMapping(field.key, event.target.value)}
+                        >
+                          <option value="">Choose sheet column</option>
+                          {preview?.headers.length ? (
+                            preview.headers.map((header) => (
+                              <option key={header} value={header}>{header}</option>
+                            ))
+                          ) : (
+                            <option value={draft.column_mapping[field.key] || DEFAULT_MAPPING[draft.target_type][field.key]}>
+                              {draft.column_mapping[field.key] || DEFAULT_MAPPING[draft.target_type][field.key]}
+                            </option>
+                          )}
+                        </select>
+                        <Button
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          disabled={field.required}
+                          onClick={() => removeMappingField(field.key)}
+                        />
+                      </div>
+                      ))}
+                    </div>
+                  )}
+                  {unmappedFields.length > 0 && (
+                    <div className="bg-white px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
+                      <select
+                        className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        value={fieldToAdd}
+                        onChange={(event) => setFieldToAdd(event.target.value)}
+                      >
+                        <option value="">Add another field</option>
+                        {unmappedFields.map((field) => (
+                          <option key={field.key} value={field.key}>
+                            {field.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Button icon={<PlusOutlined />} onClick={addMappingField} disabled={!fieldToAdd}>
+                        Add Field
+                      </Button>
+                    </div>
+                  )}
+                  {preview?.headers.length ? (
+                    <div className="bg-slate-50 border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
+                      Showing {preview.headers.filter((header) => header.trim()).length} sheet columns. Columns set to "Do not import" are ignored during sync.
+                    </div>
+                  ) : null}
+                </div>
+              )
+            },
+            {
+              key: 'strategy',
+              label: 'Overwrite Strategy',
+              children: (
+                <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <p className="text-sm text-gray-600">
+                      Choose how we handle fields when an application already exists.
+                    </p>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {visibleMappingFields.map((field) => (
+                      <div key={field.key} className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-4 px-4 py-3 items-center">
+                        <label className="text-sm font-medium text-gray-700">
+                          {field.label}
+                        </label>
+                        <Segmented
+                          options={[
+                            { label: 'Always Overwrite', value: 'always' },
+                            { label: 'Only if Empty', value: 'if_empty' },
+                            { label: 'Never Overwrite', value: 'never' },
+                          ]}
+                          value={draft.overwrite_strategies[field.key] || 'always'}
+                          onChange={(value) => updateStrategy(field.key, value.toString())}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+          ]}
+        />
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="pt-5 mt-2 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
             <input
               type="checkbox"
-              className="rounded border-gray-300"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
               checked={draft.enabled}
               onChange={(event) => updateDraft({ enabled: event.target.checked })}
             />
@@ -1066,6 +1140,7 @@ const GoogleSheetsSettings: React.FC = () => {
           </label>
           <Button
             type="primary"
+            size="large"
             icon={<CheckCircleOutlined />}
             loading={saving}
             disabled={!canSaveDraft}
@@ -1163,6 +1238,7 @@ const GoogleSheetsSettings: React.FC = () => {
                           { key: 'edit', label: 'Edit' },
                           { key: 'test', label: 'Test connection' },
                           { key: 'resync', label: 'Resync all rows' },
+                          { key: 'history', label: 'View Sync History' },
                           { type: 'divider' },
                           { key: 'delete', label: 'Delete sync', danger: true },
                         ],
@@ -1174,6 +1250,8 @@ const GoogleSheetsSettings: React.FC = () => {
                             testConfig(config);
                           } else if (key === 'resync') {
                             syncConfig(config, true);
+                          } else if (key === 'history') {
+                            openHistory(config);
                           } else if (key === 'delete') {
                             removeConfig(config);
                           }
@@ -1206,53 +1284,62 @@ const GoogleSheetsSettings: React.FC = () => {
       >
         {historyConfig ? (
           <div className="space-y-4">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-              <div className="text-sm font-semibold text-gray-900">
-                {historyConfig.last_synced_at
-                  ? `Last sync ${new Date(historyConfig.last_synced_at).toLocaleString()}`
-                  : 'No sync has run yet'}
-              </div>
-              <div className="mt-1 text-xs text-gray-500">
-                {resultText(historyConfig)} / {syncHistory(historyConfig).length} logged change(s)
-              </div>
-            </div>
-            {syncHistory(historyConfig).length === 0 ? (
+            {syncRunsLoading ? (
+              <div className="py-10 text-center text-sm text-gray-500">Loading sync runs...</div>
+            ) : syncRuns.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-                No change history has been recorded for this sync yet.
+                No sync runs have been recorded for this configuration yet.
               </div>
             ) : (
-              <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
-                {syncHistory(historyConfig).map((entry, index) => {
-                  const meta = historyTypeMeta[entry.type] || { label: entry.type || 'Change', color: 'default' };
-                  return (
-                    <div key={`${entry.type}-${entry.row}-${entry.created_at}-${index}`} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Tag color={meta.color} className="m-0">{meta.label}</Tag>
-                            {entry.row ? <span className="text-xs font-medium text-gray-400">Row {entry.row}</span> : null}
-                            {entry.company_name || entry.role_title ? (
-                              <span className="truncate text-xs font-medium text-gray-500">
-                                {[entry.company_name, entry.role_title].filter(Boolean).join(' / ')}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="mt-2 text-sm leading-6 text-gray-800">{entry.message}</div>
+              <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1">
+                {syncRuns.map((run) => (
+                  <div key={run.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">
+                            {new Date(run.started_at).toLocaleString()}
+                          </span>
+                          <Tag color={run.status === 'SUCCESS' ? 'green' : run.status === 'ROLLED_BACK' ? 'purple' : 'red'}>
+                            {run.status}
+                          </Tag>
                         </div>
-                        {entry.field && (
-                          <div className="shrink-0 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500 sm:max-w-[240px]">
-                            <div className="font-semibold capitalize text-gray-600">{entry.field.replace(/_/g, ' ')}</div>
-                            {(entry.before || entry.after) && (
-                              <div className="mt-1 truncate">
-                                {entry.before || 'blank'} {'->'} {entry.after || 'blank'}
+                        <div className="mt-1 text-xs text-gray-500">
+                          {(run.summary as any)?.created || 0} created / {(run.summary as any)?.updated || 0} updated / {(run.summary as any)?.skipped || 0} skipped
+                        </div>
+                      </div>
+                      {run.status !== 'ROLLED_BACK' && run.changes?.length > 0 && (
+                        <Button size="small" danger onClick={() => {
+                          Modal.confirm({
+                            title: 'Rollback this sync?',
+                            content: 'This will undo creations and field updates made during this specific sync run.',
+                            okText: 'Yes, rollback',
+                            okButtonProps: { danger: true },
+                            onOk: () => rollbackRun(historyConfig, run.id)
+                          });
+                        }}>Rollback</Button>
+                      )}
+                    </div>
+                    {run.changes?.length > 0 && (
+                      <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
+                        {run.changes.map((change, i) => (
+                          <div key={i} className="text-sm">
+                            <span className="font-medium text-gray-700 capitalize">{change.action}</span> row {change.row_number}
+                            {change.diff && Object.keys(change.diff).length > 0 && (
+                              <div className="mt-1 space-y-1 pl-2 border-l-2 border-gray-100">
+                                {Object.entries(change.diff).map(([field, vals]) => (
+                                  <div key={field} className="text-xs text-gray-600">
+                                    <span className="font-medium capitalize">{field.replace(/_/g, ' ')}:</span> {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
-                        )}
+                        ))}
                       </div>
-                    </div>
-                  );
-                })}
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
