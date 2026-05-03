@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal, Tooltip, Input, Typography, Checkbox, message, Space } from 'antd';
 import {
@@ -21,6 +21,13 @@ import {
   updateCoverLetterTitle,
 } from '../../utils/coverLetterStorage';
 import type { StoredCoverLetter } from '../../utils/coverLetterStorage';
+import {
+  deleteAllArtifactsByType,
+  deleteArtifactByClientId,
+  loadCoverLettersFromArtifacts,
+  setArtifactLock,
+  updateArtifactTitle,
+} from '../../utils/aiArtifactStorage';
 
 const { Text } = Typography;
 
@@ -31,8 +38,25 @@ const CoverLettersTab: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [viewingLetter, setViewingLetter] = useState<StoredCoverLetter | null>(null);
   const [editingLetter, setEditingLetter] = useState<{ id: string; title: string } | null>(null);
+  const [usingBackendArtifacts, setUsingBackendArtifacts] = useState(false);
 
-  const refresh = useCallback(() => setLetters(getAllCoverLetters()), []);
+  const refresh = useCallback(async () => {
+    try {
+      const backendLetters = await loadCoverLettersFromArtifacts();
+      setLetters(backendLetters);
+      setUsingBackendArtifacts(true);
+    } catch {
+      setLetters(getAllCoverLetters());
+      setUsingBackendArtifacts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refresh();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   /* ── Selection ── */
   const toggleSelect = useCallback((id: string) => {
@@ -59,28 +83,49 @@ const CoverLettersTab: React.FC = () => {
 
   /* ── Single-item actions ── */
   const handleDelete = useCallback(
-    (id: string) => {
-      deleteCoverLetter(id);
+    async (id: string) => {
+      if (usingBackendArtifacts) {
+        try {
+          await deleteArtifactByClientId('COVER_LETTER', id);
+        } catch {
+          deleteCoverLetter(id);
+        }
+      } else {
+        deleteCoverLetter(id);
+      }
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       refresh();
     },
-    [refresh],
+    [refresh, usingBackendArtifacts],
   );
 
   const handleToggleLock = useCallback(
-    (id: string) => {
-      toggleCoverLetterLock(id);
+    async (id: string) => {
+      const letter = letters.find((item) => item.id === id);
+      if (usingBackendArtifacts && letter) {
+        try {
+          await setArtifactLock('COVER_LETTER', id, !letter.isLocked);
+        } catch {
+          toggleCoverLetterLock(id);
+        }
+      } else {
+        toggleCoverLetterLock(id);
+      }
       refresh();
     },
-    [refresh],
+    [letters, refresh, usingBackendArtifacts],
   );
 
   const handleRename = useCallback(() => {
     if (!editingLetter) return;
-    updateCoverLetterTitle(editingLetter.id, editingLetter.title);
-    refresh();
-    setEditingLetter(null);
-  }, [editingLetter, refresh]);
+    (usingBackendArtifacts
+      ? updateArtifactTitle('COVER_LETTER', editingLetter.id, editingLetter.title)
+      : Promise.resolve(updateCoverLetterTitle(editingLetter.id, editingLetter.title))
+    ).finally(() => {
+      refresh();
+      setEditingLetter(null);
+    });
+  }, [editingLetter, refresh, usingBackendArtifacts]);
 
   /* ── Bulk actions ── */
   const handleBulkDelete = useCallback(() => {
@@ -95,30 +140,45 @@ const CoverLettersTab: React.FC = () => {
       okText: 'Delete',
       okType: 'danger',
       onOk: () => {
-        deletableIds.forEach((id) => deleteCoverLetter(id));
+        Promise.all(
+          deletableIds.map((id) =>
+            usingBackendArtifacts
+              ? deleteArtifactByClientId('COVER_LETTER', id)
+              : Promise.resolve(deleteCoverLetter(id)),
+          ),
+        ).finally(refresh);
         setSelectedIds([]);
-        refresh();
       },
     });
-  }, [selectedIds, letters, refresh]);
+  }, [selectedIds, letters, refresh, usingBackendArtifacts]);
 
   const handleBulkToggleLock = useCallback(
     (lock: boolean) => {
       selectedIds.forEach((id) => {
         const l = letters.find((x) => x.id === id);
-        if (l && l.isLocked !== lock) toggleCoverLetterLock(id);
+        if (l && l.isLocked !== lock) {
+          if (usingBackendArtifacts) {
+            void setArtifactLock('COVER_LETTER', id, lock);
+          } else {
+            toggleCoverLetterLock(id);
+          }
+        }
       });
       setSelectedIds([]);
       refresh();
     },
-    [selectedIds, letters, refresh],
+    [selectedIds, letters, refresh, usingBackendArtifacts],
   );
 
   const handleDeleteAll = useCallback(() => {
-    deleteAllCoverLetters();
+    if (usingBackendArtifacts) {
+      void deleteAllArtifactsByType('COVER_LETTER').finally(refresh);
+    } else {
+      deleteAllCoverLetters();
+      refresh();
+    }
     setSelectedIds([]);
-    refresh();
-  }, [refresh]);
+  }, [refresh, usingBackendArtifacts]);
 
   /* ── Export ── */
   const handleExport = useCallback(

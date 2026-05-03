@@ -149,8 +149,46 @@ export const applyGoogleSheetImportReview = (
 export const getOffers = () => api.get('/career/offers/');
 export const createOffer = (data: Record<string, unknown>) => api.post('/career/offers/', data);
 export const updateOffer = (id: number, data: Record<string, unknown>) =>
-  api.put(`/career/offers/${id}/`, data);
+  api.patch(`/career/offers/${id}/`, data);
 export const deleteOffer = (id: number) => api.delete(`/career/offers/${id}/`);
+
+export interface OfferDecisionSnapshot {
+  id: number;
+  offer: number;
+  company_name: string;
+  role_title: string;
+  title: string;
+  notes: string;
+  decision_score: number | null;
+  rank: number | null;
+  total_comp: string;
+  adjusted_value: string | null;
+  monthly_rent: string | null;
+  commute_cost_annual: string | null;
+  tax_snapshot: Record<string, unknown>;
+  score_categories: Array<Record<string, unknown>>;
+  offer_snapshot: Record<string, unknown>;
+  adjustment_snapshot: Record<string, unknown>;
+  is_locked: boolean;
+  captured_at: string;
+  updated_at: string;
+}
+
+export type OfferDecisionSnapshotPayload = Omit<
+  OfferDecisionSnapshot,
+  'id' | 'company_name' | 'role_title' | 'captured_at' | 'updated_at'
+>;
+
+export const getOfferDecisionSnapshots = (offerId?: number) =>
+  api.get<OfferDecisionSnapshot[]>('/career/offer-decision-snapshots/', {
+    params: { offer: offerId },
+  });
+export const createOfferDecisionSnapshot = (data: Partial<OfferDecisionSnapshotPayload>) =>
+  api.post<OfferDecisionSnapshot>('/career/offer-decision-snapshots/', data);
+export const updateOfferDecisionSnapshot = (id: number, data: Partial<OfferDecisionSnapshotPayload>) =>
+  api.patch<OfferDecisionSnapshot>(`/career/offer-decision-snapshots/${id}/`, data);
+export const deleteOfferDecisionSnapshot = (id: number) =>
+  api.delete(`/career/offer-decision-snapshots/${id}/`);
 
 export const getDocuments = () => api.get('/career/documents/');
 export const deleteAllDocuments = () => api.delete('/career/documents/delete_all/');
@@ -184,6 +222,39 @@ export const getWeeklyReview = (startDate?: string, endDate?: string) =>
 export const getCareerReferenceData = () => api.get('/career/reference-data/');
 export const getCareerRentEstimate = (city: string) =>
   api.get('/career/rent-estimate/', { params: { city } });
+
+export type AIArtifactType = 'JD_REPORT' | 'COVER_LETTER' | 'NEGOTIATION_RESULT';
+
+export interface AIArtifact {
+  id: number;
+  artifact_type: AIArtifactType;
+  client_id: string;
+  title: string;
+  summary: string;
+  payload: Record<string, unknown>;
+  source_application: number | null;
+  source_offer: number | null;
+  is_locked: boolean;
+  saved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AIArtifactPayload = Omit<AIArtifact, 'id' | 'created_at' | 'updated_at'>;
+
+export const getAIArtifacts = (artifactType?: AIArtifactType, search?: string) =>
+  api.get<AIArtifact[]>('/career/ai-artifacts/', {
+    params: {
+      artifact_type: artifactType,
+      search,
+    },
+  });
+export const createAIArtifact = (data: Partial<AIArtifactPayload>) =>
+  api.post<AIArtifact>('/career/ai-artifacts/', data);
+export const updateAIArtifact = (id: number, data: Partial<AIArtifactPayload>) =>
+  api.patch<AIArtifact>(`/career/ai-artifacts/${id}/`, data);
+export const deleteAIArtifact = (id: number) => api.delete(`/career/ai-artifacts/${id}/`);
+export const deleteAllAIArtifacts = () => api.delete('/career/ai-artifacts/delete_all/');
 
 export const getExperiences = () => api.get<Experience[]>('/career/experiences/');
 export const createExperience = (data: Partial<Experience>) =>

@@ -45,6 +45,9 @@ export function saveCoverLetter(
   const existing = getAllCoverLetters();
   const updated = [entry, ...existing].slice(0, 100);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  void import('./aiArtifactStorage')
+    .then(({ syncCoverLetterArtifact }) => syncCoverLetterArtifact(entry))
+    .catch(() => {});
   return entry;
 }
 

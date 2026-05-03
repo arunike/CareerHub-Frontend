@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { getNegotiationResultById } from '../../utils/negotiationStorage';
 import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
+import { getNegotiationArtifactByClientId } from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
 
@@ -65,7 +66,12 @@ const NegotiationResultPage: React.FC = () => {
   const [result, setResult] = useState<StoredNegotiationResult | null>(null);
 
   useEffect(() => {
-    if (id) setResult(getNegotiationResultById(id));
+    if (!id) return;
+    getNegotiationArtifactByClientId(id)
+      .then((backendResult) => {
+        setResult(backendResult || getNegotiationResultById(id));
+      })
+      .catch(() => setResult(getNegotiationResultById(id)));
   }, [id]);
 
   if (!result) {

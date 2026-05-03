@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal, Tooltip, Input, Typography, Checkbox, message } from 'antd';
 import {
@@ -21,6 +21,13 @@ import {
   updateNegotiationResultTitle,
 } from '../../utils/negotiationStorage';
 import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
+import {
+  deleteAllArtifactsByType,
+  deleteArtifactByClientId,
+  loadNegotiationResultsFromArtifacts,
+  setArtifactLock,
+  updateArtifactTitle,
+} from '../../utils/aiArtifactStorage';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
 
 const { Text } = Typography;
@@ -33,8 +40,25 @@ const NegotiationResultsTab: React.FC = () => {
   const [results, setResults] = useState<StoredNegotiationResult[]>(getAllNegotiationResults);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingResult, setEditingResult] = useState<{ id: string; title: string } | null>(null);
+  const [usingBackendArtifacts, setUsingBackendArtifacts] = useState(false);
 
-  const refresh = useCallback(() => setResults(getAllNegotiationResults()), []);
+  const refresh = useCallback(async () => {
+    try {
+      const backendResults = await loadNegotiationResultsFromArtifacts();
+      setResults(backendResults);
+      setUsingBackendArtifacts(true);
+    } catch {
+      setResults(getAllNegotiationResults());
+      setUsingBackendArtifacts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refresh();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   /* ── Selection ── */
   const toggleSelect = useCallback((id: string) => {
@@ -61,28 +85,49 @@ const NegotiationResultsTab: React.FC = () => {
 
   /* ── Single-item actions ── */
   const handleDelete = useCallback(
-    (id: string) => {
-      deleteNegotiationResult(id);
+    async (id: string) => {
+      if (usingBackendArtifacts) {
+        try {
+          await deleteArtifactByClientId('NEGOTIATION_RESULT', id);
+        } catch {
+          deleteNegotiationResult(id);
+        }
+      } else {
+        deleteNegotiationResult(id);
+      }
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       refresh();
     },
-    [refresh],
+    [refresh, usingBackendArtifacts],
   );
 
   const handleToggleLock = useCallback(
-    (id: string) => {
-      toggleNegotiationResultLock(id);
+    async (id: string) => {
+      const result = results.find((item) => item.id === id);
+      if (usingBackendArtifacts && result) {
+        try {
+          await setArtifactLock('NEGOTIATION_RESULT', id, !result.isLocked);
+        } catch {
+          toggleNegotiationResultLock(id);
+        }
+      } else {
+        toggleNegotiationResultLock(id);
+      }
       refresh();
     },
-    [refresh],
+    [refresh, results, usingBackendArtifacts],
   );
 
   const handleRename = useCallback(() => {
     if (!editingResult) return;
-    updateNegotiationResultTitle(editingResult.id, editingResult.title);
-    refresh();
-    setEditingResult(null);
-  }, [editingResult, refresh]);
+    (usingBackendArtifacts
+      ? updateArtifactTitle('NEGOTIATION_RESULT', editingResult.id, editingResult.title)
+      : Promise.resolve(updateNegotiationResultTitle(editingResult.id, editingResult.title))
+    ).finally(() => {
+      refresh();
+      setEditingResult(null);
+    });
+  }, [editingResult, refresh, usingBackendArtifacts]);
 
   /* ── Bulk actions ── */
   const handleBulkDelete = useCallback(() => {
@@ -97,30 +142,45 @@ const NegotiationResultsTab: React.FC = () => {
       okText: 'Delete',
       okType: 'danger',
       onOk: () => {
-        deletableIds.forEach((id) => deleteNegotiationResult(id));
+        Promise.all(
+          deletableIds.map((id) =>
+            usingBackendArtifacts
+              ? deleteArtifactByClientId('NEGOTIATION_RESULT', id)
+              : Promise.resolve(deleteNegotiationResult(id)),
+          ),
+        ).finally(refresh);
         setSelectedIds([]);
-        refresh();
       },
     });
-  }, [selectedIds, results, refresh]);
+  }, [selectedIds, results, refresh, usingBackendArtifacts]);
 
   const handleBulkToggleLock = useCallback(
     (lock: boolean) => {
       selectedIds.forEach((id) => {
         const r = results.find((x) => x.id === id);
-        if (r && r.isLocked !== lock) toggleNegotiationResultLock(id);
+        if (r && r.isLocked !== lock) {
+          if (usingBackendArtifacts) {
+            void setArtifactLock('NEGOTIATION_RESULT', id, lock);
+          } else {
+            toggleNegotiationResultLock(id);
+          }
+        }
       });
       setSelectedIds([]);
       refresh();
     },
-    [selectedIds, results, refresh],
+    [selectedIds, results, refresh, usingBackendArtifacts],
   );
 
   const handleDeleteAll = useCallback(() => {
-    deleteAllNegotiationResults();
+    if (usingBackendArtifacts) {
+      void deleteAllArtifactsByType('NEGOTIATION_RESULT').finally(refresh);
+    } else {
+      deleteAllNegotiationResults();
+      refresh();
+    }
     setSelectedIds([]);
-    refresh();
-  }, [refresh]);
+  }, [refresh, usingBackendArtifacts]);
 
   /* ── Export ── */
   const handleExport = useCallback(

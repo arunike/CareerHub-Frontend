@@ -8,6 +8,9 @@ import {
   createApplication,
   updateApplication,
   deleteApplication,
+  createOfferDecisionSnapshot,
+  type OfferDecisionSnapshot,
+  type OfferDecisionSnapshotPayload,
 } from '../../api';
 import { PlusOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -20,6 +23,7 @@ import { useOfferAdjustmentsPersistence } from './useOfferAdjustmentsPersistence
 import { getEffectiveTaxLocation } from '../../utils/applicationLocation';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import OfferDecisionScorecard from './OfferDecisionScorecard';
+import type { DecisionRow } from './OfferDecisionScorecard';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
 import type { RaiseEntry } from '../../types';
 import {
@@ -27,6 +31,7 @@ import {
   type BenefitItem,
   type OfferLike as Offer,
   type SimulatedOffer,
+  annualizeAmount,
   computeBenefitsTotal,
   estimateColIndexFromCity,
 } from './calculations';
@@ -38,6 +43,7 @@ const EditOfferModal = lazy(() => import('./EditOfferModal'));
 const NegotiationAdvisorModal = lazy(() => import('./NegotiationAdvisorModal'));
 const RaiseHistoryModal = lazy(() => import('./RaiseHistoryModal'));
 const CompensationSimulator = lazy(() => import('./CompensationSimulator'));
+const OfferDecisionSnapshotsModal = lazy(() => import('./OfferDecisionSnapshotsModal'));
 
 const LazySectionFallback = () => (
   <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -56,6 +62,9 @@ const normalizeDecisionScore = (value: unknown) => {
   const parsed = Number(value);
   return parsed >= 1 && parsed <= 5 ? parsed : null;
 };
+
+const snapshotValue = (snapshot: Record<string, unknown>, key: string) =>
+  Object.prototype.hasOwnProperty.call(snapshot, key) ? snapshot[key] : undefined;
 
 const OFFER_ADJUSTMENT_SETTINGS_KEY = 'careerhub.offerAdjustments.v1';
 
@@ -113,6 +122,8 @@ const OfferComparison = () => {
   const [newJobName, setNewJobName] = useState('Current Employer');
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
   const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
+  const [snapshotOffer, setSnapshotOffer] = useState<Offer | null>(null);
+  const [decisionOrderIds, setDecisionOrderIds] = useState<string[]>([]);
   
   const [isAddScenarioOpen, setIsAddScenarioOpen] = useState(false);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
@@ -140,7 +151,7 @@ const OfferComparison = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [offersResp, appsResp] = await Promise.all([getOffers(), getApplications()]);
@@ -159,11 +170,11 @@ const OfferComparison = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     loadUsCityOptions()
@@ -333,6 +344,9 @@ const OfferComparison = () => {
       if (raiseHistoryOffer?.id === offer.id) {
         setRaiseHistoryOffer(null);
       }
+      if (snapshotOffer?.id === offer.id) {
+        setSnapshotOffer(null);
+      }
 
       fetchData();
     } catch (error) {
@@ -435,6 +449,15 @@ const OfferComparison = () => {
     normalizeSimulatedOffers,
   });
 
+  const applicationsById = useMemo(
+    () =>
+      applications.reduce<Record<number, Application>>((acc, app) => {
+        acc[app.id] = app;
+        return acc;
+      }, {}),
+    [applications]
+  );
+
   const referenceLocation = useMemo(() => {
     const current = filteredOffers.find((offer) => offer.is_current) || filteredOffers[0];
     if (current) {
@@ -475,6 +498,248 @@ const OfferComparison = () => {
     maritalStatus,
     stateTaxRate,
   });
+
+  const buildDecisionSnapshotPayload = useCallback(
+    (offer: Offer, row: DecisionRow): Partial<OfferDecisionSnapshotPayload> | null => {
+      if (!offer.id) return null;
+      const application = applicationsById[offer.application];
+      const metrics = adjustedByOfferId[offer.id];
+      const totalComp =
+        Number(offer.base_salary || 0) +
+        Number(offer.bonus || 0) +
+        Number(offer.equity || 0) +
+        Number(offer.sign_on || 0) +
+        Number(offer.benefits_value || 0);
+      const titleDate = new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      return {
+        offer: offer.id,
+        title: `${application?.company_name || offer.application_details?.company || 'Offer'} decision - ${titleDate}`,
+        notes: '',
+        decision_score: row.score ?? null,
+        rank: row.rank ?? null,
+        total_comp: totalComp.toFixed(2),
+        adjusted_value: metrics?.adjustedValue != null ? metrics.adjustedValue.toFixed(2) : null,
+        monthly_rent: metrics?.monthlyRent != null ? metrics.monthlyRent.toFixed(2) : null,
+        commute_cost_annual: annualizeAmount(
+          Number(application?.commute_cost_value || 0),
+          application?.commute_cost_frequency || 'MONTHLY'
+        ).toFixed(2),
+        tax_snapshot: {
+          base: metrics?.usedBaseTaxRate ?? application?.tax_base_rate ?? null,
+          bonus: metrics?.usedBonusTaxRate ?? application?.tax_bonus_rate ?? null,
+          equity: metrics?.usedEquityTaxRate ?? application?.tax_equity_rate ?? null,
+        },
+        score_categories: row.categories || [],
+        offer_snapshot: {
+          company: application?.company_name || offer.application_details?.company || '',
+          role: application?.role_title || offer.application_details?.role_title || '',
+          base_salary: offer.base_salary,
+          bonus: offer.bonus,
+          equity: offer.equity,
+          equity_total_grant: offer.equity_total_grant,
+          equity_vesting_percent: offer.equity_vesting_percent,
+          equity_vesting_schedule: offer.equity_vesting_schedule || [],
+          sign_on: offer.sign_on,
+          benefits_value: offer.benefits_value,
+          benefit_items: offer.benefit_items || [],
+          pto_days: offer.pto_days,
+          is_unlimited_pto: offer.is_unlimited_pto || false,
+          holiday_days: offer.holiday_days || 0,
+          work_mode: application?.rto_policy || '',
+          office_location: application?.office_location || '',
+        },
+        adjustment_snapshot: {
+          marital_status: maritalStatus,
+          reference_location: referenceLocation,
+          adjusted_diff: metrics?.adjustedDiff ?? null,
+          after_tax_base: metrics?.afterTaxBase ?? null,
+          after_tax_bonus: metrics?.afterTaxBonus ?? null,
+          after_tax_sign_on: metrics?.afterTaxSignOn ?? null,
+          after_tax_equity: metrics?.afterTaxEquity ?? null,
+          rto_policy: application?.rto_policy || '',
+          rto_days_per_week: application?.rto_days_per_week ?? 0,
+          commute_cost_value: application?.commute_cost_value ?? 0,
+          commute_cost_frequency: application?.commute_cost_frequency || 'MONTHLY',
+          free_food_perk_value: application?.free_food_perk_value ?? 0,
+          free_food_perk_frequency: application?.free_food_perk_frequency || 'YEARLY',
+          tax_base_rate: application?.tax_base_rate ?? null,
+          tax_bonus_rate: application?.tax_bonus_rate ?? null,
+          tax_equity_rate: application?.tax_equity_rate ?? null,
+          monthly_rent_override: application?.monthly_rent_override ?? null,
+          growth_score: application?.growth_score ?? null,
+          work_life_score: application?.work_life_score ?? null,
+          brand_score: application?.brand_score ?? null,
+          team_score: application?.team_score ?? null,
+          visa_sponsorship: application?.visa_sponsorship || '',
+          day_one_gc: application?.day_one_gc || '',
+        },
+        is_locked: false,
+      };
+    },
+    [adjustedByOfferId, applicationsById, maritalStatus, referenceLocation]
+  );
+
+  const handleSaveDecisionSnapshot = useCallback(
+    async (offer: Offer, row: DecisionRow) => {
+      const payload = buildDecisionSnapshotPayload(offer, row);
+      if (!payload) {
+        messageApi.error('Save the offer before creating a snapshot');
+        return;
+      }
+
+      try {
+        await createOfferDecisionSnapshot(payload);
+        messageApi.success('Decision snapshot saved');
+      } catch (error) {
+        messageApi.error('Failed to save decision snapshot');
+        console.error(error);
+      }
+    },
+    [buildDecisionSnapshotPayload, messageApi]
+  );
+
+  const handleRestoreDecisionSnapshot = useCallback(
+    async (snapshot: OfferDecisionSnapshot) => {
+      const offerSnapshot = snapshot.offer_snapshot || {};
+      const adjustmentSnapshot = snapshot.adjustment_snapshot || {};
+      const targetOffer = offers.find((offer) => offer.id === snapshot.offer);
+      if (!targetOffer?.id) {
+        throw new Error('Unable to find offer for snapshot restore');
+      }
+      const restoredBenefitItems =
+        Array.isArray(offerSnapshot.benefit_items) && offerSnapshot.benefit_items.length > 0
+          ? offerSnapshot.benefit_items.map((item, idx) =>
+              normalizeBenefitItem(
+                item as Partial<BenefitItem>,
+                `snapshot-benefit-${snapshot.id}-${idx}`
+              )
+            )
+          : [
+              {
+                id: `snapshot-benefit-${snapshot.id}`,
+                label: 'Benefits',
+                amount: Number(offerSnapshot.benefits_value ?? targetOffer.benefits_value ?? 0),
+                frequency: 'YEARLY' as const,
+              },
+            ];
+
+      const offerPatch = {
+        base_salary: Number(offerSnapshot.base_salary ?? targetOffer.base_salary),
+        bonus: Number(offerSnapshot.bonus ?? targetOffer.bonus),
+        equity: Number(offerSnapshot.equity ?? targetOffer.equity),
+        equity_total_grant:
+          offerSnapshot.equity_total_grant == null
+            ? targetOffer.equity_total_grant
+            : Number(offerSnapshot.equity_total_grant),
+        equity_vesting_percent:
+          offerSnapshot.equity_vesting_percent == null
+            ? targetOffer.equity_vesting_percent
+            : Number(offerSnapshot.equity_vesting_percent),
+        equity_vesting_schedule: Array.isArray(offerSnapshot.equity_vesting_schedule)
+          ? offerSnapshot.equity_vesting_schedule.map(Number)
+          : targetOffer.equity_vesting_schedule,
+        sign_on: Number(offerSnapshot.sign_on ?? targetOffer.sign_on),
+        benefits_value: Number(offerSnapshot.benefits_value ?? targetOffer.benefits_value),
+        benefit_items: restoredBenefitItems,
+        pto_days: Number(offerSnapshot.pto_days ?? targetOffer.pto_days),
+        is_unlimited_pto: Boolean(offerSnapshot.is_unlimited_pto ?? targetOffer.is_unlimited_pto),
+        holiday_days:
+          offerSnapshot.holiday_days == null ? targetOffer.holiday_days : Number(offerSnapshot.holiday_days),
+      };
+
+      const applicationPatch: Record<string, unknown> = {
+        company_name: typeof offerSnapshot.company === 'string' ? offerSnapshot.company : undefined,
+        role_title: typeof offerSnapshot.role === 'string' ? offerSnapshot.role : undefined,
+        office_location: typeof offerSnapshot.office_location === 'string' ? offerSnapshot.office_location : undefined,
+        rto_policy: (snapshotValue(adjustmentSnapshot, 'rto_policy') ??
+          snapshotValue(offerSnapshot, 'work_mode')) as Application['rto_policy'],
+        rto_days_per_week: snapshotValue(adjustmentSnapshot, 'rto_days_per_week') as number | undefined,
+        commute_cost_value: snapshotValue(adjustmentSnapshot, 'commute_cost_value') as number | undefined,
+        commute_cost_frequency: snapshotValue(adjustmentSnapshot, 'commute_cost_frequency') as Application['commute_cost_frequency'],
+        free_food_perk_value: snapshotValue(adjustmentSnapshot, 'free_food_perk_value') as number | undefined,
+        free_food_perk_frequency: snapshotValue(adjustmentSnapshot, 'free_food_perk_frequency') as Application['free_food_perk_frequency'],
+        tax_base_rate: snapshotValue(adjustmentSnapshot, 'tax_base_rate'),
+        tax_bonus_rate: snapshotValue(adjustmentSnapshot, 'tax_bonus_rate'),
+        tax_equity_rate: snapshotValue(adjustmentSnapshot, 'tax_equity_rate'),
+        monthly_rent_override: snapshotValue(adjustmentSnapshot, 'monthly_rent_override'),
+        growth_score: snapshotValue(adjustmentSnapshot, 'growth_score') as number | null | undefined,
+        work_life_score: snapshotValue(adjustmentSnapshot, 'work_life_score') as number | null | undefined,
+        brand_score: snapshotValue(adjustmentSnapshot, 'brand_score') as number | null | undefined,
+        team_score: snapshotValue(adjustmentSnapshot, 'team_score') as number | null | undefined,
+        visa_sponsorship: snapshotValue(adjustmentSnapshot, 'visa_sponsorship') as Application['visa_sponsorship'],
+        day_one_gc: snapshotValue(adjustmentSnapshot, 'day_one_gc') as Application['day_one_gc'],
+      };
+
+      const [offerResponse, applicationResponse] = await Promise.all([
+        updateOffer(targetOffer.id, offerPatch),
+        updateApplication(targetOffer.application, applicationPatch),
+      ]);
+
+      const restoredOffer = offerResponse.data as Partial<Offer>;
+      const restoredApplication = applicationResponse.data as Partial<Application> & {
+        company_details?: { name?: string };
+      };
+
+      setOffers((prev) =>
+        prev.map((offer) =>
+          offer.id === targetOffer.id
+            ? {
+                ...offer,
+                ...offerPatch,
+                ...restoredOffer,
+                application_details: restoredOffer.application_details || {
+                  company:
+                    restoredApplication.company_details?.name ||
+                    restoredApplication.company_name ||
+                    (typeof offerSnapshot.company === 'string' ? offerSnapshot.company : '') ||
+                    offer.application_details?.company ||
+                    '',
+                  role_title:
+                    restoredApplication.role_title ||
+                    (typeof offerSnapshot.role === 'string' ? offerSnapshot.role : '') ||
+                    offer.application_details?.role_title ||
+                    '',
+                },
+              }
+            : offer
+        )
+      );
+
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === targetOffer.application
+            ? ({
+                ...app,
+                ...applicationPatch,
+                ...restoredApplication,
+                role_title: restoredApplication.role_title || app.role_title,
+                company_name:
+                  restoredApplication.company_details?.name ||
+                  restoredApplication.company_name ||
+                  app.company_name,
+              } as Application)
+            : app
+        )
+      );
+
+      setSnapshotOffer((current) => {
+        if (!current || current.id !== targetOffer.id) return current;
+        return {
+          ...current,
+          ...offerPatch,
+          ...restoredOffer,
+          application_details: restoredOffer.application_details || current.application_details,
+        };
+      });
+
+    },
+    [offers]
+  );
 
   const customFormTaxPreview = useMemo(() => {
     const tax = {
@@ -559,6 +824,15 @@ const OfferComparison = () => {
     });
   }, [scenarioRows, visibleOfferIds]);
 
+  const decisionOrderById = useMemo(
+    () =>
+      decisionOrderIds.reduce<Record<string, number>>((acc, id, index) => {
+        acc[id] = index;
+        return acc;
+      }, {}),
+    [decisionOrderIds]
+  );
+
   // Prepare Chart Data
   const chartData = [
     ...displayOffers.map((offer) => {
@@ -570,6 +844,7 @@ const OfferComparison = () => {
         Number(offer.sign_on);
 
       return {
+        id: `real-${offer.id}`,
         name: appName,
         Base: Number(offer.base_salary),
         Bonus: Number(offer.bonus),
@@ -591,6 +866,7 @@ const OfferComparison = () => {
         Number(offer.sign_on);
 
       return {
+        id: `sim-${offer.id}`,
         name: simName,
         Base: Number(offer.base_salary),
         Bonus: Number(offer.bonus),
@@ -600,7 +876,7 @@ const OfferComparison = () => {
         Total: totalComp,
       };
     }),
-  ];
+  ].sort((a, b) => (decisionOrderById[a.id] ?? 9999) - (decisionOrderById[b.id] ?? 9999));
 
   const updateEditingBenefits = (items: BenefitItem[]) => {
     setEditingBenefitItems(items);
@@ -625,18 +901,6 @@ const OfferComparison = () => {
   const removeEditingBenefitItem = (id: string) => {
     updateEditingBenefits(editingBenefitItems.filter((item) => item.id !== id));
   };
-
-
-
-  const applicationsById = useMemo(
-    () =>
-      applications.reduce<Record<number, Application>>((acc, app) => {
-        acc[app.id] = app;
-        return acc;
-      }, {}),
-    [applications]
-  );
-
   if (loading) return <div className="p-8 text-center text-gray-500">Loading offers...</div>;
 
   const compareOptions = [
@@ -667,7 +931,7 @@ const OfferComparison = () => {
       {contextHolder}
       <PageActionToolbar
         title="Offer Comparison"
-        subtitle="Compare Total Compensation (TC) across your offers."
+        subtitle="Compare first-year total compensation (TC) across your offers."
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         availableYears={availableYears}
@@ -745,10 +1009,36 @@ const OfferComparison = () => {
           setScenarioModalMode('add');
           setIsAddScenarioOpen(true);
         }}
+        onDecisionOrderChange={(orderedIds) => {
+          setDecisionOrderIds((current) =>
+            current.length === orderedIds.length && current.every((id, index) => id === orderedIds[index])
+              ? current
+              : orderedIds
+          );
+        }}
         onScoreUpdate={async (appId, patch) => {
           try {
-            await updateApplication(appId, patch);
-            await fetchData();
+            const response = await updateApplication(appId, patch);
+            const updatedApplication = response.data as Partial<Application> & {
+              company_details?: { name?: string };
+            };
+            setApplications((prev) =>
+              prev.map((app) => {
+                if (app.id !== appId) {
+                  return app;
+                }
+
+                return {
+                  ...app,
+                  ...patch,
+                  ...updatedApplication,
+                  company_name:
+                    updatedApplication.company_details?.name ||
+                    updatedApplication.company_name ||
+                    app.company_name,
+                };
+              })
+            );
             messageApi.success('Score updated');
           } catch (error) {
             messageApi.error('Failed to update score');
@@ -760,6 +1050,10 @@ const OfferComparison = () => {
         onToggleCurrent={toggleCurrent}
         onNegotiateClick={setNegotiatingOffer}
         onRaiseHistoryClick={setRaiseHistoryOffer}
+        onSaveSnapshotClick={handleSaveDecisionSnapshot}
+        onSnapshotsClick={(offer) => {
+          setSnapshotOffer(offer);
+        }}
         onDeleteClick={handleDeleteOffer}
       />
 
@@ -811,6 +1105,19 @@ const OfferComparison = () => {
             companyName={applicationsById[raiseHistoryOffer.application]?.company_name ?? 'Current Job'}
             roleTitle={applicationsById[raiseHistoryOffer.application]?.role_title ?? ''}
             onSave={handleSaveRaiseHistory}
+          />
+        </Suspense>
+      )}
+
+      {snapshotOffer && (
+        <Suspense fallback={null}>
+          <OfferDecisionSnapshotsModal
+            open={!!snapshotOffer}
+            offer={snapshotOffer}
+            onRestoreSnapshot={handleRestoreDecisionSnapshot}
+            onClose={() => {
+              setSnapshotOffer(null);
+            }}
           />
         </Suspense>
       )}
