@@ -3,20 +3,24 @@ import {
   CheckCircleOutlined,
   DeleteOutlined,
   ExperimentOutlined,
+  HistoryOutlined,
+  MoreOutlined,
   LinkOutlined,
   PlusOutlined,
   SyncOutlined,
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, message, TimePicker } from 'antd';
+import { Button, Checkbox, Dropdown, Modal, Segmented, Tag, message, TimePicker } from 'antd';
 import dayjs from 'dayjs';
 import {
+  applyGoogleSheetImportReview,
   createGoogleSheetSync,
   deleteGoogleSheetSync,
   connectGoogleOAuth,
   disconnectGoogleOAuth,
   getGoogleOAuthStatus,
+  getGoogleSheetImportReview,
   getGoogleSpreadsheetTabs,
   getGoogleSheetSyncs,
   getGoogleSpreadsheets,
@@ -28,6 +32,9 @@ import {
 } from '../../api';
 import type {
   GoogleOAuthStatus,
+  GoogleSheetDuplicateResolution,
+  GoogleSheetImportReview,
+  GoogleSheetImportReviewItem,
   GoogleSheetSyncConfig,
   GoogleSheetSyncPreview,
   GoogleSheetSyncTarget,
@@ -201,6 +208,47 @@ const resultText = (config: GoogleSheetSyncConfig) => {
   return pieces.join(' / ');
 };
 
+const reviewActionMeta: Record<GoogleSheetImportReviewItem['action'], { label: string; color: string }> = {
+  create: { label: 'New', color: 'green' },
+  update: { label: 'Update', color: 'blue' },
+  status_change: { label: 'Status', color: 'purple' },
+  possible_duplicate: { label: 'Duplicate?', color: 'orange' },
+};
+
+const reviewSummaryText = (review: GoogleSheetImportReview) => {
+  const { summary } = review;
+  return [
+    `${summary.new_applications} new applications detected`,
+    `${summary.status_changes} status changes`,
+    `${summary.possible_duplicates} possible duplicates`,
+    `${summary.updates} other updates`,
+  ].join(' / ');
+};
+
+const historyTypeMeta: Record<string, { label: string; color: string }> = {
+  created: { label: 'Created', color: 'green' },
+  updated: { label: 'Updated', color: 'blue' },
+  status_changed: { label: 'Status', color: 'purple' },
+  date_applied_backfilled: { label: 'Date', color: 'cyan' },
+  custom_stage_created: { label: 'Stage', color: 'geekblue' },
+  duplicate_matched: { label: 'Duplicate', color: 'orange' },
+  field_changed: { label: 'Changed', color: 'blue' },
+  skipped: { label: 'Skipped', color: 'default' },
+};
+
+const syncHistory = (config: GoogleSheetSyncConfig) => config.last_result?.history || [];
+const duplicateCompareFields = [
+  { key: 'company_name', label: 'Company' },
+  { key: 'role_title', label: 'Role' },
+  { key: 'status', label: 'Status' },
+  { key: 'salary_range', label: 'Salary' },
+  { key: 'location', label: 'Location' },
+  { key: 'office_location', label: 'Office' },
+  { key: 'job_link', label: 'Job Link' },
+  { key: 'date_applied', label: 'Date Applied' },
+  { key: 'notes', label: 'Notes' },
+];
+
 const GoogleSheetsSettings: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [configs, setConfigs] = useState<GoogleSheetSyncConfig[]>([]);
@@ -217,6 +265,13 @@ const GoogleSheetsSettings: React.FC = () => {
   const [spreadsheetsLoading, setSpreadsheetsLoading] = useState(false);
   const [worksheetTabs, setWorksheetTabs] = useState<GoogleSpreadsheetTab[]>([]);
   const [worksheetTabsLoading, setWorksheetTabsLoading] = useState(false);
+  const [reviewConfig, setReviewConfig] = useState<GoogleSheetSyncConfig | null>(null);
+  const [importReview, setImportReview] = useState<GoogleSheetImportReview | null>(null);
+  const [selectedReviewIds, setSelectedReviewIds] = useState<string[]>([]);
+  const [duplicateResolutions, setDuplicateResolutions] = useState<Record<string, GoogleSheetDuplicateResolution>>({});
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [applyingReview, setApplyingReview] = useState(false);
+  const [historyConfig, setHistoryConfig] = useState<GoogleSheetSyncConfig | null>(null);
 
   const fields = useMemo(() => FIELD_OPTIONS[draft.target_type], [draft.target_type]);
   const requiredFields = useMemo(() => fields.filter((field) => field.required), [fields]);
@@ -524,6 +579,71 @@ const GoogleSheetsSettings: React.FC = () => {
     } finally {
       setBusyId(null);
     }
+  };
+
+  const openImportReview = async (config: GoogleSheetSyncConfig, force = false) => {
+    setBusyId(config.id);
+    setReviewLoading(true);
+    setReviewConfig(config);
+    try {
+      const response = await getGoogleSheetImportReview(config.id, force);
+      setImportReview(response.data.review);
+      setSelectedReviewIds(response.data.review.items.map((item) => item.id));
+      setDuplicateResolutions(
+        response.data.review.items.reduce<Record<string, GoogleSheetDuplicateResolution>>((acc, item) => {
+          if (item.action === 'possible_duplicate') {
+            acc[item.id] = 'merge';
+          }
+          return acc;
+        }, {}),
+      );
+      if (response.data.review.items.length === 0) {
+        messageApi.success('No import changes need review');
+      }
+    } catch (error) {
+      messageApi.error('Could not build import review');
+      console.error('Failed to build Google Sheet import review', error);
+      setReviewConfig(null);
+    } finally {
+      setReviewLoading(false);
+      setBusyId(null);
+    }
+  };
+
+  const applyReview = async () => {
+    if (!reviewConfig || !importReview) return;
+    setApplyingReview(true);
+    try {
+      const response = await applyGoogleSheetImportReview(reviewConfig.id, selectedReviewIds, duplicateResolutions);
+      messageApi.success(
+        `Import applied: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated, ${response.data.result.rejected || 0} rejected`,
+      );
+      setReviewConfig(null);
+      setImportReview(null);
+      setSelectedReviewIds([]);
+      setDuplicateResolutions({});
+      fetchConfigs();
+    } catch (error) {
+      messageApi.error('Failed to apply import review');
+      console.error('Failed to apply Google Sheet import review', error);
+      fetchConfigs();
+    } finally {
+      setApplyingReview(false);
+    }
+  };
+
+  const toggleReviewItem = (itemId: string, checked: boolean) => {
+    setSelectedReviewIds((current) => (
+      checked ? [...current, itemId] : current.filter((id) => id !== itemId)
+    ));
+  };
+
+  const toggleAllReviewItems = (checked: boolean) => {
+    setSelectedReviewIds(checked && importReview ? importReview.items.map((item) => item.id) : []);
+  };
+
+  const updateDuplicateResolution = (itemId: string, resolution: GoogleSheetDuplicateResolution) => {
+    setDuplicateResolutions((current) => ({ ...current, [itemId]: resolution }));
   };
 
   const removeConfig = async (config: GoogleSheetSyncConfig) => {
@@ -966,10 +1086,12 @@ const GoogleSheetsSettings: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {configs.map((config) => (
+            {configs.map((config) => {
+              const history = syncHistory(config);
+              return (
               <div key={config.id} className="rounded-xl border border-gray-200 p-4">
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-semibold text-gray-900">{config.name}</h4>
                       <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
@@ -1006,18 +1128,7 @@ const GoogleSheetsSettings: React.FC = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2 shrink-0">
-                    <Button size="small" onClick={() => { setDraft(toDraft(config)); setPreview(null); }}>
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      icon={<ExperimentOutlined />}
-                      loading={busyId === config.id}
-                      onClick={() => testConfig(config)}
-                    >
-                      Test
-                    </Button>
+                  <div className="flex flex-wrap justify-start gap-2 shrink-0 lg:justify-end">
                     <Button
                       size="small"
                       type="primary"
@@ -1027,28 +1138,298 @@ const GoogleSheetsSettings: React.FC = () => {
                     >
                       Sync Now
                     </Button>
+                    {config.target_type === 'APPLICATIONS' && (
+                      <Button
+                        size="small"
+                        icon={<TableOutlined />}
+                        loading={busyId === config.id}
+                        onClick={() => openImportReview(config)}
+                      >
+                        Review
+                      </Button>
+                    )}
                     <Button
                       size="small"
-                      icon={<SyncOutlined />}
-                      loading={busyId === config.id}
-                      onClick={() => syncConfig(config, true)}
+                      icon={<HistoryOutlined />}
+                      disabled={history.length === 0}
+                      onClick={() => setHistoryConfig(config)}
                     >
-                      Resync All
+                      History{history.length > 0 ? ` (${history.length})` : ''}
                     </Button>
-                    <Button
-                      size="small"
-                      danger
-                      icon={<DeleteOutlined />}
-                      loading={busyId === config.id}
-                      onClick={() => removeConfig(config)}
-                    />
+                    <Dropdown
+                      trigger={['click']}
+                      menu={{
+                        items: [
+                          { key: 'edit', label: 'Edit' },
+                          { key: 'test', label: 'Test connection' },
+                          { key: 'resync', label: 'Resync all rows' },
+                          { type: 'divider' },
+                          { key: 'delete', label: 'Delete sync', danger: true },
+                        ],
+                        onClick: ({ key }) => {
+                          if (key === 'edit') {
+                            setDraft(toDraft(config));
+                            setPreview(null);
+                          } else if (key === 'test') {
+                            testConfig(config);
+                          } else if (key === 'resync') {
+                            syncConfig(config, true);
+                          } else if (key === 'delete') {
+                            removeConfig(config);
+                          }
+                        },
+                      }}
+                    >
+                      <Button size="small" icon={<MoreOutlined />} loading={busyId === config.id}>
+                        More
+                      </Button>
+                    </Dropdown>
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
+
+      <Modal
+        title={historyConfig ? `Sync Change History: ${historyConfig.name}` : 'Sync Change History'}
+        open={Boolean(historyConfig)}
+        onCancel={() => setHistoryConfig(null)}
+        width={780}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setHistoryConfig(null)}>
+            Done
+          </Button>,
+        ]}
+      >
+        {historyConfig ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <div className="text-sm font-semibold text-gray-900">
+                {historyConfig.last_synced_at
+                  ? `Last sync ${new Date(historyConfig.last_synced_at).toLocaleString()}`
+                  : 'No sync has run yet'}
+              </div>
+              <div className="mt-1 text-xs text-gray-500">
+                {resultText(historyConfig)} / {syncHistory(historyConfig).length} logged change(s)
+              </div>
+            </div>
+            {syncHistory(historyConfig).length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+                No change history has been recorded for this sync yet.
+              </div>
+            ) : (
+              <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+                {syncHistory(historyConfig).map((entry, index) => {
+                  const meta = historyTypeMeta[entry.type] || { label: entry.type || 'Change', color: 'default' };
+                  return (
+                    <div key={`${entry.type}-${entry.row}-${entry.created_at}-${index}`} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Tag color={meta.color} className="m-0">{meta.label}</Tag>
+                            {entry.row ? <span className="text-xs font-medium text-gray-400">Row {entry.row}</span> : null}
+                            {entry.company_name || entry.role_title ? (
+                              <span className="truncate text-xs font-medium text-gray-500">
+                                {[entry.company_name, entry.role_title].filter(Boolean).join(' / ')}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-2 text-sm leading-6 text-gray-800">{entry.message}</div>
+                        </div>
+                        {entry.field && (
+                          <div className="shrink-0 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500 sm:max-w-[240px]">
+                            <div className="font-semibold capitalize text-gray-600">{entry.field.replace(/_/g, ' ')}</div>
+                            {(entry.before || entry.after) && (
+                              <div className="mt-1 truncate">
+                                {entry.before || 'blank'} {'->'} {entry.after || 'blank'}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
+        title={reviewConfig ? `Review Import: ${reviewConfig.name}` : 'Review Import'}
+        open={Boolean(reviewConfig)}
+        onCancel={() => {
+          if (applyingReview) return;
+          setReviewConfig(null);
+          setImportReview(null);
+          setSelectedReviewIds([]);
+          setDuplicateResolutions({});
+        }}
+        width={860}
+        footer={[
+          <Button
+            key="cancel"
+            disabled={applyingReview}
+            onClick={() => {
+              setReviewConfig(null);
+              setImportReview(null);
+              setSelectedReviewIds([]);
+              setDuplicateResolutions({});
+            }}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="apply"
+            type="primary"
+            loading={applyingReview}
+            disabled={!importReview || selectedReviewIds.length === 0}
+            onClick={applyReview}
+          >
+            Apply Selected
+          </Button>,
+        ]}
+      >
+        {reviewLoading ? (
+          <div className="py-10 text-center text-sm text-gray-500">Scanning sheet changes...</div>
+        ) : importReview ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <ReviewMetric label="New" value={importReview.summary.new_applications} tone="emerald" />
+              <ReviewMetric label="Status" value={importReview.summary.status_changes} tone="violet" />
+              <ReviewMetric label="Duplicates" value={importReview.summary.possible_duplicates} tone="amber" />
+              <ReviewMetric label="Updates" value={importReview.summary.updates} tone="blue" />
+            </div>
+            <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">{reviewSummaryText(importReview)}</div>
+                <div className="mt-0.5 text-xs text-gray-500">
+                  {importReview.scanned_rows} row(s) scanned. Unchecked rows are rejected for this import run.
+                </div>
+              </div>
+              <Checkbox
+                checked={selectedReviewIds.length === importReview.items.length && importReview.items.length > 0}
+                indeterminate={selectedReviewIds.length > 0 && selectedReviewIds.length < importReview.items.length}
+                onChange={(event) => toggleAllReviewItems(event.target.checked)}
+              >
+                Select all
+              </Checkbox>
+            </div>
+            {importReview.errors.length > 0 && (
+              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
+                {importReview.errors.length} row(s) could not be reviewed. Fix those rows in Google Sheets and scan again.
+              </div>
+            )}
+            {importReview.items.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                No new imports or updates were detected.
+              </div>
+            ) : (
+              <div className="max-h-[440px] space-y-3 overflow-y-auto pr-1">
+                {importReview.items.map((item) => {
+                  const meta = reviewActionMeta[item.action];
+                  const checked = selectedReviewIds.includes(item.id);
+                  const changeEntries = Object.entries(item.changes || {});
+                  return (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl border p-4 transition ${
+                        checked ? 'border-indigo-200 bg-indigo-50/70' : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={checked}
+                          onChange={(event) => toggleReviewItem(item.id, event.target.checked)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-gray-900">{item.title}</span>
+                            <Tag color={meta.color}>{meta.label}</Tag>
+                            <span className="text-xs text-gray-400">Row {item.row}</span>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-600">{item.detail}</p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                            {item.status && <span>Status: {item.status}</span>}
+                            {item.salary_range && <span>Salary: {item.salary_range}</span>}
+                            {item.location && <span>Location: {item.location}</span>}
+                          </div>
+                          {changeEntries.length > 0 && (
+                            <div className="mt-3 space-y-1 rounded-lg bg-white/80 px-3 py-2 text-xs text-gray-600">
+                              {changeEntries.slice(0, 4).map(([field, change]) => (
+                                <div key={field} className="grid grid-cols-[110px_1fr] gap-2">
+                                  <span className="font-medium capitalize text-gray-500">{field.replace(/_/g, ' ')}</span>
+                                  <span className="truncate">
+                                    {change.from || 'blank'} {'->'} {change.to || 'blank'}
+                                  </span>
+                                </div>
+                              ))}
+                              {changeEntries.length > 4 && (
+                                <div className="text-gray-400">+ {changeEntries.length - 4} more change(s)</div>
+                              )}
+                            </div>
+                          )}
+                          {item.action === 'possible_duplicate' && (
+                            <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+                              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                <div>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                                    Duplicate resolution
+                                  </div>
+                                  <div className="mt-1 text-xs text-amber-700">
+                                    Choose how this row should be applied if selected.
+                                  </div>
+                                </div>
+                                <Segmented
+                                  size="small"
+                                  value={duplicateResolutions[item.id] || 'merge'}
+                                  onChange={(value) => updateDuplicateResolution(item.id, value as GoogleSheetDuplicateResolution)}
+                                  options={[
+                                    { label: 'Merge', value: 'merge' },
+                                    { label: 'Keep separate', value: 'keep_separate' },
+                                    { label: 'Intentional duplicate', value: 'intentional_duplicate' },
+                                  ]}
+                                />
+                              </div>
+                              <div className="mt-3 overflow-x-auto rounded-lg border border-amber-100 bg-white">
+                                <div className="grid min-w-[620px] grid-cols-[140px_1fr_1fr] border-b border-amber-100 bg-amber-50/70 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                                  <div className="px-3 py-2">Field</div>
+                                  <div className="px-3 py-2">Existing / matched</div>
+                                  <div className="px-3 py-2">Incoming sheet row</div>
+                                </div>
+                                {duplicateCompareFields.map((field) => {
+                                  const existingValue = item.duplicate_candidate?.fields?.[field.key] || '';
+                                  const incomingValue = item.incoming_fields?.[field.key] || '';
+                                  const differs = existingValue !== incomingValue;
+                                  return (
+                                    <div key={field.key} className="grid min-w-[620px] grid-cols-[140px_1fr_1fr] border-b border-gray-100 last:border-b-0 text-xs">
+                                      <div className="px-3 py-2 font-medium text-gray-500">{field.label}</div>
+                                      <div className={`px-3 py-2 ${differs ? 'bg-amber-50 text-gray-900' : 'text-gray-600'}`}>
+                                        {existingValue || 'blank'}
+                                      </div>
+                                      <div className={`px-3 py-2 ${differs ? 'bg-blue-50 text-gray-900' : 'text-gray-600'}`}>
+                                        {incomingValue || 'blank'}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
 
       {preview && (
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-3">
@@ -1077,6 +1458,21 @@ const GoogleSheetsSettings: React.FC = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const ReviewMetric = ({ label, value, tone }: { label: string; value: number; tone: 'emerald' | 'violet' | 'amber' | 'blue' }) => {
+  const classes = {
+    emerald: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    violet: 'border-violet-100 bg-violet-50 text-violet-700',
+    amber: 'border-amber-100 bg-amber-50 text-amber-700',
+    blue: 'border-blue-100 bg-blue-50 text-blue-700',
+  }[tone];
+  return (
+    <div className={`rounded-xl border px-4 py-3 ${classes}`}>
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-xs font-semibold uppercase tracking-wide">{label}</div>
     </div>
   );
 };

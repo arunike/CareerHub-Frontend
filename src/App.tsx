@@ -4,7 +4,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 
+const HomePage = lazy(() => import('./pages/Home'));
 const Availability = lazy(() => import('./pages/Availability'));
 const Events = lazy(() => import('./pages/Events'));
 const Holidays = lazy(() => import('./pages/Holidays'));
@@ -32,6 +34,7 @@ const RouteFallback = () => (
 
 function AppRoutes() {
   const location = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
   const isPublicBooking = location.pathname.startsWith('/book/');
   const isStandalone =
     isPublicBooking ||
@@ -39,6 +42,7 @@ function AppRoutes() {
     location.pathname.startsWith('/negotiation-result/');
   const isLoginPage = location.pathname === '/login';
   const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms';
+  const isHomePage = location.pathname === '/';
 
   if (isStandalone) {
     return (
@@ -68,6 +72,16 @@ function AppRoutes() {
         <Routes>
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/terms" element={<LegalPage type="terms" />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
+  if (isHomePage && !isLoading && !isAuthenticated) {
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
         </Routes>
       </Suspense>
     );

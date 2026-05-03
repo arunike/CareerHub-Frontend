@@ -134,89 +134,92 @@ export default function LegalPage({ type }: LegalPageProps) {
   const alternateLabel = type === 'privacy' ? 'Terms of Service' : 'Privacy Policy';
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-5 sm:px-8 lg:px-10">
-        <PublicHeader
-          navItems={[
-            { label: 'Privacy', to: '/privacy', active: type === 'privacy' },
-            { label: 'Terms', to: '/terms', active: type === 'terms' },
-          ]}
-        />
+    <main className="relative min-h-screen bg-slate-50 text-slate-600 selection:bg-indigo-500/30 overflow-hidden">
+      {/* Subtle glowing ambient backgrounds for light mode */}
+      <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-400/20 opacity-50 blur-[100px]" />
+      <div className="pointer-events-none absolute right-0 top-1/4 h-[500px] w-[500px] translate-x-1/3 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
 
-        <section className="grid gap-8 py-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:py-16">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600">{copy.eyebrow}</p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-6xl">
-              {copy.title}
-            </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">{copy.intro}</p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              {trustItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <span
-                    key={item.label}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm"
-                  >
-                    <Icon className="text-indigo-600" />
-                    {item.label}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 pt-24 pb-5 sm:px-8 sm:pt-32 lg:px-10">
+        <PublicHeader />
 
-          <aside className="border-l-4 border-indigo-500 bg-slate-950 p-6 text-white shadow-xl shadow-slate-200">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-200">Quick summary</p>
-            <ul className="mt-5 space-y-4">
-              {copy.summary.map((item) => (
-                <li key={item} className="flex gap-3 text-sm leading-6 text-slate-100">
-                  <CheckCircleOutlined className="mt-1 text-indigo-300" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 border-t border-white/15 pt-4 text-xs text-slate-300">Last updated: {updatedAt}</p>
-          </aside>
-        </section>
-
-        <section className="grid gap-4 pb-12 lg:grid-cols-2">
-          {copy.sections.map((section, index) => (
-            <article
-              key={section.title}
-              className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm ${
-                index === 0 ? 'lg:col-span-2' : ''
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950">{section.title}</h2>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{section.body}</p>
-                  {section.bullets && (
-                    <ul className="mt-4 space-y-2">
-                      {section.bullets.map((bullet) => (
-                        <li key={bullet} className="flex gap-2 text-sm leading-6 text-slate-600">
-                          <CheckCircleOutlined className="mt-1 text-indigo-600" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+        <div className="mx-auto w-full max-w-6xl">
+          <section className="grid gap-8 py-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:py-16">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">{copy.eyebrow}</p>
+              <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-6xl">
+                {copy.title}
+              </h1>
+              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">{copy.intro}</p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                {trustItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <span
+                      key={item.label}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-indigo-100 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
+                    >
+                      <Icon className="text-indigo-600" />
+                      {item.label}
+                    </span>
+                  );
+                })}
               </div>
-            </article>
-          ))}
-        </section>
+            </div>
 
-        <footer className="mt-auto flex flex-col gap-3 border-t border-slate-200 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <span>CareerHub legal information is available without signing in.</span>
-          <Link to={`/${alternateType}`} className="font-semibold text-indigo-600 hover:text-indigo-700">
-            View {alternateLabel}
-          </Link>
-        </footer>
+            <aside className="rounded-[28px] border border-white/80 bg-white/70 p-8 shadow-xl shadow-indigo-900/5 backdrop-blur-xl">
+              <p className="text-[11px] font-black uppercase tracking-wider text-indigo-600">Quick summary</p>
+              <ul className="mt-5 space-y-4">
+                {copy.summary.map((item) => (
+                  <li key={item} className="flex gap-3 text-sm font-medium leading-6 text-slate-700">
+                    <CheckCircleOutlined className="mt-1 shrink-0 text-emerald-500" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 border-t border-slate-200/60 pt-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Last updated: {updatedAt}
+              </p>
+            </aside>
+          </section>
+
+          <section className="grid gap-5 pb-12 lg:grid-cols-2">
+            {copy.sections.map((section, index) => (
+              <article
+                key={section.title}
+                className={`group rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur-sm transition-all hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 ${
+                  index === 0 ? 'lg:col-span-2' : ''
+                }`}
+              >
+                <div className="flex flex-col items-start gap-5 sm:flex-row">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-black text-indigo-600 shadow-inner transition-transform group-hover:scale-110">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 sm:mt-2">{section.title}</h2>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{section.body}</p>
+                    {section.bullets && (
+                      <ul className="mt-5 space-y-3">
+                        {section.bullets.map((bullet) => (
+                          <li key={bullet} className="flex gap-3 text-sm font-medium leading-6 text-slate-600">
+                            <CheckCircleOutlined className="mt-1 shrink-0 text-indigo-500" />
+                            <span>{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+
+          <footer className="mt-auto flex flex-col gap-4 border-t border-slate-200 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+            <span className="font-medium">CareerHub legal information is available without signing in.</span>
+            <Link to={`/${alternateType}`} className="font-bold text-slate-600 transition hover:text-slate-900">
+              View {alternateLabel}
+            </Link>
+          </footer>
+        </div>
       </div>
     </main>
   );

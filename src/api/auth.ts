@@ -32,6 +32,50 @@ export interface SignupStatusResponse {
   message: string;
 }
 
+export interface SecurityDashboardResponse {
+  environment: {
+    mode: string;
+    debug: boolean;
+    admin_enabled: boolean;
+    public_signup_enabled: boolean;
+    allowed_hosts_count: number;
+    cors_origins_count: number;
+    csrf_trusted_origins_count: number;
+    secure_ssl_redirect: boolean;
+    session_cookie_secure: boolean;
+    csrf_cookie_secure: boolean;
+    hsts_seconds: number;
+  };
+  auth: {
+    login_rate: string;
+    signup_rate: string;
+    token_refresh_rate: string;
+    jwt_access_minutes: number;
+    jwt_refresh_days: number;
+    refresh_rotation_enabled: boolean;
+    refresh_blacklist_enabled: boolean;
+  };
+  google: {
+    oauth_configured: boolean;
+    oauth_connected: boolean;
+    connected_email: string;
+    can_list_spreadsheets: boolean;
+    total_syncs: number;
+    enabled_syncs: number;
+    error_syncs: number;
+    latest_synced_at: string | null;
+    latest_error: string;
+  };
+  waf: {
+    vercel_project: boolean;
+    edge_scanner_denies_deployed: boolean;
+    firewall_actions_file: string;
+    bot_protection_configured: boolean;
+    ai_bots_blocked: boolean;
+  };
+  checked_at: string;
+}
+
 interface SignupPayload {
   email: string;
   full_name: string;
@@ -49,6 +93,8 @@ export const refreshAccessToken = (refresh: string) =>
   api.post<Pick<AuthResponse, 'access' | 'refresh'>>('/auth/refresh/', { refresh });
 
 export const getSignupStatus = () => api.get<SignupStatusResponse>('/auth/signup-status/');
+
+export const getSecurityDashboard = () => api.get<SecurityDashboardResponse>('/security/dashboard/');
 
 export const signup = (payload: SignupPayload) => api.post<AuthResponse>('/auth/signup/', payload);
 
