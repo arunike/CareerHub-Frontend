@@ -47,7 +47,7 @@ const JDReportPage: React.FC = () => {
         <RobotOutlined style={{ fontSize: 48 }} />
         <p className="text-lg text-gray-500">Report not found.</p>
         <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => navigate('/jd-reports')}
-          style={{ background: '#4f46e5', borderColor: '#4f46e5' }}>
+          style={{ background: '#0284c7', borderColor: '#0284c7' }}>
           View All Reports
         </Button>
       </div>
@@ -87,7 +87,7 @@ const JDReportPage: React.FC = () => {
               </button>
               <span className="text-gray-200 select-none">|</span>
               <div className="flex items-center gap-2">
-                <RobotOutlined style={{ color: '#6366f1', fontSize: 15 }} />
+                <RobotOutlined style={{ color: '#0ea5e9', fontSize: 15 }} />
                 <span className="text-sm font-semibold text-gray-700">AI Resume Evaluator</span>
               </div>
             </div>
@@ -106,7 +106,7 @@ const JDReportPage: React.FC = () => {
                 icon={<DownloadOutlined />}
                 onClick={() => window.print()}
                 className="rounded-lg"
-                style={{ background: '#4f46e5', borderColor: '#4f46e5' }}
+                style={{ background: '#0284c7', borderColor: '#0284c7' }}
               >
                 Download PDF
               </Button>
@@ -122,9 +122,9 @@ const JDReportPage: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 mb-4 shadow-sm">
-                <RobotOutlined className="text-indigo-500 text-xs" />
-                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">AI Resume Evaluation Report</span>
+              <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-3 py-1 mb-4 shadow-sm">
+                <RobotOutlined className="text-sky-500 text-xs" />
+                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">AI Resume Evaluation Report</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight tracking-tight">
                 {report.title || 'Job Match Analysis'}
@@ -162,7 +162,7 @@ const JDReportPage: React.FC = () => {
               </div>
               <div className="flex flex-col gap-3.5 pt-1">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 bg-indigo-600 rounded-full" />
+                  <div className="w-1 h-5 bg-sky-600 rounded-full" />
                   <h2 className="text-lg font-bold text-gray-900 m-0 tracking-tight">Executive Summary</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed text-sm m-0 font-medium opacity-90 max-w-2xl">
@@ -288,8 +288,8 @@ const JDReportPage: React.FC = () => {
               {keywordSuggestions.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
-                      <TagsOutlined className="text-indigo-600 text-sm" />
+                    <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
+                      <TagsOutlined className="text-sky-600 text-sm" />
                     </div>
                     <span className="font-semibold text-gray-800 text-sm">Supported JD Keywords</span>
                   </div>
@@ -298,17 +298,17 @@ const JDReportPage: React.FC = () => {
                   </p>
                   <div className="flex flex-col gap-2">
                     {keywordSuggestions.map((keyword, index) => (
-                      <div key={index} className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2">
+                      <div key={index} className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-bold text-indigo-700">{keywordName(keyword)}</span>
+                          <span className="text-xs font-bold text-sky-700">{keywordName(keyword)}</span>
                           {isRecord(keyword) && keyword.support_level && (
-                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-600 border border-indigo-100">
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-600 border border-sky-100">
                               {supportLabel(keyword.support_level)}
                             </span>
                           )}
                         </div>
                         {isRecord(keyword) && keyword.where_to_use && (
-                          <p className="mt-1 text-[11px] leading-relaxed text-indigo-900/70 m-0">
+                          <p className="mt-1 text-[11px] leading-relaxed text-sky-900/70 m-0">
                             Use in: {String(keyword.where_to_use)}
                           </p>
                         )}
@@ -407,8 +407,8 @@ const JDReportPage: React.FC = () => {
           {report.overall_risk_assessment && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
-                  <WarningOutlined className="text-violet-600 text-sm" />
+                <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <WarningOutlined className="text-blue-600 text-sm" />
                 </div>
                 <span className="font-semibold text-gray-800 text-sm">Risk Assessment</span>
               </div>
@@ -419,9 +419,9 @@ const JDReportPage: React.FC = () => {
                   ['Tech Stack', report.overall_risk_assessment.technical_stack_risk],
                   ['Positioning', report.overall_risk_assessment.resume_positioning_risk],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-xl border border-violet-100 bg-violet-50/60 p-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-violet-400">{label}</div>
-                    <div className="mt-1 text-sm font-bold capitalize text-violet-900">{value}</div>
+                  <div key={label} className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-blue-400">{label}</div>
+                    <div className="mt-1 text-sm font-bold capitalize text-blue-900">{value}</div>
                   </div>
                 ))}
               </div>

@@ -346,10 +346,10 @@ const Tasks: React.FC = () => {
         primaryActionIcon={<PlusOutlined />}
       />
 
-      <Card className="overflow-hidden border-indigo-100 shadow-sm">
+      <Card className="overflow-hidden border-sky-100 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <div className="flex items-start gap-3 lg:w-[280px]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
               <BellOutlined />
             </div>
             <div className="min-w-0">
@@ -385,7 +385,7 @@ const Tasks: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSmartReminderText(example)}
-                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-500 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
                   >
                     {example}
                   </button>

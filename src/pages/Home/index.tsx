@@ -57,25 +57,25 @@ const securityTransparency = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-indigo-500/30">
+    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-sky-500/30">
       <PublicHeader />
 
       <div className="flex min-h-screen w-full flex-col pt-24 sm:pt-32">
         <section className="relative px-5 py-10 sm:px-8 lg:px-10 lg:py-16">
           {/* Subtle glowing ambient backgrounds for light mode */}
-          <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-400/20 opacity-50 blur-[100px]" />
+          <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
           <div className="pointer-events-none absolute right-0 top-1/4 h-[500px] w-[500px] translate-x-1/3 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
 
           <div className="relative mx-auto grid w-full max-w-[1440px] gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(600px,1.08fr)] lg:items-center xl:gap-16">
             <div className="max-w-[640px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-700 shadow-sm">
                 <SafetyCertificateOutlined />
                 Private career operating system
               </div>
 
               <h1 className="mt-8 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-5xl xl:text-[64px]">
                 Your private command center for every{' '}
-                <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-sky-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   job application.
                 </span>
               </h1>
@@ -87,14 +87,14 @@ export default function HomePage() {
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   to="/login"
-                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-300"
+                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-blue-600 px-6 text-sm font-bold text-white shadow-lg shadow-sky-200 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-sky-300"
                 >
                   Start tracking
                   <ArrowRightOutlined />
                 </Link>
                 <Link
                   to="/privacy"
-                  className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-indigo-300 hover:bg-slate-50"
+                  className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-sky-300 hover:bg-slate-50"
                 >
                   View privacy policy
                 </Link>
@@ -111,8 +111,8 @@ export default function HomePage() {
             </div>
 
             <div className="relative min-w-0">
-              <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-br from-indigo-200/50 via-sky-200/50 to-transparent blur-2xl" />
-              <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-2xl shadow-indigo-900/10 backdrop-blur-xl">
+              <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-br from-sky-200/50 via-sky-200/50 to-transparent blur-2xl" />
+              <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-2xl shadow-sky-900/10 backdrop-blur-xl">
                 
                 {/* Bento Grid layout representing the product suite */}
                 <div className="grid gap-4 bg-slate-50/50 p-4 sm:grid-cols-3">
@@ -124,7 +124,7 @@ export default function HomePage() {
                         <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline</p>
                         <p className="mt-1 text-sm font-bold text-slate-900">Application Tracking</p>
                       </div>
-                      <BarChartOutlined className="text-xl text-indigo-500" />
+                      <BarChartOutlined className="text-xl text-sky-500" />
                     </div>
 
                     <div className="mt-4 flex gap-3 overflow-hidden">
@@ -136,8 +136,8 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="w-1/3 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-indigo-500">Onsite</p>
-                        <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50/50 p-2.5 shadow-sm">
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-sky-500">Onsite</p>
+                        <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50/50 p-2.5 shadow-sm">
                           <p className="text-xs font-bold text-slate-900">Google</p>
                           <p className="mt-0.5 text-[10px] text-slate-500">L4 Engineer</p>
                         </div>
@@ -153,15 +153,15 @@ export default function HomePage() {
                   </section>
 
                   {/* Card 2: BYOK AI (col-span-1) */}
-                  <section className="col-span-3 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm sm:col-span-1">
+                  <section className="col-span-3 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm sm:col-span-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-indigo-500">Smart Tools</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-sky-500">Smart Tools</p>
                         <p className="mt-1 text-sm font-bold text-slate-900">BYOK AI</p>
                       </div>
-                      <RobotOutlined className="text-xl text-indigo-500" />
+                      <RobotOutlined className="text-xl text-sky-500" />
                     </div>
-                    <div className="mt-4 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm">
+                    <div className="mt-4 rounded-xl border border-sky-100 bg-white p-3 shadow-sm">
                       <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                         <ThunderboltFilled className="text-amber-400" />
                         <span className="text-xs font-bold text-slate-700">JD Matcher</span>
@@ -221,11 +221,11 @@ export default function HomePage() {
                           <div className="h-full w-[60%] rounded-full bg-emerald-500" />
                         </div>
                       </div>
-                      <div className="flex-1 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                        <p className="text-[10px] font-black uppercase text-indigo-600">Annual Equity</p>
+                      <div className="flex-1 rounded-xl border border-sky-100 bg-sky-50/50 p-4">
+                        <p className="text-[10px] font-black uppercase text-sky-600">Annual Equity</p>
                         <p className="mt-1 text-2xl font-black text-slate-900">$120k</p>
-                        <div className="mt-2 h-1.5 w-full rounded-full bg-indigo-200">
-                          <div className="h-full w-[40%] rounded-full bg-indigo-500" />
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-sky-200">
+                          <div className="h-full w-[40%] rounded-full bg-sky-500" />
                         </div>
                       </div>
                     </div>
@@ -243,7 +243,7 @@ export default function HomePage() {
           <div className="relative mx-auto w-full max-w-[1440px]">
             <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">Why register</p>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">Why register</p>
                 <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
                   Built to manage your entire career trajectory, not just spreadsheets.
                 </h2>
@@ -263,9 +263,9 @@ export default function HomePage() {
                 return (
                   <article
                     key={card.title}
-                    className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5"
+                    className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-sky-200 hover:shadow-xl hover:shadow-sky-500/5"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-xl text-indigo-600 transition-transform group-hover:scale-110">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-xl text-sky-600 transition-transform group-hover:scale-110">
                       <Icon />
                     </div>
                     <h2 className="mt-6 text-lg font-bold text-slate-900">{card.title}</h2>
@@ -279,9 +279,9 @@ export default function HomePage() {
 
         <section className="px-5 pb-20 sm:px-8 lg:px-10">
           <div className="mx-auto grid w-full max-w-[1440px] gap-6 rounded-[32px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 lg:grid-cols-[0.68fr_1.32fr] lg:p-6">
-            <div className="relative overflow-hidden rounded-[24px] border border-indigo-100 bg-indigo-50/50 p-8">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-200/50 blur-3xl" />
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-indigo-600 border border-indigo-100 shadow-sm">
+            <div className="relative overflow-hidden rounded-[24px] border border-sky-100 bg-sky-50/50 p-8">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-200/50 blur-3xl" />
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-sky-600 border border-sky-100 shadow-sm">
                 <SafetyCertificateOutlined />
               </div>
               <h2 className="relative mt-6 text-3xl font-black tracking-tight text-slate-900">
@@ -290,7 +290,7 @@ export default function HomePage() {
               <p className="relative mt-4 text-base leading-relaxed text-slate-600">
                 CareerHub asks for the minimum access needed. API keys are strictly encrypted, and optional Google integrations are transparently scoped. Your data is yours.
               </p>
-              <Link to="/privacy" className="relative mt-8 inline-flex items-center text-sm font-bold text-indigo-600 transition hover:text-indigo-700">
+              <Link to="/privacy" className="relative mt-8 inline-flex items-center text-sm font-bold text-sky-600 transition hover:text-sky-700">
                 Read the Privacy Policy
                 <ArrowRightOutlined className="ml-2 transition-transform group-hover:translate-x-1" />
               </Link>

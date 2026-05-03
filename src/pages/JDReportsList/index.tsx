@@ -159,7 +159,7 @@ const JDReportsListPage: React.FC = () => {
 
         <div className="flex flex-col gap-6">
           {selectedIds.length > 0 && (
-            <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm animate-in fade-in slide-in-from-top-2">
               <BulkActionHeader
                 selectedCount={selectedIds.length}
                 totalCount={reports.length}
@@ -174,8 +174,8 @@ const JDReportsListPage: React.FC = () => {
           {/* Empty state */}
           {reports.length === 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-24 gap-6">
-              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center">
-                <FileTextOutlined style={{ fontSize: 40, color: '#6366f1' }} />
+              <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center">
+                <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
               </div>
               <div className="text-center">
                 <h3 className="text-gray-900 font-bold text-xl m-0 mb-2">No reports yet</h3>
@@ -184,7 +184,7 @@ const JDReportsListPage: React.FC = () => {
               <Button 
                 type="primary" 
                 size="large"
-                className="bg-indigo-600 hover:!bg-indigo-500 border-transparent shadow-lg shadow-indigo-200"
+                className="bg-sky-600 hover:!bg-sky-500 border-transparent shadow-lg shadow-sky-200"
                 onClick={() => navigate('/experience')}
               >
                 Go to Experience Page
@@ -209,7 +209,7 @@ const JDReportsListPage: React.FC = () => {
                 <div
                   key={report.id}
                   className={`group bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${
-                    isSelected ? 'border-indigo-300 shadow-md ring-1 ring-indigo-200' : 'border-gray-100 shadow-sm hover:shadow-md'
+                    isSelected ? 'border-sky-300 shadow-md ring-1 ring-sky-200' : 'border-gray-100 shadow-sm hover:shadow-md'
                   }`}
                   onClick={() => toggleSelect(report.id)}
                   style={{ cursor: 'pointer' }}
@@ -253,7 +253,7 @@ const JDReportsListPage: React.FC = () => {
                             e.stopPropagation();
                             setEditingReport({ id: report.id, title: report.title || report.jdSnippet || '' });
                           }}
-                          className="opacity-0 group-hover/title:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-all"
+                          className="opacity-0 group-hover/title:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-sky-600 transition-all"
                         >
                           <EditOutlined className="text-sm" />
                         </button>
@@ -276,12 +276,12 @@ const JDReportsListPage: React.FC = () => {
 
                   {/* Card Footer */}
                   <div className={`border-t px-6 py-3.5 flex items-center justify-between transition-colors duration-300 ${
-                    isSelected ? 'bg-indigo-50/40 border-indigo-100' : 'bg-gray-50/60 border-gray-50'
+                    isSelected ? 'bg-sky-50/40 border-sky-100' : 'bg-gray-50/60 border-gray-50'
                   }`}>
                     <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-gray-400">
                       <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> {report.matched_skills?.length ?? 0} strengths</span>
                       <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-orange-400" /> {report.missing_skills?.length ?? 0} gaps</span>
-                      <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> {report.tailored_bullets?.length ?? 0} rewrites</span>
+                      <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-sky-400" /> {report.tailored_bullets?.length ?? 0} rewrites</span>
                     </div>
                     <div onClick={(e) => e.stopPropagation()}>
                       <RowActions

@@ -31,7 +31,7 @@ interface CustomWidgetCardProps {
   onDelete: (id: string) => void;
 }
 
-const COLORS = ['#1890ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#1890ff', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
 const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete }) => {
   const { cachedData, color, icon, name } = widget;
@@ -41,7 +41,7 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
     green: { bg: 'bg-green-100', text: 'text-green-600', fill: '#10b981' },
     amber: { bg: 'bg-amber-100', text: 'text-amber-600', fill: '#f59e0b' },
     red: { bg: 'bg-red-100', text: 'text-red-600', fill: '#ef4444' },
-    purple: { bg: 'bg-purple-100', text: 'text-purple-600', fill: '#8b5cf6' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-600', fill: '#3b82f6' },
     pink: { bg: 'bg-pink-100', text: 'text-pink-600', fill: '#ec4899' },
   };
 

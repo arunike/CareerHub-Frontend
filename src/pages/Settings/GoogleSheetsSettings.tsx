@@ -1300,7 +1300,7 @@ const GoogleSheetsSettings: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <ReviewMetric label="New" value={importReview.summary.new_applications} tone="emerald" />
-              <ReviewMetric label="Status" value={importReview.summary.status_changes} tone="violet" />
+              <ReviewMetric label="Status" value={importReview.summary.status_changes} tone="blue" />
               <ReviewMetric label="Duplicates" value={importReview.summary.possible_duplicates} tone="amber" />
               <ReviewMetric label="Updates" value={importReview.summary.updates} tone="blue" />
             </div>
@@ -1338,7 +1338,7 @@ const GoogleSheetsSettings: React.FC = () => {
                     <div
                       key={item.id}
                       className={`rounded-xl border p-4 transition ${
-                        checked ? 'border-indigo-200 bg-indigo-50/70' : 'border-gray-200 bg-white hover:border-gray-300'
+                        checked ? 'border-sky-200 bg-sky-50/70' : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -1462,12 +1462,12 @@ const GoogleSheetsSettings: React.FC = () => {
   );
 };
 
-const ReviewMetric = ({ label, value, tone }: { label: string; value: number; tone: 'emerald' | 'violet' | 'amber' | 'blue' }) => {
+const ReviewMetric = ({ label, value, tone }: { label: string; value: number; tone: 'emerald' | 'blue' | 'amber' | 'sky' }) => {
   const classes = {
     emerald: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    violet: 'border-violet-100 bg-violet-50 text-violet-700',
-    amber: 'border-amber-100 bg-amber-50 text-amber-700',
     blue: 'border-blue-100 bg-blue-50 text-blue-700',
+    amber: 'border-amber-100 bg-amber-50 text-amber-700',
+    sky: 'border-sky-100 bg-sky-50 text-sky-700',
   }[tone];
   return (
     <div className={`rounded-xl border px-4 py-3 ${classes}`}>

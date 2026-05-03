@@ -355,7 +355,7 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>;
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600" /></div>;
   if (!settings) return <div className="text-center py-12 text-red-600">Failed to load profile</div>;
 
   const profileName =
@@ -402,7 +402,7 @@ const ProfilePage: React.FC = () => {
             icon={<SaveOutlined />}
             loading={saving}
             onClick={handleSaveGeneral}
-            className="rounded-xl h-12 px-8 bg-indigo-600 hover:bg-indigo-700 border-none shadow-lg shadow-indigo-200 font-semibold"
+            className="rounded-xl h-12 px-8 bg-sky-600 hover:bg-sky-700 border-none shadow-lg shadow-sky-200 font-semibold"
           >
             Save All Changes
           </Button>
@@ -521,7 +521,7 @@ const ProfilePage: React.FC = () => {
           {/* General Section */}
           <section className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden">
             <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
                 <IdcardOutlined />
               </div>
               <h3 className="text-base font-bold text-slate-800">Basic Information</h3>
@@ -535,7 +535,7 @@ const ProfilePage: React.FC = () => {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all placeholder:text-slate-300"
+                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500 transition-all placeholder:text-slate-300"
                     placeholder="Enter first name"
                   />
                 </div>
@@ -545,7 +545,7 @@ const ProfilePage: React.FC = () => {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all placeholder:text-slate-300"
+                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500 transition-all placeholder:text-slate-300"
                     placeholder="Enter last name"
                   />
                 </div>
@@ -555,13 +555,13 @@ const ProfilePage: React.FC = () => {
                 <label className="text-xs font-bold text-slate-500 ml-1">Display Name</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <UserOutlined className="text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
+                    <UserOutlined className="text-slate-300 group-focus-within:text-sky-500 transition-colors" />
                   </div>
                   <input
                     type="text"
                     value={settings.display_name || ''}
                     onChange={(e) => setSettings({ ...settings, display_name: e.target.value })}
-                    className="w-full h-12 pl-11 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
+                    className="w-full h-12 pl-11 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500 transition-all"
                     placeholder="Your public name"
                   />
                 </div>
@@ -613,7 +613,7 @@ const ProfilePage: React.FC = () => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="At least 8 characters"
-                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
+                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500 transition-all"
                   />
                 </div>
                 <div className="space-y-2">
@@ -623,7 +623,7 @@ const ProfilePage: React.FC = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat new password"
-                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
+                    className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50/20 px-4 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500 transition-all"
                   />
                 </div>
               </div>
@@ -635,7 +635,7 @@ const ProfilePage: React.FC = () => {
                   icon={<LockOutlined />}
                   loading={passwordSaving}
                   onClick={handlePasswordChange}
-                  className="rounded-xl h-11 text-xs font-bold border-slate-200 hover:border-indigo-500 hover:text-indigo-600 transition-all flex items-center gap-2"
+                  className="rounded-xl h-11 text-xs font-bold border-slate-200 hover:border-sky-500 hover:text-sky-600 transition-all flex items-center gap-2"
                 >
                   Update Account Password
                 </Button>
@@ -702,7 +702,7 @@ const ProfilePage: React.FC = () => {
                       value={encryptedExportPassphrase}
                       onChange={(e) => setEncryptedExportPassphrase(e.target.value)}
                       placeholder="Encryption passphrase"
-                      className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500"
+                      className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500"
                     />
                     <Button loading={exporting} icon={<FileProtectOutlined />} onClick={handleEncryptedExport}>
                       Encrypt
@@ -743,7 +743,7 @@ const ProfilePage: React.FC = () => {
                   value={restorePassphrase}
                   onChange={(e) => setRestorePassphrase(e.target.value)}
                   placeholder="Passphrase for encrypted JSON restore (optional)"
-                  className="mt-3 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500"
+                  className="mt-3 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500"
                 />
               </div>
 

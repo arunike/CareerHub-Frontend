@@ -84,7 +84,7 @@ const Settings: React.FC = () => {
     { value: 'green',  label: 'Green',  bg: '#dcfce7', text: '#15803d' },
     { value: 'red',    label: 'Red',    bg: '#fee2e2', text: '#b91c1c' },
     { value: 'pink',   label: 'Pink',   bg: '#fce7f3', text: '#be185d' },
-    { value: 'indigo', label: 'Indigo', bg: '#e0e7ff', text: '#4338ca' },
+    { value: 'sky', label: 'Sky', bg: '#e0f2fe', text: '#0369a1' },
     { value: 'gray',   label: 'Gray',   bg: '#f3f4f6', text: '#374151' },
   ];
   const [isAddingEmpType, setIsAddingEmpType] = useState(false);
@@ -307,7 +307,7 @@ const Settings: React.FC = () => {
       if (!data.application_stages || data.application_stages.length === 0) {
         data.application_stages = [
           { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-          { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-violet-500' },
+          { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
           { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
           { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
           { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
@@ -925,15 +925,15 @@ const Settings: React.FC = () => {
       {activeTab === 'ai' && <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
         <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">AI Provider</h3>
 
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-sky-50 p-5 space-y-4">
+        <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-sky-50 p-5 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
               <RobotOutlined className="text-lg" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm font-semibold text-gray-900">Encrypted Server-side BYOK</h4>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-indigo-200 text-indigo-700">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-sky-200 text-sky-700">
                   Multi-provider
                 </span>
               </div>
@@ -953,7 +953,7 @@ const Settings: React.FC = () => {
               Provider Adapter
             </label>
             <select
-              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
               value={aiSettings.adapter}
               onChange={(e) => applyAiProviderPreset(e.target.value as AIProviderSettings['adapter'])}
             >
@@ -976,7 +976,7 @@ const Settings: React.FC = () => {
               <ApiOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="url"
-                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
                 value={aiSettings.endpoint}
                 onChange={(e) => updateAiSetting('endpoint', e.target.value)}
                 placeholder={
@@ -998,7 +998,7 @@ const Settings: React.FC = () => {
             </label>
             <input
               type="text"
-              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
               value={aiSettings.model}
               onChange={(e) => updateAiSetting('model', e.target.value)}
               placeholder={
@@ -1019,14 +1019,14 @@ const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAiApiKey((current) => !current)}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                className="text-xs font-medium text-sky-600 hover:text-sky-700"
               >
                 {showAiApiKey ? 'Hide key' : 'Show key'}
               </button>
             </div>
             <input
               type={showAiApiKey ? 'text' : 'password'}
-              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
               value={aiSettings.apiKey}
               onChange={(e) => updateAiSetting('apiKey', e.target.value)}
               placeholder={
@@ -1041,7 +1041,7 @@ const Settings: React.FC = () => {
               Used by Cover Letter generation, JD Matcher, job URL import, Negotiation Advisor, and Analytics custom widgets.
             </p>
             {aiSettings.apiKeyConfigured && !aiSettings.apiKey && (
-              <p className="text-xs text-indigo-600 mt-1">
+              <p className="text-xs text-sky-600 mt-1">
                 A key is already stored securely for this account: {aiSettings.apiKeyMasked || 'Saved key'}
               </p>
             )}
@@ -1065,7 +1065,7 @@ const Settings: React.FC = () => {
                 type="button"
                 onClick={handleSaveAiSettings}
                 disabled={!aiSettingsDirty}
-                className="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3.5 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Save Provider
               </button>
@@ -1568,7 +1568,7 @@ const Settings: React.FC = () => {
               <button
                 onClick={() => toggleKey(itemKey)}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                  visible ? 'bg-indigo-500' : 'bg-gray-200'
+                  visible ? 'bg-sky-500' : 'bg-gray-200'
                 }`}
                 role="switch"
                 aria-checked={visible}

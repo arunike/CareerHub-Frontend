@@ -525,7 +525,7 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
       </div>
 
       {/* Final */}
-      <div className="border-t border-slate-200 pt-2 bg-indigo-50 rounded-lg px-3 py-2.5">
+      <div className="border-t border-slate-200 pt-2 bg-sky-50 rounded-lg px-3 py-2.5">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-bold text-slate-800">Total Score</p>
@@ -533,7 +533,7 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
               {(rawSum / 100).toFixed(2)} pts ÷ {activeWeightTotal / 100} = {row.score}
             </p>
           </div>
-          <span className="text-2xl font-black text-indigo-600">{row.score}</span>
+          <span className="text-2xl font-black text-sky-600">{row.score}</span>
         </div>
       </div>
     </div>
@@ -595,12 +595,12 @@ const OfferDecisionScorecard = ({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 shadow-sm ring-1 ring-sky-100">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-indigo-500">Decision Scorecard</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-500">Decision Scorecard</p>
             </div>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Best overall: <span className="text-indigo-600">{leader.company}</span></h2>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Best overall: <span className="text-sky-600">{leader.company}</span></h2>
             <p className="mt-2 text-sm font-medium text-slate-500 max-w-2xl">
               Weighted beyond total comp. Advanced signals only count after you fill them in.
             </p>
@@ -625,13 +625,13 @@ const OfferDecisionScorecard = ({
       <div className="grid items-start gap-6 p-4 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="grid gap-6 xl:grid-cols-2">
           {rows.map((row) => (
-            <article key={row.id} className="relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md">
+            <article key={row.id} className="relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:border-sky-300 hover:shadow-md">
               {/* Card Header */}
               <div className="border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-6 sm:py-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white shadow-sm">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[11px] font-bold text-white shadow-sm">
                         {row.rank}
                       </span>
                       <h3 className="text-lg font-bold text-slate-900">{row.company}</h3>
@@ -647,9 +647,9 @@ const OfferDecisionScorecard = ({
                       overlayStyle={{ maxWidth: 380 }}
                     >
                       <button className="group flex flex-col items-end text-right hover:opacity-80 transition-opacity cursor-pointer">
-                        <p className="text-3xl font-black tracking-tight text-indigo-600 group-hover:underline decoration-dotted underline-offset-4">{row.score}</p>
+                        <p className="text-3xl font-black tracking-tight text-sky-600 group-hover:underline decoration-dotted underline-offset-4">{row.score}</p>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                          Total Score <span className="text-indigo-300">ⓘ</span>
+                          Total Score <span className="text-sky-300">ⓘ</span>
                         </p>
                       </button>
                     </Popover>
@@ -702,7 +702,7 @@ const OfferDecisionScorecard = ({
                           <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                             <div
                               className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                                category.key === 'financial' ? 'bg-emerald-500' : 'bg-indigo-500'
+                                category.key === 'financial' ? 'bg-emerald-500' : 'bg-sky-500'
                               }`}
                               style={{ width: `${Math.round(category.score)}%` }}
                             />
@@ -738,7 +738,7 @@ const OfferDecisionScorecard = ({
                           <Rate 
                             value={rateValue} 
                             onChange={(val) => onScoreUpdate?.(row.applicationId, { [dbKey]: val })}
-                            className="text-indigo-500 text-sm"
+                            className="text-sky-500 text-sm"
                           />
                         </div>
                       );
@@ -899,7 +899,7 @@ const OfferDecisionScorecard = ({
                 {row.isSimulated ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="grid grid-cols-2 gap-2 sm:flex">
-                      <button onClick={() => onEditScenario(String(row.offer.id))} className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">Edit</button>
+                      <button onClick={() => onEditScenario(String(row.offer.id))} className="px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-50 rounded-lg transition-colors">Edit</button>
                     </div>
                     <div>
                       <Popconfirm
@@ -916,7 +916,7 @@ const OfferDecisionScorecard = ({
                 ) : (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                      <button onClick={() => onEditClick(row.offer as Offer)} className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">Edit</button>
+                      <button onClick={() => onEditClick(row.offer as Offer)} className="px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-50 rounded-lg transition-colors">Edit</button>
                       <button onClick={() => onToggleCurrent(row.offer as Offer)} className={clsx("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors", (row.offer as Offer).is_current ? "text-slate-400 hover:bg-slate-50" : "text-slate-600 hover:bg-slate-50")}>
                         {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
                       </button>
@@ -995,7 +995,7 @@ const OfferDecisionScorecard = ({
           {/* Score Weights */}
           <div className="rounded-3xl border border-slate-200 bg-slate-50/50 p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
               </div>
               <div>
@@ -1017,7 +1017,7 @@ const OfferDecisionScorecard = ({
               ? 'bg-emerald-500'
               : isNear
               ? 'bg-amber-400'
-              : 'bg-indigo-500';
+              : 'bg-sky-500';
 
             const labelColor = isOver
               ? 'text-rose-600'
@@ -1057,7 +1057,7 @@ const OfferDecisionScorecard = ({
                   const isOptional = ['workLife', 'growth', 'brand', 'team'].includes(key);
                   return (
                     <div key={key} className={clsx(
-                      'flex items-center justify-between rounded-2xl border p-3 shadow-sm transition-colors hover:border-indigo-200',
+                      'flex items-center justify-between rounded-2xl border p-3 shadow-sm transition-colors hover:border-sky-200',
                       isOver ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'
                     )}>
                       <div className="flex flex-col">
@@ -1076,7 +1076,7 @@ const OfferDecisionScorecard = ({
                           'w-[72px] text-xs font-bold border-none rounded-md text-right [&_.ant-input-number-input]:!font-bold',
                           isOver
                             ? 'bg-rose-50 text-rose-600 [&_.ant-input-number-input]:!text-rose-600'
-                            : 'bg-indigo-50 text-indigo-700 [&_.ant-input-number-input]:!text-indigo-700'
+                            : 'bg-sky-50 text-sky-700 [&_.ant-input-number-input]:!text-sky-700'
                         )}
                         controls={false}
                         formatter={(value) => `${value}%`}

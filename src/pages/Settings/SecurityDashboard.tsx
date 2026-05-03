@@ -166,7 +166,7 @@ const SecurityDashboard: React.FC = () => {
         <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <SafetyCertificateOutlined className="text-indigo-600" />
+              <SafetyCertificateOutlined className="text-sky-600" />
               <h3 className="text-lg font-semibold text-gray-900">Security Dashboard</h3>
             </div>
             <p className="mt-1 text-sm text-gray-500">
@@ -256,7 +256,7 @@ const Metric = ({ label, value, tone }: { label: string; value: number; tone: 'e
 const Panel = ({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) => (
   <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
     <div className="mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
-      <span className="text-indigo-600">{icon}</span>
+      <span className="text-sky-600">{icon}</span>
       <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
     </div>
     <div className="space-y-2">{children}</div>

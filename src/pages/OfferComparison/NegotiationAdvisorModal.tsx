@@ -133,7 +133,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
     <Modal
       title={
         <div className="flex items-center gap-2">
-          <ThunderboltOutlined style={{ color: '#6366f1' }} />
+          <ThunderboltOutlined style={{ color: '#0ea5e9' }} />
           <span>Negotiation Advisor — {roleTitle} at {companyName}</span>
         </div>
       }
@@ -164,7 +164,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
             type="primary"
             icon={<ThunderboltOutlined />}
             onClick={handleGenerate}
-            style={{ background: '#6366f1', borderColor: '#6366f1' }}
+            style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}
           >
             Generate Negotiation Advice
           </Button>
@@ -195,10 +195,10 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
         <div className="flex flex-col gap-4">
           {/* Suggested Ask */}
           {advice.suggested_ask && (
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
               <div className="flex items-center gap-2 mb-3">
-                <DollarOutlined style={{ color: '#6366f1' }} />
-                <Text strong style={{ color: '#6366f1' }}>
+                <DollarOutlined style={{ color: '#0ea5e9' }} />
+                <Text strong style={{ color: '#0ea5e9' }}>
                   Suggested Counter-Ask
                 </Text>
               </div>
@@ -211,9 +211,9 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
                 ]
                   .filter((x) => x.value)
                   .map(({ label, value }) => (
-                    <div key={label} className="flex flex-col items-center min-w-[80px] bg-white rounded-lg border border-indigo-100 px-3 py-2">
+                    <div key={label} className="flex flex-col items-center min-w-[80px] bg-white rounded-lg border border-sky-100 px-3 py-2">
                       <Text type="secondary" className="text-xs uppercase tracking-wider">{label}</Text>
-                      <Text strong style={{ color: '#6366f1' }}>{value}</Text>
+                      <Text strong style={{ color: '#0ea5e9' }}>{value}</Text>
                     </div>
                   ))}
               </div>

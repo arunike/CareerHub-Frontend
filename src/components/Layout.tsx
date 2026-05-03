@@ -228,7 +228,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               icon={isDesktopSidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={toggleDesktopSidebar}
               aria-label={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="!h-9 !w-9 !rounded-xl !text-slate-400 hover:!text-indigo-600 hover:!bg-indigo-50"
+              className="!h-9 !w-9 !rounded-xl !text-slate-400 hover:!text-sky-600 hover:!bg-sky-50"
             />
           </Tooltip>
         ) : (
@@ -280,7 +280,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 type="button"
                 onClick={() => navigate('/profile')}
                 aria-label="Open profile"
-                className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-500/5 transition-all"
+                className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-sky-100 hover:shadow-lg hover:shadow-sky-500/5 transition-all"
               >
                 <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
               </button>
@@ -312,13 +312,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
             <div 
               onClick={() => navigate('/profile')}
-              className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
+              className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-sky-100 hover:shadow-xl hover:shadow-sky-500/5 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-3">
                 <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Account</p>
-                  <p className="text-sm font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
+                  <p className="text-sm font-bold text-slate-900 truncate group-hover:text-sky-600 transition-colors">
                     {displayName || 'CareerHub User'}
                   </p>
                 </div>
@@ -400,7 +400,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   onClick={() => navigate(item.key)}
                   className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-600'
+                      ? 'bg-sky-50 text-sky-600'
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                   aria-current={isActive ? 'page' : undefined}

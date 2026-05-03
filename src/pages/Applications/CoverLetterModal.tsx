@@ -84,7 +84,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
     <Modal
       title={
         <Space>
-          <ThunderboltOutlined style={{ color: '#6366f1' }} />
+          <ThunderboltOutlined style={{ color: '#0ea5e9' }} />
           <span>
             Cover Letter — {application.role_title} at{' '}
             {application.company_details?.name}
@@ -130,8 +130,8 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
         style={{
           height: 44,
           borderRadius: 10,
-          background: '#4f46e5',
-          borderColor: '#4f46e5',
+          background: '#0284c7',
+          borderColor: '#0284c7',
           fontWeight: 600,
           fontSize: 14,
           marginBottom: 20,
@@ -143,7 +143,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
       {/* Loading skeleton */}
       {loading && (
         <div style={{
-          background: 'linear-gradient(135deg, #f5f3ff, #eef2ff)',
+          background: 'linear-gradient(135deg, #eff6ff, #f0f9ff)',
           border: '1px solid #e0e7ff',
           borderRadius: 12,
           padding: '32px 24px',

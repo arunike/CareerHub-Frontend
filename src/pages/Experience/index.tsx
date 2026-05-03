@@ -65,7 +65,7 @@ const BADGE_CLASSES: Record<string, string> = {
   green:  'bg-green-50 text-green-700 border-green-200',
   red:    'bg-red-50 text-red-700 border-red-200',
   pink:   'bg-pink-50 text-pink-700 border-pink-200',
-  indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  sky: 'bg-sky-50 text-sky-700 border-sky-200',
   gray:   'bg-gray-50 text-gray-700 border-gray-200',
 };
 
@@ -78,7 +78,7 @@ const DOT_CLASSES: Record<string, string> = {
   green:  'bg-green-400',
   red:    'bg-red-400',
   pink:   'bg-pink-400',
-  indigo: 'bg-indigo-400',
+  sky: 'bg-sky-400',
   gray:   'bg-gray-400',
 };
 
@@ -100,7 +100,7 @@ const getAvatarStyle = (name: string) => {
   const gradients = [
     'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',   // Light Blue to Blue
     'linear-gradient(135deg, #34d399 0%, #10b981 100%)',   // Emerald
-    'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',   // Purple to Violet
+    'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',   // Purple to Violet
     'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',   // Sky to Blue
   ];
   let hash = 0;
@@ -785,7 +785,7 @@ const ExperiencePage: React.FC = () => {
               size="large"
               icon={<RobotOutlined />} 
               onClick={() => setJdModalOpen(true)}
-              className="toolbar-btn text-indigo-600 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 shadow-sm"
+              className="toolbar-btn text-sky-600 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300 shadow-sm"
             >
               Match JD
             </Button>
@@ -1072,7 +1072,7 @@ const ExperiencePage: React.FC = () => {
                         </div>
                         <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">{exp.company}</div>
                         <div className="flex flex-nowrap shrink-0 items-center gap-x-4 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100 max-w-full overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                          <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50/80 border border-indigo-100/50 px-2 py-0.5 rounded-md">
+                          <div className="flex items-center gap-2 text-sky-600 bg-sky-50/80 border border-sky-100/50 px-2 py-0.5 rounded-md">
                             <CalendarOutlined />
                             <span className="font-semibold">{formatDuration(exp)}</span>
                           </div>
@@ -1219,7 +1219,7 @@ const ExperiencePage: React.FC = () => {
                             {tenure && (
                               <>
                                 <span className="text-gray-300">·</span>
-                                <span className="text-[15px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">{tenure} total</span>
+                                <span className="text-[15px] font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">{tenure} total</span>
                               </>
                             )}
                           </div>
@@ -1299,7 +1299,7 @@ const ExperiencePage: React.FC = () => {
                                   )}
                                 </div>
                                 <div className="flex flex-nowrap shrink-0 items-center gap-x-4 mt-1 text-sm text-gray-500 font-medium bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 w-fit max-w-full overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                  <div className="flex items-center gap-2 text-indigo-600 bg-indigo-50/80 border border-indigo-100/50 px-2 py-0.5 rounded-md shrink-0">
+                                  <div className="flex items-center gap-2 text-sky-600 bg-sky-50/80 border border-sky-100/50 px-2 py-0.5 rounded-md shrink-0">
                                     <CalendarOutlined style={{ fontSize: 11 }} />
                                     <span className="font-semibold">{formatRoleDateRange(exp, roleIdx > 0 ? group[roleIdx - 1].start_date : null)}</span>
                                   </div>
@@ -1457,7 +1457,7 @@ const ExperiencePage: React.FC = () => {
                     <div className={`absolute top-0 left-0 w-2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
                       primary.is_pinned
                         ? 'bg-gradient-to-b from-amber-300 to-orange-400'
-                        : 'bg-gradient-to-b from-blue-300 to-indigo-400'
+                        : 'bg-gradient-to-b from-blue-300 to-sky-400'
                     }`} />
                     {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
                   </div>

@@ -62,7 +62,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
     <Modal
       title={
         <Space size={8}>
-          <RobotOutlined style={{ color: '#6366f1' }} />
+          <RobotOutlined style={{ color: '#0ea5e9' }} />
           <span style={{ fontWeight: 600, color: '#1f2937' }}>AI Resume Evaluator</span>
         </Space>
       }
@@ -99,7 +99,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
             disabled={!jdText.trim()}
             block
             style={jdText.trim()
-              ? { height: 46, borderRadius: 10, background: '#4f46e5', borderColor: '#4f46e5', fontSize: 14 }
+              ? { height: 46, borderRadius: 10, background: '#0284c7', borderColor: '#0284c7', fontSize: 14 }
               : { height: 46, borderRadius: 10, fontSize: 14 }}
           >
             {analyzing ? 'Analyzing...' : 'Analyze Resume against JD'}
@@ -190,7 +190,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
             icon={<ExpandOutlined />}
             block
             onClick={openReport}
-            style={{ height: 46, borderRadius: 10, background: '#4f46e5', borderColor: '#4f46e5', fontSize: 14, fontWeight: 600 }}
+            style={{ height: 46, borderRadius: 10, background: '#0284c7', borderColor: '#0284c7', fontSize: 14, fontWeight: 600 }}
           >
             View Full Report
           </Button>

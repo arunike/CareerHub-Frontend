@@ -173,8 +173,8 @@ const PublicBookingPage = () => {
             </div>
           </div>
           {publicNote && (
-            <div className="mt-10 p-5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-slate-700 text-sm leading-relaxed relative">
-              <div className="absolute top-0 left-6 -mt-2.5 px-2 bg-indigo-100 text-indigo-600 text-[9px] font-black uppercase tracking-wider rounded">Note</div>
+            <div className="mt-10 p-5 rounded-2xl bg-sky-50/50 border border-sky-100 text-slate-700 text-sm leading-relaxed relative">
+              <div className="absolute top-0 left-6 -mt-2.5 px-2 bg-sky-100 text-sky-600 text-[9px] font-black uppercase tracking-wider rounded">Note</div>
               {publicNote}
             </div>
           )}
@@ -396,7 +396,7 @@ const PublicBookingPage = () => {
                   <button
                     onClick={handleBook}
                     disabled={!selectedSlot || submitting}
-                    className="w-full py-4 px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-base font-black rounded-2xl shadow-xl shadow-blue-200/50 disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                    className="w-full py-4 px-8 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white text-base font-black rounded-2xl shadow-xl shadow-blue-200/50 disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3"
                   >
                     {submitting ? (
                       <>

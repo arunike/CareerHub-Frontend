@@ -173,7 +173,7 @@ const CoverLettersTab: React.FC = () => {
 
       {/* Bulk action bar */}
       {selectedIds.length > 0 && (
-        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-6 animate-in fade-in slide-in-from-top-2">
+        <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm mb-6 animate-in fade-in slide-in-from-top-2">
           <BulkActionHeader
             selectedCount={selectedIds.length}
             totalCount={letters.length}
@@ -209,8 +209,8 @@ const CoverLettersTab: React.FC = () => {
       {/* Empty state */}
       {letters.length === 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-24 gap-6">
-          <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center">
-            <FileTextOutlined style={{ fontSize: 40, color: '#6366f1' }} />
+          <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center">
+            <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
           </div>
           <div className="text-center">
             <h3 className="text-gray-900 font-bold text-xl m-0 mb-2">No cover letters yet</h3>
@@ -223,7 +223,7 @@ const CoverLettersTab: React.FC = () => {
             size="large"
             icon={<ThunderboltOutlined />}
             onClick={() => navigate('/applications')}
-            style={{ background: '#6366f1', borderColor: '#6366f1' }}
+            style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}
           >
             Go to Applications
           </Button>
@@ -249,7 +249,7 @@ const CoverLettersTab: React.FC = () => {
               key={letter.id}
               className={`group bg-white rounded-2xl border transition-all duration-200 overflow-hidden cursor-pointer ${
                 isSelected
-                  ? 'border-indigo-300 shadow-md ring-1 ring-indigo-200'
+                  ? 'border-sky-300 shadow-md ring-1 ring-sky-200'
                   : 'border-gray-100 shadow-sm hover:shadow-md'
               }`}
               onClick={() => toggleSelect(letter.id)}
@@ -261,8 +261,8 @@ const CoverLettersTab: React.FC = () => {
                 </div>
 
                 {/* Icon */}
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-                  <FileTextOutlined style={{ color: '#6366f1', fontSize: 18 }} />
+                <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center shrink-0">
+                  <FileTextOutlined style={{ color: '#0ea5e9', fontSize: 18 }} />
                 </div>
 
                 {/* Content */}
@@ -277,7 +277,7 @@ const CoverLettersTab: React.FC = () => {
                           e.stopPropagation();
                           setEditingLetter({ id: letter.id, title: displayTitle });
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-sky-600 transition-all shrink-0"
                       >
                         <EditOutlined className="text-xs" />
                       </button>
@@ -308,7 +308,7 @@ const CoverLettersTab: React.FC = () => {
               {/* Footer */}
               <div
                 className={`border-t px-5 py-3 flex items-center justify-end gap-2 transition-colors ${
-                  isSelected ? 'bg-indigo-50/40 border-indigo-100' : 'bg-gray-50/60 border-gray-50'
+                  isSelected ? 'bg-sky-50/40 border-sky-100' : 'bg-gray-50/60 border-gray-50'
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -334,7 +334,7 @@ const CoverLettersTab: React.FC = () => {
         open={!!viewingLetter}
         title={
           <Space>
-            <FileTextOutlined style={{ color: '#6366f1' }} />
+            <FileTextOutlined style={{ color: '#0ea5e9' }} />
             <span>
               {viewingLetter?.title ||
                 `${viewingLetter?.roleTitle} @ ${viewingLetter?.companyName}`}

@@ -42,7 +42,7 @@ const DecisionSignalsSection = ({
   teamScore,
   onTeamScoreChange,
 }: DecisionSignalsSectionProps) => (
-  <details className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
+  <details className="rounded-2xl border border-sky-100 bg-sky-50/40 p-4">
     <summary className="cursor-pointer list-none">
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
@@ -51,7 +51,7 @@ const DecisionSignalsSection = ({
             Optional. Blank fields are not included in the offer scorecard.
           </p>
         </div>
-        <span className="rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-600">
+        <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-xs font-medium text-sky-600">
           Expand
         </span>
       </div>
