@@ -18,6 +18,7 @@ import SegmentedToggle from '../../components/SegmentedToggle';
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
+const CohortAnalysis = lazy(() => import('./CohortAnalysis'));
 type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
 
 const SectionFallback = () => (
@@ -31,11 +32,9 @@ const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'availability' | 'career'>('availability');
   const [loading, setLoading] = useState(true);
 
-  // Data States
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [applicationStages, setApplicationStages] = useState<ApplicationStage[]>([]);
 
-  // Derived Stats
   const [availabilityStats, setAvailabilityStats] = useState({
     totalEvents: 0,
     thisWeek: 0,
@@ -89,7 +88,6 @@ const Analytics: React.FC = () => {
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-    // 1. Basic Stats
     const thisWeekEvents = data.filter((e) => {
       const eventDate = parseISO(e.date);
       return eventDate >= weekStart && eventDate <= weekEnd;
@@ -102,7 +100,6 @@ const Analytics: React.FC = () => {
       totalMinutes += (end.getTime() - start.getTime()) / 60000;
     });
 
-    // 2. Category Data for Pie Chart
     const categoryCount: Record<string, number> = {};
     data.forEach((e) => {
       const catName = e.category_details?.name || 'Uncategorized';
@@ -116,7 +113,6 @@ const Analytics: React.FC = () => {
       }))
       .sort((a, b) => b.value - a.value);
 
-    // 3. Daily Activity for Bar Chart (Last 7 Days)
     const last7Days = eachDayOfInterval({
       start: addDays(now, -6),
       end: now,
@@ -150,7 +146,6 @@ const Analytics: React.FC = () => {
   const processCareerData = (
     data: Array<{ status: string; date_applied?: string; [key: string]: unknown }>
   ) => {
-    // 1. Funnel Data
     const stageCounts = {
       APPLIED: 0,
       OA: 0,
@@ -174,7 +169,6 @@ const Analytics: React.FC = () => {
       }
     });
 
-    // Construct Funnel (Simplified Pipeline View)
     const funnelData = [
       { name: 'Applied', value: stageCounts.APPLIED, fill: '#1890ff' },
       { name: 'Online Assessment', value: stageCounts.OA, fill: '#3b82f6' },
@@ -183,14 +177,12 @@ const Analytics: React.FC = () => {
       { name: 'Offer', value: stageCounts.OFFER, fill: '#059669' },
     ].filter((item) => item.value > 0);
 
-    // 2. Response Rate Calculation
     const positiveResponses =
       stageCounts.SCREEN + stageCounts.ONSITE + stageCounts.OFFER;
     const totalApplications = data.length;
     const responseRate =
       totalApplications > 0 ? Math.round((positiveResponses / totalApplications) * 100) : 0;
 
-    // 3. Weekly Activity (Last 12 Weeks)
     const weeks = [];
     const now = new Date();
     for (let i = 11; i >= 0; i--) {
@@ -261,6 +253,10 @@ const Analytics: React.FC = () => {
 
           <Suspense fallback={<SectionFallback />}>
             <WeeklyActivityChart data={careerStats.weeklyActivity} />
+          </Suspense>
+
+          <Suspense fallback={<SectionFallback />}>
+            <CohortAnalysis applications={applications} />
           </Suspense>
         </div>
       )}
