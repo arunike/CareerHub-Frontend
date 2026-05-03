@@ -8,6 +8,7 @@ import type {
   GoogleSheetSyncConfig,
   GoogleSheetImportReview,
   GoogleSheetSyncPreview,
+  GoogleSheetSyncRun,
   Task,
   Experience,
   WeeklyReview,
@@ -145,6 +146,10 @@ export const applyGoogleSheetImportReview = (
     `/career/google-sheet-syncs/${id}/apply-import-review/`,
     { approved_item_ids: approvedItemIds, duplicate_resolutions: duplicateResolutions, force },
   );
+export const getGoogleSheetSyncRuns = (id: number) =>
+  api.get<{ ok: true; runs: GoogleSheetSyncRun[] }>(`/career/google-sheet-syncs/${id}/runs/`);
+export const rollbackGoogleSheetSyncRun = (id: number, runId: number) =>
+  api.post<{ ok: true }>(`/career/google-sheet-syncs/${id}/rollback/`, { run_id: runId });
 
 export const getOffers = () => api.get('/career/offers/');
 export const createOffer = (data: Record<string, unknown>) => api.post('/career/offers/', data);

@@ -468,7 +468,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
               daysToOfferCount++;
             }
           }
-        } catch {
+        } catch (error) {
           console.error('Failed to calculate days to offer', error);
         }
       }

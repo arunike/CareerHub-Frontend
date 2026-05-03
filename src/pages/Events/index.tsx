@@ -243,7 +243,7 @@ const Events = () => {
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
     setIsFormOpen(true);
-    setRecurrenceRule(event.recurrence_rule as RecurrenceRule);s
+    setRecurrenceRule(event.recurrence_rule as RecurrenceRule);
     setLocationType(event.location_type);
 
     form.setFieldsValue({
