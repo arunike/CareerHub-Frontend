@@ -33,14 +33,12 @@ export const useCustomWidgets = (
       try {
         return JSON.parse(saved);
       } catch (error) {
-        // console.error to avoid side-effects in state initializer
         console.error('Failed to parse custom widgets', error);
       }
     }
     return [];
   });
 
-  // Refresh data on mount
   useEffect(() => {
     const refreshWidgets = async () => {
       if (customWidgets.length === 0) return;

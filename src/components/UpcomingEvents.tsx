@@ -21,10 +21,8 @@ const UpcomingEvents: React.FC = () => {
       const allEvents = resp.data;
       const now = new Date();
 
-      // Filter for future events and sort by date/time
       const upcoming = allEvents
         .filter((e: Event) => {
-          // Combine date and time for comparison
           const eventStart = new Date(`${e.date}T${e.start_time}`);
           return isAfter(eventStart, now);
         })
@@ -33,7 +31,7 @@ const UpcomingEvents: React.FC = () => {
           const dateB = new Date(`${b.date}T${b.start_time}`);
           return compareAsc(dateA, dateB);
         })
-        .slice(0, 3); // Take next 3
+        .slice(0, 3);
 
       setEvents(upcoming);
     } catch (error) {

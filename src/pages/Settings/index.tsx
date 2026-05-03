@@ -67,7 +67,6 @@ const Settings: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
-  // Employment type editor state
   const DEFAULT_EMP_TYPES: EmploymentType[] = [
     { value: 'full_time', label: 'Full-time', color: 'blue' },
     { value: 'part_time', label: 'Part-time', color: 'teal' },

@@ -186,7 +186,6 @@ const ExperiencePage: React.FC = () => {
       const response = await updateExperience(experience.id, { skills: refinedSkills });
       setExperiences(prev => prev.map(exp => exp.id === experience.id ? response.data : exp));
     } catch (error) {
-      // AI skill refinement is best-effort. Deterministic backend extraction remains the fallback.
       if (!isLLMConfigurationError(error)) {
         console.debug('AI skill refinement skipped:', error);
       }

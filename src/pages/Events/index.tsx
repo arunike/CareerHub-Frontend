@@ -62,7 +62,6 @@ const Events = () => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
 
-  // Data State
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<EventCategory[]>([]);
@@ -75,7 +74,6 @@ const Events = () => {
     }>
   >([]);
 
-  // Filter/Sort State
   const [categoryFilter, setCategoryFilter] = useState<number | 'ALL'>('ALL');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'duration'>('date');
@@ -97,7 +95,6 @@ const Events = () => {
     }
   );
 
-  // UI State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
@@ -105,26 +102,21 @@ const Events = () => {
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  // Recurrence & Extra
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [locationType, setLocationType] = useState<'in_person' | 'virtual' | 'hybrid'>('virtual');
 
-  // Defaults
   const [defaultDuration, setDefaultDuration] = useState(60);
   const [defaultCategory, setDefaultCategory] = useState<number | undefined>(undefined);
 
-  // Initial Fetch
   const fetchData = async () => {
     try {
       setLoading(true);
       const today = dayjs();
-      // Expanded range to catch more events
       const startStr = today.subtract(1, 'month').format('YYYY-MM-DD');
       const endStr = today.add(12, 'month').format('YYYY-MM-DD');
 
@@ -195,7 +187,6 @@ const Events = () => {
     fetchApplications();
   }, []);
 
-  // Filter Logic
   const filteredEvents = filterByYear(events, selectedYear, 'date')
     .filter((event) => {
       if (categoryFilter !== 'ALL' && event.category !== categoryFilter) return false;
@@ -211,7 +202,6 @@ const Events = () => {
       if (sortBy === 'date') {
         comparison = dayjs(`${a.date}T${a.start_time}`).diff(dayjs(`${b.date}T${b.start_time}`));
       } else {
-        // Duration
         const getDiff = (e: Event) =>
           dayjs(`${e.date}T${e.end_time}`).diff(dayjs(`${e.date}T${e.start_time}`));
         comparison = getDiff(a) - getDiff(b);
@@ -219,15 +209,12 @@ const Events = () => {
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-  // Get available years from all events
   const availableYears = getAvailableYears(events, 'date');
 
-  // Handle year change and persist to localStorage
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
   };
 
-  // Form Handlers
   const handleAdd = () => {
     setEditingId(null);
     setRecurrenceRule(null);
@@ -256,7 +243,7 @@ const Events = () => {
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
     setIsFormOpen(true);
-    setRecurrenceRule(event.recurrence_rule as RecurrenceRule); // Cast if needed but type matches
+    setRecurrenceRule(event.recurrence_rule as RecurrenceRule);s
     setLocationType(event.location_type);
 
     form.setFieldsValue({
@@ -320,7 +307,6 @@ const Events = () => {
   };
 
   const handleDeleteAll = async () => {
-    // Placeholder for delete all
     messageApi.info('Delete all not implemented yet');
     setIsDeleteAllOpen(false);
   };
@@ -446,7 +432,6 @@ const Events = () => {
       cancelText: 'No',
       onOk: async () => {
         try {
-          // Virtual events (negative IDs) must be handled differently or ignored
           const realIds = selectedIds.filter(id => id > 0);
           await Promise.all(realIds.map(id => deleteEvent(id)));
           messageApi.success(`${realIds.length} events deleted`);

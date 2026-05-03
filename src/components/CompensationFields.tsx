@@ -67,7 +67,6 @@ const CompensationFields: React.FC<Props> = ({
   );
   const [isVestingOpen, setIsVestingOpen] = useState(false);
 
-  // Sync external vesting percent
   useEffect(() => {
     if (equityVestingPercent != null) setVestingPct(equityVestingPercent);
   }, [equityVestingPercent]);
@@ -82,7 +81,6 @@ const CompensationFields: React.FC<Props> = ({
     }
   }, [equityTotalGrant]);
 
-  // When value changes externally (e.g. auto-fill from offer), keep % inputs consistent
   useEffect(() => {
     if (bonusMode === '%' && base != null && base > 0 && bonus != null) {
       setBonusPct(((bonus / base) * 100).toFixed(2).replace(/\.00$/, ''));
@@ -99,7 +97,6 @@ const CompensationFields: React.FC<Props> = ({
 
   const handleBaseChange = (raw: string) => {
     const next = raw === '' ? null : Number(raw);
-    // Recalculate bonus if in % mode
     const nextBonus =
       bonusMode === '%' && next != null
         ? ((Number(bonusPct) || 0) / 100) * next

@@ -434,7 +434,6 @@ const HourlyBreakdown = ({
   const displayHourlyRate = useLiveSnapshot ? (liveSnapshot?.hourlyRate ?? hourlyRate) : hourlyRate;
   const displayRegularPay = useLiveSnapshot ? (liveSnapshot?.regularPay ?? regularPay) : regularPay;
 
-  // Simplified and corrected live fields:
   const displayOvertimeHours = useLiveSnapshot ? (liveSnapshot?.overtimeHours ?? overtimeHours) : overtimeHours;
   const displayOvertimeRate = useLiveSnapshot ? (liveSnapshot?.overtimeRate ?? overtimeRate) : overtimeRate;
   const displayOvertimeMultiplier = useLiveSnapshot ? (liveSnapshot?.overtimeMultiplier ?? overtimeMultiplier) : overtimeMultiplier;

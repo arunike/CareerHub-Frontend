@@ -129,7 +129,7 @@ const CoverLetters: React.FC = () => {
         });
         return { data: blob, headers: { 'content-type': 'application/json' } };
       }
-      // CSV (default + xlsx fallback)
+      
       const escape = (v: string) => `"${v.replace(/"/g, '""').replace(/\n/g, ' ')}"`;
       const header = ['Title', 'Company', 'Role', 'Saved At', 'JD Snippet', 'Cover Letter'];
       const rows = letters.map((l) => [

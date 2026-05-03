@@ -62,7 +62,6 @@ export default function HomePage() {
 
       <div className="flex min-h-screen w-full flex-col pt-24 sm:pt-32">
         <section className="relative px-5 py-10 sm:px-8 lg:px-10 lg:py-16">
-          {/* Subtle glowing ambient backgrounds for light mode */}
           <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
           <div className="pointer-events-none absolute right-0 top-1/4 h-[500px] w-[500px] translate-x-1/3 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
 
@@ -114,7 +113,6 @@ export default function HomePage() {
               <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-br from-sky-200/50 via-sky-200/50 to-transparent blur-2xl" />
               <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-2xl shadow-sky-900/10 backdrop-blur-xl">
                 
-                {/* Bento Grid layout representing the product suite */}
                 <div className="grid gap-4 bg-slate-50/50 p-4 sm:grid-cols-3">
                   
                   {/* Card 1: Application Pipeline (col-span-2) */}

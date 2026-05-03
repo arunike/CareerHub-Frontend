@@ -181,19 +181,15 @@ const Holidays = () => {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
 
-  // State
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(false);
   
-  // Tab state
   const [activeTab, setActiveTab] = useState('custom');
 
-  // Advanced Mode State
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
-  // Sorting
   const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
@@ -205,20 +201,16 @@ const Holidays = () => {
     }
   );
 
-  // Add Form State
   const [isRangeMode, setIsRangeMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   
-  // Custom Federal Holiday State
   const [addFederalModalOpen, setAddFederalModalOpen] = useState(false);
   const [federalForm] = Form.useForm();
   
-  // Edit State
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
-  // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const fetchData = async () => {
@@ -279,7 +271,7 @@ const Holidays = () => {
             date: item.date,
             description: item.description,
             is_recurring: item.is_recurring,
-            is_locked: false, // Calculated logically if all are locked below
+            is_locked: false,
           };
           groupMap.set(item.group_id, newGroup);
           groups.push(newGroup);
@@ -418,11 +410,11 @@ const Holidays = () => {
       
       let itemsToUpdate: any[] = [];
       if (editingItem.isBulk) {
-        itemsToUpdate = editingItem.items; // [{id: 1}, {id: 2}]
+        itemsToUpdate = editingItem.items;
       } else if (editingItem.isGroup) {
-        itemsToUpdate = editingItem.items; // The group's actual array of CustomHolidays
+        itemsToUpdate = editingItem.items;
       } else {
-        itemsToUpdate = [editingItem]; // Single CustomHoliday
+        itemsToUpdate = [editingItem];
       }
 
       await Promise.all(
@@ -442,7 +434,7 @@ const Holidays = () => {
       
       messageApi.success('Holiday updated successfully');
       setEditModalOpen(false);
-      setSelectedIds([]); // Clear any bulk selections after a bulk edit
+      setSelectedIds([]); 
       fetchData();
     } catch (error) {
       if (error && (error as any).errorFields) {

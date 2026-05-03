@@ -53,7 +53,7 @@ const SortableItem = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0 : 1, // Hide the original item while dragging
+    opacity: isDragging ? 0 : 1,
   };
 
   return (
@@ -94,7 +94,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     if (saved) {
       try {
         const order = JSON.parse(saved);
-        // Filter to only include enabled widgets
         return order.filter((id: string) => enabledWidgets.includes(id));
       } catch (error) {
         console.error('Failed to parse widget order', error);
@@ -120,7 +119,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   const [newWidgetIcon, setNewWidgetIcon] = useState('CalendarOutlined');
   const [newWidgetColor, setNewWidgetColor] = useState('blue');
 
-  // Update order when enabled widgets change
   useEffect(() => {
     setWidgetOrder(prev => {
       const newOrder = prev.filter(id => enabledWidgets.includes(id));
@@ -140,7 +138,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-    // Capture the initial dimensions of the dragged item
     if (event.active.rect.current.initial) {
       const { width, height } = event.active.rect.current.initial;
       setActiveSize({ width, height });
@@ -159,8 +156,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         return newItems;
       });
     } else {
-      // Even if order didn't change at the end (because we updated during drag),
-      // make sure to save the current state
       localStorage.setItem('availability_analytics_order', JSON.stringify(widgetOrder));
     }
     setActiveId(null);
@@ -170,7 +165,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     setEnabledWidgets(prev => {
       let newEnabled: string[];
       if (prev.includes(widgetId)) {
-        // Prevent disabling all widgets
         if (prev.length === 1) {
           return prev;
         }
@@ -223,12 +217,10 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
     addCustomWidget(customWidget);
 
-    // Enable the new widget
     const updatedEnabled = [...enabledWidgets, customWidget.id];
     setEnabledWidgets(updatedEnabled);
     localStorage.setItem('availability_analytics_enabled', JSON.stringify(updatedEnabled));
 
-    // Reset form
     setNewWidgetName('');
     setNewWidgetQuery('');
     setValidationResult(null);

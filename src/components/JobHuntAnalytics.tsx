@@ -120,7 +120,6 @@ const SortableItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className={className}>
-      {/* Grip handle for dragging, only visible on hover of the component ideally, but for now static */}
       <div className="relative group h-full">
         <div
           {...attributes}
@@ -186,7 +185,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
   const [newWidgetIcon, setNewWidgetIcon] = useState('FileTextOutlined');
   const [newWidgetColor, setNewWidgetColor] = useState('blue');
 
-  // Update order when enabled widgets change
   useEffect(() => {
     setWidgetOrder(prev => {
       const newOrder = prev.filter(id => enabledWidgets.includes(id));
@@ -241,7 +239,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-    // Capture the initial dimensions of the dragged item
     if (event.active.rect.current.initial) {
       const { width, height } = event.active.rect.current.initial;
       setActiveSize({ width, height });
@@ -260,8 +257,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
         return newItems;
       });
     } else {
-      // Even if order didn't change at the end (because we updated during drag),
-      // make sure to save the current state
       localStorage.setItem('analytics_dashboard_order', JSON.stringify(widgetOrder));
     }
     setActiveId(null);
@@ -271,7 +266,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     setEnabledWidgets(prev => {
       let newEnabled: string[];
       if (prev.includes(widgetId)) {
-        // Prevent disabling all widgets
         if (prev.length === 1) {
           return prev;
         }
@@ -324,12 +318,10 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
 
     addCustomWidget(customWidget);
 
-    // Enable the new widget
     const updatedEnabled = [...enabledWidgets, customWidget.id];
     setEnabledWidgets(updatedEnabled);
     localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(updatedEnabled));
 
-    // Reset form
     setNewWidgetName('');
     setNewWidgetQuery('');
     setValidationResult(null);
@@ -341,13 +333,11 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
   };
 
   const stats: JobHuntStats = useMemo(() => {
-    // 1. Basic Counts
     const total = applications.length;
     const rejections = applications.filter((a) => a.status === 'REJECTED').length;
     const offers = applications.filter((a) => a.status === 'OFFER').length;
     const ghosted = applications.filter((a) => a.status === 'GHOSTED').length;
 
-    // 2. Interview Stats
     const activeInterviews = applications.filter((a) =>
       !INACTIVE_STATUSES.has(a.status)
     ).length;
@@ -365,7 +355,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     const responseRate = total > 0 ? ((respondedCount / total) * 100).toFixed(1) : '0.0';
     const offerRate = total > 0 ? ((offers / total) * 100).toFixed(1) : '0.0';
 
-    // 3. Dynamic Location Stats
     const locationCounts: Record<string, number> = {};
     const companyCounts: Record<string, number> = {};
     const workModeCounts: Record<string, number> = {
@@ -409,7 +398,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
       { name: 'Unknown', count: workModeCounts.Unknown, color: 'bg-slate-400' },
     ];
 
-    // 4. Dynamic Round Stats
     const roundCounts: Record<string, number> = {};
     applications.forEach((a) => {
       const r = a.current_round || 0;
@@ -428,7 +416,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
       .sort((a, b) => a.roundNum - b.roundNum)
       .map(({ name, count }) => ({ name, count }));
 
-    // 5. Funnel & Avg Days
     let daysToOfferSum = 0;
     let daysToOfferCount = 0;
     const stageMap = new Map<string, ApplicationStage>();
@@ -482,7 +469,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
             }
           }
         } catch {
-          // ignore
+          console.error('Failed to calculate days to offer', error);
         }
       }
     });

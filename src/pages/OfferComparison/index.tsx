@@ -260,7 +260,6 @@ const OfferComparison = () => {
     if (!editingOffer) return;
 
     try {
-      // 1. Update Application if changed
       if (editingApp) {
         await updateApplication(editingApp.id, {
           company_name: editingApp.company_name,
@@ -286,7 +285,6 @@ const OfferComparison = () => {
         });
       }
 
-      // 2. Update Offer
       await updateOffer(editingOffer.id!, {
         ...editingOffer,
         benefit_items: editingBenefitItems,
@@ -297,7 +295,7 @@ const OfferComparison = () => {
       setEditingOffer(null);
       setEditingApp(null);
       setOfferModalMode('edit');
-      fetchData(); // Refresh to show new names/values
+      fetchData();
     } catch (error) {
       messageApi.error('Failed to save changes');
       console.error(error);
@@ -305,7 +303,6 @@ const OfferComparison = () => {
   };
 
   const toggleCurrent = async (offer: Offer) => {
-    // If it's a pending offer (no ID), we should create it first (edge case), but usually current jobs are created.
     if (!offer.id) return;
 
     const updated = { ...offer, is_current: !offer.is_current };
@@ -404,7 +401,6 @@ const OfferComparison = () => {
     }
   };
 
-  // Filter offers by year
   const filteredOffers = filterByYear(offers, selectedYear, 'created_at');
   const availableYears = getAvailableYears(offers, 'created_at');
   const handleYearChange = (year: number | 'all') => {
@@ -833,7 +829,6 @@ const OfferComparison = () => {
     [decisionOrderIds]
   );
 
-  // Prepare Chart Data
   const chartData = [
     ...displayOffers.map((offer) => {
       const appName = getApplicationName(offer.application);

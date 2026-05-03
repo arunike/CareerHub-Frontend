@@ -100,7 +100,6 @@ const Applications = () => {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
-  // Data State
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
@@ -125,7 +124,6 @@ const Applications = () => {
     { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
   ]);
 
-  // View State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isJobImportModalOpen, setIsJobImportModalOpen] = useState(false);
@@ -138,12 +136,10 @@ const Applications = () => {
   const [detailDrawerMode, setDetailDrawerMode] = useState<'view' | 'edit'>('view');
   const [coverLetterApp, setCoverLetterApp] = useState<CareerApplication | null>(null);
 
-  // Bulk Selection State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
 
-  // Filter State
   const [searchText, setSearchText] = useState('');
   const [locationSearchText, setLocationSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -311,7 +307,7 @@ const Applications = () => {
       const selectedDocumentIds: number[] = values.linked_document_ids || [];
       const payload: Record<string, unknown> = {
         ...values,
-        company_name: values.company, // API expects company_name
+        company_name: values.company,
         job_link: values.site_link,
         date_applied: values.date_applied ? values.date_applied.format('YYYY-MM-DD') : undefined,
       };
@@ -325,7 +321,7 @@ const Applications = () => {
       delete payload.company;
       delete payload.site_link;
       delete payload.linked_document_ids;
-      delete payload.notes; // notes are managed via the Notes tab rich-text editor
+      delete payload.notes;
 
       if (editingId) {
         const isDrawerEdit = detailDrawerMode === 'edit' && detailApp?.id === editingId;
@@ -540,7 +536,7 @@ const Applications = () => {
         .catch(() => {
           messageApi.error('Import failed');
         });
-      return false; // Prevent default upload
+      return false;
     },
   };
 
@@ -564,7 +560,6 @@ const Applications = () => {
     return Array.from(locations).sort();
   }, [applications]);
 
-  // Get available years and handle year change
   const availableYears = getAvailableYears(applications, 'date_applied');
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);

@@ -33,17 +33,14 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
       const response = await onExport(format);
 
-      // Create a Blob from the PDF/CSV Stream
       const blob = new Blob([response.data], {
         type: response.headers['content-type'],
       });
 
-      // Create a link element
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
 
-      // Set filename based on format
       const extension = format === 'excel' ? 'xlsx' : format;
       link.setAttribute(
         'download',
@@ -53,10 +50,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       // Append to html link element page
       document.body.appendChild(link);
 
-      // Start download
       link.click();
 
-      // Clean up and remove the link
       link.parentNode?.removeChild(link);
       link.parentNode?.removeChild(link);
       messageApi.success('Export successful');

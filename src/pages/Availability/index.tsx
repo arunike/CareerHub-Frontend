@@ -117,7 +117,6 @@ const Availability = () => {
           setHostEmail(activeLink.host_email);
         }
       } else {
-        // Autofill from profile settings
         if (settingsResp.data.display_name) {
           setHostDisplayName(settingsResp.data.display_name);
         }
@@ -130,7 +129,6 @@ const Availability = () => {
     }
   };
 
-  // Immediate prefill from auth user to avoid lag
   useEffect(() => {
     if (user) {
       if (!hostDisplayName) setHostDisplayName(user.full_name || '');
@@ -291,13 +289,11 @@ const Availability = () => {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  // --- Grouping Logic ---
   const groupedData = useMemo(() => {
     if (!data.length) return [];
 
     const start = parseISO(startDate);
 
-    // Define buckets
     const groups: { title: string; items: AvailabilityType[] }[] = [
       { title: 'This Week', items: [] },
       { title: 'Next Week', items: [] },
@@ -308,14 +304,12 @@ const Availability = () => {
       const itemDate = parseISO(item.date);
 
       if (isSameWeek(itemDate, start, { weekStartsOn: 1 })) {
-        // Assuming Monday start
         groups[0].items.push(item);
       } else if (isSameWeek(itemDate, addWeeks(start, 1), { weekStartsOn: 1 })) {
         groups[1].items.push(item);
       } else if (isSameWeek(itemDate, addWeeks(start, 2), { weekStartsOn: 1 })) {
         groups[2].items.push(item);
       } else {
-        // Fallback
         let lastGroup = groups.find((g) => g.title === 'Later');
         if (!lastGroup) {
           lastGroup = { title: 'Later', items: [] };
@@ -328,7 +322,6 @@ const Availability = () => {
     return groups.filter((g) => g.items.length > 0);
   }, [data, startDate]);
 
-  // Condensing Logic
   const processGroupItems = (items: AvailabilityType[]) => {
     if (textMode === 'detailed')
       return items.map((item) => ({
@@ -338,7 +331,6 @@ const Availability = () => {
         fullText: `${item.day_name}, ${item.readable_date}, ${item.availability || 'Unknown'}`,
       }));
 
-    // Combined View
     const condensed: { displayDate: string; availability: string; fullText: string }[] = [];
 
     if (items.length === 0) return [];

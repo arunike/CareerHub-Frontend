@@ -67,14 +67,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('settings-saved', handler);
   }, []);
 
-  // Close sidebar on route change for mobile
   useEffect(() => {
     if (!screens.lg) {
       setCollapsed(true);
     }
   }, [location, screens.lg]);
 
-  // Update collapsed state when screen size changes
   useEffect(() => {
     if (!screens.lg) {
       setCollapsed(true);
