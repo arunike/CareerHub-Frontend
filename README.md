@@ -28,7 +28,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
 - 📥 **Import/Export**: Bulk upload via CSV/XLSX plus full-fidelity Experience import/export in CSV, JSON, or XLSX formats (JSON recommended for logos + linked snapshots)
-- 🔄 **Google Sheets Sync**: Settings can link a Google Sheet to Applications or Events, auto-map columns from sheet headers, and run imports on demand while daily cron keeps enabled syncs current
+- 🔄 **Google Sheets Sync**: Settings can connect Google for private read-only Sheets access, link a Google Sheet to Applications or Events, auto-map columns from sheet headers, configure the daily sync time/timezone, and run imports on demand while cron keeps enabled syncs current
 
 ## ✨ Features
 
@@ -41,7 +41,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Bulk select → bulk lock / unlock / delete
 - Company timeline modal for Applied → OA → phone → onsite → offer/reject stages with per-stage notes and document attachments
 - Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
-- Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings
+- Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, with private sheets supported through Google OAuth
 - Lock/unlock individual applications
 - **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
 
@@ -127,7 +127,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 - **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
 - **AI Provider**: configure Claude, Gemini, OpenAI, or OpenRouter for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
-- **Integrations**: create Google Sheets syncs, select Applications or Events, auto-map sheet columns, adjust/add/remove mapped fields when needed, preview rows, and run syncs immediately
+- **Integrations**: connect/disconnect Google OAuth for private read-only Sheets access, pick from available Google spreadsheets and worksheet tabs, create Google Sheets syncs, select Applications or Events, auto-map sheet columns, configure the daily sync time/timezone, adjust/add/remove mapped fields when needed, preview rows, and run syncs immediately
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows per day (e.g., 11am–12pm and 2pm–5pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
 - **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
 - **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
