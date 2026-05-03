@@ -154,11 +154,9 @@ const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const { user, updateProfile, logout } = useAuth();
 
-  // User info state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
-  // Password state
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -231,7 +229,6 @@ const ProfilePage: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
       
-      // Logout after a short delay so user can see the message
       setTimeout(() => {
         logout();
       }, 1500);

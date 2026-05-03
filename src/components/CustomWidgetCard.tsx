@@ -59,7 +59,6 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
     icon === 'NumberOutlined' ? NumberOutlined :
     CalendarOutlined;
 
-  // Render Metric Widget
   if (widget.widgetType === 'metric') {
     const value = cachedData?.value ?? '...';
     const unit = cachedData?.unit || '';
@@ -88,7 +87,6 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
     );
   }
 
-  // Render Chart Widget
   if (widget.widgetType === 'chart' && cachedData?.data) {
     const chartType = cachedData.chartType || 'bar';
 

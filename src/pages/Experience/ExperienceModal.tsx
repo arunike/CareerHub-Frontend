@@ -134,7 +134,6 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     }
   }, [open, experience, form, importForm, offers]);
 
-  // Revoke object URL on cleanup
   useEffect(() => {
     return () => {
       if (logoPreview) URL.revokeObjectURL(logoPreview);

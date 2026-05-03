@@ -173,7 +173,7 @@ export default function LoginPage() {
           setSignupStatus(response.data);
           setMode(response.data.can_signup && !response.data.has_users ? 'signup' : 'login');
         } catch {
-          // Keep the page usable even if the status refresh fails.
+          setErrorMessage('Unable to determine signup status. Please try again later.');
         }
       }
     } finally {

@@ -61,7 +61,6 @@ function nanoid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-// Small mode toggle button group
 const ModeBtn = ({
   active, onClick, children,
 }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
@@ -102,7 +101,6 @@ const RaiseHistoryModal: React.FC<Props> = ({
 
   const latestEntry = sorted[0];
 
-  // When base_after changes and bonus is in %ofbase mode, recompute bonus_after
   useEffect(() => {
     if (afterModes.bonus === '%ofbase' && pctInputs.bonus !== '') {
       const pctVal = parseFloat(pctInputs.bonus);
@@ -165,7 +163,6 @@ const RaiseHistoryModal: React.FC<Props> = ({
   const setF = (key: keyof Omit<RaiseEntry, 'id'>, val: unknown) =>
     setForm(f => ({ ...f, [key]: val }));
 
-  // --- Before inputs (always $) ---
   const beforeInput = (key: keyof Omit<RaiseEntry, 'id'>, label: string) => (
     <div>
       <label className="block text-xs text-gray-500 mb-1">{label}</label>
@@ -180,7 +177,6 @@ const RaiseHistoryModal: React.FC<Props> = ({
     </div>
   );
 
-  // --- After inputs with mode toggle ---
   const switchBaseMode = (mode: BaseEquityMode) => {
     setAfterModes(m => ({ ...m, base: mode }));
     if (mode === '%change') {

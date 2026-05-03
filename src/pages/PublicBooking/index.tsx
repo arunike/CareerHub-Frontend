@@ -47,7 +47,6 @@ const PublicBookingPage = () => {
       setDays(resp.data.days || []);
       setLinkInvalid(false);
 
-      // Auto-advance to first available date if current one is empty
       const currentDay = resp.data.days?.find((day: BookingDayAvailability) => day.date === (anchorDate || selectedDate));
       if (!currentDay || currentDay.slots.length === 0) {
         const firstAvailable = resp.data.days?.find((day: BookingDayAvailability) => day.slots.length > 0);

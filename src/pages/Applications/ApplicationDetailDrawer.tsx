@@ -47,7 +47,6 @@ const statusColor = (status?: string) => {
   return 'blue';
 };
 
-// ----- Main Drawer -----
 const ApplicationDetailDrawer = ({
   application,
   documents,

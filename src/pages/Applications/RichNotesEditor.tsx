@@ -22,7 +22,7 @@ const ToolbarButton = ({ active, onClick, title, children }: ToolbarButtonProps)
     type="button"
     title={title}
     onMouseDown={(e) => {
-      e.preventDefault(); // keep editor focus
+      e.preventDefault();
       onClick();
     }}
     className={`flex h-7 w-7 items-center justify-center rounded-md text-sm transition-colors ${
@@ -91,7 +91,6 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
     },
   });
 
-  // Sync if opened for a different application
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();

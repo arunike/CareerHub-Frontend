@@ -11,7 +11,6 @@ interface IconPickerProps {
 const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
 
-  // Get the component for the current value, or fallback
   const SelectedIcon = ICON_MAP[value] || ICON_MAP['tag'];
 
   const content = (

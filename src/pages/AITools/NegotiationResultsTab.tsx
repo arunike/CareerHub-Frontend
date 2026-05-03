@@ -218,7 +218,7 @@ const NegotiationResultsTab: React.FC = () => {
     [results],
   );
 
-  void messageApi; // suppress unused warning — used via contextHolder
+  void messageApi;
 
   return (
     <div style={{ padding: 0, width: '100%' }}>

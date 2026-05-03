@@ -251,8 +251,6 @@ const buildRows = (
     const brandScore = scoreFromManual(app?.brand_score);
     const teamScore = scoreFromManual(app?.team_score);
     
-    // Build effective weights: if this offer needs immigration scoring, inject visa weight
-    // and scale all other weights down proportionally to keep total = 100.
     const baseWeightScale = shouldScoreImmigration ? (100 - VISA_OVERLAY_WEIGHT) / 100 : 1;
 
     const categories: CategoryScore[] = (Object.entries(weights) as [CategoryKey, number][]).map(([key, weight]) => {
@@ -350,7 +348,6 @@ const buildRows = (
     const company = baseApp ? baseApp.company_name : offer.custom_company_name || 'Simulated Company';
     const role = baseApp ? baseApp.role_title : offer.custom_role_title || 'Simulated Role';
     
-    // Fake an application object for scoring
     const app = {
       ...baseApp,
       company_name: company,

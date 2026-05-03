@@ -131,7 +131,6 @@ const PublicBookingManager = ({
   const handleBulkEditLinksSubmit = async () => {
     try {
       const values = await editForm.validateFields();
-      // Only include fields that were actually changed (not empty strings)
       const updates: Partial<ShareLink> = {};
       if (values.title) updates.title = values.title;
       if (values.duration_days) updates.duration_days = values.duration_days;
