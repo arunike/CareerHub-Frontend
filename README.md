@@ -40,6 +40,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Filter by status and search by company/role
 - Year filter with persisted state
 - Bulk select → bulk lock / unlock / delete
+- In-context application detail drawer consolidates overview, timeline, linked events, documents, AI outputs, notes, and task-linking readiness from the table
 - Company timeline modal for Applied → OA → phone → onsite → offer/reject stages with per-stage notes and document attachments
 - Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
 - Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, with private sheets supported through Google OAuth
@@ -51,6 +52,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - **Interactive Bar Chart**: Recharts stacked chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
 - **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
 - **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled
+- **Decision Snapshots**: Save point-in-time offer decisions with current score, rank, total comp, adjusted value, rent/tax/commute assumptions, category breakdown, and notes; locked snapshots are preserved from deletion
 - **Compensation Simulator**: After-tax monthly take-home view with rent, commute, food budget, PTO value, and equity vesting scenarios for real offers and custom scenarios
 - **⚡ Negotiation Advisor**: per-row "Negotiate" button (non-current offers) opens `NegotiationAdvisorModal`:
   - Centered offer snapshot header (Base, Bonus, Equity/yr, Sign-On, PTO)
@@ -75,6 +77,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Cover Letters** (`/ai-tools?tab=cover-letters`): Auto-saved whenever a cover letter is generated from the Applications page. Card list with view modal (serif font, Copy to Clipboard), rename, lock/delete, bulk actions, CSV/JSON export.
 - **Negotiation Results** (`/ai-tools?tab=negotiation-results`): Auto-saved whenever the Negotiation Advisor runs. Card list showing offer snapshot chips, advice summary counts, lock/delete, bulk actions, CSV/JSON export, and "View Full Report" link.
 - **Negotiation Result Detail** (`/negotiation-result/:id`): Full standalone page mirroring `JDReport` layout — offer snapshot, Suggested Counter-Ask panel, Leverage Points, Talking Points & Scripts, Watch Out For. Top bar uses `BulkActionHeader`.
+- **Backend AI Artifact Library**: JD reports, cover letters, and negotiation results are saved to authenticated backend records for cross-device access. Existing localStorage artifacts migrate automatically on first load and remain as a browser fallback if the API is unavailable.
 
 ### 📄 Document Vault (`/documents`)
 
@@ -162,7 +165,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### Data & State
 - **Axios** — HTTP client
-- **localStorage** — Persisted state for JD reports, cover letters, offer adjustments, and widget layouts
+- **Backend persistence + localStorage fallback** — JD reports, cover letters, and negotiation results use backend AI artifacts with automatic localStorage migration; offer adjustments and widget layouts remain local
 - **Custom hooks**: `usePersistedState`, `useCustomWidgets`, `useOfferAdjustmentsPersistence`, `useScenarioRows`
 
 ### Data Visualization
@@ -257,6 +260,7 @@ frontend/
 │   ├── pages/
 │   │   ├── Applications/
 │   │   │   ├── index.tsx            # Application tracker page
+│   │   │   ├── ApplicationDetailDrawer.tsx # In-context detail drawer for timeline/events/docs/AI/notes
 │   │   │   ├── ApplicationTimelineModal.tsx # Per-company stage timeline with notes/docs
 │   │   │   └── CoverLetterModal.tsx # AI cover letter generator (auto-saves)
 │   │   ├── CoverLetters/
@@ -311,9 +315,10 @@ frontend/
 │   │   └── browserAi.ts             # Prompt builders for cover letters, JD match, negotiation, analytics
 │   │
 │   ├── utils/
-│   │   ├── reportStorage.ts         # localStorage CRUD for JD match reports
-│   │   ├── coverLetterStorage.ts    # localStorage CRUD for cover letters
-│   │   ├── negotiationStorage.ts    # localStorage CRUD for negotiation results
+│   │   ├── aiArtifactStorage.ts     # Backend AI artifact sync + localStorage migration
+│   │   ├── reportStorage.ts         # Local fallback CRUD for JD match reports
+│   │   ├── coverLetterStorage.ts    # Local fallback CRUD for cover letters
+│   │   ├── negotiationStorage.ts    # Local fallback CRUD for negotiation results
 │   │   ├── yearFilter.ts            # Year filter helpers
 │   │   └── ...
 │   │
