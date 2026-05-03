@@ -28,9 +28,8 @@ import {
   UnlockOutlined,
   DeleteOutlined,
   ThunderboltOutlined,
-  ClockCircleOutlined,
-    DownOutlined,
-    UpOutlined,
+  DownOutlined,
+  UpOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
@@ -56,7 +55,7 @@ import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import CoverLetterModal from './CoverLetterModal';
-import ApplicationTimelineModal from './ApplicationTimelineModal';
+import ApplicationDetailDrawer from './ApplicationDetailDrawer';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
@@ -135,8 +134,9 @@ const Applications = () => {
   const [jobImportLoading, setJobImportLoading] = useState(false);
   const [jobImportSaving, setJobImportSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [detailApp, setDetailApp] = useState<CareerApplication | null>(null);
+  const [detailDrawerMode, setDetailDrawerMode] = useState<'view' | 'edit'>('view');
   const [coverLetterApp, setCoverLetterApp] = useState<CareerApplication | null>(null);
-  const [timelineApp, setTimelineApp] = useState<CareerApplication | null>(null);
 
   // Bulk Selection State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -325,9 +325,11 @@ const Applications = () => {
       delete payload.company;
       delete payload.site_link;
       delete payload.linked_document_ids;
+      delete payload.notes; // notes are managed via the Notes tab rich-text editor
 
       if (editingId) {
-        await updateApplication(editingId, payload);
+        const isDrawerEdit = detailDrawerMode === 'edit' && detailApp?.id === editingId;
+        const response = await updateApplication(editingId, payload);
 
         const currentlyLinkedDocIds = documents
           .filter((doc) => doc.application === editingId)
@@ -341,6 +343,23 @@ const Applications = () => {
           ...docsToUnlink.map((docId) => patchDocument(docId, { application: null })),
         ]);
         messageApi.success('Application updated');
+
+        const updatedApplication = response.data as CareerApplication;
+        setApplications((prev) => prev.map((app) => (app.id === editingId ? updatedApplication : app)));
+        setDocuments((prev) =>
+          prev.map((doc) => {
+            if (docsToLink.includes(doc.id)) return { ...doc, application: editingId };
+            if (docsToUnlink.includes(doc.id)) return { ...doc, application: null };
+            return doc;
+          })
+        );
+
+        if (isDrawerEdit) {
+          setDetailApp(updatedApplication);
+          setDetailDrawerMode('view');
+        } else {
+          setIsAddModalOpen(false);
+        }
       } else {
         const response = await createApplication(payload);
         const applicationId = response.data.id;
@@ -351,11 +370,11 @@ const Applications = () => {
           );
         }
         messageApi.success('Application created');
+        setIsAddModalOpen(false);
+        fetchData();
       }
-      setIsAddModalOpen(false);
       form.resetFields();
       setEditingId(null);
-      fetchData();
     } catch (error) {
       messageApi.error('Failed to save application');
       console.error(error);
@@ -364,6 +383,8 @@ const Applications = () => {
 
   const openAddModal = () => {
     setEditingId(null);
+    setDetailApp(null);
+    setDetailDrawerMode('view');
     form.resetFields();
     form.setFieldsValue({
       status: 'APPLIED',
@@ -453,7 +474,7 @@ const Applications = () => {
     }
   };
 
-  const openEditModal = (app: CareerApplication) => {
+  const populateApplicationForm = (app: CareerApplication) => {
     setEditingId(app.id);
     form.setFieldsValue({
       company: app.company_details?.name,
@@ -477,7 +498,31 @@ const Applications = () => {
         .filter((doc) => doc.application === app.id)
         .map((doc) => doc.id),
     });
-    setIsAddModalOpen(true);
+  };
+
+  const openDetailDrawer = (app: CareerApplication) => {
+    setDetailApp(app);
+    setDetailDrawerMode('view');
+  };
+
+  const openEditDrawer = (app: CareerApplication) => {
+    populateApplicationForm(app);
+    setIsAddModalOpen(false);
+    setDetailApp(app);
+    setDetailDrawerMode('edit');
+  };
+
+  const closeDetailDrawer = () => {
+    setDetailApp(null);
+    setDetailDrawerMode('view');
+    setEditingId(null);
+    form.resetFields();
+  };
+
+  const cancelDrawerEdit = () => {
+    setDetailDrawerMode('view');
+    setEditingId(null);
+    form.resetFields();
   };
 
   const importProps: UploadProps = {
@@ -596,7 +641,13 @@ const Applications = () => {
       key: 'company',
       render: (_: unknown, record: CareerApplication) => (
         <Space direction="vertical" size={0}>
-          <Text strong>{record.company_details?.name}</Text>
+          <Button
+            type="link"
+            className="!h-auto !p-0 !font-semibold"
+            onClick={() => openDetailDrawer(record)}
+          >
+            {record.company_details?.name}
+          </Button>
           <Text type="secondary" style={{ fontSize: 12 }}>
             {record.office_location || record.location || '—'}
           </Text>
@@ -643,6 +694,14 @@ const Applications = () => {
       key: 'actions',
       render: (_: unknown, record: CareerApplication) => (
         <Space>
+          <Tooltip title="Details">
+            <Button
+              type="text"
+              size="small"
+              icon={<InboxOutlined style={{ color: '#334155' }} />}
+              onClick={() => openDetailDrawer(record)}
+            />
+          </Tooltip>
           <Tooltip title="Generate Cover Letter">
             <Button
               type="text"
@@ -651,19 +710,11 @@ const Applications = () => {
               onClick={() => setCoverLetterApp(record)}
             />
           </Tooltip>
-          <Tooltip title="Timeline">
-            <Button
-              type="text"
-              size="small"
-              icon={<ClockCircleOutlined style={{ color: '#0f766e' }} />}
-              onClick={() => setTimelineApp(record)}
-            />
-          </Tooltip>
           <RowActions
             size="middle"
             isLocked={record.is_locked}
             onToggleLock={() => toggleLock(record)}
-            onEdit={() => openEditModal(record)}
+            onEdit={() => openEditDrawer(record)}
             onDelete={() => handleDelete(record.id)}
             disableDelete={record.is_locked}
           />
@@ -674,8 +725,97 @@ const Applications = () => {
 
   const activeFilterCount = Number(Boolean(searchText)) +
     Number(statusFilter !== 'ALL') + Number(empTypeFilter !== 'ALL') + Number(locationFilter !== 'ALL');
-    Number(statusFilter !== 'ALL') +
-    Number(empTypeFilter !== 'ALL');
+
+  const renderApplicationForm = (onCancel: () => void, submitLabel = 'Save') => (
+    <Form form={form} layout="vertical" onFinish={handleAddEdit}>
+      <Row gutter={16}>
+        <Col xs={24} sm={12}>
+          <Form.Item name="company" label="Company" rules={[{ required: true }]}>
+            <Input placeholder="Google" />
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item name="role_title" label="Role Title" rules={[{ required: true }]}>
+            <Input placeholder="Software Engineer" />
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item name="status" label="Status">
+            <Select>
+              {appStages.map(stage => (
+                <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item name="employment_type" label="Employment Type">
+            <Select>
+              {empTypes.map(t => (
+                <Option key={t.value} value={t.value}>{t.label}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item name="date_applied" label="Date Applied">
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item name="office_location" label="Location">
+            <Select
+              className="w-full"
+              showSearch
+              options={officeLocationOptions}
+              onSearch={(value) => setLocationSearchText(value)}
+              onChange={(value) => {
+                form.setFieldValue('office_location', value);
+                setLocationSearchText('');
+              }}
+              onBlur={() => setLocationSearchText('')}
+              placeholder="e.g. San Francisco, CA"
+              allowClear
+              filterOption={false}
+            />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item name="salary_range" label="Salary Range">
+            <Input prefix={<DollarOutlined />} placeholder="150k - 200k" />
+          </Form.Item>
+        </Col>
+
+        <Col span={24}>
+          <Form.Item name="site_link" label="Job Link">
+            <Input prefix={<GlobalOutlined />} placeholder="https://..." />
+          </Form.Item>
+        </Col>
+        <Col span={24}>
+          <Form.Item name="linked_document_ids" label="Linked Documents (Optional)">
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Select documents to link"
+              optionFilterProp="label"
+              options={documents.map((doc) => ({
+                value: doc.id,
+                label: `${doc.title} (v${doc.version_number || 1})`,
+              }))}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
+      <div style={{ textAlign: 'right', marginTop: 16 }}>
+        <Space>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button type="primary" htmlType="submit">
+            {submitLabel}
+          </Button>
+        </Space>
+      </div>
+    </Form>
+  );
 
   return (
     <div style={{ padding: 0, width: '100%' }}>
@@ -927,14 +1067,10 @@ const Applications = () => {
                         >
                           Letter
                         </Button>
-                        <Button
-                          size="large"
-                          icon={<ClockCircleOutlined />}
-                          onClick={() => setTimelineApp(record)}
-                        >
-                          Timeline
+                        <Button size="large" icon={<InboxOutlined />} onClick={() => openDetailDrawer(record)}>
+                          Details
                         </Button>
-                        <Button size="large" onClick={() => openEditModal(record)}>
+                        <Button size="large" onClick={() => openEditDrawer(record)}>
                           Edit
                         </Button>
                         <Button
@@ -992,107 +1128,15 @@ const Applications = () => {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Add Modal */}
       <Modal
-        title={editingId ? 'Edit Application' : 'Add Application'}
+        title="Add Application"
         open={isAddModalOpen}
         onCancel={() => setIsAddModalOpen(false)}
         footer={null}
         width={700}
       >
-        <Form form={form} layout="vertical" onFinish={handleAddEdit}>
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item name="company" label="Company" rules={[{ required: true }]}>
-                <Input placeholder="Google" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item name="role_title" label="Role Title" rules={[{ required: true }]}>
-                <Input placeholder="Software Engineer" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item name="status" label="Status">
-                <Select>
-                  {appStages.map(stage => (
-                    <Option key={stage.key} value={stage.key}>{stage.label}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item name="employment_type" label="Employment Type">
-                <Select>
-                  {empTypes.map(t => (
-                    <Option key={t.value} value={t.value}>{t.label}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item name="date_applied" label="Date Applied">
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item name="office_location" label="Location">
-                <Select
-                  className="w-full"
-                  showSearch
-                  options={officeLocationOptions}
-                  onSearch={(value) => setLocationSearchText(value)}
-                  onChange={(value) => {
-                    form.setFieldValue('office_location', value);
-                    setLocationSearchText('');
-                  }}
-                  onBlur={() => setLocationSearchText('')}
-                  placeholder="e.g. San Francisco, CA"
-                  allowClear
-                  filterOption={false}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="salary_range" label="Salary Range">
-                <Input prefix={<DollarOutlined />} placeholder="150k - 200k" />
-              </Form.Item>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item name="site_link" label="Job Link">
-                <Input prefix={<GlobalOutlined />} placeholder="https://..." />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item name="linked_document_ids" label="Linked Documents (Optional)">
-                <Select
-                  mode="multiple"
-                  allowClear
-                  placeholder="Select documents to link"
-                  optionFilterProp="label"
-                  options={documents.map((doc) => ({
-                    value: doc.id,
-                    label: `${doc.title} (v${doc.version_number || 1})`,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item name="notes" label="Notes">
-                <Input.TextArea rows={3} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <div style={{ textAlign: 'right', marginTop: 16 }}>
-            <Space>
-              <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-              <Button type="primary" htmlType="submit">
-                Save
-              </Button>
-            </Space>
-          </div>
-        </Form>
+        {isAddModalOpen ? renderApplicationForm(() => setIsAddModalOpen(false)) : null}
       </Modal>
 
       {/* Cover Letter Modal */}
@@ -1104,12 +1148,27 @@ const Applications = () => {
         />
       )}
 
-      <ApplicationTimelineModal
-        application={timelineApp}
+      <ApplicationDetailDrawer
+        application={detailApp}
         documents={documents}
-        open={!!timelineApp}
-        onClose={() => setTimelineApp(null)}
+        open={!!detailApp}
+        mode={detailDrawerMode}
         appStages={appStages}
+        editContent={
+          detailDrawerMode === 'edit'
+            ? renderApplicationForm(cancelDrawerEdit, 'Save Application')
+            : null
+        }
+        onClose={closeDetailDrawer}
+        onCancelEdit={cancelDrawerEdit}
+        onEdit={openEditDrawer}
+        onGenerateCoverLetter={setCoverLetterApp}
+        onNotesUpdate={(id, notes) => {
+          setApplications((prev) =>
+            prev.map((app) => (app.id === id ? { ...app, notes } : app))
+          );
+          setDetailApp((prev) => (prev && prev.id === id ? { ...prev, notes } : prev));
+        }}
       />
 
       <Modal

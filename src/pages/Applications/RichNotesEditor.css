@@ -1,0 +1,112 @@
+/* ---- Tiptap editor body ---- */
+.rich-notes-editor-body {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: #374151;
+  min-height: 180px;
+}
+
+/* Placeholder */
+.rich-notes-editor-body p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #cbd5e1;
+  pointer-events: none;
+  height: 0;
+  float: left;
+  font-style: normal;
+}
+
+/* Headings */
+.rich-notes-editor-body h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 1rem 0 0.3rem;
+  line-height: 1.4;
+}
+.rich-notes-editor-body h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0.75rem 0 0.25rem;
+  line-height: 1.4;
+}
+
+/* Paragraphs */
+.rich-notes-editor-body p {
+  margin: 0.25rem 0;
+}
+
+/* Lists */
+.rich-notes-editor-body ul,
+.rich-notes-editor-body ol {
+  padding-left: 1.4rem;
+  margin: 0.25rem 0;
+}
+.rich-notes-editor-body li {
+  margin: 0.1rem 0;
+}
+.rich-notes-editor-body ul li {
+  list-style-type: disc;
+}
+.rich-notes-editor-body ol li {
+  list-style-type: decimal;
+}
+
+/* Blockquote */
+.rich-notes-editor-body blockquote {
+  border-left: 3px solid #e2e8f0;
+  padding: 0.2rem 0.8rem;
+  margin: 0.5rem 0;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Inline code */
+.rich-notes-editor-body code {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.8em;
+  font-family: 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+  color: #0369a1;
+}
+
+/* Code block */
+.rich-notes-editor-body pre {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+.rich-notes-editor-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0369a1;
+  font-size: 0.8rem;
+}
+
+/* Bold / italic / underline / strike */
+.rich-notes-editor-body strong {
+  font-weight: 600;
+  color: #0f172a;
+}
+.rich-notes-editor-body em {
+  font-style: italic;
+}
+.rich-notes-editor-body u {
+  text-decoration: underline;
+}
+.rich-notes-editor-body s {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+/* Selection colour */
+.rich-notes-editor-body ::selection {
+  background: #bae6fd;
+}
