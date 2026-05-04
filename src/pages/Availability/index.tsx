@@ -17,7 +17,7 @@ import {
   updateShareLink,
   getUserSettings,
 } from '../../api';
-import type { Availability as AvailabilityType, Event, Holiday, PublicBooking } from '../../types';
+import type { Availability as AvailabilityType, BookingIntakeQuestion, Event, Holiday, PublicBooking } from '../../types';
 import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -57,6 +57,8 @@ const Availability = () => {
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState<number>(30);
   const [bufferMinutes, setBufferMinutes] = useState<number>(10);
   const [maxBookingsPerDay, setMaxBookingsPerDay] = useState<number>(3);
+  const [allowRescheduleCancel, setAllowRescheduleCancel] = useState(true);
+  const [intakeQuestions, setIntakeQuestions] = useState<BookingIntakeQuestion[]>([]);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [deactivatingLink, setDeactivatingLink] = useState(false);
 
@@ -116,6 +118,8 @@ const Availability = () => {
         if (activeLink.host_email) {
           setHostEmail(activeLink.host_email);
         }
+        setAllowRescheduleCancel(activeLink.allow_reschedule_cancel);
+        setIntakeQuestions(activeLink.intake_questions || []);
       } else {
         if (settingsResp.data.display_name) {
           setHostDisplayName(settingsResp.data.display_name);
@@ -160,6 +164,8 @@ const Availability = () => {
         booking_block_minutes: bookingBlockMinutes,
         buffer_minutes: bufferMinutes,
         max_bookings_per_day: maxBookingsPerDay,
+        allow_reschedule_cancel: allowRescheduleCancel,
+        intake_questions: intakeQuestions.filter((question) => question.label.trim()),
       });
       setShareLink(resp.data);
       await fetchShareLink();
@@ -446,6 +452,10 @@ const Availability = () => {
             onBufferMinutesChange={setBufferMinutes}
             maxBookingsPerDay={maxBookingsPerDay}
             onMaxBookingsPerDayChange={setMaxBookingsPerDay}
+            allowRescheduleCancel={allowRescheduleCancel}
+            onAllowRescheduleCancelChange={setAllowRescheduleCancel}
+            intakeQuestions={intakeQuestions}
+            onIntakeQuestionsChange={setIntakeQuestions}
             generatingLink={generatingLink}
             onGenerateShareLink={handleGenerateShareLink}
             onCopyShareLink={handleCopyShareLink}

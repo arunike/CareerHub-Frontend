@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import type { CareerApplication } from '../../types/application';
 
 type Dimension = 'month' | 'company' | 'location';
@@ -133,6 +134,7 @@ const RateBar = ({
 
 const CohortAnalysis = ({ applications }: Props) => {
   const [dimension, setDimension] = useState<Dimension>('month');
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const cohorts = useMemo(
     () => buildCohorts(applications, dimension),
@@ -218,16 +220,28 @@ const CohortAnalysis = ({ applications }: Props) => {
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       {/* Header */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Cohort Analysis
-          </p>
-          <h3 className="mt-0.5 text-base font-bold text-slate-900">
-            Where Are You Getting Results?
-          </h3>
-          <p className="mt-0.5 text-xs text-slate-400">
-            Groups with fewer than {MIN_COHORT_SIZE} applications are hidden.
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <button
+            type="button"
+            onClick={() => setIsCollapsed((value) => !value)}
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 text-slate-500 transition-colors hover:border-sky-100 hover:bg-sky-50 hover:text-sky-600"
+            aria-label={isCollapsed ? 'Expand cohort analysis' : 'Collapse cohort analysis'}
+          >
+            {isCollapsed ? <RightOutlined className="text-xs" /> : <DownOutlined className="text-xs" />}
+          </button>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Cohort Analysis
+            </p>
+            <h3 className="mt-0.5 text-base font-bold text-slate-900">
+              Where Are You Getting Results?
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {isCollapsed
+                ? `${cohorts.length} visible group${cohorts.length === 1 ? '' : 's'} hidden from view.`
+                : `Groups with fewer than ${MIN_COHORT_SIZE} applications are hidden.`}
+            </p>
+          </div>
         </div>
 
         {/* Dimension pills */}
@@ -248,7 +262,18 @@ const CohortAnalysis = ({ applications }: Props) => {
         </div>
       </div>
 
-      {cohorts.length === 0 ? (
+      {isCollapsed ? (
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          className="flex w-full items-center justify-between rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-3 text-left transition-colors hover:border-sky-100 hover:bg-sky-50/60"
+        >
+          <span className="text-sm font-semibold text-slate-600">
+            Cohort table collapsed
+          </span>
+          <span className="text-xs font-semibold text-sky-600">Show analysis</span>
+        </button>
+      ) : cohorts.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-slate-400">
           <p className="text-sm font-medium">Not enough data yet</p>
           <p className="mt-0.5 text-xs">

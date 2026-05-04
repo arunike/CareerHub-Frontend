@@ -245,8 +245,14 @@ const PublicBookingManager = ({
                           <span>
                             {link.max_bookings_per_day ? `${link.max_bookings_per_day}/day` : 'No daily cap'}
                           </span>
+                          <span>{link.allow_reschedule_cancel ? 'Guest changes on' : 'Guest changes off'}</span>
                           <span>Expires {new Date(link.expires_at).toLocaleDateString()}</span>
                         </div>
+                        {link.intake_questions?.length > 0 && (
+                          <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                            Intake: {link.intake_questions.map((question) => question.label).join(', ')}
+                          </p>
+                        )}
                         {link.public_note && (
                           <p className="mt-2 text-xs leading-relaxed text-gray-600">{link.public_note}</p>
                         )}
@@ -349,6 +355,11 @@ const PublicBookingManager = ({
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-bold text-gray-900 m-0">{booking.name}</h3>
                         {booking.is_locked && <LockOutlined className="text-amber-500 text-xs" />}
+                        {booking.status === 'canceled' && (
+                          <span className="rounded-full border border-rose-100 bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
+                            Canceled
+                          </span>
+                        )}
                       </div>
                       <CheckCircleOutlined className="text-emerald-500" />
                     </div>
@@ -370,6 +381,32 @@ const PublicBookingManager = ({
                         {booking.notes}
                       </p>
                     )}
+                    {booking.intake_answers && Object.keys(booking.intake_answers).length > 0 && (
+                      <div className="mt-2 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs leading-relaxed text-sky-900">
+                        {Object.entries(booking.intake_answers).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="font-bold">{key}:</span> {String(value)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
+                      {booking.ics_url && (
+                        <a className="text-blue-600 hover:underline" href={booking.ics_url}>
+                          .ics
+                        </a>
+                      )}
+                      {booking.reschedule_url && booking.status !== 'canceled' && (
+                        <a className="text-blue-600 hover:underline" href={booking.reschedule_url}>
+                          Reschedule link
+                        </a>
+                      )}
+                      {booking.cancel_url && booking.status !== 'canceled' && (
+                        <a className="text-rose-600 hover:underline" href={booking.cancel_url}>
+                          Cancel link
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
