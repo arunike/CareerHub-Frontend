@@ -49,7 +49,8 @@ import { PlusOutlined } from '@ant-design/icons';
 
 const JDReportsListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [reports, setReports] = useState<StoredReport[]>(getAllReports());
+  const [reports, setReports] = useState<StoredReport[]>([]);
+  const [hasLoadedReports, setHasLoadedReports] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingReport, setEditingReport] = useState<{ id: string, title: string } | null>(null);
@@ -63,6 +64,8 @@ const JDReportsListPage: React.FC = () => {
     } catch {
       setReports(getAllReports());
       setUsingBackendArtifacts(false);
+    } finally {
+      setHasLoadedReports(true);
     }
   }, []);
 
@@ -222,7 +225,7 @@ const JDReportsListPage: React.FC = () => {
           )}
 
           {/* Empty state */}
-          {reports.length === 0 && (
+          {hasLoadedReports && reports.length === 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-24 gap-6">
               <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center">
                 <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
@@ -243,6 +246,7 @@ const JDReportsListPage: React.FC = () => {
           )}
 
           {/* Report Cards Grid */}
+          {hasLoadedReports && (
           <div className="grid grid-cols-1 gap-6">
             {reports.map((report) => {
               const meta = getScoreMeta(report.score);
@@ -349,6 +353,7 @@ const JDReportsListPage: React.FC = () => {
               );
             })}
           </div>
+          )}
       </div>
       </div>
 
