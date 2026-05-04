@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, DatePicker, Input, Spin, Tag, message } from 'antd';
+import { Button, DatePicker, Input, Select, Spin, Tag, message } from 'antd';
+import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
   createApplicationTimelineEntry,
@@ -20,6 +21,13 @@ type TimelineDraft = {
   notes: string;
 };
 
+type DisplayStage = {
+  key: string;
+  label: string;
+  shortLabel?: string;
+  tone?: string;
+};
+
 const emptyDraft = (): TimelineDraft => ({
   event_date: null,
   notes: '',
@@ -27,6 +35,17 @@ const emptyDraft = (): TimelineDraft => ({
 
 const hasContent = (draft?: TimelineDraft) =>
   Boolean(draft?.id || draft?.event_date || draft?.notes.trim());
+
+const formatStageLabel = (key: string) => {
+  if (!key) return 'Stage';
+  if (key.includes(' ')) return key;
+  return key
+    .toLowerCase()
+    .split('_')
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
+};
 
 const TONE_TO_HEX: Record<string, string> = {
   'bg-blue-500': '#3b82f6',
@@ -48,6 +67,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, TimelineDraft>>({});
+  const [addedStageKeys, setAddedStageKeys] = useState<string[]>([]);
+  const [isAddingStage, setIsAddingStage] = useState(false);
+  const [selectedStageKey, setSelectedStageKey] = useState<string | undefined>();
 
   const buildInitialDrafts = useCallback(
     (entries: ApplicationTimelineEntry[]) => {
@@ -66,6 +88,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       if (next.APPLIED && !next.APPLIED.event_date && application?.date_applied) {
         next.APPLIED.event_date = application.date_applied;
       }
+      setAddedStageKeys([]);
+      setIsAddingStage(false);
+      setSelectedStageKey(undefined);
       return next;
     },
     [application?.date_applied, appStages]
@@ -97,25 +122,67 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   };
 
   const allDisplayStages = useMemo(() => {
+    const configuredStages: DisplayStage[] = appStages.map((stage) => ({ ...stage }));
     const existingKeys = new Set(appStages.map((s) => s.key));
-    const extraStages = Object.keys(drafts)
+    const extraStages: DisplayStage[] = Object.keys(drafts)
       .filter((key) => !existingKeys.has(key) && hasContent(drafts[key]))
       .map((key) => ({
         key,
-        label: `${key.charAt(0)}${key.slice(1).toLowerCase()} (Legacy)`,
+        label: formatStageLabel(key),
         shortLabel: key.slice(0, 5),
         tone: 'bg-gray-300',
       }));
-    return [...appStages, ...extraStages];
+    return [...configuredStages, ...extraStages];
   }, [appStages, drafts]);
 
   const activeStages = useMemo(
     () =>
       allDisplayStages.filter(
-        (stage) => hasContent(drafts[stage.key]) || application?.status === stage.key
+        (stage) => addedStageKeys.includes(stage.key) || hasContent(drafts[stage.key]) || application?.status === stage.key
       ),
-    [allDisplayStages, application?.status, drafts]
+    [addedStageKeys, allDisplayStages, application?.status, drafts]
   );
+
+  const availableStages = useMemo(
+    () =>
+      allDisplayStages.filter(
+        (stage) =>
+          !addedStageKeys.includes(stage.key) &&
+          !hasContent(drafts[stage.key]) &&
+          application?.status !== stage.key
+      ),
+    [addedStageKeys, allDisplayStages, application?.status, drafts]
+  );
+
+  const handleAddStage = () => {
+    if (!selectedStageKey) {
+      messageApi.error('Select a stage first');
+      return;
+    }
+    const stage = allDisplayStages.find((item) => item.key === selectedStageKey);
+    if (!stage) {
+      messageApi.error('That stage is no longer available');
+      return;
+    }
+    setAddedStageKeys((prev) => (prev.includes(stage.key) ? prev : [...prev, stage.key]));
+    setDrafts((prev) => ({ ...prev, [stage.key]: prev[stage.key] || emptyDraft() }));
+    setSelectedStageKey(undefined);
+    setIsAddingStage(false);
+  };
+
+  const handleRemoveAddedStage = (stageKey: string) => {
+    const draft = drafts[stageKey];
+    if (draft?.id) {
+      messageApi.info('Saved stages stay on the timeline. Clear the date and notes if you no longer need it.');
+      return;
+    }
+    setAddedStageKeys((prev) => prev.filter((key) => key !== stageKey));
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[stageKey];
+      return next;
+    });
+  };
 
   const handleSave = async () => {
     if (!application) return;
@@ -150,7 +217,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       {contextHolder}
 
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             Timeline
@@ -159,16 +226,52 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
             Track key dates and notes for each stage.
           </p>
         </div>
-        <Button
-          type="primary"
-          size="small"
-          className="!rounded-lg !px-4 !text-xs !font-semibold"
-          loading={saving}
-          onClick={handleSave}
-        >
-          Save
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            size="small"
+            icon={<PlusOutlined />}
+            className="!rounded-lg !px-3 !text-xs !font-semibold"
+            onClick={() => setIsAddingStage((value) => !value)}
+          >
+            Stage
+          </Button>
+          <Button
+            type="primary"
+            size="small"
+            className="!rounded-lg !px-4 !text-xs !font-semibold"
+            loading={saving}
+            onClick={handleSave}
+          >
+            Save
+          </Button>
+        </div>
       </div>
+
+      {isAddingStage && (
+        <div className="mb-4 rounded-xl border border-sky-100 bg-sky-50/50 p-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Select
+              value={selectedStageKey}
+              onChange={setSelectedStageKey}
+              placeholder={availableStages.length ? 'Select a timeline stage' : 'No more stages to add'}
+              disabled={availableStages.length === 0}
+              className="min-w-0 flex-1 [&_.ant-select-selector]:!rounded-lg"
+              options={availableStages.map((stage) => ({
+                value: stage.key,
+                label: stage.label,
+              }))}
+            />
+            <div className="flex gap-2">
+              <Button type="primary" className="!rounded-lg" onClick={handleAddStage} disabled={!selectedStageKey}>
+                Add
+              </Button>
+              <Button className="!rounded-lg" onClick={() => setIsAddingStage(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -239,19 +342,30 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                           </Tag>
                         )}
                       </div>
-                      <DatePicker
-                        value={draft.event_date ? dayjs(draft.event_date) : null}
-                        onChange={(value) =>
-                          patchDraft(stage.key, {
-                            event_date: value ? value.format('YYYY-MM-DD') : null,
-                          })
-                        }
-                        placeholder="Add date"
-                        size="small"
-                        variant="borderless"
-                        className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600"
-                        format="MMM D, YYYY"
-                      />
+                      <div className="flex shrink-0 items-center gap-1">
+                        <DatePicker
+                          value={draft.event_date ? dayjs(draft.event_date) : null}
+                          onChange={(value) =>
+                            patchDraft(stage.key, {
+                              event_date: value ? value.format('YYYY-MM-DD') : null,
+                            })
+                          }
+                          placeholder="Add date"
+                          size="small"
+                          variant="borderless"
+                          className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600"
+                          format="MMM D, YYYY"
+                        />
+                        {addedStageKeys.includes(stage.key) && !draft.id && !hasContent(draft) && (
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<CloseOutlined />}
+                            className="!h-7 !w-7 !rounded-lg !text-slate-300 hover:!text-rose-500"
+                            onClick={() => handleRemoveAddedStage(stage.key)}
+                          />
+                        )}
+                      </div>
                     </div>
 
                     {/* Divider */}

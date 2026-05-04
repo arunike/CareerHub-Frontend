@@ -49,6 +49,7 @@ function AppRoutes() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/book/:uuid" element={<PublicBookingPage />} />
+          <Route path="/book/:uuid/:bookingUuid/:action" element={<PublicBookingPage />} />
           <Route path="/jd-report/:id" element={<JDReportPage />} />
           <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
         </Routes>

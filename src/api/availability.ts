@@ -1,4 +1,4 @@
-import type { Event, Holiday, PublicBooking, RecurrenceRule, ShareLink, UserSettings } from '../types';
+import type { BookingIntakeQuestion, Event, Holiday, PublicBooking, RecurrenceRule, ShareLink, UserSettings } from '../types';
 import api from './client';
 
 export const getEvents = (startDate?: string, endDate?: string) =>
@@ -67,6 +67,8 @@ export const generateShareLink = (data: {
   booking_block_minutes?: number;
   buffer_minutes?: number;
   max_bookings_per_day?: number;
+  allow_reschedule_cancel?: boolean;
+  intake_questions?: BookingIntakeQuestion[];
 }) =>
   api.post<ShareLink>('/share-links/generate/', data);
 export const deactivateShareLink = () => api.post('/share-links/deactivate/');
@@ -76,7 +78,7 @@ export const updateShareLink = (id: number, data: Partial<ShareLink>) => api.pat
 export const getPublicBookings = () => api.get<PublicBooking[]>('/share-links/bookings/');
 export const deletePublicBooking = (id: number) => api.delete(`/public-bookings/${id}/`);
 export const updatePublicBooking = (id: number, data: Partial<PublicBooking>) => api.patch<PublicBooking>(`/public-bookings/${id}/`, data);
-export const getPublicBookingSlots = (uuid: string, date?: string, timezone: string = 'PT') =>
+export const getPublicBookingSlots = (uuid: string, date?: string, timezone: string = 'PT', bookingUuid?: string) =>
   api.get<{
     title: string;
     host_display_name?: string;
@@ -88,13 +90,15 @@ export const getPublicBookingSlots = (uuid: string, date?: string, timezone: str
     booking_block_minutes: number;
     buffer_minutes: number;
     max_bookings_per_day: number;
+    allow_reschedule_cancel: boolean;
+    intake_questions: BookingIntakeQuestion[];
     days: Array<{
       date: string;
       day_name: string;
       readable_date: string;
       slots: Array<{ start_time: string; end_time: string; label: string }>;
     }>;
-  }>(`/booking/${uuid}/slots/`, { params: { date, timezone } });
+  }>(`/booking/${uuid}/slots/`, { params: { date, timezone, booking_uuid: bookingUuid } });
 export const createPublicBooking = (
   uuid: string,
   data: {
@@ -105,8 +109,19 @@ export const createPublicBooking = (
     end_time: string;
     timezone?: string;
     notes?: string;
+    intake_answers?: Record<string, string>;
   },
 ) => api.post(`/booking/${uuid}/book/`, data);
+
+export const getPublicBookingDetails = (uuid: string, bookingUuid: string) =>
+  api.get<{ booking: PublicBooking; share_link: ShareLink }>(`/booking/${uuid}/manage/${bookingUuid}/details/`);
+export const reschedulePublicBooking = (
+  uuid: string,
+  bookingUuid: string,
+  data: { date: string; start_time: string; end_time: string; timezone?: string },
+) => api.post<{ message: string; booking: PublicBooking }>(`/booking/${uuid}/manage/${bookingUuid}/reschedule/`, data);
+export const cancelPublicBooking = (uuid: string, bookingUuid: string) =>
+  api.post<{ message: string; booking: PublicBooking }>(`/booking/${uuid}/manage/${bookingUuid}/cancel/`);
 
 export const exportEvents = (format: string = 'csv') =>
   api.get('/events/export/', { params: { fmt: format }, responseType: 'blob' });

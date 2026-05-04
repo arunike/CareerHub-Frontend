@@ -1,17 +1,65 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { createPublicBooking, getPublicBookingSlots } from '../../api';
+import {
+  cancelPublicBooking,
+  createPublicBooking,
+  getPublicBookingDetails,
+  getPublicBookingSlots,
+  reschedulePublicBooking,
+} from '../../api';
 import { CalendarOutlined, ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import IdentityAvatar from '../../components/IdentityAvatar';
-import type { BookingDayAvailability, BookingSlot } from '../../types';
+import type { BookingDayAvailability, BookingIntakeQuestion, BookingSlot, PublicBooking } from '../../types';
 
 const timezones = ['PT', 'MT', 'CT', 'ET'] as const;
 type Timezone = (typeof timezones)[number];
+type StoredGuestBooking = {
+  booking_uuid: string;
+  email?: string;
+  saved_at: string;
+};
+
+const guestBookingStorageKey = (shareLinkUuid: string) => `careerhub_public_booking:${shareLinkUuid}`;
+
+const getStoredGuestBooking = (shareLinkUuid?: string): StoredGuestBooking | null => {
+  if (!shareLinkUuid) return null;
+  try {
+    const raw = window.localStorage.getItem(guestBookingStorageKey(shareLinkUuid));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredGuestBooking>;
+    if (!parsed.booking_uuid) return null;
+    return {
+      booking_uuid: parsed.booking_uuid,
+      email: parsed.email,
+      saved_at: parsed.saved_at || new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveGuestBooking = (shareLinkUuid: string | undefined, booking: PublicBooking) => {
+  if (!shareLinkUuid) return;
+  window.localStorage.setItem(
+    guestBookingStorageKey(shareLinkUuid),
+    JSON.stringify({
+      booking_uuid: booking.uuid,
+      email: booking.email,
+      saved_at: new Date().toISOString(),
+    } satisfies StoredGuestBooking),
+  );
+};
+
+const clearGuestBooking = (shareLinkUuid?: string) => {
+  if (!shareLinkUuid) return;
+  window.localStorage.removeItem(guestBookingStorageKey(shareLinkUuid));
+};
 
 const PublicBookingPage = () => {
-  const { uuid } = useParams<{ uuid: string }>();
+  const { uuid, bookingUuid, action } = useParams<{ uuid: string; bookingUuid?: string; action?: string }>();
   const [messageApi, contextHolder] = message.useMessage();
+  const manageAction = action === 'reschedule' || action === 'cancel' ? action : null;
 
   const [title, setTitle] = useState('Book a time');
   const [hostDisplayName, setHostDisplayName] = useState('');
@@ -19,6 +67,8 @@ const PublicBookingPage = () => {
   const [hostProfilePicture, setHostProfilePicture] = useState<string | null>(null);
   const [publicNote, setPublicNote] = useState('');
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState(30);
+  const [allowRescheduleCancel, setAllowRescheduleCancel] = useState(true);
+  const [intakeQuestions, setIntakeQuestions] = useState<BookingIntakeQuestion[]>([]);
   const [timezone, setTimezone] = useState<Timezone>('PT');
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [days, setDays] = useState<BookingDayAvailability[]>([]);
@@ -28,6 +78,10 @@ const PublicBookingPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
+  const [intakeAnswers, setIntakeAnswers] = useState<Record<string, string>>({});
+  const [managedBooking, setManagedBooking] = useState<PublicBooking | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<PublicBooking | null>(null);
+  const [restoredGuestBooking, setRestoredGuestBooking] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -37,13 +91,15 @@ const PublicBookingPage = () => {
     if (!uuid) return;
     setLoading(true);
     try {
-      const resp = await getPublicBookingSlots(uuid, anchorDate || selectedDate, timezone);
+      const resp = await getPublicBookingSlots(uuid, anchorDate || selectedDate, timezone, bookingUuid);
       setTitle(resp.data.title || 'Book a time');
       setHostDisplayName(resp.data.host_display_name || '');
       setHostEmail(resp.data.host_email || '');
       setHostProfilePicture(resp.data.host_profile_picture || null);
       setPublicNote(resp.data.public_note || '');
       setBookingBlockMinutes(resp.data.booking_block_minutes || 30);
+      setAllowRescheduleCancel(resp.data.allow_reschedule_cancel);
+      setIntakeQuestions(resp.data.intake_questions || []);
       setDays(resp.data.days || []);
       setLinkInvalid(false);
 
@@ -63,10 +119,87 @@ const PublicBookingPage = () => {
     }
   };
 
+  const loadManagedBooking = async () => {
+    if (!uuid || !bookingUuid || !manageAction) return;
+    setLoading(true);
+    try {
+      const resp = await getPublicBookingDetails(uuid, bookingUuid);
+      const booking = resp.data.booking;
+      const link = resp.data.share_link;
+      setManagedBooking(booking);
+      setTitle(link.title || 'Manage booking');
+      setHostDisplayName(link.host_display_name || '');
+      setHostEmail(link.host_email || '');
+      setPublicNote(link.public_note || '');
+      setBookingBlockMinutes(link.booking_block_minutes || 30);
+      setAllowRescheduleCancel(link.allow_reschedule_cancel);
+      setIntakeQuestions(link.intake_questions || []);
+      setTimezone((booking.timezone as Timezone) || 'PT');
+      setSelectedDate(booking.date);
+      setName(booking.name);
+      setEmail(booking.email);
+      setNotes(booking.notes || '');
+      setIntakeAnswers(booking.intake_answers || {});
+      if (booking.status === 'active') {
+        saveGuestBooking(uuid, booking);
+      }
+      setLinkInvalid(false);
+    } catch (error) {
+      console.error(error);
+      setLinkInvalid(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStoredGuestBooking = async () => {
+    if (!uuid || bookingUuid || manageAction) return;
+    const stored = getStoredGuestBooking(uuid);
+    if (!stored) return;
+    try {
+      const resp = await getPublicBookingDetails(uuid, stored.booking_uuid);
+      const booking = resp.data.booking;
+      const link = resp.data.share_link;
+      if (booking.status !== 'active') {
+        clearGuestBooking(uuid);
+        return;
+      }
+      setManagedBooking(booking);
+      setRestoredGuestBooking(true);
+      setTitle(link.title || 'Manage booking');
+      setHostDisplayName(link.host_display_name || '');
+      setHostEmail(link.host_email || '');
+      setPublicNote(link.public_note || '');
+      setBookingBlockMinutes(link.booking_block_minutes || 30);
+      setAllowRescheduleCancel(link.allow_reschedule_cancel);
+      setIntakeQuestions(link.intake_questions || []);
+      setTimezone((booking.timezone as Timezone) || 'PT');
+      setSelectedDate(booking.date);
+      setName(booking.name);
+      setEmail(booking.email);
+      setNotes(booking.notes || '');
+      setIntakeAnswers(booking.intake_answers || {});
+    } catch (error) {
+      console.error(error);
+      clearGuestBooking(uuid);
+    }
+  };
+
   useEffect(() => {
+    if (manageAction) {
+      loadManagedBooking();
+      return;
+    }
+    loadStoredGuestBooking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uuid, bookingUuid, manageAction]);
+
+  useEffect(() => {
+    if (manageAction === 'cancel') return;
+    if (manageAction === 'reschedule' && !managedBooking) return;
     loadSlots(selectedDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uuid, timezone]);
+  }, [uuid, timezone, manageAction, managedBooking?.uuid]);
 
   useEffect(() => {
     if (!uuid) return;
@@ -85,31 +218,73 @@ const PublicBookingPage = () => {
   }, [selectedDate, timezone]);
 
   const handleBook = async () => {
-    if (!uuid || !selectedSlot) return;
-    if (!name.trim() || !email.trim()) {
+    if (!uuid) return;
+    if (manageAction === 'cancel') {
+      if (!bookingUuid) return;
+      setSubmitting(true);
+      try {
+        const resp = await cancelPublicBooking(uuid, bookingUuid);
+        setManagedBooking(resp.data.booking);
+        clearGuestBooking(uuid);
+        messageApi.success('Booking canceled.');
+      } catch (error) {
+        messageApi.error('Failed to cancel booking.');
+        console.error(error);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (!selectedSlot) return;
+    if (!manageAction && (!name.trim() || !email.trim())) {
       messageApi.error('Please enter your name and email.');
       return;
+    }
+    for (const question of intakeQuestions) {
+      if (question.required && !intakeAnswers[question.id]?.trim()) {
+        messageApi.error(`Please answer: ${question.label}`);
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
-      await createPublicBooking(uuid, {
-        name: name.trim(),
-        email: email.trim(),
-        notes: notes.trim(),
-        date: selectedDate,
-        start_time: selectedSlot.start_time,
-        end_time: selectedSlot.end_time,
-        timezone,
-      });
-      messageApi.success('Booked successfully.');
-      setName('');
-      setEmail('');
-      setNotes('');
-      setSelectedSlot(null);
-      loadSlots();
+      if (manageAction === 'reschedule' && bookingUuid) {
+        const resp = await reschedulePublicBooking(uuid, bookingUuid, {
+          date: selectedDate,
+          start_time: selectedSlot.start_time,
+          end_time: selectedSlot.end_time,
+          timezone,
+        });
+        setManagedBooking(resp.data.booking);
+        saveGuestBooking(uuid, resp.data.booking);
+        setSelectedSlot(null);
+        messageApi.success('Booking rescheduled.');
+        loadSlots();
+      } else {
+        const resp = await createPublicBooking(uuid, {
+          name: name.trim(),
+          email: email.trim(),
+          notes: notes.trim(),
+          date: selectedDate,
+          start_time: selectedSlot.start_time,
+          end_time: selectedSlot.end_time,
+          timezone,
+          intake_answers: intakeAnswers,
+        });
+        saveGuestBooking(uuid, resp.data.booking);
+        setConfirmedBooking(resp.data.booking);
+        messageApi.success('Booked successfully.');
+        setName('');
+        setEmail('');
+        setNotes('');
+        setIntakeAnswers({});
+        setSelectedSlot(null);
+        loadSlots();
+      }
     } catch (error) {
-      messageApi.error('Failed to book slot. Please refresh and retry.');
+      messageApi.error(manageAction ? 'Failed to update booking. Please refresh and retry.' : 'Failed to book slot. Please refresh and retry.');
       console.error(error);
     } finally {
       setSubmitting(false);
@@ -138,14 +313,23 @@ const PublicBookingPage = () => {
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="flex-1">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-6">
-                Booking Invitation
+                {manageAction === 'reschedule'
+                  ? 'Reschedule Booking'
+                  : manageAction === 'cancel'
+                  ? 'Cancel Booking'
+                  : restoredGuestBooking
+                  ? 'Your Booking'
+                  : 'Booking Invitation'}
               </div>
               <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">
                 {title}
               </h1>
               <p className="text-slate-500 text-lg max-w-xl leading-relaxed">
-                Please select a convenient time for our session. All times are automatically adjusted to your local
-                timezone.
+                {restoredGuestBooking
+                  ? 'You already have a scheduled time from this browser. You can reschedule or cancel it if needed.'
+                  : manageAction === 'cancel'
+                  ? 'Review your booking details and cancel if this time no longer works.'
+                  : 'Please select a convenient time for our session. All times are automatically adjusted to your local timezone.'}
               </p>
             </div>
             <div className="shrink-0">
@@ -177,6 +361,20 @@ const PublicBookingPage = () => {
               {publicNote}
             </div>
           )}
+          {managedBooking && (
+            <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm text-slate-600">
+              Current booking: <span className="font-bold text-slate-900">{managedBooking.date}</span>{' '}
+              {managedBooking.start_time.slice(0, 5)}-{managedBooking.end_time.slice(0, 5)} {managedBooking.timezone}
+              {managedBooking.status === 'canceled' && <span className="ml-2 font-bold text-rose-600">Canceled</span>}
+              {restoredGuestBooking && managedBooking.status === 'active' && (
+                <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold">
+                  {managedBooking.ics_url && <a href={managedBooking.ics_url} className="text-blue-700 underline">Download .ics</a>}
+                  {managedBooking.reschedule_url && <a href={managedBooking.reschedule_url} className="text-blue-700 underline">Reschedule</a>}
+                  {managedBooking.cancel_url && <a href={managedBooking.cancel_url} className="text-rose-700 underline">Cancel</a>}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Selection & Details Flow */}
@@ -187,7 +385,7 @@ const PublicBookingPage = () => {
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
                   <CalendarOutlined className="text-blue-500" />
-                  1. Select Date & Time
+                  {manageAction === 'cancel' ? 'Booking Time' : '1. Select Date & Time'}
                 </h2>
                 <div className="flex gap-1 p-1 rounded-xl bg-slate-50 border border-slate-100">
                   <button
@@ -239,7 +437,13 @@ const PublicBookingPage = () => {
                 </div>
               </div>
 
-              {loading && days.length === 0 ? (
+              {manageAction === 'cancel' ? (
+                <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-6 text-sm font-bold text-slate-700">
+                  {managedBooking
+                    ? `${managedBooking.date} · ${managedBooking.start_time.slice(0, 5)} - ${managedBooking.end_time.slice(0, 5)} ${managedBooking.timezone}`
+                    : 'Loading booking details...'}
+                </div>
+              ) : loading && days.length === 0 ? (
                 <div className="py-16 text-center">
                   <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
                   <p className="text-sm font-bold text-slate-400">Loading slots...</p>
@@ -335,7 +539,7 @@ const PublicBookingPage = () => {
             <div className="bg-white rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sticky top-8">
               <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2 mb-8">
                 <UserOutlined className="text-blue-500" />
-                2. Your Details
+                {manageAction ? 'Booking Details' : '2. Your Details'}
               </h2>
               
               <div className="space-y-6">
@@ -347,6 +551,7 @@ const PublicBookingPage = () => {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    disabled={!!manageAction}
                     placeholder="Your Name"
                     className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
                   />
@@ -361,6 +566,7 @@ const PublicBookingPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={!!manageAction}
                     placeholder="your@email.com"
                     className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
                   />
@@ -373,10 +579,25 @@ const PublicBookingPage = () => {
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
+                    disabled={!!manageAction}
                     placeholder="Anything useful before the meeting..."
                     className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold min-h-[100px] focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none"
                   />
                 </div>
+
+                {!manageAction && intakeQuestions.map((question) => (
+                  <div className="space-y-2" key={question.id}>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      {question.label} {question.required && <span className="text-rose-500">*</span>}
+                    </label>
+                    <textarea
+                      value={intakeAnswers[question.id] || ''}
+                      onChange={(e) => setIntakeAnswers((prev) => ({ ...prev, [question.id]: e.target.value }))}
+                      placeholder="Your answer"
+                      className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold min-h-[80px] focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none"
+                    />
+                  </div>
+                ))}
 
                 <div className="pt-6">
                   {selectedSlot && (
@@ -391,11 +612,25 @@ const PublicBookingPage = () => {
                       </div>
                     </div>
                   )}
+                  {confirmedBooking && (
+                    <div className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
+                      <div className="font-black">Booking confirmed</div>
+                      <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold">
+                        {confirmedBooking.ics_url && <a href={confirmedBooking.ics_url} className="text-emerald-700 underline">Download .ics</a>}
+                        {confirmedBooking.reschedule_url && <a href={confirmedBooking.reschedule_url} className="text-emerald-700 underline">Reschedule</a>}
+                        {confirmedBooking.cancel_url && <a href={confirmedBooking.cancel_url} className="text-emerald-700 underline">Cancel</a>}
+                      </div>
+                    </div>
+                  )}
                   
                   <button
                     onClick={handleBook}
-                    disabled={!selectedSlot || submitting}
-                    className="w-full py-4 px-8 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white text-base font-black rounded-2xl shadow-xl shadow-blue-200/50 disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                    disabled={(manageAction !== 'cancel' && !selectedSlot) || submitting || managedBooking?.status === 'canceled' || !allowRescheduleCancel}
+                    className={`w-full py-4 px-8 text-white text-base font-black rounded-2xl shadow-xl disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${
+                      manageAction === 'cancel'
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200/50'
+                        : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 shadow-blue-200/50'
+                    }`}
                   >
                     {submitting ? (
                       <>
@@ -403,7 +638,7 @@ const PublicBookingPage = () => {
                         Confirming...
                       </>
                     ) : (
-                      'Confirm Booking'
+                      manageAction === 'reschedule' ? 'Confirm New Time' : manageAction === 'cancel' ? 'Cancel Booking' : 'Confirm Booking'
                     )}
                   </button>
                   <p className="mt-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">

@@ -432,6 +432,8 @@ export interface ShareLink {
   booking_block_minutes: number;
   buffer_minutes: number;
   max_bookings_per_day: number;
+  allow_reschedule_cancel: boolean;
+  intake_questions: BookingIntakeQuestion[];
   created_at: string;
   expires_at: string;
   is_active: boolean;
@@ -439,8 +441,15 @@ export interface ShareLink {
   is_locked: boolean;
 }
 
+export interface BookingIntakeQuestion {
+  id: string;
+  label: string;
+  required?: boolean;
+}
+
 export interface PublicBooking {
   id: number;
+  uuid: string;
   share_link: number;
   share_link_title?: string;
   name: string;
@@ -450,7 +459,12 @@ export interface PublicBooking {
   end_time: string;
   timezone: string;
   notes: string;
+  intake_answers?: Record<string, string>;
+  status: 'active' | 'canceled';
   is_locked: boolean;
+  reschedule_url?: string;
+  cancel_url?: string;
+  ics_url?: string;
   created_at: string;
 }
 

@@ -1,6 +1,6 @@
 import { LinkOutlined, SettingOutlined, StopOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import type { ShareLink } from '../../../types';
+import type { BookingIntakeQuestion, ShareLink } from '../../../types';
 
 type Props = {
   shareLink: ShareLink | null;
@@ -20,6 +20,10 @@ type Props = {
   onBufferMinutesChange: (value: number) => void;
   maxBookingsPerDay: number;
   onMaxBookingsPerDayChange: (value: number) => void;
+  allowRescheduleCancel: boolean;
+  onAllowRescheduleCancelChange: (value: boolean) => void;
+  intakeQuestions: BookingIntakeQuestion[];
+  onIntakeQuestionsChange: (value: BookingIntakeQuestion[]) => void;
   generatingLink: boolean;
   onGenerateShareLink: () => void;
   onCopyShareLink: () => void;
@@ -47,6 +51,10 @@ const AvailabilityBookingCard = ({
   onBufferMinutesChange,
   maxBookingsPerDay,
   onMaxBookingsPerDayChange,
+  allowRescheduleCancel,
+  onAllowRescheduleCancelChange,
+  intakeQuestions,
+  onIntakeQuestionsChange,
   generatingLink,
   onGenerateShareLink,
   onCopyShareLink,
@@ -56,6 +64,10 @@ const AvailabilityBookingCard = ({
   onReset,
 }: Props) => {
   const [showConfig, setShowConfig] = useState(false);
+
+  const updateQuestion = (index: number, updates: Partial<BookingIntakeQuestion>) => {
+    onIntakeQuestionsChange(intakeQuestions.map((question, idx) => (idx === index ? { ...question, ...updates } : question)));
+  };
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
@@ -84,7 +96,13 @@ const AvailabilityBookingCard = ({
                 Booking duration: {shareLink.booking_block_minutes} minutes per slot
                 {shareLink.buffer_minutes ? ` · ${shareLink.buffer_minutes} min buffer` : ''}
                 {shareLink.max_bookings_per_day ? ` · max ${shareLink.max_bookings_per_day}/day` : ''}
+                {shareLink.allow_reschedule_cancel ? ' · reschedule/cancel enabled' : ''}
               </p>
+              {shareLink.intake_questions?.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Intake questions: {shareLink.intake_questions.map((question) => question.label).join(', ')}
+                </p>
+              )}
             </>
           ) : (
             <>
@@ -212,6 +230,66 @@ const AvailabilityBookingCard = ({
                       <option value={5}>Max 5/day</option>
                       <option value={8}>Max 8/day</option>
                     </select>
+                  </div>
+                  <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 md:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={allowRescheduleCancel}
+                      onChange={(e) => onAllowRescheduleCancelChange(e.target.checked)}
+                    />
+                    Allow guests to reschedule or cancel from their booking links
+                  </label>
+                  <div className="md:col-span-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider ml-1">
+                        Intake Questions
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onIntakeQuestionsChange([
+                            ...intakeQuestions,
+                            { id: `q_${Date.now()}`, label: '', required: false },
+                          ])
+                        }
+                        className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                      >
+                        Add question
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {intakeQuestions.length === 0 ? (
+                        <p className="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-gray-500">
+                          Optional. Ask for company, role, agenda, phone number, or anything you want before the meeting.
+                        </p>
+                      ) : (
+                        intakeQuestions.map((question, index) => (
+                          <div key={question.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+                            <input
+                              value={question.label}
+                              onChange={(e) => updateQuestion(index, { label: e.target.value })}
+                              className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                              placeholder="e.g. Which company is this for?"
+                            />
+                            <label className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={!!question.required}
+                                onChange={(e) => updateQuestion(index, { required: e.target.checked })}
+                              />
+                              Required
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => onIntakeQuestionsChange(intakeQuestions.filter((_, idx) => idx !== index))}
+                              className="rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-500 hover:text-red-600"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
