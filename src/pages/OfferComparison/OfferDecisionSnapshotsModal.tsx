@@ -142,7 +142,9 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
       {contextHolder}
       <div className="min-h-[320px]">
         {snapshots.length === 0 && !loading ? (
-          <Empty description="No decision snapshots yet" />
+          <div className="flex min-h-[320px] w-full items-center justify-center">
+            <Empty description="No decision snapshots yet" />
+          </div>
         ) : (
           <div className="space-y-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">

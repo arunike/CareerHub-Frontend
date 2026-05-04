@@ -260,8 +260,9 @@ const OfferComparison = () => {
     if (!editingOffer) return;
 
     try {
+      let updatedApplication: (Partial<Application> & { company_details?: { name?: string } }) | null = null;
       if (editingApp) {
-        await updateApplication(editingApp.id, {
+        const applicationResponse = await updateApplication(editingApp.id, {
           company_name: editingApp.company_name,
           role_title: editingApp.role_title,
           location: editingApp.location,
@@ -283,19 +284,68 @@ const OfferComparison = () => {
           brand_score: editingApp.brand_score ?? null,
           team_score: editingApp.team_score ?? null,
         });
+        updatedApplication = applicationResponse.data as Partial<Application> & {
+          company_details?: { name?: string };
+        };
       }
 
-      await updateOffer(editingOffer.id!, {
+      const offerResponse = await updateOffer(editingOffer.id!, {
         ...editingOffer,
         benefit_items: editingBenefitItems,
         benefits_value: computeBenefitsTotal(editingBenefitItems),
       });
+      const updatedOffer = offerResponse.data as Partial<Offer>;
+
+      if (updatedApplication && editingApp) {
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.id === editingApp.id
+              ? ({
+                  ...app,
+                  ...editingApp,
+                  ...updatedApplication,
+                  company_name:
+                    updatedApplication.company_details?.name ||
+                    updatedApplication.company_name ||
+                    editingApp.company_name ||
+                    app.company_name,
+                } as Application)
+              : app
+          )
+        );
+      }
+
+      setOffers((prev) =>
+        prev.map((offer) =>
+          offer.id === editingOffer.id
+            ? {
+                ...offer,
+                ...editingOffer,
+                ...updatedOffer,
+                benefit_items: editingBenefitItems,
+                benefits_value: computeBenefitsTotal(editingBenefitItems),
+                application_details: updatedOffer.application_details || {
+                  company:
+                    updatedApplication?.company_details?.name ||
+                    updatedApplication?.company_name ||
+                    editingApp?.company_name ||
+                    offer.application_details?.company ||
+                    '',
+                  role_title:
+                    updatedApplication?.role_title ||
+                    editingApp?.role_title ||
+                    offer.application_details?.role_title ||
+                    '',
+                },
+              }
+            : offer
+        )
+      );
 
       messageApi.success('Offer updated successfully');
       setEditingOffer(null);
       setEditingApp(null);
       setOfferModalMode('edit');
-      fetchData();
     } catch (error) {
       messageApi.error('Failed to save changes');
       console.error(error);
@@ -345,7 +395,15 @@ const OfferComparison = () => {
         setSnapshotOffer(null);
       }
 
-      fetchData();
+      setOffers((prev) => prev.filter((item) => item.id !== offer.id));
+      if (linkedApplication?.id) {
+        setApplications((prev) => prev.filter((app) => app.id !== linkedApplication.id));
+      }
+      if (offer.id) {
+        const removedOfferId = String(offer.id);
+        setVisibleOfferIds((prev) => prev.filter((id) => id !== removedOfferId));
+        setDecisionOrderIds((prev) => prev.filter((id) => id !== removedOfferId));
+      }
     } catch (error) {
       messageApi.error('Failed to delete linked application');
       console.error(error);
