@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   cancelPublicBooking,
   createPublicBooking,
@@ -58,6 +58,7 @@ const clearGuestBooking = (shareLinkUuid?: string) => {
 
 const PublicBookingPage = () => {
   const { uuid, bookingUuid, action } = useParams<{ uuid: string; bookingUuid?: string; action?: string }>();
+  const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const manageAction = action === 'reschedule' || action === 'cancel' ? action : null;
 
@@ -86,6 +87,7 @@ const PublicBookingPage = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [linkInvalid, setLinkInvalid] = useState(false);
+  const showCurrentBookingOnly = Boolean(!manageAction && restoredGuestBooking && managedBooking?.status === 'active');
 
   const loadSlots = async (anchorDate?: string) => {
     if (!uuid) return;
@@ -196,10 +198,11 @@ const PublicBookingPage = () => {
 
   useEffect(() => {
     if (manageAction === 'cancel') return;
+    if (showCurrentBookingOnly) return;
     if (manageAction === 'reschedule' && !managedBooking) return;
     loadSlots(selectedDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uuid, timezone, manageAction, managedBooking?.uuid]);
+  }, [uuid, timezone, manageAction, managedBooking?.uuid, showCurrentBookingOnly]);
 
   useEffect(() => {
     if (!uuid) return;
@@ -259,9 +262,10 @@ const PublicBookingPage = () => {
         });
         setManagedBooking(resp.data.booking);
         saveGuestBooking(uuid, resp.data.booking);
+        setRestoredGuestBooking(true);
         setSelectedSlot(null);
         messageApi.success('Booking rescheduled.');
-        loadSlots();
+        navigate(`/book/${uuid}`, { replace: true });
       } else {
         const resp = await createPublicBooking(uuid, {
           name: name.trim(),
@@ -380,6 +384,49 @@ const PublicBookingPage = () => {
         {/* Selection & Details Flow */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left: Date & Time Selection (3 columns) */}
+          {showCurrentBookingOnly ? (
+            <div className="lg:col-span-5">
+              <div className="bg-white rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
+                <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Scheduled time</div>
+                    <div className="text-2xl font-black text-slate-900">
+                      {managedBooking?.date} · {managedBooking?.start_time.slice(0, 5)} - {managedBooking?.end_time.slice(0, 5)} {managedBooking?.timezone}
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-slate-500">
+                      {managedBooking?.name} · {managedBooking?.email}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {managedBooking?.ics_url && (
+                      <a
+                        href={managedBooking.ics_url}
+                        className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 hover:border-blue-200 hover:text-blue-700"
+                      >
+                        Download .ics
+                      </a>
+                    )}
+                    {managedBooking?.reschedule_url && (
+                      <a
+                        href={managedBooking.reschedule_url}
+                        className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-100 hover:bg-blue-700"
+                      >
+                        Reschedule
+                      </a>
+                    )}
+                    {managedBooking?.cancel_url && (
+                      <a
+                        href={managedBooking.cancel_url}
+                        className="rounded-2xl bg-rose-50 px-5 py-3 text-sm font-black text-rose-700 hover:bg-rose-100"
+                      >
+                        Cancel
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
           <div className="lg:col-span-3 space-y-6">
             <div className="bg-white rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
               <div className="flex items-center justify-between mb-8">
@@ -533,8 +580,10 @@ const PublicBookingPage = () => {
               )}
             </div>
           </div>
+          )}
 
           {/* Right: Details Form (2 columns) */}
+          {!showCurrentBookingOnly && (
           <div className="lg:col-span-2">
             <div className="bg-white rounded-[32px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sticky top-8">
               <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2 mb-8">
@@ -648,6 +697,7 @@ const PublicBookingPage = () => {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

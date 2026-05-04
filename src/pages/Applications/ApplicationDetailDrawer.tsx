@@ -149,6 +149,9 @@ const ApplicationDetailDrawer = ({
                       <Descriptions.Item label="Current Round">
                         {application.current_round ?? 0}
                       </Descriptions.Item>
+                      <Descriptions.Item label="Salary Range">
+                        {application.salary_range || '-'}
+                      </Descriptions.Item>
                       <Descriptions.Item label="Job Link">
                         {application.job_link ? (
                           <a href={application.job_link} target="_blank" rel="noreferrer">

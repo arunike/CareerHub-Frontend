@@ -198,7 +198,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
             notes: draft.notes,
           };
           if (draft.id) return updateApplicationTimelineEntry(draft.id, payload);
-          if (hasContent(draft)) return createApplicationTimelineEntry(payload);
+          if (hasContent(draft) || addedStageKeys.includes(stage.key)) {
+            return createApplicationTimelineEntry(payload);
+          }
           return Promise.resolve();
         })
       );

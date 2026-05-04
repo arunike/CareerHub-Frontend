@@ -3,7 +3,6 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
-  LockOutlined,
   VideoCameraOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -70,7 +69,6 @@ const EventsGrid = ({
                     {event.name}
                   </Text>
                 </Tooltip>
-                {event.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
               </Space>
             }
             extra={
@@ -78,10 +76,8 @@ const EventsGrid = ({
                 isLocked={event.is_locked}
                 onToggleLock={() => onToggleLock(event)}
                 onView={() => onView(event)}
-                onEdit={() => onEdit(event)}
-                disableEdit={Boolean(event.is_locked)}
-                onDelete={() => onDelete(event)}
-                disableDelete={Boolean(event.is_locked)}
+                onEdit={event.is_locked ? undefined : () => onEdit(event)}
+                onDelete={event.is_locked ? undefined : () => onDelete(event)}
                 confirmDelete={false}
                 size="small"
               />
