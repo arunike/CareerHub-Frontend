@@ -120,6 +120,7 @@ export interface UserSettings {
   work_days: number[];
   default_event_duration: number;
   buffer_time: number;
+  availability_weeks: number;
   primary_timezone: string;
   theme: 'light' | 'dark' | 'auto';
   notification_preferences: NotificationPreferences;

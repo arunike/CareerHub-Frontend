@@ -1,10 +1,13 @@
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import EditableNumberInput from '../../../components/EditableNumberInput';
 
 type Props = {
   startDate: string;
   onStartDateChange: (value: string) => void;
   timezone: string;
   onTimezoneChange: (value: string) => void;
+  availabilityWeeks: number;
+  onAvailabilityWeeksChange: (value: number) => void;
   loading: boolean;
   onGenerate: () => void;
 };
@@ -14,6 +17,8 @@ const AvailabilityGeneratorCard = ({
   onStartDateChange,
   timezone,
   onTimezoneChange,
+  availabilityWeeks,
+  onAvailabilityWeeksChange,
   loading,
   onGenerate,
 }: Props) => {
@@ -48,6 +53,18 @@ const AvailabilityGeneratorCard = ({
               <option value="ET">Eastern Time (ET)</option>
             </select>
           </div>
+        </div>
+
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Range (weeks)</label>
+          <EditableNumberInput
+            min={1}
+            step={1}
+            value={availabilityWeeks}
+            fallbackValue={2}
+            onCommit={onAvailabilityWeeksChange}
+            className="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+          />
         </div>
 
         <div className="flex-none w-full md:w-auto">
