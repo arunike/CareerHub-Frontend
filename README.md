@@ -106,7 +106,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### 📅 Availability & Events
 
-- **Availability** (`/`): Weekly calendar with availability text generation, federal holiday integration, event badges, date navigation, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, and **instant auto-prefill** of host information from the user profile.
+- **Availability** (`/`): Weekly calendar with user-defined week-long availability text generation, federal holiday integration, event badges, date navigation, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, and **instant auto-prefill** of host information from the user profile.
 - **Events** (`/events`): Create/edit/delete interview events; link to applications; timezone display; event type tags
 - Google Sheets sync can import mapped sheet rows as Events for interview calendars
 - **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
@@ -129,7 +129,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### ⚙️ Settings (`/settings`)
 
-- **Availability & Job Hunt Settings**: work hours, work days, default event duration, buffer time, primary timezone, ghosting threshold, default event category
+- **Availability & Job Hunt Settings**: work hours, work days, availability range, default event duration, buffer time, primary timezone, ghosting threshold, default event category
 - **AI Provider**: configure Claude, Gemini, OpenAI, or OpenRouter for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
 - **Integrations**: connect/disconnect Google OAuth for private read-only Sheets access, pick from available Google spreadsheets and worksheet tabs, create Google Sheets syncs, select Applications or Events, auto-map sheet columns, configure the daily sync time/timezone, adjust/add/remove mapped fields when needed, preview rows, review detected application imports, compare possible duplicates side by side, resolve duplicates, inspect last-run change history, and run syncs immediately
 - **Security Dashboard**: review deployment posture, auth throttles, Google Sheets sync health, OAuth scope readiness, and Vercel edge/WAF setup status from one Settings tab
