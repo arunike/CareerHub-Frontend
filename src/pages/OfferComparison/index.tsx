@@ -15,6 +15,7 @@ import {
 import { PlusOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { todayDateOnlyLocal } from '../../utils/dateOnly';
 import { Button, message, Select, Spin } from 'antd';
 import { useSafeNullableFormState, useSafeFormState } from './useSafeFormState';
 import { useScenarioRows } from './useScenarioRows';
@@ -428,7 +429,7 @@ const OfferComparison = () => {
         company_name: newJobName,
         role_title: 'Current Role',
         status: 'ACCEPTED',
-        date_applied: new Date().toISOString().split('T')[0],
+        date_applied: todayDateOnlyLocal(),
         office_location: '',
         visa_sponsorship: '',
         day_one_gc: '',

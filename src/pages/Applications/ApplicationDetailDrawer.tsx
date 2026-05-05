@@ -17,12 +17,12 @@ import {
   FileTextOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { downloadDocument } from '../../api';
 import type { Document } from '../../types';
 import type { CareerApplication } from '../../types/application';
 import ApplicationTimelinePanel from './ApplicationTimelinePanel';
 import RichNotesEditor from './RichNotesEditor';
+import { formatDateOnly } from '../../utils/dateOnly';
 
 type Props = {
   application: CareerApplication | null;
@@ -136,9 +136,7 @@ const ApplicationDetailDrawer = ({
                         <Tag color={statusColor(application.status)}>{application.status}</Tag>
                       </Descriptions.Item>
                       <Descriptions.Item label="Date Applied">
-                        {application.date_applied
-                          ? dayjs(application.date_applied).format('MMM D, YYYY')
-                          : '-'}
+                        {formatDateOnly(application.date_applied, '-')}
                       </Descriptions.Item>
                       <Descriptions.Item label="Location">
                         {application.office_location || application.location || '-'}

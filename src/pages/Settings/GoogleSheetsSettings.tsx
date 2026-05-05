@@ -1228,7 +1228,7 @@ const GoogleSheetsSettings: React.FC = () => {
                       size="small"
                       icon={<HistoryOutlined />}
                       disabled={history.length === 0}
-                      onClick={() => setHistoryConfig(config)}
+                      onClick={() => openHistory(config)}
                     >
                       History{history.length > 0 ? ` (${history.length})` : ''}
                     </Button>
@@ -1239,7 +1239,6 @@ const GoogleSheetsSettings: React.FC = () => {
                           { key: 'edit', label: 'Edit' },
                           { key: 'test', label: 'Test connection' },
                           { key: 'resync', label: 'Resync all rows' },
-                          { key: 'history', label: 'View Sync History' },
                           { type: 'divider' },
                           { key: 'delete', label: 'Delete sync', danger: true },
                         ],
@@ -1251,8 +1250,6 @@ const GoogleSheetsSettings: React.FC = () => {
                             testConfig(config);
                           } else if (key === 'resync') {
                             syncConfig(config, true);
-                          } else if (key === 'history') {
-                            openHistory(config);
                           } else if (key === 'delete') {
                             removeConfig(config);
                           }
