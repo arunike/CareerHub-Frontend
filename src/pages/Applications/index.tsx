@@ -57,6 +57,7 @@ import RowActions from '../../components/RowActions';
 import CoverLetterModal from './CoverLetterModal';
 import ApplicationDetailDrawer from './ApplicationDetailDrawer';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
 
@@ -488,7 +489,7 @@ const Applications = () => {
       brand_score: app.brand_score ?? null,
       team_score: app.team_score ?? null,
       current_round: app.current_round || 0,
-      date_applied: app.date_applied ? dayjs(app.date_applied) : null,
+      date_applied: dayjsDateOnlyLocal(app.date_applied),
       notes: app.notes,
       linked_document_ids: documents
         .filter((doc) => doc.application === app.id)
@@ -688,9 +689,9 @@ const Applications = () => {
       title: 'Date Applied',
       dataIndex: 'date_applied',
       key: 'date_applied',
-      render: (date: string) => (date ? dayjs(date).format('MMM D, YYYY') : '—'),
+      render: (date: string) => formatDateOnly(date, '—'),
       sorter: (a: CareerApplication, b: CareerApplication) =>
-        dayjs(a.date_applied).diff(dayjs(b.date_applied)),
+        (dayjsDateOnlyLocal(a.date_applied)?.valueOf() ?? 0) - (dayjsDateOnlyLocal(b.date_applied)?.valueOf() ?? 0),
     },
     {
       title: 'Actions',
@@ -1047,7 +1048,7 @@ const Applications = () => {
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                          Applied {record.date_applied ? dayjs(record.date_applied).format('MMM D, YYYY') : 'Unknown'}
+                          Applied {formatDateOnly(record.date_applied, 'Unknown')}
                         </span>
                         {(record.office_location || record.location) ? (
                           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">

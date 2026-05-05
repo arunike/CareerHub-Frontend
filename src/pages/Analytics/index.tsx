@@ -14,6 +14,7 @@ import {
 import type { CareerApplication } from '../../types/application';
 import { message, Spin } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
+import { parseDateOnlyLocal } from '../../utils/dateOnly';
 
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
@@ -192,7 +193,8 @@ const Analytics: React.FC = () => {
 
       const count = data.filter((app) => {
         if (!app.date_applied) return false; // If no date, skip
-        const appDate = new Date(app.date_applied); // Assuming date_applied is YYYY-MM-DD
+        const appDate = parseDateOnlyLocal(app.date_applied);
+        if (!appDate) return false;
         return appDate >= start && appDate <= end;
       }).length;
 

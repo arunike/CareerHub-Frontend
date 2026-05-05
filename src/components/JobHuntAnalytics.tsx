@@ -4,6 +4,7 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { Grid, Typography, message } from 'antd';
+import { parseDateOnlyLocal } from '../utils/dateOnly';
 import {
   DndContext,
   closestCenter,
@@ -446,7 +447,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     const recentApplications30d = applications.filter((a) => {
       const sourceDate = a.date_applied || a.created_at;
       if (!sourceDate) return false;
-      const timestamp = new Date(sourceDate).getTime();
+      const timestamp = parseDateOnlyLocal(sourceDate)?.getTime() ?? new Date(sourceDate).getTime();
       return !Number.isNaN(timestamp) && now - timestamp <= THIRTY_DAYS_MS;
     }).length;
 
@@ -460,7 +461,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
         try {
           const offer = a.offer as { created_at?: string };
           const offerDate = new Date(offer.created_at || '');
-          const appliedDate = new Date(a.date_applied as string);
+          const appliedDate = parseDateOnlyLocal(a.date_applied as string) ?? new Date(a.date_applied as string);
           if (!isNaN(offerDate.getTime()) && !isNaN(appliedDate.getTime())) {
             const days = Math.floor((offerDate.getTime() - appliedDate.getTime()) / (1000 * 3600 * 24));
             if (days >= 0) {

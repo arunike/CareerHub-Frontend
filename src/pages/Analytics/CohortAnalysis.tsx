@@ -3,6 +3,7 @@ import { Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import type { CareerApplication } from '../../types/application';
+import { parseDateOnlyLocal } from '../../utils/dateOnly';
 
 type Dimension = 'month' | 'company' | 'location';
 
@@ -55,7 +56,7 @@ function cohortKey(app: CareerApplication, dim: Dimension): string {
 
 function daysBetween(from: string | undefined, to: string): number | null {
   if (!from) return null;
-  const a = new Date(from).getTime();
+  const a = parseDateOnlyLocal(from)?.getTime() ?? new Date(from).getTime();
   const b = new Date(to).getTime();
   const days = Math.round((b - a) / 86_400_000);
   return days >= 0 ? days : null;

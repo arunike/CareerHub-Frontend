@@ -1,3 +1,5 @@
+import { parseDateOnlyLocal } from './dateOnly';
+
 export const getAvailableYears = <T extends Record<string, any>>(
   items: T[],
   dateField: keyof T
@@ -6,7 +8,7 @@ export const getAvailableYears = <T extends Record<string, any>>(
     .map((item) => {
       const dateValue = item[dateField];
       if (!dateValue) return null;
-      return new Date(dateValue as string).getFullYear();
+      return parseDateOnlyLocal(dateValue as string)?.getFullYear() ?? null;
     })
     .filter((year): year is number => year !== null && !isNaN(year));
 
@@ -23,7 +25,7 @@ export const filterByYear = <T extends Record<string, any>>(
   return items.filter((item) => {
     const dateValue = item[dateField];
     if (!dateValue) return false;
-    const itemYear = new Date(dateValue as string).getFullYear();
+    const itemYear = parseDateOnlyLocal(dateValue as string)?.getFullYear();
     return itemYear === year;
   });
 };

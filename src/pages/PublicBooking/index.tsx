@@ -11,6 +11,7 @@ import { CalendarOutlined, ClockCircleOutlined, UserOutlined } from '@ant-design
 import { message } from 'antd';
 import IdentityAvatar from '../../components/IdentityAvatar';
 import type { BookingDayAvailability, BookingIntakeQuestion, BookingSlot, PublicBooking } from '../../types';
+import { formatDateOnly, todayDateOnlyLocal } from '../../utils/dateOnly';
 
 const timezones = ['PT', 'MT', 'CT', 'ET'] as const;
 type Timezone = (typeof timezones)[number];
@@ -71,7 +72,7 @@ const PublicBookingPage = () => {
   const [allowRescheduleCancel, setAllowRescheduleCancel] = useState(true);
   const [intakeQuestions, setIntakeQuestions] = useState<BookingIntakeQuestion[]>([]);
   const [timezone, setTimezone] = useState<Timezone>('PT');
-  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState<string>(() => todayDateOnlyLocal());
   const [days, setDays] = useState<BookingDayAvailability[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
   const [slotView, setSlotView] = useState<'list' | 'calendar'>('list');
@@ -654,7 +655,7 @@ const PublicBookingPage = () => {
                       <div>
                         <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Selected Slot</div>
                         <div className="text-sm font-black text-blue-700">{selectedSlot.label}</div>
-                        <div className="text-[10px] font-bold text-blue-500">{new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div className="text-[10px] font-bold text-blue-500">{formatDateOnly(selectedDate)}</div>
                       </div>
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
                         <ClockCircleOutlined className="text-blue-500" />
