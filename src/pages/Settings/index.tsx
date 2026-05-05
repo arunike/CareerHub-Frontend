@@ -23,6 +23,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
 import CategoryBadge from '../../components/CategoryBadge';
+import EditableNumberInput from '../../components/EditableNumberInput';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import LockableListItem from '../../components/LockableListItem';
 import {
@@ -818,15 +819,15 @@ const Settings: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Default Event Duration (minutes)
           </label>
-          <input
-            type="number"
-            min="15"
-            step="15"
+          <EditableNumberInput
+            min={15}
+            step={15}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.default_event_duration || 60}
-            onChange={(e) =>
+            fallbackValue={60}
+            onCommit={(value) =>
               setSettings((prev) =>
-                prev ? { ...prev, default_event_duration: Number(e.target.value) } : null
+                prev ? { ...prev, default_event_duration: value } : null
               )
             }
           />
@@ -863,15 +864,15 @@ const Settings: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Buffer Time (minutes)
           </label>
-          <input
-            type="number"
-            min="0"
-            step="5"
+          <EditableNumberInput
+            min={0}
+            step={5}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.buffer_time || 0}
-            onChange={(e) =>
+            fallbackValue={0}
+            onCommit={(value) =>
               setSettings((prev) =>
-                prev ? { ...prev, buffer_time: Number(e.target.value) } : null
+                prev ? { ...prev, buffer_time: value } : null
               )
             }
           />
@@ -902,14 +903,14 @@ const Settings: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Ghosting Threshold (Days)
           </label>
-          <input
-            type="number"
-            min="1"
+          <EditableNumberInput
+            min={1}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={settings.ghosting_threshold_days || 30}
-            onChange={(e) =>
+            fallbackValue={30}
+            onCommit={(value) =>
               setSettings((prev) =>
-                prev ? { ...prev, ghosting_threshold_days: Number(e.target.value) } : null
+                prev ? { ...prev, ghosting_threshold_days: value } : null
               )
             }
           />

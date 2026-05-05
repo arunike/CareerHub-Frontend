@@ -44,6 +44,7 @@ import type {
   GoogleSpreadsheetTab,
   GoogleSheetSyncRun,
 } from '../../types';
+import EditableNumberInput from '../../components/EditableNumberInput';
 
 type Draft = {
   id?: number;
@@ -872,12 +873,12 @@ const GoogleSheetsSettings: React.FC = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Header Row</label>
-            <input
-              type="number"
+            <EditableNumberInput
               min={1}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.header_row}
-              onChange={(event) => updateDraft({ header_row: Number(event.target.value) || 1 })}
+              fallbackValue={1}
+              onCommit={(value) => updateDraft({ header_row: value })}
             />
           </div>
         </div>

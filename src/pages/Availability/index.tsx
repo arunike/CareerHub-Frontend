@@ -15,6 +15,7 @@ import {
   getShareLinks,
   updatePublicBooking,
   updateShareLink,
+  updateUserSettings,
   getUserSettings,
 } from '../../api';
 import type { Availability as AvailabilityType, BookingIntakeQuestion, Event, Holiday, PublicBooking } from '../../types';
@@ -43,6 +44,7 @@ const Availability = () => {
   const [data, setData] = useState<AvailabilityType[]>([]);
   const [timezone, setTimezone] = useState('PT');
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [availabilityWeeks, setAvailabilityWeeks] = useState(2);
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
 
   const [textMode, setTextMode] = useState<'detailed' | 'combined'>('combined');
@@ -69,7 +71,7 @@ const Availability = () => {
   const fetchAvailability = async () => {
     setLoading(true);
     try {
-      const resp = await getAvailability(startDate, timezone);
+      const resp = await getAvailability(startDate, timezone, availabilityWeeks);
       setData(resp.data);
     } catch (error) {
       messageApi.error('Failed to fetch availability');
@@ -108,6 +110,9 @@ const Availability = () => {
       setPublicBookings(bookingsResp.data);
       
       const activeLink = currentResp.data.active;
+      const nextAvailabilityWeeks = settingsResp.data.availability_weeks || 2;
+      setAvailabilityWeeks(nextAvailabilityWeeks);
+
       if (activeLink) {
         if (activeLink.booking_block_minutes) {
           setBookingBlockMinutes(activeLink.booking_block_minutes);
@@ -128,8 +133,25 @@ const Availability = () => {
           setHostEmail(settingsResp.data.email);
         }
       }
+
+      if (nextAvailabilityWeeks !== availabilityWeeks) {
+        const availabilityResp = await getAvailability(startDate, timezone, nextAvailabilityWeeks);
+        setData(availabilityResp.data);
+      }
     } catch (error) {
       console.error('Failed to fetch share link', error);
+    }
+  };
+
+  const handleAvailabilityWeeksChange = async (value: number) => {
+    const nextWeeks = Math.max(1, Math.floor(value || 2));
+    if (nextWeeks === availabilityWeeks) return;
+    setAvailabilityWeeks(nextWeeks);
+    try {
+      await updateUserSettings({ availability_weeks: nextWeeks });
+    } catch (error) {
+      messageApi.error('Failed to save availability range');
+      console.error(error);
     }
   };
 
@@ -430,6 +452,8 @@ const Availability = () => {
             onStartDateChange={setStartDate}
             timezone={timezone}
             onTimezoneChange={setTimezone}
+            availabilityWeeks={availabilityWeeks}
+            onAvailabilityWeeksChange={handleAvailabilityWeeksChange}
             loading={loading}
             onGenerate={fetchAvailability}
           />

@@ -18,8 +18,8 @@ export const updateHoliday = (id: number, data: Partial<Holiday>) => api.patch(`
 export const deleteHoliday = (id: number) => api.delete(`/holidays/${id}/`);
 export const deleteAllHolidays = () => api.delete('/holidays/delete_all/');
 
-export const getAvailability = (startDate?: string, timezone?: string) =>
-  api.get('/availability/generate/', { params: { start_date: startDate, timezone } });
+export const getAvailability = (startDate?: string, timezone?: string, weeks?: number) =>
+  api.get('/availability/generate/', { params: { start_date: startDate, timezone, weeks } });
 export const createOverride = (data: { date: string; availability_text: string }) =>
   api.post('/overrides/', data);
 
