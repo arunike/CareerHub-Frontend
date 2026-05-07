@@ -11,7 +11,7 @@ import {
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, Checkbox, Dropdown, Modal, Segmented, Tag, message, TimePicker, Tabs } from 'antd';
+import { Button, Checkbox, Dropdown, Modal, Segmented, Tag, message, Tabs } from 'antd';
 import dayjs from 'dayjs';
 import {
   applyGoogleSheetImportReview,
@@ -45,6 +45,7 @@ import type {
   GoogleSheetSyncRun,
 } from '../../types';
 import EditableNumberInput from '../../components/EditableNumberInput';
+import FriendlyTimeInput from '../../components/FriendlyTimeInput';
 
 type Draft = {
   id?: number;
@@ -429,21 +430,6 @@ const GoogleSheetsSettings: React.FC = () => {
 
   const updateDraft = (patch: Partial<Draft>) => {
     setDraft((current) => ({ ...current, ...patch }));
-  };
-
-  const resetMeridiemColumnScroll = (open: boolean) => {
-    if (!open) return;
-    const reset = () => {
-      const columns = document.querySelectorAll(
-        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]'
-      );
-      columns.forEach((column) => {
-        (column as HTMLElement).scrollTop = 0;
-      });
-    };
-
-    requestAnimationFrame(reset);
-    setTimeout(reset, 120);
   };
 
   const updateMapping = (key: string, value: string) => {
@@ -963,20 +949,14 @@ const GoogleSheetsSettings: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Daily Sync Time</label>
-            <TimePicker
+            <FriendlyTimeInput
               className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-              format="h:mm a"
               value={syncTimeValue(draft.sync_time)}
               onChange={(time) => {
                 if (time) updateDraft({ sync_time: time.format('HH:mm') });
               }}
               minuteStep={1}
-              use12Hours
-              inputReadOnly={false}
-              needConfirm={false}
               allowClear={false}
-              popupClassName="event-timepicker-dropdown"
-              onOpenChange={resetMeridiemColumnScroll}
             />
             <p className="text-xs text-gray-500 mt-1">
               Vercel wakes this job once daily; this time controls which syncs are due during that
