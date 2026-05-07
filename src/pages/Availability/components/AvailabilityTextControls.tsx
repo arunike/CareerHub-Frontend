@@ -1,4 +1,9 @@
-import { CheckCircleOutlined, MenuOutlined, ScheduleOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  MenuOutlined,
+  ScheduleOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
 import SegmentedToggle from '../../../components/SegmentedToggle';
 
 type Props = {
@@ -9,7 +14,13 @@ type Props = {
   onCopyAll: () => void;
 };
 
-const AvailabilityTextControls = ({ hasData, textMode, onTextModeChange, copiedIndex, onCopyAll }: Props) => {
+const AvailabilityTextControls = ({
+  hasData,
+  textMode,
+  onTextModeChange,
+  copiedIndex,
+  onCopyAll,
+}: Props) => {
   if (!hasData) return null;
 
   return (

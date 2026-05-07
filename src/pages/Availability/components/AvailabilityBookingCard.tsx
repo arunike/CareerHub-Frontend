@@ -66,7 +66,11 @@ const AvailabilityBookingCard = ({
   const [showConfig, setShowConfig] = useState(false);
 
   const updateQuestion = (index: number, updates: Partial<BookingIntakeQuestion>) => {
-    onIntakeQuestionsChange(intakeQuestions.map((question, idx) => (idx === index ? { ...question, ...updates } : question)));
+    onIntakeQuestionsChange(
+      intakeQuestions.map((question, idx) =>
+        idx === index ? { ...question, ...updates } : question
+      )
+    );
   };
 
   return (
@@ -78,7 +82,8 @@ const AvailabilityBookingCard = ({
             <label className="block text-sm font-medium text-gray-700">Public Booking Link</label>
           </div>
           <p className="text-xs text-gray-500 mb-2">
-            People can only see and book your available slots. Event and holiday details stay private.
+            People can only see and book your available slots. Event and holiday details stay
+            private.
           </p>
           {shareLink ? (
             <>
@@ -95,12 +100,15 @@ const AvailabilityBookingCard = ({
               <p className="text-xs text-gray-500 mt-1">
                 Booking duration: {shareLink.booking_block_minutes} minutes per slot
                 {shareLink.buffer_minutes ? ` · ${shareLink.buffer_minutes} min buffer` : ''}
-                {shareLink.max_bookings_per_day ? ` · max ${shareLink.max_bookings_per_day}/day` : ''}
+                {shareLink.max_bookings_per_day
+                  ? ` · max ${shareLink.max_bookings_per_day}/day`
+                  : ''}
                 {shareLink.allow_reschedule_cancel ? ' · reschedule/cancel enabled' : ''}
               </p>
               {shareLink.intake_questions?.length > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Intake questions: {shareLink.intake_questions.map((question) => question.label).join(', ')}
+                  Intake questions:{' '}
+                  {shareLink.intake_questions.map((question) => question.label).join(', ')}
                 </p>
               )}
             </>
@@ -126,7 +134,9 @@ const AvailabilityBookingCard = ({
                     value={hostDisplayName}
                     onChange={(e) => onHostDisplayNameChange(e.target.value)}
                     className={`rounded-lg border px-3 py-2 text-sm bg-white ${
-                      !hostDisplayName.trim() && generatingLink ? 'border-red-500' : 'border-gray-300'
+                      !hostDisplayName.trim() && generatingLink
+                        ? 'border-red-500'
+                        : 'border-gray-300'
                     }`}
                     placeholder="e.g. John"
                     required
@@ -260,11 +270,15 @@ const AvailabilityBookingCard = ({
                     <div className="space-y-2">
                       {intakeQuestions.length === 0 ? (
                         <p className="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-gray-500">
-                          Optional. Ask for company, role, agenda, phone number, or anything you want before the meeting.
+                          Optional. Ask for company, role, agenda, phone number, or anything you
+                          want before the meeting.
                         </p>
                       ) : (
                         intakeQuestions.map((question, index) => (
-                          <div key={question.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+                          <div
+                            key={question.id}
+                            className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2"
+                          >
                             <input
                               value={question.label}
                               onChange={(e) => updateQuestion(index, { label: e.target.value })}
@@ -275,13 +289,19 @@ const AvailabilityBookingCard = ({
                               <input
                                 type="checkbox"
                                 checked={!!question.required}
-                                onChange={(e) => updateQuestion(index, { required: e.target.checked })}
+                                onChange={(e) =>
+                                  updateQuestion(index, { required: e.target.checked })
+                                }
                               />
                               Required
                             </label>
                             <button
                               type="button"
-                              onClick={() => onIntakeQuestionsChange(intakeQuestions.filter((_, idx) => idx !== index))}
+                              onClick={() =>
+                                onIntakeQuestionsChange(
+                                  intakeQuestions.filter((_, idx) => idx !== index)
+                                )
+                              }
                               className="rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-500 hover:text-red-600"
                             >
                               Remove
@@ -310,7 +330,9 @@ const AvailabilityBookingCard = ({
               >
                 <SettingOutlined
                   className={
-                    showConfig ? 'rotate-90 transition-transform duration-300' : 'transition-transform duration-300'
+                    showConfig
+                      ? 'rotate-90 transition-transform duration-300'
+                      : 'transition-transform duration-300'
                   }
                 />
                 {showConfig ? 'Hide Config' : 'Config'}

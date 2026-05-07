@@ -39,7 +39,7 @@ export function saveNegotiationResult(
   companyName: string,
   roleTitle: string,
   offerSnapshot: StoredNegotiationResult['offerSnapshot'],
-  advice: NegotiationAdvice,
+  advice: NegotiationAdvice
 ): StoredNegotiationResult {
   const entry: StoredNegotiationResult = {
     id: generateId(),

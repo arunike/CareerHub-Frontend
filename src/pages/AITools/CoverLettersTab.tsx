@@ -60,25 +60,23 @@ const CoverLettersTab: React.FC = () => {
 
   /* ── Selection ── */
   const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       setSelectedIds(checked ? letters.map((l) => l.id) : []);
     },
-    [letters],
+    [letters]
   );
 
   const selectedLetters = useMemo(
     () => letters.filter((l) => selectedIds.includes(l.id)),
-    [letters, selectedIds],
+    [letters, selectedIds]
   );
   const hasLockedSelected = useMemo(
     () => selectedLetters.some((l) => l.isLocked),
-    [selectedLetters],
+    [selectedLetters]
   );
 
   /* ── Single-item actions ── */
@@ -96,7 +94,7 @@ const CoverLettersTab: React.FC = () => {
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       refresh();
     },
-    [refresh, usingBackendArtifacts],
+    [refresh, usingBackendArtifacts]
   );
 
   const handleToggleLock = useCallback(
@@ -113,7 +111,7 @@ const CoverLettersTab: React.FC = () => {
       }
       refresh();
     },
-    [letters, refresh, usingBackendArtifacts],
+    [letters, refresh, usingBackendArtifacts]
   );
 
   const handleRename = useCallback(() => {
@@ -144,8 +142,8 @@ const CoverLettersTab: React.FC = () => {
           deletableIds.map((id) =>
             usingBackendArtifacts
               ? deleteArtifactByClientId('COVER_LETTER', id)
-              : Promise.resolve(deleteCoverLetter(id)),
-          ),
+              : Promise.resolve(deleteCoverLetter(id))
+          )
         ).finally(refresh);
         setSelectedIds([]);
       },
@@ -167,7 +165,7 @@ const CoverLettersTab: React.FC = () => {
       setSelectedIds([]);
       refresh();
     },
-    [selectedIds, letters, refresh, usingBackendArtifacts],
+    [selectedIds, letters, refresh, usingBackendArtifacts]
   );
 
   const handleDeleteAll = useCallback(() => {
@@ -203,7 +201,7 @@ const CoverLettersTab: React.FC = () => {
       const blob = new Blob([csv], { type: 'text/csv' });
       return { data: blob, headers: { 'content-type': 'text/csv' } };
     },
-    [letters],
+    [letters]
   );
 
   /* ── Copy helper ── */
@@ -248,9 +246,7 @@ const CoverLettersTab: React.FC = () => {
                 <Button icon={<UnlockOutlined />} onClick={() => handleBulkToggleLock(false)}>
                   Unlock
                 </Button>
-                <Tooltip
-                  title={hasLockedSelected ? 'Unlock selected items before deleting' : ''}
-                >
+                <Tooltip title={hasLockedSelected ? 'Unlock selected items before deleting' : ''}>
                   <Button
                     danger
                     icon={<DeleteOutlined />}

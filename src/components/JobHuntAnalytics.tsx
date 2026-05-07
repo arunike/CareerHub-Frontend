@@ -1,8 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  HolderOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
+import { HolderOutlined, SettingOutlined } from '@ant-design/icons';
 import { Grid, Typography, message } from 'antd';
 import { parseDateOnlyLocal } from '../utils/dateOnly';
 import {
@@ -111,7 +108,9 @@ const SortableItem = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -135,7 +134,10 @@ const SortableItem = ({
   );
 };
 
-const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationStages = DEFAULT_APPLICATION_STAGES }) => {
+const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
+  applications,
+  applicationStages = DEFAULT_APPLICATION_STAGES,
+}) => {
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -148,7 +150,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
         console.error('Failed to parse enabled widgets', error);
       }
     }
-    return AVAILABLE_WIDGETS.filter(w => w.defaultEnabled).map(w => w.id);
+    return AVAILABLE_WIDGETS.filter((w) => w.defaultEnabled).map((w) => w.id);
   });
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -169,15 +171,16 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
-  const [timelineAnalytics, setTimelineAnalytics] = useState<ApplicationTimelineAnalytics | null>(null);
+  const [timelineAnalytics, setTimelineAnalytics] = useState<ApplicationTimelineAnalytics | null>(
+    null
+  );
   const [timelineAnalyticsLoading, setTimelineAnalyticsLoading] = useState(false);
 
-  const {
-    customWidgets,
-    addCustomWidget,
-    deleteCustomWidget,
-    testQuery
-  } = useCustomWidgets('job_hunt_analytics_custom', 'job-hunt', messageApi);
+  const { customWidgets, addCustomWidget, deleteCustomWidget, testQuery } = useCustomWidgets(
+    'job_hunt_analytics_custom',
+    'job-hunt',
+    messageApi
+  );
 
   const [newWidgetName, setNewWidgetName] = useState('');
   const [newWidgetQuery, setNewWidgetQuery] = useState('');
@@ -187,9 +190,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
   const [newWidgetColor, setNewWidgetColor] = useState('blue');
 
   useEffect(() => {
-    setWidgetOrder(prev => {
-      const newOrder = prev.filter(id => enabledWidgets.includes(id));
-      const newWidgets = enabledWidgets.filter(id => !prev.includes(id));
+    setWidgetOrder((prev) => {
+      const newOrder = prev.filter((id) => enabledWidgets.includes(id));
+      const newWidgets = enabledWidgets.filter((id) => !prev.includes(id));
       const updated = [...newOrder, ...newWidgets];
       localStorage.setItem('analytics_dashboard_order', JSON.stringify(updated));
       return updated;
@@ -200,7 +203,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     const migrationKey = 'job_hunt_analytics_timeline_widget_added';
     if (localStorage.getItem(migrationKey)) return;
 
-    setEnabledWidgets(prev => {
+    setEnabledWidgets((prev) => {
       if (prev.includes('timeline_analytics')) return prev;
       const updated = [...prev, 'timeline_analytics'];
       localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(updated));
@@ -264,13 +267,13 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
   };
 
   const toggleWidget = (widgetId: string) => {
-    setEnabledWidgets(prev => {
+    setEnabledWidgets((prev) => {
       let newEnabled: string[];
       if (prev.includes(widgetId)) {
         if (prev.length === 1) {
           return prev;
         }
-        newEnabled = prev.filter(id => id !== widgetId);
+        newEnabled = prev.filter((id) => id !== widgetId);
       } else {
         newEnabled = [...prev, widgetId];
       }
@@ -281,7 +284,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
 
   const handleTestQuery = async () => {
     if (!newWidgetQuery.trim()) return;
-    
+
     setIsValidating(true);
     setValidationResult(null);
     try {
@@ -339,9 +342,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     const offers = applications.filter((a) => a.status === 'OFFER').length;
     const ghosted = applications.filter((a) => a.status === 'GHOSTED').length;
 
-    const activeInterviews = applications.filter((a) =>
-      !INACTIVE_STATUSES.has(a.status)
-    ).length;
+    const activeInterviews = applications.filter((a) => !INACTIVE_STATUSES.has(a.status)).length;
 
     const totalInterviews = applications.filter(
       (a) =>
@@ -350,8 +351,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     ).length;
 
     const interviewRate = total > 0 ? ((totalInterviews / total) * 100).toFixed(1) : '0.0';
-    const respondedCount = applications.filter((a) =>
-      !RESPONDED_EXCLUDE_STATUSES.has(a.status)
+    const respondedCount = applications.filter(
+      (a) => !RESPONDED_EXCLUDE_STATUSES.has(a.status)
     ).length;
     const responseRate = total > 0 ? ((respondedCount / total) * 100).toFixed(1) : '0.0';
     const offerRate = total > 0 ? ((offers / total) * 100).toFixed(1) : '0.0';
@@ -366,7 +367,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     };
 
     applications.forEach((a) => {
-      let loc = ((a.office_location || a.location) || '').trim();
+      let loc = (a.office_location || a.location || '').trim();
       if (!loc) loc = 'Unknown';
       loc = loc.split(',')[0].trim();
       if (loc.toLowerCase().includes('remote')) loc = 'Remote';
@@ -420,7 +421,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
     let daysToOfferSum = 0;
     let daysToOfferCount = 0;
     const stageMap = new Map<string, ApplicationStage>();
-    const configuredStages = applicationStages.length ? applicationStages : DEFAULT_APPLICATION_STAGES;
+    const configuredStages = applicationStages.length
+      ? applicationStages
+      : DEFAULT_APPLICATION_STAGES;
     configuredStages.forEach((stage) => {
       if (stage.key && !stageMap.has(stage.key)) {
         stageMap.set(stage.key, stage);
@@ -461,9 +464,12 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
         try {
           const offer = a.offer as { created_at?: string };
           const offerDate = new Date(offer.created_at || '');
-          const appliedDate = parseDateOnlyLocal(a.date_applied as string) ?? new Date(a.date_applied as string);
+          const appliedDate =
+            parseDateOnlyLocal(a.date_applied as string) ?? new Date(a.date_applied as string);
           if (!isNaN(offerDate.getTime()) && !isNaN(appliedDate.getTime())) {
-            const days = Math.floor((offerDate.getTime() - appliedDate.getTime()) / (1000 * 3600 * 24));
+            const days = Math.floor(
+              (offerDate.getTime() - appliedDate.getTime()) / (1000 * 3600 * 24)
+            );
             if (days >= 0) {
               daysToOfferSum += days;
               daysToOfferCount++;
@@ -475,7 +481,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
       }
     });
 
-    const avgDaysToOffer = daysToOfferCount > 0 ? Math.round(daysToOfferSum / daysToOfferCount) : null;
+    const avgDaysToOffer =
+      daysToOfferCount > 0 ? Math.round(daysToOfferSum / daysToOfferCount) : null;
     const funnel = Array.from(stageMap.values())
       .filter((stage) => !NON_FUNNEL_STATUSES.has(stage.key) || (funnelSteps[stage.key] || 0) > 0)
       .map((stage) => ({
@@ -526,9 +533,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
         </button>
       </div>
 
-      <DndContext 
-        sensors={sensors} 
-        collisionDetection={closestCenter} 
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -544,9 +551,11 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications, applicationS
 
         <DragOverlay>
           {activeId ? (
-            <div 
+            <div
               className={`h-full ${getJobHuntWidgetColSpan(activeId, customWidgets)}`}
-              style={activeSize ? { width: activeSize.width, height: activeSize.height } : undefined}
+              style={
+                activeSize ? { width: activeSize.width, height: activeSize.height } : undefined
+              }
             >
               {renderJobHuntWidget(activeId, stats, customWidgets, deleteCustomWidget)}
             </div>

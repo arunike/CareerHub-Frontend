@@ -34,7 +34,14 @@ const getIdentityInitials = (name?: string | null, email?: string | null) => {
   return initials || source.charAt(0).toUpperCase();
 };
 
-const IdentityAvatar = ({ imageUrl, name, email, alt, size = 'md', className }: IdentityAvatarProps) => {
+const IdentityAvatar = ({
+  imageUrl,
+  name,
+  email,
+  alt,
+  size = 'md',
+  className,
+}: IdentityAvatarProps) => {
   const innerRadius = innerRadiusClassNames[size];
 
   return (
@@ -42,7 +49,7 @@ const IdentityAvatar = ({ imageUrl, name, email, alt, size = 'md', className }: 
       className={clsx(
         'shrink-0 overflow-hidden border border-slate-200 bg-slate-50 transition-colors duration-200',
         sizeClassNames[size],
-        className,
+        className
       )}
     >
       {imageUrl ? (
@@ -52,7 +59,12 @@ const IdentityAvatar = ({ imageUrl, name, email, alt, size = 'md', className }: 
           className={clsx('h-full w-full object-cover', innerRadius)}
         />
       ) : (
-        <div className={clsx('flex h-full w-full items-center justify-center bg-slate-100', innerRadius)}>
+        <div
+          className={clsx(
+            'flex h-full w-full items-center justify-center bg-slate-100',
+            innerRadius
+          )}
+        >
           <span className="font-black text-slate-950">{getIdentityInitials(name, email)}</span>
         </div>
       )}

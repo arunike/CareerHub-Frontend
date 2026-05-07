@@ -139,7 +139,6 @@ const NegotiationResultPage: React.FC = () => {
       {/* Page */}
       <div className="min-h-screen bg-slate-50/50 py-12 px-4 shadow-inner">
         <div className="max-w-4xl mx-auto flex flex-col gap-8">
-
           {/* Header */}
           <div>
             <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-3 py-1 mb-4 shadow-sm">
@@ -174,7 +173,11 @@ const NegotiationResultPage: React.FC = () => {
                 { label: 'Sign-On', value: fmt(snap.sign_on) },
                 {
                   label: 'PTO',
-                  value: snap.is_unlimited_pto ? 'Unlimited' : snap.pto_days ? formatPtoLabel(snap.pto_days) : null,
+                  value: snap.is_unlimited_pto
+                    ? 'Unlimited'
+                    : snap.pto_days
+                      ? formatPtoLabel(snap.pto_days)
+                      : null,
                 },
               ]
                 .filter((x) => x.value)
@@ -265,9 +268,7 @@ const NegotiationResultPage: React.FC = () => {
             />
           )}
 
-          <p className="text-center text-xs text-gray-400 pb-4">
-            CareerHub AI · {date}
-          </p>
+          <p className="text-center text-xs text-gray-400 pb-4">CareerHub AI · {date}</p>
         </div>
       </div>
     </>

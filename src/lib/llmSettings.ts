@@ -18,12 +18,15 @@ export const DEFAULT_AI_PROVIDER_SETTINGS: AIProviderSettings = {
   apiKeyMasked: '',
 };
 
-const normalizeAIProviderAdapter = (
-  adapter?: string
-): AIProviderSettings['adapter'] => {
+const normalizeAIProviderAdapter = (adapter?: string): AIProviderSettings['adapter'] => {
   if (adapter === 'google_gemini') return 'gemini';
   if (adapter === 'openai_compatible') return 'openai';
-  if (adapter === 'claude' || adapter === 'gemini' || adapter === 'openai' || adapter === 'openrouter') {
+  if (
+    adapter === 'claude' ||
+    adapter === 'gemini' ||
+    adapter === 'openai' ||
+    adapter === 'openrouter'
+  ) {
     return adapter;
   }
   return DEFAULT_AI_PROVIDER_SETTINGS.adapter;
@@ -68,6 +71,6 @@ export const hasConfiguredAIProviderSettings = (
 ) =>
   Boolean(
     settings.endpoint.trim() &&
-      settings.model.trim() &&
-      (settings.apiKey.trim() || settings.apiKeyConfigured)
+    settings.model.trim() &&
+    (settings.apiKey.trim() || settings.apiKeyConfigured)
   );

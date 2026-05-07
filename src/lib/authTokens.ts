@@ -14,7 +14,9 @@ interface AuthTokenEventDetail {
 
 const dispatchAuthTokenEvent = (detail: AuthTokenEventDetail) => {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent<AuthTokenEventDetail>(AUTH_TOKENS_UPDATED_EVENT, { detail }));
+  window.dispatchEvent(
+    new CustomEvent<AuthTokenEventDetail>(AUTH_TOKENS_UPDATED_EVENT, { detail })
+  );
 };
 
 const safeStorage = () => {

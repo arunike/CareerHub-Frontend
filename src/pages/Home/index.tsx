@@ -80,7 +80,8 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                Track your pipeline, analyze total compensation, and use your own AI to match job descriptions—all in one secure, private workspace.
+                Track your pipeline, analyze total compensation, and use your own AI to match job
+                descriptions—all in one secure, private workspace.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -112,36 +113,44 @@ export default function HomePage() {
             <div className="relative min-w-0">
               <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-br from-sky-200/50 via-sky-200/50 to-transparent blur-2xl" />
               <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-2xl shadow-sky-900/10 backdrop-blur-xl">
-                
                 <div className="grid gap-4 bg-slate-50/50 p-4 sm:grid-cols-3">
-                  
                   {/* Card 1: Application Pipeline (col-span-2) */}
                   <section className="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline</p>
-                        <p className="mt-1 text-sm font-bold text-slate-900">Application Tracking</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                          Pipeline
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-slate-900">
+                          Application Tracking
+                        </p>
                       </div>
                       <BarChartOutlined className="text-xl text-sky-500" />
                     </div>
 
                     <div className="mt-4 flex gap-3 overflow-hidden">
                       <div className="w-1/3 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400">Applied</p>
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400">
+                          Applied
+                        </p>
                         <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
                           <p className="text-xs font-bold text-slate-900">Stripe</p>
                           <p className="mt-0.5 text-[10px] text-slate-500">Frontend Eng</p>
                         </div>
                       </div>
                       <div className="w-1/3 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-sky-500">Onsite</p>
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-sky-500">
+                          Onsite
+                        </p>
                         <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50/50 p-2.5 shadow-sm">
                           <p className="text-xs font-bold text-slate-900">Google</p>
                           <p className="mt-0.5 text-[10px] text-slate-500">L4 Engineer</p>
                         </div>
                       </div>
                       <div className="w-1/3 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-emerald-500">Offer</p>
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-emerald-500">
+                          Offer
+                        </p>
                         <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/50 p-2.5 shadow-sm">
                           <p className="text-xs font-bold text-slate-900">OpenAI</p>
                           <p className="mt-0.5 text-[10px] text-slate-500">MTS</p>
@@ -154,7 +163,9 @@ export default function HomePage() {
                   <section className="col-span-3 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm sm:col-span-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-sky-500">Smart Tools</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-sky-500">
+                          Smart Tools
+                        </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">BYOK AI</p>
                       </div>
                       <RobotOutlined className="text-xl text-sky-500" />
@@ -179,7 +190,9 @@ export default function HomePage() {
                   <section className="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Vault</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                          Vault
+                        </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">Documents</p>
                       </div>
                       <FilePdfOutlined className="text-xl text-slate-400" />
@@ -195,7 +208,9 @@ export default function HomePage() {
                       <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5">
                         <div className="flex items-center gap-2">
                           <FilePdfOutlined className="text-red-400 opacity-50" />
-                          <span className="text-xs font-medium text-slate-500">Cover_Letter.pdf</span>
+                          <span className="text-xs font-medium text-slate-500">
+                            Cover_Letter.pdf
+                          </span>
                         </div>
                         <span className="text-[10px] text-slate-400">v1.2</span>
                       </div>
@@ -204,23 +219,29 @@ export default function HomePage() {
 
                   {/* Card 4: Total Compensation Simulator (col-span-2) */}
                   <section className="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-2">
-                     <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Simulation</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                          Simulation
+                        </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">Total Compensation</p>
                       </div>
                       <DollarOutlined className="text-xl text-emerald-500" />
                     </div>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <div className="flex-1 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                        <p className="text-[10px] font-black uppercase text-emerald-600">Base Salary</p>
+                        <p className="text-[10px] font-black uppercase text-emerald-600">
+                          Base Salary
+                        </p>
                         <p className="mt-1 text-2xl font-black text-slate-900">$180k</p>
                         <div className="mt-2 h-1.5 w-full rounded-full bg-emerald-200">
                           <div className="h-full w-[60%] rounded-full bg-emerald-500" />
                         </div>
                       </div>
                       <div className="flex-1 rounded-xl border border-sky-100 bg-sky-50/50 p-4">
-                        <p className="text-[10px] font-black uppercase text-sky-600">Annual Equity</p>
+                        <p className="text-[10px] font-black uppercase text-sky-600">
+                          Annual Equity
+                        </p>
                         <p className="mt-1 text-2xl font-black text-slate-900">$120k</p>
                         <div className="mt-2 h-1.5 w-full rounded-full bg-sky-200">
                           <div className="h-full w-[40%] rounded-full bg-sky-500" />
@@ -228,7 +249,6 @@ export default function HomePage() {
                       </div>
                     </div>
                   </section>
-
                 </div>
               </div>
             </div>
@@ -237,11 +257,13 @@ export default function HomePage() {
 
         <section className="relative px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-50" />
-          
+
           <div className="relative mx-auto w-full max-w-[1440px]">
             <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">Why register</p>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">
+                  Why register
+                </p>
                 <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
                   Built to manage your entire career trajectory, not just spreadsheets.
                 </h2>
@@ -286,9 +308,13 @@ export default function HomePage() {
                 Security by default
               </h2>
               <p className="relative mt-4 text-base leading-relaxed text-slate-600">
-                CareerHub asks for the minimum access needed. API keys are strictly encrypted, and optional Google integrations are transparently scoped. Your data is yours.
+                CareerHub asks for the minimum access needed. API keys are strictly encrypted, and
+                optional Google integrations are transparently scoped. Your data is yours.
               </p>
-              <Link to="/privacy" className="relative mt-8 inline-flex items-center text-sm font-bold text-sky-600 transition hover:text-sky-700">
+              <Link
+                to="/privacy"
+                className="relative mt-8 inline-flex items-center text-sm font-bold text-sky-600 transition hover:text-sky-700"
+              >
                 Read the Privacy Policy
                 <ArrowRightOutlined className="ml-2 transition-transform group-hover:translate-x-1" />
               </Link>
@@ -298,7 +324,10 @@ export default function HomePage() {
               {securityTransparency.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <article key={item.title} className="rounded-3xl border border-slate-100 bg-slate-50/50 p-6 transition hover:bg-slate-50 hover:border-slate-200">
+                  <article
+                    key={item.title}
+                    className="rounded-3xl border border-slate-100 bg-slate-50/50 p-6 transition hover:bg-slate-50 hover:border-slate-200"
+                  >
                     <Icon className="text-2xl text-slate-400" />
                     <h3 className="mt-5 text-base font-bold text-slate-900">{item.title}</h3>
                     <p className="mt-2.5 text-sm leading-relaxed text-slate-600">{item.body}</p>
@@ -311,12 +340,20 @@ export default function HomePage() {
 
         <footer className="border-t border-slate-200 bg-slate-50 px-5 sm:px-8 lg:px-10">
           <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-            <span className="font-medium">CareerHub public information is available without signing in.</span>
+            <span className="font-medium">
+              CareerHub public information is available without signing in.
+            </span>
             <div className="flex gap-6">
-              <Link to="/privacy" className="font-bold text-slate-600 transition hover:text-slate-900">
+              <Link
+                to="/privacy"
+                className="font-bold text-slate-600 transition hover:text-slate-900"
+              >
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="font-bold text-slate-600 transition hover:text-slate-900">
+              <Link
+                to="/terms"
+                className="font-bold text-slate-600 transition hover:text-slate-900"
+              >
                 Terms
               </Link>
             </div>

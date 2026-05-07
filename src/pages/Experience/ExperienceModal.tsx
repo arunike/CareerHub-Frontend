@@ -1,6 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Input, Modal, DatePicker, Switch, Tabs, Button, message, Select, Upload, Avatar, AutoComplete, Tooltip } from 'antd';
-import { CameraOutlined, DeleteOutlined, BankOutlined, RiseOutlined, LinkOutlined } from '@ant-design/icons';
+import {
+  Form,
+  Input,
+  Modal,
+  DatePicker,
+  Switch,
+  Tabs,
+  Button,
+  message,
+  Select,
+  Upload,
+  Avatar,
+  AutoComplete,
+  Tooltip,
+} from 'antd';
+import {
+  CameraOutlined,
+  DeleteOutlined,
+  BankOutlined,
+  RiseOutlined,
+  LinkOutlined,
+} from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Experience, EmploymentType } from '../../types';
 import CompensationFields, { type CompValue } from '../../components/CompensationFields';
@@ -17,7 +37,11 @@ interface OfferOption {
 interface ExperienceModalProps {
   open: boolean;
   onCancel: () => void;
-  onSave: (data: Partial<Experience>, logoFile?: File | null, removeLogo?: boolean) => Promise<void>;
+  onSave: (
+    data: Partial<Experience>,
+    logoFile?: File | null,
+    removeLogo?: boolean
+  ) => Promise<void>;
   experience?: Experience | null;
   experiences?: Experience[];
   employmentTypes?: EmploymentType[];
@@ -39,7 +63,11 @@ const getAvatarStyle = (name: string) => {
   for (let i = 0; i < safeName.length; i++) {
     hash = safeName.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return { backgroundImage: gradients[Math.abs(hash) % gradients.length], color: '#fff', border: 'none' };
+  return {
+    backgroundImage: gradients[Math.abs(hash) % gradients.length],
+    color: '#fff',
+    border: 'none',
+  };
 };
 
 const DEFAULT_EMP_TYPES: EmploymentType[] = [
@@ -58,8 +86,17 @@ const toNullableNumber = (value: unknown): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSave, experience, experiences = [], employmentTypes, offers = [] }) => {
-  const empTypes = (employmentTypes && employmentTypes.length > 0) ? employmentTypes : DEFAULT_EMP_TYPES;
+const ExperienceModal: React.FC<ExperienceModalProps> = ({
+  open,
+  onCancel,
+  onSave,
+  experience,
+  experiences = [],
+  employmentTypes,
+  offers = [],
+}) => {
+  const empTypes =
+    employmentTypes && employmentTypes.length > 0 ? employmentTypes : DEFAULT_EMP_TYPES;
   const [form] = Form.useForm();
   const [importForm] = Form.useForm();
   const [activeTab, setActiveTab] = useState('manual');
@@ -84,21 +121,28 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           title: experience.title,
           company: experience.company,
           location: experience.location,
-          dates: experience.start_date ? [
-            dayjs(experience.start_date),
-            experience.end_date ? dayjs(experience.end_date) : undefined
-          ] : undefined,
+          dates: experience.start_date
+            ? [
+                dayjs(experience.start_date),
+                experience.end_date ? dayjs(experience.end_date) : undefined,
+              ]
+            : undefined,
           is_current: experience.is_current,
           employment_type: empType,
           description: experience.description,
           skills: experience.skills || [],
           is_promotion: experience.is_promotion || false,
           is_return_offer: experience.is_return_offer || false,
-          role_context: experience.is_promotion ? 'promotion' : experience.is_return_offer ? 'return_offer' : 'none',
+          role_context: experience.is_promotion
+            ? 'promotion'
+            : experience.is_return_offer
+              ? 'return_offer'
+              : 'none',
           offer: experience.offer ?? null,
           hourly_rate: experience.hourly_rate ?? null,
           hours_per_day: experience.hours_per_day ?? (empType === 'internship' ? 8 : null),
-          working_days_per_week: experience.working_days_per_week ?? (empType === 'internship' ? 5 : null),
+          working_days_per_week:
+            experience.working_days_per_week ?? (empType === 'internship' ? 5 : null),
           total_hours_worked: experience.total_hours_worked ?? null,
           total_earnings_override: experience.total_earnings_override ?? null,
           comp: {
@@ -109,7 +153,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
         });
 
         if (experience.offer) {
-          const linked = offers.find(o => o.value === experience.offer);
+          const linked = offers.find((o) => o.value === experience.offer);
           if (linked) {
             form.setFieldsValue({
               comp: {
@@ -153,14 +197,14 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
       }
     }
     return Array.from(seen.values()).map(({ name, logo }) => ({
-      value: name,   // plain string → shown in input after selection
+      value: name, // plain string → shown in input after selection
       logoUrl: logo, // extra data used by optionRender and onSelect
     }));
   }, [experiences, experience]);
 
   const isExistingCompany = useMemo(() => {
     if (!companyName) return false;
-    return companyOptions.some(opt => opt.value.toLowerCase() === companyName.toLowerCase());
+    return companyOptions.some((opt) => opt.value.toLowerCase() === companyName.toLowerCase());
   }, [companyName, companyOptions]);
 
   const handleCompanySelect = async (_value: string, option: { logoUrl?: string | null }) => {
@@ -213,11 +257,14 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
 
         const datesVal = values.dates;
         const start_date = datesVal
-          ? (dayjs.isDayjs(datesVal) ? datesVal.format('YYYY-MM-DD') : datesVal[0]?.format('YYYY-MM-DD') ?? null)
+          ? dayjs.isDayjs(datesVal)
+            ? datesVal.format('YYYY-MM-DD')
+            : (datesVal[0]?.format('YYYY-MM-DD') ?? null)
           : null;
-        const end_date = !values.is_current && Array.isArray(datesVal) && datesVal[1]
-          ? datesVal[1].format('YYYY-MM-DD')
-          : null;
+        const end_date =
+          !values.is_current && Array.isArray(datesVal) && datesVal[1]
+            ? datesVal[1].format('YYYY-MM-DD')
+            : null;
         const selectedEmploymentType = values.employment_type || 'full_time';
         const isInternship = selectedEmploymentType === 'internship';
         const normalizedHourlyRate = toNullableNumber(values.hourly_rate);
@@ -240,7 +287,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           overtime_hours: isInternship ? (experience?.overtime_hours ?? null) : null,
           overtime_rate: isInternship ? (experience?.overtime_rate ?? null) : null,
           overtime_multiplier: isInternship ? (experience?.overtime_multiplier ?? null) : null,
-          total_earnings_override: isInternship ? (experience?.total_earnings_override ?? null) : null,
+          total_earnings_override: isInternship
+            ? (experience?.total_earnings_override ?? null)
+            : null,
           base_salary: (values.comp as CompValue)?.base_salary ?? null,
           bonus: (values.comp as CompValue)?.bonus ?? null,
           equity: (values.comp as CompValue)?.equity ?? null,
@@ -250,11 +299,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           payload.skills = values.skills || [];
         }
 
-        await onSave(
-          payload,
-          logoFile,
-          removeLogo,
-        );
+        await onSave(payload, logoFile, removeLogo);
       } else {
         const values = await importForm.validateFields();
         await onSave({
@@ -276,7 +321,10 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     const text = e.target.value;
     if (!text || text.length < 10) return;
 
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const lines = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
     if (lines.length < 2) return;
 
     let parsedTitle = '';
@@ -285,7 +333,8 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     let parsedDates = '';
     const descriptionLines: string[] = [];
 
-    const isBullet = (str: string) => str.startsWith('-') || str.startsWith('•') || str.startsWith('*');
+    const isBullet = (str: string) =>
+      str.startsWith('-') || str.startsWith('•') || str.startsWith('*');
 
     let i = 0;
     while (i < lines.length && !isBullet(lines[i])) {
@@ -294,7 +343,10 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
       } else if (i === 1) {
         parsedCompany = lines[i];
       } else if (i === 2) {
-        if (/([0-9]{2,4}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(lines[i]) && !lines[i].toLowerCase().includes('remote')) {
+        if (
+          /([0-9]{2,4}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(lines[i]) &&
+          !lines[i].toLowerCase().includes('remote')
+        ) {
           parsedDates = lines[i];
         } else {
           parsedLocation = lines[i];
@@ -319,12 +371,15 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
     let dateValues: [Dayjs, Dayjs?] | undefined;
     let isCurrentVal = false;
     if (parsedDates) {
-      const parts = parsedDates.split(/-|–|to/i).map(s => s.trim());
+      const parts = parsedDates.split(/-|–|to/i).map((s) => s.trim());
       if (parts.length > 0) {
         const start = dayjs(parts[0]);
         if (start.isValid()) {
           if (parts.length > 1) {
-            if (parts[1].toLowerCase().includes('present') || parts[1].toLowerCase().includes('current')) {
+            if (
+              parts[1].toLowerCase().includes('present') ||
+              parts[1].toLowerCase().includes('current')
+            ) {
               isCurrentVal = true;
               dateValues = [start, undefined];
             } else {
@@ -388,7 +443,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
               setEmploymentType(changed.employment_type);
             }
             if (changed.offer !== undefined) {
-              const linked = offers.find(o => o.value === changed.offer);
+              const linked = offers.find((o) => o.value === changed.offer);
               if (linked) {
                 form.setFieldsValue({
                   comp: {
@@ -404,11 +459,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
           {/* Logo Upload */}
           <div className="mb-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <div className="relative group/logo">
-              <Upload
-                accept="image/*"
-                showUploadList={false}
-                beforeUpload={handleLogoSelect}
-              >
+              <Upload accept="image/*" showUploadList={false} beforeUpload={handleLogoSelect}>
                 <div className="cursor-pointer">
                   {currentLogoSrc ? (
                     <Avatar
@@ -444,7 +495,12 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             </div>
             <div className="flex flex-col items-center justify-center sm:items-start">
               <Upload accept="image/*" showUploadList={false} beforeUpload={handleLogoSelect}>
-                <Button size="small" icon={<CameraOutlined />} type="link" className="p-0 text-gray-500 hover:text-blue-500">
+                <Button
+                  size="small"
+                  icon={<CameraOutlined />}
+                  type="link"
+                  className="p-0 text-gray-500 hover:text-blue-500"
+                >
                   {currentLogoSrc ? 'Change logo' : 'Upload logo'}
                 </Button>
               </Upload>
@@ -462,8 +518,10 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             </Form.Item>
             <Form.Item name="employment_type" label="Employment Type">
               <Select>
-                {empTypes.map(t => (
-                  <Select.Option key={t.value} value={t.value}>{t.label}</Select.Option>
+                {empTypes.map((t) => (
+                  <Select.Option key={t.value} value={t.value}>
+                    {t.label}
+                  </Select.Option>
                 ))}
               </Select>
             </Form.Item>
@@ -479,12 +537,13 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
                 options={companyOptions}
                 optionRender={(option) => (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {option.data.logoUrl
-                      ? <Avatar size={18} src={option.data.logoUrl} />
-                      : <Avatar size={18} style={getAvatarStyle(option.value as string)}>
-                          {(option.value as string).charAt(0).toUpperCase()}
-                        </Avatar>
-                    }
+                    {option.data.logoUrl ? (
+                      <Avatar size={18} src={option.data.logoUrl} />
+                    ) : (
+                      <Avatar size={18} style={getAvatarStyle(option.value as string)}>
+                        {(option.value as string).charAt(0).toUpperCase()}
+                      </Avatar>
+                    )}
                     <span>{option.value as string}</span>
                   </div>
                 )}
@@ -492,7 +551,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
                 onChange={(val) => {
                   const name = val || '';
                   setCompanyName(name);
-                  const matches = companyOptions.some(opt => opt.value.toLowerCase() === name.toLowerCase());
+                  const matches = companyOptions.some(
+                    (opt) => opt.value.toLowerCase() === name.toLowerCase()
+                  );
                   if (!matches) form.setFieldValue('is_promotion', false);
                 }}
                 filterOption={(input, option) =>
@@ -524,7 +585,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
                   if (!value) return Promise.resolve();
                   const current = getFieldValue('is_current');
                   if (!current && Array.isArray(value) && (!value[0] || !value[1])) {
-                    return Promise.reject(new Error('End date is required unless "I currently work here" is checked'));
+                    return Promise.reject(
+                      new Error('End date is required unless "I currently work here" is checked')
+                    );
                   }
                   return Promise.resolve();
                 },
@@ -550,7 +613,11 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
             label="Skills"
             tooltip="Auto-extracted from your description, but you can manually add, edit, or remove them at any time. Type and press Enter."
           >
-            <Select mode="tags" style={{ width: '100%' }} placeholder="e.g. React, Docker, Python" />
+            <Select
+              mode="tags"
+              style={{ width: '100%' }}
+              placeholder="e.g. React, Docker, Python"
+            />
           </Form.Item>
 
           {/* Compensation */}
@@ -559,13 +626,24 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
               <Form.Item
                 name="hourly_rate"
                 label="Hourly Rate"
-                rules={[{ required: true, message: 'Please enter hourly rate for this internship' }]}
+                rules={[
+                  { required: true, message: 'Please enter hourly rate for this internship' },
+                ]}
               >
-                <Input prefix="$" suffix="/hr" type="number" min={0} step={0.01} placeholder="e.g. 45.00" />
+                <Input
+                  prefix="$"
+                  suffix="/hr"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  placeholder="e.g. 45.00"
+                />
               </Form.Item>
 
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                Advanced internship earnings inputs like hours per day, working days per week, total hours, overtime, and direct total override can be edited from the role's `Internship Earnings Breakdown` after you save.
+                Advanced internship earnings inputs like hours per day, working days per week, total
+                hours, overtime, and direct total override can be edited from the role's `Internship
+                Earnings Breakdown` after you save.
               </div>
             </div>
           ) : (
@@ -600,7 +678,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
 
           {/* Role context — custom card selector */}
           {/* Hidden Form.Item keeps the value registered with the form */}
-          <Form.Item name="role_context" className="hidden mb-0"><Input /></Form.Item>
+          <Form.Item name="role_context" className="hidden mb-0">
+            <Input />
+          </Form.Item>
           <div className="mt-4">
             <div className="text-sm font-medium text-gray-700 mb-2">Role Context</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -627,8 +707,8 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ open, onCancel, onSav
                   !isExistingCompany
                     ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed opacity-60'
                     : roleContext === 'promotion'
-                    ? 'border-amber-400 bg-amber-50 text-amber-700 shadow-sm cursor-pointer'
-                    : 'border-gray-200 bg-white text-gray-400 hover:border-amber-300 hover:text-amber-600 cursor-pointer'
+                      ? 'border-amber-400 bg-amber-50 text-amber-700 shadow-sm cursor-pointer'
+                      : 'border-gray-200 bg-white text-gray-400 hover:border-amber-300 hover:text-amber-600 cursor-pointer'
                 }`}
               >
                 <RiseOutlined className="text-base" />

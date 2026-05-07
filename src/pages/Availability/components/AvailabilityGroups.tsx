@@ -22,7 +22,14 @@ type Props = {
   onUpdate: () => void;
 };
 
-const AvailabilityGroups = ({ groupedData, loading, hasData, copiedIndex, onCopy, onUpdate }: Props) => {
+const AvailabilityGroups = ({
+  groupedData,
+  loading,
+  hasData,
+  copiedIndex,
+  onCopy,
+  onUpdate,
+}: Props) => {
   if (!hasData && !loading) {
     return (
       <EmptyState
@@ -44,7 +51,9 @@ const AvailabilityGroups = ({ groupedData, loading, hasData, copiedIndex, onCopy
             className="animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: `${groupIdx * 100}ms` }}
           >
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">{group.title}</h3>
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">
+              {group.title}
+            </h3>
             <div className="space-y-3">
               {group.items.map((item, idx) => (
                 <AvailabilityItem
@@ -86,7 +95,9 @@ const AvailabilityItem = ({
     setSaving(true);
     try {
       if (!item.date) {
-        messageApi.error('Cannot edit a combined range. Please switch to Detailed view to edit specific days.');
+        messageApi.error(
+          'Cannot edit a combined range. Please switch to Detailed view to edit specific days.'
+        );
         setIsEditing(false);
         setSaving(false);
         return;
@@ -141,7 +152,9 @@ const AvailabilityItem = ({
             </div>
           ) : (
             <div className="flex items-center gap-2 group/text">
-              <p className="text-gray-700 font-medium font-mono text-sm md:text-base">{item.availability}</p>
+              <p className="text-gray-700 font-medium font-mono text-sm md:text-base">
+                {item.availability}
+              </p>
               {item.date && (
                 <button
                   onClick={() => {
@@ -168,7 +181,11 @@ const AvailabilityItem = ({
           )}
           title="Copy line"
         >
-          {copiedIndex === itemId ? <CheckCircleOutlined className="text-xl" /> : <CopyOutlined className="text-xl" />}
+          {copiedIndex === itemId ? (
+            <CheckCircleOutlined className="text-xl" />
+          ) : (
+            <CopyOutlined className="text-xl" />
+          )}
         </button>
       </div>
 

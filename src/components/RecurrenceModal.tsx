@@ -110,7 +110,9 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
           <select
             className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={frequency}
-            onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
+            onChange={(e) =>
+              setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')
+            }
           >
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>

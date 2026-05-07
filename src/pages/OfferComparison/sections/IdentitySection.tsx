@@ -36,7 +36,9 @@ const IdentitySection = ({
           </label>
           <select
             value={linkedApplicationId ?? ''}
-            onChange={(e) => onLinkedApplicationChange(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) =>
+              onLinkedApplicationChange(e.target.value ? Number(e.target.value) : null)
+            }
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           >
             <option value="">No link (custom)</option>

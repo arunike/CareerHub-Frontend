@@ -23,8 +23,15 @@ interface Props {
 }
 
 const RESPONDED_STATUSES = new Set([
-  'OA', 'SCREEN', 'ROUND_1', 'ROUND_2', 'ROUND_3', 'ROUND_4',
-  'ONSITE', 'OFFER', 'ACCEPTED',
+  'OA',
+  'SCREEN',
+  'ROUND_1',
+  'ROUND_2',
+  'ROUND_3',
+  'ROUND_4',
+  'ONSITE',
+  'OFFER',
+  'ACCEPTED',
 ]);
 
 const OFFER_STATUSES = new Set(['OFFER', 'ACCEPTED']);
@@ -128,7 +135,8 @@ const RateBar = ({
       />
     </div>
     <span className="min-w-[32px] text-right text-xs font-semibold text-slate-700">
-      {value}{suffix}
+      {value}
+      {suffix}
     </span>
   </div>
 );
@@ -137,19 +145,14 @@ const CohortAnalysis = ({ applications }: Props) => {
   const [dimension, setDimension] = useState<Dimension>('month');
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const cohorts = useMemo(
-    () => buildCohorts(applications, dimension),
-    [applications, dimension]
-  );
+  const cohorts = useMemo(() => buildCohorts(applications, dimension), [applications, dimension]);
 
   const columns: ColumnsType<CohortRow> = [
     {
       title: DIMENSIONS.find((d) => d.key === dimension)?.label ?? 'Group',
       dataIndex: 'label',
       key: 'label',
-      render: (label: string) => (
-        <span className="font-semibold text-slate-800">{label}</span>
-      ),
+      render: (label: string) => <span className="font-semibold text-slate-800">{label}</span>,
       sorter: (a, b) => a.label.localeCompare(b.label),
     },
     {
@@ -228,7 +231,11 @@ const CohortAnalysis = ({ applications }: Props) => {
             className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 text-slate-500 transition-colors hover:border-sky-100 hover:bg-sky-50 hover:text-sky-600"
             aria-label={isCollapsed ? 'Expand cohort analysis' : 'Collapse cohort analysis'}
           >
-            {isCollapsed ? <RightOutlined className="text-xs" /> : <DownOutlined className="text-xs" />}
+            {isCollapsed ? (
+              <RightOutlined className="text-xs" />
+            ) : (
+              <DownOutlined className="text-xs" />
+            )}
           </button>
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
@@ -269,9 +276,7 @@ const CohortAnalysis = ({ applications }: Props) => {
           onClick={() => setIsCollapsed(false)}
           className="flex w-full items-center justify-between rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-3 text-left transition-colors hover:border-sky-100 hover:bg-sky-50/60"
         >
-          <span className="text-sm font-semibold text-slate-600">
-            Cohort table collapsed
-          </span>
+          <span className="text-sm font-semibold text-slate-600">Cohort table collapsed</span>
           <span className="text-xs font-semibold text-sky-600">Show analysis</span>
         </button>
       ) : cohorts.length === 0 ? (

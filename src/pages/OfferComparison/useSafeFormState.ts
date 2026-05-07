@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 type PatchArg<T> = Partial<T> | ((prev: T) => Partial<T>);
 
-export const useSafeFormState = <T,>(initial: T) => {
+export const useSafeFormState = <T>(initial: T) => {
   const [state, setState] = useState<T>(initial);
 
   const patch = useCallback((updates: PatchArg<T>) => {
@@ -19,7 +19,7 @@ export const useSafeFormState = <T,>(initial: T) => {
   return { state, setState, patch, setField };
 };
 
-export const useSafeNullableFormState = <T,>(initial: T | null = null) => {
+export const useSafeNullableFormState = <T>(initial: T | null = null) => {
   const [state, setState] = useState<T | null>(initial);
 
   const patch = useCallback((updates: PatchArg<T>) => {
@@ -38,4 +38,3 @@ export const useSafeNullableFormState = <T,>(initial: T | null = null) => {
 
   return { state, setState, patch, setField };
 };
-

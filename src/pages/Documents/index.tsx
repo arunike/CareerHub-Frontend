@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Card, Form, Grid, Input, Modal, Select, Table, Tag, message } from 'antd';
-import { PlusOutlined, FilePdfOutlined, FileWordOutlined, FileOutlined, LockOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+  FileOutlined,
+  LockOutlined,
+} from '@ant-design/icons';
 import {
   getApplications,
   getDocuments,
@@ -36,7 +42,9 @@ const Documents: React.FC = () => {
   const [versionTarget, setVersionTarget] = useState<Document | null>(null);
   const [versionList, setVersionList] = useState<Document[]>([]);
   const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
-  const [applications, setApplications] = useState<Array<{ id: number; role_title: string; company_details?: { name: string } }>>([]);
+  const [applications, setApplications] = useState<
+    Array<{ id: number; role_title: string; company_details?: { name: string } }>
+  >([]);
   const [form] = Form.useForm();
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'documentsSelectedYear',
@@ -115,7 +123,9 @@ const Documents: React.FC = () => {
     try {
       await patchDocument(record.id, { is_locked: !record.is_locked });
       message.success(record.is_locked ? 'Document unlocked' : 'Document locked');
-      setDocuments(prev => prev.map(d => d.id === record.id ? { ...d, is_locked: !record.is_locked } : d));
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === record.id ? { ...d, is_locked: !record.is_locked } : d))
+      );
     } catch (error: unknown) {
       const apiError = error as ApiError;
       message.error(apiError?.response?.data?.error || 'Failed to update lock status');
@@ -161,7 +171,8 @@ const Documents: React.FC = () => {
   const getFileIcon = (fileName: string | null | undefined) => {
     const normalized = (fileName || '').toLowerCase();
     if (normalized.endsWith('.pdf')) return <FilePdfOutlined className="text-red-500 text-lg" />;
-    if (normalized.endsWith('.doc') || normalized.endsWith('.docx')) return <FileWordOutlined className="text-blue-500 text-lg" />;
+    if (normalized.endsWith('.doc') || normalized.endsWith('.docx'))
+      return <FileWordOutlined className="text-blue-500 text-lg" />;
     return <FileOutlined className="text-gray-500 text-lg" />;
   };
 
@@ -185,10 +196,14 @@ const Documents: React.FC = () => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'RESUME': return 'blue';
-      case 'COVER_LETTER': return 'green';
-      case 'PORTFOLIO': return 'purple';
-      default: return 'default';
+      case 'RESUME':
+        return 'blue';
+      case 'COVER_LETTER':
+        return 'green';
+      case 'PORTFOLIO':
+        return 'purple';
+      default:
+        return 'default';
     }
   };
 
@@ -264,9 +279,7 @@ const Documents: React.FC = () => {
       title: 'Category',
       dataIndex: 'document_type',
       key: 'document_type',
-      render: (type: string) => (
-        <Tag color={getTypeColor(type)}>{type.replace('_', ' ')}</Tag>
-      ),
+      render: (type: string) => <Tag color={getTypeColor(type)}>{type.replace('_', ' ')}</Tag>,
     },
     {
       title: 'Version',
@@ -283,11 +296,12 @@ const Documents: React.FC = () => {
     {
       title: 'Linked Application',
       key: 'application',
-      render: (_: unknown, record: Document) => (
-        record.application_details 
-          ? `${record.application_details.role} @ ${record.application_details.company}`
-          : <span className="text-gray-400">None</span>
-      ),
+      render: (_: unknown, record: Document) =>
+        record.application_details ? (
+          `${record.application_details.role} @ ${record.application_details.company}`
+        ) : (
+          <span className="text-gray-400">None</span>
+        ),
     },
     {
       title: 'Uploaded At',
@@ -361,10 +375,14 @@ const Documents: React.FC = () => {
                         >
                           <span className="line-clamp-2">{record.title}</span>
                         </button>
-                        {record.is_locked ? <LockOutlined className="mt-1 shrink-0 text-amber-500" /> : null}
+                        {record.is_locked ? (
+                          <LockOutlined className="mt-1 shrink-0 text-amber-500" />
+                        ) : null}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Tag color={getTypeColor(record.document_type)}>{record.document_type.replace('_', ' ')}</Tag>
+                        <Tag color={getTypeColor(record.document_type)}>
+                          {record.document_type.replace('_', ' ')}
+                        </Tag>
                         <Tag color="geekblue">v{record.version_number || 1}</Tag>
                         <Tag>{new Date(record.created_at).toLocaleDateString()}</Tag>
                       </div>
@@ -383,7 +401,11 @@ const Documents: React.FC = () => {
                     <Button size="large" onClick={() => openVersionsModal(record)}>
                       History
                     </Button>
-                    <Button size="large" disabled={Boolean(record.is_locked)} onClick={() => openEditModal(record)}>
+                    <Button
+                      size="large"
+                      disabled={Boolean(record.is_locked)}
+                      onClick={() => openEditModal(record)}
+                    >
                       Edit
                     </Button>
                     <Button size="large" onClick={() => handleToggleLock(record)}>
@@ -418,7 +440,7 @@ const Documents: React.FC = () => {
         </Card>
       )}
 
-      <UploadDocumentModal 
+      <UploadDocumentModal
         visible={isUploadModalVisible}
         onCancel={() => setIsUploadModalVisible(false)}
         onSuccess={() => {
@@ -523,7 +545,8 @@ const Documents: React.FC = () => {
                 width: 110,
                 render: (_: unknown, row: Document) => (
                   <Tag color={row.is_current ? 'success' : 'default'}>
-                    v{row.version_number || 1}{row.is_current ? ' (current)' : ''}
+                    v{row.version_number || 1}
+                    {row.is_current ? ' (current)' : ''}
                   </Tag>
                 ),
               },

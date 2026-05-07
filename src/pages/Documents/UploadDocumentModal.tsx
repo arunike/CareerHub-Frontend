@@ -60,7 +60,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      
+
       if (fileList.length === 0) {
         message.error('Please upload a file');
         return;
@@ -144,10 +144,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
           </Select>
         </Form.Item>
 
-        <Form.Item
-          name="application"
-          label="Link to Application (Optional)"
-        >
+        <Form.Item name="application" label="Link to Application (Optional)">
           <Select
             showSearch
             allowClear

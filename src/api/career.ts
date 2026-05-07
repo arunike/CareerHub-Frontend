@@ -43,7 +43,8 @@ const EXPERIENCE_DECIMAL_FIELDS = [
 
 const roundExperienceDecimal = (value: unknown) => {
   if (value == null || value === '') return value;
-  const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  const parsed =
+    typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
   if (!Number.isFinite(parsed)) return value;
   return Number(parsed.toFixed(2));
 };
@@ -76,7 +77,8 @@ const normalizeExperiencePayload = (data: Partial<Experience>): Partial<Experien
 };
 
 export const getCompanies = () => api.get('/career/companies/');
-export const createCompany = (data: Record<string, unknown>) => api.post('/career/companies/', data);
+export const createCompany = (data: Record<string, unknown>) =>
+  api.post('/career/companies/', data);
 export const updateCompany = (id: number, data: Record<string, unknown>) =>
   api.put(`/career/companies/${id}/`, data);
 export const deleteCompany = (id: number) => api.delete(`/career/companies/${id}/`);
@@ -89,11 +91,15 @@ export const updateApplication = (id: number, data: Record<string, unknown>) =>
 export const deleteApplication = (id: number) => api.delete(`/career/applications/${id}/`);
 export const deleteAllApplications = () => api.delete('/career/applications/delete_all/');
 export const getApplicationTimeline = (applicationId: number) =>
-  api.get<ApplicationTimelineEntry[]>('/career/application-timeline/', { params: { application: applicationId } });
+  api.get<ApplicationTimelineEntry[]>('/career/application-timeline/', {
+    params: { application: applicationId },
+  });
 export const createApplicationTimelineEntry = (data: Partial<ApplicationTimelineEntry>) =>
   api.post<ApplicationTimelineEntry>('/career/application-timeline/', data);
-export const updateApplicationTimelineEntry = (id: number, data: Partial<ApplicationTimelineEntry>) =>
-  api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
+export const updateApplicationTimelineEntry = (
+  id: number,
+  data: Partial<ApplicationTimelineEntry>
+) => api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const getApplicationTimelineAnalytics = () =>
   api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
 export const importApplications = (formData: FormData) =>
@@ -103,18 +109,27 @@ export const extractJobBoardPosting = (url: string) =>
 export const exportApplications = (format: string = 'csv') =>
   api.get('/career/applications/export/', { params: { fmt: format }, responseType: 'blob' });
 
-export const getGoogleSheetSyncs = () => api.get<GoogleSheetSyncConfig[]>('/career/google-sheet-syncs/');
+export const getGoogleSheetSyncs = () =>
+  api.get<GoogleSheetSyncConfig[]>('/career/google-sheet-syncs/');
 export const createGoogleSheetSync = (data: Partial<GoogleSheetSyncConfig>) =>
   api.post<GoogleSheetSyncConfig>('/career/google-sheet-syncs/', data);
 export const updateGoogleSheetSync = (id: number, data: Partial<GoogleSheetSyncConfig>) =>
   api.patch<GoogleSheetSyncConfig>(`/career/google-sheet-syncs/${id}/`, data);
-export const deleteGoogleSheetSync = (id: number) => api.delete(`/career/google-sheet-syncs/${id}/`);
+export const deleteGoogleSheetSync = (id: number) =>
+  api.delete(`/career/google-sheet-syncs/${id}/`);
 export const previewGoogleSheetSync = (data: Partial<GoogleSheetSyncConfig>) =>
-  api.post<{ ok: true; preview: GoogleSheetSyncPreview }>('/career/google-sheet-syncs/preview/', data);
-export const getGoogleOAuthStatus = () => api.get<GoogleOAuthStatus>('/career/google-oauth/status/');
+  api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(
+    '/career/google-sheet-syncs/preview/',
+    data
+  );
+export const getGoogleOAuthStatus = () =>
+  api.get<GoogleOAuthStatus>('/career/google-oauth/status/');
 export const connectGoogleOAuth = (redirectUrl: string) =>
-  api.post<{ authorization_url: string }>('/career/google-oauth/connect/', { redirect_url: redirectUrl });
-export const disconnectGoogleOAuth = () => api.post<{ ok: true }>('/career/google-oauth/disconnect/');
+  api.post<{ authorization_url: string }>('/career/google-oauth/connect/', {
+    redirect_url: redirectUrl,
+  });
+export const disconnectGoogleOAuth = () =>
+  api.post<{ ok: true }>('/career/google-oauth/disconnect/');
 export const getGoogleSpreadsheets = () =>
   api.get<{ spreadsheets: GoogleSpreadsheetFile[] }>('/career/google-oauth/spreadsheets/');
 export const getGoogleSpreadsheetTabs = (spreadsheetId: string) =>
@@ -125,26 +140,26 @@ export const testGoogleSheetSync = (id: number) =>
   api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(`/career/google-sheet-syncs/${id}/test/`);
 export const runGoogleSheetSync = (id: number) =>
   api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
-    `/career/google-sheet-syncs/${id}/sync-now/`,
+    `/career/google-sheet-syncs/${id}/sync-now/`
   );
 export const resyncGoogleSheetSync = (id: number) =>
   api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
-    `/career/google-sheet-syncs/${id}/resync/`,
+    `/career/google-sheet-syncs/${id}/resync/`
   );
 export const getGoogleSheetImportReview = (id: number, force = false) =>
   api.post<{ ok: true; review: GoogleSheetImportReview }>(
     `/career/google-sheet-syncs/${id}/import-review/`,
-    { force },
+    { force }
   );
 export const applyGoogleSheetImportReview = (
   id: number,
   approvedItemIds: string[],
   duplicateResolutions: Record<string, GoogleSheetDuplicateResolution> = {},
-  force = false,
+  force = false
 ) =>
   api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
     `/career/google-sheet-syncs/${id}/apply-import-review/`,
-    { approved_item_ids: approvedItemIds, duplicate_resolutions: duplicateResolutions, force },
+    { approved_item_ids: approvedItemIds, duplicate_resolutions: duplicateResolutions, force }
   );
 export const getGoogleSheetSyncRuns = (id: number) =>
   api.get<{ ok: true; runs: GoogleSheetSyncRun[] }>(`/career/google-sheet-syncs/${id}/runs/`);
@@ -190,8 +205,10 @@ export const getOfferDecisionSnapshots = (offerId?: number) =>
   });
 export const createOfferDecisionSnapshot = (data: Partial<OfferDecisionSnapshotPayload>) =>
   api.post<OfferDecisionSnapshot>('/career/offer-decision-snapshots/', data);
-export const updateOfferDecisionSnapshot = (id: number, data: Partial<OfferDecisionSnapshotPayload>) =>
-  api.patch<OfferDecisionSnapshot>(`/career/offer-decision-snapshots/${id}/`, data);
+export const updateOfferDecisionSnapshot = (
+  id: number,
+  data: Partial<OfferDecisionSnapshotPayload>
+) => api.patch<OfferDecisionSnapshot>(`/career/offer-decision-snapshots/${id}/`, data);
 export const deleteOfferDecisionSnapshot = (id: number) =>
   api.delete(`/career/offer-decision-snapshots/${id}/`);
 
@@ -216,13 +233,16 @@ export const downloadDocument = (id: number) =>
 
 export const getTasks = () => api.get('/career/tasks/');
 export const createTask = (data: Partial<Task>) => api.post('/career/tasks/', data);
-export const updateTask = (id: number, data: Partial<Task>) => api.patch(`/career/tasks/${id}/`, data);
+export const updateTask = (id: number, data: Partial<Task>) =>
+  api.patch(`/career/tasks/${id}/`, data);
 export const deleteTask = (id: number) => api.delete(`/career/tasks/${id}/`);
 export const reorderTasks = (
-  updates: Array<{ id: number; status: 'TODO' | 'IN_PROGRESS' | 'DONE'; position: number }>,
+  updates: Array<{ id: number; status: 'TODO' | 'IN_PROGRESS' | 'DONE'; position: number }>
 ) => api.post('/career/tasks/reorder/', { updates });
 export const getWeeklyReview = (startDate?: string, endDate?: string) =>
-  api.get<WeeklyReview>('/career/weekly-review/', { params: { start_date: startDate, end_date: endDate } });
+  api.get<WeeklyReview>('/career/weekly-review/', {
+    params: { start_date: startDate, end_date: endDate },
+  });
 
 export const getCareerReferenceData = () => api.get('/career/reference-data/');
 export const getCareerRentEstimate = (city: string) =>
@@ -273,7 +293,9 @@ export const importExperiences = (formData: FormData) =>
 export const exportExperiences = (format: string = 'csv') =>
   api.get('/career/experiences/export/', { params: { fmt: format }, responseType: 'blob' });
 export const uploadExperienceLogo = (id: number, formData: FormData) =>
-  api.post<Experience>(`/career/experiences/${id}/upload-logo/`, formData, { headers: { 'Content-Type': undefined } });
+  api.post<Experience>(`/career/experiences/${id}/upload-logo/`, formData, {
+    headers: { 'Content-Type': undefined },
+  });
 export const removeExperienceLogo = (id: number) =>
   api.delete<Experience>(`/career/experiences/${id}/remove-logo/`);
 

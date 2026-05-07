@@ -36,25 +36,23 @@ const CoverLetters: React.FC = () => {
 
   /* ── Selection ── */
   const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       setSelectedIds(checked ? letters.map((l) => l.id) : []);
     },
-    [letters],
+    [letters]
   );
 
   const selectedLetters = useMemo(
     () => letters.filter((l) => selectedIds.includes(l.id)),
-    [letters, selectedIds],
+    [letters, selectedIds]
   );
   const hasLockedSelected = useMemo(
     () => selectedLetters.some((l) => l.isLocked),
-    [selectedLetters],
+    [selectedLetters]
   );
 
   /* ── Single-item actions ── */
@@ -64,7 +62,7 @@ const CoverLetters: React.FC = () => {
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const handleToggleLock = useCallback(
@@ -72,7 +70,7 @@ const CoverLetters: React.FC = () => {
       toggleCoverLetterLock(id);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const handleRename = useCallback(() => {
@@ -111,7 +109,7 @@ const CoverLetters: React.FC = () => {
       setSelectedIds([]);
       refresh();
     },
-    [selectedIds, letters, refresh],
+    [selectedIds, letters, refresh]
   );
 
   const handleDeleteAll = useCallback(() => {
@@ -129,7 +127,7 @@ const CoverLetters: React.FC = () => {
         });
         return { data: blob, headers: { 'content-type': 'application/json' } };
       }
-      
+
       const escape = (v: string) => `"${v.replace(/"/g, '""').replace(/\n/g, ' ')}"`;
       const header = ['Title', 'Company', 'Role', 'Saved At', 'JD Snippet', 'Cover Letter'];
       const rows = letters.map((l) => [
@@ -144,7 +142,7 @@ const CoverLetters: React.FC = () => {
       const blob = new Blob([csv], { type: 'text/csv' });
       return { data: blob, headers: { 'content-type': 'text/csv' } };
     },
-    [letters],
+    [letters]
   );
 
   /* ── Copy helper ── */
@@ -189,9 +187,7 @@ const CoverLetters: React.FC = () => {
                 <Button icon={<UnlockOutlined />} onClick={() => handleBulkToggleLock(false)}>
                   Unlock
                 </Button>
-                <Tooltip
-                  title={hasLockedSelected ? 'Unlock selected items before deleting' : ''}
-                >
+                <Tooltip title={hasLockedSelected ? 'Unlock selected items before deleting' : ''}>
                   <Button
                     danger
                     icon={<DeleteOutlined />}
@@ -258,10 +254,7 @@ const CoverLetters: React.FC = () => {
               <div className="p-5 flex items-start gap-4">
                 {/* Checkbox */}
                 <div onClick={(e) => e.stopPropagation()} className="pt-1 shrink-0">
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={() => toggleSelect(letter.id)}
-                  />
+                  <Checkbox checked={isSelected} onChange={() => toggleSelect(letter.id)} />
                 </div>
 
                 {/* Icon */}

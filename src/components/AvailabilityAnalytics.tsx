@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  HolderOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
+import { HolderOutlined, SettingOutlined } from '@ant-design/icons';
 import { Typography, message } from 'antd';
 import {
   DndContext,
@@ -48,7 +45,9 @@ const SortableItem = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -83,7 +82,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         console.error('Failed to parse enabled widgets', error);
       }
     }
-    return AVAILABLE_WIDGETS.filter(w => w.defaultEnabled).map(w => w.id);
+    return AVAILABLE_WIDGETS.filter((w) => w.defaultEnabled).map((w) => w.id);
   });
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -105,12 +104,11 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
 
-  const { 
-    customWidgets,
-    addCustomWidget, 
-    deleteCustomWidget, 
-    testQuery 
-  } = useCustomWidgets('availability_analytics_custom', 'availability', messageApi);
+  const { customWidgets, addCustomWidget, deleteCustomWidget, testQuery } = useCustomWidgets(
+    'availability_analytics_custom',
+    'availability',
+    messageApi
+  );
 
   const [newWidgetName, setNewWidgetName] = useState('');
   const [newWidgetQuery, setNewWidgetQuery] = useState('');
@@ -120,9 +118,9 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   const [newWidgetColor, setNewWidgetColor] = useState('blue');
 
   useEffect(() => {
-    setWidgetOrder(prev => {
-      const newOrder = prev.filter(id => enabledWidgets.includes(id));
-      const newWidgets = enabledWidgets.filter(id => !prev.includes(id));
+    setWidgetOrder((prev) => {
+      const newOrder = prev.filter((id) => enabledWidgets.includes(id));
+      const newWidgets = enabledWidgets.filter((id) => !prev.includes(id));
       const updated = [...newOrder, ...newWidgets];
       localStorage.setItem('availability_analytics_order', JSON.stringify(updated));
       return updated;
@@ -162,13 +160,13 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   };
 
   const toggleWidget = (widgetId: string) => {
-    setEnabledWidgets(prev => {
+    setEnabledWidgets((prev) => {
       let newEnabled: string[];
       if (prev.includes(widgetId)) {
         if (prev.length === 1) {
           return prev;
         }
-        newEnabled = prev.filter(id => id !== widgetId);
+        newEnabled = prev.filter((id) => id !== widgetId);
       } else {
         newEnabled = [...prev, widgetId];
       }
@@ -179,7 +177,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
   const handleTestQuery = async () => {
     if (!newWidgetQuery.trim()) return;
-    
+
     setIsValidating(true);
     setValidationResult(null);
     try {
@@ -249,16 +247,20 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         </button>
       </div>
 
-      <DndContext 
-        sensors={sensors} 
-        collisionDetection={closestCenter} 
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
           <div className="grid grid-cols-1 md:grid-cols-6 gap-6 animate-in fade-in duration-500 items-start">
             {widgetOrder.map((id) => (
-              <SortableItem key={id} id={id} className={getAvailabilityWidgetClass(id, customWidgets)}>
+              <SortableItem
+                key={id}
+                id={id}
+                className={getAvailabilityWidgetClass(id, customWidgets)}
+              >
                 {renderAvailabilityWidget(id, stats, customWidgets, deleteCustomWidget)}
               </SortableItem>
             ))}
@@ -266,9 +268,11 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         </SortableContext>
         <DragOverlay>
           {activeId ? (
-            <div 
+            <div
               className={`h-full ${getAvailabilityWidgetClass(activeId, customWidgets)}`}
-              style={activeSize ? { width: activeSize.width, height: activeSize.height } : undefined}
+              style={
+                activeSize ? { width: activeSize.width, height: activeSize.height } : undefined
+              }
             >
               {renderAvailabilityWidget(activeId, stats, customWidgets, deleteCustomWidget)}
             </div>

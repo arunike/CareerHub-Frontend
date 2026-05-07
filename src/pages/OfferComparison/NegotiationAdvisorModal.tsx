@@ -26,8 +26,7 @@ interface Props {
   onClose: () => void;
 }
 
-const fmt = (n: number | null | undefined) =>
-  n != null ? `$${Number(n).toLocaleString()}` : null;
+const fmt = (n: number | null | undefined) => (n != null ? `$${Number(n).toLocaleString()}` : null);
 
 const Section = ({
   icon,
@@ -44,13 +43,19 @@ const Section = ({
   border: string;
   items: string[];
 }) => (
-  <div className={`rounded-xl border p-4 flex flex-col gap-3`} style={{ background: bg, borderColor: border }}>
+  <div
+    className={`rounded-xl border p-4 flex flex-col gap-3`}
+    style={{ background: bg, borderColor: border }}
+  >
     <div className="flex items-center gap-2">
       <span style={{ color }}>{icon}</span>
       <Text strong style={{ color }}>
         {label}
       </Text>
-      <Tag style={{ marginLeft: 'auto', background: bg, borderColor: border, color }} className="font-bold">
+      <Tag
+        style={{ marginLeft: 'auto', background: bg, borderColor: border, color }}
+        className="font-bold"
+      >
         {items.length}
       </Tag>
     </div>
@@ -105,7 +110,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           pto_days: offer.pto_days ?? 0,
           is_unlimited_pto: !!offer.is_unlimited_pto,
         },
-        data,
+        data
       );
       setSavedId(saved.id);
     } catch (error) {
@@ -134,7 +139,9 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
       title={
         <div className="flex items-center gap-2">
           <ThunderboltOutlined style={{ color: '#0ea5e9' }} />
-          <span>Negotiation Advisor — {roleTitle} at {companyName}</span>
+          <span>
+            Negotiation Advisor — {roleTitle} at {companyName}
+          </span>
         </div>
       }
       open={open}
@@ -152,7 +159,9 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           { label: 'PTO', value: formatPtoLabel(offer.pto_days, !!offer.is_unlimited_pto) },
         ].map(({ label, value }) => (
           <div key={label} className="flex flex-col items-center min-w-[72px]">
-            <Text type="secondary" className="text-xs uppercase tracking-wider">{label}</Text>
+            <Text type="secondary" className="text-xs uppercase tracking-wider">
+              {label}
+            </Text>
             <Text strong>{value}</Text>
           </div>
         ))}
@@ -207,18 +216,32 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
                   { label: 'Base', value: fmt(advice.suggested_ask.base_salary) },
                   { label: 'Sign-On', value: fmt(advice.suggested_ask.sign_on) },
                   { label: 'Equity/yr', value: fmt(advice.suggested_ask.equity) },
-                  { label: 'PTO', value: advice.suggested_ask.pto_days ? `${advice.suggested_ask.pto_days} days` : null },
+                  {
+                    label: 'PTO',
+                    value: advice.suggested_ask.pto_days
+                      ? `${advice.suggested_ask.pto_days} days`
+                      : null,
+                  },
                 ]
                   .filter((x) => x.value)
                   .map(({ label, value }) => (
-                    <div key={label} className="flex flex-col items-center min-w-[80px] bg-white rounded-lg border border-sky-100 px-3 py-2">
-                      <Text type="secondary" className="text-xs uppercase tracking-wider">{label}</Text>
-                      <Text strong style={{ color: '#0ea5e9' }}>{value}</Text>
+                    <div
+                      key={label}
+                      className="flex flex-col items-center min-w-[80px] bg-white rounded-lg border border-sky-100 px-3 py-2"
+                    >
+                      <Text type="secondary" className="text-xs uppercase tracking-wider">
+                        {label}
+                      </Text>
+                      <Text strong style={{ color: '#0ea5e9' }}>
+                        {value}
+                      </Text>
                     </div>
                   ))}
               </div>
               {advice.suggested_ask.notes && (
-                <Text type="secondary" className="text-xs">{advice.suggested_ask.notes}</Text>
+                <Text type="secondary" className="text-xs">
+                  {advice.suggested_ask.notes}
+                </Text>
               )}
             </div>
           )}
@@ -257,9 +280,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
-            <Button onClick={handleGenerate}>
-              Regenerate
-            </Button>
+            <Button onClick={handleGenerate}>Regenerate</Button>
             {savedId && (
               <>
                 <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -269,7 +290,10 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
                   size="small"
                   type="link"
                   icon={<ArrowRightOutlined />}
-                  onClick={() => { handleClose(); navigate(`/negotiation-result/${savedId}`); }}
+                  onClick={() => {
+                    handleClose();
+                    navigate(`/negotiation-result/${savedId}`);
+                  }}
                   style={{ padding: 0 }}
                 >
                   View Full Report

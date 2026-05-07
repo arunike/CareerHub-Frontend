@@ -110,7 +110,13 @@ const CreateAvailabilityWidgetModal = ({
         <div>
           <Text strong>Icon</Text>
           <div className="flex gap-2 mt-2">
-            {['CalendarOutlined', 'ClockCircleOutlined', 'RiseOutlined', 'PieChartOutlined', 'BarChartOutlined'].map((icon) => (
+            {[
+              'CalendarOutlined',
+              'ClockCircleOutlined',
+              'RiseOutlined',
+              'PieChartOutlined',
+              'BarChartOutlined',
+            ].map((icon) => (
               <button
                 key={icon}
                 onClick={() => setNewWidgetIcon(icon)}

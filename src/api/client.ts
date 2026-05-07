@@ -1,5 +1,10 @@
 import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios';
-import { clearAuthTokens, getStoredAccessToken, getStoredRefreshToken, storeAuthTokens } from '../lib/authTokens';
+import {
+  clearAuthTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  storeAuthTokens,
+} from '../lib/authTokens';
 import { getApiBaseUrl } from '../lib/runtimeConfig';
 
 const api = axios.create({
@@ -24,7 +29,9 @@ let refreshPromise: Promise<string> | null = null;
 
 const shouldSkipRefresh = (url?: string) => {
   if (!url) return false;
-  return ['/auth/login/', '/auth/signup/', '/auth/refresh/'].some((segment) => url.includes(segment));
+  return ['/auth/login/', '/auth/signup/', '/auth/refresh/'].some((segment) =>
+    url.includes(segment)
+  );
 };
 
 api.interceptors.request.use((config) => {
@@ -99,7 +106,7 @@ api.interceptors.response.use(
       clearAuthTokens();
       return Promise.reject(refreshError);
     }
-  },
+  }
 );
 
 export default api;

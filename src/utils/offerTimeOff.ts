@@ -7,7 +7,7 @@ const normalizeDayCount = (value: number | string | null | undefined) => {
 export const formatPtoLabel = (
   ptoDays: number | string | null | undefined,
   isUnlimitedPto = false,
-  compact = false,
+  compact = false
 ) => {
   if (isUnlimitedPto) return 'Unlimited';
   const days = normalizeDayCount(ptoDays);

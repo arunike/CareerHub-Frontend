@@ -1,8 +1,4 @@
-import {
-  CalendarOutlined,
-  LeftOutlined,
-  RightOutlined,
-} from '@ant-design/icons';
+import { CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import SegmentedToggle from '../SegmentedToggle';
 import type { CalendarViewMode } from './types';
 import { VIEW_OPTIONS } from './types';

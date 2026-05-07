@@ -21,7 +21,11 @@ const BenefitsSection = ({
     <div className="space-y-2 rounded-lg border border-gray-200 p-3">
       <div className="flex items-center justify-between">
         <label className="block text-sm font-medium text-gray-700">Benefit Items</label>
-        <button type="button" onClick={onAddBenefitItem} className="text-xs text-blue-600 hover:text-blue-700">
+        <button
+          type="button"
+          onClick={onAddBenefitItem}
+          className="text-xs text-blue-600 hover:text-blue-700"
+        >
           + Add Item
         </button>
       </div>
@@ -39,7 +43,9 @@ const BenefitsSection = ({
               type="number"
               min={0}
               value={item.amount}
-              onChange={(e) => onUpdateBenefitItem(item.id, { amount: Number(e.target.value) || 0 })}
+              onChange={(e) =>
+                onUpdateBenefitItem(item.id, { amount: Number(e.target.value) || 0 })
+              }
               className="col-span-3 rounded-md border border-gray-300 px-2 py-2 text-sm"
             />
             <select
@@ -66,9 +72,12 @@ const BenefitsSection = ({
         ))}
       </div>
       <p className="text-xs text-gray-500">
-        Annualized benefits value used in adjusted comparison: ${Math.round(computeBenefitsTotal(benefitItems)).toLocaleString()}
+        Annualized benefits value used in adjusted comparison: $
+        {Math.round(computeBenefitsTotal(benefitItems)).toLocaleString()}
       </p>
-      <p className="text-xs text-gray-500">Benefits Value (Auto): ${Math.round(benefitsValue || 0).toLocaleString()}</p>
+      <p className="text-xs text-gray-500">
+        Benefits Value (Auto): ${Math.round(benefitsValue || 0).toLocaleString()}
+      </p>
     </div>
   );
 };

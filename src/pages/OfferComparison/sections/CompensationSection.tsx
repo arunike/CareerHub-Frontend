@@ -41,7 +41,7 @@ const CompensationSection = ({
     <div className="space-y-3">
       <CompensationFields
         value={{ base_salary: baseSalary, bonus, equity }}
-        onChange={v => {
+        onChange={(v) => {
           if (v.base_salary !== baseSalary) onBaseSalaryChange(v.base_salary ?? 0);
           if (v.bonus !== bonus) onBonusChange(v.bonus ?? 0);
           if (v.equity !== equity) onEquityChange(v.equity ?? 0);
@@ -52,7 +52,7 @@ const CompensationSection = ({
         equityVestingSchedule={equityVestingSchedule}
         onEquityVestingScheduleChange={onEquityVestingScheduleChange}
         defaultEquityMode={defaultEquityMode}
-        onEquityVestingPercentChange={v => {
+        onEquityVestingPercentChange={(v) => {
           setEquityVestingPercentInternal(v);
           onEquityVestingPercentChange?.(v);
         }}
@@ -66,7 +66,7 @@ const CompensationSection = ({
           <input
             type="number"
             value={signOn}
-            onChange={e => onSignOnChange(Number(e.target.value) || 0)}
+            onChange={(e) => onSignOnChange(Number(e.target.value) || 0)}
             className="w-full rounded-lg border border-gray-200 px-3 py-2 pl-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
           />
         </div>

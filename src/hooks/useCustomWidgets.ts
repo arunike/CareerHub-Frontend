@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
-import {
-  loadAnalyticsSourceData,
-  runAnalyticsWidgetQuery,
-} from '../lib/browserAi';
+import { loadAnalyticsSourceData, runAnalyticsWidgetQuery } from '../lib/browserAi';
 
 export interface CustomWidget {
   id: string;
@@ -53,28 +50,30 @@ export const useCustomWidgets = (
       }
 
       let hasUpdates = false;
-      const updatedWidgets = await Promise.all(customWidgets.map(async (widget) => {
-        try {
-          const data = await runAnalyticsWidgetQuery(widget.query, context, sourceData);
-          if (JSON.stringify(widget.cachedData) !== JSON.stringify(data)) {
-            hasUpdates = true;
-            return { ...widget, cachedData: data };
+      const updatedWidgets = await Promise.all(
+        customWidgets.map(async (widget) => {
+          try {
+            const data = await runAnalyticsWidgetQuery(widget.query, context, sourceData);
+            if (JSON.stringify(widget.cachedData) !== JSON.stringify(data)) {
+              hasUpdates = true;
+              return { ...widget, cachedData: data };
+            }
+          } catch (error) {
+            messageApi.error(
+              error instanceof Error ? error.message : `Failed to refresh widget ${widget.name}`
+            );
+            console.error(`Failed to refresh widget ${widget.name}:`, error);
           }
-        } catch (error) {
-          messageApi.error(
-            error instanceof Error ? error.message : `Failed to refresh widget ${widget.name}`
-          );
-          console.error(`Failed to refresh widget ${widget.name}:`, error);
-        }
-        return widget;
-      }));
-      
+          return widget;
+        })
+      );
+
       if (hasUpdates) {
         setCustomWidgets(updatedWidgets);
         localStorage.setItem(storageKey, JSON.stringify(updatedWidgets));
       }
     };
-    
+
     refreshWidgets();
   }, []);
 
@@ -85,7 +84,7 @@ export const useCustomWidgets = (
   };
 
   const deleteCustomWidget = (id: string) => {
-    const updated = customWidgets.filter(w => w.id !== id);
+    const updated = customWidgets.filter((w) => w.id !== id);
     setCustomWidgets(updated);
     localStorage.setItem(storageKey, JSON.stringify(updated));
     messageApi.success('Custom widget deleted');

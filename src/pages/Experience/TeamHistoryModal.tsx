@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, DatePicker, Input, Switch, Popconfirm, Tooltip } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  TeamOutlined,
+  LockOutlined,
+  UnlockOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { TeamEntry } from '../../types';
 
@@ -33,7 +40,17 @@ interface Props {
   expIsCurrent?: boolean;
 }
 
-const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entries, onSave, isIntern, expStartDate, expEndDate, expIsCurrent }) => {
+const TeamHistoryModal: React.FC<Props> = ({
+  open,
+  onClose,
+  experienceName,
+  entries,
+  onSave,
+  isIntern,
+  expStartDate,
+  expEndDate,
+  expIsCurrent,
+}) => {
   const [local, setLocal] = useState<TeamEntry[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<TeamEntry, 'id'>>(emptyEntry());
@@ -79,20 +96,20 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
   const commitEdit = () => {
     if (!form.name.trim()) return;
     if (editingId === '__new__') {
-      setLocal(prev => [...prev, { ...form, id: nanoid() }]);
+      setLocal((prev) => [...prev, { ...form, id: nanoid() }]);
     } else {
-      setLocal(prev => prev.map(e => e.id === editingId ? { ...form, id: editingId } : e));
+      setLocal((prev) => prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e)));
     }
     setEditingId(null);
     setForm(emptyEntry());
   };
 
   const handleDelete = (id: string) => {
-    setLocal(prev => prev.filter(e => e.id !== id));
+    setLocal((prev) => prev.filter((e) => e.id !== id));
   };
 
   const toggleLock = (id: string) => {
-    setLocal(prev => prev.map(e => e.id === id ? { ...e, is_locked: !e.is_locked } : e));
+    setLocal((prev) => prev.map((e) => (e.id === id ? { ...e, is_locked: !e.is_locked } : e)));
   };
 
   const handleSave = async () => {
@@ -105,7 +122,7 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
     }
   };
 
-  const fmtDate = (d: string | null | undefined) => d ? dayjs(d).format('MMM YYYY') : '—';
+  const fmtDate = (d: string | null | undefined) => (d ? dayjs(d).format('MMM YYYY') : '—');
 
   const isFormEditing = editingId !== null;
 
@@ -114,7 +131,9 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
       title={
         <div className="flex items-center gap-2">
           <TeamOutlined className="text-blue-500" />
-          <span>Team History — <span className="font-normal text-gray-500">{experienceName}</span></span>
+          <span>
+            Team History — <span className="font-normal text-gray-500">{experienceName}</span>
+          </span>
         </div>
       }
       open={open}
@@ -127,7 +146,9 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
           </Button>
           <div className="flex gap-2">
             <Button onClick={onClose}>Cancel</Button>
-            <Button type="primary" onClick={handleSave} loading={saving}>Save</Button>
+            <Button type="primary" onClick={handleSave} loading={saving}>
+              Save
+            </Button>
           </div>
         </div>
       }
@@ -142,7 +163,7 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
                 <Input
                   placeholder="e.g. Platform Team"
                   value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   autoFocus
                 />
               </div>
@@ -151,19 +172,23 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
                 <Input
                   placeholder="e.g. Jane Smith"
                   value={form.manager ?? ''}
-                  onChange={e => setForm(f => ({ ...f, manager: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, manager: e.target.value }))}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Currently on this team</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Currently on this team
+                </label>
                 <div className="flex items-center gap-2 h-8">
                   <Switch
                     size="small"
                     checked={form.is_current}
-                    onChange={v => setForm(f => ({ ...f, is_current: v, end_date: v ? null : f.end_date }))}
+                    onChange={(v) =>
+                      setForm((f) => ({ ...f, is_current: v, end_date: v ? null : f.end_date }))
+                    }
                   />
                   <span className="text-sm text-gray-500">{form.is_current ? 'Yes' : 'No'}</span>
                 </div>
@@ -172,7 +197,8 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
 
             {isIntern && (
               <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                Dates auto-filled from experience ({fmtDate(expStartDate)} – {expIsCurrent ? 'Present' : fmtDate(expEndDate)})
+                Dates auto-filled from experience ({fmtDate(expStartDate)} –{' '}
+                {expIsCurrent ? 'Present' : fmtDate(expEndDate)})
               </div>
             )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -182,7 +208,9 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
                   className="w-full"
                   picker="month"
                   value={form.start_date ? dayjs(form.start_date) : null}
-                  onChange={d => setForm(f => ({ ...f, start_date: d ? d.format('YYYY-MM-DD') : '' }))}
+                  onChange={(d) =>
+                    setForm((f) => ({ ...f, start_date: d ? d.format('YYYY-MM-DD') : '' }))
+                  }
                 />
               </div>
               {!form.is_current && (
@@ -192,24 +220,30 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
                     className="w-full"
                     picker="month"
                     value={form.end_date ? dayjs(form.end_date) : null}
-                    onChange={d => setForm(f => ({ ...f, end_date: d ? d.format('YYYY-MM-DD') : null }))}
+                    onChange={(d) =>
+                      setForm((f) => ({ ...f, end_date: d ? d.format('YYYY-MM-DD') : null }))
+                    }
                   />
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Team Norms & Standards</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Team Norms & Standards
+              </label>
               <TextArea
                 rows={5}
                 placeholder="Describe the team's working norms, processes, standards, on-call expectations, code review practices, deployment cadence, etc."
                 value={form.norms}
-                onChange={e => setForm(f => ({ ...f, norms: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, norms: e.target.value }))}
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button size="small" onClick={cancelEdit}>Cancel</Button>
+              <Button size="small" onClick={cancelEdit}>
+                Cancel
+              </Button>
               <Button size="small" type="primary" onClick={commitEdit} disabled={!form.name.trim()}>
                 {editingId === '__new__' ? 'Add' : 'Update'}
               </Button>
@@ -224,7 +258,7 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
           </div>
         )}
 
-        {local.map(entry => (
+        {local.map((entry) => (
           <div
             key={entry.id}
             className={`border rounded-xl p-4 transition-all group ${
@@ -251,16 +285,23 @@ const TeamHistoryModal: React.FC<Props> = ({ open, onClose, experienceName, entr
                   )}
                 </div>
                 <div className="text-sm text-gray-500 mb-2 flex items-center gap-2 flex-wrap">
-                  <span>{fmtDate(entry.start_date)} – {entry.is_current ? 'Present' : fmtDate(entry.end_date)}</span>
+                  <span>
+                    {fmtDate(entry.start_date)} –{' '}
+                    {entry.is_current ? 'Present' : fmtDate(entry.end_date)}
+                  </span>
                   {entry.manager && (
                     <>
                       <span className="text-gray-300">·</span>
-                      <span>Manager: <span className="font-medium text-gray-600">{entry.manager}</span></span>
+                      <span>
+                        Manager: <span className="font-medium text-gray-600">{entry.manager}</span>
+                      </span>
                     </>
                   )}
                 </div>
                 {entry.norms && (
-                  <p className="text-[15px] text-gray-600 whitespace-pre-wrap leading-relaxed line-clamp-3">{entry.norms}</p>
+                  <p className="text-[15px] text-gray-600 whitespace-pre-wrap leading-relaxed line-clamp-3">
+                    {entry.norms}
+                  </p>
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">

@@ -234,10 +234,14 @@ const buildResumeContext = (experiences: Experience[]) => {
     }
     if (experience.base_salary != null || experience.hourly_rate != null) {
       const compBits = [];
-      if (experience.base_salary != null) compBits.push(`Base salary: $${Number(experience.base_salary).toLocaleString()}`);
-      if (experience.bonus != null) compBits.push(`Bonus: $${Number(experience.bonus).toLocaleString()}`);
-      if (experience.equity != null) compBits.push(`Equity: $${Number(experience.equity).toLocaleString()}`);
-      if (experience.hourly_rate != null) compBits.push(`Hourly rate: $${Number(experience.hourly_rate).toLocaleString()}/hr`);
+      if (experience.base_salary != null)
+        compBits.push(`Base salary: $${Number(experience.base_salary).toLocaleString()}`);
+      if (experience.bonus != null)
+        compBits.push(`Bonus: $${Number(experience.bonus).toLocaleString()}`);
+      if (experience.equity != null)
+        compBits.push(`Equity: $${Number(experience.equity).toLocaleString()}`);
+      if (experience.hourly_rate != null)
+        compBits.push(`Hourly rate: $${Number(experience.hourly_rate).toLocaleString()}/hr`);
       if (compBits.length) lines.push(compBits.join(' | '));
     }
     lines.push('-'.repeat(40));
@@ -246,7 +250,9 @@ const buildResumeContext = (experiences: Experience[]) => {
 };
 
 const formatApplicationLocation = (
-  application: Pick<CareerApplication, 'location' | 'office_location'> | Pick<ApplicationLike, 'location' | 'office_location'>,
+  application:
+    | Pick<CareerApplication, 'location' | 'office_location'>
+    | Pick<ApplicationLike, 'location' | 'office_location'>
 ) => {
   const homeLocation = application.location?.trim() || '';
   const officeLocation = application.office_location?.trim() || '';
@@ -367,8 +373,10 @@ Sign-On: $${toNumber(currentOffer.sign_on).toLocaleString()}
 Time Off: ${formatTimeOff(currentOffer)}`
     : 'CURRENT / BASELINE COMPENSATION: Not provided — advise based on the offer alone.';
 
-  const targetCompany = application?.company_name || offer.application_details?.company || 'Unknown Company';
-  const targetRole = application?.role_title || offer.application_details?.role_title || 'Unknown Role';
+  const targetCompany =
+    application?.company_name || offer.application_details?.company || 'Unknown Company';
+  const targetRole =
+    application?.role_title || offer.application_details?.role_title || 'Unknown Role';
 
   return requestJsonCompletion<NegotiationAdvice>({
     temperature: 0.3,
@@ -446,7 +454,7 @@ const computeEventDurationMinutes = (event: Event) => {
   const [startHour, startMinute] = event.start_time.split(':').map((part) => Number(part));
   const [endHour, endMinute] = event.end_time.split(':').map((part) => Number(part));
   if ([startHour, startMinute, endHour, endMinute].some((part) => Number.isNaN(part))) return 0;
-  return Math.max(0, (endHour * 60 + endMinute) - (startHour * 60 + startMinute));
+  return Math.max(0, endHour * 60 + endMinute - (startHour * 60 + startMinute));
 };
 
 const buildAnalyticsSummary = ({ applications, events }: AnalyticsSourceData) => {
@@ -469,29 +477,42 @@ const buildAnalyticsSummary = ({ applications, events }: AnalyticsSourceData) =>
     applications: {
       total: applications.length,
       by_status: byStatus,
-      offers_count: applications.filter((application) => ['OFFER', 'ACCEPTED'].includes(application.status)).length,
-      active_count: applications.filter((application) => !['REJECTED', 'GHOSTED', 'ACCEPTED'].includes(application.status)).length,
+      offers_count: applications.filter((application) =>
+        ['OFFER', 'ACCEPTED'].includes(application.status)
+      ).length,
+      active_count: applications.filter(
+        (application) => !['REJECTED', 'GHOSTED', 'ACCEPTED'].includes(application.status)
+      ).length,
     },
     events: {
       total: events.length,
       by_category: byCategory,
       average_duration_minutes:
         events.length > 0
-          ? Math.round(events.reduce((sum, event) => sum + computeEventDurationMinutes(event), 0) / events.length)
+          ? Math.round(
+              events.reduce((sum, event) => sum + computeEventDurationMinutes(event), 0) /
+                events.length
+            )
           : 0,
     },
   };
 };
 
 export const loadAnalyticsSourceData = async (): Promise<AnalyticsSourceData> => {
-  const [applicationsResponse, eventsResponse] = await Promise.all([getApplications(), getEvents()]);
+  const [applicationsResponse, eventsResponse] = await Promise.all([
+    getApplications(),
+    getEvents(),
+  ]);
   return {
     applications: applicationsResponse.data as CareerApplication[],
     events: eventsResponse.data as Event[],
   };
 };
 
-const normalizeAnalyticsContext = (queryLower: string, context: AnalyticsContext): AnalyticsContext => {
+const normalizeAnalyticsContext = (
+  queryLower: string,
+  context: AnalyticsContext
+): AnalyticsContext => {
   if (/(application|app|offer|interview)/.test(queryLower)) return 'job-hunt';
   if (/(event|meeting)/.test(queryLower)) return 'availability';
   return context;
@@ -500,14 +521,16 @@ const normalizeAnalyticsContext = (queryLower: string, context: AnalyticsContext
 const processAnalyticsQueryDeterministically = (
   query: string,
   context: AnalyticsContext,
-  sourceData: AnalyticsSourceData,
+  sourceData: AnalyticsSourceData
 ): AnalyticsWidgetResult | null => {
   const queryLower = query.trim().toLowerCase();
   const normalizedContext = normalizeAnalyticsContext(queryLower, context);
   const { start, end } = getDateRangeFromQuery(queryLower);
 
   if (normalizedContext === 'availability') {
-    const filteredEvents = sourceData.events.filter((event) => isWithinDateRange(event.date, start, end));
+    const filteredEvents = sourceData.events.filter((event) =>
+      isWithinDateRange(event.date, start, end)
+    );
 
     if (/total (events|meetings)/.test(queryLower)) {
       return { type: 'metric', value: filteredEvents.length, unit: 'events' };
@@ -553,8 +576,8 @@ const processAnalyticsQueryDeterministically = (
     }
 
     if (/active (applications|apps)/.test(queryLower)) {
-      const value = filteredApplications.filter((application) =>
-        !['REJECTED', 'GHOSTED', 'ACCEPTED'].includes(application.status)
+      const value = filteredApplications.filter(
+        (application) => !['REJECTED', 'GHOSTED', 'ACCEPTED'].includes(application.status)
       ).length;
       return { type: 'metric', value, unit: 'active apps' };
     }
@@ -576,7 +599,7 @@ const processAnalyticsQueryDeterministically = (
 export const runAnalyticsWidgetQuery = async (
   query: string,
   context: AnalyticsContext,
-  sourceData: AnalyticsSourceData,
+  sourceData: AnalyticsSourceData
 ): Promise<AnalyticsWidgetResult> => {
   const deterministic = processAnalyticsQueryDeterministically(query, context, sourceData);
   if (deterministic) return deterministic;

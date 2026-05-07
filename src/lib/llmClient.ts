@@ -29,7 +29,10 @@ export class LLMRequestError extends Error {
 }
 
 const stripCodeFences = (value: string) =>
-  value.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+  value
+    .replace(/^```(?:json)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    .trim();
 
 export const isLLMConfigurationError = (error: unknown): error is LLMConfigurationError =>
   error instanceof LLMConfigurationError;
@@ -56,9 +59,11 @@ export const requestChatCompletion = async ({
     });
     const payload: unknown = response.data;
 
-    const content = (payload as {
-      choices?: Array<{ message?: { content?: unknown } }>;
-    }).choices?.[0]?.message?.content;
+    const content = (
+      payload as {
+        choices?: Array<{ message?: { content?: unknown } }>;
+      }
+    ).choices?.[0]?.message?.content;
 
     if (typeof content !== 'string' || !content.trim()) {
       throw new LLMRequestError('Provider returned an empty completion.');
@@ -79,13 +84,11 @@ export const requestChatCompletion = async ({
     if (error instanceof LLMRequestError || error instanceof LLMConfigurationError) {
       throw error;
     }
-    throw new LLMRequestError(
-      error instanceof Error ? error.message : 'Provider request failed.'
-    );
+    throw new LLMRequestError(error instanceof Error ? error.message : 'Provider request failed.');
   }
 };
 
-export const requestJsonCompletion = async <T,>(options: ChatCompletionOptions): Promise<T> => {
+export const requestJsonCompletion = async <T>(options: ChatCompletionOptions): Promise<T> => {
   const content = await requestChatCompletion(options);
 
   try {

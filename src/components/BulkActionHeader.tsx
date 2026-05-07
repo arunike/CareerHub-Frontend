@@ -52,9 +52,7 @@ const BulkActionHeader: React.FC<BulkActionHeaderProps> = ({
         {isBulkMode ? (
           <>
             {bulkActions}
-            {onCancelSelection && (
-              <Button onClick={onCancelSelection}>Cancel</Button>
-            )}
+            {onCancelSelection && <Button onClick={onCancelSelection}>Cancel</Button>}
           </>
         ) : (
           defaultActions

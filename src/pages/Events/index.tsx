@@ -78,14 +78,10 @@ const Events = () => {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'duration'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [userTimezone, setUserTimezone] = usePersistedState<string>(
-    'userTimezone',
-    'PT',
-    {
-      serialize: (value) => value,
-      deserialize: (raw) => raw,
-    }
-  );
+  const [userTimezone, setUserTimezone] = usePersistedState<string>('userTimezone', 'PT', {
+    serialize: (value) => value,
+    deserialize: (raw) => raw,
+  });
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'eventsSelectedYear',
     getCurrentYear(),
@@ -409,14 +405,14 @@ const Events = () => {
   };
 
   const handleSelectChange = (id: number, checked: boolean) => {
-    setSelectedIds((prev) => 
-      checked ? [...prev, id] : prev.filter(selectedId => selectedId !== id)
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((selectedId) => selectedId !== id)
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = filteredEvents.map(e => e.id);
+      const allIds = filteredEvents.map((e) => e.id);
       setSelectedIds(allIds);
     } else {
       setSelectedIds([]);
@@ -432,8 +428,8 @@ const Events = () => {
       cancelText: 'No',
       onOk: async () => {
         try {
-          const realIds = selectedIds.filter(id => id > 0);
-          await Promise.all(realIds.map(id => deleteEvent(id)));
+          const realIds = selectedIds.filter((id) => id > 0);
+          await Promise.all(realIds.map((id) => deleteEvent(id)));
           messageApi.success(`${realIds.length} events deleted`);
           setSelectedIds([]);
           fetchData();
@@ -447,8 +443,8 @@ const Events = () => {
 
   const handleBulkToggleLock = async (lock: boolean) => {
     try {
-      const realIds = selectedIds.filter(id => id > 0);
-      await Promise.all(realIds.map(id => updateEvent(id, { is_locked: lock })));
+      const realIds = selectedIds.filter((id) => id > 0);
+      await Promise.all(realIds.map((id) => updateEvent(id, { is_locked: lock })));
       messageApi.success(`${realIds.length} events ${lock ? 'locked' : 'unlocked'}`);
       setSelectedIds([]);
       fetchData();
@@ -556,10 +552,14 @@ const Events = () => {
                     <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
                       Unlock
                     </Button>
-                    <Tooltip title={isAnySelectedLocked ? "Cannot delete while locked items are selected" : ""}>
-                      <Button 
-                        danger 
-                        onClick={handleBulkDelete} 
+                    <Tooltip
+                      title={
+                        isAnySelectedLocked ? 'Cannot delete while locked items are selected' : ''
+                      }
+                    >
+                      <Button
+                        danger
+                        onClick={handleBulkDelete}
                         icon={<DeleteOutlined />}
                         disabled={isAnySelectedLocked}
                       >
@@ -629,7 +629,11 @@ const Events = () => {
         initialRule={recurrenceRule || undefined}
       />
 
-      <EventViewModal event={viewingEvent} onClose={() => setViewingEvent(null)} onEdit={handleEdit} />
+      <EventViewModal
+        event={viewingEvent}
+        onClose={() => setViewingEvent(null)}
+        onEdit={handleEdit}
+      />
 
       {/* Import Modal */}
       <Modal

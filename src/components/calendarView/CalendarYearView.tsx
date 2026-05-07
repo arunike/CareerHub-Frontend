@@ -1,4 +1,14 @@
-import { addDays, addMonths, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns';
 import { Tooltip } from 'antd';
 import clsx from 'clsx';
 import { CalendarDayTooltipContent } from './CalendarDayContent';
@@ -60,7 +70,9 @@ const CalendarYearView = ({ anchorDate, today, selectedDate, onDateSelect, getDa
                   {format(cloneDay, 'd')}
                 </span>
                 <div className="flex min-h-[6px] items-center justify-center gap-1">
-                  {dayData.events.length > 0 && <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
+                  {dayData.events.length > 0 && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                  )}
                   {dayData.customHolidays.length > 0 && (
                     <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                   )}

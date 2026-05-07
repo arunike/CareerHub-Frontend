@@ -19,10 +19,41 @@ import { getReportArtifactByClientId } from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 
 const getScoreMeta = (score: number) => {
-  if (score >= 90) return { label: 'Strong match', stroke: '#10b981', ringBg: '#f0fdf4', barColor: '#10b981', badgeBg: '#d1fae5', badgeText: '#065f46' };
-  if (score >= 70) return { label: 'Good fit with minor gaps', stroke: '#3b82f6', ringBg: '#eff6ff', barColor: '#3b82f6', badgeBg: '#dbeafe', badgeText: '#1e40af' };
-  if (score >= 50) return { label: 'Partial match', stroke: '#f59e0b', ringBg: '#fffbeb', barColor: '#f59e0b', badgeBg: '#fef3c7', badgeText: '#92400e' };
-  return              { label: 'Poor match', stroke: '#ef4444', ringBg: '#fef2f2', barColor: '#ef4444', badgeBg: '#fee2e2', badgeText: '#7f1d1d' };
+  if (score >= 90)
+    return {
+      label: 'Strong match',
+      stroke: '#10b981',
+      ringBg: '#f0fdf4',
+      barColor: '#10b981',
+      badgeBg: '#d1fae5',
+      badgeText: '#065f46',
+    };
+  if (score >= 70)
+    return {
+      label: 'Good fit with minor gaps',
+      stroke: '#3b82f6',
+      ringBg: '#eff6ff',
+      barColor: '#3b82f6',
+      badgeBg: '#dbeafe',
+      badgeText: '#1e40af',
+    };
+  if (score >= 50)
+    return {
+      label: 'Partial match',
+      stroke: '#f59e0b',
+      ringBg: '#fffbeb',
+      barColor: '#f59e0b',
+      badgeBg: '#fef3c7',
+      badgeText: '#92400e',
+    };
+  return {
+    label: 'Poor match',
+    stroke: '#ef4444',
+    ringBg: '#fef2f2',
+    barColor: '#ef4444',
+    badgeBg: '#fee2e2',
+    badgeText: '#7f1d1d',
+  };
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -33,10 +64,14 @@ const supportLabel = (value: unknown) =>
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
-const skillName = (value: unknown) => (isRecord(value) ? String(value.skill || '') : String(value || ''));
-const missingSkillName = (value: unknown) => (isRecord(value) ? String(value.skill || '') : String(value || ''));
-const keywordName = (value: unknown) => (isRecord(value) ? String(value.keyword || '') : String(value || ''));
-const requirementName = (value: unknown) => (isRecord(value) ? String(value.requirement || '') : String(value || ''));
+const skillName = (value: unknown) =>
+  isRecord(value) ? String(value.skill || '') : String(value || '');
+const missingSkillName = (value: unknown) =>
+  isRecord(value) ? String(value.skill || '') : String(value || '');
+const keywordName = (value: unknown) =>
+  isRecord(value) ? String(value.keyword || '') : String(value || '');
+const requirementName = (value: unknown) =>
+  isRecord(value) ? String(value.requirement || '') : String(value || '');
 
 const JDReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,8 +92,12 @@ const JDReportPage: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-400">
         <RobotOutlined style={{ fontSize: 48 }} />
         <p className="text-lg text-gray-500">Report not found.</p>
-        <Button type="primary" icon={<ArrowLeftOutlined />} onClick={() => navigate('/jd-reports')}
-          style={{ background: '#0284c7', borderColor: '#0284c7' }}>
+        <Button
+          type="primary"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/jd-reports')}
+          style={{ background: '#0284c7', borderColor: '#0284c7' }}
+        >
           View All Reports
         </Button>
       </div>
@@ -67,7 +106,11 @@ const JDReportPage: React.FC = () => {
 
   const meta = getScoreMeta(report.score);
   const date = new Date(report.savedAt).toLocaleString('en-US', {
-    month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
   const resumeGaps = report.resume_gaps ?? [];
   const keywordSuggestions = report.keyword_suggestions ?? [];
@@ -129,13 +172,14 @@ const JDReportPage: React.FC = () => {
       {/* Page */}
       <div className="min-h-screen bg-slate-50/50 py-12 px-4 shadow-inner">
         <div className="max-w-4xl mx-auto flex flex-col gap-8">
-
           {/* Header */}
           <div className="flex flex-col gap-4">
             <div>
               <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-3 py-1 mb-4 shadow-sm">
                 <RobotOutlined className="text-sky-500 text-xs" />
-                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">AI Resume Evaluation Report</span>
+                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">
+                  AI Resume Evaluation Report
+                </span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight tracking-tight">
                 {report.title || 'Job Match Analysis'}
@@ -161,20 +205,28 @@ const JDReportPage: React.FC = () => {
                   strokeWidth={8}
                   format={(pct) => (
                     <div className="flex flex-col items-center">
-                      <span className="text-3xl font-black text-gray-900 leading-none tracking-tighter">{pct}</span>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">Overall Match</span>
+                      <span className="text-3xl font-black text-gray-900 leading-none tracking-tighter">
+                        {pct}
+                      </span>
+                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">
+                        Overall Match
+                      </span>
                     </div>
                   )}
                 />
-                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm bg-white"
-                  style={{ color: meta.badgeText, border: `1px solid ${meta.stroke}44` }}>
+                <span
+                  className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm bg-white"
+                  style={{ color: meta.badgeText, border: `1px solid ${meta.stroke}44` }}
+                >
                   {report.score_label || meta.label}
                 </span>
               </div>
               <div className="flex flex-col gap-3.5 pt-1">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 bg-sky-600 rounded-full" />
-                  <h2 className="text-lg font-bold text-gray-900 m-0 tracking-tight">Executive Summary</h2>
+                  <h2 className="text-lg font-bold text-gray-900 m-0 tracking-tight">
+                    Executive Summary
+                  </h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed text-sm m-0 font-medium opacity-90 max-w-2xl">
                   {report.summary}
@@ -183,13 +235,20 @@ const JDReportPage: React.FC = () => {
             </div>
             {/* Progress bar strip */}
             <div className="relative h-2.5 bg-gray-100/50">
-              <div className="absolute top-0 left-0 h-full rounded-r-full transition-all duration-1000 ease-out"
-                style={{ width: `${report.score}%`, background: `linear-gradient(to right, ${meta.stroke}44, ${meta.stroke})` }} />
+              <div
+                className="absolute top-0 left-0 h-full rounded-r-full transition-all duration-1000 ease-out"
+                style={{
+                  width: `${report.score}%`,
+                  background: `linear-gradient(to right, ${meta.stroke}44, ${meta.stroke})`,
+                }}
+              />
             </div>
           </div>
 
           {/* Two-col Strengths + Gaps */}
-          <div className={`grid gap-6 ${report.matched_skills?.length > 0 && report.missing_skills?.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+          <div
+            className={`grid gap-6 ${report.matched_skills?.length > 0 && report.missing_skills?.length > 0 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}
+          >
             {report.matched_skills?.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
@@ -205,7 +264,10 @@ const JDReportPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-2">
                   {report.matched_skills.map((s, i) => (
-                    <div key={i} className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2">
+                    <div
+                      key={i}
+                      className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2"
+                    >
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-bold text-emerald-800">{skillName(s)}</span>
                         {isRecord(s) && s.support_level && (
@@ -240,9 +302,14 @@ const JDReportPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-2">
                   {report.missing_skills.map((s, i) => (
-                    <div key={i} className="rounded-xl border border-red-100 bg-red-50/60 px-3 py-2">
+                    <div
+                      key={i}
+                      className="rounded-xl border border-red-100 bg-red-50/60 px-3 py-2"
+                    >
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold text-red-700">{missingSkillName(s)}</span>
+                        <span className="text-xs font-bold text-red-700">
+                          {missingSkillName(s)}
+                        </span>
                         {isRecord(s) && s.severity && (
                           <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-500 border border-red-100">
                             {String(s.severity)}
@@ -250,7 +317,9 @@ const JDReportPage: React.FC = () => {
                         )}
                       </div>
                       {isRecord(s) && s.reason && (
-                        <p className="mt-1 text-[11px] leading-relaxed text-red-900/70 m-0">{String(s.reason)}</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-red-900/70 m-0">
+                          {String(s.reason)}
+                        </p>
                       )}
                       {isRecord(s) && s.resume_evidence_status && (
                         <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-red-400 m-0">
@@ -272,11 +341,16 @@ const JDReportPage: React.FC = () => {
                     <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center">
                       <WarningOutlined className="text-orange-600 text-sm" />
                     </div>
-                    <span className="font-semibold text-gray-800 text-sm">Resume Evidence Gaps</span>
+                    <span className="font-semibold text-gray-800 text-sm">
+                      Resume Evidence Gaps
+                    </span>
                   </div>
                   <div className="flex flex-col gap-3">
                     {resumeGaps.map((gap, index) => (
-                      <div key={index} className="rounded-xl border border-orange-100 bg-orange-50/60 p-4">
+                      <div
+                        key={index}
+                        className="rounded-xl border border-orange-100 bg-orange-50/60 p-4"
+                      >
                         <p className="text-sm font-semibold text-orange-950 leading-relaxed m-0">
                           {isRecord(gap) ? String(gap.gap || '') : String(gap)}
                         </p>
@@ -302,16 +376,24 @@ const JDReportPage: React.FC = () => {
                     <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
                       <TagsOutlined className="text-sky-600 text-sm" />
                     </div>
-                    <span className="font-semibold text-gray-800 text-sm">Supported JD Keywords</span>
+                    <span className="font-semibold text-gray-800 text-sm">
+                      Supported JD Keywords
+                    </span>
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed m-0">
-                    Keywords below should only be woven into bullets where your saved experience already supports them.
+                    Keywords below should only be woven into bullets where your saved experience
+                    already supports them.
                   </p>
                   <div className="flex flex-col gap-2">
                     {keywordSuggestions.map((keyword, index) => (
-                      <div key={index} className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-2">
+                      <div
+                        key={index}
+                        className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-2"
+                      >
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-bold text-sky-700">{keywordName(keyword)}</span>
+                          <span className="text-xs font-bold text-sky-700">
+                            {keywordName(keyword)}
+                          </span>
                           {isRecord(keyword) && keyword.support_level && (
                             <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-600 border border-sky-100">
                               {supportLabel(keyword.support_level)}
@@ -337,11 +419,16 @@ const JDReportPage: React.FC = () => {
                 <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
                   <EditOutlined className="text-blue-600 text-sm" />
                 </div>
-                <span className="font-semibold text-gray-800 text-sm">Resume Bullet Rewrite Suggestions</span>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Resume Bullet Rewrite Suggestions
+                </span>
               </div>
               <div className="flex flex-col gap-4">
                 {tailoredBullets.map((bullet, index) => (
-                  <div key={index} className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/70 to-white p-5 flex flex-col gap-3">
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/70 to-white p-5 flex flex-col gap-3"
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full">
                         Suggestion {index + 1}
@@ -360,14 +447,22 @@ const JDReportPage: React.FC = () => {
 
                     {bullet.original && (
                       <div className="rounded-xl bg-white/70 border border-gray-100 p-4">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Original</div>
-                        <p className="text-sm text-gray-500 leading-relaxed m-0">{bullet.original}</p>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                          Original
+                        </div>
+                        <p className="text-sm text-gray-500 leading-relaxed m-0">
+                          {bullet.original}
+                        </p>
                       </div>
                     )}
 
                     <div className="rounded-xl bg-white border border-blue-100 p-4 shadow-sm">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Tailored Rewrite</div>
-                      <p className="text-sm text-gray-800 leading-relaxed m-0 font-medium">{bullet.revised}</p>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">
+                        Tailored Rewrite
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed m-0 font-medium">
+                        {bullet.revised}
+                      </p>
                     </div>
 
                     <p className="text-xs text-gray-500 leading-relaxed m-0">
@@ -390,20 +485,32 @@ const JDReportPage: React.FC = () => {
                 <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
                   <ProfileOutlined className="text-slate-600 text-sm" />
                 </div>
-                <span className="font-semibold text-gray-800 text-sm">Best Experience Evidence</span>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Best Experience Evidence
+                </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {bestExperiences.map((experience, index) => (
-                  <div key={index} className="rounded-2xl border border-gray-100 bg-slate-50/70 p-5 flex flex-col gap-3">
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-gray-100 bg-slate-50/70 p-5 flex flex-col gap-3"
+                  >
                     <div>
                       <h3 className="text-sm font-bold text-gray-900 m-0">{experience.title}</h3>
-                      <p className="text-xs font-semibold text-gray-400 m-0 mt-1">{experience.company}</p>
+                      <p className="text-xs font-semibold text-gray-400 m-0 mt-1">
+                        {experience.company}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed m-0">{experience.relevance}</p>
+                    <p className="text-sm text-gray-600 leading-relaxed m-0">
+                      {experience.relevance}
+                    </p>
                     {(experience.matched_requirements?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {experience.matched_requirements?.map((requirement, requirementIndex) => (
-                          <span key={requirementIndex} className="text-[11px] font-medium px-2 py-1 rounded-lg bg-white text-slate-600 border border-slate-200">
+                          <span
+                            key={requirementIndex}
+                            className="text-[11px] font-medium px-2 py-1 rounded-lg bg-white text-slate-600 border border-slate-200"
+                          >
                             {requirementName(requirement)}
                           </span>
                         ))}
@@ -431,7 +538,9 @@ const JDReportPage: React.FC = () => {
                   ['Positioning', report.overall_risk_assessment.resume_positioning_risk],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-blue-400">{label}</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                      {label}
+                    </div>
                     <div className="mt-1 text-sm font-bold capitalize text-blue-900">{value}</div>
                   </div>
                 ))}
@@ -446,11 +555,16 @@ const JDReportPage: React.FC = () => {
                 <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
                   <BulbOutlined className="text-amber-600 text-sm" />
                 </div>
-                <span className="font-semibold text-gray-800 text-sm">Actionable Recommendations</span>
+                <span className="font-semibold text-gray-800 text-sm">
+                  Actionable Recommendations
+                </span>
               </div>
               <div className="flex flex-col gap-3">
                 {report.recommendations.map((rec, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-white border border-amber-100">
+                  <div
+                    key={i}
+                    className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-white border border-amber-100"
+                  >
                     <div className="w-6 h-6 rounded-full bg-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                       {i + 1}
                     </div>
@@ -461,9 +575,7 @@ const JDReportPage: React.FC = () => {
             </div>
           )}
 
-          <p className="text-center text-xs text-gray-400 pb-4 no-print">
-            CareerHub AI · {date}
-          </p>
+          <p className="text-center text-xs text-gray-400 pb-4 no-print">CareerHub AI · {date}</p>
         </div>
       </div>
     </>

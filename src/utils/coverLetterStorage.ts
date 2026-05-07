@@ -30,7 +30,7 @@ export function saveCoverLetter(
   companyName: string,
   roleTitle: string,
   coverLetter: string,
-  jdText: string,
+  jdText: string
 ): StoredCoverLetter {
   const entry: StoredCoverLetter = {
     id: generateId(),
