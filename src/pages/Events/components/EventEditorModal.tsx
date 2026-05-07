@@ -9,13 +9,13 @@ import {
   Row,
   Select,
   Space,
-  TimePicker,
   Typography,
 } from 'antd';
 import { EnvironmentOutlined, PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
 import type { EventCategory, RecurrenceRule } from '../../../types';
 import CategoryBadge from '../../../components/CategoryBadge';
+import FriendlyTimeInput from '../../../components/FriendlyTimeInput';
 import IconPicker from '../../../components/IconPicker';
 
 const { Text } = Typography;
@@ -68,21 +68,6 @@ const EventEditorModal = ({
   onClearRecurrence,
   applications,
 }: EventEditorModalProps) => {
-  const resetMeridiemColumnScroll = (open: boolean) => {
-    if (!open) return;
-    const reset = () => {
-      const columns = document.querySelectorAll(
-        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]'
-      );
-      columns.forEach((column) => {
-        (column as HTMLElement).scrollTop = 0;
-      });
-    };
-
-    requestAnimationFrame(reset);
-    setTimeout(reset, 120);
-  };
-
   return (
     <Modal
       title={editingId ? 'Edit Event' : 'Add Event'}
@@ -112,13 +97,8 @@ const EventEditorModal = ({
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item name="start_time" label="Start Time" rules={[{ required: true }]}>
-              <TimePicker
-                use12Hours
-                format="h:mm a"
-                style={{ width: '100%' }}
+              <FriendlyTimeInput
                 minuteStep={5}
-                popupClassName="event-timepicker-dropdown"
-                onOpenChange={resetMeridiemColumnScroll}
                 onChange={(val) => {
                   if (val) {
                     const end = val.add(defaultDuration, 'minute');
@@ -130,14 +110,7 @@ const EventEditorModal = ({
           </Col>
           <Col xs={24} sm={12}>
             <Form.Item name="end_time" label="End Time" rules={[{ required: true }]}>
-              <TimePicker
-                use12Hours
-                format="h:mm a"
-                style={{ width: '100%' }}
-                minuteStep={5}
-                popupClassName="event-timepicker-dropdown"
-                onOpenChange={resetMeridiemColumnScroll}
-              />
+              <FriendlyTimeInput minuteStep={5} />
             </Form.Item>
           </Col>
         </Row>

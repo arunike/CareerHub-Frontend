@@ -18,12 +18,13 @@ import {
   UnlockOutlined,
   RobotOutlined,
 } from '@ant-design/icons';
-import { Button, message, TimePicker } from 'antd';
+import { Button, message } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
 import CategoryBadge from '../../components/CategoryBadge';
 import EditableNumberInput from '../../components/EditableNumberInput';
+import FriendlyTimeInput from '../../components/FriendlyTimeInput';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import LockableListItem from '../../components/LockableListItem';
 import {
@@ -319,21 +320,6 @@ const Settings: React.FC = () => {
     setNewAppStageLabel('');
     setNewAppStageShortLabel('');
     setNewAppStageTone('bg-blue-500');
-  };
-
-  const resetMeridiemColumnScroll = (open: boolean) => {
-    if (!open) return;
-    const reset = () => {
-      const columns = document.querySelectorAll(
-        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]'
-      );
-      columns.forEach((column) => {
-        (column as HTMLElement).scrollTop = 0;
-      });
-    };
-
-    requestAnimationFrame(reset);
-    setTimeout(reset, 120);
   };
 
   const syncAiSettings = useCallback((nextSettings: Partial<UserSettings> | null | undefined) => {
@@ -764,9 +750,8 @@ const Settings: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-gray-500 mb-1">Start</label>
-                    <TimePicker
+                    <FriendlyTimeInput
                       className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-                      format="h:mm a"
                       value={
                         settings.work_start_time
                           ? dayjs(settings.work_start_time, 'HH:mm:ss')
@@ -779,20 +764,14 @@ const Settings: React.FC = () => {
                           );
                       }}
                       minuteStep={1}
-                      use12Hours
-                      inputReadOnly={false}
-                      needConfirm={false}
                       allowClear={false}
-                      popupClassName="event-timepicker-dropdown"
-                      onOpenChange={resetMeridiemColumnScroll}
                     />
                   </div>
                   <span className="text-gray-400 mt-5">–</span>
                   <div className="flex-1">
                     <label className="block text-xs text-gray-500 mb-1">End</label>
-                    <TimePicker
+                    <FriendlyTimeInput
                       className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-                      format="h:mm a"
                       value={
                         settings.work_end_time
                           ? dayjs(settings.work_end_time, 'HH:mm:ss')
@@ -805,12 +784,7 @@ const Settings: React.FC = () => {
                           );
                       }}
                       minuteStep={1}
-                      use12Hours
-                      inputReadOnly={false}
-                      needConfirm={false}
                       allowClear={false}
-                      popupClassName="event-timepicker-dropdown"
-                      onOpenChange={resetMeridiemColumnScroll}
                     />
                   </div>
                 </div>
@@ -822,9 +796,8 @@ const Settings: React.FC = () => {
                         {idx === 0 && (
                           <label className="block text-xs text-gray-500 mb-1">Start</label>
                         )}
-                        <TimePicker
+                        <FriendlyTimeInput
                           className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-                          format="h:mm a"
                           value={
                             range.start
                               ? dayjs(range.start, 'HH:mm:ss')
@@ -840,12 +813,7 @@ const Settings: React.FC = () => {
                             }
                           }}
                           minuteStep={1}
-                          use12Hours
-                          inputReadOnly={false}
-                          needConfirm={false}
                           allowClear={false}
-                          popupClassName="event-timepicker-dropdown"
-                          onOpenChange={resetMeridiemColumnScroll}
                         />
                       </div>
                       <span className={`text-gray-400 ${idx === 0 ? 'mt-5' : ''}`}>–</span>
@@ -853,9 +821,8 @@ const Settings: React.FC = () => {
                         {idx === 0 && (
                           <label className="block text-xs text-gray-500 mb-1">End</label>
                         )}
-                        <TimePicker
+                        <FriendlyTimeInput
                           className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-                          format="h:mm a"
                           value={
                             range.end ? dayjs(range.end, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')
                           }
@@ -869,12 +836,7 @@ const Settings: React.FC = () => {
                             }
                           }}
                           minuteStep={1}
-                          use12Hours
-                          inputReadOnly={false}
-                          needConfirm={false}
                           allowClear={false}
-                          popupClassName="event-timepicker-dropdown"
-                          onOpenChange={resetMeridiemColumnScroll}
                         />
                       </div>
                       <button
