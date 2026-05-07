@@ -152,23 +152,27 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ## 🛠 Tech Stack
 
 ### Core
+
 - **React 19** — UI library with hooks
 - **TypeScript** — Type safety
 - **Vite** — Fast build tool and dev server
 - **React Router DOM** — Client-side routing
 
 ### UI & Styling
+
 - **Ant Design** — Component library (Table, Modal, Form, Button, Select, Tabs, Tooltip, etc.)
 - **Tailwind CSS** — Utility-first CSS
 - **clsx** — Conditional className management
 - **Lucide React** — Icon library
 
 ### Data & State
+
 - **Axios** — HTTP client
 - **Backend persistence + localStorage fallback** — JD reports, cover letters, and negotiation results use backend AI artifacts with automatic localStorage migration; offer adjustments and widget layouts remain local
 - **Custom hooks**: `usePersistedState`, `useCustomWidgets`, `useOfferAdjustmentsPersistence`, `useScenarioRows`
 
 ### Data Visualization
+
 - **Recharts** — Composable charting (Bar, Pie)
 - **dnd-kit** — Drag-and-drop for widget and task reordering
 
@@ -182,11 +186,13 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### Installation
 
 1. **Navigate to frontend directory**
+
    ```bash
    cd frontend
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    ```
@@ -199,11 +205,13 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 The app will be available at `http://localhost:5173` and proxies API/media calls to `http://localhost:8000` when `VITE_API_BASE_URL` is unset.
 
 For deployed environments:
+
 ```bash
 cp .env.example .env.local
 ```
 
 Then set:
+
 ```bash
 VITE_API_BASE_URL=https://your-api-project.vercel.app/api
 # Optional if uploaded files are served from a different origin
@@ -213,6 +221,7 @@ VITE_MEDIA_BASE_URL=https://your-api-project.vercel.app
 For local backend startup, copy `api/.env.development.example` to `api/.env.development` before running Django or Docker Compose.
 
 If backend models changed, run backend migrations before using the app:
+
 ```bash
 cd ../api && python manage.py migrate
 ```
@@ -227,12 +236,15 @@ Frontend deploys as its own Vercel project:
 4. Deploy normally; `frontend/vercel.json` already rewrites SPA routes back to `index.html`
 
 ### Build for Production
+
 ```bash
 npm run build
 ```
+
 Output in `dist/`.
 
 ### Run Linter
+
 ```bash
 npm run lint
 ```
@@ -341,25 +353,25 @@ frontend/
 
 ## 📡 Routes
 
-| Path | Page | Description |
-|---|---|---|
-| `/` | Home / Availability | Public homepage when logged out; weekly calendar + availability text generator when authenticated |
-| `/events` | Events | Interview event management |
-| `/holidays` | Holidays | Federal + custom holiday management with custom tabs |
-| `/applications` | Applications | Application tracker with timeline view, job URL import, and AI cover letter |
-| `/offers` | Offer Comparison | Offer analysis with weighted decision scorecard and AI negotiation advisor |
-| `/documents` | Documents | Document vault with versioning |
-| `/tasks` | Action Items | Kanban task board with smart reminder creation |
-| `/experience` | Experience | Work history, team history, schedule phases, internship earnings breakdowns, import/export, and AI JD matcher |
-| `/jd-reports` | JD Reports | Saved AI JD match report history |
-| `/ai-tools?tab=cover-letters` | Cover Letters | Saved AI cover letter history |
-| `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history |
-| `/analytics` | Analytics | Custom widget dashboard with timeline-driven job hunt insights |
-| `/settings` | Settings | User preferences with layered locking |
-| `/profile` | Profile | Standalone identity and security management page |
-| `/book/:uuid` | Public Booking | Public-facing booking page (no auth) |
-| `/jd-report/:id` | JD Report Detail | Full JD match report with PDF export |
-| `/negotiation-result/:id` | Negotiation Detail | Full negotiation advisory report |
+| Path                                | Page                | Description                                                                                                   |
+| ----------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `/`                                 | Home / Availability | Public homepage when logged out; weekly calendar + availability text generator when authenticated             |
+| `/events`                           | Events              | Interview event management                                                                                    |
+| `/holidays`                         | Holidays            | Federal + custom holiday management with custom tabs                                                          |
+| `/applications`                     | Applications        | Application tracker with timeline view, job URL import, and AI cover letter                                   |
+| `/offers`                           | Offer Comparison    | Offer analysis with weighted decision scorecard and AI negotiation advisor                                    |
+| `/documents`                        | Documents           | Document vault with versioning                                                                                |
+| `/tasks`                            | Action Items        | Kanban task board with smart reminder creation                                                                |
+| `/experience`                       | Experience          | Work history, team history, schedule phases, internship earnings breakdowns, import/export, and AI JD matcher |
+| `/jd-reports`                       | JD Reports          | Saved AI JD match report history                                                                              |
+| `/ai-tools?tab=cover-letters`       | Cover Letters       | Saved AI cover letter history                                                                                 |
+| `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history                                                                           |
+| `/analytics`                        | Analytics           | Custom widget dashboard with timeline-driven job hunt insights                                                |
+| `/settings`                         | Settings            | User preferences with layered locking                                                                         |
+| `/profile`                          | Profile             | Standalone identity and security management page                                                              |
+| `/book/:uuid`                       | Public Booking      | Public-facing booking page (no auth)                                                                          |
+| `/jd-report/:id`                    | JD Report Detail    | Full JD match report with PDF export                                                                          |
+| `/negotiation-result/:id`           | Negotiation Detail  | Full negotiation advisory report                                                                              |
 
 ## 🔗 Backend
 

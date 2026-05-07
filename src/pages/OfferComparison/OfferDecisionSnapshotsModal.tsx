@@ -37,7 +37,9 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
   const [selectedSnapshotIds, setSelectedSnapshotIds] = useState<number[]>([]);
 
   const offerId = typeof offer?.id === 'number' ? offer.id : null;
-  const selectedSnapshots = snapshots.filter((snapshot) => selectedSnapshotIds.includes(snapshot.id));
+  const selectedSnapshots = snapshots.filter((snapshot) =>
+    selectedSnapshotIds.includes(snapshot.id)
+  );
   const isAnySelectedLocked = selectedSnapshots.some((snapshot) => snapshot.is_locked);
 
   const loadSnapshots = useCallback(async () => {
@@ -132,13 +134,7 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
   };
 
   return (
-    <Modal
-      open={open}
-      title="Decision Snapshots"
-      onCancel={onClose}
-      footer={null}
-      width={860}
-    >
+    <Modal open={open} title="Decision Snapshots" onCancel={onClose} footer={null} width={860}>
       {contextHolder}
       <div className="min-h-[320px]">
         {snapshots.length === 0 && !loading ? (
@@ -156,9 +152,15 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                 onCancelSelection={() => setSelectedSnapshotIds([])}
                 bulkActions={
                   <>
-                    <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>Lock</Button>
-                    <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>Unlock</Button>
-                    <Tooltip title={isAnySelectedLocked ? 'Unlock selected snapshots before deleting' : ''}>
+                    <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                      Lock
+                    </Button>
+                    <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
+                      Unlock
+                    </Button>
+                    <Tooltip
+                      title={isAnySelectedLocked ? 'Unlock selected snapshots before deleting' : ''}
+                    >
                       <Popconfirm
                         title="Delete selected snapshots?"
                         okText="Delete"
@@ -176,7 +178,10 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
               />
             </div>
             {snapshots.map((snapshot) => (
-              <div key={snapshot.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div
+                key={snapshot.id}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <Checkbox
@@ -186,7 +191,9 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                     />
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="m-0 text-sm font-bold text-slate-900">{snapshot.title || 'Untitled snapshot'}</h3>
+                        <h3 className="m-0 text-sm font-bold text-slate-900">
+                          {snapshot.title || 'Untitled snapshot'}
+                        </h3>
                         {snapshot.is_locked && <Tag color="gold">Locked</Tag>}
                       </div>
                       <p className="mt-1 text-xs text-slate-400">
@@ -221,17 +228,40 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                       disabled={snapshot.is_locked}
                       onConfirm={() => handleDelete(snapshot)}
                     >
-                      <Button size="small" danger icon={<DeleteOutlined />} disabled={snapshot.is_locked} />
+                      <Button
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        disabled={snapshot.is_locked}
+                      />
                     </Popconfirm>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                  <div className="rounded-lg bg-slate-50 p-2"><span className="block text-slate-400">Score</span><strong>{snapshot.decision_score ?? '-'}</strong></div>
-                  <div className="rounded-lg bg-slate-50 p-2"><span className="block text-slate-400">Rank</span><strong>{snapshot.rank ? `#${snapshot.rank}` : '-'}</strong></div>
-                  <div className="rounded-lg bg-slate-50 p-2"><span className="block text-slate-400">TC</span><strong>{currency(snapshot.total_comp)}</strong></div>
-                  <div className="rounded-lg bg-slate-50 p-2"><span className="block text-slate-400">Adjusted</span><strong>{snapshot.adjusted_value ? currency(snapshot.adjusted_value) : '-'}</strong></div>
+                  <div className="rounded-lg bg-slate-50 p-2">
+                    <span className="block text-slate-400">Score</span>
+                    <strong>{snapshot.decision_score ?? '-'}</strong>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-2">
+                    <span className="block text-slate-400">Rank</span>
+                    <strong>{snapshot.rank ? `#${snapshot.rank}` : '-'}</strong>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-2">
+                    <span className="block text-slate-400">TC</span>
+                    <strong>{currency(snapshot.total_comp)}</strong>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-2">
+                    <span className="block text-slate-400">Adjusted</span>
+                    <strong>
+                      {snapshot.adjusted_value ? currency(snapshot.adjusted_value) : '-'}
+                    </strong>
+                  </div>
                 </div>
-                {snapshot.notes && <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">{snapshot.notes}</p>}
+                {snapshot.notes && (
+                  <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">
+                    {snapshot.notes}
+                  </p>
+                )}
               </div>
             ))}
           </div>

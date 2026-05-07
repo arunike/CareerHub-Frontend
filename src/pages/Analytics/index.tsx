@@ -178,8 +178,7 @@ const Analytics: React.FC = () => {
       { name: 'Offer', value: stageCounts.OFFER, fill: '#059669' },
     ].filter((item) => item.value > 0);
 
-    const positiveResponses =
-      stageCounts.SCREEN + stageCounts.ONSITE + stageCounts.OFFER;
+    const positiveResponses = stageCounts.SCREEN + stageCounts.ONSITE + stageCounts.OFFER;
     const totalApplications = data.length;
     const responseRate =
       totalApplications > 0 ? Math.round((positiveResponses / totalApplications) * 100) : 0;
@@ -233,8 +232,16 @@ const Analytics: React.FC = () => {
               onChange={setActiveTab}
               wrapperClassName="grid grid-cols-2 sm:flex"
               options={[
-                { value: 'availability', label: 'Availability', activeClassName: 'bg-white text-gray-900 shadow-sm' },
-                { value: 'career', label: 'Job Hunt', activeClassName: 'bg-white text-blue-600 shadow-sm' },
+                {
+                  value: 'availability',
+                  label: 'Availability',
+                  activeClassName: 'bg-white text-gray-900 shadow-sm',
+                },
+                {
+                  value: 'career',
+                  label: 'Job Hunt',
+                  activeClassName: 'bg-white text-blue-600 shadow-sm',
+                },
               ]}
             />
           </div>

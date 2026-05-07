@@ -1,4 +1,12 @@
-import type { BookingIntakeQuestion, Event, Holiday, PublicBooking, RecurrenceRule, ShareLink, UserSettings } from '../types';
+import type {
+  BookingIntakeQuestion,
+  Event,
+  Holiday,
+  PublicBooking,
+  RecurrenceRule,
+  ShareLink,
+  UserSettings,
+} from '../types';
 import api from './client';
 
 export const getEvents = (startDate?: string, endDate?: string) =>
@@ -14,7 +22,8 @@ export const updateEvent = (id: number, data: Partial<Event>, params?: Record<st
 export const getHolidays = () => api.get('/holidays/');
 export const getFederalHolidays = () => api.get('/holidays/federal/');
 export const createHoliday = (data: Partial<Holiday>) => api.post('/holidays/', data);
-export const updateHoliday = (id: number, data: Partial<Holiday>) => api.patch(`/holidays/${id}/`, data);
+export const updateHoliday = (id: number, data: Partial<Holiday>) =>
+  api.patch(`/holidays/${id}/`, data);
 export const deleteHoliday = (id: number) => api.delete(`/holidays/${id}/`);
 export const deleteAllHolidays = () => api.delete('/holidays/delete_all/');
 
@@ -27,20 +36,26 @@ export const importData = (formData: FormData) =>
   api.post('/import/', formData, { headers: { 'Content-Type': undefined } });
 
 export const getSettings = () => api.get('/settings/');
-export const updateSettings = (key: string, value: string) => api.put(`/settings/${key}/`, { key, value });
+export const updateSettings = (key: string, value: string) =>
+  api.put(`/settings/${key}/`, { key, value });
 export const createSetting = (data: { key: string; value: string }) => api.post('/settings/', data);
 
 export const getCategories = () => api.get('/categories/');
 export const createCategory = (data: { name: string; color: string; icon?: string }) =>
   api.post('/categories/', data);
-export const updateCategory = (id: number, data: { name: string; color: string; icon?: string; is_locked?: boolean }) =>
-  api.put(`/categories/${id}/`, data);
-export const patchCategory = (id: number, data: Partial<{ name: string; color: string; icon: string; is_locked: boolean }>) =>
-  api.patch(`/categories/${id}/`, data);
+export const updateCategory = (
+  id: number,
+  data: { name: string; color: string; icon?: string; is_locked?: boolean }
+) => api.put(`/categories/${id}/`, data);
+export const patchCategory = (
+  id: number,
+  data: Partial<{ name: string; color: string; icon: string; is_locked: boolean }>
+) => api.patch(`/categories/${id}/`, data);
 export const deleteCategory = (id: number) => api.delete(`/categories/${id}/`);
 
 export const getUserSettings = () => api.get('/user-settings/current/');
-export const updateUserSettings = (data: Partial<UserSettings> | FormData) => api.put('/user-settings/current/', data);
+export const updateUserSettings = (data: Partial<UserSettings> | FormData) =>
+  api.put('/user-settings/current/', data);
 export const requestAIProviderChatCompletion = (data: {
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
   temperature?: number;
@@ -52,11 +67,13 @@ export const setRecurrence = (eventId: number, recurrenceRule: RecurrenceRule) =
   api.post(`/events/${eventId}/set_recurrence/`, { recurrence_rule: recurrenceRule });
 export const updateRecurringSeries = (eventId: number, updates: Partial<Event>) =>
   api.put(`/events/${eventId}/update_series/`, updates);
-export const deleteRecurringSeries = (eventId: number) => api.delete(`/events/${eventId}/delete_series/`);
+export const deleteRecurringSeries = (eventId: number) =>
+  api.delete(`/events/${eventId}/delete_series/`);
 export const deleteRecurringInstance = (eventId: number, date: string) =>
   api.post(`/events/${eventId}/delete_instance/`, { date });
 
-export const getCurrentShareLink = () => api.get<{ active: ShareLink | null }>('/share-links/current/');
+export const getCurrentShareLink = () =>
+  api.get<{ active: ShareLink | null }>('/share-links/current/');
 export const getShareLinks = () => api.get<ShareLink[]>('/share-links/');
 export const generateShareLink = (data: {
   title?: string;
@@ -69,16 +86,23 @@ export const generateShareLink = (data: {
   max_bookings_per_day?: number;
   allow_reschedule_cancel?: boolean;
   intake_questions?: BookingIntakeQuestion[];
-}) =>
-  api.post<ShareLink>('/share-links/generate/', data);
+}) => api.post<ShareLink>('/share-links/generate/', data);
 export const deactivateShareLink = () => api.post('/share-links/deactivate/');
-export const deactivateSpecificShareLink = (id: number) => api.post<ShareLink>(`/share-links/${id}/deactivate_link/`);
+export const deactivateSpecificShareLink = (id: number) =>
+  api.post<ShareLink>(`/share-links/${id}/deactivate_link/`);
 export const deleteShareLink = (id: number) => api.delete(`/share-links/${id}/`);
-export const updateShareLink = (id: number, data: Partial<ShareLink>) => api.patch<ShareLink>(`/share-links/${id}/`, data);
+export const updateShareLink = (id: number, data: Partial<ShareLink>) =>
+  api.patch<ShareLink>(`/share-links/${id}/`, data);
 export const getPublicBookings = () => api.get<PublicBooking[]>('/share-links/bookings/');
 export const deletePublicBooking = (id: number) => api.delete(`/public-bookings/${id}/`);
-export const updatePublicBooking = (id: number, data: Partial<PublicBooking>) => api.patch<PublicBooking>(`/public-bookings/${id}/`, data);
-export const getPublicBookingSlots = (uuid: string, date?: string, timezone: string = 'PT', bookingUuid?: string) =>
+export const updatePublicBooking = (id: number, data: Partial<PublicBooking>) =>
+  api.patch<PublicBooking>(`/public-bookings/${id}/`, data);
+export const getPublicBookingSlots = (
+  uuid: string,
+  date?: string,
+  timezone: string = 'PT',
+  bookingUuid?: string
+) =>
   api.get<{
     title: string;
     host_display_name?: string;
@@ -110,18 +134,26 @@ export const createPublicBooking = (
     timezone?: string;
     notes?: string;
     intake_answers?: Record<string, string>;
-  },
+  }
 ) => api.post(`/booking/${uuid}/book/`, data);
 
 export const getPublicBookingDetails = (uuid: string, bookingUuid: string) =>
-  api.get<{ booking: PublicBooking; share_link: ShareLink }>(`/booking/${uuid}/manage/${bookingUuid}/details/`);
+  api.get<{ booking: PublicBooking; share_link: ShareLink }>(
+    `/booking/${uuid}/manage/${bookingUuid}/details/`
+  );
 export const reschedulePublicBooking = (
   uuid: string,
   bookingUuid: string,
-  data: { date: string; start_time: string; end_time: string; timezone?: string },
-) => api.post<{ message: string; booking: PublicBooking }>(`/booking/${uuid}/manage/${bookingUuid}/reschedule/`, data);
+  data: { date: string; start_time: string; end_time: string; timezone?: string }
+) =>
+  api.post<{ message: string; booking: PublicBooking }>(
+    `/booking/${uuid}/manage/${bookingUuid}/reschedule/`,
+    data
+  );
 export const cancelPublicBooking = (uuid: string, bookingUuid: string) =>
-  api.post<{ message: string; booking: PublicBooking }>(`/booking/${uuid}/manage/${bookingUuid}/cancel/`);
+  api.post<{ message: string; booking: PublicBooking }>(
+    `/booking/${uuid}/manage/${bookingUuid}/cancel/`
+  );
 
 export const exportEvents = (format: string = 'csv') =>
   api.get('/events/export/', { params: { fmt: format }, responseType: 'blob' });

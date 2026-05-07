@@ -47,11 +47,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isDesktopSidebarCollapsed = Boolean(screens.lg && desktopCollapsed);
 
   useEffect(() => {
-    getUserSettings().then(res => {
-      setHiddenNavItems(res.data.hidden_nav_items || []);
-      setProfilePic(res.data.profile_picture);
-      setDisplayName(res.data.display_name || user?.full_name || '');
-    }).catch(() => {});
+    getUserSettings()
+      .then((res) => {
+        setHiddenNavItems(res.data.hidden_nav_items || []);
+        setProfilePic(res.data.profile_picture);
+        setDisplayName(res.data.display_name || user?.full_name || '');
+      })
+      .catch(() => {});
   }, [user]);
 
   useEffect(() => {
@@ -156,23 +158,28 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isVisible = (key: string) =>
     key === '/settings' || location.pathname === key || !hiddenNavItems.includes(key);
 
-  const filterChildren = (items: typeof menuItems[0]['children']) =>
-    items?.filter(item => !('children' in item) || isVisible(item.key)
-      ? isVisible(item.key)
-      : false
-    ).map(item =>
-      'children' in item && item.children
-        ? {
-            ...item,
-            children: (item.children as Array<{ key: string }>).filter((child) => isVisible(child.key)),
-          }
-        : item
-    );
+  const filterChildren = (items: (typeof menuItems)[0]['children']) =>
+    items
+      ?.filter((item) =>
+        !('children' in item) || isVisible(item.key) ? isVisible(item.key) : false
+      )
+      .map((item) =>
+        'children' in item && item.children
+          ? {
+              ...item,
+              children: (item.children as Array<{ key: string }>).filter((child) =>
+                isVisible(child.key)
+              ),
+            }
+          : item
+      );
 
-  const visibleMenuItems = menuItems.map(group => ({
-    ...group,
-    children: filterChildren(group.children),
-  })).filter(group => (group.children?.length ?? 0) > 0);
+  const visibleMenuItems = menuItems
+    .map((group) => ({
+      ...group,
+      children: filterChildren(group.children),
+    }))
+    .filter((group) => (group.children?.length ?? 0) > 0);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key.startsWith('/')) {
@@ -203,7 +210,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   ];
   const matchesNavKey = (key: string) =>
     key === '/' ? location.pathname === '/' : location.pathname.startsWith(key);
-  const isMoreActive = !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
+  const isMoreActive =
+    !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
 
   const SidebarContent = (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
@@ -220,7 +228,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           className={isDesktopSidebarCollapsed ? 'h-11 w-11 object-contain' : 'h-24'}
         />
         {screens.lg ? (
-          <Tooltip title={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right">
+          <Tooltip
+            title={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            placement="right"
+          >
             <Button
               type="text"
               icon={isDesktopSidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -280,7 +291,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 aria-label="Open profile"
                 className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-sky-100 hover:shadow-lg hover:shadow-sky-500/5 transition-all"
               >
-                <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
+                <IdentityAvatar
+                  imageUrl={profilePic}
+                  name={displayName || user?.full_name}
+                  email={user?.email}
+                  size="sm"
+                />
               </button>
             </Tooltip>
             <Tooltip title="Sign out" placement="right">
@@ -308,14 +324,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="text-xs text-gray-400 font-medium">Notifications</span>
               <NotificationBell placement="top-left" />
             </div>
-            <div 
+            <div
               onClick={() => navigate('/profile')}
               className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-sky-100 hover:shadow-xl hover:shadow-sky-500/5 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-3">
-                <IdentityAvatar imageUrl={profilePic} name={displayName || user?.full_name} email={user?.email} size="sm" />
+                <IdentityAvatar
+                  imageUrl={profilePic}
+                  name={displayName || user?.full_name}
+                  email={user?.email}
+                  size="sm"
+                />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Account</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                    Account
+                  </p>
                   <p className="text-sm font-bold text-slate-900 truncate group-hover:text-sky-600 transition-colors">
                     {displayName || 'CareerHub User'}
                   </p>
@@ -380,7 +403,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       <AntLayout className="min-h-screen bg-gray-50 transition-all duration-300">
         <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
-          <div className={`max-w-400 mx-auto p-4 md:p-6 lg:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}>
+          <div
+            className={`max-w-400 mx-auto p-4 md:p-6 lg:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}
+          >
             {children}
           </div>
         </Content>

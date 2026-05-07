@@ -53,15 +53,25 @@ export const useScenarioRows = ({
       const app = applications.find((a) => a.id === offer.application);
       const homeLocation = getEffectiveTaxLocation(app) || referenceLocation;
       const rowCity = homeLocation;
-      const rowColIndex = estimateColIndexFromCity(rowCity, cityCostOfLiving, stateColBase, stateNameToAbbr);
+      const rowColIndex = estimateColIndexFromCity(
+        rowCity,
+        cityCostOfLiving,
+        stateColBase,
+        stateNameToAbbr
+      );
       const rowMonthlyRent = Math.max(
         0,
         Number(
-          app?.monthly_rent_override ?? Math.round(baselineRent * (Math.max(1, rowColIndex) / baselineColIndex)),
-        ),
+          app?.monthly_rent_override ??
+            Math.round(baselineRent * (Math.max(1, rowColIndex) / baselineColIndex))
+        )
       );
       const workMode =
-        app?.rto_policy === 'REMOTE' ? 'REMOTE' : app?.rto_policy === 'ONSITE' ? 'ONSITE' : 'HYBRID';
+        app?.rto_policy === 'REMOTE'
+          ? 'REMOTE'
+          : app?.rto_policy === 'ONSITE'
+            ? 'ONSITE'
+            : 'HYBRID';
       const rtoDays =
         typeof app?.rto_days_per_week === 'number'
           ? app.rto_days_per_week
@@ -81,7 +91,7 @@ export const useScenarioRows = ({
         maritalStatus,
         rowCity,
         stateTaxRate,
-        stateNameToAbbr,
+        stateNameToAbbr
       );
       const rowTax = {
         baseTaxRate: Number(app?.tax_base_rate ?? estimatedTax.baseTaxRate),
@@ -91,11 +101,11 @@ export const useScenarioRows = ({
 
       const freeFoodAnnualValue = annualizeAmount(
         Number(app?.free_food_perk_value || 0),
-        (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY',
+        (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
       );
       const commuteAnnualCost = annualizeAmount(
         Number(app?.commute_cost_value || 0),
-        (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY',
+        (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
       );
 
       const scenarioCalc = calculateScenarioValue({
@@ -158,8 +168,15 @@ export const useScenarioRows = ({
     const simulatedRows = simulatedOffers.map((offer) => {
       const homeLocation = getEffectiveTaxLocation(offer) || referenceLocation;
       const rowCity = homeLocation;
-      const rowColIndex = estimateColIndexFromCity(rowCity, cityCostOfLiving, stateColBase, stateNameToAbbr);
-      const estimatedMonthlyRent = Math.round(baselineRent * (Math.max(1, rowColIndex) / baselineColIndex));
+      const rowColIndex = estimateColIndexFromCity(
+        rowCity,
+        cityCostOfLiving,
+        stateColBase,
+        stateNameToAbbr
+      );
+      const estimatedMonthlyRent = Math.round(
+        baselineRent * (Math.max(1, rowColIndex) / baselineColIndex)
+      );
       const rowMonthlyRent = Math.max(0, Number(offer.monthly_rent ?? estimatedMonthlyRent));
       const rowIncome =
         Number(offer.base_salary) +
@@ -172,7 +189,7 @@ export const useScenarioRows = ({
         maritalStatus,
         rowCity,
         stateTaxRate,
-        stateNameToAbbr,
+        stateNameToAbbr
       );
       const rowTax = {
         baseTaxRate: Number(offer.tax_base_rate ?? estimatedTax.baseTaxRate),
@@ -181,11 +198,11 @@ export const useScenarioRows = ({
       };
       const freeFoodAnnualValue = annualizeAmount(
         Number(offer.free_food_perk_value || 0),
-        offer.free_food_perk_frequency || 'YEARLY',
+        offer.free_food_perk_frequency || 'YEARLY'
       );
       const commuteAnnualCost = annualizeAmount(
         Number(offer.commute_cost_value || 0),
-        offer.commute_cost_frequency || 'MONTHLY',
+        offer.commute_cost_frequency || 'MONTHLY'
       );
       const scenarioCalc = calculateScenarioValue({
         base_salary: Number(offer.base_salary),
@@ -268,7 +285,10 @@ export const useScenarioRows = ({
         deltaBonusAfterTax: row.offer.is_current ? 0 : row.afterTaxBonus - currentBonusAfterTax,
         deltaEquityAfterTax: row.offer.is_current ? 0 : row.afterTaxEquity - currentEquityAfterTax,
         deltaPtoHolidayDays:
-          row.offer.is_current || row.is_unlimited_pto || currentHasUnlimitedPto || row.pto_holiday_days == null
+          row.offer.is_current ||
+          row.is_unlimited_pto ||
+          currentHasUnlimitedPto ||
+          row.pto_holiday_days == null
             ? null
             : row.pto_holiday_days - currentPtoHolidayDays,
       }))

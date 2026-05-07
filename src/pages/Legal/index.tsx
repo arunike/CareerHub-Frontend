@@ -42,13 +42,11 @@ const pageCopy: Record<
     sections: [
       {
         title: 'Information You Add',
-        body:
-          'CareerHub stores the account information and career-tracking data you choose to add, such as applications, events, offers, compensation details, documents, notes, tasks, settings, and analytics preferences.',
+        body: 'CareerHub stores the account information and career-tracking data you choose to add, such as applications, events, offers, compensation details, documents, notes, tasks, settings, and analytics preferences.',
       },
       {
         title: 'Google Sheets Data',
-        body:
-          'If you connect Google, CareerHub requests read-only access to Google Sheets and Drive metadata. Drive metadata is used to show a spreadsheet picker. Sheet values are read only for sheets you choose to preview or sync.',
+        body: 'If you connect Google, CareerHub requests read-only access to Google Sheets and Drive metadata. Drive metadata is used to show a spreadsheet picker. Sheet values are read only for sheets you choose to preview or sync.',
         bullets: [
           'CareerHub does not write to your Google Sheets.',
           'CareerHub does not read spreadsheets you have not selected for preview or sync.',
@@ -57,23 +55,19 @@ const pageCopy: Record<
       },
       {
         title: 'How Your Data Is Used',
-        body:
-          'Data is used to run the product features you request: displaying your pipeline, importing rows from configured sheets, updating application and event records, generating analytics, and powering account settings.',
+        body: 'Data is used to run the product features you request: displaying your pipeline, importing rows from configured sheets, updating application and event records, generating analytics, and powering account settings.',
       },
       {
         title: 'Security',
-        body:
-          'CareerHub uses authenticated account access for private data. Google OAuth refresh tokens are encrypted before storage, and synced records are scoped to the CareerHub account that connected Google.',
+        body: 'CareerHub uses authenticated account access for private data. Google OAuth refresh tokens are encrypted before storage, and synced records are scoped to the CareerHub account that connected Google.',
       },
       {
         title: 'Retention And Deletion',
-        body:
-          'Your CareerHub data remains in your account until you edit it, delete it, disconnect an integration, or request account deletion. Disconnecting Google removes the stored OAuth credential used for future syncs.',
+        body: 'Your CareerHub data remains in your account until you edit it, delete it, disconnect an integration, or request account deletion. Disconnecting Google removes the stored OAuth credential used for future syncs.',
       },
       {
         title: 'Contact',
-        body:
-          'For privacy requests or questions, contact the CareerHub app owner using the support email shown on the Google OAuth consent screen.',
+        body: 'For privacy requests or questions, contact the CareerHub app owner using the support email shown on the Google OAuth consent screen.',
       },
     ],
   },
@@ -90,33 +84,27 @@ const pageCopy: Record<
     sections: [
       {
         title: 'Use Of CareerHub',
-        body:
-          'CareerHub is a personal tool for tracking job applications, interviews, offers, documents, tasks, analytics, and related career-planning information.',
+        body: 'CareerHub is a personal tool for tracking job applications, interviews, offers, documents, tasks, analytics, and related career-planning information.',
       },
       {
         title: 'Your Responsibility',
-        body:
-          'You are responsible for the data you enter, upload, connect, or sync. Do not store or import information you do not have permission to use.',
+        body: 'You are responsible for the data you enter, upload, connect, or sync. Do not store or import information you do not have permission to use.',
       },
       {
         title: 'Google Sheets Sync',
-        body:
-          'When you connect Google, you authorize CareerHub to read spreadsheet files you select for preview or sync. You can disconnect Google from Settings, and CareerHub will stop using the stored credential for scheduled syncs.',
+        body: 'When you connect Google, you authorize CareerHub to read spreadsheet files you select for preview or sync. You can disconnect Google from Settings, and CareerHub will stop using the stored credential for scheduled syncs.',
       },
       {
         title: 'Service Availability',
-        body:
-          'CareerHub is provided as-is. The product is designed to keep data handling and sync behavior predictable, but uninterrupted service, complete availability, and error-free imports are not guaranteed.',
+        body: 'CareerHub is provided as-is. The product is designed to keep data handling and sync behavior predictable, but uninterrupted service, complete availability, and error-free imports are not guaranteed.',
       },
       {
         title: 'Account And Access',
-        body:
-          'Keep your account credentials secure. Activity performed from your authenticated account may affect the applications, events, files, integrations, and settings stored in that account.',
+        body: 'Keep your account credentials secure. Activity performed from your authenticated account may affect the applications, events, files, integrations, and settings stored in that account.',
       },
       {
         title: 'Changes',
-        body:
-          'These terms may be updated as CareerHub changes. The latest version is published on this page with the effective update date.',
+        body: 'These terms may be updated as CareerHub changes. The latest version is published on this page with the effective update date.',
       },
     ],
   },
@@ -145,11 +133,15 @@ export default function LegalPage({ type }: LegalPageProps) {
         <div className="mx-auto w-full max-w-6xl">
           <section className="grid gap-8 py-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:py-16">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">{copy.eyebrow}</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">
+                {copy.eyebrow}
+              </p>
               <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-6xl">
                 {copy.title}
               </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">{copy.intro}</p>
+              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+                {copy.intro}
+              </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 {trustItems.map((item) => {
                   const Icon = item.icon;
@@ -167,10 +159,15 @@ export default function LegalPage({ type }: LegalPageProps) {
             </div>
 
             <aside className="rounded-[28px] border border-white/80 bg-white/70 p-8 shadow-xl shadow-sky-900/5 backdrop-blur-xl">
-              <p className="text-[11px] font-black uppercase tracking-wider text-sky-600">Quick summary</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-sky-600">
+                Quick summary
+              </p>
               <ul className="mt-5 space-y-4">
                 {copy.summary.map((item) => (
-                  <li key={item} className="flex gap-3 text-sm font-medium leading-6 text-slate-700">
+                  <li
+                    key={item}
+                    className="flex gap-3 text-sm font-medium leading-6 text-slate-700"
+                  >
                     <CheckCircleOutlined className="mt-1 shrink-0 text-emerald-500" />
                     <span>{item}</span>
                   </li>
@@ -200,7 +197,10 @@ export default function LegalPage({ type }: LegalPageProps) {
                     {section.bullets && (
                       <ul className="mt-5 space-y-3">
                         {section.bullets.map((bullet) => (
-                          <li key={bullet} className="flex gap-3 text-sm font-medium leading-6 text-slate-600">
+                          <li
+                            key={bullet}
+                            className="flex gap-3 text-sm font-medium leading-6 text-slate-600"
+                          >
                             <CheckCircleOutlined className="mt-1 shrink-0 text-sky-500" />
                             <span>{bullet}</span>
                           </li>
@@ -214,8 +214,13 @@ export default function LegalPage({ type }: LegalPageProps) {
           </section>
 
           <footer className="mt-auto flex flex-col gap-4 border-t border-slate-200 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-            <span className="font-medium">CareerHub legal information is available without signing in.</span>
-            <Link to={`/${alternateType}`} className="font-bold text-slate-600 transition hover:text-slate-900">
+            <span className="font-medium">
+              CareerHub legal information is available without signing in.
+            </span>
+            <Link
+              to={`/${alternateType}`}
+              className="font-bold text-slate-600 transition hover:text-slate-900"
+            >
               View {alternateLabel}
             </Link>
           </footer>

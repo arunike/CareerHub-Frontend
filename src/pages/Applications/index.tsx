@@ -172,7 +172,8 @@ const Applications = () => {
         if (query.length === 0) score += 1;
         if (candidate.startsWith(query) && query.length > 0) score += 10;
         if (candidate.includes(query) && query.length > 0) score += 6;
-        if (queryTokens.length && queryTokens.every((token) => candidate.includes(token))) score += 4;
+        if (queryTokens.length && queryTokens.every((token) => candidate.includes(token)))
+          score += 4;
         if (candidate === query && query.length > 0) score += 12;
 
         return { value: raw, score };
@@ -201,12 +202,14 @@ const Applications = () => {
 
   useEffect(() => {
     fetchData();
-    getUserSettings().then(res => {
-      const types = res.data.employment_types;
-      if (types && types.length > 0) setEmpTypes(types);
-      const stages = res.data.application_stages;
-      if (stages && stages.length > 0) setAppStages(stages);
-    }).catch(() => {});
+    getUserSettings()
+      .then((res) => {
+        const types = res.data.employment_types;
+        if (types && types.length > 0) setEmpTypes(types);
+        const stages = res.data.application_stages;
+        if (stages && stages.length > 0) setAppStages(stages);
+      })
+      .catch(() => {});
 
     loadUsCityOptions()
       .then(setAllUsCityOptions)
@@ -258,7 +261,9 @@ const Applications = () => {
     try {
       await updateApplication(app.id, { is_locked: !app.is_locked });
       messageApi.success(app.is_locked ? 'Application unlocked' : 'Application locked');
-      setApplications(prev => prev.map(a => a.id === app.id ? { ...a, is_locked: !app.is_locked } : a));
+      setApplications((prev) =>
+        prev.map((a) => (a.id === app.id ? { ...a, is_locked: !app.is_locked } : a))
+      );
     } catch (error) {
       messageApi.error('Failed to toggle lock');
       console.error(error);
@@ -274,7 +279,7 @@ const Applications = () => {
       cancelText: 'No',
       onOk: async () => {
         try {
-          await Promise.all(selectedRowKeys.map(id => deleteApplication(id as number)));
+          await Promise.all(selectedRowKeys.map((id) => deleteApplication(id as number)));
           messageApi.success(`${selectedRowKeys.length} applications deleted`);
           setSelectedRowKeys([]);
           fetchData();
@@ -288,7 +293,9 @@ const Applications = () => {
 
   const handleBulkToggleLock = async (lock: boolean) => {
     try {
-      await Promise.all(selectedRowKeys.map(id => updateApplication(id as number, { is_locked: lock })));
+      await Promise.all(
+        selectedRowKeys.map((id) => updateApplication(id as number, { is_locked: lock }))
+      );
       messageApi.success(`${selectedRowKeys.length} applications ${lock ? 'locked' : 'unlocked'}`);
       setSelectedRowKeys([]);
       fetchData();
@@ -315,10 +322,12 @@ const Applications = () => {
       ['growth_score', 'work_life_score', 'brand_score', 'team_score'].forEach((field) => {
         if (payload[field] === undefined) payload[field] = null;
       });
-      payload.visa_sponsorship = values.visa_sponsorship && values.visa_sponsorship !== 'UNKNOWN'
-        ? values.visa_sponsorship
-        : '';
-      payload.day_one_gc = values.day_one_gc && values.day_one_gc !== 'UNKNOWN' ? values.day_one_gc : '';
+      payload.visa_sponsorship =
+        values.visa_sponsorship && values.visa_sponsorship !== 'UNKNOWN'
+          ? values.visa_sponsorship
+          : '';
+      payload.day_one_gc =
+        values.day_one_gc && values.day_one_gc !== 'UNKNOWN' ? values.day_one_gc : '';
       delete payload.company;
       delete payload.site_link;
       delete payload.linked_document_ids;
@@ -333,7 +342,9 @@ const Applications = () => {
           .map((doc) => doc.id);
 
         const docsToLink = selectedDocumentIds.filter((id) => !currentlyLinkedDocIds.includes(id));
-        const docsToUnlink = currentlyLinkedDocIds.filter((id) => !selectedDocumentIds.includes(id));
+        const docsToUnlink = currentlyLinkedDocIds.filter(
+          (id) => !selectedDocumentIds.includes(id)
+        );
 
         await Promise.all([
           ...docsToLink.map((docId) => patchDocument(docId, { application: editingId })),
@@ -342,7 +353,9 @@ const Applications = () => {
         messageApi.success('Application updated');
 
         const updatedApplication = response.data as CareerApplication;
-        setApplications((prev) => prev.map((app) => (app.id === editingId ? updatedApplication : app)));
+        setApplications((prev) =>
+          prev.map((app) => (app.id === editingId ? updatedApplication : app))
+        );
         setDocuments((prev) =>
           prev.map((doc) => {
             if (docsToLink.includes(doc.id)) return { ...doc, application: editingId };
@@ -452,7 +465,10 @@ const Applications = () => {
       closeJobImportModal();
       fetchData();
     } catch (error: unknown) {
-      const formError = error as { errorFields?: unknown; response?: { data?: { error?: string } } };
+      const formError = error as {
+        errorFields?: unknown;
+        response?: { data?: { error?: string } };
+      };
       if (formError?.errorFields) return;
       messageApi.error(formError?.response?.data?.error || 'Failed to create imported application');
       console.error(error);
@@ -482,7 +498,10 @@ const Applications = () => {
       salary_range: app.salary_range,
       office_location: app.office_location || app.location,
       rto_policy: app.rto_policy || 'UNKNOWN',
-      visa_sponsorship: app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN' ? app.visa_sponsorship : undefined,
+      visa_sponsorship:
+        app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN'
+          ? app.visa_sponsorship
+          : undefined,
       day_one_gc: app.day_one_gc && app.day_one_gc !== 'UNKNOWN' ? app.day_one_gc : undefined,
       growth_score: app.growth_score ?? null,
       work_life_score: app.work_life_score ?? null,
@@ -576,26 +595,26 @@ const Applications = () => {
   };
 
   const APP_STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-    blue:   { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-    sky:    { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+    blue: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+    sky: { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
     violet: { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
     purple: { bg: '#faf5ff', color: '#7e22ce', border: '#e9d5ff' },
     indigo: { bg: '#eef2ff', color: '#4338ca', border: '#c7d2fe' },
-    amber:  { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
+    amber: { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
     orange: { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
-    red:    { bg: '#fff1f2', color: '#b91c1c', border: '#fecaca' },
-    emerald:{ bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
-    green:  { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
-    teal:   { bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' },
-    cyan:   { bg: '#ecfeff', color: '#0e7490', border: '#a5f3fc' },
-    rose:   { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
-    pink:   { bg: '#fdf2f8', color: '#9d174d', border: '#fbcfe8' },
-    slate:  { bg: '#f8fafc', color: '#334155', border: '#e2e8f0' },
-    gray:   { bg: '#f9fafb', color: '#374151', border: '#e5e7eb' },
+    red: { bg: '#fff1f2', color: '#b91c1c', border: '#fecaca' },
+    emerald: { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+    green: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+    teal: { bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' },
+    cyan: { bg: '#ecfeff', color: '#0e7490', border: '#a5f3fc' },
+    rose: { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
+    pink: { bg: '#fdf2f8', color: '#9d174d', border: '#fbcfe8' },
+    slate: { bg: '#f8fafc', color: '#334155', border: '#e2e8f0' },
+    gray: { bg: '#f9fafb', color: '#374151', border: '#e5e7eb' },
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
-    const stage = appStages.find(s => s.key === status);
+    const stage = appStages.find((s) => s.key === status);
     let c = APP_STAGE_COLORS.gray;
     if (stage) {
       const colorMatch = stage.tone.match(/bg-([a-z]+)-\d+/);
@@ -615,18 +634,18 @@ const Applications = () => {
   };
 
   const EMP_TYPE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-    blue:   { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
-    teal:   { bg: '#f0fdfa', color: '#14b8a6', border: '#99f6e4' },
-    amber:  { bg: '#fffbeb', color: '#f59e0b', border: '#fde68a' },
+    blue: { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
+    teal: { bg: '#f0fdfa', color: '#14b8a6', border: '#99f6e4' },
+    amber: { bg: '#fffbeb', color: '#f59e0b', border: '#fde68a' },
     purple: { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
     orange: { bg: '#fff7ed', color: '#f97316', border: '#fed7aa' },
-    green:  { bg: '#f0fdf4', color: '#22c55e', border: '#bbf7d0' },
-    gray:   { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb' },
+    green: { bg: '#f0fdf4', color: '#22c55e', border: '#bbf7d0' },
+    gray: { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb' },
   };
 
   const EmploymentTypeBadge = ({ type }: { type?: string | null }) => {
     if (!type || type === 'full_time') return null;
-    const meta = empTypes.find(t => t.value === type);
+    const meta = empTypes.find((t) => t.value === type);
     if (!meta) return null;
     const c = EMP_TYPE_COLORS[meta.color] ?? EMP_TYPE_COLORS.gray;
     return (
@@ -691,7 +710,8 @@ const Applications = () => {
       key: 'date_applied',
       render: (date: string) => formatDateOnly(date, '—'),
       sorter: (a: CareerApplication, b: CareerApplication) =>
-        (dayjsDateOnlyLocal(a.date_applied)?.valueOf() ?? 0) - (dayjsDateOnlyLocal(b.date_applied)?.valueOf() ?? 0),
+        (dayjsDateOnlyLocal(a.date_applied)?.valueOf() ?? 0) -
+        (dayjsDateOnlyLocal(b.date_applied)?.valueOf() ?? 0),
     },
     {
       title: 'Actions',
@@ -727,8 +747,11 @@ const Applications = () => {
     },
   ];
 
-  const activeFilterCount = Number(Boolean(searchText)) +
-    Number(statusFilter !== 'ALL') + Number(empTypeFilter !== 'ALL') + Number(locationFilter !== 'ALL');
+  const activeFilterCount =
+    Number(Boolean(searchText)) +
+    Number(statusFilter !== 'ALL') +
+    Number(empTypeFilter !== 'ALL') +
+    Number(locationFilter !== 'ALL');
 
   const renderApplicationForm = (onCancel: () => void, submitLabel = 'Save') => (
     <Form form={form} layout="vertical" onFinish={handleAddEdit}>
@@ -746,8 +769,10 @@ const Applications = () => {
         <Col xs={24} sm={12}>
           <Form.Item name="status" label="Status">
             <Select>
-              {appStages.map(stage => (
-                <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+              {appStages.map((stage) => (
+                <Option key={stage.key} value={stage.key}>
+                  {stage.label}
+                </Option>
               ))}
             </Select>
           </Form.Item>
@@ -755,8 +780,10 @@ const Applications = () => {
         <Col xs={24} sm={12}>
           <Form.Item name="employment_type" label="Employment Type">
             <Select>
-              {empTypes.map(t => (
-                <Option key={t.value} value={t.value}>{t.label}</Option>
+              {empTypes.map((t) => (
+                <Option key={t.value} value={t.value}>
+                  {t.label}
+                </Option>
               ))}
             </Select>
           </Form.Item>
@@ -833,7 +860,12 @@ const Applications = () => {
           onYearChange={handleYearChange}
           availableYears={availableYears}
           extraActions={
-            <Button className="toolbar-btn" size="large" icon={<GlobalOutlined />} onClick={() => setIsJobImportModalOpen(true)}>
+            <Button
+              className="toolbar-btn"
+              size="large"
+              icon={<GlobalOutlined />}
+              onClick={() => setIsJobImportModalOpen(true)}
+            >
               Import URL
             </Button>
           }
@@ -859,10 +891,19 @@ const Applications = () => {
             onCancelSelection={() => setSelectedRowKeys([])}
             bulkActions={
               <>
-                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>Lock</Button>
-                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>Unlock</Button>
+                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                  Lock
+                </Button>
+                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
+                  Unlock
+                </Button>
                 <Tooltip title={isAnySelectedLocked ? 'Unlock selected items before deleting' : ''}>
-                  <Button danger onClick={handleBulkDelete} icon={<DeleteOutlined />} disabled={isAnySelectedLocked}>
+                  <Button
+                    danger
+                    onClick={handleBulkDelete}
+                    icon={<DeleteOutlined />}
+                    disabled={isAnySelectedLocked}
+                  >
                     Delete
                   </Button>
                 </Tooltip>
@@ -912,8 +953,10 @@ const Applications = () => {
                   suffixIcon={<FilterOutlined />}
                 >
                   <Option value="ALL">All Statuses</Option>
-                  {appStages.map(stage => (
-                    <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+                  {appStages.map((stage) => (
+                    <Option key={stage.key} value={stage.key}>
+                      {stage.label}
+                    </Option>
                   ))}
                 </Select>
                 <Select
@@ -923,8 +966,10 @@ const Applications = () => {
                   suffixIcon={<FilterOutlined />}
                 >
                   <Option value="ALL">All Types</Option>
-                  {empTypes.map(t => (
-                    <Option key={t.value} value={t.value}>{t.label}</Option>
+                  {empTypes.map((t) => (
+                    <Option key={t.value} value={t.value}>
+                      {t.label}
+                    </Option>
                   ))}
                 </Select>
                 <Select
@@ -937,8 +982,10 @@ const Applications = () => {
                   onClear={() => setLocationFilter('ALL')}
                 >
                   <Option value="ALL">All Locations</Option>
-                  {uniqueLocations.map(loc => (
-                    <Option key={loc} value={loc}>{loc}</Option>
+                  {uniqueLocations.map((loc) => (
+                    <Option key={loc} value={loc}>
+                      {loc}
+                    </Option>
                   ))}
                 </Select>
                 <Text type="secondary" className="text-sm">
@@ -967,8 +1014,10 @@ const Applications = () => {
             suffixIcon={<FilterOutlined />}
           >
             <Option value="ALL">All Statuses</Option>
-            {appStages.map(stage => (
-              <Option key={stage.key} value={stage.key}>{stage.label}</Option>
+            {appStages.map((stage) => (
+              <Option key={stage.key} value={stage.key}>
+                {stage.label}
+              </Option>
             ))}
           </Select>
           <Select
@@ -979,8 +1028,10 @@ const Applications = () => {
             suffixIcon={<FilterOutlined />}
           >
             <Option value="ALL">All Types</Option>
-            {empTypes.map(t => (
-              <Option key={t.value} value={t.value}>{t.label}</Option>
+            {empTypes.map((t) => (
+              <Option key={t.value} value={t.value}>
+                {t.label}
+              </Option>
             ))}
           </Select>
           <Select
@@ -994,11 +1045,16 @@ const Applications = () => {
             onClear={() => setLocationFilter('ALL')}
           >
             <Option value="ALL">All Locations</Option>
-            {uniqueLocations.map(loc => (
-              <Option key={loc} value={loc}>{loc}</Option>
+            {uniqueLocations.map((loc) => (
+              <Option key={loc} value={loc}>
+                {loc}
+              </Option>
             ))}
           </Select>
-          {(searchText || statusFilter !== 'ALL' || empTypeFilter !== 'ALL' || locationFilter !== 'ALL') && (
+          {(searchText ||
+            statusFilter !== 'ALL' ||
+            empTypeFilter !== 'ALL' ||
+            locationFilter !== 'ALL') && (
             <Text type="secondary" className="self-center text-sm">
               {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
             </Text>
@@ -1033,7 +1089,9 @@ const Applications = () => {
                   <div className="flex items-start gap-3">
                     <Checkbox
                       checked={isSelected}
-                      onChange={(event) => toggleSelectedApplication(record.id, event.target.checked)}
+                      onChange={(event) =>
+                        toggleSelectedApplication(record.id, event.target.checked)
+                      }
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
@@ -1050,7 +1108,7 @@ const Applications = () => {
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                           Applied {formatDateOnly(record.date_applied, 'Unknown')}
                         </span>
-                        {(record.office_location || record.location) ? (
+                        {record.office_location || record.location ? (
                           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                             {record.office_location || record.location}
                           </span>
@@ -1071,7 +1129,11 @@ const Applications = () => {
                         >
                           Letter
                         </Button>
-                        <Button size="large" icon={<InboxOutlined />} onClick={() => openDetailDrawer(record)}>
+                        <Button
+                          size="large"
+                          icon={<InboxOutlined />}
+                          onClick={() => openDetailDrawer(record)}
+                        >
                           Details
                         </Button>
                         <Button size="large" onClick={() => openEditDrawer(record)}>
@@ -1091,7 +1153,9 @@ const Applications = () => {
                           <Button
                             size="large"
                             icon={<GlobalOutlined />}
-                            onClick={() => window.open(record.job_link || '', '_blank', 'noopener,noreferrer')}
+                            onClick={() =>
+                              window.open(record.job_link || '', '_blank', 'noopener,noreferrer')
+                            }
                           >
                             Open Link
                           </Button>
@@ -1168,9 +1232,7 @@ const Applications = () => {
         onEdit={openEditDrawer}
         onGenerateCoverLetter={setCoverLetterApp}
         onNotesUpdate={(id, notes) => {
-          setApplications((prev) =>
-            prev.map((app) => (app.id === id ? { ...app, notes } : app))
-          );
+          setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, notes } : app)));
           setDetailApp((prev) => (prev && prev.id === id ? { ...prev, notes } : prev));
         }}
       />
@@ -1207,9 +1269,12 @@ const Applications = () => {
           <div className="rounded-2xl border border-sky-100 bg-sky-50/50 px-4 py-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Paste a supported job posting URL</div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Paste a supported job posting URL
+                </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  Uses your saved AI provider when available, then falls back to the built-in parser. Extracted fields stay editable.
+                  Uses your saved AI provider when available, then falls back to the built-in
+                  parser. Extracted fields stay editable.
                 </div>
               </div>
               <Button size="small" onClick={copyJobImportBookmarklet}>
@@ -1231,12 +1296,20 @@ const Applications = () => {
             <Form form={jobImportForm} layout="vertical">
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
-                  <Form.Item name="company" label="Company" rules={[{ required: true, message: 'Company is required' }]}>
+                  <Form.Item
+                    name="company"
+                    label="Company"
+                    rules={[{ required: true, message: 'Company is required' }]}
+                  >
                     <Input />
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>
-                  <Form.Item name="role_title" label="Role Title" rules={[{ required: true, message: 'Role title is required' }]}>
+                  <Form.Item
+                    name="role_title"
+                    label="Role Title"
+                    rules={[{ required: true, message: 'Role title is required' }]}
+                  >
                     <Input />
                   </Form.Item>
                 </Col>

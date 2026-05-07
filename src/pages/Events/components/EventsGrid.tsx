@@ -92,7 +92,9 @@ const EventsGrid = ({
           >
             <Space direction="vertical" style={{ width: '100%' }}>
               <Space>
-                {event.category_details && <CategoryBadge category={event.category_details} size="sm" />}
+                {event.category_details && (
+                  <CategoryBadge category={event.category_details} size="sm" />
+                )}
                 {event.location_type !== 'virtual' && (
                   <Tag icon={<EnvironmentOutlined style={{ fontSize: '14px' }} />}>On-site</Tag>
                 )}
@@ -104,7 +106,9 @@ const EventsGrid = ({
                 <CalendarOutlined style={{ color: '#8c8c8c', fontSize: '16px' }} />
                 <Text type="secondary">{dayjs(event.date).format('MMM D, YYYY')}</Text>
               </Space>
-              {event.application_details && <Tag color="blue">💼 {event.application_details.company}</Tag>}
+              {event.application_details && (
+                <Tag color="blue">💼 {event.application_details.company}</Tag>
+              )}
             </Space>
           </Card>
         </div>

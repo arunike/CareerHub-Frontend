@@ -141,7 +141,7 @@ export const getNegotiationArtifactByClientId = async (clientId: string) => {
 export const updateArtifactTitle = async (
   artifactType: AIArtifactType,
   clientId: string,
-  title: string,
+  title: string
 ) => {
   const response = await getAIArtifacts(artifactType);
   const artifact = response.data.find((item) => item.client_id === clientId);
@@ -152,7 +152,7 @@ export const updateArtifactTitle = async (
 export const setArtifactLock = async (
   artifactType: AIArtifactType,
   clientId: string,
-  isLocked: boolean,
+  isLocked: boolean
 ) => {
   const response = await getAIArtifacts(artifactType);
   const artifact = response.data.find((item) => item.client_id === clientId);
@@ -170,9 +170,7 @@ export const deleteArtifactByClientId = async (artifactType: AIArtifactType, cli
 export const deleteAllArtifactsByType = async (artifactType: AIArtifactType) => {
   const response = await getAIArtifacts(artifactType);
   await Promise.all(
-    response.data
-      .filter((item) => !item.is_locked)
-      .map((item) => deleteAIArtifact(item.id)),
+    response.data.filter((item) => !item.is_locked).map((item) => deleteAIArtifact(item.id))
   );
 };
 

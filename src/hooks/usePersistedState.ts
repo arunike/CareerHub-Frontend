@@ -5,10 +5,10 @@ type Options<T> = {
   deserialize?: (raw: string) => T;
 };
 
-export const usePersistedState = <T,>(
+export const usePersistedState = <T>(
   key: string,
   initialValue: T | (() => T),
-  options?: Options<T>,
+  options?: Options<T>
 ) => {
   const serialize = options?.serialize ?? ((value: T) => JSON.stringify(value));
   const deserialize = options?.deserialize ?? ((raw: string) => JSON.parse(raw) as T);

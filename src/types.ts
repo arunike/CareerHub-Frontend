@@ -220,7 +220,11 @@ export interface GoogleSheetSyncPreview {
   rows: Array<Record<string, string>>;
 }
 
-export type GoogleSheetImportReviewAction = 'create' | 'update' | 'status_change' | 'possible_duplicate';
+export type GoogleSheetImportReviewAction =
+  | 'create'
+  | 'update'
+  | 'status_change'
+  | 'possible_duplicate';
 export type GoogleSheetDuplicateResolution = 'merge' | 'keep_separate' | 'intentional_duplicate';
 
 export interface GoogleSheetImportReviewItem {

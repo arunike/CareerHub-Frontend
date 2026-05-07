@@ -1,4 +1,13 @@
-import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
+import {
+  addDays,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns';
 import clsx from 'clsx';
 import { CalendarCompactDayEntries } from './CalendarDayContent';
 import type { GetDayData } from './types';
@@ -12,7 +21,13 @@ type Props = {
   getDayData: GetDayData;
 };
 
-const CalendarMonthView = ({ anchorDate, today, selectedDate, onDateSelect, getDayData }: Props) => {
+const CalendarMonthView = ({
+  anchorDate,
+  today,
+  selectedDate,
+  onDateSelect,
+  getDayData,
+}: Props) => {
   const monthStart = startOfMonth(anchorDate);
   const monthEnd = endOfMonth(monthStart);
   const gridStart = startOfWeek(monthStart);

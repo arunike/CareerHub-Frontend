@@ -138,7 +138,10 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const activeStages = useMemo(
     () =>
       allDisplayStages.filter(
-        (stage) => addedStageKeys.includes(stage.key) || hasContent(drafts[stage.key]) || application?.status === stage.key
+        (stage) =>
+          addedStageKeys.includes(stage.key) ||
+          hasContent(drafts[stage.key]) ||
+          application?.status === stage.key
       ),
     [addedStageKeys, allDisplayStages, application?.status, drafts]
   );
@@ -173,7 +176,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const handleRemoveAddedStage = (stageKey: string) => {
     const draft = drafts[stageKey];
     if (draft?.id) {
-      messageApi.info('Saved stages stay on the timeline. Clear the date and notes if you no longer need it.');
+      messageApi.info(
+        'Saved stages stay on the timeline. Clear the date and notes if you no longer need it.'
+      );
       return;
     }
     setAddedStageKeys((prev) => prev.filter((key) => key !== stageKey));
@@ -224,9 +229,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             Timeline
           </p>
-          <p className="mt-0.5 text-sm text-slate-500">
-            Track key dates and notes for each stage.
-          </p>
+          <p className="mt-0.5 text-sm text-slate-500">Track key dates and notes for each stage.</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button
@@ -255,7 +258,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
             <Select
               value={selectedStageKey}
               onChange={setSelectedStageKey}
-              placeholder={availableStages.length ? 'Select a timeline stage' : 'No more stages to add'}
+              placeholder={
+                availableStages.length ? 'Select a timeline stage' : 'No more stages to add'
+              }
               disabled={availableStages.length === 0}
               className="min-w-0 flex-1 [&_.ant-select-selector]:!rounded-lg"
               options={availableStages.map((stage) => ({
@@ -264,7 +269,12 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
               }))}
             />
             <div className="flex gap-2">
-              <Button type="primary" className="!rounded-lg" onClick={handleAddStage} disabled={!selectedStageKey}>
+              <Button
+                type="primary"
+                className="!rounded-lg"
+                onClick={handleAddStage}
+                disabled={!selectedStageKey}
+              >
                 Add
               </Button>
               <Button className="!rounded-lg" onClick={() => setIsAddingStage(false)}>

@@ -125,7 +125,7 @@ const OfferComparison = () => {
   const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
   const [snapshotOffer, setSnapshotOffer] = useState<Offer | null>(null);
   const [decisionOrderIds, setDecisionOrderIds] = useState<string[]>([]);
-  
+
   const [isAddScenarioOpen, setIsAddScenarioOpen] = useState(false);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
   const [scenarioModalMode, setScenarioModalMode] = useState<'add' | 'view' | 'edit'>('add');
@@ -217,15 +217,24 @@ const OfferComparison = () => {
                     ? 5
                     : 3,
             commute_cost_value: Number(app.commute_cost_value || 0),
-            commute_cost_frequency: (app.commute_cost_frequency || 'MONTHLY') as 'DAILY' | 'MONTHLY' | 'YEARLY',
+            commute_cost_frequency: (app.commute_cost_frequency || 'MONTHLY') as
+              | 'DAILY'
+              | 'MONTHLY'
+              | 'YEARLY',
             free_food_perk_value: Number(app.free_food_perk_value || 0),
-            free_food_perk_frequency: (app.free_food_perk_frequency || 'YEARLY') as 'DAILY' | 'MONTHLY' | 'YEARLY',
+            free_food_perk_frequency: (app.free_food_perk_frequency || 'YEARLY') as
+              | 'DAILY'
+              | 'MONTHLY'
+              | 'YEARLY',
             tax_base_rate: app.tax_base_rate != null ? Number(app.tax_base_rate) : undefined,
             tax_bonus_rate: app.tax_bonus_rate != null ? Number(app.tax_bonus_rate) : undefined,
             tax_equity_rate: app.tax_equity_rate != null ? Number(app.tax_equity_rate) : undefined,
             monthly_rent_override:
               app.monthly_rent_override != null ? Number(app.monthly_rent_override) : undefined,
-            visa_sponsorship: app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN' ? app.visa_sponsorship : '',
+            visa_sponsorship:
+              app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN'
+                ? app.visa_sponsorship
+                : '',
             day_one_gc: app.day_one_gc && app.day_one_gc !== 'UNKNOWN' ? app.day_one_gc : '',
             growth_score: normalizeDecisionScore(app.growth_score),
             work_life_score: normalizeDecisionScore(app.work_life_score),
@@ -255,13 +264,13 @@ const OfferComparison = () => {
     openOfferModal(offer, 'edit');
   };
 
-
-
   const handleSaveEdit = async () => {
     if (!editingOffer) return;
 
     try {
-      let updatedApplication: (Partial<Application> & { company_details?: { name?: string } }) | null = null;
+      let updatedApplication:
+        | (Partial<Application> & { company_details?: { name?: string } })
+        | null = null;
       if (editingApp) {
         const applicationResponse = await updateApplication(editingApp.id, {
           company_name: editingApp.company_name,
@@ -278,8 +287,14 @@ const OfferComparison = () => {
           tax_bonus_rate: editingApp.tax_bonus_rate ?? null,
           tax_equity_rate: editingApp.tax_equity_rate ?? null,
           monthly_rent_override: editingApp.monthly_rent_override ?? null,
-          visa_sponsorship: editingApp.visa_sponsorship && editingApp.visa_sponsorship !== 'UNKNOWN' ? editingApp.visa_sponsorship : '',
-          day_one_gc: editingApp.day_one_gc && editingApp.day_one_gc !== 'UNKNOWN' ? editingApp.day_one_gc : '',
+          visa_sponsorship:
+            editingApp.visa_sponsorship && editingApp.visa_sponsorship !== 'UNKNOWN'
+              ? editingApp.visa_sponsorship
+              : '',
+          day_one_gc:
+            editingApp.day_one_gc && editingApp.day_one_gc !== 'UNKNOWN'
+              ? editingApp.day_one_gc
+              : '',
           growth_score: editingApp.growth_score ?? null,
           work_life_score: editingApp.work_life_score ?? null,
           brand_score: editingApp.brand_score ?? null,
@@ -535,7 +550,8 @@ const OfferComparison = () => {
   const effectiveMonthlyRent = Number(rentEstimate?.monthly_rent_estimate || 0);
 
   const referenceColIndex = useMemo(
-    () => estimateColIndexFromCity(referenceLocation, cityCostOfLiving, stateColBase, stateNameToAbbr),
+    () =>
+      estimateColIndexFromCity(referenceLocation, cityCostOfLiving, stateColBase, stateNameToAbbr),
     [referenceLocation, cityCostOfLiving, stateColBase, stateNameToAbbr]
   );
 
@@ -704,29 +720,55 @@ const OfferComparison = () => {
         pto_days: Number(offerSnapshot.pto_days ?? targetOffer.pto_days),
         is_unlimited_pto: Boolean(offerSnapshot.is_unlimited_pto ?? targetOffer.is_unlimited_pto),
         holiday_days:
-          offerSnapshot.holiday_days == null ? targetOffer.holiday_days : Number(offerSnapshot.holiday_days),
+          offerSnapshot.holiday_days == null
+            ? targetOffer.holiday_days
+            : Number(offerSnapshot.holiday_days),
       };
 
       const applicationPatch: Record<string, unknown> = {
         company_name: typeof offerSnapshot.company === 'string' ? offerSnapshot.company : undefined,
         role_title: typeof offerSnapshot.role === 'string' ? offerSnapshot.role : undefined,
-        office_location: typeof offerSnapshot.office_location === 'string' ? offerSnapshot.office_location : undefined,
+        office_location:
+          typeof offerSnapshot.office_location === 'string'
+            ? offerSnapshot.office_location
+            : undefined,
         rto_policy: (snapshotValue(adjustmentSnapshot, 'rto_policy') ??
           snapshotValue(offerSnapshot, 'work_mode')) as Application['rto_policy'],
-        rto_days_per_week: snapshotValue(adjustmentSnapshot, 'rto_days_per_week') as number | undefined,
-        commute_cost_value: snapshotValue(adjustmentSnapshot, 'commute_cost_value') as number | undefined,
-        commute_cost_frequency: snapshotValue(adjustmentSnapshot, 'commute_cost_frequency') as Application['commute_cost_frequency'],
-        free_food_perk_value: snapshotValue(adjustmentSnapshot, 'free_food_perk_value') as number | undefined,
-        free_food_perk_frequency: snapshotValue(adjustmentSnapshot, 'free_food_perk_frequency') as Application['free_food_perk_frequency'],
+        rto_days_per_week: snapshotValue(adjustmentSnapshot, 'rto_days_per_week') as
+          | number
+          | undefined,
+        commute_cost_value: snapshotValue(adjustmentSnapshot, 'commute_cost_value') as
+          | number
+          | undefined,
+        commute_cost_frequency: snapshotValue(
+          adjustmentSnapshot,
+          'commute_cost_frequency'
+        ) as Application['commute_cost_frequency'],
+        free_food_perk_value: snapshotValue(adjustmentSnapshot, 'free_food_perk_value') as
+          | number
+          | undefined,
+        free_food_perk_frequency: snapshotValue(
+          adjustmentSnapshot,
+          'free_food_perk_frequency'
+        ) as Application['free_food_perk_frequency'],
         tax_base_rate: snapshotValue(adjustmentSnapshot, 'tax_base_rate'),
         tax_bonus_rate: snapshotValue(adjustmentSnapshot, 'tax_bonus_rate'),
         tax_equity_rate: snapshotValue(adjustmentSnapshot, 'tax_equity_rate'),
         monthly_rent_override: snapshotValue(adjustmentSnapshot, 'monthly_rent_override'),
-        growth_score: snapshotValue(adjustmentSnapshot, 'growth_score') as number | null | undefined,
-        work_life_score: snapshotValue(adjustmentSnapshot, 'work_life_score') as number | null | undefined,
+        growth_score: snapshotValue(adjustmentSnapshot, 'growth_score') as
+          | number
+          | null
+          | undefined,
+        work_life_score: snapshotValue(adjustmentSnapshot, 'work_life_score') as
+          | number
+          | null
+          | undefined,
         brand_score: snapshotValue(adjustmentSnapshot, 'brand_score') as number | null | undefined,
         team_score: snapshotValue(adjustmentSnapshot, 'team_score') as number | null | undefined,
-        visa_sponsorship: snapshotValue(adjustmentSnapshot, 'visa_sponsorship') as Application['visa_sponsorship'],
+        visa_sponsorship: snapshotValue(
+          adjustmentSnapshot,
+          'visa_sponsorship'
+        ) as Application['visa_sponsorship'],
         day_one_gc: snapshotValue(adjustmentSnapshot, 'day_one_gc') as Application['day_one_gc'],
       };
 
@@ -791,7 +833,6 @@ const OfferComparison = () => {
           application_details: restoredOffer.application_details || current.application_details,
         };
       });
-
     },
     [offers]
   );
@@ -826,7 +867,9 @@ const OfferComparison = () => {
   };
 
   const updateScenarioBenefitItem = (id: string, patch: Partial<BenefitItem>) => {
-    setScenarioBenefitItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+    setScenarioBenefitItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
+    );
   };
 
   const removeScenarioBenefitItem = (id: string) => {
@@ -863,13 +906,15 @@ const OfferComparison = () => {
     messageApi.success(editingScenarioId ? 'Custom offer updated' : 'Custom offer added');
   };
 
-  const displayOffers = visibleOfferIds.length > 0 
-    ? filteredOffers.filter((o) => visibleOfferIds.includes(`real-${o.id}`))
-    : filteredOffers;
+  const displayOffers =
+    visibleOfferIds.length > 0
+      ? filteredOffers.filter((o) => visibleOfferIds.includes(`real-${o.id}`))
+      : filteredOffers;
 
-  const displaySimulatedOffers = visibleOfferIds.length > 0
-    ? simulatedOffers.filter((o) => visibleOfferIds.includes(`sim-${o.id}`))
-    : simulatedOffers;
+  const displaySimulatedOffers =
+    visibleOfferIds.length > 0
+      ? simulatedOffers.filter((o) => visibleOfferIds.includes(`sim-${o.id}`))
+      : simulatedOffers;
 
   const displayScenarioRows = useMemo(() => {
     if (visibleOfferIds.length === 0) return scenarioRows;
@@ -909,10 +954,11 @@ const OfferComparison = () => {
       };
     }),
     ...displaySimulatedOffers.map((offer) => {
-      const simName = typeof offer.application === 'number'
-        ? `${getApplicationName(offer.application)} (Scenario)`
-        : `${offer.custom_company_name} (Custom)`;
-      
+      const simName =
+        typeof offer.application === 'number'
+          ? `${getApplicationName(offer.application)} (Scenario)`
+          : `${offer.custom_company_name} (Custom)`;
+
       const totalComp =
         Number(offer.base_salary) +
         Number(offer.bonus) +
@@ -949,7 +995,9 @@ const OfferComparison = () => {
   };
 
   const updateEditingBenefitItem = (id: string, patch: Partial<BenefitItem>) => {
-    updateEditingBenefits(editingBenefitItems.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+    updateEditingBenefits(
+      editingBenefitItems.map((item) => (item.id === id ? { ...item, ...patch } : item))
+    );
   };
 
   const removeEditingBenefitItem = (id: string) => {
@@ -960,21 +1008,22 @@ const OfferComparison = () => {
   const compareOptions = [
     {
       label: 'Real Offers',
-      options: filteredOffers.map(o => ({
+      options: filteredOffers.map((o) => ({
         value: `real-${o.id}`,
-        label: getApplicationName(o.application)
-      }))
+        label: getApplicationName(o.application),
+      })),
     },
     ...(simulatedOffers.length > 0
       ? [
           {
             label: 'Custom Scenarios',
-            options: simulatedOffers.map(o => ({
+            options: simulatedOffers.map((o) => ({
               value: `sim-${o.id}`,
-              label: typeof o.application === 'number'
-                ? `${getApplicationName(o.application)} (Scenario)`
-                : `${o.custom_company_name} - ${o.custom_role_title}`
-            }))
+              label:
+                typeof o.application === 'number'
+                  ? `${getApplicationName(o.application)} (Scenario)`
+                  : `${o.custom_company_name} - ${o.custom_role_title}`,
+            })),
           },
         ]
       : []),
@@ -1040,18 +1089,19 @@ const OfferComparison = () => {
           setScenarioModalMode('edit');
           setEditingScenarioId(id);
           setNewScenario({ ...target });
-          const benefitItems = Array.isArray(target.benefit_items) && target.benefit_items.length > 0
-            ? target.benefit_items.map((item, idx) =>
-                normalizeBenefitItem(item, `scenario-benefit-${Date.now()}-${idx}`)
-              )
-            : [
-                {
-                  id: `scenario-benefit-${Date.now()}`,
-                  label: 'Benefits',
-                  amount: Number(target.benefits_value || 0),
-                  frequency: 'YEARLY' as const,
-                },
-              ];
+          const benefitItems =
+            Array.isArray(target.benefit_items) && target.benefit_items.length > 0
+              ? target.benefit_items.map((item, idx) =>
+                  normalizeBenefitItem(item, `scenario-benefit-${Date.now()}-${idx}`)
+                )
+              : [
+                  {
+                    id: `scenario-benefit-${Date.now()}`,
+                    label: 'Benefits',
+                    amount: Number(target.benefits_value || 0),
+                    frequency: 'YEARLY' as const,
+                  },
+                ];
           setScenarioBenefitItems(benefitItems);
           setIsAddScenarioOpen(true);
         }}
@@ -1065,7 +1115,8 @@ const OfferComparison = () => {
         }}
         onDecisionOrderChange={(orderedIds) => {
           setDecisionOrderIds((current) =>
-            current.length === orderedIds.length && current.every((id, index) => id === orderedIds[index])
+            current.length === orderedIds.length &&
+            current.every((id, index) => id === orderedIds[index])
               ? current
               : orderedIds
           );
@@ -1156,7 +1207,9 @@ const OfferComparison = () => {
             open={!!raiseHistoryOffer}
             onClose={() => setRaiseHistoryOffer(null)}
             offer={raiseHistoryOffer}
-            companyName={applicationsById[raiseHistoryOffer.application]?.company_name ?? 'Current Job'}
+            companyName={
+              applicationsById[raiseHistoryOffer.application]?.company_name ?? 'Current Job'
+            }
             roleTitle={applicationsById[raiseHistoryOffer.application]?.role_title ?? ''}
             onSave={handleSaveRaiseHistory}
           />
@@ -1220,7 +1273,6 @@ const OfferComparison = () => {
           />
         </Suspense>
       )}
-
     </div>
   );
 };

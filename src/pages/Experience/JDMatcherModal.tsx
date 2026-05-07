@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { Modal, Input, Button, Space, Alert, Progress } from 'antd';
-import { RobotOutlined, ExpandOutlined, ArrowLeftOutlined, CheckCircleOutlined, WarningOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  RobotOutlined,
+  ExpandOutlined,
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getExperiences } from '../../api/career';
 import { matchJobDescriptionWithBrowserAI } from '../../lib/browserAi';
@@ -15,10 +22,37 @@ interface Props {
 }
 
 const getScoreMeta = (score: number) => {
-  if (score >= 90) return { label: 'Strong match', stroke: '#10b981', bg: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)', badgeBg: '#d1fae5', badgeText: '#065f46' };
-  if (score >= 70) return { label: 'Good fit with minor gaps', stroke: '#3b82f6', bg: 'linear-gradient(135deg, #eff6ff, #f0f7ff)', badgeBg: '#dbeafe', badgeText: '#1e40af' };
-  if (score >= 50) return { label: 'Partial match', stroke: '#f59e0b', bg: 'linear-gradient(135deg, #fffbeb, #fefce8)', badgeBg: '#fef3c7', badgeText: '#92400e' };
-  return              { label: 'Poor match', stroke: '#ef4444', bg: 'linear-gradient(135deg, #fef2f2, #fdf2f2)', badgeBg: '#fee2e2', badgeText: '#7f1d1d' };
+  if (score >= 90)
+    return {
+      label: 'Strong match',
+      stroke: '#10b981',
+      bg: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)',
+      badgeBg: '#d1fae5',
+      badgeText: '#065f46',
+    };
+  if (score >= 70)
+    return {
+      label: 'Good fit with minor gaps',
+      stroke: '#3b82f6',
+      bg: 'linear-gradient(135deg, #eff6ff, #f0f7ff)',
+      badgeBg: '#dbeafe',
+      badgeText: '#1e40af',
+    };
+  if (score >= 50)
+    return {
+      label: 'Partial match',
+      stroke: '#f59e0b',
+      bg: 'linear-gradient(135deg, #fffbeb, #fefce8)',
+      badgeBg: '#fef3c7',
+      badgeText: '#92400e',
+    };
+  return {
+    label: 'Poor match',
+    stroke: '#ef4444',
+    bg: 'linear-gradient(135deg, #fef2f2, #fdf2f2)',
+    badgeBg: '#fee2e2',
+    badgeText: '#7f1d1d',
+  };
 };
 
 const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
@@ -54,7 +88,10 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
 
   const openReport = () => savedReport && window.open(`/jd-report/${savedReport.id}`, '_blank');
 
-  const viewAllReports = () => { onCancel(); navigate('/jd-reports'); };
+  const viewAllReports = () => {
+    onCancel();
+    navigate('/jd-reports');
+  };
 
   const meta = savedReport ? getScoreMeta(savedReport.score) : null;
 
@@ -78,10 +115,17 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
         /* ── Input State ── */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {errorMsg && (
-            <Alert type="error" message={errorMsg} showIcon closable onClose={() => setErrorMsg(null)} />
+            <Alert
+              type="error"
+              message={errorMsg}
+              showIcon
+              closable
+              onClose={() => setErrorMsg(null)}
+            />
           )}
           <p style={{ margin: 0, color: '#6b7280', fontSize: 13, lineHeight: 1.6 }}>
-            Paste a full Job Description below. Our AI will cross-reference it against your entire Career History and generate a full evaluation report.
+            Paste a full Job Description below. Our AI will cross-reference it against your entire
+            Career History and generate a full evaluation report.
           </p>
           <TextArea
             rows={9}
@@ -98,9 +142,17 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
             loading={analyzing}
             disabled={!jdText.trim()}
             block
-            style={jdText.trim()
-              ? { height: 46, borderRadius: 10, background: '#0284c7', borderColor: '#0284c7', fontSize: 14 }
-              : { height: 46, borderRadius: 10, fontSize: 14 }}
+            style={
+              jdText.trim()
+                ? {
+                    height: 46,
+                    borderRadius: 10,
+                    background: '#0284c7',
+                    borderColor: '#0284c7',
+                    fontSize: 14,
+                  }
+                : { height: 46, borderRadius: 10, fontSize: 14 }
+            }
           >
             {analyzing ? 'Analyzing...' : 'Analyze Resume against JD'}
           </Button>
@@ -108,17 +160,18 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
       ) : (
         /* ── Result State ── */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
           {/* Score hero */}
-          <div style={{
-            background: meta!.bg,
-            borderRadius: 16,
-            padding: '24px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 20,
-            border: '1px solid rgba(0,0,0,0.05)',
-          }}>
+          <div
+            style={{
+              background: meta!.bg,
+              borderRadius: 16,
+              padding: '24px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 20,
+              border: '1px solid rgba(0,0,0,0.05)',
+            }}
+          >
             <Progress
               type="circle"
               percent={savedReport.score}
@@ -131,12 +184,20 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
               )}
             />
             <div style={{ flex: 1 }}>
-              <span style={{
-                display: 'inline-block', marginBottom: 8,
-                fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-                padding: '3px 10px', borderRadius: 999,
-                background: meta!.badgeBg, color: meta!.badgeText,
-              }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  marginBottom: 8,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  background: meta!.badgeBg,
+                  color: meta!.badgeText,
+                }}
+              >
                 {savedReport.score_label || meta!.label}
               </span>
               <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.65 }}>
@@ -147,38 +208,102 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
 
           {/* Quick stats row */}
           <div style={{ display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1, background: '#f0fdf4', borderRadius: 10, padding: '12px 14px', border: '1px solid #d1fae5' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#059669', fontWeight: 600, fontSize: 13 }}>
+            <div
+              style={{
+                flex: 1,
+                background: '#f0fdf4',
+                borderRadius: 10,
+                padding: '12px 14px',
+                border: '1px solid #d1fae5',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: '#059669',
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
                 <CheckCircleOutlined /> Strengths
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#065f46', marginTop: 4 }}>
                 {savedReport.matched_skills?.length ?? 0}
               </div>
             </div>
-            <div style={{ flex: 1, background: '#fef2f2', borderRadius: 10, padding: '12px 14px', border: '1px solid #fecaca' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#dc2626', fontWeight: 600, fontSize: 13 }}>
+            <div
+              style={{
+                flex: 1,
+                background: '#fef2f2',
+                borderRadius: 10,
+                padding: '12px 14px',
+                border: '1px solid #fecaca',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: '#dc2626',
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
                 <WarningOutlined /> Gaps
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#7f1d1d', marginTop: 4 }}>
                 {savedReport.missing_skills?.length ?? 0}
               </div>
             </div>
-            <div style={{ flex: 1, background: '#fffbeb', borderRadius: 10, padding: '12px 14px', border: '1px solid #fde68a' }}>
+            <div
+              style={{
+                flex: 1,
+                background: '#fffbeb',
+                borderRadius: 10,
+                padding: '12px 14px',
+                border: '1px solid #fde68a',
+              }}
+            >
               <div style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>Tailor</div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#78350f', marginTop: 4 }}>
-                {(savedReport.tailored_bullets?.length ?? 0) || (savedReport.recommendations?.length ?? 0)}
+                {(savedReport.tailored_bullets?.length ?? 0) ||
+                  (savedReport.recommendations?.length ?? 0)}
               </div>
             </div>
           </div>
 
-          {((savedReport.tailored_bullets?.length ?? 0) > 0 || (savedReport.keyword_suggestions?.length ?? 0) > 0) && (
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: '14px 16px', border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+          {((savedReport.tailored_bullets?.length ?? 0) > 0 ||
+            (savedReport.keyword_suggestions?.length ?? 0) > 0) && (
+            <div
+              style={{
+                background: '#f8fafc',
+                borderRadius: 12,
+                padding: '14px 16px',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: '#475569',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  marginBottom: 8,
+                }}
+              >
                 <EditOutlined /> Resume Tailoring Added
               </div>
               <p style={{ margin: 0, color: '#64748b', fontSize: 12, lineHeight: 1.6 }}>
-                Full report includes {savedReport.tailored_bullets?.length ?? 0} bullet rewrite suggestion{(savedReport.tailored_bullets?.length ?? 0) === 1 ? '' : 's'}
-                {(savedReport.keyword_suggestions?.length ?? 0) > 0 ? ` and ${savedReport.keyword_suggestions?.length ?? 0} supported JD keyword${(savedReport.keyword_suggestions?.length ?? 0) === 1 ? '' : 's'} to weave into your resume.` : '.'}
+                Full report includes {savedReport.tailored_bullets?.length ?? 0} bullet rewrite
+                suggestion{(savedReport.tailored_bullets?.length ?? 0) === 1 ? '' : 's'}
+                {(savedReport.keyword_suggestions?.length ?? 0) > 0
+                  ? ` and ${savedReport.keyword_suggestions?.length ?? 0} supported JD keyword${(savedReport.keyword_suggestions?.length ?? 0) === 1 ? '' : 's'} to weave into your resume.`
+                  : '.'}
               </p>
             </div>
           )}
@@ -190,18 +315,47 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
             icon={<ExpandOutlined />}
             block
             onClick={openReport}
-            style={{ height: 46, borderRadius: 10, background: '#0284c7', borderColor: '#0284c7', fontSize: 14, fontWeight: 600 }}
+            style={{
+              height: 46,
+              borderRadius: 10,
+              background: '#0284c7',
+              borderColor: '#0284c7',
+              fontSize: 14,
+              fontWeight: 600,
+            }}
           >
             View Full Report
           </Button>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={handleReset}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={handleReset}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#9ca3af',
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
               <ArrowLeftOutlined /> Analyze another
             </button>
-            <button onClick={viewAllReports}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={viewAllReports}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#9ca3af',
+                fontSize: 13,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
               View all reports →
             </button>
           </div>

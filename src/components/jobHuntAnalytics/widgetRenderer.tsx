@@ -13,7 +13,16 @@ import {
   QuestionCircleOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  CartesianGrid,
+} from 'recharts';
 import CustomWidgetCard from '../CustomWidgetCard';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { ApplicationTimelineAnalytics } from '../../types';
@@ -133,7 +142,9 @@ export const renderJobHuntWidget = (
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-500">
             <CheckCircleOutlined className="mr-1.5 text-emerald-500 text-base" />
-            <span>{stats.offers} offer{stats.offers !== 1 ? 's' : ''}</span>
+            <span>
+              {stats.offers} offer{stats.offers !== 1 ? 's' : ''}
+            </span>
           </div>
         </div>
       );
@@ -223,7 +234,9 @@ export const renderJobHuntWidget = (
                   <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-sky-500 rounded-full"
-                      style={{ width: `${stats.total > 0 ? (company.count / stats.total) * 100 : 0}%` }}
+                      style={{
+                        width: `${stats.total > 0 ? (company.count / stats.total) * 100 : 0}%`,
+                      }}
                     />
                   </div>
                   <span className="font-mono text-gray-900 font-bold">{company.count}</span>
@@ -255,7 +268,9 @@ export const renderJobHuntWidget = (
                     style={{ width: `${stats.total > 0 ? (mode.count / stats.total) * 100 : 0}%` }}
                   />
                 </div>
-                <div className="w-10 text-right font-mono text-gray-900 font-bold">{mode.count}</div>
+                <div className="w-10 text-right font-mono text-gray-900 font-bold">
+                  {mode.count}
+                </div>
               </div>
             ))}
             {stats.workModes.every((mode) => mode.count === 0) && (
@@ -313,7 +328,7 @@ export const renderJobHuntWidget = (
         </div>
       );
     case 'funnel': {
-      const funnelMax = Math.max(...stats.funnel.map(s => s.value), 1);
+      const funnelMax = Math.max(...stats.funnel.map((s) => s.value), 1);
       return (
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full flex flex-col justify-between">
           <p className="text-sm font-medium text-gray-500 mb-4">Application Funnel</p>
@@ -324,9 +339,17 @@ export const renderJobHuntWidget = (
                 <div key={idx} className="flex-1 flex flex-col justify-end min-w-[60px]">
                   <div className="text-center mb-2">
                     <span className="font-bold text-gray-900 block">{step.value}</span>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-tighter truncate block" title={step.label}>{step.label}</span>
+                    <span
+                      className="text-[10px] text-gray-500 uppercase tracking-tighter truncate block"
+                      title={step.label}
+                    >
+                      {step.label}
+                    </span>
                   </div>
-                  <div className={`w-full rounded-t-lg border-t-2 opacity-80 ${step.color}`} style={{ height: `${heightPercent}px`, minHeight: '4px' }} />
+                  <div
+                    className={`w-full rounded-t-lg border-t-2 opacity-80 ${step.color}`}
+                    style={{ height: `${heightPercent}px`, minHeight: '4px' }}
+                  />
                 </div>
               );
             })}
@@ -349,10 +372,14 @@ export const renderJobHuntWidget = (
                   <NodeIndexOutlined className="text-lg text-sky-600" />
                   <h3 className="text-lg font-semibold text-gray-900">Timeline Analytics</h3>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">Synced status history, stage movement, and sheet outcomes</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Synced status history, stage movement, and sheet outcomes
+                </p>
               </div>
               <div className="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500">Avg to Interview</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500">
+                  Avg to Interview
+                </p>
                 <p className="text-2xl font-bold text-sky-700">
                   {stats.timelineAnalyticsLoading
                     ? '...'
@@ -361,7 +388,8 @@ export const renderJobHuntWidget = (
                       : '-'}
                 </p>
                 <p className="text-xs text-sky-500">
-                  {analytics?.time_to_interview_sample_size || 0} sample{analytics?.time_to_interview_sample_size === 1 ? '' : 's'}
+                  {analytics?.time_to_interview_sample_size || 0} sample
+                  {analytics?.time_to_interview_sample_size === 1 ? '' : 's'}
                 </p>
               </div>
             </div>
@@ -376,24 +404,44 @@ export const renderJobHuntWidget = (
               <>
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Stale In Stage</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Stale In Stage
+                    </p>
                     <div className="mt-2 flex items-end gap-2">
-                      <span className={`text-2xl font-bold ${staleCount > 0 ? 'text-amber-600' : 'text-gray-900'}`}>{staleCount}</span>
-                      <span className="pb-1 text-xs text-gray-500">over {analytics.stale_threshold_days}d</span>
+                      <span
+                        className={`text-2xl font-bold ${staleCount > 0 ? 'text-amber-600' : 'text-gray-900'}`}
+                      >
+                        {staleCount}
+                      </span>
+                      <span className="pb-1 text-xs text-gray-500">
+                        over {analytics.stale_threshold_days}d
+                      </span>
                     </div>
                   </div>
                   <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Best Sheet Source</p>
-                    <p className="mt-2 truncate text-sm font-semibold text-gray-900" title={topSource?.name || 'No sheet source'}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Best Sheet Source
+                    </p>
+                    <p
+                      className="mt-2 truncate text-sm font-semibold text-gray-900"
+                      title={topSource?.name || 'No sheet source'}
+                    >
                       {topSource?.name || 'No sheet source'}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {topSource ? `${Math.round(topSource.offer_rate * 100)}% offer rate` : 'Connect a sheet to compare'}
+                      {topSource
+                        ? `${Math.round(topSource.offer_rate * 100)}% offer rate`
+                        : 'Connect a sheet to compare'}
                     </p>
                   </div>
                   <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Top Company Rate</p>
-                    <p className="mt-2 truncate text-sm font-semibold text-gray-900" title={analytics.offer_rate_by_company[0]?.name || 'No company data'}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Top Company Rate
+                    </p>
+                    <p
+                      className="mt-2 truncate text-sm font-semibold text-gray-900"
+                      title={analytics.offer_rate_by_company[0]?.name || 'No company data'}
+                    >
                       {analytics.offer_rate_by_company[0]?.name || 'No company data'}
                     </p>
                     <p className="text-xs text-gray-500">
@@ -406,32 +454,54 @@ export const renderJobHuntWidget = (
 
                 <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Stage Conversion</p>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Stage Conversion
+                    </p>
                     <div className="space-y-3">
                       {topStages.map((stage) => (
-                        <div key={stage.key} className="grid grid-cols-[92px_1fr_48px] items-center gap-3">
-                          <span className="truncate text-sm font-medium text-gray-700" title={stage.label}>{stage.label}</span>
+                        <div
+                          key={stage.key}
+                          className="grid grid-cols-[92px_1fr_48px] items-center gap-3"
+                        >
+                          <span
+                            className="truncate text-sm font-medium text-gray-700"
+                            title={stage.label}
+                          >
+                            {stage.label}
+                          </span>
                           <div className="h-2 rounded-full bg-gray-100">
                             <div
                               className="h-full rounded-full bg-sky-500"
-                              style={{ width: `${Math.max(stage.conversion_rate * 100, stage.reached_count > 0 ? 5 : 0)}%` }}
+                              style={{
+                                width: `${Math.max(stage.conversion_rate * 100, stage.reached_count > 0 ? 5 : 0)}%`,
+                              }}
                             />
                           </div>
-                          <span className="text-right text-xs font-semibold text-gray-600">{Math.round(stage.conversion_rate * 100)}%</span>
+                          <span className="text-right text-xs font-semibold text-gray-600">
+                            {Math.round(stage.conversion_rate * 100)}%
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Watch List</p>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Watch List
+                    </p>
                     <div className="space-y-2">
                       {analytics.stale_in_stage.slice(0, 3).map((item) => (
-                        <div key={item.application_id} className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                        <div
+                          key={item.application_id}
+                          className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
+                        >
                           <div className="flex items-start gap-2">
                             <WarningOutlined className="mt-0.5 text-amber-600" />
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-gray-900" title={`${item.company} ${item.role_title}`}>
+                              <p
+                                className="truncate text-sm font-semibold text-gray-900"
+                                title={`${item.company} ${item.role_title}`}
+                              >
                                 {item.company} · {item.role_title}
                               </p>
                               <p className="text-xs text-amber-700">
@@ -466,7 +536,8 @@ export const renderJobHuntWidget = (
               </p>
             </div>
             <div className="shrink-0 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">
-              {stats.avgDaysToOfferSampleSize} offer{stats.avgDaysToOfferSampleSize !== 1 ? 's' : ''}
+              {stats.avgDaysToOfferSampleSize} offer
+              {stats.avgDaysToOfferSampleSize !== 1 ? 's' : ''}
             </div>
           </div>
           <div className="mt-5 flex items-center text-sm text-gray-500">
@@ -497,7 +568,17 @@ export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[
       : 'col-span-1';
   }
 
-  if (['locations', 'rounds', 'funnel', 'top_companies', 'work_modes', 'avg_days_to_offer', 'timeline_analytics'].includes(id)) {
+  if (
+    [
+      'locations',
+      'rounds',
+      'funnel',
+      'top_companies',
+      'work_modes',
+      'avg_days_to_offer',
+      'timeline_analytics',
+    ].includes(id)
+  ) {
     return 'col-span-1 md:col-span-2 lg:col-span-2';
   }
   return 'col-span-1';

@@ -1,10 +1,30 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, DatePicker, Empty, Form, Grid, Input, Modal, Select, Tag, Tooltip, message } from 'antd';
+import {
+  Button,
+  Card,
+  DatePicker,
+  Empty,
+  Form,
+  Grid,
+  Input,
+  Modal,
+  Select,
+  Tag,
+  Tooltip,
+  message,
+} from 'antd';
 import { BellOutlined, CheckCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Task, WeeklyReview } from '../../types';
-import { createTask, deleteTask, getTasks, getWeeklyReview, reorderTasks, updateTask } from '../../api';
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  getWeeklyReview,
+  reorderTasks,
+  updateTask,
+} from '../../api';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
 import { parseSmartReminder } from '../../utils/smartReminder';
@@ -252,7 +272,9 @@ const Tasks: React.FC = () => {
   const handleCreateSmartReminder = async (sourceText = smartReminderText) => {
     const draft = parseSmartReminder(sourceText);
     if (!draft) {
-      messageApi.warning('Try a reminder with a date, like "follow up after 7 days" or "offer deadline in 3 days".');
+      messageApi.warning(
+        'Try a reminder with a date, like "follow up after 7 days" or "offer deadline in 3 days".'
+      );
       return;
     }
 
@@ -306,7 +328,9 @@ const Tasks: React.FC = () => {
   const checklistTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
       const statusOrder: Record<TaskStatus, number> = { TODO: 0, IN_PROGRESS: 1, DONE: 2 };
-      return statusOrder[a.status] - statusOrder[b.status] || a.position - b.position || a.id - b.id;
+      return (
+        statusOrder[a.status] - statusOrder[b.status] || a.position - b.position || a.id - b.id
+      );
     });
   }, [tasks]);
 
@@ -364,7 +388,7 @@ const Tasks: React.FC = () => {
               value={smartReminderText}
               onChange={(event) => setSmartReminderText(event.target.value)}
               onPressEnter={() => handleCreateSmartReminder()}
-              placeholder='e.g. Follow up after 7 days'
+              placeholder="e.g. Follow up after 7 days"
               disabled={smartReminderSaving}
             />
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -374,7 +398,9 @@ const Tasks: React.FC = () => {
                   {smartReminderDraft.dueDate.format('MMM D, YYYY')} · {smartReminderDraft.priority}
                 </span>
               ) : (
-                <span className="text-slate-400">Understands tomorrow, after 7 days, in 3 days, next Friday.</span>
+                <span className="text-slate-400">
+                  Understands tomorrow, after 7 days, in 3 days, next Friday.
+                </span>
               )}
               {[
                 'Follow up after 7 days',
@@ -409,52 +435,61 @@ const Tasks: React.FC = () => {
       </Card>
 
       <div>
-        <Card
-        title="Weekly Review"
-        loading={weeklyReviewLoading}
-      >
-        {weeklyReview ? (
-          <div className="space-y-3">
-            <div className="text-sm text-gray-600">
-              {dayjs(weeklyReview.start_date).format('MMM D')} - {dayjs(weeklyReview.end_date).format('MMM D, YYYY')}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-lg border border-gray-200 px-3 py-2">
-                <div className="text-xs text-gray-500 uppercase tracking-wide">Applications Sent</div>
-                <div className="text-2xl font-semibold">{weeklyReview.applications_sent}</div>
+        <Card title="Weekly Review" loading={weeklyReviewLoading}>
+          {weeklyReview ? (
+            <div className="space-y-3">
+              <div className="text-sm text-gray-600">
+                {dayjs(weeklyReview.start_date).format('MMM D')} -{' '}
+                {dayjs(weeklyReview.end_date).format('MMM D, YYYY')}
               </div>
-              <div className="rounded-lg border border-gray-200 px-3 py-2">
-                <div className="text-xs text-gray-500 uppercase tracking-wide">Interviews Done</div>
-                <div className="text-2xl font-semibold">{weeklyReview.interviews_done}</div>
-              </div>
-              <div className="rounded-lg border border-gray-200 px-3 py-2">
-                <div className="text-xs text-gray-500 uppercase tracking-wide">Next Actions</div>
-                <div className="text-2xl font-semibold">{weeklyReview.next_actions_count}</div>
-              </div>
-            </div>
-            <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm text-gray-700">
-              {weeklyReview.summary_text}
-            </div>
-            {weeklyReview.next_actions.length > 0 ? (
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Top Next Actions</div>
-                <div className="space-y-1">
-                  {weeklyReview.next_actions.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between text-sm rounded border border-gray-100 px-2 py-1">
-                      <span className="truncate pr-3">{item.title}</span>
-                      <span className={`text-xs ${item.is_overdue ? 'text-red-500' : 'text-gray-500'}`}>
-                        {item.due_date ? dayjs(item.due_date).format('YYYY-MM-DD') : 'No due date'}
-                      </span>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">
+                    Applications Sent
+                  </div>
+                  <div className="text-2xl font-semibold">{weeklyReview.applications_sent}</div>
+                </div>
+                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">
+                    Interviews Done
+                  </div>
+                  <div className="text-2xl font-semibold">{weeklyReview.interviews_done}</div>
+                </div>
+                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Next Actions</div>
+                  <div className="text-2xl font-semibold">{weeklyReview.next_actions_count}</div>
                 </div>
               </div>
-            ) : null}
-          </div>
-        ) : (
-          <Empty description="No weekly review available" />
-        )}
-      </Card>
+              <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm text-gray-700">
+                {weeklyReview.summary_text}
+              </div>
+              {weeklyReview.next_actions.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Top Next Actions</div>
+                  <div className="space-y-1">
+                    {weeklyReview.next_actions.slice(0, 5).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between text-sm rounded border border-gray-100 px-2 py-1"
+                      >
+                        <span className="truncate pr-3">{item.title}</span>
+                        <span
+                          className={`text-xs ${item.is_overdue ? 'text-red-500' : 'text-gray-500'}`}
+                        >
+                          {item.due_date
+                            ? dayjs(item.due_date).format('YYYY-MM-DD')
+                            : 'No due date'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <Empty description="No weekly review available" />
+          )}
+        </Card>
       </div>
 
       {viewMode === 'kanban' ? (
@@ -502,11 +537,15 @@ const Tasks: React.FC = () => {
                       }
                     >
                       <div className="space-y-2">
-                        {task.description ? <p className="text-sm text-gray-600 m-0">{task.description}</p> : null}
+                        {task.description ? (
+                          <p className="text-sm text-gray-600 m-0">{task.description}</p>
+                        ) : null}
                         <div className="flex items-center justify-between">
                           <Tag color={PRIORITY_COLOR[task.priority]}>{task.priority}</Tag>
                           {task.due_date ? (
-                            <span className="text-xs text-gray-500">Due {dayjs(task.due_date).format('MMM D')}</span>
+                            <span className="text-xs text-gray-500">
+                              Due {dayjs(task.due_date).format('MMM D')}
+                            </span>
                           ) : null}
                         </div>
                       </div>
@@ -535,12 +574,16 @@ const Tasks: React.FC = () => {
                       onChange={(e) => handleChecklistToggle(task, e.target.checked)}
                     />
                     <div className="min-w-0">
-                      <div className={`font-medium truncate ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}>
+                      <div
+                        className={`font-medium truncate ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
+                      >
                         {task.title}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <Tag color={PRIORITY_COLOR[task.priority]}>{task.priority}</Tag>
-                        {task.due_date ? <span>Due {dayjs(task.due_date).format('YYYY-MM-DD')}</span> : null}
+                        {task.due_date ? (
+                          <span>Due {dayjs(task.due_date).format('YYYY-MM-DD')}</span>
+                        ) : null}
                         <span>{STATUS_META.find((s) => s.key === task.status)?.label}</span>
                       </div>
                     </div>
@@ -596,11 +639,19 @@ const Tasks: React.FC = () => {
         }
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Please enter a title' }]}>
+          <Form.Item
+            name="title"
+            label="Title"
+            rules={[{ required: true, message: 'Please enter a title' }]}
+          >
             <Input placeholder="e.g. Follow up with recruiter" disabled={modalMode === 'view'} />
           </Form.Item>
           <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Optional details" disabled={modalMode === 'view'} />
+            <Input.TextArea
+              rows={3}
+              placeholder="Optional details"
+              disabled={modalMode === 'view'}
+            />
           </Form.Item>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Form.Item name="status" label="Status" rules={[{ required: true }]}>
@@ -628,7 +679,6 @@ const Tasks: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-
     </div>
   );
 };

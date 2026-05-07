@@ -23,13 +23,26 @@ body {
 }
 
 /* Premium scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 
 /* Smooth transitions on interactive elements */
-.ant-btn, .ant-select-selector, .ant-input, .ant-menu-item {
+.ant-btn,
+.ant-select-selector,
+.ant-input,
+.ant-menu-item {
   transition: all 0.18s ease !important;
 }
 

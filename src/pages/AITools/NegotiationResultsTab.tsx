@@ -62,25 +62,23 @@ const NegotiationResultsTab: React.FC = () => {
 
   /* ── Selection ── */
   const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       setSelectedIds(checked ? results.map((r) => r.id) : []);
     },
-    [results],
+    [results]
   );
 
   const selectedResults = useMemo(
     () => results.filter((r) => selectedIds.includes(r.id)),
-    [results, selectedIds],
+    [results, selectedIds]
   );
   const hasLockedSelected = useMemo(
     () => selectedResults.some((r) => r.isLocked),
-    [selectedResults],
+    [selectedResults]
   );
 
   /* ── Single-item actions ── */
@@ -98,7 +96,7 @@ const NegotiationResultsTab: React.FC = () => {
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       refresh();
     },
-    [refresh, usingBackendArtifacts],
+    [refresh, usingBackendArtifacts]
   );
 
   const handleToggleLock = useCallback(
@@ -115,7 +113,7 @@ const NegotiationResultsTab: React.FC = () => {
       }
       refresh();
     },
-    [refresh, results, usingBackendArtifacts],
+    [refresh, results, usingBackendArtifacts]
   );
 
   const handleRename = useCallback(() => {
@@ -146,8 +144,8 @@ const NegotiationResultsTab: React.FC = () => {
           deletableIds.map((id) =>
             usingBackendArtifacts
               ? deleteArtifactByClientId('NEGOTIATION_RESULT', id)
-              : Promise.resolve(deleteNegotiationResult(id)),
-          ),
+              : Promise.resolve(deleteNegotiationResult(id))
+          )
         ).finally(refresh);
         setSelectedIds([]);
       },
@@ -169,7 +167,7 @@ const NegotiationResultsTab: React.FC = () => {
       setSelectedIds([]);
       refresh();
     },
-    [selectedIds, results, refresh, usingBackendArtifacts],
+    [selectedIds, results, refresh, usingBackendArtifacts]
   );
 
   const handleDeleteAll = useCallback(() => {
@@ -193,9 +191,18 @@ const NegotiationResultsTab: React.FC = () => {
       }
       const escape = (v: string) => `"${String(v).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
       const header = [
-        'Title', 'Company', 'Role', 'Saved At',
-        'Base Salary', 'Bonus', 'Equity', 'Sign-On', 'PTO Days',
-        'Leverage Points', 'Talking Points', 'Caution Points',
+        'Title',
+        'Company',
+        'Role',
+        'Saved At',
+        'Base Salary',
+        'Bonus',
+        'Equity',
+        'Sign-On',
+        'PTO Days',
+        'Leverage Points',
+        'Talking Points',
+        'Caution Points',
       ];
       const rows = results.map((r) => [
         escape(r.title || `${r.roleTitle} @ ${r.companyName}`),
@@ -215,7 +222,7 @@ const NegotiationResultsTab: React.FC = () => {
       const blob = new Blob([csv], { type: 'text/csv' });
       return { data: blob, headers: { 'content-type': 'text/csv' } };
     },
-    [results],
+    [results]
   );
 
   void messageApi;
@@ -256,9 +263,7 @@ const NegotiationResultsTab: React.FC = () => {
                 <Button icon={<UnlockOutlined />} onClick={() => handleBulkToggleLock(false)}>
                   Unlock
                 </Button>
-                <Tooltip
-                  title={hasLockedSelected ? 'Unlock selected items before deleting' : ''}
-                >
+                <Tooltip title={hasLockedSelected ? 'Unlock selected items before deleting' : ''}>
                   <Button
                     danger
                     icon={<DeleteOutlined />}
@@ -302,8 +307,7 @@ const NegotiationResultsTab: React.FC = () => {
       <div className="flex flex-col gap-4">
         {results.map((result) => {
           const isSelected = selectedIds.includes(result.id);
-          const displayTitle =
-            result.title || `${result.roleTitle} @ ${result.companyName}`;
+          const displayTitle = result.title || `${result.roleTitle} @ ${result.companyName}`;
           const date = new Date(result.savedAt).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -370,12 +374,11 @@ const NegotiationResultsTab: React.FC = () => {
                       { label: 'Sign-On', value: fmt(snap.sign_on) },
                       {
                         label: 'PTO',
-                        value:
-                          snap.is_unlimited_pto
-                            ? 'Unlimited'
-                            : snap.pto_days
-                              ? formatPtoLabel(snap.pto_days, false, true)
-                              : null,
+                        value: snap.is_unlimited_pto
+                          ? 'Unlimited'
+                          : snap.pto_days
+                            ? formatPtoLabel(snap.pto_days, false, true)
+                            : null,
                       },
                     ]
                       .filter((x) => x.value)

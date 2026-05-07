@@ -85,7 +85,7 @@ const ModalShell = ({
         ) : null}
       </div>
     </div>,
-    document.body,
+    document.body
   );
 };
 

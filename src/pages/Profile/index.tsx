@@ -33,7 +33,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
     typeof error === 'object' &&
     error !== null &&
     'response' in error &&
-    typeof (error as { response?: { data?: { error?: unknown } } }).response?.data?.error === 'string'
+    typeof (error as { response?: { data?: { error?: unknown } } }).response?.data?.error ===
+      'string'
   ) {
     return (error as { response: { data: { error: string } } }).response.data.error;
   }
@@ -59,7 +60,8 @@ const bytesToBase64 = (bytes: Uint8Array) => {
   return window.btoa(binary);
 };
 
-const base64ToBytes = (value: string) => Uint8Array.from(window.atob(value), (char) => char.charCodeAt(0));
+const base64ToBytes = (value: string) =>
+  Uint8Array.from(window.atob(value), (char) => char.charCodeAt(0));
 
 const formatDeletionDate = (value?: string | null) => {
   if (!value) return null;
@@ -78,7 +80,7 @@ const encryptExport = async (plainText: string, passphrase: string) => {
     encoder.encode(passphrase),
     'PBKDF2',
     false,
-    ['deriveKey'],
+    ['deriveKey']
   );
   const key = await window.crypto.subtle.deriveKey(
     {
@@ -90,12 +92,12 @@ const encryptExport = async (plainText: string, passphrase: string) => {
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
-    ['encrypt'],
+    ['encrypt']
   );
   const encrypted = await window.crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
-    encoder.encode(plainText),
+    encoder.encode(plainText)
   );
 
   return JSON.stringify(
@@ -109,23 +111,26 @@ const encryptExport = async (plainText: string, passphrase: string) => {
       ciphertext: bytesToBase64(new Uint8Array(encrypted)),
     },
     null,
-    2,
+    2
   );
 };
 
-const decryptExport = async (payload: {
-  iterations: number;
-  salt: string;
-  iv: string;
-  ciphertext: string;
-}, passphrase: string) => {
+const decryptExport = async (
+  payload: {
+    iterations: number;
+    salt: string;
+    iv: string;
+    ciphertext: string;
+  },
+  passphrase: string
+) => {
   const encoder = new TextEncoder();
   const keyMaterial = await window.crypto.subtle.importKey(
     'raw',
     encoder.encode(passphrase),
     'PBKDF2',
     false,
-    ['deriveKey'],
+    ['deriveKey']
   );
   const key = await window.crypto.subtle.deriveKey(
     {
@@ -137,12 +142,12 @@ const decryptExport = async (payload: {
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
-    ['decrypt'],
+    ['decrypt']
   );
   const decrypted = await window.crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: base64ToBytes(payload.iv) },
     key,
-    base64ToBytes(payload.ciphertext),
+    base64ToBytes(payload.ciphertext)
   );
   return new TextDecoder().decode(decrypted);
 };
@@ -200,10 +205,14 @@ const ProfilePage: React.FC = () => {
     try {
       await updateUserSettings({ display_name: settings.display_name });
       await updateProfile({ first_name: firstName, last_name: lastName });
-      window.dispatchEvent(new CustomEvent('settings-saved', { detail: { 
-        display_name: settings.display_name,
-        profile_picture: settings.profile_picture 
-      }}));
+      window.dispatchEvent(
+        new CustomEvent('settings-saved', {
+          detail: {
+            display_name: settings.display_name,
+            profile_picture: settings.profile_picture,
+          },
+        })
+      );
       messageApi.success('Profile updated successfully!');
     } catch {
       messageApi.error('Failed to update profile');
@@ -228,7 +237,7 @@ const ProfilePage: React.FC = () => {
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
       setTimeout(() => {
         logout();
       }, 1500);
@@ -244,7 +253,10 @@ const ProfilePage: React.FC = () => {
     try {
       const resp = await exportAccountData(format);
       const extension = format === 'zip' ? 'zip' : 'json';
-      downloadBlob(new Blob([resp.data]), `careerhub_account_export_${new Date().toISOString().slice(0, 10)}.${extension}`);
+      downloadBlob(
+        new Blob([resp.data]),
+        `careerhub_account_export_${new Date().toISOString().slice(0, 10)}.${extension}`
+      );
       messageApi.success('Account export downloaded.');
     } catch (error: unknown) {
       messageApi.error(getErrorMessage(error, 'Failed to export account data'));
@@ -265,7 +277,7 @@ const ProfilePage: React.FC = () => {
       const encrypted = await encryptExport(plainText, encryptedExportPassphrase);
       downloadBlob(
         new Blob([encrypted], { type: 'application/json' }),
-        `careerhub_account_export_encrypted_${new Date().toISOString().slice(0, 10)}.json`,
+        `careerhub_account_export_encrypted_${new Date().toISOString().slice(0, 10)}.json`
       );
       setEncryptedExportPassphrase('');
       messageApi.success('Encrypted local export downloaded.');
@@ -321,7 +333,8 @@ const ProfilePage: React.FC = () => {
     setDeleteModalOpen(false);
     Modal.confirm({
       title: 'Schedule account deletion?',
-      content: 'Your account will be scheduled for permanent deletion in 14 days. Sign in again before then to cancel the deletion.',
+      content:
+        'Your account will be scheduled for permanent deletion in 14 days. Sign in again before then to cancel the deletion.',
       okText: 'Schedule deletion',
       okButtonProps: { danger: true },
       cancelText: 'Keep account',
@@ -333,7 +346,7 @@ const ProfilePage: React.FC = () => {
           messageApi.success(
             scheduledFor
               ? `Account deletion scheduled for ${scheduledFor}. Sign in before then to cancel.`
-              : 'Account deletion scheduled. Sign in within 14 days to cancel.',
+              : 'Account deletion scheduled. Sign in within 14 days to cancel.'
           );
           try {
             await logout();
@@ -352,8 +365,14 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600" /></div>;
-  if (!settings) return <div className="text-center py-12 text-red-600">Failed to load profile</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600" />
+      </div>
+    );
+  if (!settings)
+    return <div className="text-center py-12 text-red-600">Failed to load profile</div>;
 
   const profileName =
     firstName || lastName
@@ -377,8 +396,9 @@ const ProfilePage: React.FC = () => {
       >
         <div className="space-y-4 pt-2">
           <p className="text-sm leading-relaxed text-slate-600">
-            This schedules permanent account and server-side data deletion after a 14-day grace period.
-            Sign in again before the deadline to cancel it. Type DELETE to enable the next step.
+            This schedules permanent account and server-side data deletion after a 14-day grace
+            period. Sign in again before the deadline to cancel it. Type DELETE to enable the next
+            step.
           </p>
           <input
             type="text"
@@ -389,7 +409,7 @@ const ProfilePage: React.FC = () => {
           />
         </div>
       </Modal>
-      
+
       <PageActionToolbar
         title="Profile Settings"
         extraActions={
@@ -415,9 +435,7 @@ const ProfilePage: React.FC = () => {
             <div className="relative p-6">
               <div className="mb-6 flex items-center justify-between gap-4">
                 <p className="text-[11px] font-bold uppercase text-slate-400">Identity</p>
-                <span className="text-[11px] font-bold uppercase text-slate-500">
-                  Signed in
-                </span>
+                <span className="text-[11px] font-bold uppercase text-slate-500">Signed in</span>
               </div>
 
               <div className="mb-7 flex items-center gap-4">
@@ -446,12 +464,20 @@ const ProfilePage: React.FC = () => {
                             try {
                               const resp = await updateUserSettings(formData);
                               setSettings(resp.data);
-                              window.dispatchEvent(new CustomEvent('settings-saved', { detail: { 
-                                display_name: resp.data.display_name,
-                                profile_picture: resp.data.profile_picture 
-                              }}));
+                              window.dispatchEvent(
+                                new CustomEvent('settings-saved', {
+                                  detail: {
+                                    display_name: resp.data.display_name,
+                                    profile_picture: resp.data.profile_picture,
+                                  },
+                                })
+                              );
                               messageApi.success('Photo updated!');
-                            } catch { messageApi.error('Upload failed'); } finally { setSaving(false); }
+                            } catch {
+                              messageApi.error('Upload failed');
+                            } finally {
+                              setSaving(false);
+                            }
                           }
                         }}
                       />
@@ -465,11 +491,19 @@ const ProfilePage: React.FC = () => {
                           try {
                             const resp = await updateUserSettings({ profile_picture: null });
                             setSettings(resp.data);
-                            window.dispatchEvent(new CustomEvent('settings-saved', { detail: { 
-                              display_name: resp.data.display_name,
-                              profile_picture: resp.data.profile_picture 
-                            }}));
-                          } catch { messageApi.error('Error'); } finally { setSaving(false); }
+                            window.dispatchEvent(
+                              new CustomEvent('settings-saved', {
+                                detail: {
+                                  display_name: resp.data.display_name,
+                                  profile_picture: resp.data.profile_picture,
+                                },
+                              })
+                            );
+                          } catch {
+                            messageApi.error('Error');
+                          } finally {
+                            setSaving(false);
+                          }
                         }}
                         className="absolute -top-1 -right-1 bg-white p-1.5 rounded-full border border-slate-200 text-slate-400 hover:text-rose-500 transition-all hover:scale-110"
                       >
@@ -504,11 +538,12 @@ const ProfilePage: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase text-slate-400">Account Type</p>
-                    <p className="text-sm font-bold text-slate-800">{user?.is_staff ? 'Administrator' : 'Standard User'}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {user?.is_staff ? 'Administrator' : 'Standard User'}
+                    </p>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </aside>
@@ -523,7 +558,7 @@ const ProfilePage: React.FC = () => {
               </div>
               <h3 className="text-base font-bold text-slate-800">Basic Information</h3>
             </div>
-            
+
             <div className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -584,7 +619,7 @@ const ProfilePage: React.FC = () => {
                 </div>
               </Tooltip>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 ml-1">Current Password</label>
@@ -614,7 +649,9 @@ const ProfilePage: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 ml-1">Confirm New Password</label>
+                  <label className="text-xs font-bold text-slate-500 ml-1">
+                    Confirm New Password
+                  </label>
                   <input
                     type="password"
                     value={confirmPassword}
@@ -647,7 +684,9 @@ const ProfilePage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-800">Privacy & Export Center</h3>
-                <p className="text-xs font-medium text-slate-400 mt-0.5">Export, restore, or permanently remove account data.</p>
+                <p className="text-xs font-medium text-slate-400 mt-0.5">
+                  Export, restore, or permanently remove account data.
+                </p>
               </div>
             </div>
 
@@ -657,9 +696,12 @@ const ProfilePage: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <SafetyOutlined className="text-lg text-amber-700 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-black text-amber-950">Deletion grace period active</h4>
+                      <h4 className="text-sm font-black text-amber-950">
+                        Deletion grace period active
+                      </h4>
                       <p className="text-xs text-amber-800/75 mt-1 leading-relaxed">
-                        This account is scheduled for permanent deletion on {deletionScheduledFor}. Signing in before that date cancels the deletion.
+                        This account is scheduled for permanent deletion on {deletionScheduledFor}.
+                        Signing in before that date cancels the deletion.
                       </p>
                     </div>
                   </div>
@@ -672,14 +714,24 @@ const ProfilePage: React.FC = () => {
                     <DownloadOutlined className="text-lg text-slate-700 mt-0.5" />
                     <div>
                       <h4 className="text-sm font-black text-slate-900">Account export</h4>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">Download a readable JSON or zipped backup of your CareerHub account.</p>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Download a readable JSON or zipped backup of your CareerHub account.
+                      </p>
                     </div>
                   </div>
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Button loading={exporting} icon={<DownloadOutlined />} onClick={() => handlePlainExport('json')}>
+                    <Button
+                      loading={exporting}
+                      icon={<DownloadOutlined />}
+                      onClick={() => handlePlainExport('json')}
+                    >
                       JSON
                     </Button>
-                    <Button loading={exporting} icon={<DownloadOutlined />} onClick={() => handlePlainExport('zip')}>
+                    <Button
+                      loading={exporting}
+                      icon={<DownloadOutlined />}
+                      onClick={() => handlePlainExport('zip')}
+                    >
                       ZIP
                     </Button>
                   </div>
@@ -690,7 +742,9 @@ const ProfilePage: React.FC = () => {
                     <LockOutlined className="text-lg text-slate-700 mt-0.5" />
                     <div>
                       <h4 className="text-sm font-black text-slate-900">Encrypted local export</h4>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">Encrypts the export in your browser before the file is saved locally.</p>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Encrypts the export in your browser before the file is saved locally.
+                      </p>
                     </div>
                   </div>
                   <div className="mt-5 flex flex-col sm:flex-row gap-2">
@@ -701,7 +755,11 @@ const ProfilePage: React.FC = () => {
                       placeholder="Encryption passphrase"
                       className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500"
                     />
-                    <Button loading={exporting} icon={<FileProtectOutlined />} onClick={handleEncryptedExport}>
+                    <Button
+                      loading={exporting}
+                      icon={<FileProtectOutlined />}
+                      onClick={handleEncryptedExport}
+                    >
                       Encrypt
                     </Button>
                   </div>
@@ -713,7 +771,10 @@ const ProfilePage: React.FC = () => {
                   <UploadOutlined className="text-lg text-slate-700 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-black text-slate-900">Backup restore</h4>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">Restore a CareerHub account export. Merge keeps current records; replace clears current core data first. Encrypted JSON exports need their passphrase.</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      Restore a CareerHub account export. Merge keeps current records; replace
+                      clears current core data first. Encrypted JSON exports need their passphrase.
+                    </p>
                   </div>
                 </div>
                 <div className="mt-5 grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3">
@@ -750,7 +811,8 @@ const ProfilePage: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-black text-rose-950">Delete account</h4>
                     <p className="text-xs text-rose-700/70 mt-1 leading-relaxed">
-                      Schedule permanent deletion after 14 days. Sign in again before then to cancel.
+                      Schedule permanent deletion after 14 days. Sign in again before then to
+                      cancel.
                     </p>
                   </div>
                   <Button

@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, Modal } from 'antd';
 import { DollarCircleOutlined } from '@ant-design/icons';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { buildHourlyCompensationSnapshot, buildHourlyWorkSummary, type ExperienceCompensationSnapshot } from './compensation';
+import {
+  buildHourlyCompensationSnapshot,
+  buildHourlyWorkSummary,
+  type ExperienceCompensationSnapshot,
+} from './compensation';
 
 type HourlyInputUpdate = {
   hourly_rate: number | null;
@@ -60,7 +64,10 @@ const normalizeEditableNumber = (value: string | number | null | undefined) => {
   return Number(parsed.toFixed(2));
 };
 
-const numbersMatch = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+const numbersMatch = (
+  a: string | number | null | undefined,
+  b: string | number | null | undefined
+) => {
   if (a == null && b == null) return true;
   return normalizeEditableNumber(a) === normalizeEditableNumber(b);
 };
@@ -119,11 +126,12 @@ const CompensationBreakdownModal: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           <DollarCircleOutlined className="text-emerald-500" />
           <span>
-            {titleText ?? (snapshot.kind === 'hourly' ? 'Internship Earnings Breakdown' : 'Pay Structure Breakdown')}
+            {titleText ??
+              (snapshot.kind === 'hourly'
+                ? 'Internship Earnings Breakdown'
+                : 'Pay Structure Breakdown')}
             {resolvedContextLabel && (
-              <span className="ml-2 font-normal text-gray-500">
-                {resolvedContextLabel}
-              </span>
+              <span className="ml-2 font-normal text-gray-500">{resolvedContextLabel}</span>
             )}
           </span>
         </div>
@@ -194,12 +202,10 @@ const SalaryBreakdown = ({
   editLabel?: string;
 }) => {
   const breakdown = { base, bonus, equity };
-  const chartData = SEGMENTS
-    .map(segment => ({
-      ...segment,
-      value: breakdown[segment.key],
-    }))
-    .filter(segment => segment.value > 0);
+  const chartData = SEGMENTS.map((segment) => ({
+    ...segment,
+    value: breakdown[segment.key],
+  })).filter((segment) => segment.value > 0);
 
   return (
     <div className="mt-2 space-y-4">
@@ -218,7 +224,9 @@ const SalaryBreakdown = ({
             {totalLabel ?? 'Total Annual Earnings'}
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900">{fmtMoney(total)}</div>
-          <div className="mt-1 text-sm text-gray-500">{totalHint ?? 'Base salary + bonus + equity, annualized'}</div>
+          <div className="mt-1 text-sm text-gray-500">
+            {totalHint ?? 'Base salary + bonus + equity, annualized'}
+          </div>
 
           <div className="mt-5 h-64">
             {chartData.length > 0 ? (
@@ -234,7 +242,7 @@ const SalaryBreakdown = ({
                     stroke="#ffffff"
                     strokeWidth={3}
                   >
-                    {chartData.map(segment => (
+                    {chartData.map((segment) => (
                       <Cell key={segment.key} fill={segment.color} />
                     ))}
                   </Pie>
@@ -257,12 +265,15 @@ const SalaryBreakdown = ({
         </div>
 
         <div className="space-y-3">
-          {SEGMENTS.map(segment => {
+          {SEGMENTS.map((segment) => {
             const value = breakdown[segment.key];
             const pct = total > 0 ? (value / total) * 100 : 0;
 
             return (
-              <div key={segment.key} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div
+                key={segment.key}
+                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -357,14 +368,26 @@ const HourlyBreakdown = ({
   const [savingInputs, setSavingInputs] = useState(false);
   const [draftHourlyRate, setDraftHourlyRate] = useState(toInputValue(hourlyRate));
   const [draftHoursPerDay, setDraftHoursPerDay] = useState(toInputValue(hoursPerDay));
-  const [draftWorkingDaysPerWeek, setDraftWorkingDaysPerWeek] = useState(toInputValue(workingDaysPerWeek));
-  const [draftTotalHoursWorked, setDraftTotalHoursWorked] = useState(toInputValue(totalHoursWorked ?? autoCalculatedHours));
+  const [draftWorkingDaysPerWeek, setDraftWorkingDaysPerWeek] = useState(
+    toInputValue(workingDaysPerWeek)
+  );
+  const [draftTotalHoursWorked, setDraftTotalHoursWorked] = useState(
+    toInputValue(totalHoursWorked ?? autoCalculatedHours)
+  );
   const [draftOvertimeHours, setDraftOvertimeHours] = useState(toInputValue(overtimeHours || null));
   const [draftOvertimeRate, setDraftOvertimeRate] = useState(toInputValue(overtimeRate));
-  const [draftOvertimeMultiplier, setDraftOvertimeMultiplier] = useState(toInputValue(overtimeMultiplier || 1.5));
-  const [draftTotalEarningsOverride, setDraftTotalEarningsOverride] = useState(toInputValue(totalEarningsOverride));
+  const [draftOvertimeMultiplier, setDraftOvertimeMultiplier] = useState(
+    toInputValue(overtimeMultiplier || 1.5)
+  );
+  const [draftTotalEarningsOverride, setDraftTotalEarningsOverride] = useState(
+    toInputValue(totalEarningsOverride)
+  );
   const canEditHourlyInputs = Boolean(onSaveHourlyInputs);
-  const hasAdvancedDefault = overtimeHours > 0 || totalEarningsOverride != null || overtimeRate != null || overtimeMultiplier !== 1.5;
+  const hasAdvancedDefault =
+    overtimeHours > 0 ||
+    totalEarningsOverride != null ||
+    overtimeRate != null ||
+    overtimeMultiplier !== 1.5;
   const [showOverrides, setShowOverrides] = useState(hasAdvancedDefault);
   const previousAutoHoursRef = useRef<number | null>(null);
   const isAggregateDisplay = displayMode === 'aggregate';
@@ -379,7 +402,17 @@ const HourlyBreakdown = ({
     setDraftOvertimeRate(toInputValue(overtimeRate));
     setDraftOvertimeMultiplier(toInputValue(overtimeMultiplier || 1.5));
     setDraftTotalEarningsOverride(toInputValue(totalEarningsOverride));
-  }, [hourlyRate, hoursPerDay, workingDaysPerWeek, totalHoursWorked, overtimeHours, overtimeRate, overtimeMultiplier, autoCalculatedHours, totalEarningsOverride]);
+  }, [
+    hourlyRate,
+    hoursPerDay,
+    workingDaysPerWeek,
+    totalHoursWorked,
+    overtimeHours,
+    overtimeRate,
+    overtimeMultiplier,
+    autoCalculatedHours,
+    totalEarningsOverride,
+  ]);
 
   const liveWorkSummary = useMemo(() => {
     return buildHourlyWorkSummary({
@@ -400,7 +433,11 @@ const HourlyBreakdown = ({
     const nextAutoHours = Number(liveWorkSummary.autoCalculatedHours.toFixed(2));
     const currentHours = toNullableNumber(draftTotalHoursWorked);
     const previousAutoHours = previousAutoHoursRef.current;
-    const shouldAutofill = currentHours == null || currentHours === 0 || previousAutoHours == null || Math.abs(currentHours - previousAutoHours) < 0.01;
+    const shouldAutofill =
+      currentHours == null ||
+      currentHours === 0 ||
+      previousAutoHours == null ||
+      Math.abs(currentHours - previousAutoHours) < 0.01;
 
     if (shouldAutofill && Math.abs((currentHours ?? 0) - nextAutoHours) >= 0.01) {
       setDraftTotalHoursWorked(toInputValue(nextAutoHours));
@@ -423,22 +460,56 @@ const HourlyBreakdown = ({
       overtimeMultiplier: draftOvertimeMultiplier,
       totalEarningsOverride: draftTotalEarningsOverride,
     });
-  }, [draftHourlyRate, draftHoursPerDay, draftOvertimeHours, draftOvertimeMultiplier, draftOvertimeRate, draftWorkingDaysPerWeek, draftTotalEarningsOverride, draftTotalHoursWorked, endDate, isCurrent, startDate]);
+  }, [
+    draftHourlyRate,
+    draftHoursPerDay,
+    draftOvertimeHours,
+    draftOvertimeMultiplier,
+    draftOvertimeRate,
+    draftWorkingDaysPerWeek,
+    draftTotalEarningsOverride,
+    draftTotalHoursWorked,
+    endDate,
+    isCurrent,
+    startDate,
+  ]);
 
-  const displayCalculationMode = useLiveSnapshot ? (liveSnapshot?.calculationMode ?? calculationMode) : calculationMode;
-  const displayHoursPerDay = useLiveSnapshot ? (liveSnapshot?.hoursPerDay ?? hoursPerDay) : hoursPerDay;
-  const displayWorkingDaysPerWeek = useLiveSnapshot ? (liveSnapshot?.workingDaysPerWeek ?? workingDaysPerWeek) : workingDaysPerWeek;
-  const displayEstimatedHours = useLiveSnapshot ? (liveSnapshot?.estimatedHours ?? estimatedHours) : estimatedHours;
-  const displayWeekdaysWorked = useLiveSnapshot ? (liveSnapshot?.weekdaysWorked ?? weekdaysWorked) : weekdaysWorked;
-  const displayDateRangeLabel = useLiveSnapshot ? (liveSnapshot?.dateRangeLabel ?? dateRangeLabel) : dateRangeLabel;
+  const displayCalculationMode = useLiveSnapshot
+    ? (liveSnapshot?.calculationMode ?? calculationMode)
+    : calculationMode;
+  const displayHoursPerDay = useLiveSnapshot
+    ? (liveSnapshot?.hoursPerDay ?? hoursPerDay)
+    : hoursPerDay;
+  const displayWorkingDaysPerWeek = useLiveSnapshot
+    ? (liveSnapshot?.workingDaysPerWeek ?? workingDaysPerWeek)
+    : workingDaysPerWeek;
+  const displayEstimatedHours = useLiveSnapshot
+    ? (liveSnapshot?.estimatedHours ?? estimatedHours)
+    : estimatedHours;
+  const displayWeekdaysWorked = useLiveSnapshot
+    ? (liveSnapshot?.weekdaysWorked ?? weekdaysWorked)
+    : weekdaysWorked;
+  const displayDateRangeLabel = useLiveSnapshot
+    ? (liveSnapshot?.dateRangeLabel ?? dateRangeLabel)
+    : dateRangeLabel;
   const displayHourlyRate = useLiveSnapshot ? (liveSnapshot?.hourlyRate ?? hourlyRate) : hourlyRate;
   const displayRegularPay = useLiveSnapshot ? (liveSnapshot?.regularPay ?? regularPay) : regularPay;
 
-  const displayOvertimeHours = useLiveSnapshot ? (liveSnapshot?.overtimeHours ?? overtimeHours) : overtimeHours;
-  const displayOvertimeRate = useLiveSnapshot ? (liveSnapshot?.overtimeRate ?? overtimeRate) : overtimeRate;
-  const displayOvertimeMultiplier = useLiveSnapshot ? (liveSnapshot?.overtimeMultiplier ?? overtimeMultiplier) : overtimeMultiplier;
-  const displayEffectiveOvertimeRate = useLiveSnapshot ? (liveSnapshot?.effectiveOvertimeRate ?? effectiveOvertimeRate) : effectiveOvertimeRate;
-  const displayOvertimePay = useLiveSnapshot ? (liveSnapshot?.overtimePay ?? overtimePay) : overtimePay;
+  const displayOvertimeHours = useLiveSnapshot
+    ? (liveSnapshot?.overtimeHours ?? overtimeHours)
+    : overtimeHours;
+  const displayOvertimeRate = useLiveSnapshot
+    ? (liveSnapshot?.overtimeRate ?? overtimeRate)
+    : overtimeRate;
+  const displayOvertimeMultiplier = useLiveSnapshot
+    ? (liveSnapshot?.overtimeMultiplier ?? overtimeMultiplier)
+    : overtimeMultiplier;
+  const displayEffectiveOvertimeRate = useLiveSnapshot
+    ? (liveSnapshot?.effectiveOvertimeRate ?? effectiveOvertimeRate)
+    : effectiveOvertimeRate;
+  const displayOvertimePay = useLiveSnapshot
+    ? (liveSnapshot?.overtimePay ?? overtimePay)
+    : overtimePay;
   const displayTotal = useLiveSnapshot ? (liveSnapshot?.total ?? total) : total;
   const hasValidDraft = [
     toNullableNumber(draftHourlyRate),
@@ -449,15 +520,19 @@ const HourlyBreakdown = ({
     toNullableNumber(draftOvertimeRate),
     toNullableNumber(draftOvertimeMultiplier),
     toNullableNumber(draftTotalEarningsOverride),
-  ].some(value => value != null);
-  const isDirty = !numbersMatch(toNullableNumber(draftHourlyRate), hourlyRate)
-    || !numbersMatch(toNullableNumber(draftHoursPerDay), hoursPerDay)
-    || !numbersMatch(toNullableNumber(draftWorkingDaysPerWeek), workingDaysPerWeek)
-    || !numbersMatch(toNullableNumber(draftTotalHoursWorked), totalHoursWorked ?? autoCalculatedHours)
-    || !numbersMatch(toNullableNumber(draftOvertimeHours), overtimeHours || null)
-    || !numbersMatch(toNullableNumber(draftOvertimeRate), overtimeRate)
-    || !numbersMatch(toNullableNumber(draftOvertimeMultiplier), overtimeMultiplier || 1.5)
-    || !numbersMatch(toNullableNumber(draftTotalEarningsOverride), totalEarningsOverride);
+  ].some((value) => value != null);
+  const isDirty =
+    !numbersMatch(toNullableNumber(draftHourlyRate), hourlyRate) ||
+    !numbersMatch(toNullableNumber(draftHoursPerDay), hoursPerDay) ||
+    !numbersMatch(toNullableNumber(draftWorkingDaysPerWeek), workingDaysPerWeek) ||
+    !numbersMatch(
+      toNullableNumber(draftTotalHoursWorked),
+      totalHoursWorked ?? autoCalculatedHours
+    ) ||
+    !numbersMatch(toNullableNumber(draftOvertimeHours), overtimeHours || null) ||
+    !numbersMatch(toNullableNumber(draftOvertimeRate), overtimeRate) ||
+    !numbersMatch(toNullableNumber(draftOvertimeMultiplier), overtimeMultiplier || 1.5) ||
+    !numbersMatch(toNullableNumber(draftTotalEarningsOverride), totalEarningsOverride);
 
   const resetDraft = () => {
     setDraftHourlyRate(toInputValue(hourlyRate));
@@ -496,20 +571,20 @@ const HourlyBreakdown = ({
   };
 
   const isManualTotal = displayCalculationMode === 'manual_total';
-  const totalHeading = totalLabel ?? (
-    isManualTotal
+  const totalHeading =
+    totalLabel ??
+    (isManualTotal
       ? 'Custom Total Earnings'
       : displayCalculationMode === 'manual_hours'
         ? 'Total Earnings'
-        : 'Estimated Total Earnings'
-  );
-  const totalHeadingHint = totalHint ?? (
-    isManualTotal
+        : 'Estimated Total Earnings');
+  const totalHeadingHint =
+    totalHint ??
+    (isManualTotal
       ? 'Using your direct total override for the final internship total.'
       : displayCalculationMode === 'manual_hours'
         ? 'Calculated from your saved hourly rate, total hours, and overtime inputs.'
-        : 'Estimated from hourly rate, role dates, and your internship work schedule.'
-  );
+        : 'Estimated from hourly rate, role dates, and your internship work schedule.');
   const dateRangeHint = isCurrent
     ? 'Current roles are calculated through today'
     : 'Using the saved role start and end dates';
@@ -521,11 +596,13 @@ const HourlyBreakdown = ({
   return (
     <div className="mt-2 space-y-4">
       <div className={isAggregateDisplay ? 'grid gap-5' : 'grid gap-5 md:grid-cols-[320px,1fr]'}>
-        <div className={`rounded-2xl border p-5 ${
-          isManualTotal
-            ? 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-50'
-            : 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-blue-50'
-        }`}>
+        <div
+          className={`rounded-2xl border p-5 ${
+            isManualTotal
+              ? 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-50'
+              : 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-blue-50'
+          }`}
+        >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
@@ -541,7 +618,9 @@ const HourlyBreakdown = ({
                     placeholder="Custom total"
                     autoFocus
                   />
-                  <div className="mt-1 text-[11px] font-semibold text-blue-600 uppercase tracking-widest">Editing Total Override</div>
+                  <div className="mt-1 text-[11px] font-semibold text-blue-600 uppercase tracking-widest">
+                    Editing Total Override
+                  </div>
                 </div>
               ) : (
                 <div className="mt-2 flex items-center gap-3 mb-1">
@@ -578,13 +657,15 @@ const HourlyBreakdown = ({
           </div>
 
           {!isAggregateDisplay && (
-            <div className={`mt-4 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
-              isManualTotal
-                ? 'border-blue-200 bg-blue-50 text-blue-700'
-                : displayCalculationMode === 'manual_hours'
-                  ? 'border-amber-200 bg-amber-50 text-amber-700'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-            }`}>
+            <div
+              className={`mt-4 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                isManualTotal
+                  ? 'border-blue-200 bg-blue-50 text-blue-700'
+                  : displayCalculationMode === 'manual_hours'
+                    ? 'border-amber-200 bg-amber-50 text-amber-700'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              }`}
+            >
               {isManualTotal
                 ? 'Direct total override'
                 : displayCalculationMode === 'manual_hours'
@@ -603,7 +684,9 @@ const HourlyBreakdown = ({
 
           {!isManualTotal && !isAggregateDisplay && (
             <div className="mt-5 rounded-2xl border border-white bg-white/85 px-4 py-4 shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400">Calculation</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400">
+                Calculation
+              </div>
               <div className="mt-2 text-xl font-bold text-gray-900">
                 {fmtNumber(displayEstimatedHours)} hrs
                 <span className="mx-2 text-gray-300">×</span>
@@ -629,70 +712,91 @@ const HourlyBreakdown = ({
           )}
 
           {/* Donut chart: Regular vs OT pay */}
-          {!isManualTotal && displayTotal > 0 && (() => {
-            const chartData = [
-              { name: 'Regular Pay', value: displayRegularPay, color: '#2563eb' },
-              ...(displayOvertimePay > 0 ? [{ name: 'Overtime Pay', value: displayOvertimePay, color: '#f59e0b' }] : []),
-            ];
-            return (
-              <div className="mt-5 h-52">
-                <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={208}>
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={58}
-                      outerRadius={90}
-                      paddingAngle={chartData.length > 1 ? 3 : 0}
-                      stroke="#ffffff"
-                      strokeWidth={3}
-                    >
-                      {chartData.map(entry => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip
-                      formatter={(value) => fmtMoney(Number(value ?? 0))}
-                      contentStyle={{
-                        borderRadius: 14,
-                        border: '1px solid #e5e7eb',
-                        boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            );
-          })()}
+          {!isManualTotal &&
+            displayTotal > 0 &&
+            (() => {
+              const chartData = [
+                { name: 'Regular Pay', value: displayRegularPay, color: '#2563eb' },
+                ...(displayOvertimePay > 0
+                  ? [{ name: 'Overtime Pay', value: displayOvertimePay, color: '#f59e0b' }]
+                  : []),
+              ];
+              return (
+                <div className="mt-5 h-52">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={208}>
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={58}
+                        outerRadius={90}
+                        paddingAngle={chartData.length > 1 ? 3 : 0}
+                        stroke="#ffffff"
+                        strokeWidth={3}
+                      >
+                        {chartData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        formatter={(value) => fmtMoney(Number(value ?? 0))}
+                        contentStyle={{
+                          borderRadius: 14,
+                          border: '1px solid #e5e7eb',
+                          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })()}
 
           {/* Pay breakdown bars */}
           {!isManualTotal && displayTotal > 0 && (
             <div className="mt-4 space-y-2.5">
               {[
                 { label: 'Regular Pay', value: displayRegularPay, color: '#2563eb', show: true },
-                { label: 'Overtime Pay', value: displayOvertimePay, color: '#f59e0b', show: displayOvertimePay > 0 },
-              ].filter(s => s.show).map(segment => {
-                const pct = displayTotal > 0 ? (segment.value / displayTotal) * 100 : 0;
-                return (
-                  <div key={segment.label} className="rounded-xl border border-gray-100 bg-white/90 px-3 py-2.5 shadow-sm">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
-                        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: segment.color }} />
-                        {segment.label}
+                {
+                  label: 'Overtime Pay',
+                  value: displayOvertimePay,
+                  color: '#f59e0b',
+                  show: displayOvertimePay > 0,
+                },
+              ]
+                .filter((s) => s.show)
+                .map((segment) => {
+                  const pct = displayTotal > 0 ? (segment.value / displayTotal) * 100 : 0;
+                  return (
+                    <div
+                      key={segment.label}
+                      className="rounded-xl border border-gray-100 bg-white/90 px-3 py-2.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+                          <span
+                            className="inline-block h-2 w-2 rounded-full"
+                            style={{ backgroundColor: segment.color }}
+                          />
+                          {segment.label}
+                        </div>
+                        <span className="text-sm font-bold text-gray-900">
+                          {fmtMoney(segment.value)}
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-gray-900">{fmtMoney(segment.value)}</span>
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.max(pct, 4)}%`, backgroundColor: segment.color }}
+                        />
+                      </div>
+                      <div className="mt-1 text-[10px] text-gray-400">
+                        {pct.toFixed(1)}% of total
+                      </div>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(pct, 4)}%`, backgroundColor: segment.color }}
-                      />
-                    </div>
-                    <div className="mt-1 text-[10px] text-gray-400">{pct.toFixed(1)}% of total</div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
         </div>
@@ -701,15 +805,18 @@ const HourlyBreakdown = ({
           <div className="space-y-3">
             {isMultiPhase ? (
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 mt-4 space-y-3">
-                <h3 className="text-sm font-semibold text-emerald-900">Multi-Phase Schedule Active</h3>
+                <h3 className="text-sm font-semibold text-emerald-900">
+                  Multi-Phase Schedule Active
+                </h3>
                 <p className="text-sm text-emerald-700 leading-relaxed">
-                  The compensation for this role is being calculated across multiple schedule phases. 
-                  Inline editing of hours and rates is disabled to protect your complex schedule tracking.
+                  The compensation for this role is being calculated across multiple schedule
+                  phases. Inline editing of hours and rates is disabled to protect your complex
+                  schedule tracking.
                 </p>
                 {openSchedulePhases && (
-                  <Button 
-                    type="primary" 
-                    className="bg-emerald-600 hover:!bg-emerald-500 mt-2" 
+                  <Button
+                    type="primary"
+                    className="bg-emerald-600 hover:!bg-emerald-500 mt-2"
                     onClick={openSchedulePhases}
                   >
                     Manage Schedule Phases
@@ -721,9 +828,12 @@ const HourlyBreakdown = ({
                 {openSchedulePhases && (
                   <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
                     <div>
-                      <div className="text-sm font-semibold text-emerald-900">Need a multi-phase schedule?</div>
+                      <div className="text-sm font-semibold text-emerald-900">
+                        Need a multi-phase schedule?
+                      </div>
                       <div className="mt-1 text-sm text-emerald-700 leading-relaxed">
-                        Split this internship into phases when your dates, pay rate, or weekly schedule changed over time.
+                        Split this internship into phases when your dates, pay rate, or weekly
+                        schedule changed over time.
                       </div>
                     </div>
                     <Button
@@ -740,7 +850,9 @@ const HourlyBreakdown = ({
                     label="Hourly Rate"
                     value={`${fmtMoney(displayHourlyRate)}/hr`}
                     editing={activeField === 'hourly_rate'}
-                    onActivate={onSaveHourlyInputs ? () => setActiveField('hourly_rate') : undefined}
+                    onActivate={
+                      onSaveHourlyInputs ? () => setActiveField('hourly_rate') : undefined
+                    }
                   >
                     <InlineNumberInput
                       value={draftHourlyRate}
@@ -767,7 +879,9 @@ const HourlyBreakdown = ({
                     label="Hours per Day"
                     value={`${fmtNumber(displayHoursPerDay)} hrs`}
                     editing={activeField === 'hours_per_day'}
-                    onActivate={onSaveHourlyInputs ? () => setActiveField('hours_per_day') : undefined}
+                    onActivate={
+                      onSaveHourlyInputs ? () => setActiveField('hours_per_day') : undefined
+                    }
                   >
                     <InlineNumberInput
                       value={draftHoursPerDay}
@@ -782,7 +896,9 @@ const HourlyBreakdown = ({
                     label="Working Days per Week"
                     value={`${fmtNumber(displayWorkingDaysPerWeek)} days`}
                     editing={activeField === 'working_days_per_week'}
-                    onActivate={onSaveHourlyInputs ? () => setActiveField('working_days_per_week') : undefined}
+                    onActivate={
+                      onSaveHourlyInputs ? () => setActiveField('working_days_per_week') : undefined
+                    }
                   >
                     <InlineNumberInput
                       value={draftWorkingDaysPerWeek}
@@ -796,11 +912,15 @@ const HourlyBreakdown = ({
                   <EditableMetricRow
                     label="Total Hours Worked"
                     value={`${fmtNumber(displayEstimatedHours)} hrs`}
-                    hint={displayCalculationMode === 'manual_hours'
-                      ? `Manual override saved. Auto-fill: ${fmtNumber(liveWorkSummary?.autoCalculatedHours ?? autoCalculatedHours)} hrs.`
-                      : `Auto-filled. Overridable.`}
+                    hint={
+                      displayCalculationMode === 'manual_hours'
+                        ? `Manual override saved. Auto-fill: ${fmtNumber(liveWorkSummary?.autoCalculatedHours ?? autoCalculatedHours)} hrs.`
+                        : `Auto-filled. Overridable.`
+                    }
                     editing={activeField === 'total_hours_worked'}
-                    onActivate={onSaveHourlyInputs ? () => setActiveField('total_hours_worked') : undefined}
+                    onActivate={
+                      onSaveHourlyInputs ? () => setActiveField('total_hours_worked') : undefined
+                    }
                   >
                     <InlineNumberInput
                       value={draftTotalHoursWorked}
@@ -816,7 +936,12 @@ const HourlyBreakdown = ({
 
             {!showOverrides ? (
               canRevealAdvancedOptions ? (
-                <Button type="dashed" block className="h-10 text-gray-400 hover:text-gray-600 border-gray-200" onClick={() => setShowOverrides(true)}>
+                <Button
+                  type="dashed"
+                  block
+                  className="h-10 text-gray-400 hover:text-gray-600 border-gray-200"
+                  onClick={() => setShowOverrides(true)}
+                >
                   {advancedOptionsCta}
                 </Button>
               ) : null
@@ -826,7 +951,9 @@ const HourlyBreakdown = ({
                   label="Overtime Hours"
                   value={`${fmtNumber(displayOvertimeHours)} hrs`}
                   editing={activeField === 'overtime_hours'}
-                  onActivate={onSaveHourlyInputs ? () => setActiveField('overtime_hours') : undefined}
+                  onActivate={
+                    onSaveHourlyInputs ? () => setActiveField('overtime_hours') : undefined
+                  }
                 >
                   <InlineNumberInput
                     value={draftOvertimeHours}
@@ -840,11 +967,15 @@ const HourlyBreakdown = ({
                 <EditableMetricRow
                   label="Overtime Rate"
                   value={`${fmtMoney(displayOvertimeRate ?? displayEffectiveOvertimeRate)}/hr`}
-                  hint={displayOvertimeRate != null
-                    ? `Custom OT rate saved. Overtime pay: ${fmtMoney(displayOvertimePay)}`
-                    : `Blank uses ${fmtNumber(displayOvertimeMultiplier)}x base rate. Overtime pay: ${fmtMoney(displayOvertimePay)}`}
+                  hint={
+                    displayOvertimeRate != null
+                      ? `Custom OT rate saved. Overtime pay: ${fmtMoney(displayOvertimePay)}`
+                      : `Blank uses ${fmtNumber(displayOvertimeMultiplier)}x base rate. Overtime pay: ${fmtMoney(displayOvertimePay)}`
+                  }
                   editing={activeField === 'overtime_rate'}
-                  onActivate={onSaveHourlyInputs ? () => setActiveField('overtime_rate') : undefined}
+                  onActivate={
+                    onSaveHourlyInputs ? () => setActiveField('overtime_rate') : undefined
+                  }
                 >
                   <InlineNumberInput
                     value={draftOvertimeRate}
@@ -861,7 +992,9 @@ const HourlyBreakdown = ({
                   label="OT Multiplier"
                   value={`${fmtNumber(displayOvertimeMultiplier)}x`}
                   editing={activeField === 'overtime_multiplier'}
-                  onActivate={onSaveHourlyInputs ? () => setActiveField('overtime_multiplier') : undefined}
+                  onActivate={
+                    onSaveHourlyInputs ? () => setActiveField('overtime_multiplier') : undefined
+                  }
                 >
                   <InlineNumberInput
                     value={draftOvertimeMultiplier}
@@ -873,10 +1006,10 @@ const HourlyBreakdown = ({
                 </EditableMetricRow>
 
                 <div className="flex justify-end pt-2 pr-1 pb-1">
-                  <Button 
-                    type="text" 
-                    size="small" 
-                    className="text-gray-400 hover:text-gray-600 mb-1" 
+                  <Button
+                    type="text"
+                    size="small"
+                    className="text-gray-400 hover:text-gray-600 mb-1"
                     onClick={() => setShowOverrides(false)}
                   >
                     Hide Advanced Options
@@ -961,7 +1094,9 @@ const MetricSection = ({
 }) => (
   <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
     <div className="pb-2">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">{title}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+        {title}
+      </div>
       {hint && <div className="mt-1 text-sm text-gray-500">{hint}</div>}
     </div>
     <div className="divide-y divide-gray-100">{children}</div>
@@ -993,14 +1128,16 @@ const EditableMetricRow = ({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-2 -mx-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">{label}</div>
-              <div className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 uppercase tracking-widest">Editing</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                {label}
+              </div>
+              <div className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 uppercase tracking-widest">
+                Editing
+              </div>
             </div>
             {hint && <div className="mt-1 text-sm text-gray-500 leading-relaxed">{hint}</div>}
           </div>
-          <div className="sm:w-64 mt-2 sm:mt-0">
-            {children}
-          </div>
+          <div className="sm:w-64 mt-2 sm:mt-0">{children}</div>
         </div>
       </div>
     );
@@ -1014,31 +1151,29 @@ const EditableMetricRow = ({
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 group-hover:text-gray-600 transition-colors">{label}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 group-hover:text-gray-600 transition-colors">
+            {label}
+          </div>
           {hint && <div className="mt-0.5 text-[13px] text-gray-400 leading-relaxed">{hint}</div>}
         </div>
         <div className="shrink-0 flex items-center gap-3 text-left sm:text-right mt-1 sm:mt-0">
           <div className="text-[15px] font-bold text-gray-800">{value}</div>
-          <div className="text-[10px] font-semibold text-gray-400 group-hover:text-blue-600 transition-colors uppercase tracking-widest bg-gray-50 px-1.5 py-0.5 rounded group-hover:bg-blue-50">Edit</div>
+          <div className="text-[10px] font-semibold text-gray-400 group-hover:text-blue-600 transition-colors uppercase tracking-widest bg-gray-50 px-1.5 py-0.5 rounded group-hover:bg-blue-50">
+            Edit
+          </div>
         </div>
       </div>
     </button>
   );
 };
 
-const MetricRow = ({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) => (
+const MetricRow = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
   <div className="py-2.5 px-2 -mx-2 first:pt-0 last:pb-0">
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">{label}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+          {label}
+        </div>
         {hint && <div className="mt-0.5 text-[13px] text-gray-400 leading-relaxed">{hint}</div>}
       </div>
       <div className="shrink-0 text-left sm:text-right mt-1 sm:mt-0 items-center flex">

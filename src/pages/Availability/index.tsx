@@ -18,7 +18,13 @@ import {
   updateUserSettings,
   getUserSettings,
 } from '../../api';
-import type { Availability as AvailabilityType, BookingIntakeQuestion, Event, Holiday, PublicBooking } from '../../types';
+import type {
+  Availability as AvailabilityType,
+  BookingIntakeQuestion,
+  Event,
+  Holiday,
+  PublicBooking,
+} from '../../types';
 import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -108,7 +114,7 @@ const Availability = () => {
       setShareLink(currentResp.data.active);
       setShareLinks(linksResp.data);
       setPublicBookings(bookingsResp.data);
-      
+
       const activeLink = currentResp.data.active;
       const nextAvailabilityWeeks = settingsResp.data.availability_weeks || 2;
       setAvailabilityWeeks(nextAvailabilityWeeks);

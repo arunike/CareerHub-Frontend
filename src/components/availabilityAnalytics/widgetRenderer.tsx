@@ -98,7 +98,9 @@ export const renderAvailabilityWidget = (
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`
+                    }
                   >
                     {stats.byCategory.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -138,8 +140,20 @@ export const renderAvailabilityWidget = (
                   }}
                 />
                 <Legend />
-                <Bar yAxisId="left" dataKey="count" name="Events" fill="#1890ff" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="minutes" name="Minutes" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <Bar
+                  yAxisId="left"
+                  dataKey="count"
+                  name="Events"
+                  fill="#1890ff"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="minutes"
+                  name="Minutes"
+                  fill="#f59e0b"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

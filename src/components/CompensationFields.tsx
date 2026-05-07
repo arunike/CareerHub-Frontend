@@ -24,7 +24,10 @@ type EquityMode = 'annual' | 'total';
 
 const num = (v: number | null | undefined) => (v == null ? '' : String(v));
 const formatPct = (value: number) =>
-  Number(value).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+  Number(value)
+    .toFixed(2)
+    .replace(/\.00$/, '')
+    .replace(/(\.\d)0$/, '$1');
 const defaultSchedule = (firstYearPct: number) => {
   const y1 = Math.min(100, Math.max(0, Number(firstYearPct) || 25));
   const remaining = Math.max(0, 100 - y1);
@@ -85,7 +88,12 @@ const CompensationFields: React.FC<Props> = ({
     if (bonusMode === '%' && base != null && base > 0 && bonus != null) {
       setBonusPct(((bonus / base) * 100).toFixed(2).replace(/\.00$/, ''));
     }
-    if (equityMode === 'total' && equity != null && vestingPct > 0 && !(equityTotalGrant && equityTotalGrant > 0)) {
+    if (
+      equityMode === 'total' &&
+      equity != null &&
+      vestingPct > 0 &&
+      !(equityTotalGrant && equityTotalGrant > 0)
+    ) {
       const total = Math.round(equity / (vestingPct / 100));
       setEquityTotal(String(total));
       onEquityTotalGrantChange?.(total);
@@ -98,9 +106,7 @@ const CompensationFields: React.FC<Props> = ({
   const handleBaseChange = (raw: string) => {
     const next = raw === '' ? null : Number(raw);
     const nextBonus =
-      bonusMode === '%' && next != null
-        ? ((Number(bonusPct) || 0) / 100) * next
-        : bonus;
+      bonusMode === '%' && next != null ? ((Number(bonusPct) || 0) / 100) * next : bonus;
     onChange?.({ base_salary: next, bonus: nextBonus, equity });
   };
 
@@ -145,19 +151,24 @@ const CompensationFields: React.FC<Props> = ({
   };
 
   const vestingTotalPct = vestingSchedule.reduce((sum, pct) => sum + (Number(pct) || 0), 0);
-  const yearOneEquity = Math.round((Number(equityTotal) || 0) * ((Number(vestingSchedule[0]) || 0) / 100));
+  const yearOneEquity = Math.round(
+    (Number(equityTotal) || 0) * ((Number(vestingSchedule[0]) || 0) / 100)
+  );
   const resetVestingToFull = () => {
     const next = defaultSchedule(Number(vestingSchedule[0]) || vestingPct || 25);
     setVestingSchedule(next);
     emitEquityFromTotal(Number(equityTotal) || 0, next);
   };
 
-  const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition';
+  const inputCls =
+    'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition';
   const vestingEditor = (
     <div className="w-[320px] max-w-[calc(100vw-48px)]">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Vesting schedule</div>
+          <div className="text-xs font-bold uppercase tracking-wide text-gray-500">
+            Vesting schedule
+          </div>
           <div className="mt-0.5 text-xs text-gray-400">Total {formatPct(vestingTotalPct)}%</div>
         </div>
         {Math.round(vestingTotalPct * 100) !== 10000 && (
@@ -181,7 +192,7 @@ const CompensationFields: React.FC<Props> = ({
                 type="text"
                 inputMode="decimal"
                 value={formatPct(pct)}
-                onChange={e => updateVestingSchedule(index, e.target.value)}
+                onChange={(e) => updateVestingSchedule(index, e.target.value)}
                 className="min-w-0 flex-1 border-0 bg-transparent text-right text-sm font-semibold tabular-nums text-gray-900 focus:outline-none"
               />
               <span className="shrink-0 pl-1 text-sm font-medium text-gray-400">%</span>
@@ -216,7 +227,7 @@ const CompensationFields: React.FC<Props> = ({
             min={0}
             step={1000}
             value={num(base)}
-            onChange={e => handleBaseChange(e.target.value)}
+            onChange={(e) => handleBaseChange(e.target.value)}
             placeholder="e.g. 150000"
             className={`${inputCls} pl-6`}
           />
@@ -245,7 +256,7 @@ const CompensationFields: React.FC<Props> = ({
                 min={0}
                 step={0.5}
                 value={bonusPct}
-                onChange={e => {
+                onChange={(e) => {
                   const pct = e.target.value;
                   setBonusPct(pct);
                   emit({ bonus: ((Number(pct) || 0) / 100) * (base ?? 0) });
@@ -253,21 +264,29 @@ const CompensationFields: React.FC<Props> = ({
                 placeholder="e.g. 15"
                 className={`${inputCls} pr-7`}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                %
+              </span>
             </div>
             {bonus != null && (
-              <p className="text-[11px] text-gray-400 mt-1">≈ ${Math.round(bonus).toLocaleString()}</p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                ≈ ${Math.round(bonus).toLocaleString()}
+              </p>
             )}
           </div>
         ) : (
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+              $
+            </span>
             <input
               type="number"
               min={0}
               step={1000}
               value={num(bonus)}
-              onChange={e => emit({ bonus: e.target.value === '' ? null : Number(e.target.value) })}
+              onChange={(e) =>
+                emit({ bonus: e.target.value === '' ? null : Number(e.target.value) })
+              }
               placeholder="e.g. 20000"
               className={`${inputCls} pl-6`}
             />
@@ -285,7 +304,9 @@ const CompensationFields: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleEquityToggle('annual')}
-              className={equityMode === 'annual' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}
+              className={
+                equityMode === 'annual' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+              }
             >
               /yr
             </button>
@@ -293,7 +314,9 @@ const CompensationFields: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleEquityToggle('total')}
-              className={equityMode === 'total' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}
+              className={
+                equityMode === 'total' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+              }
             >
               total
             </button>
@@ -302,13 +325,15 @@ const CompensationFields: React.FC<Props> = ({
         {equityMode === 'total' ? (
           <div className="space-y-1.5">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+                $
+              </span>
               <input
                 type="number"
                 min={0}
                 step={10000}
                 value={equityTotal}
-                onChange={e => {
+                onChange={(e) => {
                   const total = e.target.value;
                   setEquityTotal(total);
                   emitEquityFromTotal(Number(total) || 0, vestingSchedule);
@@ -340,13 +365,17 @@ const CompensationFields: React.FC<Props> = ({
           </div>
         ) : (
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+              $
+            </span>
             <input
               type="number"
               min={0}
               step={1000}
               value={num(equity)}
-              onChange={e => emit({ equity: e.target.value === '' ? null : Number(e.target.value) })}
+              onChange={(e) =>
+                emit({ equity: e.target.value === '' ? null : Number(e.target.value) })
+              }
               placeholder="Annual value"
               className={`${inputCls} pl-6`}
             />

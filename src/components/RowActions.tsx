@@ -1,6 +1,14 @@
 import React from 'react';
 import { Button, Popconfirm, Space, Tooltip } from 'antd';
-import { DeleteOutlined, EditOutlined, EyeOutlined, LockOutlined, UnlockOutlined, PushpinOutlined, PushpinFilled } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  PushpinOutlined,
+  PushpinFilled,
+} from '@ant-design/icons';
 
 interface RowActionsProps {
   isLocked?: boolean;
@@ -67,7 +75,13 @@ const RowActions: React.FC<RowActionsProps> = ({
 
       {onEdit ? (
         <Tooltip title={editTitle}>
-          <Button type="text" size={size} icon={<EditOutlined />} onClick={stopAndRun(onEdit)} disabled={disableEdit} />
+          <Button
+            type="text"
+            size={size}
+            icon={<EditOutlined />}
+            onClick={stopAndRun(onEdit)}
+            disabled={disableEdit}
+          />
         </Tooltip>
       ) : null}
 
@@ -82,31 +96,37 @@ const RowActions: React.FC<RowActionsProps> = ({
         </Tooltip>
       ) : null}
 
-      {onDelete ? (() => {
-        const deleteButton = (
-          <Button
-            type="text"
-            size={size}
-            danger
-            icon={<DeleteOutlined />}
-            disabled={disableDelete}
-            onClick={confirmDelete ? (e) => e.stopPropagation() : stopAndRun(onDelete)}
-          />
-        );
-        const withConfirm =
-          confirmDelete && !disableDelete ? (
-            <Popconfirm title={deleteTitle} description={deleteDescription} onConfirm={onDelete}>
-              {deleteButton}
-            </Popconfirm>
-          ) : (
-            deleteButton
-          );
-        return deleteButtonTooltip ? (
-          <Tooltip title={deleteButtonTooltip}>{withConfirm}</Tooltip>
-        ) : (
-          withConfirm
-        );
-      })() : null}
+      {onDelete
+        ? (() => {
+            const deleteButton = (
+              <Button
+                type="text"
+                size={size}
+                danger
+                icon={<DeleteOutlined />}
+                disabled={disableDelete}
+                onClick={confirmDelete ? (e) => e.stopPropagation() : stopAndRun(onDelete)}
+              />
+            );
+            const withConfirm =
+              confirmDelete && !disableDelete ? (
+                <Popconfirm
+                  title={deleteTitle}
+                  description={deleteDescription}
+                  onConfirm={onDelete}
+                >
+                  {deleteButton}
+                </Popconfirm>
+              ) : (
+                deleteButton
+              );
+            return deleteButtonTooltip ? (
+              <Tooltip title={deleteButtonTooltip}>{withConfirm}</Tooltip>
+            ) : (
+              withConfirm
+            );
+          })()
+        : null}
     </Space>
   );
 };

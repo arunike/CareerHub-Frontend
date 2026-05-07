@@ -17,15 +17,15 @@ type Params = {
 
 export const useOfferReferenceData = ({ referenceLocation, isSettingsHydrated }: Params) => {
   const [cityCostOfLiving, setCityCostOfLiving] = useState<Record<string, number>>(
-    DEFAULT_CITY_COST_OF_LIVING,
+    DEFAULT_CITY_COST_OF_LIVING
   );
   const [stateColBase, setStateColBase] = useState<Record<string, number>>(DEFAULT_STATE_COL_BASE);
   const [stateTaxRate, setStateTaxRate] = useState<Record<string, number>>(DEFAULT_STATE_TAX_RATE);
   const [stateNameToAbbr, setStateNameToAbbr] = useState<Record<string, string>>(
-    DEFAULT_STATE_NAME_TO_ABBR,
+    DEFAULT_STATE_NAME_TO_ABBR
   );
   const [maritalStatusOptions, setMaritalStatusOptions] = useState<MaritalStatusOption[]>(
-    DEFAULT_MARITAL_STATUS_OPTIONS,
+    DEFAULT_MARITAL_STATUS_OPTIONS
   );
   const [rentEstimate, setRentEstimate] = useState<RentEstimateData | null>(null);
 

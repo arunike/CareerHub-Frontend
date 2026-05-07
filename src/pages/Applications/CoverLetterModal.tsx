@@ -21,8 +21,7 @@ interface Props {
   onClose: () => void;
 }
 
-const wordCount = (text: string) =>
-  text.trim() ? text.trim().split(/\s+/).length : 0;
+const wordCount = (text: string) => (text.trim() ? text.trim().split(/\s+/).length : 0);
 
 const CoverLetterModal = ({ application, open, onClose }: Props) => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -50,7 +49,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
         application.company_details?.name ?? '',
         application.role_title,
         letter,
-        jdText,
+        jdText
       );
       setSaved(true);
     } catch (error) {
@@ -86,8 +85,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
         <Space>
           <ThunderboltOutlined style={{ color: '#0ea5e9' }} />
           <span>
-            Cover Letter — {application.role_title} at{' '}
-            {application.company_details?.name}
+            Cover Letter — {application.role_title} at {application.company_details?.name}
           </span>
         </Space>
       }
@@ -101,7 +99,14 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
 
       {/* JD Input */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 6,
+          }}
+        >
           <Text type="secondary" style={{ fontSize: 13 }}>
             Paste the job description for a tailored letter, or leave blank for a general one.
           </Text>
@@ -142,13 +147,15 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
 
       {/* Loading skeleton */}
       {loading && (
-        <div style={{
-          background: 'linear-gradient(135deg, #eff6ff, #f0f9ff)',
-          border: '1px solid #e0e7ff',
-          borderRadius: 12,
-          padding: '32px 24px',
-          textAlign: 'center',
-        }}>
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #eff6ff, #f0f9ff)',
+            border: '1px solid #e0e7ff',
+            borderRadius: 12,
+            padding: '32px 24px',
+            textAlign: 'center',
+          }}
+        >
           <div style={{ fontSize: 28, marginBottom: 12 }}>✍️</div>
           <Text type="secondary" style={{ fontSize: 13 }}>
             Crafting your cover letter…
@@ -160,19 +167,27 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
       {hasLetter && (
         <div>
           {/* Result header */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 10,
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 10,
+            }}
+          >
             <Space size={8}>
-              <Text strong style={{ fontSize: 13 }}>Generated Cover Letter</Text>
+              <Text strong style={{ fontSize: 13 }}>
+                Generated Cover Letter
+              </Text>
               <Text type="secondary" style={{ fontSize: 11 }}>
                 {wordCount(coverLetter).toLocaleString()} words
               </Text>
               {saved && (
-                <Tag color="green" icon={<SaveOutlined />} style={{ fontSize: 11, lineHeight: '18px' }}>
+                <Tag
+                  color="green"
+                  icon={<SaveOutlined />}
+                  style={{ fontSize: 11, lineHeight: '18px' }}
+                >
                   Saved
                 </Tag>
               )}
@@ -188,19 +203,21 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
           </div>
 
           {/* Letter body */}
-          <div style={{
-            background: '#fafafa',
-            border: '1px solid #e8e8e8',
-            borderRadius: 10,
-            padding: '20px 24px',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'Georgia, serif',
-            lineHeight: 1.85,
-            fontSize: 14,
-            color: '#1f2937',
-            maxHeight: 420,
-            overflowY: 'auto',
-          }}>
+          <div
+            style={{
+              background: '#fafafa',
+              border: '1px solid #e8e8e8',
+              borderRadius: 10,
+              padding: '20px 24px',
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'Georgia, serif',
+              lineHeight: 1.85,
+              fontSize: 14,
+              color: '#1f2937',
+              maxHeight: 420,
+              overflowY: 'auto',
+            }}
+          >
             {coverLetter}
           </div>
         </div>

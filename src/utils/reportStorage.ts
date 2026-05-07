@@ -40,7 +40,7 @@ export function saveReport(report: JDMatchResult, jdText: string): StoredReport 
     isLocked: false,
   };
   const existing = getAllReports();
-  
+
   const updated = [newReport, ...existing].slice(0, 50);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   void import('./aiArtifactStorage')
@@ -51,9 +51,7 @@ export function saveReport(report: JDMatchResult, jdText: string): StoredReport 
 
 export function toggleReportLock(id: string): void {
   const reports = getAllReports();
-  const updated = reports.map((r) =>
-    r.id === id ? { ...r, isLocked: !r.isLocked } : r
-  );
+  const updated = reports.map((r) => (r.id === id ? { ...r, isLocked: !r.isLocked } : r));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }
 
@@ -82,8 +80,6 @@ export function deleteAllReports(): void {
 
 export function updateReportTitle(id: string, title: string): void {
   const reports = getAllReports();
-  const updated = reports.map((r) =>
-    r.id === id ? { ...r, title } : r
-  );
+  const updated = reports.map((r) => (r.id === id ? { ...r, title } : r));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }

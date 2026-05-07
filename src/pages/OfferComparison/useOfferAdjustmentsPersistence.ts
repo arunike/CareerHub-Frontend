@@ -7,7 +7,10 @@ type Params = {
   normalizeSimulatedOffers: (offers: SimulatedOffer[]) => SimulatedOffer[];
 };
 
-export const useOfferAdjustmentsPersistence = ({ storageKey, normalizeSimulatedOffers }: Params) => {
+export const useOfferAdjustmentsPersistence = ({
+  storageKey,
+  normalizeSimulatedOffers,
+}: Params) => {
   const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>('SINGLE');
   const [simulatedOffers, setSimulatedOffers] = useState<SimulatedOffer[]>([]);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);

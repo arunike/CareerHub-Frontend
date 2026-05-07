@@ -94,7 +94,8 @@ export const refreshAccessToken = (refresh: string) =>
 
 export const getSignupStatus = () => api.get<SignupStatusResponse>('/auth/signup-status/');
 
-export const getSecurityDashboard = () => api.get<SecurityDashboardResponse>('/security/dashboard/');
+export const getSecurityDashboard = () =>
+  api.get<SecurityDashboardResponse>('/security/dashboard/');
 
 export const signup = (payload: SignupPayload) => api.post<AuthResponse>('/auth/signup/', payload);
 
@@ -115,7 +116,9 @@ export const isAuthenticationError = (error: unknown) => {
 
   const status = error.response?.status;
   const detail =
-    typeof error.response?.data?.detail === 'string' ? error.response.data.detail.toLowerCase() : '';
+    typeof error.response?.data?.detail === 'string'
+      ? error.response.data.detail.toLowerCase()
+      : '';
 
   return (
     status === 401 ||

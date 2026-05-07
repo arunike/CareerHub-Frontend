@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, DatePicker, Input, Switch, Popconfirm, Tooltip, InputNumber, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  Modal,
+  Button,
+  DatePicker,
+  Input,
+  Switch,
+  Popconfirm,
+  Tooltip,
+  InputNumber,
+  message,
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CalendarOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { SchedulePhase } from '../../types';
 import { buildHourlyCompensationSnapshot } from './compensation';
@@ -89,7 +105,7 @@ const getInitialImportYear = ({
     const firstDateMatch = rawText.match(/\b(\d{1,2})\/(\d{1,2})\b/);
     if (firstDateMatch) {
       const firstMonth = Number(firstDateMatch[1]);
-      return firstMonth > (end.month() + 1) ? end.year() - 1 : end.year();
+      return firstMonth > end.month() + 1 ? end.year() - 1 : end.year();
     }
     return end.year();
   }
@@ -102,7 +118,14 @@ const resolveImportedDate = (token: string, currentYear: number, previousDate: D
   const month = Number(monthText);
   const day = Number(dayText);
 
-  if (!Number.isInteger(month) || !Number.isInteger(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+  if (
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
     throw new Error(`Couldn't understand the date "${token}".`);
   }
 
@@ -119,14 +142,17 @@ const resolveImportedDate = (token: string, currentYear: number, previousDate: D
 
 const summarizeImportedWeek = (label: string, entries: ImportedDayEntry[]): ImportedWeekSummary => {
   const sortedEntries = [...entries].sort((a, b) => a.date.valueOf() - b.date.valueOf());
-  const positiveHours = sortedEntries.map(entry => entry.hours).filter(hours => hours > 0.01);
+  const positiveHours = sortedEntries.map((entry) => entry.hours).filter((hours) => hours > 0.01);
   const positiveHoursTotal = roundTo(positiveHours.reduce((sum, hours) => sum + hours, 0));
-  const hasZeroHourEntry = sortedEntries.some(entry => entry.hours <= 0.01);
+  const hasZeroHourEntry = sortedEntries.some((entry) => entry.hours <= 0.01);
   const baselineHours = positiveHours[0] ?? null;
-  const isUniformHours = baselineHours != null
-    && !hasZeroHourEntry
-    && positiveHours.every(hours => Math.abs(hours - baselineHours) < 0.05);
-  const workingDaysPerWeek = sortedEntries.filter(entry => entry.hours > 0 || entry.overtimeHours > 0).length || sortedEntries.length;
+  const isUniformHours =
+    baselineHours != null &&
+    !hasZeroHourEntry &&
+    positiveHours.every((hours) => Math.abs(hours - baselineHours) < 0.05);
+  const workingDaysPerWeek =
+    sortedEntries.filter((entry) => entry.hours > 0 || entry.overtimeHours > 0).length ||
+    sortedEntries.length;
   const weekNumber = parseWeekNumber(label);
 
   return {
@@ -201,7 +227,9 @@ const parseImportedWeeks = ({
   flushCurrentWeek();
 
   if (parsedWeeks.length === 0) {
-    throw new Error('No schedule rows were found. Paste lines with Date, Hours, and Overtime Hours.');
+    throw new Error(
+      'No schedule rows were found. Paste lines with Date, Hours, and Overtime Hours.'
+    );
   }
 
   return parsedWeeks;
@@ -250,8 +278,10 @@ const buildImportedPhases = ({
     }
   }
 
-  const parsedEndDate = expEndDate && dayjs(expEndDate).isValid() ? dayjs(expEndDate).startOf('day') : null;
-  const parsedStartDate = expStartDate && dayjs(expStartDate).isValid() ? dayjs(expStartDate).startOf('day') : null;
+  const parsedEndDate =
+    expEndDate && dayjs(expEndDate).isValid() ? dayjs(expEndDate).startOf('day') : null;
+  const parsedStartDate =
+    expStartDate && dayjs(expStartDate).isValid() ? dayjs(expStartDate).startOf('day') : null;
 
   return {
     phases: groupedWeeks.map((weeks, index) => {
@@ -259,16 +289,23 @@ const buildImportedPhases = ({
       const firstWeek = weeks[0];
       const lastWeek = weeks[weeks.length - 1];
       const totalHoursWorked = roundTo(weeks.reduce((sum, week) => sum + week.totalHours, 0));
-      const totalOvertimeHours = roundTo(weeks.reduce((sum, week) => sum + week.totalOvertimeHours, 0));
+      const totalOvertimeHours = roundTo(
+        weeks.reduce((sum, week) => sum + week.totalOvertimeHours, 0)
+      );
       const positiveHoursTotal = weeks.reduce((sum, week) => sum + week.positiveHoursTotal, 0);
       const positiveHourEntries = weeks.reduce((sum, week) => sum + week.positiveHourEntries, 0);
-      const startDate = index === 0 && parsedStartDate && parsedStartDate.isBefore(firstWeek.startDate, 'day')
-        && firstWeek.startDate.diff(parsedStartDate, 'day') <= 7
-        ? parsedStartDate
-        : firstWeek.startDate;
+      const startDate =
+        index === 0 &&
+        parsedStartDate &&
+        parsedStartDate.isBefore(firstWeek.startDate, 'day') &&
+        firstWeek.startDate.diff(parsedStartDate, 'day') <= 7
+          ? parsedStartDate
+          : firstWeek.startDate;
       const endDate = nextGroup
         ? nextGroup[0].startDate.subtract(1, 'day')
-        : parsedEndDate && parsedEndDate.isAfter(lastWeek.endDate, 'day') && parsedEndDate.diff(lastWeek.endDate, 'day') <= 7
+        : parsedEndDate &&
+            parsedEndDate.isAfter(lastWeek.endDate, 'day') &&
+            parsedEndDate.diff(lastWeek.endDate, 'day') <= 7
           ? parsedEndDate
           : lastWeek.endDate;
 
@@ -279,9 +316,10 @@ const buildImportedPhases = ({
         end_date: endDate.format('YYYY-MM-DD'),
         is_current: false,
         hourly_rate: defaults.hourlyRate ?? null,
-        hours_per_day: positiveHourEntries > 0
-          ? roundTo(positiveHoursTotal / positiveHourEntries)
-          : (defaults.hoursPerDay ?? 8),
+        hours_per_day:
+          positiveHourEntries > 0
+            ? roundTo(positiveHoursTotal / positiveHourEntries)
+            : (defaults.hoursPerDay ?? 8),
         working_days_per_week: firstWeek.workingDaysPerWeek || defaults.workingDaysPerWeek || 5,
         total_hours_worked: totalHoursWorked,
         overtime_hours: totalOvertimeHours > 0 ? totalOvertimeHours : null,
@@ -347,14 +385,27 @@ const SchedulePhasesModal: React.FC<Props> = ({
       setShowQuickImport(false);
       setQuickImportText('');
     }
-  }, [open, phases, expHourlyRate, expHoursPerDay, expWorkingDaysPerWeek, expOvertimeRate, expOvertimeMultiplier]);
+  }, [
+    open,
+    phases,
+    expHourlyRate,
+    expHoursPerDay,
+    expWorkingDaysPerWeek,
+    expOvertimeRate,
+    expOvertimeMultiplier,
+  ]);
 
   const startAdd = () => {
     setEditingId('__new__');
     setForm({
       ...emptyPhase(phaseDefaults),
       name: `Phase ${local.length + 1}`,
-      start_date: local.length > 0 && local[local.length - 1].end_date ? dayjs(local[local.length - 1].end_date).add(1, 'day').format('YYYY-MM-DD') : (expStartDate || dayjs().format('YYYY-MM-DD')),
+      start_date:
+        local.length > 0 && local[local.length - 1].end_date
+          ? dayjs(local[local.length - 1].end_date)
+              .add(1, 'day')
+              .format('YYYY-MM-DD')
+          : expStartDate || dayjs().format('YYYY-MM-DD'),
       end_date: expEndDate ?? null,
       is_current: expIsCurrent ?? false,
     });
@@ -386,16 +437,16 @@ const SchedulePhasesModal: React.FC<Props> = ({
   const commitEdit = () => {
     if (!form.name.trim()) return;
     if (editingId === '__new__') {
-      setLocal(prev => [...prev, { ...form, id: nanoid() }]);
+      setLocal((prev) => [...prev, { ...form, id: nanoid() }]);
     } else {
-      setLocal(prev => prev.map(e => e.id === editingId ? { ...form, id: editingId } : e));
+      setLocal((prev) => prev.map((e) => (e.id === editingId ? { ...form, id: editingId } : e)));
     }
     setEditingId(null);
     setForm(emptyPhase(phaseDefaults));
   };
 
   const handleDelete = (id: string) => {
-    setLocal(prev => prev.filter(e => e.id !== id));
+    setLocal((prev) => prev.filter((e) => e.id !== id));
   };
 
   const handleQuickImport = () => {
@@ -411,7 +462,9 @@ const SchedulePhasesModal: React.FC<Props> = ({
       setForm(emptyPhase(phaseDefaults));
       setShowQuickImport(false);
       setQuickImportText('');
-      message.success(`Generated ${imported.phases.length} phase(s) from ${imported.importedWeekCount} imported week(s). Review and Save when ready.`);
+      message.success(
+        `Generated ${imported.phases.length} phase(s) from ${imported.importedWeekCount} imported week(s). Review and Save when ready.`
+      );
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'Failed to import schedule phases.');
     }
@@ -427,8 +480,8 @@ const SchedulePhasesModal: React.FC<Props> = ({
     }
   };
 
-  const fmtDate = (d: string | null | undefined) => d ? dayjs(d).format('MMM D, YYYY') : '—';
-  
+  const fmtDate = (d: string | null | undefined) => (d ? dayjs(d).format('MMM D, YYYY') : '—');
+
   const isFormEditing = editingId !== null;
   const importDefaultsSummary = [
     phaseDefaults.hourlyRate != null ? `Rate $${phaseDefaults.hourlyRate}/hr` : null,
@@ -437,14 +490,18 @@ const SchedulePhasesModal: React.FC<Props> = ({
       : phaseDefaults.overtimeMultiplier != null
         ? `OT ${phaseDefaults.overtimeMultiplier}x`
         : null,
-  ].filter(Boolean).join('  |  ');
+  ]
+    .filter(Boolean)
+    .join('  |  ');
 
   return (
     <Modal
       title={
         <div className="flex items-center gap-2">
           <CalendarOutlined className="text-emerald-500" />
-          <span>Schedule Phases — <span className="font-normal text-gray-500">{experienceName}</span></span>
+          <span>
+            Schedule Phases — <span className="font-normal text-gray-500">{experienceName}</span>
+          </span>
         </div>
       }
       open={open}
@@ -466,19 +523,25 @@ const SchedulePhasesModal: React.FC<Props> = ({
               </Button>
             </Popconfirm>
             <Button
-              onClick={() => setShowQuickImport(prev => !prev)}
+              onClick={() => setShowQuickImport((prev) => !prev)}
               icon={<UploadOutlined />}
               disabled={isFormEditing}
             >
               {showQuickImport ? 'Hide Import' : 'Quick Import'}
             </Button>
-            <Button onClick={startAdd} icon={<PlusOutlined />} disabled={isFormEditing || showQuickImport}>
+            <Button
+              onClick={startAdd}
+              icon={<PlusOutlined />}
+              disabled={isFormEditing || showQuickImport}
+            >
               Add Phase
             </Button>
           </div>
           <div className="flex gap-2">
             <Button onClick={onClose}>Cancel</Button>
-            <Button type="primary" onClick={handleSave} loading={saving}>Save</Button>
+            <Button type="primary" onClick={handleSave} loading={saving}>
+              Save
+            </Button>
           </div>
         </div>
       }
@@ -487,9 +550,13 @@ const SchedulePhasesModal: React.FC<Props> = ({
         {showQuickImport && (
           <div className="border border-amber-200 rounded-xl bg-amber-50/40 p-4 space-y-3">
             <div>
-              <div className="text-sm font-semibold text-amber-900">Quick Import Weekly Schedule</div>
+              <div className="text-sm font-semibold text-amber-900">
+                Quick Import Weekly Schedule
+              </div>
               <div className="mt-1 text-sm text-amber-700 leading-relaxed">
-                Paste weekly timesheet text with `Week`, `Date`, `Hours`, and `Overtime Hours`. We&apos;ll merge consecutive weeks that share the same schedule into phases and keep exact total + overtime hours from the import.
+                Paste weekly timesheet text with `Week`, `Date`, `Hours`, and `Overtime Hours`.
+                We&apos;ll merge consecutive weeks that share the same schedule into phases and keep
+                exact total + overtime hours from the import.
               </div>
               {importDefaultsSummary && (
                 <div className="mt-2 text-xs text-amber-700/80">
@@ -506,7 +573,9 @@ const SchedulePhasesModal: React.FC<Props> = ({
               rows={12}
               value={quickImportText}
               onChange={(event) => setQuickImportText(event.target.value)}
-              placeholder={'Week 1\nDate    Hours    Overtime Hours\n08/22   8        2.71\n08/23   8        2.02\n...'}
+              placeholder={
+                'Week 1\nDate    Hours    Overtime Hours\n08/22   8        2.71\n08/23   8        2.02\n...'
+              }
             />
             <div className="flex justify-end gap-2">
               <Button onClick={() => setShowQuickImport(false)}>Cancel Import</Button>
@@ -526,17 +595,21 @@ const SchedulePhasesModal: React.FC<Props> = ({
                 <Input
                   placeholder="e.g. Full-time Summer Phase"
                   value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   autoFocus
                 />
               </div>
               <div className="flex flex-col">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Currently in this phase</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Currently in this phase
+                </label>
                 <div className="flex items-center gap-2 h-8">
                   <Switch
                     size="small"
                     checked={form.is_current}
-                    onChange={v => setForm(f => ({ ...f, is_current: v, end_date: v ? null : f.end_date }))}
+                    onChange={(v) =>
+                      setForm((f) => ({ ...f, is_current: v, end_date: v ? null : f.end_date }))
+                    }
                   />
                   <span className="text-sm text-gray-500">{form.is_current ? 'Yes' : 'No'}</span>
                 </div>
@@ -549,7 +622,9 @@ const SchedulePhasesModal: React.FC<Props> = ({
                 <DatePicker
                   className="w-full"
                   value={form.start_date ? dayjs(form.start_date) : null}
-                  onChange={d => setForm(f => ({ ...f, start_date: d ? d.format('YYYY-MM-DD') : '' }))}
+                  onChange={(d) =>
+                    setForm((f) => ({ ...f, start_date: d ? d.format('YYYY-MM-DD') : '' }))
+                  }
                 />
               </div>
               {!form.is_current && (
@@ -558,7 +633,9 @@ const SchedulePhasesModal: React.FC<Props> = ({
                   <DatePicker
                     className="w-full"
                     value={form.end_date ? dayjs(form.end_date) : null}
-                    onChange={d => setForm(f => ({ ...f, end_date: d ? d.format('YYYY-MM-DD') : null }))}
+                    onChange={(d) =>
+                      setForm((f) => ({ ...f, end_date: d ? d.format('YYYY-MM-DD') : null }))
+                    }
                   />
                 </div>
               )}
@@ -572,7 +649,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
                   prefix="$"
                   placeholder="e.g. 45"
                   value={form.hourly_rate}
-                  onChange={v => setForm(f => ({ ...f, hourly_rate: v }))}
+                  onChange={(v) => setForm((f) => ({ ...f, hourly_rate: v }))}
                 />
               </div>
               <div>
@@ -581,7 +658,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
                   className="w-full"
                   placeholder="e.g. 8"
                   value={form.hours_per_day}
-                  onChange={v => setForm(f => ({ ...f, hours_per_day: v }))}
+                  onChange={(v) => setForm((f) => ({ ...f, hours_per_day: v }))}
                 />
               </div>
               <div>
@@ -590,15 +667,15 @@ const SchedulePhasesModal: React.FC<Props> = ({
                   className="w-full"
                   placeholder="e.g. 5"
                   value={form.working_days_per_week}
-                  onChange={v => setForm(f => ({ ...f, working_days_per_week: v }))}
+                  onChange={(v) => setForm((f) => ({ ...f, working_days_per_week: v }))}
                 />
               </div>
             </div>
 
-
-
             <div className="flex justify-end gap-2 pt-1">
-              <Button size="small" onClick={cancelEdit}>Cancel</Button>
+              <Button size="small" onClick={cancelEdit}>
+                Cancel
+              </Button>
               <Button size="small" type="primary" onClick={commitEdit} disabled={!form.name.trim()}>
                 {editingId === '__new__' ? 'Add Phase' : 'Update Phase'}
               </Button>
@@ -609,11 +686,12 @@ const SchedulePhasesModal: React.FC<Props> = ({
         {/* Phase list */}
         {local.length === 0 && !isFormEditing && !showQuickImport && (
           <div className="text-center py-10 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
-            No schedule phases. The global role schedule applies. Click "Quick Import" or "Add Phase" to split the schedule.
+            No schedule phases. The global role schedule applies. Click "Quick Import" or "Add
+            Phase" to split the schedule.
           </div>
         )}
 
-        {local.map(phase => {
+        {local.map((phase) => {
           const snapshot = buildHourlyCompensationSnapshot({
             startDate: phase.start_date,
             endDate: phase.end_date,
@@ -629,76 +707,92 @@ const SchedulePhasesModal: React.FC<Props> = ({
           });
 
           return (
-          <div
-            key={phase.id}
-            className={`border rounded-xl p-4 transition-all group ${
-              editingId === phase.id
-                ? 'hidden'
-                : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-base font-semibold text-gray-900">{phase.name}</span>
-                  {phase.is_current && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
-                      Current
-                    </span>
-                  )}
-                </div>
-                <div className="text-sm text-gray-500 mb-2 flex items-center gap-2 flex-wrap">
-                  <span>{fmtDate(phase.start_date)} – {phase.is_current ? 'Present' : fmtDate(phase.end_date)}</span>
-                </div>
-                
-                <div className="flex text-xs mt-2 bg-gray-50 p-2 rounded-lg inline-flex flex-wrap border border-gray-100 items-center">
-                  <div className="flex gap-4 items-center">
-                    {phase.hourly_rate != null && <span><span className="text-gray-400">Rate:</span> ${phase.hourly_rate}/hr</span>}
-                    {phase.hours_per_day != null && phase.working_days_per_week != null && (
-                      <span><span className="text-gray-400">Schedule:</span> {phase.hours_per_day}h/day, {phase.working_days_per_week} days/wk</span>
+            <div
+              key={phase.id}
+              className={`border rounded-xl p-4 transition-all group ${
+                editingId === phase.id
+                  ? 'hidden'
+                  : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-base font-semibold text-gray-900">{phase.name}</span>
+                    {phase.is_current && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                        Current
+                      </span>
                     )}
                   </div>
-                  {snapshot && snapshot.estimatedHours > 0 && (
-                    <div className="flex items-center pl-3 ml-3 border-l border-gray-200 text-gray-600 font-medium">
-                      <span>{snapshot.estimatedHours} hrs</span>
-                      <span className="text-gray-300 mx-2">•</span>
-                      <span>${snapshot.total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}</span>
+                  <div className="text-sm text-gray-500 mb-2 flex items-center gap-2 flex-wrap">
+                    <span>
+                      {fmtDate(phase.start_date)} –{' '}
+                      {phase.is_current ? 'Present' : fmtDate(phase.end_date)}
+                    </span>
+                  </div>
+
+                  <div className="flex text-xs mt-2 bg-gray-50 p-2 rounded-lg inline-flex flex-wrap border border-gray-100 items-center">
+                    <div className="flex gap-4 items-center">
+                      {phase.hourly_rate != null && (
+                        <span>
+                          <span className="text-gray-400">Rate:</span> ${phase.hourly_rate}/hr
+                        </span>
+                      )}
+                      {phase.hours_per_day != null && phase.working_days_per_week != null && (
+                        <span>
+                          <span className="text-gray-400">Schedule:</span> {phase.hours_per_day}
+                          h/day, {phase.working_days_per_week} days/wk
+                        </span>
+                      )}
                     </div>
-                  )}
+                    {snapshot && snapshot.estimatedHours > 0 && (
+                      <div className="flex items-center pl-3 ml-3 border-l border-gray-200 text-gray-600 font-medium">
+                        <span>{snapshot.estimatedHours} hrs</span>
+                        <span className="text-gray-300 mx-2">•</span>
+                        <span>
+                          $
+                          {snapshot.total.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 1,
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <Tooltip title="Edit">
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={() => startEdit(phase)}
-                      disabled={isFormEditing}
-                      className="text-gray-400 hover:text-emerald-500"
-                    />
-                  </Tooltip>
-                  <Popconfirm
-                    title="Remove this phase?"
-                    onConfirm={() => handleDelete(phase.id)}
-                    okText="Remove"
-                    okButtonProps={{ danger: true }}
-                  >
-                    <Tooltip title="Delete">
+                <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                    <Tooltip title="Edit">
                       <Button
                         type="text"
                         size="small"
-                        icon={<DeleteOutlined />}
+                        icon={<EditOutlined />}
+                        onClick={() => startEdit(phase)}
                         disabled={isFormEditing}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-gray-400 hover:text-emerald-500"
                       />
                     </Tooltip>
-                  </Popconfirm>
+                    <Popconfirm
+                      title="Remove this phase?"
+                      onConfirm={() => handleDelete(phase.id)}
+                      okText="Remove"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Tooltip title="Delete">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          disabled={isFormEditing}
+                          className="text-gray-400 hover:text-red-500"
+                        />
+                      </Tooltip>
+                    </Popconfirm>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           );
         })}
       </div>

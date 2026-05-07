@@ -33,7 +33,10 @@ const tidyTitle = (value: string) =>
     .replace(/\b(remind me to|reminder to|remember to)\b/i, '')
     .replace(/\s+(today|tonight|tomorrow)\b/i, '')
     .replace(/\s+\b(in|after)\s+\d+\s+(day|days|week|weeks)\b/i, '')
-    .replace(/\s+\bnext\s+(sun(day)?|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(rs|rsday)?|fri(day)?|sat(urday)?)\b/i, '')
+    .replace(
+      /\s+\bnext\s+(sun(day)?|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(rs|rsday)?|fri(day)?|sat(urday)?)\b/i,
+      ''
+    )
     .trim();
 
 const nextWeekday = (base: Dayjs, weekday: number) => {
@@ -46,13 +49,17 @@ const detectPriority = (text: string, dueDate: Dayjs): Task['priority'] => {
   const daysUntil = dueDate.startOf('day').diff(dayjs().startOf('day'), 'day');
 
   if (/\b(deadline|offer deadline|urgent|final|expires?|due)\b/.test(lower)) return 'HIGH';
-  if (/\b(interview|onsite|phone screen|screen|prep|prepare)\b/.test(lower) && daysUntil <= 2) return 'HIGH';
+  if (/\b(interview|onsite|phone screen|screen|prep|prepare)\b/.test(lower) && daysUntil <= 2)
+    return 'HIGH';
   if (daysUntil <= 1) return 'HIGH';
   if (daysUntil <= 7 || /\b(follow up|follow-up|recruiter|email)\b/.test(lower)) return 'MEDIUM';
   return 'LOW';
 };
 
-export const parseSmartReminder = (input: string, baseDate: Dayjs = dayjs()): SmartReminderDraft | null => {
+export const parseSmartReminder = (
+  input: string,
+  baseDate: Dayjs = dayjs()
+): SmartReminderDraft | null => {
   const text = input.trim();
   if (!text) return null;
 
@@ -78,7 +85,9 @@ export const parseSmartReminder = (input: string, baseDate: Dayjs = dayjs()): Sm
     matchedPhrase = lower.includes('tonight') ? 'tonight' : 'today';
   }
 
-  const weekday = lower.match(/\bnext\s+(sun(day)?|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(rs|rsday)?|fri(day)?|sat(urday)?)\b/);
+  const weekday = lower.match(
+    /\bnext\s+(sun(day)?|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(rs|rsday)?|fri(day)?|sat(urday)?)\b/
+  );
   if (!dueDate && weekday) {
     const target = WEEKDAY_INDEX[weekday[1]];
     if (typeof target === 'number') {

@@ -31,10 +31,22 @@ interface LoginLocationState {
 }
 
 const features = [
-  { icon: <CalendarOutlined />, label: 'Schedule tracking', desc: 'Interviews, availability, weekly pulse' },
-  { icon: <LineChartOutlined />, label: 'Application pipeline', desc: 'Status, response rates, follow-ups' },
+  {
+    icon: <CalendarOutlined />,
+    label: 'Schedule tracking',
+    desc: 'Interviews, availability, weekly pulse',
+  },
+  {
+    icon: <LineChartOutlined />,
+    label: 'Application pipeline',
+    desc: 'Status, response rates, follow-ups',
+  },
   { icon: <DollarOutlined />, label: 'Offer comparison', desc: 'Base, equity, PTO side by side' },
-  { icon: <SafetyCertificateOutlined />, label: 'Career analytics', desc: 'Earnings, growth, timeline' },
+  {
+    icon: <SafetyCertificateOutlined />,
+    label: 'Career analytics',
+    desc: 'Earnings, growth, timeline',
+  },
 ];
 
 const trustPills = ['Private dashboard', 'Token secured', 'Encrypted passwords'];
@@ -164,7 +176,9 @@ export default function LoginPage() {
       navigate(redirectTo, { replace: true });
     } catch (error) {
       const fallback =
-        mode === 'signup' ? 'Unable to create your account right now.' : 'Unable to sign in right now.';
+        mode === 'signup'
+          ? 'Unable to create your account right now.'
+          : 'Unable to sign in right now.';
       setErrorMessage(extractErrorMessage(error, fallback));
 
       if (mode === 'signup' && axios.isAxiosError(error) && error.response?.status === 403) {
@@ -197,8 +211,8 @@ export default function LoginPage() {
               <span className="login-page__title-accent">career OS.</span>
             </Typography.Title>
             <Typography.Paragraph className="login-page__lead">
-              One place for interviews, applications, offers, and analytics.
-              Private by default. Built for focus.
+              One place for interviews, applications, offers, and analytics. Private by default.
+              Built for focus.
             </Typography.Paragraph>
           </div>
 

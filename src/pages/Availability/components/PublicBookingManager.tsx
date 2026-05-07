@@ -134,8 +134,10 @@ const PublicBookingManager = ({
       const updates: Partial<ShareLink> = {};
       if (values.title) updates.title = values.title;
       if (values.duration_days) updates.duration_days = values.duration_days;
-      if (values.booking_block_minutes) updates.booking_block_minutes = values.booking_block_minutes;
-      if (values.max_bookings_per_day !== undefined) updates.max_bookings_per_day = values.max_bookings_per_day;
+      if (values.booking_block_minutes)
+        updates.booking_block_minutes = values.booking_block_minutes;
+      if (values.max_bookings_per_day !== undefined)
+        updates.max_bookings_per_day = values.max_bookings_per_day;
 
       if (onBulkUpdateLinks) {
         onBulkUpdateLinks(selectedLinkIds, updates);
@@ -170,10 +172,18 @@ const PublicBookingManager = ({
                 <Button size="small" icon={<StopOutlined />} onClick={handleBulkDeactivateLinks}>
                   Deactivate
                 </Button>
-                <Button size="small" icon={<LockOutlined />} onClick={() => handleBulkToggleLockLinks(true)}>
+                <Button
+                  size="small"
+                  icon={<LockOutlined />}
+                  onClick={() => handleBulkToggleLockLinks(true)}
+                >
                   Lock
                 </Button>
-                <Button size="small" icon={<UnlockOutlined />} onClick={() => handleBulkToggleLockLinks(false)}>
+                <Button
+                  size="small"
+                  icon={<UnlockOutlined />}
+                  onClick={() => handleBulkToggleLockLinks(false)}
+                >
                   Unlock
                 </Button>
                 <Button size="small" icon={<EditOutlined />} onClick={handleOpenBulkEditLinks}>
@@ -198,7 +208,9 @@ const PublicBookingManager = ({
               </span>
             }
           />
-          <p className="text-xs text-gray-500 mt-1">Manage every recruiter-facing link you have created.</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Manage every recruiter-facing link you have created.
+          </p>
         </div>
 
         {links.length === 0 ? (
@@ -243,18 +255,27 @@ const PublicBookingManager = ({
                           <span>{link.booking_block_minutes} min slots</span>
                           <span>{link.buffer_minutes || 0} min buffer</span>
                           <span>
-                            {link.max_bookings_per_day ? `${link.max_bookings_per_day}/day` : 'No daily cap'}
+                            {link.max_bookings_per_day
+                              ? `${link.max_bookings_per_day}/day`
+                              : 'No daily cap'}
                           </span>
-                          <span>{link.allow_reschedule_cancel ? 'Guest changes on' : 'Guest changes off'}</span>
+                          <span>
+                            {link.allow_reschedule_cancel
+                              ? 'Guest changes on'
+                              : 'Guest changes off'}
+                          </span>
                           <span>Expires {new Date(link.expires_at).toLocaleDateString()}</span>
                         </div>
                         {link.intake_questions?.length > 0 && (
                           <p className="mt-2 text-xs leading-relaxed text-gray-600">
-                            Intake: {link.intake_questions.map((question) => question.label).join(', ')}
+                            Intake:{' '}
+                            {link.intake_questions.map((question) => question.label).join(', ')}
                           </p>
                         )}
                         {link.public_note && (
-                          <p className="mt-2 text-xs leading-relaxed text-gray-600">{link.public_note}</p>
+                          <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                            {link.public_note}
+                          </p>
                         )}
                       </div>
                       <div className="flex gap-2 shrink-0">
@@ -301,10 +322,18 @@ const PublicBookingManager = ({
             onCancelSelection={() => setSelectedBookingIds([])}
             bulkActions={
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="small" icon={<LockOutlined />} onClick={() => handleBulkToggleLockBookings(true)}>
+                <Button
+                  size="small"
+                  icon={<LockOutlined />}
+                  onClick={() => handleBulkToggleLockBookings(true)}
+                >
                   Lock
                 </Button>
-                <Button size="small" icon={<UnlockOutlined />} onClick={() => handleBulkToggleLockBookings(false)}>
+                <Button
+                  size="small"
+                  icon={<UnlockOutlined />}
+                  onClick={() => handleBulkToggleLockBookings(false)}
+                >
                   Unlock
                 </Button>
                 <Tooltip title={isAnyBookingLocked ? 'Cannot delete locked bookings' : ''}>
@@ -326,7 +355,9 @@ const PublicBookingManager = ({
               </span>
             }
           />
-          <p className="text-xs text-gray-500 mt-1">Recruiter submissions from all public availability links.</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Recruiter submissions from all public availability links.
+          </p>
         </div>
 
         {bookings.length === 0 ? (
@@ -369,8 +400,8 @@ const PublicBookingManager = ({
                         <CalendarOutlined /> {booking.date}
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1">
-                        <ClockCircleOutlined /> {formatTime(booking.start_time)} - {formatTime(booking.end_time)}{' '}
-                        {booking.timezone}
+                        <ClockCircleOutlined /> {formatTime(booking.start_time)} -{' '}
+                        {formatTime(booking.end_time)} {booking.timezone}
                       </span>
                     </div>
                     <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">

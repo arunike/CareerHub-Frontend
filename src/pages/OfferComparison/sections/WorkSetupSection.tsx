@@ -84,7 +84,9 @@ const WorkSetupSection = ({
             />
             <select
               value={commuteCostFrequency}
-              onChange={(e) => onCommuteCostFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')}
+              onChange={(e) =>
+                onCommuteCostFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             >
               <option value="DAILY">/day</option>
@@ -92,12 +94,16 @@ const WorkSetupSection = ({
               <option value="YEARLY">/year</option>
             </select>
           </div>
-          <p className="text-xs text-gray-500">Annualized total: ${Math.round(annualizedCommute).toLocaleString()}</p>
+          <p className="text-xs text-gray-500">
+            Annualized total: ${Math.round(annualizedCommute).toLocaleString()}
+          </p>
         </div>
       )}
       {showCommuteAndPerks && (
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Free Food Perk Value</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Free Food Perk Value
+          </label>
           <div className="grid grid-cols-[1fr_132px] gap-2">
             <input
               type="number"
@@ -108,7 +114,9 @@ const WorkSetupSection = ({
             />
             <select
               value={freeFoodPerkFrequency}
-              onChange={(e) => onFreeFoodPerkFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')}
+              onChange={(e) =>
+                onFreeFoodPerkFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             >
               <option value="DAILY">/day</option>
@@ -116,7 +124,9 @@ const WorkSetupSection = ({
               <option value="YEARLY">/year</option>
             </select>
           </div>
-          <p className="text-xs text-gray-500">Annualized total: ${Math.round(annualizedFoodPerk).toLocaleString()}</p>
+          <p className="text-xs text-gray-500">
+            Annualized total: ${Math.round(annualizedFoodPerk).toLocaleString()}
+          </p>
         </div>
       )}
     </div>

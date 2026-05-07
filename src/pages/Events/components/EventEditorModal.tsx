@@ -1,4 +1,17 @@
-import { Button, Collapse, Col, DatePicker, Form, Input, Modal, Row, Select, Space, TimePicker, Typography } from 'antd';
+import {
+  Button,
+  Collapse,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Modal,
+  Row,
+  Select,
+  Space,
+  TimePicker,
+  Typography,
+} from 'antd';
 import { EnvironmentOutlined, PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
 import type { EventCategory, RecurrenceRule } from '../../../types';
@@ -71,7 +84,13 @@ const EventEditorModal = ({
   };
 
   return (
-    <Modal title={editingId ? 'Edit Event' : 'Add Event'} open={open} onCancel={onCancel} footer={null} width={600}>
+    <Modal
+      title={editingId ? 'Edit Event' : 'Add Event'}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={600}
+    >
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item name="name" label="Event Name" rules={[{ required: true }]}>
           <Input placeholder="Team Sync" />
@@ -149,7 +168,10 @@ const EventEditorModal = ({
                               onChange={(e) => onNewCategoryNameChange(e.target.value)}
                               style={{ width: 120 }}
                             />
-                            <IconPicker value={newCategoryIcon} onChange={onNewCategoryIconChange} />
+                            <IconPicker
+                              value={newCategoryIcon}
+                              onChange={onNewCategoryIconChange}
+                            />
                             <Button type="text" icon={<PlusOutlined />} onClick={onCreateCategory}>
                               Add
                             </Button>

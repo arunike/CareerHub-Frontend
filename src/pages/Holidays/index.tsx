@@ -55,16 +55,16 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
-const GroupedHolidayItem = ({ 
-  item, 
-  handleToggleLockGroup, 
-  handleDeleteGroup, 
-  toggleLock, 
-  handleDelete, 
+const GroupedHolidayItem = ({
+  item,
+  handleToggleLockGroup,
+  handleDeleteGroup,
+  toggleLock,
+  handleDelete,
   handleEditItem,
   selectedIds,
   onSelectChange,
-  onSelectGroup
+  onSelectGroup,
 }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const startDate = item.items[0].date;
@@ -75,23 +75,27 @@ const GroupedHolidayItem = ({
 
   return (
     <List.Item
-      actions={!isExpanded ? [
-        <RowActions
-          key={`actions-group-${item.id}`}
-          size="middle"
-          isLocked={item.is_locked}
-          onToggleLock={() => handleToggleLockGroup(item)}
-          onDelete={() => handleDeleteGroup(item)}
-          onEdit={() => handleEditItem(item)}
-          disableDelete={item.is_locked}
-        />,
-      ] : []}
+      actions={
+        !isExpanded
+          ? [
+              <RowActions
+                key={`actions-group-${item.id}`}
+                size="middle"
+                isLocked={item.is_locked}
+                onToggleLock={() => handleToggleLockGroup(item)}
+                onDelete={() => handleDeleteGroup(item)}
+                onEdit={() => handleEditItem(item)}
+                disableDelete={item.is_locked}
+              />,
+            ]
+          : []
+      }
     >
       <List.Item.Meta
         avatar={
           <div className="flex items-center gap-3">
-            <Checkbox 
-              checked={allSelected} 
+            <Checkbox
+              checked={allSelected}
               indeterminate={someSelected}
               onChange={() => onSelectGroup(item.items, !allSelected)}
               style={{ marginTop: 8 }}
@@ -114,15 +118,19 @@ const GroupedHolidayItem = ({
         }
         description={
           <div className="mt-2 w-full" style={{ marginLeft: -8 }}>
-            <Collapse 
-              ghost 
-              size="small" 
+            <Collapse
+              ghost
+              size="small"
               className="bg-transparent"
               style={{ padding: 0 }}
               onChange={(keys) => setIsExpanded(keys.length > 0)}
             >
-              <Collapse.Panel 
-                header={<Text type="secondary" className="hover:text-blue-500 transition-colors">{item.description || 'View Individual Days'}</Text>} 
+              <Collapse.Panel
+                header={
+                  <Text type="secondary" className="hover:text-blue-500 transition-colors">
+                    {item.description || 'View Individual Days'}
+                  </Text>
+                }
                 key="1"
               >
                 <div className="pl-4 border-l-2 border-dashed border-gray-200 ml-1 mt-2">
@@ -131,7 +139,7 @@ const GroupedHolidayItem = ({
                     split={false}
                     dataSource={item.items}
                     renderItem={(subItem: any) => (
-                      <List.Item 
+                      <List.Item
                         className="group hover:bg-gray-50 transition-colors rounded-lg mb-1 relative"
                         style={{ padding: '8px 12px' }}
                         actions={[
@@ -150,9 +158,9 @@ const GroupedHolidayItem = ({
                       >
                         {/* Tree Branch Connector */}
                         <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
-                        
+
                         <Space size="middle" className="pl-2">
-                          <Checkbox 
+                          <Checkbox
                             checked={selectedIds.includes(subItem.id)}
                             onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
                           />
@@ -185,7 +193,7 @@ const Holidays = () => {
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState('custom');
 
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
@@ -204,10 +212,10 @@ const Holidays = () => {
   const [isRangeMode, setIsRangeMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
-  
+
   const [addFederalModalOpen, setAddFederalModalOpen] = useState(false);
   const [federalForm] = Form.useForm();
-  
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
@@ -217,9 +225,9 @@ const Holidays = () => {
     try {
       setLoading(true);
       const [customResp, federalResp, settingsResp] = await Promise.all([
-        getHolidays(), 
+        getHolidays(),
         getFederalHolidays(),
-        getUserSettings()
+        getUserSettings(),
       ]);
       setHolidays(customResp.data);
       setFederalHolidays(federalResp.data);
@@ -240,10 +248,10 @@ const Holidays = () => {
 
   const activeTabHolidays = React.useMemo(() => {
     if (activeTab === 'custom') {
-      return holidays.filter(h => !h.tab || !customTabs.some(t => t.id === h.tab));
+      return holidays.filter((h) => !h.tab || !customTabs.some((t) => t.id === h.tab));
     }
     if (activeTab === 'federal') return [];
-    return holidays.filter(h => h.tab === activeTab);
+    return holidays.filter((h) => h.tab === activeTab);
   }, [holidays, activeTab, customTabs]);
 
   const sortedHolidays = filterByYear(activeTabHolidays, selectedYear, 'date').sort((a, b) => {
@@ -320,18 +328,22 @@ const Holidays = () => {
         return;
       }
 
-      const groupId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+      const groupId = crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2, 15);
       const promises = [];
       let current = start.clone();
 
       while (current.isBefore(end) || current.isSame(end, 'day')) {
-        promises.push(createHoliday({
-          date: current.format('YYYY-MM-DD'),
-          group_id: groupId,
-          description,
-          is_recurring: isRecurring,
-          tab: tabValue,
-        }));
+        promises.push(
+          createHoliday({
+            date: current.format('YYYY-MM-DD'),
+            group_id: groupId,
+            description,
+            is_recurring: isRecurring,
+            tab: tabValue,
+          })
+        );
         current = current.add(1, 'day');
       }
 
@@ -392,7 +404,6 @@ const Holidays = () => {
     }
   };
 
-
   const handleEditClick = (item: any) => {
     setEditingItem(item);
     const sampleItem = item.isGroup ? item.items[0] : item;
@@ -407,7 +418,7 @@ const Holidays = () => {
   const handleEditSubmit = async () => {
     try {
       const values = await editForm.validateFields();
-      
+
       let itemsToUpdate: any[] = [];
       if (editingItem.isBulk) {
         itemsToUpdate = editingItem.items;
@@ -431,10 +442,10 @@ const Holidays = () => {
           return updateHoliday(i.id, updatePayload);
         })
       );
-      
+
       messageApi.success('Holiday updated successfully');
       setEditModalOpen(false);
-      setSelectedIds([]); 
+      setSelectedIds([]);
       fetchData();
     } catch (error) {
       if (error && (error as any).errorFields) {
@@ -459,35 +470,34 @@ const Holidays = () => {
   };
 
   const handleSelectChange = (id: number, checked: boolean) => {
-    setSelectedIds((prev) => 
-      checked ? [...prev, id] : prev.filter(selectedId => selectedId !== id)
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((selectedId) => selectedId !== id)
     );
   };
 
   const handleSelectGroup = (items: any[], checked: boolean) => {
-    const itemIds = items.map(i => i.id);
+    const itemIds = items.map((i) => i.id);
     setSelectedIds((prev) => {
       if (checked) {
         const newIds = [...prev];
-        itemIds.forEach(id => {
+        itemIds.forEach((id) => {
           if (!newIds.includes(id)) newIds.push(id);
         });
         return newIds;
       } else {
-        return prev.filter(id => !itemIds.includes(id));
+        return prev.filter((id) => !itemIds.includes(id));
       }
     });
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = sortedHolidays.map(h => h.id);
+      const allIds = sortedHolidays.map((h) => h.id);
       setSelectedIds(allIds);
     } else {
       setSelectedIds([]);
     }
   };
-
 
   const handleBulkDelete = () => {
     Modal.confirm({
@@ -498,7 +508,7 @@ const Holidays = () => {
       cancelText: 'No',
       onOk: async () => {
         try {
-          await Promise.all(selectedIds.map(id => deleteHoliday(id)));
+          await Promise.all(selectedIds.map((id) => deleteHoliday(id)));
           messageApi.success(`${selectedIds.length} holidays deleted`);
           setSelectedIds([]);
           fetchData();
@@ -512,7 +522,7 @@ const Holidays = () => {
 
   const handleBulkToggleLock = async (lock: boolean) => {
     try {
-      await Promise.all(selectedIds.map(id => updateHoliday(id, { is_locked: lock })));
+      await Promise.all(selectedIds.map((id) => updateHoliday(id, { is_locked: lock })));
       messageApi.success(`${selectedIds.length} holidays ${lock ? 'locked' : 'unlocked'}`);
       setSelectedIds([]);
       fetchData();
@@ -525,17 +535,19 @@ const Holidays = () => {
   const handleBulkEditClick = () => {
     editForm.resetFields();
 
-    const selectedHolidays = selectedIds.map(id => holidays.find(h => h.id === id)).filter(Boolean) as Holiday[];
+    const selectedHolidays = selectedIds
+      .map((id) => holidays.find((h) => h.id === id))
+      .filter(Boolean) as Holiday[];
 
     if (selectedHolidays.length > 0) {
       const firstDesc = selectedHolidays[0].description;
-      const allSameDesc = selectedHolidays.every(h => h.description === firstDesc);
-      
+      const allSameDesc = selectedHolidays.every((h) => h.description === firstDesc);
+
       const firstRecur = selectedHolidays[0].is_recurring;
-      const allSameRecur = selectedHolidays.every(h => h.is_recurring === firstRecur);
+      const allSameRecur = selectedHolidays.every((h) => h.is_recurring === firstRecur);
 
       const firstTab = selectedHolidays[0].tab || '';
-      const allSameTab = selectedHolidays.every(h => (h.tab || '') === firstTab);
+      const allSameTab = selectedHolidays.every((h) => (h.tab || '') === firstTab);
 
       editForm.setFieldsValue({
         description: allSameDesc ? firstDesc : undefined,
@@ -554,23 +566,27 @@ const Holidays = () => {
     setEditModalOpen(true);
   };
 
-  const handleToggleFederalHoliday = async (holidayName: string, dateStr: string, isObserved: boolean) => {
+  const handleToggleFederalHoliday = async (
+    holidayName: string,
+    dateStr: string,
+    isObserved: boolean
+  ) => {
     if (!userSettings) return;
-    
+
     try {
       let ignoredList = userSettings.ignored_federal_holidays || [];
-      
+
       if (!isObserved) {
         if (!ignoredList.includes(holidayName) && !ignoredList.includes(dateStr)) {
           ignoredList = [...ignoredList, holidayName];
         }
       } else {
-        ignoredList = ignoredList.filter(name => name !== holidayName && name !== dateStr);
+        ignoredList = ignoredList.filter((name) => name !== holidayName && name !== dateStr);
       }
-      
+
       await updateUserSettings({ ignored_federal_holidays: ignoredList });
       messageApi.success(`${holidayName} is now ${isObserved ? 'observed' : 'ignored'}`);
-      
+
       fetchData();
     } catch (error) {
       messageApi.error('Failed to update federal holiday settings');
@@ -636,224 +652,235 @@ const Holidays = () => {
   };
 
   const renderHolidayListTab = (_tabKey: string, tabLabel: string) => (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {/* Add Form */}
-          <Card title="Add New Holiday">
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleAdd}
-              initialValues={{ is_recurring: false }}
-            >
-              <Row gutter={16}>
-                <Col span={24} md={24} lg={24}>
-                  <Form.Item style={{ marginBottom: 0 }}>
-                    <Space style={{ marginBottom: 12 }}>
-                      <Switch
-                        checked={isRangeMode}
-                        onChange={setIsRangeMode}
-                        checkedChildren="Range"
-                        unCheckedChildren="Single Day"
-                      />
-                      <Text type="secondary">Switch to Date Range</Text>
-                    </Space>
-                  </Form.Item>
-                </Col>
-
-                <Col span={24} md={8}>
-                  {isRangeMode ? (
-                    <Form.Item
-                      name="dateRange"
-                      label="Date Range"
-                      rules={[{ required: true, message: 'Select dates' }]}
-                    >
-                      <RangePicker style={{ width: '100%' }} />
-                    </Form.Item>
-                  ) : (
-                    <Form.Item
-                      name="date"
-                      label="Date"
-                      rules={[{ required: true, message: 'Select date' }]}
-                    >
-                      <DatePicker style={{ width: '100%' }} />
-                    </Form.Item>
-                  )}
-                </Col>
-                <Col span={24} md={8}>
-                  <Form.Item name="name" label="Name">
-                    <Input placeholder="Winter Break" />
-                  </Form.Item>
-                </Col>
-                <Col span={24} md={8}>
-                  <Form.Item label=" " colon={false} style={{ marginBottom: 0 }}>
-                    <div className="flex items-center justify-between gap-3">
-                      <Form.Item name="is_recurring" valuePropName="checked" noStyle>
-                        <Checkbox>Recurring (Yearly)</Checkbox>
-                      </Form.Item>
-                      <Button type="primary" htmlType="submit" icon={<PlusOutlined />} size="large">
-                        Add
-                      </Button>
-                    </div>
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Form>
-          </Card>
-
-          {/* List */}
-          <Card
-            title={
-              <BulkActionHeader
-                selectedCount={selectedIds.length}
-                totalCount={sortedHolidays.length}
-                onSelectAll={handleSelectAll}
-                onCancelSelection={() => setSelectedIds([])}
-                title={`${tabLabel} (${activeTabHolidays.length})`}
-                bulkActions={
-                  <>
-                    <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
-                      Lock
-                    </Button>
-                    <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
-                      Unlock
-                    </Button>
-                    <Button onClick={handleBulkEditClick} icon={<EditOutlined />}>
-                      Edit
-                    </Button>
-                    <Tooltip title={isAnySelectedLocked ? "Cannot delete while locked items are selected" : ""}>
-                      <Button 
-                        danger 
-                        onClick={handleBulkDelete} 
-                        icon={<DeleteOutlined />}
-                        disabled={isAnySelectedLocked}
-                      >
-                        Delete
-                      </Button>
-                    </Tooltip>
-                  </>
-                }
-                defaultActions={
-                  <>
-                    <Select
-                      value={sortBy}
-                      onChange={setSortBy}
-                      options={[
-                        { value: 'date', label: 'By Date' },
-                        { value: 'name', label: 'By Name' },
-                      ]}
-                      style={{ width: 120 }}
-                    />
-                    <Button
-                      icon={
-                        sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />
-                      }
-                      onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                    />
-                    <Popconfirm
-                      title="Delete All Unlocked?"
-                      description={`This will delete all unlocked holidays in "${tabLabel}". This cannot be undone.`}
-                      okText="Delete All"
-                      okType="danger"
-                      onConfirm={async () => {
-                        try {
-                          const toDelete = activeTabHolidays.filter(h => !h.is_locked);
-                          await Promise.all(toDelete.map(h => deleteHoliday(h.id)));
-                          messageApi.success('All unlocked holidays deleted');
-                          fetchData();
-                        } catch (e) { messageApi.error('Failed to delete all'); }
-                      }}
-                      disabled={activeTabHolidays.length === 0}
-                    >
-                      <Button danger disabled={activeTabHolidays.length === 0} icon={<DeleteOutlined />}>
-                        Delete All
-                      </Button>
-                    </Popconfirm>
-                  </>
-                }
-              />
-            }
-          >
-            <List
-              loading={loading}
-              itemLayout="horizontal"
-              dataSource={groupedHolidays}
-              renderItem={(item) => {
-                if (item.isGroup) {
-                  return (
-                    <GroupedHolidayItem
-                      key={`group-${item.id}`}
-                      item={item}
-                      handleToggleLockGroup={handleToggleLockGroup}
-                      handleDeleteGroup={handleDeleteGroup}
-                      toggleLock={toggleLock}
-                      handleDelete={handleDelete}
-                      handleEditItem={handleEditClick}
-                      selectedIds={selectedIds}
-                      onSelectChange={handleSelectChange}
-                      onSelectGroup={handleSelectGroup}
-                    />
-                  );
-                }
-
-                return (
-                  <List.Item
-                    actions={[
-                      <RowActions
-                        key={`actions-${item.id}`}
-                        size="middle"
-                        isLocked={item.is_locked}
-                        onToggleLock={() => toggleLock(item)}
-                        onDelete={() => handleDelete(item.id)}
-                        onEdit={() => handleEditClick(item)}
-                        disableDelete={item.is_locked}
-                      />,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <div className="flex items-center gap-3">
-                          <Checkbox 
-                            checked={selectedIds.includes(item.id)}
-                            onChange={(e) => handleSelectChange(item.id, e.target.checked)}
-                            style={{ marginTop: 8 }}
-                          />
-                          <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
-                        </div>
-                      }
-                      title={
-                        <Space>
-                          <Text strong>
-                            {dayjs(item.date).format('YYYY-MM-DD')}
-                          </Text>
-                          {item.is_recurring && (
-                            <Tag color="blue" icon={<SyncOutlined />}>
-                              Yearly
-                            </Tag>
-                          )}
-                          {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
-                        </Space>
-                      }
-                      description={item.description || 'No description'}
-                    />
-                  </List.Item>
-                );
-              }}
-              locale={{
-                emptyText: (
-                  <Empty
-                    description="No custom holidays found"
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      {/* Add Form */}
+      <Card title="Add New Holiday">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleAdd}
+          initialValues={{ is_recurring: false }}
+        >
+          <Row gutter={16}>
+            <Col span={24} md={24} lg={24}>
+              <Form.Item style={{ marginBottom: 0 }}>
+                <Space style={{ marginBottom: 12 }}>
+                  <Switch
+                    checked={isRangeMode}
+                    onChange={setIsRangeMode}
+                    checkedChildren="Range"
+                    unCheckedChildren="Single Day"
                   />
-                ),
-              }}
-            />
-          </Card>
-        </Space>
+                  <Text type="secondary">Switch to Date Range</Text>
+                </Space>
+              </Form.Item>
+            </Col>
+
+            <Col span={24} md={8}>
+              {isRangeMode ? (
+                <Form.Item
+                  name="dateRange"
+                  label="Date Range"
+                  rules={[{ required: true, message: 'Select dates' }]}
+                >
+                  <RangePicker style={{ width: '100%' }} />
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  name="date"
+                  label="Date"
+                  rules={[{ required: true, message: 'Select date' }]}
+                >
+                  <DatePicker style={{ width: '100%' }} />
+                </Form.Item>
+              )}
+            </Col>
+            <Col span={24} md={8}>
+              <Form.Item name="name" label="Name">
+                <Input placeholder="Winter Break" />
+              </Form.Item>
+            </Col>
+            <Col span={24} md={8}>
+              <Form.Item label=" " colon={false} style={{ marginBottom: 0 }}>
+                <div className="flex items-center justify-between gap-3">
+                  <Form.Item name="is_recurring" valuePropName="checked" noStyle>
+                    <Checkbox>Recurring (Yearly)</Checkbox>
+                  </Form.Item>
+                  <Button type="primary" htmlType="submit" icon={<PlusOutlined />} size="large">
+                    Add
+                  </Button>
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
+
+      {/* List */}
+      <Card
+        title={
+          <BulkActionHeader
+            selectedCount={selectedIds.length}
+            totalCount={sortedHolidays.length}
+            onSelectAll={handleSelectAll}
+            onCancelSelection={() => setSelectedIds([])}
+            title={`${tabLabel} (${activeTabHolidays.length})`}
+            bulkActions={
+              <>
+                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                  Lock
+                </Button>
+                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
+                  Unlock
+                </Button>
+                <Button onClick={handleBulkEditClick} icon={<EditOutlined />}>
+                  Edit
+                </Button>
+                <Tooltip
+                  title={isAnySelectedLocked ? 'Cannot delete while locked items are selected' : ''}
+                >
+                  <Button
+                    danger
+                    onClick={handleBulkDelete}
+                    icon={<DeleteOutlined />}
+                    disabled={isAnySelectedLocked}
+                  >
+                    Delete
+                  </Button>
+                </Tooltip>
+              </>
+            }
+            defaultActions={
+              <>
+                <Select
+                  value={sortBy}
+                  onChange={setSortBy}
+                  options={[
+                    { value: 'date', label: 'By Date' },
+                    { value: 'name', label: 'By Name' },
+                  ]}
+                  style={{ width: 120 }}
+                />
+                <Button
+                  icon={
+                    sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />
+                  }
+                  onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                />
+                <Popconfirm
+                  title="Delete All Unlocked?"
+                  description={`This will delete all unlocked holidays in "${tabLabel}". This cannot be undone.`}
+                  okText="Delete All"
+                  okType="danger"
+                  onConfirm={async () => {
+                    try {
+                      const toDelete = activeTabHolidays.filter((h) => !h.is_locked);
+                      await Promise.all(toDelete.map((h) => deleteHoliday(h.id)));
+                      messageApi.success('All unlocked holidays deleted');
+                      fetchData();
+                    } catch (e) {
+                      messageApi.error('Failed to delete all');
+                    }
+                  }}
+                  disabled={activeTabHolidays.length === 0}
+                >
+                  <Button
+                    danger
+                    disabled={activeTabHolidays.length === 0}
+                    icon={<DeleteOutlined />}
+                  >
+                    Delete All
+                  </Button>
+                </Popconfirm>
+              </>
+            }
+          />
+        }
+      >
+        <List
+          loading={loading}
+          itemLayout="horizontal"
+          dataSource={groupedHolidays}
+          renderItem={(item) => {
+            if (item.isGroup) {
+              return (
+                <GroupedHolidayItem
+                  key={`group-${item.id}`}
+                  item={item}
+                  handleToggleLockGroup={handleToggleLockGroup}
+                  handleDeleteGroup={handleDeleteGroup}
+                  toggleLock={toggleLock}
+                  handleDelete={handleDelete}
+                  handleEditItem={handleEditClick}
+                  selectedIds={selectedIds}
+                  onSelectChange={handleSelectChange}
+                  onSelectGroup={handleSelectGroup}
+                />
+              );
+            }
+
+            return (
+              <List.Item
+                actions={[
+                  <RowActions
+                    key={`actions-${item.id}`}
+                    size="middle"
+                    isLocked={item.is_locked}
+                    onToggleLock={() => toggleLock(item)}
+                    onDelete={() => handleDelete(item.id)}
+                    onEdit={() => handleEditClick(item)}
+                    disableDelete={item.is_locked}
+                  />,
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedIds.includes(item.id)}
+                        onChange={(e) => handleSelectChange(item.id, e.target.checked)}
+                        style={{ marginTop: 8 }}
+                      />
+                      <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+                    </div>
+                  }
+                  title={
+                    <Space>
+                      <Text strong>{dayjs(item.date).format('YYYY-MM-DD')}</Text>
+                      {item.is_recurring && (
+                        <Tag color="blue" icon={<SyncOutlined />}>
+                          Yearly
+                        </Tag>
+                      )}
+                      {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+                    </Space>
+                  }
+                  description={item.description || 'No description'}
+                />
+              </List.Item>
+            );
+          }}
+          locale={{
+            emptyText: (
+              <Empty description="No custom holidays found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ),
+          }}
+        />
+      </Card>
+    </Space>
   );
 
   const items = [
-    { key: 'custom', label: 'Manage Custom', children: renderHolidayListTab('custom', 'Manage Custom') },
-    ...customTabs.map(t => ({ key: t.id, label: t.name, children: renderHolidayListTab(t.id, t.name) })),
+    {
+      key: 'custom',
+      label: 'Manage Custom',
+      children: renderHolidayListTab('custom', 'Manage Custom'),
+    },
+    ...customTabs.map((t) => ({
+      key: t.id,
+      label: t.name,
+      children: renderHolidayListTab(t.id, t.name),
+    })),
     {
       key: 'federal',
       label: 'View Federal',
@@ -867,18 +894,19 @@ const Holidays = () => {
                   <Text strong>Federal Holidays are Automatic</Text>
                   <div>
                     <Text type="secondary">
-                      These are automatically excluded from availability. You don't need to add them.
+                      These are automatically excluded from availability. You don't need to add
+                      them.
                     </Text>
                   </div>
                 </div>
               </Space>
-              
+
               <Space direction="vertical" align="end" size={2}>
                 <Space size={16}>
                   {isAdvancedMode && (
-                    <Button 
-                      type="primary" 
-                      icon={<PlusOutlined />} 
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
                       onClick={() => setAddFederalModalOpen(true)}
                     >
                       Add Federal Holiday
@@ -920,49 +948,59 @@ const Holidays = () => {
                           <CalendarOutlined className="text-lg" />
                         </div>
                       ) : (
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isAdvancedMode ? 'bg-blue-50 text-blue-500' : 'bg-gray-100 text-gray-400'}`}>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${isAdvancedMode ? 'bg-blue-50 text-blue-500' : 'bg-gray-100 text-gray-400'}`}
+                        >
                           <CalendarOutlined className="text-lg" />
                         </div>
                       )}
                       <div className="flex flex-col">
-                        <Text 
-                          strong 
-                          delete={item.is_ignored} 
+                        <Text
+                          strong
+                          delete={item.is_ignored}
                           className={`text-base ${item.is_ignored ? 'text-gray-400' : 'text-gray-800'}`}
                         >
                           {dayjs(item.date).format('MMMM D, YYYY')}
                         </Text>
-                        <Text className={`text-xs ${item.is_ignored ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <Text
+                          className={`text-xs ${item.is_ignored ? 'text-gray-400' : 'text-gray-500'}`}
+                        >
                           {dayjs(item.date).format('dddd')}
                         </Text>
                       </div>
                     </div>
                     <Space>
                       {item.is_ignored ? (
-                        <Tag className="m-0 border-gray-300 text-gray-500 bg-gray-100 px-3 py-1 rounded-full" color="default">
+                        <Tag
+                          className="m-0 border-gray-300 text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
+                          color="default"
+                        >
                           Ignored
                         </Tag>
                       ) : (
-                        <Tag className={`m-0 px-3 py-1 rounded-full ${isAdvancedMode ? 'border-blue-200 text-blue-600 bg-blue-50' : 'border-gray-200 text-gray-500 bg-gray-100'}`} color={isAdvancedMode ? "blue" : "default"}>
+                        <Tag
+                          className={`m-0 px-3 py-1 rounded-full ${isAdvancedMode ? 'border-blue-200 text-blue-600 bg-blue-50' : 'border-gray-200 text-gray-500 bg-gray-100'}`}
+                          color={isAdvancedMode ? 'blue' : 'default'}
+                        >
                           Observed
                         </Tag>
                       )}
                       {isAdvancedMode && item.holiday_type === 'federal' && (
-                         <Popconfirm
-                           title="Delete custom federal holiday?"
-                           onConfirm={() => handleDelete(item.id)}
-                           okText="Yes"
-                           cancelText="No"
-                         >
-                           <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                         </Popconfirm>
+                        <Popconfirm
+                          title="Delete custom federal holiday?"
+                          onConfirm={() => handleDelete(item.id)}
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                        </Popconfirm>
                       )}
                     </Space>
                   </div>
-                  
+
                   <div className="flex-grow mb-4 h-10 overflow-hidden">
-                    <Text 
-                      className={`text-sm line-clamp-2 ${item.is_ignored ? 'text-gray-400 line-through' : 'text-gray-600'}`} 
+                    <Text
+                      className={`text-sm line-clamp-2 ${item.is_ignored ? 'text-gray-400 line-through' : 'text-gray-600'}`}
                       title={item.description}
                     >
                       {item.description}
@@ -970,15 +1008,21 @@ const Holidays = () => {
                   </div>
 
                   {isAdvancedMode && (
-                    <div className={`mt-auto pt-4 border-t flex justify-between items-center ${
-                      item.is_ignored ? 'border-gray-200' : 'border-blue-50'
-                    }`}>
-                      <Text className={`text-xs font-medium ${item.is_ignored ? 'text-gray-400' : 'text-blue-400'}`}>
+                    <div
+                      className={`mt-auto pt-4 border-t flex justify-between items-center ${
+                        item.is_ignored ? 'border-gray-200' : 'border-blue-50'
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs font-medium ${item.is_ignored ? 'text-gray-400' : 'text-blue-400'}`}
+                      >
                         Observance Status
                       </Text>
-                      <Switch 
-                        checked={!item.is_ignored} 
-                        onChange={(checked) => handleToggleFederalHoliday(item.description, item.date, checked)}
+                      <Switch
+                        checked={!item.is_ignored}
+                        onChange={(checked) =>
+                          handleToggleFederalHoliday(item.description, item.date, checked)
+                        }
                       />
                     </div>
                   )}
@@ -1010,14 +1054,23 @@ const Holidays = () => {
 
         <Tabs
           activeKey={activeTab}
-          onChange={key => { setActiveTab(key); setSelectedIds([]); }}
+          onChange={(key) => {
+            setActiveTab(key);
+            setSelectedIds([]);
+          }}
           items={items}
           type="card"
         />
 
         {/* Edit Modal */}
         <Modal
-          title={editingItem?.isGroup ? "Edit Holiday Collection" : (editingItem?.isBulk ? `Edit ${editingItem.items.length} Holidays` : "Edit Holiday")}
+          title={
+            editingItem?.isGroup
+              ? 'Edit Holiday Collection'
+              : editingItem?.isBulk
+                ? `Edit ${editingItem.items.length} Holidays`
+                : 'Edit Holiday'
+          }
           open={editModalOpen}
           onCancel={() => setEditModalOpen(false)}
           onOk={handleEditSubmit}
@@ -1026,15 +1079,26 @@ const Holidays = () => {
           <Form form={editForm} layout="vertical">
             {editingItem?.isBulk && !editingItem?.allSameDesc && (
               <div className="mb-4 text-gray-500 text-sm italic">
-                You are editing multiple holidays with different names. Leave the name field blank to keep their original names, or type a new name to overwrite all of them.
+                You are editing multiple holidays with different names. Leave the name field blank
+                to keep their original names, or type a new name to overwrite all of them.
               </div>
             )}
             <Form.Item
               name="description"
               label="Name"
-              rules={editingItem?.isBulk && !editingItem?.allSameDesc ? [] : [{ required: true, message: 'Please enter a name' }]}
+              rules={
+                editingItem?.isBulk && !editingItem?.allSameDesc
+                  ? []
+                  : [{ required: true, message: 'Please enter a name' }]
+              }
             >
-              <Input placeholder={editingItem?.isBulk && !editingItem?.allSameDesc ? "Leave blank to keep original names..." : "Winter Break"} />
+              <Input
+                placeholder={
+                  editingItem?.isBulk && !editingItem?.allSameDesc
+                    ? 'Leave blank to keep original names...'
+                    : 'Winter Break'
+                }
+              />
             </Form.Item>
             <Form.Item name="is_recurring" valuePropName="checked">
               <Checkbox>Recurring (Yearly)</Checkbox>
@@ -1043,11 +1107,15 @@ const Holidays = () => {
               <Form.Item name="tab" label="Tab">
                 <Select>
                   {editingItem?.isBulk && (
-                    <Select.Option value="__unchanged__"><span className="text-gray-400 italic">Leave unchanged</span></Select.Option>
+                    <Select.Option value="__unchanged__">
+                      <span className="text-gray-400 italic">Leave unchanged</span>
+                    </Select.Option>
                   )}
                   <Select.Option value="">Manage Custom (default)</Select.Option>
-                  {customTabs.map(t => (
-                    <Select.Option key={t.id} value={t.id}>{t.name}</Select.Option>
+                  {customTabs.map((t) => (
+                    <Select.Option key={t.id} value={t.id}>
+                      {t.name}
+                    </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -1079,26 +1147,27 @@ const Holidays = () => {
           okText="Add"
         >
           <Form form={federalForm} layout="vertical">
-             <div className="mb-4 text-gray-500 text-sm">
-               Custom federal holidays will appear globally in your federal holiday list alongside native federal holidays.
-             </div>
-             <Form.Item
-               name="date"
-               label="Date"
-               rules={[{ required: true, message: 'Please select a date' }]}
-             >
-               <DatePicker className="w-full" />
-             </Form.Item>
-             <Form.Item
-               name="description"
-               label="Holiday Name"
-               rules={[{ required: true, message: 'Please enter a name' }]}
-             >
-               <Input placeholder="E.g., Company Founders Day" />
-             </Form.Item>
-             <Form.Item name="is_recurring" valuePropName="checked">
-               <Checkbox>Recurring (Yearly)</Checkbox>
-             </Form.Item>
+            <div className="mb-4 text-gray-500 text-sm">
+              Custom federal holidays will appear globally in your federal holiday list alongside
+              native federal holidays.
+            </div>
+            <Form.Item
+              name="date"
+              label="Date"
+              rules={[{ required: true, message: 'Please select a date' }]}
+            >
+              <DatePicker className="w-full" />
+            </Form.Item>
+            <Form.Item
+              name="description"
+              label="Holiday Name"
+              rules={[{ required: true, message: 'Please enter a name' }]}
+            >
+              <Input placeholder="E.g., Company Founders Day" />
+            </Form.Item>
+            <Form.Item name="is_recurring" valuePropName="checked">
+              <Checkbox>Recurring (Yearly)</Checkbox>
+            </Form.Item>
           </Form>
         </Modal>
       </div>

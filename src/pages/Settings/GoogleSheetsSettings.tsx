@@ -72,7 +72,10 @@ const normalizeTimeInput = (value?: string | null) => (value || '22:00').slice(0
 const syncTimeValue = (value: string) => dayjs(`2000-01-01T${normalizeTimeInput(value)}:00`);
 const spreadsheetIdFromUrl = (url: string) => url.match(/\/spreadsheets\/d\/([^/?#]+)/)?.[1] || '';
 
-const FIELD_OPTIONS: Record<GoogleSheetSyncTarget, Array<{ key: string; label: string; required?: boolean }>> = {
+const FIELD_OPTIONS: Record<
+  GoogleSheetSyncTarget,
+  Array<{ key: string; label: string; required?: boolean }>
+> = {
   APPLICATIONS: [
     { key: 'external_id', label: 'External ID' },
     { key: 'company_name', label: 'Company', required: true },
@@ -162,7 +165,15 @@ const HEADER_ALIASES: Record<GoogleSheetSyncTarget, Record<string, string[]>> = 
     role_title: ['role', 'role title', 'title', 'position', 'position applied', 'job title'],
     status: ['status', 'stage', 'application status'],
     job_link: ['job link', 'link', 'url', 'posting', 'posting url'],
-    salary_range: ['salary', 'salary range', 'compensation', 'pay', 'pay annual', 'annual pay', 'pay annual dollars'],
+    salary_range: [
+      'salary',
+      'salary range',
+      'compensation',
+      'pay',
+      'pay annual',
+      'annual pay',
+      'pay annual dollars',
+    ],
     location: ['location', 'company location', 'home location', 'city'],
     office_location: ['office location', 'office', 'work location'],
     date_applied: ['date applied', 'applied date', 'application date', 'applied on'],
@@ -184,19 +195,31 @@ const HEADER_ALIASES: Record<GoogleSheetSyncTarget, Record<string, string[]>> = 
 };
 
 const normalizeHeader = (value: string) =>
-  value.toLowerCase().trim().replace(/[_-]+/g, ' ').replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ');
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/\s+/g, ' ');
 
 const buildAutoMapping = (target: GoogleSheetSyncTarget, headers: string[]) => {
-  const normalizedHeaders = headers.map((header) => ({ raw: header, normalized: normalizeHeader(header) }));
+  const normalizedHeaders = headers.map((header) => ({
+    raw: header,
+    normalized: normalizeHeader(header),
+  }));
   const mapping: Record<string, string> = {};
 
   FIELD_OPTIONS[target].forEach((field) => {
     const aliases = HEADER_ALIASES[target][field.key] || [field.label];
     const normalizedAliases = [field.label, field.key, ...aliases].map(normalizeHeader);
     const exact = normalizedHeaders.find((header) => normalizedAliases.includes(header.normalized));
-    const fuzzy = exact || normalizedHeaders.find((header) =>
-      normalizedAliases.some((alias) => header.normalized.includes(alias) || alias.includes(header.normalized)),
-    );
+    const fuzzy =
+      exact ||
+      normalizedHeaders.find((header) =>
+        normalizedAliases.some(
+          (alias) => header.normalized.includes(alias) || alias.includes(header.normalized)
+        )
+      );
     if (fuzzy) {
       mapping[field.key] = fuzzy.raw;
     }
@@ -215,7 +238,10 @@ const resultText = (config: GoogleSheetSyncConfig) => {
   return pieces.join(' / ');
 };
 
-const reviewActionMeta: Record<GoogleSheetImportReviewItem['action'], { label: string; color: string }> = {
+const reviewActionMeta: Record<
+  GoogleSheetImportReviewItem['action'],
+  { label: string; color: string }
+> = {
   create: { label: 'New', color: 'green' },
   update: { label: 'Update', color: 'blue' },
   status_change: { label: 'Status', color: 'purple' },
@@ -231,8 +257,6 @@ const reviewSummaryText = (review: GoogleSheetImportReview) => {
     `${summary.updates} other updates`,
   ].join(' / ');
 };
-
-
 
 const syncHistory = (config: GoogleSheetSyncConfig) => config.last_result?.history || [];
 const duplicateCompareFields = [
@@ -266,7 +290,9 @@ const GoogleSheetsSettings: React.FC = () => {
   const [reviewConfig, setReviewConfig] = useState<GoogleSheetSyncConfig | null>(null);
   const [importReview, setImportReview] = useState<GoogleSheetImportReview | null>(null);
   const [selectedReviewIds, setSelectedReviewIds] = useState<string[]>([]);
-  const [duplicateResolutions, setDuplicateResolutions] = useState<Record<string, GoogleSheetDuplicateResolution>>({});
+  const [duplicateResolutions, setDuplicateResolutions] = useState<
+    Record<string, GoogleSheetDuplicateResolution>
+  >({});
   const [reviewLoading, setReviewLoading] = useState(false);
   const [applyingReview, setApplyingReview] = useState(false);
   const [historyConfig, setHistoryConfig] = useState<GoogleSheetSyncConfig | null>(null);
@@ -276,28 +302,36 @@ const GoogleSheetsSettings: React.FC = () => {
   const fields = useMemo(() => FIELD_OPTIONS[draft.target_type], [draft.target_type]);
   const requiredFields = useMemo(() => fields.filter((field) => field.required), [fields]);
   const activeFields = useMemo(
-    () => fields.filter((field) => Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key)),
-    [draft.column_mapping, fields],
+    () =>
+      fields.filter((field) =>
+        Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key)
+      ),
+    [draft.column_mapping, fields]
   );
   const visibleMappingFields = useMemo(() => {
     const activeOptionalFields = activeFields.filter((field) => !field.required);
     return [...requiredFields, ...activeOptionalFields];
   }, [activeFields, requiredFields]);
   const unmappedFields = useMemo(
-    () => fields.filter(
-      (field) => !field.required && !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key),
-    ),
-    [draft.column_mapping, fields],
+    () =>
+      fields.filter(
+        (field) =>
+          !field.required && !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key)
+      ),
+    [draft.column_mapping, fields]
   );
   const missingRequiredFields = useMemo(
     () => requiredFields.filter((field) => !(draft.column_mapping[field.key] || '').trim()),
-    [draft.column_mapping, requiredFields],
+    [draft.column_mapping, requiredFields]
   );
-  const canSaveDraft = Boolean(draft.name.trim() && draft.sheet_url.trim() && missingRequiredFields.length === 0);
+  const canSaveDraft = Boolean(
+    draft.name.trim() && draft.sheet_url.trim() && missingRequiredFields.length === 0
+  );
   const sheetMappingHeaders = useMemo(() => {
     const headers = preview?.headers.filter((header) => header.trim()) || [];
-    const extraMappedHeaders = Object.values(draft.column_mapping)
-      .filter((header) => header && !headers.includes(header));
+    const extraMappedHeaders = Object.values(draft.column_mapping).filter(
+      (header) => header && !headers.includes(header)
+    );
     return [...headers, ...extraMappedHeaders];
   }, [draft.column_mapping, preview?.headers]);
 
@@ -342,29 +376,32 @@ const GoogleSheetsSettings: React.FC = () => {
     fetchSpreadsheets();
   }, [fetchSpreadsheets]);
 
-  const fetchWorksheetTabs = useCallback(async (sheetUrl: string) => {
-    const spreadsheetId = spreadsheetIdFromUrl(sheetUrl);
-    if (!spreadsheetId || !googleStatus?.connected) {
-      setWorksheetTabs([]);
-      return;
-    }
-    setWorksheetTabsLoading(true);
-    try {
-      const response = await getGoogleSpreadsheetTabs(spreadsheetId);
-      setWorksheetTabs(response.data.tabs);
-      setDraft((current) => {
-        if (!response.data.tabs.length || current.worksheet_name) {
-          return current;
-        }
-        return { ...current, worksheet_name: response.data.tabs[0].title };
-      });
-    } catch (error) {
-      setWorksheetTabs([]);
-      console.error('Failed to load worksheet tabs', error);
-    } finally {
-      setWorksheetTabsLoading(false);
-    }
-  }, [googleStatus?.connected]);
+  const fetchWorksheetTabs = useCallback(
+    async (sheetUrl: string) => {
+      const spreadsheetId = spreadsheetIdFromUrl(sheetUrl);
+      if (!spreadsheetId || !googleStatus?.connected) {
+        setWorksheetTabs([]);
+        return;
+      }
+      setWorksheetTabsLoading(true);
+      try {
+        const response = await getGoogleSpreadsheetTabs(spreadsheetId);
+        setWorksheetTabs(response.data.tabs);
+        setDraft((current) => {
+          if (!response.data.tabs.length || current.worksheet_name) {
+            return current;
+          }
+          return { ...current, worksheet_name: response.data.tabs[0].title };
+        });
+      } catch (error) {
+        setWorksheetTabs([]);
+        console.error('Failed to load worksheet tabs', error);
+      } finally {
+        setWorksheetTabsLoading(false);
+      }
+    },
+    [googleStatus?.connected]
+  );
 
   useEffect(() => {
     fetchWorksheetTabs(draft.sheet_url);
@@ -383,7 +420,11 @@ const GoogleSheetsSettings: React.FC = () => {
     params.delete('google');
     params.delete('message');
     const nextQuery = params.toString();
-    window.history.replaceState(null, '', `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`);
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`
+    );
   }, [fetchConfigs, messageApi]);
 
   const updateDraft = (patch: Partial<Draft>) => {
@@ -394,7 +435,7 @@ const GoogleSheetsSettings: React.FC = () => {
     if (!open) return;
     const reset = () => {
       const columns = document.querySelectorAll(
-        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]',
+        '.event-timepicker-dropdown .ant-picker-time-panel-column[data-type="meridiem"]'
       );
       columns.forEach((column) => {
         (column as HTMLElement).scrollTop = 0;
@@ -452,7 +493,10 @@ const GoogleSheetsSettings: React.FC = () => {
       ...current,
       column_mapping: {
         ...current.column_mapping,
-        [field.key]: preview?.headers.find((header) => normalizeHeader(header) === normalizeHeader(field.label)) || '',
+        [field.key]:
+          preview?.headers.find(
+            (header) => normalizeHeader(header) === normalizeHeader(field.label)
+          ) || '',
       },
     }));
     setFieldToAdd('');
@@ -467,7 +511,9 @@ const GoogleSheetsSettings: React.FC = () => {
   };
 
   const fieldForSheetHeader = (sheetHeader: string) =>
-    Object.entries(draft.column_mapping).find(([, mappedHeader]) => mappedHeader === sheetHeader)?.[0] || '';
+    Object.entries(draft.column_mapping).find(
+      ([, mappedHeader]) => mappedHeader === sheetHeader
+    )?.[0] || '';
 
   const sampleForHeader = (sheetHeader: string) =>
     preview?.rows.find((row) => row[sheetHeader])?.[sheetHeader] || '';
@@ -523,7 +569,9 @@ const GoogleSheetsSettings: React.FC = () => {
       return;
     }
     if (missingRequiredFields.length > 0) {
-      messageApi.warning(`Map required fields first: ${missingRequiredFields.map((field) => field.label).join(', ')}`);
+      messageApi.warning(
+        `Map required fields first: ${missingRequiredFields.map((field) => field.label).join(', ')}`
+      );
       return;
     }
     setSaving(true);
@@ -577,7 +625,7 @@ const GoogleSheetsSettings: React.FC = () => {
         ? await resyncGoogleSheetSync(config.id)
         : await runGoogleSheetSync(config.id);
       messageApi.success(
-        `${force ? 'Resync' : 'Sync'} finished: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated`,
+        `${force ? 'Resync' : 'Sync'} finished: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated`
       );
       fetchConfigs();
     } catch (error) {
@@ -598,12 +646,15 @@ const GoogleSheetsSettings: React.FC = () => {
       setImportReview(response.data.review);
       setSelectedReviewIds(response.data.review.items.map((item) => item.id));
       setDuplicateResolutions(
-        response.data.review.items.reduce<Record<string, GoogleSheetDuplicateResolution>>((acc, item) => {
-          if (item.action === 'possible_duplicate') {
-            acc[item.id] = 'merge';
-          }
-          return acc;
-        }, {}),
+        response.data.review.items.reduce<Record<string, GoogleSheetDuplicateResolution>>(
+          (acc, item) => {
+            if (item.action === 'possible_duplicate') {
+              acc[item.id] = 'merge';
+            }
+            return acc;
+          },
+          {}
+        )
       );
       if (response.data.review.items.length === 0) {
         messageApi.success('No import changes need review');
@@ -647,9 +698,13 @@ const GoogleSheetsSettings: React.FC = () => {
     if (!reviewConfig || !importReview) return;
     setApplyingReview(true);
     try {
-      const response = await applyGoogleSheetImportReview(reviewConfig.id, selectedReviewIds, duplicateResolutions);
+      const response = await applyGoogleSheetImportReview(
+        reviewConfig.id,
+        selectedReviewIds,
+        duplicateResolutions
+      );
       messageApi.success(
-        `Import applied: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated, ${response.data.result.rejected || 0} rejected`,
+        `Import applied: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated, ${response.data.result.rejected || 0} rejected`
       );
       setReviewConfig(null);
       setImportReview(null);
@@ -666,16 +721,19 @@ const GoogleSheetsSettings: React.FC = () => {
   };
 
   const toggleReviewItem = (itemId: string, checked: boolean) => {
-    setSelectedReviewIds((current) => (
+    setSelectedReviewIds((current) =>
       checked ? [...current, itemId] : current.filter((id) => id !== itemId)
-    ));
+    );
   };
 
   const toggleAllReviewItems = (checked: boolean) => {
     setSelectedReviewIds(checked && importReview ? importReview.items.map((item) => item.id) : []);
   };
 
-  const updateDuplicateResolution = (itemId: string, resolution: GoogleSheetDuplicateResolution) => {
+  const updateDuplicateResolution = (
+    itemId: string,
+    resolution: GoogleSheetDuplicateResolution
+  ) => {
     setDuplicateResolutions((current) => ({ ...current, [itemId]: resolution }));
   };
 
@@ -746,7 +804,13 @@ const GoogleSheetsSettings: React.FC = () => {
               Link a sheet, map columns, then let the daily maintenance job import changes.
             </p>
           </div>
-          <Button icon={<PlusOutlined />} onClick={() => { setDraft(emptyDraft()); setPreview(null); }}>
+          <Button
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setDraft(emptyDraft());
+              setPreview(null);
+            }}
+          >
             New Sync
           </Button>
         </div>
@@ -776,7 +840,12 @@ const GoogleSheetsSettings: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <Button type="primary" loading={googleBusy} disabled={!googleStatus?.configured} onClick={connectGoogle}>
+            <Button
+              type="primary"
+              loading={googleBusy}
+              disabled={!googleStatus?.configured}
+              onClick={connectGoogle}
+            >
               Connect Google
             </Button>
           )}
@@ -808,14 +877,20 @@ const GoogleSheetsSettings: React.FC = () => {
         <div className="space-y-3">
           {googleStatus?.connected && googleStatus.can_list_spreadsheets && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Choose from Google Sheets</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Choose from Google Sheets
+              </label>
               <select
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                value={spreadsheets.some((sheet) => sheet.url === draft.sheet_url) ? draft.sheet_url : ''}
+                value={
+                  spreadsheets.some((sheet) => sheet.url === draft.sheet_url) ? draft.sheet_url : ''
+                }
                 onChange={(event) => selectSpreadsheet(event.target.value)}
                 disabled={spreadsheetsLoading}
               >
-                <option value="">{spreadsheetsLoading ? 'Loading sheets...' : 'Select a spreadsheet'}</option>
+                <option value="">
+                  {spreadsheetsLoading ? 'Loading sheets...' : 'Select a spreadsheet'}
+                </option>
                 {spreadsheets.map((sheet) => (
                   <option key={sheet.id} value={sheet.url}>
                     {sheet.name}
@@ -825,7 +900,9 @@ const GoogleSheetsSettings: React.FC = () => {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Google Sheet Link</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Google Sheet Link
+            </label>
             <div className="relative">
               <LinkOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -902,7 +979,8 @@ const GoogleSheetsSettings: React.FC = () => {
               onOpenChange={resetMeridiemColumnScroll}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Vercel wakes this job once daily; this time controls which syncs are due during that run.
+              Vercel wakes this job once daily; this time controls which syncs are due during that
+              run.
             </p>
           </div>
           <div className="sm:col-span-2">
@@ -925,7 +1003,8 @@ const GoogleSheetsSettings: React.FC = () => {
           <div>
             <div className="text-sm font-semibold text-gray-900">Preview before creating</div>
             <div className="text-xs text-gray-600 mt-0.5">
-              Test reads the sheet headers, fills the mapping, and shows sample values before anything is saved.
+              Test reads the sheet headers, fills the mapping, and shows sample values before
+              anything is saved.
             </div>
           </div>
           <Button icon={<ExperimentOutlined />} loading={previewing} onClick={previewDraft}>
@@ -988,30 +1067,41 @@ const GoogleSheetsSettings: React.FC = () => {
                       {sheetMappingHeaders.map((sheetHeader) => {
                         const selectedField = fieldForSheetHeader(sheetHeader);
                         const availableFields = fields.filter(
-                          (field) => field.key === selectedField || !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key),
+                          (field) =>
+                            field.key === selectedField ||
+                            !Object.prototype.hasOwnProperty.call(draft.column_mapping, field.key)
                         );
                         return (
-                          <div key={sheetHeader} className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.1fr_auto] gap-2 px-4 py-3 items-center">
+                          <div
+                            key={sheetHeader}
+                            className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1.1fr_auto] gap-2 px-4 py-3 items-center"
+                          >
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 min-w-0">
-                                <div className="text-sm font-medium text-gray-900 truncate">{sheetHeader}</div>
-                                {selectedField && fields.find((field) => field.key === selectedField)?.required && (
-                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                                    Required
-                                  </span>
-                                )}
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {sheetHeader}
+                                </div>
+                                {selectedField &&
+                                  fields.find((field) => field.key === selectedField)?.required && (
+                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                                      Required
+                                    </span>
+                                  )}
                               </div>
                               <div className="text-xs text-gray-500">Google Sheet column</div>
                             </div>
                             <select
                               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                               value={selectedField}
-                              onChange={(event) => updateSheetColumnMapping(sheetHeader, event.target.value)}
+                              onChange={(event) =>
+                                updateSheetColumnMapping(sheetHeader, event.target.value)
+                              }
                             >
                               <option value="">Do not import</option>
                               {availableFields.map((field) => (
                                 <option key={field.key} value={field.key}>
-                                  {field.label}{field.required ? ' *' : ''}
+                                  {field.label}
+                                  {field.required ? ' *' : ''}
                                 </option>
                               ))}
                             </select>
@@ -1022,7 +1112,10 @@ const GoogleSheetsSettings: React.FC = () => {
                               size="small"
                               danger
                               icon={<DeleteOutlined />}
-                              disabled={!selectedField || !!fields.find((field) => field.key === selectedField)?.required}
+                              disabled={
+                                !selectedField ||
+                                !!fields.find((field) => field.key === selectedField)?.required
+                              }
                               onClick={() => selectedField && removeMappingField(selectedField)}
                             />
                           </div>
@@ -1036,35 +1129,46 @@ const GoogleSheetsSettings: React.FC = () => {
                   ) : (
                     <div className="divide-y divide-gray-100">
                       {visibleMappingFields.map((field) => (
-                      <div key={field.key} className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 px-4 py-3 items-center">
-                        <label className="text-sm text-gray-700">
-                          {field.label}
-                          {field.required && <span className="text-red-500 ml-1">*</span>}
-                        </label>
-                        <select
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          value={draft.column_mapping[field.key] || ''}
-                          onChange={(event) => updateMapping(field.key, event.target.value)}
+                        <div
+                          key={field.key}
+                          className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 px-4 py-3 items-center"
                         >
-                          <option value="">Choose sheet column</option>
-                          {preview?.headers.length ? (
-                            preview.headers.map((header) => (
-                              <option key={header} value={header}>{header}</option>
-                            ))
-                          ) : (
-                            <option value={draft.column_mapping[field.key] || DEFAULT_MAPPING[draft.target_type][field.key]}>
-                              {draft.column_mapping[field.key] || DEFAULT_MAPPING[draft.target_type][field.key]}
-                            </option>
-                          )}
-                        </select>
-                        <Button
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                          disabled={field.required}
-                          onClick={() => removeMappingField(field.key)}
-                        />
-                      </div>
+                          <label className="text-sm text-gray-700">
+                            {field.label}
+                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                          </label>
+                          <select
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            value={draft.column_mapping[field.key] || ''}
+                            onChange={(event) => updateMapping(field.key, event.target.value)}
+                          >
+                            <option value="">Choose sheet column</option>
+                            {preview?.headers.length ? (
+                              preview.headers.map((header) => (
+                                <option key={header} value={header}>
+                                  {header}
+                                </option>
+                              ))
+                            ) : (
+                              <option
+                                value={
+                                  draft.column_mapping[field.key] ||
+                                  DEFAULT_MAPPING[draft.target_type][field.key]
+                                }
+                              >
+                                {draft.column_mapping[field.key] ||
+                                  DEFAULT_MAPPING[draft.target_type][field.key]}
+                              </option>
+                            )}
+                          </select>
+                          <Button
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            disabled={field.required}
+                            onClick={() => removeMappingField(field.key)}
+                          />
+                        </div>
                       ))}
                     </div>
                   )}
@@ -1082,18 +1186,23 @@ const GoogleSheetsSettings: React.FC = () => {
                           </option>
                         ))}
                       </select>
-                      <Button icon={<PlusOutlined />} onClick={addMappingField} disabled={!fieldToAdd}>
+                      <Button
+                        icon={<PlusOutlined />}
+                        onClick={addMappingField}
+                        disabled={!fieldToAdd}
+                      >
                         Add Field
                       </Button>
                     </div>
                   )}
                   {preview?.headers.length ? (
                     <div className="bg-slate-50 border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
-                      Showing {preview.headers.filter((header) => header.trim()).length} sheet columns. Columns set to "Do not import" are ignored during sync.
+                      Showing {preview.headers.filter((header) => header.trim()).length} sheet
+                      columns. Columns set to "Do not import" are ignored during sync.
                     </div>
                   ) : null}
                 </div>
-              )
+              ),
             },
             {
               key: 'strategy',
@@ -1107,10 +1216,11 @@ const GoogleSheetsSettings: React.FC = () => {
                   </div>
                   <div className="divide-y divide-gray-100">
                     {visibleMappingFields.map((field) => (
-                      <div key={field.key} className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-4 px-4 py-3 items-center">
-                        <label className="text-sm font-medium text-gray-700">
-                          {field.label}
-                        </label>
+                      <div
+                        key={field.key}
+                        className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-4 px-4 py-3 items-center"
+                      >
+                        <label className="text-sm font-medium text-gray-700">{field.label}</label>
                         <Segmented
                           options={[
                             { label: 'Always Overwrite', value: 'always' },
@@ -1124,8 +1234,8 @@ const GoogleSheetsSettings: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              )
-            }
+              ),
+            },
           ]}
         />
 
@@ -1165,105 +1275,110 @@ const GoogleSheetsSettings: React.FC = () => {
             {configs.map((config) => {
               const history = syncHistory(config);
               return (
-              <div key={config.id} className="rounded-xl border border-gray-200 p-4">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-gray-900">{config.name}</h4>
-                      <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
-                        {config.target_type === 'APPLICATIONS' ? 'Applications' : 'Events'}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs ${
-                          config.last_status === 'SUCCESS'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : config.last_status === 'ERROR'
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-slate-50 text-slate-600'
-                        }`}
-                      >
-                        {config.last_status}
-                      </span>
-                      {!config.enabled && (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs">Paused</span>
+                <div key={config.id} className="rounded-xl border border-gray-200 p-4">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-gray-900">{config.name}</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                          {config.target_type === 'APPLICATIONS' ? 'Applications' : 'Events'}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs ${
+                            config.last_status === 'SUCCESS'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : config.last_status === 'ERROR'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-slate-50 text-slate-600'
+                          }`}
+                        >
+                          {config.last_status}
+                        </span>
+                        {!config.enabled && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs">
+                            Paused
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 truncate">{config.sheet_url}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Daily at {normalizeTimeInput(config.sync_time)}{' '}
+                        {config.sync_timezone || 'America/Los_Angeles'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {config.last_synced_at
+                          ? `Last sync ${new Date(config.last_synced_at).toLocaleString()} - ${resultText(config)}`
+                          : 'Not synced yet'}
+                      </p>
+                      {config.last_error && (
+                        <p className="text-xs text-red-600 mt-1">{config.last_error}</p>
+                      )}
+                      {config.share_with_email && (
+                        <p className="text-xs text-blue-700 mt-1">
+                          Private sheets should be shared with {config.share_with_email}
+                        </p>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 truncate">{config.sheet_url}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Daily at {normalizeTimeInput(config.sync_time)} {config.sync_timezone || 'America/Los_Angeles'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {config.last_synced_at
-                        ? `Last sync ${new Date(config.last_synced_at).toLocaleString()} - ${resultText(config)}`
-                        : 'Not synced yet'}
-                    </p>
-                    {config.last_error && <p className="text-xs text-red-600 mt-1">{config.last_error}</p>}
-                    {config.share_with_email && (
-                      <p className="text-xs text-blue-700 mt-1">
-                        Private sheets should be shared with {config.share_with_email}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap justify-start gap-2 shrink-0 lg:justify-end">
-                    <Button
-                      size="small"
-                      type="primary"
-                      icon={<SyncOutlined />}
-                      loading={busyId === config.id}
-                      onClick={() => syncConfig(config)}
-                    >
-                      Sync Now
-                    </Button>
-                    {config.target_type === 'APPLICATIONS' && (
+                    <div className="flex flex-wrap justify-start gap-2 shrink-0 lg:justify-end">
                       <Button
                         size="small"
-                        icon={<TableOutlined />}
+                        type="primary"
+                        icon={<SyncOutlined />}
                         loading={busyId === config.id}
-                        onClick={() => openImportReview(config)}
+                        onClick={() => syncConfig(config)}
                       >
-                        Review
+                        Sync Now
                       </Button>
-                    )}
-                    <Button
-                      size="small"
-                      icon={<HistoryOutlined />}
-                      disabled={history.length === 0}
-                      onClick={() => openHistory(config)}
-                    >
-                      History{history.length > 0 ? ` (${history.length})` : ''}
-                    </Button>
-                    <Dropdown
-                      trigger={['click']}
-                      menu={{
-                        items: [
-                          { key: 'edit', label: 'Edit' },
-                          { key: 'test', label: 'Test connection' },
-                          { key: 'resync', label: 'Resync all rows' },
-                          { type: 'divider' },
-                          { key: 'delete', label: 'Delete sync', danger: true },
-                        ],
-                        onClick: ({ key }) => {
-                          if (key === 'edit') {
-                            setDraft(toDraft(config));
-                            setPreview(null);
-                          } else if (key === 'test') {
-                            testConfig(config);
-                          } else if (key === 'resync') {
-                            syncConfig(config, true);
-                          } else if (key === 'delete') {
-                            removeConfig(config);
-                          }
-                        },
-                      }}
-                    >
-                      <Button size="small" icon={<MoreOutlined />} loading={busyId === config.id}>
-                        More
+                      {config.target_type === 'APPLICATIONS' && (
+                        <Button
+                          size="small"
+                          icon={<TableOutlined />}
+                          loading={busyId === config.id}
+                          onClick={() => openImportReview(config)}
+                        >
+                          Review
+                        </Button>
+                      )}
+                      <Button
+                        size="small"
+                        icon={<HistoryOutlined />}
+                        disabled={history.length === 0}
+                        onClick={() => openHistory(config)}
+                      >
+                        History{history.length > 0 ? ` (${history.length})` : ''}
                       </Button>
-                    </Dropdown>
+                      <Dropdown
+                        trigger={['click']}
+                        menu={{
+                          items: [
+                            { key: 'edit', label: 'Edit' },
+                            { key: 'test', label: 'Test connection' },
+                            { key: 'resync', label: 'Resync all rows' },
+                            { type: 'divider' },
+                            { key: 'delete', label: 'Delete sync', danger: true },
+                          ],
+                          onClick: ({ key }) => {
+                            if (key === 'edit') {
+                              setDraft(toDraft(config));
+                              setPreview(null);
+                            } else if (key === 'test') {
+                              testConfig(config);
+                            } else if (key === 'resync') {
+                              syncConfig(config, true);
+                            } else if (key === 'delete') {
+                              removeConfig(config);
+                            }
+                          },
+                        }}
+                      >
+                        <Button size="small" icon={<MoreOutlined />} loading={busyId === config.id}>
+                          More
+                        </Button>
+                      </Dropdown>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
+              );
             })}
           </div>
         )}
@@ -1291,43 +1406,69 @@ const GoogleSheetsSettings: React.FC = () => {
             ) : (
               <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1">
                 {syncRuns.map((run) => (
-                  <div key={run.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                  <div
+                    key={run.id}
+                    className="rounded-xl border border-gray-200 bg-white overflow-hidden"
+                  >
                     <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900">
                             {new Date(run.started_at).toLocaleString()}
                           </span>
-                          <Tag color={run.status === 'SUCCESS' ? 'green' : run.status === 'ROLLED_BACK' ? 'purple' : 'red'}>
+                          <Tag
+                            color={
+                              run.status === 'SUCCESS'
+                                ? 'green'
+                                : run.status === 'ROLLED_BACK'
+                                  ? 'purple'
+                                  : 'red'
+                            }
+                          >
                             {run.status}
                           </Tag>
                         </div>
                         <div className="mt-1 text-xs text-gray-500">
-                          {(run.summary as any)?.created || 0} created / {(run.summary as any)?.updated || 0} updated / {(run.summary as any)?.skipped || 0} skipped
+                          {(run.summary as any)?.created || 0} created /{' '}
+                          {(run.summary as any)?.updated || 0} updated /{' '}
+                          {(run.summary as any)?.skipped || 0} skipped
                         </div>
                       </div>
                       {run.status !== 'ROLLED_BACK' && run.changes?.length > 0 && (
-                        <Button size="small" danger onClick={() => {
-                          Modal.confirm({
-                            title: 'Rollback this sync?',
-                            content: 'This will undo creations and field updates made during this specific sync run.',
-                            okText: 'Yes, rollback',
-                            okButtonProps: { danger: true },
-                            onOk: () => rollbackRun(historyConfig, run.id)
-                          });
-                        }}>Rollback</Button>
+                        <Button
+                          size="small"
+                          danger
+                          onClick={() => {
+                            Modal.confirm({
+                              title: 'Rollback this sync?',
+                              content:
+                                'This will undo creations and field updates made during this specific sync run.',
+                              okText: 'Yes, rollback',
+                              okButtonProps: { danger: true },
+                              onOk: () => rollbackRun(historyConfig, run.id),
+                            });
+                          }}
+                        >
+                          Rollback
+                        </Button>
                       )}
                     </div>
                     {run.changes?.length > 0 && (
                       <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
                         {run.changes.map((change, i) => (
                           <div key={i} className="text-sm">
-                            <span className="font-medium text-gray-700 capitalize">{change.action}</span> row {change.row_number}
+                            <span className="font-medium text-gray-700 capitalize">
+                              {change.action}
+                            </span>{' '}
+                            row {change.row_number}
                             {change.diff && Object.keys(change.diff).length > 0 && (
                               <div className="mt-1 space-y-1 pl-2 border-l-2 border-gray-100">
                                 {Object.entries(change.diff).map(([field, vals]) => (
                                   <div key={field} className="text-xs text-gray-600">
-                                    <span className="font-medium capitalize">{field.replace(/_/g, ' ')}:</span> {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
+                                    <span className="font-medium capitalize">
+                                      {field.replace(/_/g, ' ')}:
+                                    </span>{' '}
+                                    {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
                                   </div>
                                 ))}
                               </div>
@@ -1384,21 +1525,42 @@ const GoogleSheetsSettings: React.FC = () => {
         ) : importReview ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <ReviewMetric label="New" value={importReview.summary.new_applications} tone="emerald" />
-              <ReviewMetric label="Status" value={importReview.summary.status_changes} tone="blue" />
-              <ReviewMetric label="Duplicates" value={importReview.summary.possible_duplicates} tone="amber" />
+              <ReviewMetric
+                label="New"
+                value={importReview.summary.new_applications}
+                tone="emerald"
+              />
+              <ReviewMetric
+                label="Status"
+                value={importReview.summary.status_changes}
+                tone="blue"
+              />
+              <ReviewMetric
+                label="Duplicates"
+                value={importReview.summary.possible_duplicates}
+                tone="amber"
+              />
               <ReviewMetric label="Updates" value={importReview.summary.updates} tone="blue" />
             </div>
             <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="text-sm font-semibold text-gray-900">{reviewSummaryText(importReview)}</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {reviewSummaryText(importReview)}
+                </div>
                 <div className="mt-0.5 text-xs text-gray-500">
-                  {importReview.scanned_rows} row(s) scanned. Unchecked rows are rejected for this import run.
+                  {importReview.scanned_rows} row(s) scanned. Unchecked rows are rejected for this
+                  import run.
                 </div>
               </div>
               <Checkbox
-                checked={selectedReviewIds.length === importReview.items.length && importReview.items.length > 0}
-                indeterminate={selectedReviewIds.length > 0 && selectedReviewIds.length < importReview.items.length}
+                checked={
+                  selectedReviewIds.length === importReview.items.length &&
+                  importReview.items.length > 0
+                }
+                indeterminate={
+                  selectedReviewIds.length > 0 &&
+                  selectedReviewIds.length < importReview.items.length
+                }
                 onChange={(event) => toggleAllReviewItems(event.target.checked)}
               >
                 Select all
@@ -1406,7 +1568,8 @@ const GoogleSheetsSettings: React.FC = () => {
             </div>
             {importReview.errors.length > 0 && (
               <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
-                {importReview.errors.length} row(s) could not be reviewed. Fix those rows in Google Sheets and scan again.
+                {importReview.errors.length} row(s) could not be reviewed. Fix those rows in Google
+                Sheets and scan again.
               </div>
             )}
             {importReview.items.length === 0 ? (
@@ -1423,7 +1586,9 @@ const GoogleSheetsSettings: React.FC = () => {
                     <div
                       key={item.id}
                       className={`rounded-xl border p-4 transition ${
-                        checked ? 'border-sky-200 bg-sky-50/70' : 'border-gray-200 bg-white hover:border-gray-300'
+                        checked
+                          ? 'border-sky-200 bg-sky-50/70'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -1447,14 +1612,18 @@ const GoogleSheetsSettings: React.FC = () => {
                             <div className="mt-3 space-y-1 rounded-lg bg-white/80 px-3 py-2 text-xs text-gray-600">
                               {changeEntries.slice(0, 4).map(([field, change]) => (
                                 <div key={field} className="grid grid-cols-[110px_1fr] gap-2">
-                                  <span className="font-medium capitalize text-gray-500">{field.replace(/_/g, ' ')}</span>
+                                  <span className="font-medium capitalize text-gray-500">
+                                    {field.replace(/_/g, ' ')}
+                                  </span>
                                   <span className="truncate">
                                     {change.from || 'blank'} {'->'} {change.to || 'blank'}
                                   </span>
                                 </div>
                               ))}
                               {changeEntries.length > 4 && (
-                                <div className="text-gray-400">+ {changeEntries.length - 4} more change(s)</div>
+                                <div className="text-gray-400">
+                                  + {changeEntries.length - 4} more change(s)
+                                </div>
                               )}
                             </div>
                           )}
@@ -1472,11 +1641,19 @@ const GoogleSheetsSettings: React.FC = () => {
                                 <Segmented
                                   size="small"
                                   value={duplicateResolutions[item.id] || 'merge'}
-                                  onChange={(value) => updateDuplicateResolution(item.id, value as GoogleSheetDuplicateResolution)}
+                                  onChange={(value) =>
+                                    updateDuplicateResolution(
+                                      item.id,
+                                      value as GoogleSheetDuplicateResolution
+                                    )
+                                  }
                                   options={[
                                     { label: 'Merge', value: 'merge' },
                                     { label: 'Keep separate', value: 'keep_separate' },
-                                    { label: 'Intentional duplicate', value: 'intentional_duplicate' },
+                                    {
+                                      label: 'Intentional duplicate',
+                                      value: 'intentional_duplicate',
+                                    },
                                   ]}
                                 />
                               </div>
@@ -1487,16 +1664,26 @@ const GoogleSheetsSettings: React.FC = () => {
                                   <div className="px-3 py-2">Incoming sheet row</div>
                                 </div>
                                 {duplicateCompareFields.map((field) => {
-                                  const existingValue = item.duplicate_candidate?.fields?.[field.key] || '';
+                                  const existingValue =
+                                    item.duplicate_candidate?.fields?.[field.key] || '';
                                   const incomingValue = item.incoming_fields?.[field.key] || '';
                                   const differs = existingValue !== incomingValue;
                                   return (
-                                    <div key={field.key} className="grid min-w-[620px] grid-cols-[140px_1fr_1fr] border-b border-gray-100 last:border-b-0 text-xs">
-                                      <div className="px-3 py-2 font-medium text-gray-500">{field.label}</div>
-                                      <div className={`px-3 py-2 ${differs ? 'bg-amber-50 text-gray-900' : 'text-gray-600'}`}>
+                                    <div
+                                      key={field.key}
+                                      className="grid min-w-[620px] grid-cols-[140px_1fr_1fr] border-b border-gray-100 last:border-b-0 text-xs"
+                                    >
+                                      <div className="px-3 py-2 font-medium text-gray-500">
+                                        {field.label}
+                                      </div>
+                                      <div
+                                        className={`px-3 py-2 ${differs ? 'bg-amber-50 text-gray-900' : 'text-gray-600'}`}
+                                      >
                                         {existingValue || 'blank'}
                                       </div>
-                                      <div className={`px-3 py-2 ${differs ? 'bg-blue-50 text-gray-900' : 'text-gray-600'}`}>
+                                      <div
+                                        className={`px-3 py-2 ${differs ? 'bg-blue-50 text-gray-900' : 'text-gray-600'}`}
+                                      >
                                         {incomingValue || 'blank'}
                                       </div>
                                     </div>
@@ -1524,7 +1711,9 @@ const GoogleSheetsSettings: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-500 border-b">
                   {preview.headers.map((header) => (
-                    <th key={header} className="py-2 pr-4 font-medium whitespace-nowrap">{header}</th>
+                    <th key={header} className="py-2 pr-4 font-medium whitespace-nowrap">
+                      {header}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -1547,7 +1736,15 @@ const GoogleSheetsSettings: React.FC = () => {
   );
 };
 
-const ReviewMetric = ({ label, value, tone }: { label: string; value: number; tone: 'emerald' | 'blue' | 'amber' | 'sky' }) => {
+const ReviewMetric = ({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'emerald' | 'blue' | 'amber' | 'sky';
+}) => {
   const classes = {
     emerald: 'border-emerald-100 bg-emerald-50 text-emerald-700',
     blue: 'border-blue-100 bg-blue-50 text-blue-700',

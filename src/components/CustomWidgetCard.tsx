@@ -48,16 +48,25 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
   const colors = colorMap[color] || colorMap.blue;
 
   const IconComponent =
-    icon === 'CalendarOutlined' ? CalendarOutlined :
-    icon === 'ClockCircleOutlined' ? ClockCircleOutlined :
-    icon === 'RiseOutlined' ? RiseOutlined :
-    icon === 'PieChartOutlined' ? PieChartOutlined :
-    icon === 'BarChartOutlined' ? BarChartOutlined :
-    icon === 'FileTextOutlined' ? FileTextOutlined :
-    icon === 'TrophyOutlined' ? TrophyOutlined :
-    icon === 'EnvironmentOutlined' ? EnvironmentOutlined :
-    icon === 'NumberOutlined' ? NumberOutlined :
-    CalendarOutlined;
+    icon === 'CalendarOutlined'
+      ? CalendarOutlined
+      : icon === 'ClockCircleOutlined'
+        ? ClockCircleOutlined
+        : icon === 'RiseOutlined'
+          ? RiseOutlined
+          : icon === 'PieChartOutlined'
+            ? PieChartOutlined
+            : icon === 'BarChartOutlined'
+              ? BarChartOutlined
+              : icon === 'FileTextOutlined'
+                ? FileTextOutlined
+                : icon === 'TrophyOutlined'
+                  ? TrophyOutlined
+                  : icon === 'EnvironmentOutlined'
+                    ? EnvironmentOutlined
+                    : icon === 'NumberOutlined'
+                      ? NumberOutlined
+                      : CalendarOutlined;
 
   if (widget.widgetType === 'metric') {
     const value = cachedData?.value ?? '...';
@@ -116,7 +125,9 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent ? percent * 100 : 0).toFixed(0)}%`
+                  }
                 >
                   {cachedData.data.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

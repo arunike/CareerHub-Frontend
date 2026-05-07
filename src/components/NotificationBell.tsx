@@ -260,11 +260,17 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         key={conflict.id}
                         className="p-3 hover:bg-red-50 transition-colors relative group"
                       >
-                        <div className="text-xs font-medium text-gray-900 mb-1">Overlap Detected</div>
+                        <div className="text-xs font-medium text-gray-900 mb-1">
+                          Overlap Detected
+                        </div>
                         <div className="flex flex-col gap-1 text-xs text-gray-600 border-l-2 border-red-200 pl-2">
-                          <div className="truncate">{conflict.event1_details?.name || 'Unknown Event'}</div>
+                          <div className="truncate">
+                            {conflict.event1_details?.name || 'Unknown Event'}
+                          </div>
                           <div className="text-red-400 font-bold text-[10px]">VS</div>
-                          <div className="truncate">{conflict.event2_details?.name || 'Unknown Event'}</div>
+                          <div className="truncate">
+                            {conflict.event2_details?.name || 'Unknown Event'}
+                          </div>
                         </div>
                         <div className="mt-2 flex justify-end">
                           <button
@@ -290,7 +296,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                       <div key={deadline.id} className="p-3 hover:bg-amber-50 transition-colors">
                         <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0">
-                            <div className="text-xs font-medium text-gray-900 truncate">{deadline.title}</div>
+                            <div className="text-xs font-medium text-gray-900 truncate">
+                              {deadline.title}
+                            </div>
                             <div className="text-[11px] text-gray-600 mt-1">Action Item</div>
                           </div>
                           <span
@@ -349,7 +357,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   return (
                     <div key={event.id} className="p-3 hover:bg-gray-50 transition-colors">
                       <div className="flex justify-between items-start gap-2">
-                        <span className="font-medium text-sm text-gray-900 line-clamp-1">{event.name}</span>
+                        <span className="font-medium text-sm text-gray-900 line-clamp-1">
+                          {event.name}
+                        </span>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                             isToday(eventDate)

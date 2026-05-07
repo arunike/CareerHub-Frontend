@@ -107,7 +107,10 @@ const ApplicationDetailDrawer = ({
               <Button onClick={onCancelEdit}>Overview</Button>
             ) : (
               <>
-                <Button icon={<ThunderboltOutlined />} onClick={() => onGenerateCoverLetter(application)}>
+                <Button
+                  icon={<ThunderboltOutlined />}
+                  onClick={() => onGenerateCoverLetter(application)}
+                >
                   Letter
                 </Button>
                 <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(application)}>
