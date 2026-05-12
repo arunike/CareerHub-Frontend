@@ -25,7 +25,15 @@ import type {
   Holiday,
   PublicBooking,
 } from '../../types';
-import { format, parseISO, isSameWeek, addWeeks, isSameMonth } from 'date-fns';
+import {
+  addWeeks,
+  differenceInCalendarDays,
+  format,
+  getDay,
+  isSameMonth,
+  isSameWeek,
+  parseISO,
+} from 'date-fns';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { message } from 'antd';
@@ -39,6 +47,17 @@ import {
   PublicBookingManager,
 } from './components';
 import { useAuth } from '../../context/AuthContext';
+
+const canMergeAvailabilityDates = (previousDate: string, nextDate: string) => {
+  const previous = parseISO(previousDate);
+  const next = parseISO(nextDate);
+  const dayGap = differenceInCalendarDays(next, previous);
+
+  if (dayGap === 1) return true;
+
+  const isWeekendOnlyGap = getDay(previous) === 5 && getDay(next) === 1 && dayGap === 3;
+  return isWeekendOnlyGap;
+};
 
 const Availability = () => {
   const { user } = useAuth();
@@ -373,7 +392,11 @@ const Availability = () => {
     let currentEnd = items[0];
 
     for (let i = 1; i < items.length; i++) {
-      if (items[i].availability === currentStart.availability) {
+      const canMerge =
+        items[i].availability === currentStart.availability &&
+        canMergeAvailabilityDates(currentEnd.date, items[i].date);
+
+      if (canMerge) {
         currentEnd = items[i];
       } else {
         condensed.push(formatRange(currentStart, currentEnd));

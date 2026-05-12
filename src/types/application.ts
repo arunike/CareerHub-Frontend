@@ -24,5 +24,7 @@ export interface CareerApplication {
   employment_type?: string | null;
   notes?: string;
   is_locked?: boolean;
+  source_removed_at?: string | null;
+  source_removed_delete_after?: string | null;
   [key: string]: unknown;
 }

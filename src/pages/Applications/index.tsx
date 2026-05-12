@@ -40,14 +40,15 @@ import {
   createApplication,
   updateApplication,
   deleteApplication,
-  importApplications,
+  applyImportApplications,
   extractJobBoardPosting,
+  previewImportApplications,
   deleteAllApplications,
   exportApplications,
   getDocuments,
   patchDocument,
 } from '../../api';
-import type { JobBoardImportResult } from '../../api';
+import type { ApplicationFileImportPreview, JobBoardImportResult } from '../../api';
 import { getUserSettings } from '../../api/availability';
 import type { Document, EmploymentType } from '../../types';
 import type { CareerApplication } from '../../types/application';
@@ -92,6 +93,11 @@ type ApplicationStage = {
   tone: string;
 };
 
+const getRoundNumberFromStatus = (status?: string) => {
+  const match = status?.match(/^ROUND_(\d+)$/);
+  return match ? Number(match[1]) : 0;
+};
+
 const Applications = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -123,10 +129,23 @@ const Applications = () => {
     { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
     { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
     { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
+    {
+      key: 'REMOVED_FROM_SHEET',
+      label: 'Removed from Sheet',
+      shortLabel: 'Removed',
+      tone: 'bg-slate-500',
+    },
   ]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [applicationImportPreview, setApplicationImportPreview] =
+    useState<ApplicationFileImportPreview | null>(null);
+  const [applicationImportMapping, setApplicationImportMapping] = useState<Record<string, string>>(
+    {}
+  );
+  const [applicationImportPreviewing, setApplicationImportPreviewing] = useState(false);
+  const [applicationImportApplying, setApplicationImportApplying] = useState(false);
   const [isJobImportModalOpen, setIsJobImportModalOpen] = useState(false);
   const [jobImportUrl, setJobImportUrl] = useState('');
   const [jobImportPreview, setJobImportPreview] = useState<JobBoardImportResult | null>(null);
@@ -319,6 +338,7 @@ const Applications = () => {
         job_link: values.site_link,
         date_applied: values.date_applied ? values.date_applied.format('YYYY-MM-DD') : undefined,
       };
+      payload.current_round = getRoundNumberFromStatus(values.status);
       ['growth_score', 'work_life_score', 'brand_score', 'team_score'].forEach((field) => {
         if (payload[field] === undefined) payload[field] = null;
       });
@@ -403,7 +423,6 @@ const Applications = () => {
       rto_policy: 'UNKNOWN',
       visa_sponsorship: undefined,
       day_one_gc: undefined,
-      current_round: 0,
       linked_document_ids: [],
     });
     setIsAddModalOpen(true);
@@ -507,7 +526,6 @@ const Applications = () => {
       work_life_score: app.work_life_score ?? null,
       brand_score: app.brand_score ?? null,
       team_score: app.team_score ?? null,
-      current_round: app.current_round || 0,
       date_applied: dayjsDateOnlyLocal(app.date_applied),
       notes: app.notes,
       linked_document_ids: documents
@@ -547,17 +565,68 @@ const Applications = () => {
     beforeUpload: (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      importApplications(formData)
-        .then(() => {
-          messageApi.success('Import successful');
-          setIsImportModalOpen(false);
-          fetchData();
+      setApplicationImportPreviewing(true);
+      previewImportApplications(formData)
+        .then((response) => {
+          setApplicationImportPreview(response.data.preview);
+          setApplicationImportMapping(response.data.preview.mapping);
+          messageApi.success('Import preview ready. Review the mapping before applying.');
         })
-        .catch(() => {
-          messageApi.error('Import failed');
+        .catch((error) => {
+          messageApi.error(error?.response?.data?.error || 'Import preview failed');
+        })
+        .finally(() => {
+          setApplicationImportPreviewing(false);
         });
       return false;
     },
+  };
+
+  const closeImportModal = () => {
+    setIsImportModalOpen(false);
+    setApplicationImportPreview(null);
+    setApplicationImportMapping({});
+  };
+
+  const updateImportMapping = (fieldKey: string, header: string) => {
+    setApplicationImportMapping((current) => {
+      const next = { ...current };
+      if (header) {
+        next[fieldKey] = header;
+      } else {
+        delete next[fieldKey];
+      }
+      return next;
+    });
+  };
+
+  const applyApplicationImport = async () => {
+    if (!applicationImportPreview) return;
+    if (!applicationImportMapping.company_name || !applicationImportMapping.role_title) {
+      messageApi.warning('Map Company and Role before importing');
+      return;
+    }
+    setApplicationImportApplying(true);
+    try {
+      const response = await applyImportApplications(
+        applicationImportPreview.rows,
+        applicationImportMapping
+      );
+      const { result } = response.data;
+      if (result.errors.length > 0) {
+        messageApi.warning(
+          `Imported with ${result.errors.length} row issue(s): ${result.created} created, ${result.updated} updated`
+        );
+      } else {
+        messageApi.success(`Import complete: ${result.created} created, ${result.updated} updated`);
+      }
+      closeImportModal();
+      fetchData();
+    } catch (error: any) {
+      messageApi.error(error?.response?.data?.error || 'Failed to apply import');
+    } finally {
+      setApplicationImportApplying(false);
+    }
   };
 
   const filteredData = filterByYear(applications, selectedYear, 'date_applied').filter((app) => {
@@ -1353,19 +1422,134 @@ const Applications = () => {
       <Modal
         title="Import Applications"
         open={isImportModalOpen}
-        onCancel={() => setIsImportModalOpen(false)}
-        footer={null}
+        onCancel={closeImportModal}
+        width={820}
+        footer={
+          applicationImportPreview
+            ? [
+                <Button key="cancel" onClick={closeImportModal}>
+                  Cancel
+                </Button>,
+                <Button
+                  key="apply"
+                  type="primary"
+                  loading={applicationImportApplying}
+                  onClick={applyApplicationImport}
+                >
+                  Confirm Import
+                </Button>,
+              ]
+            : null
+        }
       >
-        <Dragger {...importProps}>
-          <p className="ant-upload-drag-icon">
-            <InboxOutlined />
-          </p>
-          <p className="ant-upload-text">Click or drag file to this area to upload</p>
-          <p className="ant-upload-hint">
-            Support for a single or bulk upload. Strictly prohibited from uploading company data or
-            other banned files.
-          </p>
-        </Dragger>
+        {!applicationImportPreview ? (
+          <Dragger {...importProps} disabled={applicationImportPreviewing}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">
+              {applicationImportPreviewing
+                ? 'Reading file and generating preview...'
+                : 'Click or drag a CSV/XLSX file to preview'}
+            </p>
+            <p className="ant-upload-hint">
+              We infer column mapping first. Nothing is created until you confirm.
+            </p>
+          </Dragger>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+              <div className="text-sm font-semibold text-slate-900">
+                {applicationImportPreview.summary.total_rows} rows ready for review
+              </div>
+              <div className="mt-1 text-xs text-slate-600">
+                {applicationImportPreview.summary.creates} new /{' '}
+                {applicationImportPreview.summary.updates} updates /{' '}
+                {applicationImportPreview.summary.errors} need attention
+              </div>
+              <div
+                className={`mt-2 text-xs font-medium ${
+                  applicationImportPreview.ai_status === 'success'
+                    ? 'text-emerald-700'
+                    : applicationImportPreview.ai_status === 'failed'
+                      ? 'text-rose-700'
+                      : 'text-amber-700'
+                }`}
+              >
+                {applicationImportPreview.ai_message}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
+                Confirm Column Mapping
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+                {applicationImportPreview.field_options.map((field) => (
+                  <label key={field.key} className="space-y-1">
+                    <span className="text-xs font-medium text-slate-600">
+                      {field.label}
+                      {field.required ? <span className="text-red-500"> *</span> : null}
+                    </span>
+                    <Select
+                      className="w-full"
+                      allowClear
+                      value={applicationImportMapping[field.key]}
+                      placeholder="Do not import"
+                      onChange={(value) => updateImportMapping(field.key, value || '')}
+                      options={applicationImportPreview.headers.map((header) => ({
+                        value: header,
+                        label: header,
+                      }))}
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="max-h-72 overflow-auto rounded-xl border border-slate-200">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2">Row</th>
+                    <th className="px-3 py-2">Action</th>
+                    <th className="px-3 py-2">Company</th>
+                    <th className="px-3 py-2">Role</th>
+                    <th className="px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {applicationImportPreview.items.slice(0, 50).map((item) => (
+                    <tr key={item.row}>
+                      <td className="px-3 py-2 text-slate-500">{item.row}</td>
+                      <td className="px-3 py-2">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            item.action === 'create'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : item.action === 'update'
+                                ? 'bg-blue-50 text-blue-700'
+                                : 'bg-rose-50 text-rose-700'
+                          }`}
+                        >
+                          {item.action}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">{item.company_name || '-'}</td>
+                      <td className="px-3 py-2">{item.role_title || '-'}</td>
+                      <td className="px-3 py-2">{item.status || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {applicationImportPreview.items.length > 50 ? (
+                <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+                  Showing first 50 rows.
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

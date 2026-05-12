@@ -170,12 +170,16 @@ export interface GoogleSheetSyncConfig {
   sync_time: string;
   sync_timezone: string;
   header_row: number;
+  missing_row_strategy: 'IGNORE' | 'ARCHIVE_THEN_DELETE';
+  missing_row_delete_after_days: number;
   last_synced_at?: string | null;
   last_status: GoogleSheetSyncStatus;
   last_error: string;
   last_result: {
     created?: number;
     updated?: number;
+    archived?: number;
+    deleted?: number;
     skipped?: number;
     scanned_rows?: number;
     history?: Array<{
@@ -191,6 +195,7 @@ export interface GoogleSheetSyncConfig {
       created_at?: string;
     }>;
     errors?: Array<{ row?: number; error: string }>;
+    warnings?: Array<{ row?: number; message: string; local_object_id?: number | null }>;
     [key: string]: unknown;
   };
   share_with_email?: string;
