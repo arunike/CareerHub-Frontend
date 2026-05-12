@@ -278,6 +278,14 @@ const reviewSummaryText = (review: GoogleSheetImportReview) => {
 };
 
 const syncHistory = (config: GoogleSheetSyncConfig) => config.last_result?.history || [];
+
+const syncRunErrorText = (run: GoogleSheetSyncRun) => {
+  if (run.error_details) return run.error_details;
+  if (run.status === 'ERROR' && !run.completed_at) {
+    return 'This sync did not finish. It was likely stopped by the hosting runtime before CareerHub could save detailed error output.';
+  }
+  return '';
+};
 const duplicateCompareFields = [
   { key: 'company_name', label: 'Company' },
   { key: 'role_title', label: 'Role' },
@@ -1466,82 +1474,91 @@ const GoogleSheetsSettings: React.FC = () => {
               </div>
             ) : (
               <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1">
-                {syncRuns.map((run) => (
-                  <div
-                    key={run.id}
-                    className="rounded-xl border border-gray-200 bg-white overflow-hidden"
-                  >
-                    <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">
-                            {new Date(run.started_at).toLocaleString()}
-                          </span>
-                          <Tag
-                            color={
-                              run.status === 'SUCCESS'
-                                ? 'green'
-                                : run.status === 'ROLLED_BACK'
-                                  ? 'purple'
-                                  : 'red'
-                            }
+                {syncRuns.map((run) => {
+                  const errorText = syncRunErrorText(run);
+
+                  return (
+                    <div
+                      key={run.id}
+                      className="rounded-xl border border-gray-200 bg-white overflow-hidden"
+                    >
+                      <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900">
+                              {new Date(run.started_at).toLocaleString()}
+                            </span>
+                            <Tag
+                              color={
+                                run.status === 'SUCCESS'
+                                  ? 'green'
+                                  : run.status === 'ROLLED_BACK'
+                                    ? 'purple'
+                                    : 'red'
+                              }
+                            >
+                              {run.status}
+                            </Tag>
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500">
+                            {(run.summary as any)?.created || 0} created /{' '}
+                            {(run.summary as any)?.updated || 0} updated /{' '}
+                            {(run.summary as any)?.archived || 0} archived /{' '}
+                            {(run.summary as any)?.deleted || 0} deleted /{' '}
+                            {(run.summary as any)?.skipped || 0} skipped
+                          </div>
+                          {errorText && (
+                            <div className="mt-2 max-w-2xl rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+                              {errorText}
+                            </div>
+                          )}
+                        </div>
+                        {run.status !== 'ROLLED_BACK' && run.changes?.length > 0 && (
+                          <Button
+                            size="small"
+                            danger
+                            onClick={() => {
+                              Modal.confirm({
+                                title: 'Rollback this sync?',
+                                content:
+                                  'This will undo creations and field updates made during this specific sync run.',
+                                okText: 'Yes, rollback',
+                                okButtonProps: { danger: true },
+                                onOk: () => rollbackRun(historyConfig, run.id),
+                              });
+                            }}
                           >
-                            {run.status}
-                          </Tag>
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {(run.summary as any)?.created || 0} created /{' '}
-                          {(run.summary as any)?.updated || 0} updated /{' '}
-                          {(run.summary as any)?.archived || 0} archived /{' '}
-                          {(run.summary as any)?.deleted || 0} deleted /{' '}
-                          {(run.summary as any)?.skipped || 0} skipped
-                        </div>
+                            Rollback
+                          </Button>
+                        )}
                       </div>
-                      {run.status !== 'ROLLED_BACK' && run.changes?.length > 0 && (
-                        <Button
-                          size="small"
-                          danger
-                          onClick={() => {
-                            Modal.confirm({
-                              title: 'Rollback this sync?',
-                              content:
-                                'This will undo creations and field updates made during this specific sync run.',
-                              okText: 'Yes, rollback',
-                              okButtonProps: { danger: true },
-                              onOk: () => rollbackRun(historyConfig, run.id),
-                            });
-                          }}
-                        >
-                          Rollback
-                        </Button>
+                      {run.changes?.length > 0 && (
+                        <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
+                          {run.changes.map((change, i) => (
+                            <div key={i} className="text-sm">
+                              <span className="font-medium text-gray-700 capitalize">
+                                {change.action}
+                              </span>{' '}
+                              row {change.row_number}
+                              {change.diff && Object.keys(change.diff).length > 0 && (
+                                <div className="mt-1 space-y-1 pl-2 border-l-2 border-gray-100">
+                                  {Object.entries(change.diff).map(([field, vals]) => (
+                                    <div key={field} className="text-xs text-gray-600">
+                                      <span className="font-medium capitalize">
+                                        {field.replace(/_/g, ' ')}:
+                                      </span>{' '}
+                                      {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    {run.changes?.length > 0 && (
-                      <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
-                        {run.changes.map((change, i) => (
-                          <div key={i} className="text-sm">
-                            <span className="font-medium text-gray-700 capitalize">
-                              {change.action}
-                            </span>{' '}
-                            row {change.row_number}
-                            {change.diff && Object.keys(change.diff).length > 0 && (
-                              <div className="mt-1 space-y-1 pl-2 border-l-2 border-gray-100">
-                                {Object.entries(change.diff).map(([field, vals]) => (
-                                  <div key={field} className="text-xs text-gray-600">
-                                    <span className="font-medium capitalize">
-                                      {field.replace(/_/g, ' ')}:
-                                    </span>{' '}
-                                    {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
