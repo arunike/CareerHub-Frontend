@@ -47,6 +47,14 @@ const statusColor = (status?: string) => {
   return 'blue';
 };
 
+const formatStatusLabel = (
+  status: string | undefined,
+  stages: Array<{ key: string; label: string }>
+) => {
+  if (!status) return '-';
+  return stages.find((stage) => stage.key === status)?.label || status;
+};
+
 const ApplicationDetailDrawer = ({
   application,
   documents,
@@ -136,7 +144,9 @@ const ApplicationDetailDrawer = ({
                   <div className="space-y-5">
                     <Descriptions column={1} size="small" bordered>
                       <Descriptions.Item label="Status">
-                        <Tag color={statusColor(application.status)}>{application.status}</Tag>
+                        <Tag color={statusColor(application.status)}>
+                          {formatStatusLabel(application.status, appStages)}
+                        </Tag>
                       </Descriptions.Item>
                       <Descriptions.Item label="Date Applied">
                         {formatDateOnly(application.date_applied, '-')}
@@ -146,9 +156,6 @@ const ApplicationDetailDrawer = ({
                       </Descriptions.Item>
                       <Descriptions.Item label="Employment Type">
                         {application.employment_type || 'full_time'}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Current Round">
-                        {application.current_round ?? 0}
                       </Descriptions.Item>
                       <Descriptions.Item label="Salary Range">
                         {application.salary_range || '-'}

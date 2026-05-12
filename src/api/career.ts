@@ -27,6 +27,31 @@ export interface JobBoardImportResult {
   ai_message?: string;
 }
 
+export interface ApplicationFileImportPreview {
+  headers: string[];
+  rows: Array<Record<string, string>>;
+  mapping: Record<string, string>;
+  field_options: Array<{ key: string; label: string; required?: boolean }>;
+  items: Array<{
+    row: number;
+    action: 'create' | 'update' | 'error';
+    detail: string;
+    company_name: string;
+    role_title: string;
+    status: string;
+    local_object_id?: number | null;
+    raw: Record<string, string>;
+  }>;
+  summary: {
+    total_rows: number;
+    creates: number;
+    updates: number;
+    errors: number;
+  };
+  ai_status: 'success' | 'not_configured' | 'failed';
+  ai_message: string;
+}
+
 const EXPERIENCE_DECIMAL_FIELDS = [
   'hourly_rate',
   'hours_per_day',
@@ -102,8 +127,18 @@ export const updateApplicationTimelineEntry = (
 ) => api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const getApplicationTimelineAnalytics = () =>
   api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
-export const importApplications = (formData: FormData) =>
-  api.post('/career/import/', formData, { headers: { 'Content-Type': undefined } });
+export const previewImportApplications = (formData: FormData) =>
+  api.post<{ ok: true; preview: ApplicationFileImportPreview }>('/career/import/', formData, {
+    headers: { 'Content-Type': undefined },
+  });
+export const applyImportApplications = (
+  rows: Array<Record<string, string>>,
+  mapping: Record<string, string>
+) =>
+  api.post<{
+    ok: boolean;
+    result: { created: number; updated: number; errors: Array<{ row?: number; error: string }> };
+  }>('/career/import/apply/', { rows, mapping });
 export const extractJobBoardPosting = (url: string) =>
   api.post<JobBoardImportResult>('/career/job-import/', { url });
 export const exportApplications = (format: string = 'csv') =>

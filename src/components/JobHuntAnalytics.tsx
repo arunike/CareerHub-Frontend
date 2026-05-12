@@ -58,11 +58,23 @@ const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
   { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
   { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
   { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
+  {
+    key: 'REMOVED_FROM_SHEET',
+    label: 'Removed from Sheet',
+    shortLabel: 'Removed',
+    tone: 'bg-slate-500',
+  },
 ];
 
-const NON_FUNNEL_STATUSES = new Set(['ACCEPTED', 'REJECTED', 'GHOSTED']);
-const INACTIVE_STATUSES = new Set(['APPLIED', 'REJECTED', 'GHOSTED', 'ACCEPTED']);
-const RESPONDED_EXCLUDE_STATUSES = new Set(['APPLIED', 'GHOSTED']);
+const NON_FUNNEL_STATUSES = new Set(['ACCEPTED', 'REJECTED', 'GHOSTED', 'REMOVED_FROM_SHEET']);
+const INACTIVE_STATUSES = new Set([
+  'APPLIED',
+  'REJECTED',
+  'GHOSTED',
+  'ACCEPTED',
+  'REMOVED_FROM_SHEET',
+]);
+const RESPONDED_EXCLUDE_STATUSES = new Set(['APPLIED', 'GHOSTED', 'REMOVED_FROM_SHEET']);
 
 const toTitleCase = (value: string) =>
   value
@@ -77,6 +89,12 @@ const getStageLabel = (stage: ApplicationStage) => {
     return stage.label || toTitleCase(stage.key);
   }
   return stage.shortLabel || stage.label || toTitleCase(stage.key);
+};
+
+const getApplicationRound = (application: CareerApplication) => {
+  const roundStatus = application.status.match(/^ROUND_(\d+)$/);
+  if (roundStatus) return Number(roundStatus[1]);
+  return application.current_round || 0;
 };
 
 const getStageColor = (stage: ApplicationStage) => {
@@ -347,7 +365,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     const totalInterviews = applications.filter(
       (a) =>
         (!RESPONDED_EXCLUDE_STATUSES.has(a.status) && a.status !== 'REJECTED') ||
-        (a.status === 'REJECTED' && (a.current_round || 0) > 0)
+        (a.status === 'REJECTED' && getApplicationRound(a) > 0)
     ).length;
 
     const interviewRate = total > 0 ? ((totalInterviews / total) * 100).toFixed(1) : '0.0';
@@ -402,7 +420,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
 
     const roundCounts: Record<string, number> = {};
     applications.forEach((a) => {
-      const r = a.current_round || 0;
+      const r = getApplicationRound(a);
       if (r > 0) {
         const label = `Round ${r}`;
         roundCounts[label] = (roundCounts[label] || 0) + 1;

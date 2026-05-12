@@ -11,7 +11,17 @@ import {
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, Checkbox, Dropdown, Modal, Segmented, Tag, message, Tabs } from 'antd';
+import {
+  Button,
+  Checkbox,
+  Dropdown,
+  InputNumber,
+  Modal,
+  Segmented,
+  Tag,
+  message,
+  Tabs,
+} from 'antd';
 import dayjs from 'dayjs';
 import {
   applyGoogleSheetImportReview,
@@ -57,6 +67,8 @@ type Draft = {
   sync_time: string;
   sync_timezone: string;
   header_row: number;
+  missing_row_strategy: 'IGNORE' | 'ARCHIVE_THEN_DELETE';
+  missing_row_delete_after_days: number;
   column_mapping: Record<string, string>;
   overwrite_strategies: Record<string, string>;
 };
@@ -141,6 +153,8 @@ const emptyDraft = (target: GoogleSheetSyncTarget = 'APPLICATIONS'): Draft => ({
   sync_time: '22:00',
   sync_timezone: 'America/Los_Angeles',
   header_row: 1,
+  missing_row_strategy: 'ARCHIVE_THEN_DELETE',
+  missing_row_delete_after_days: 30,
   column_mapping: {},
   overwrite_strategies: {},
 });
@@ -155,6 +169,8 @@ const toDraft = (config: GoogleSheetSyncConfig): Draft => ({
   sync_time: normalizeTimeInput(config.sync_time),
   sync_timezone: config.sync_timezone || 'America/Los_Angeles',
   header_row: config.header_row || 1,
+  missing_row_strategy: config.missing_row_strategy || 'ARCHIVE_THEN_DELETE',
+  missing_row_delete_after_days: config.missing_row_delete_after_days || 30,
   column_mapping: config.column_mapping || {},
   overwrite_strategies: config.overwrite_strategies || {},
 });
@@ -234,6 +250,8 @@ const resultText = (config: GoogleSheetSyncConfig) => {
   const pieces = [
     `${result.created || 0} created`,
     `${result.updated || 0} updated`,
+    `${result.archived || 0} archived`,
+    `${result.deleted || 0} deleted`,
     `${result.skipped || 0} skipped`,
   ];
   return pieces.join(' / ');
@@ -522,6 +540,8 @@ const GoogleSheetsSettings: React.FC = () => {
     sync_time: draft.sync_time,
     sync_timezone: draft.sync_timezone,
     header_row: draft.header_row,
+    missing_row_strategy: draft.missing_row_strategy,
+    missing_row_delete_after_days: draft.missing_row_delete_after_days,
     column_mapping: draft.column_mapping,
     overwrite_strategies: draft.overwrite_strategies,
   });
@@ -611,8 +631,11 @@ const GoogleSheetsSettings: React.FC = () => {
         ? await resyncGoogleSheetSync(config.id)
         : await runGoogleSheetSync(config.id);
       messageApi.success(
-        `${force ? 'Resync' : 'Sync'} finished: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated`
+        `${force ? 'Resync' : 'Sync'} finished: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated, ${response.data.result.archived || 0} archived, ${response.data.result.deleted || 0} deleted`
       );
+      (response.data.result.warnings || []).forEach((warning) => {
+        messageApi.warning(warning.message);
+      });
       fetchConfigs();
     } catch (error) {
       messageApi.error(force ? 'Resync failed' : 'Sync failed');
@@ -979,6 +1002,51 @@ const GoogleSheetsSettings: React.FC = () => {
           </div>
         </div>
 
+        {draft.target_type === 'APPLICATIONS' && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Rows Removed From Sheet</div>
+                <div className="text-xs text-gray-600 mt-0.5">
+                  When a synced External ID disappears, archive the application first, then delete
+                  it after the recovery window.
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-[180px_140px] gap-3">
+                <select
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={draft.missing_row_strategy}
+                  onChange={(event) =>
+                    updateDraft({
+                      missing_row_strategy: event.target.value as Draft['missing_row_strategy'],
+                    })
+                  }
+                >
+                  <option value="ARCHIVE_THEN_DELETE">Archive then delete</option>
+                  <option value="IGNORE">Ignore removals</option>
+                </select>
+                <InputNumber
+                  min={1}
+                  max={365}
+                  className="w-full"
+                  addonAfter="days"
+                  disabled={draft.missing_row_strategy === 'IGNORE'}
+                  value={draft.missing_row_delete_after_days}
+                  onChange={(value) =>
+                    updateDraft({ missing_row_delete_after_days: Number(value) || 30 })
+                  }
+                />
+              </div>
+            </div>
+            {!draft.column_mapping.external_id && draft.target_type === 'APPLICATIONS' && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Add an External ID column mapping before relying on automatic removal. Row numbers
+                can shift when a Google Sheet row is deleted.
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-gray-900">Preview before creating</div>
@@ -1285,11 +1353,24 @@ const GoogleSheetsSettings: React.FC = () => {
                         Daily at {normalizeTimeInput(config.sync_time)}{' '}
                         {config.sync_timezone || 'America/Los_Angeles'}
                       </p>
+                      {config.target_type === 'APPLICATIONS' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Missing rows:{' '}
+                          {config.missing_row_strategy === 'ARCHIVE_THEN_DELETE'
+                            ? `archive, then delete after ${config.missing_row_delete_after_days || 30} days`
+                            : 'ignore'}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-500 mt-1">
                         {config.last_synced_at
                           ? `Last sync ${new Date(config.last_synced_at).toLocaleString()} - ${resultText(config)}`
                           : 'Not synced yet'}
                       </p>
+                      {(config.last_result?.warnings || []).map((warning, index) => (
+                        <p key={index} className="text-xs text-amber-700 mt-1">
+                          {warning.message}
+                        </p>
+                      ))}
                       {config.last_error && (
                         <p className="text-xs text-red-600 mt-1">{config.last_error}</p>
                       )}
@@ -1411,6 +1492,8 @@ const GoogleSheetsSettings: React.FC = () => {
                         <div className="mt-1 text-xs text-gray-500">
                           {(run.summary as any)?.created || 0} created /{' '}
                           {(run.summary as any)?.updated || 0} updated /{' '}
+                          {(run.summary as any)?.archived || 0} archived /{' '}
+                          {(run.summary as any)?.deleted || 0} deleted /{' '}
                           {(run.summary as any)?.skipped || 0} skipped
                         </div>
                       </div>
