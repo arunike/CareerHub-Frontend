@@ -1,5 +1,6 @@
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import EditableNumberInput from '../../../components/EditableNumberInput';
+import { TIMEZONE_OPTIONS } from '../../../lib/timezones';
 
 type Props = {
   startDate: string;
@@ -47,10 +48,11 @@ const AvailabilityGeneratorCard = ({
               onChange={(e) => onTimezoneChange(e.target.value)}
               className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
             >
-              <option value="PT">Pacific Time (PT)</option>
-              <option value="MT">Mountain Time (MT)</option>
-              <option value="CT">Central Time (CT)</option>
-              <option value="ET">Eastern Time (ET)</option>
+              {TIMEZONE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>

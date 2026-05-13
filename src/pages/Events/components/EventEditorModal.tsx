@@ -16,6 +16,7 @@ import type { FormInstance } from 'antd/es/form';
 import type { EventCategory, RecurrenceRule } from '../../../types';
 import CategoryBadge from '../../../components/CategoryBadge';
 import FriendlyTimeInput from '../../../components/FriendlyTimeInput';
+import { TIMEZONE_OPTIONS } from '../../../lib/timezones';
 import IconPicker from '../../../components/IconPicker';
 
 const { Text } = Typography;
@@ -89,7 +90,7 @@ const EventEditorModal = ({
           </Col>
           <Col xs={24} sm={12}>
             <Form.Item name="timezone" label="Timezone">
-              <Select options={['PT', 'MT', 'CT', 'ET'].map((t) => ({ label: t, value: t }))} />
+              <Select showSearch optionFilterProp="label" options={TIMEZONE_OPTIONS} />
             </Form.Item>
           </Col>
         </Row>

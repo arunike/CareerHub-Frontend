@@ -68,7 +68,7 @@ export interface Event {
   date: string;
   start_time: string;
   end_time: string;
-  timezone: 'PT' | 'ET' | 'CT' | 'MT';
+  timezone: string;
   category?: number;
   category_details?: EventCategory;
   color?: string;

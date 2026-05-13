@@ -47,6 +47,7 @@ import {
   PublicBookingManager,
 } from './components';
 import { useAuth } from '../../context/AuthContext';
+import { getBrowserTimeZone } from '../../lib/timezones';
 
 const canMergeAvailabilityDates = (previousDate: string, nextDate: string) => {
   const previous = parseISO(previousDate);
@@ -67,7 +68,7 @@ const Availability = () => {
 
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AvailabilityType[]>([]);
-  const [timezone, setTimezone] = useState('PT');
+  const [timezone, setTimezone] = useState(() => getBrowserTimeZone());
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [availabilityWeeks, setAvailabilityWeeks] = useState(2);
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);

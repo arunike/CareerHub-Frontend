@@ -34,6 +34,7 @@ import {
 } from '../../lib/llmSettings';
 import GoogleSheetsSettings from './GoogleSheetsSettings';
 import SecurityDashboard from './SecurityDashboard';
+import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
 
 dayjs.extend(customParseFormat);
 
@@ -961,17 +962,18 @@ const Settings: React.FC = () => {
               </label>
               <select
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                value={settings.primary_timezone || 'America/Los_Angeles'}
+                value={normalizeTimeZone(settings.primary_timezone)}
                 onChange={(e) =>
                   setSettings((prev) =>
                     prev ? { ...prev, primary_timezone: e.target.value } : null
                   )
                 }
               >
-                <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                <option value="America/New_York">Eastern Time (ET)</option>
-                <option value="America/Chicago">Central Time (CT)</option>
-                <option value="America/Denver">Mountain Time (MT)</option>
+                {TIMEZONE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 

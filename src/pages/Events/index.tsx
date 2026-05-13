@@ -15,6 +15,8 @@ import {
 import { PlusOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import utc from 'dayjs/plugin/utc';
+import timezonePlugin from 'dayjs/plugin/timezone';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
 import {
   getEvents,
@@ -42,8 +44,11 @@ import EventEditorModal from './components/EventEditorModal';
 import EventViewModal from './components/EventViewModal';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
+import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 
 dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
 
 const { Text } = Typography;
 
@@ -78,10 +83,14 @@ const Events = () => {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'duration'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [userTimezone, setUserTimezone] = usePersistedState<string>('userTimezone', 'PT', {
-    serialize: (value) => value,
-    deserialize: (raw) => raw,
-  });
+  const [userTimezone, setUserTimezone] = usePersistedState<string>(
+    'userTimezone',
+    getBrowserTimeZone,
+    {
+      serialize: (value) => value,
+      deserialize: (raw) => normalizeTimeZone(raw),
+    }
+  );
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'eventsSelectedYear',
     getCurrentYear(),
@@ -128,6 +137,11 @@ const Events = () => {
         }
         if (settingsResp.data.default_event_category) {
           setDefaultCategory(settingsResp.data.default_event_category);
+        }
+        if (settingsResp.data.primary_timezone) {
+          setUserTimezone((current) =>
+            normalizeTimeZone(current || settingsResp.data.primary_timezone)
+          );
         }
       }
 
@@ -230,7 +244,7 @@ const Events = () => {
       date: dayjs(),
       start_time: start,
       end_time: end,
-      timezone: 'PT',
+      timezone: normalizeTimeZone(userTimezone),
       category: defaultCategory,
       location_type: 'virtual',
     });
@@ -460,27 +474,21 @@ const Events = () => {
   });
 
   const formatEventTime = (event: Event, userTz: string) => {
-    const offsets: Record<string, number> = {
-      PT: -8,
-      MT: -7,
-      CT: -6,
-      ET: -5,
-      UTC: 0,
-    };
-
-    const eventTz = event.timezone || 'PT';
-    if (eventTz === userTz) return null;
-
-    const diffHours = (offsets[userTz] || 0) - (offsets[eventTz] || 0);
-    if (diffHours === 0) return null;
+    const eventTz = normalizeTimeZone(event.timezone);
+    const displayTz = normalizeTimeZone(userTz);
+    if (eventTz === displayTz) return null;
 
     try {
-      const startDt = dayjs(`${event.date}T${event.start_time}`).add(diffHours, 'hour');
-      const endDt = dayjs(`${event.date}T${event.end_time}`).add(diffHours, 'hour');
+      const startDt = dayjs
+        .tz(`${event.date} ${event.start_time}`, 'YYYY-MM-DD HH:mm:ss', eventTz)
+        .tz(displayTz);
+      const endDt = dayjs
+        .tz(`${event.date} ${event.end_time}`, 'YYYY-MM-DD HH:mm:ss', eventTz)
+        .tz(displayTz);
 
       if (!startDt.isValid() || !endDt.isValid()) return null;
 
-      return `(${startDt.format('HH:mm')} - ${endDt.format('HH:mm')} ${userTz})`;
+      return `(${startDt.format('HH:mm')} - ${endDt.format('HH:mm')} ${displayTz})`;
     } catch {
       return null;
     }
@@ -500,17 +508,14 @@ const Events = () => {
             availableYears={availableYears}
             extraActions={
               <Select
-                defaultValue={userTimezone}
-                onChange={setUserTimezone}
-                style={{ width: 160 }}
+                value={normalizeTimeZone(userTimezone)}
+                onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
+                style={{ width: 260 }}
                 className="toolbar-select"
                 size="large"
-                options={[
-                  { value: 'PT', label: 'Pacific (PT)' },
-                  { value: 'MT', label: 'Mountain (MT)' },
-                  { value: 'CT', label: 'Central (CT)' },
-                  { value: 'ET', label: 'Eastern (ET)' },
-                ]}
+                showSearch
+                optionFilterProp="label"
+                options={TIMEZONE_OPTIONS}
               />
             }
             onDeleteAll={() => setIsDeleteAllOpen(true)}
