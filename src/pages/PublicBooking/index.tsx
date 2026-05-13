@@ -17,9 +17,7 @@ import type {
   PublicBooking,
 } from '../../types';
 import { formatDateOnly, todayDateOnlyLocal } from '../../utils/dateOnly';
-
-const timezones = ['PT', 'MT', 'CT', 'ET'] as const;
-type Timezone = (typeof timezones)[number];
+import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 type StoredGuestBooking = {
   booking_uuid: string;
   email?: string;
@@ -81,7 +79,7 @@ const PublicBookingPage = () => {
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState(30);
   const [allowRescheduleCancel, setAllowRescheduleCancel] = useState(true);
   const [intakeQuestions, setIntakeQuestions] = useState<BookingIntakeQuestion[]>([]);
-  const [timezone, setTimezone] = useState<Timezone>('PT');
+  const [timezone, setTimezone] = useState<string>(() => getBrowserTimeZone());
   const [selectedDate, setSelectedDate] = useState<string>(() => todayDateOnlyLocal());
   const [days, setDays] = useState<BookingDayAvailability[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
@@ -158,7 +156,7 @@ const PublicBookingPage = () => {
       setBookingBlockMinutes(link.booking_block_minutes || 30);
       setAllowRescheduleCancel(link.allow_reschedule_cancel);
       setIntakeQuestions(link.intake_questions || []);
-      setTimezone((booking.timezone as Timezone) || 'PT');
+      setTimezone(normalizeTimeZone(booking.timezone));
       setSelectedDate(booking.date);
       setName(booking.name);
       setEmail(booking.email);
@@ -197,7 +195,7 @@ const PublicBookingPage = () => {
       setBookingBlockMinutes(link.booking_block_minutes || 30);
       setAllowRescheduleCancel(link.allow_reschedule_cancel);
       setIntakeQuestions(link.intake_questions || []);
-      setTimezone((booking.timezone as Timezone) || 'PT');
+      setTimezone(normalizeTimeZone(booking.timezone));
       setSelectedDate(booking.date);
       setName(booking.name);
       setEmail(booking.email);
@@ -534,18 +532,14 @@ const PublicBookingPage = () => {
                     </label>
                     <select
                       value={timezone}
-                      onChange={(e) => {
-                        const nextTimezone = e.target.value;
-                        if (timezones.includes(nextTimezone as Timezone)) {
-                          setTimezone(nextTimezone as Timezone);
-                        }
-                      }}
+                      onChange={(e) => setTimezone(normalizeTimeZone(e.target.value))}
                       className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat"
                     >
-                      <option value="PT">Pacific Time (PT)</option>
-                      <option value="MT">Mountain Time (MT)</option>
-                      <option value="CT">Central Time (CT)</option>
-                      <option value="ET">Eastern Time (ET)</option>
+                      {TIMEZONE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

@@ -56,6 +56,7 @@ import type {
 } from '../../types';
 import EditableNumberInput from '../../components/EditableNumberInput';
 import FriendlyTimeInput from '../../components/FriendlyTimeInput';
+import { DEFAULT_TIMEZONE, TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
 
 type Draft = {
   id?: number;
@@ -72,14 +73,6 @@ type Draft = {
   column_mapping: Record<string, string>;
   overwrite_strategies: Record<string, string>;
 };
-
-const TIMEZONE_OPTIONS = [
-  { value: 'America/Los_Angeles', label: 'Pacific Time' },
-  { value: 'America/Denver', label: 'Mountain Time' },
-  { value: 'America/Chicago', label: 'Central Time' },
-  { value: 'America/New_York', label: 'Eastern Time' },
-  { value: 'UTC', label: 'UTC' },
-];
 
 const normalizeTimeInput = (value?: string | null) => (value || '22:00').slice(0, 5);
 const syncTimeValue = (value: string) => dayjs(`2000-01-01T${normalizeTimeInput(value)}:00`);
@@ -151,7 +144,7 @@ const emptyDraft = (target: GoogleSheetSyncTarget = 'APPLICATIONS'): Draft => ({
   target_type: target,
   enabled: true,
   sync_time: '22:00',
-  sync_timezone: 'America/Los_Angeles',
+  sync_timezone: DEFAULT_TIMEZONE,
   header_row: 1,
   missing_row_strategy: 'ARCHIVE_THEN_DELETE',
   missing_row_delete_after_days: 30,
@@ -167,7 +160,7 @@ const toDraft = (config: GoogleSheetSyncConfig): Draft => ({
   target_type: config.target_type,
   enabled: config.enabled,
   sync_time: normalizeTimeInput(config.sync_time),
-  sync_timezone: config.sync_timezone || 'America/Los_Angeles',
+  sync_timezone: normalizeTimeZone(config.sync_timezone),
   header_row: config.header_row || 1,
   missing_row_strategy: config.missing_row_strategy || 'ARCHIVE_THEN_DELETE',
   missing_row_delete_after_days: config.missing_row_delete_after_days || 30,
@@ -1359,7 +1352,7 @@ const GoogleSheetsSettings: React.FC = () => {
                       <p className="text-xs text-gray-500 mt-1 truncate">{config.sheet_url}</p>
                       <p className="text-xs text-gray-500 mt-1">
                         Daily at {normalizeTimeInput(config.sync_time)}{' '}
-                        {config.sync_timezone || 'America/Los_Angeles'}
+                        {normalizeTimeZone(config.sync_timezone)}
                       </p>
                       {config.target_type === 'APPLICATIONS' && (
                         <p className="text-xs text-gray-500 mt-1">
