@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, DatePicker, Input, Select, Spin, Tag, message } from 'antd';
-import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, DatePicker, Input, Select, Spin, Tag, Tooltip, message } from 'antd';
+import { CalendarOutlined, CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
   createApplicationTimelineEntry,
@@ -62,6 +62,12 @@ const TONE_TO_HEX: Record<string, string> = {
   'bg-gray-300': '#d1d5db',
 };
 
+const getStageState = (draft: TimelineDraft, isCurrent: boolean) => {
+  if (isCurrent) return 'current';
+  if (draft.event_date || draft.notes.trim()) return 'done';
+  return 'empty';
+};
+
 const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
@@ -70,6 +76,8 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const [addedStageKeys, setAddedStageKeys] = useState<string[]>([]);
   const [isAddingStage, setIsAddingStage] = useState(false);
   const [selectedStageKey, setSelectedStageKey] = useState<string | undefined>();
+  const [focusedStageKey, setFocusedStageKey] = useState<string | undefined>();
+  const stageCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const buildInitialDrafts = useCallback(
     (entries: ApplicationTimelineEntry[]) => {
@@ -120,6 +128,15 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       [stage]: { ...(prev[stage] || emptyDraft()), ...patch },
     }));
   };
+
+  const scrollToStage = useCallback((stageKey: string) => {
+    const target = stageCardRefs.current[stageKey];
+    if (!target) return;
+
+    setFocusedStageKey(stageKey);
+    target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+    window.setTimeout(() => setFocusedStageKey(undefined), 1400);
+  }, []);
 
   const allDisplayStages = useMemo(() => {
     const configuredStages: DisplayStage[] = appStages.map((stage) => ({ ...stage }));
@@ -229,7 +246,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             Timeline
           </p>
-          <p className="mt-0.5 text-sm text-slate-500">Track key dates and notes for each stage.</p>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Track progression, key dates, and notes for each stage.
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button
@@ -297,19 +316,73 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
           </div>
         </div>
       ) : (
-        <div className="relative pl-8">
-          {/* Vertical spine */}
-          <div className="absolute bottom-2 left-[11px] top-2 w-px bg-slate-100" />
+        <div className="space-y-5">
+          <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4">
+            <div className="flex min-w-full w-max items-center justify-center gap-2">
+              {activeStages.map((stage, index) => {
+                const draft = drafts[stage.key] || emptyDraft();
+                const isCurrent = application?.status === stage.key;
+                const state = getStageState(draft, isCurrent);
+                const accent = TONE_TO_HEX[stage.tone || ''] ?? '#64748b';
+                const isDone = state === 'done' || state === 'current';
 
-          <div className="space-y-2">
+                return (
+                  <div key={stage.key} className="flex items-center gap-2">
+                    <Tooltip title={stage.label}>
+                      <button
+                        type="button"
+                        className="flex min-w-[82px] flex-col items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                        onClick={() => scrollToStage(stage.key)}
+                        aria-label={`Jump to ${stage.label} timeline stage`}
+                      >
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold"
+                          style={{
+                            background: isDone ? accent : 'white',
+                            borderColor: isDone ? accent : '#e2e8f0',
+                            color: isDone ? 'white' : '#94a3b8',
+                          }}
+                        >
+                          {isDone ? <CheckOutlined /> : index + 1}
+                        </div>
+                        <div
+                          className={`max-w-[90px] truncate text-center text-[11px] font-semibold ${
+                            isCurrent ? 'text-slate-950' : 'text-slate-500'
+                          }`}
+                        >
+                          {stage.shortLabel || stage.label}
+                        </div>
+                      </button>
+                    </Tooltip>
+                    {index < activeStages.length - 1 && (
+                      <div
+                        className="h-px w-8"
+                        style={{ background: isDone ? accent : '#e2e8f0' }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="relative pl-8">
+            <div className="absolute bottom-2 left-[11px] top-2 w-px bg-slate-100" />
             {activeStages.map((stage, index) => {
               const draft = drafts[stage.key] || emptyDraft();
               const isCurrent = application?.status === stage.key;
               const isLast = index === activeStages.length - 1;
               const accent = TONE_TO_HEX[stage.tone || ''] ?? '#94a3b8';
+              const isFocused = focusedStageKey === stage.key;
 
               return (
-                <div key={stage.key} className="relative">
+                <div
+                  key={stage.key}
+                  ref={(node) => {
+                    stageCardRefs.current[stage.key] = node;
+                  }}
+                  className="relative scroll-mt-4"
+                >
                   {/* Dot */}
                   <div
                     className="absolute -left-8 top-[18px] flex h-[22px] w-[22px] items-center justify-center rounded-full"
@@ -325,15 +398,15 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                     />
                   </div>
 
-                  {/* Card */}
                   <div
                     className={`rounded-xl border bg-white transition-shadow duration-150 ${
-                      isCurrent
-                        ? 'border-slate-200 shadow-md shadow-slate-100'
-                        : 'border-slate-100 hover:shadow-sm'
+                      isFocused
+                        ? 'border-blue-200 shadow-lg shadow-blue-100/70 ring-2 ring-blue-100'
+                        : isCurrent
+                          ? 'border-slate-200 shadow-md shadow-slate-100'
+                          : 'border-slate-100 hover:shadow-sm'
                     } ${isLast ? 'mb-0' : 'mb-2'}`}
                   >
-                    {/* Stage header */}
                     <div className="flex items-center justify-between gap-4 px-4 pt-3.5">
                       <div className="flex items-center gap-2">
                         <span
@@ -365,6 +438,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                           placeholder="Add date"
                           size="small"
                           variant="borderless"
+                          suffixIcon={<CalendarOutlined />}
                           className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600"
                           format="MMM D, YYYY"
                         />
@@ -380,10 +454,8 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                       </div>
                     </div>
 
-                    {/* Divider */}
                     <div className="mx-4 mt-2 h-px bg-slate-50" />
 
-                    {/* Notes */}
                     <div className="px-3 pb-3 pt-2">
                       <Input.TextArea
                         value={draft.notes}
