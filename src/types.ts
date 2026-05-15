@@ -180,6 +180,7 @@ export interface GoogleSheetSyncConfig {
     updated?: number;
     archived?: number;
     deleted?: number;
+    missing_from_sheet?: number;
     skipped?: number;
     scanned_rows?: number;
     history?: Array<{
