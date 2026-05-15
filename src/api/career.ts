@@ -21,6 +21,8 @@ export interface JobBoardImportResult {
   company: string;
   role_title: string;
   location: string;
+  employment_type: string;
+  salary_range: string;
   job_description: string;
   extraction_method?: 'ai' | 'rules';
   ai_status?: 'success' | 'not_configured' | 'failed';
