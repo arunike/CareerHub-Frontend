@@ -14,6 +14,7 @@ import {
 import {
   Button,
   Checkbox,
+  Collapse,
   Dropdown,
   InputNumber,
   Modal,
@@ -238,17 +239,70 @@ const buildAutoMapping = (target: GoogleSheetSyncTarget, headers: string[]) => {
   return mapping;
 };
 
-const resultText = (config: GoogleSheetSyncConfig) => {
-  const result = config.last_result || {};
-  const pieces = [
-    `${result.created || 0} created`,
-    `${result.updated || 0} updated`,
-    `${result.archived || 0} archived`,
-    `${result.deleted || 0} deleted`,
-    `${result.skipped || 0} skipped`,
-  ];
-  return pieces.join(' / ');
+type SyncSummarySource = Partial<GoogleSheetSyncConfig['last_result']> | Record<string, unknown>;
+
+const syncSummaryValue = (summary: SyncSummarySource | null | undefined, key: string) => {
+  const value = summary?.[key];
+  return typeof value === 'number' ? value : 0;
 };
+
+const syncMissingFromSheet = (summary: SyncSummarySource | null | undefined) => {
+  const explicit = summary?.missing_from_sheet;
+  if (typeof explicit === 'number') return explicit;
+  return syncSummaryValue(summary, 'archived') + syncSummaryValue(summary, 'deleted');
+};
+
+const syncReviewItems = (summary: SyncSummarySource | null | undefined) => [
+  {
+    key: 'created',
+    label: 'Created',
+    value: syncSummaryValue(summary, 'created'),
+    className: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+  },
+  {
+    key: 'updated',
+    label: 'Updated',
+    value: syncSummaryValue(summary, 'updated'),
+    className: 'border-blue-100 bg-blue-50 text-blue-700',
+  },
+  {
+    key: 'archived',
+    label: 'Archived',
+    value: syncSummaryValue(summary, 'archived'),
+    className: 'border-amber-100 bg-amber-50 text-amber-700',
+  },
+  {
+    key: 'missing_from_sheet',
+    label: 'Missing from sheet',
+    value: syncMissingFromSheet(summary),
+    className: 'border-orange-100 bg-orange-50 text-orange-700',
+  },
+  {
+    key: 'deleted',
+    label: 'Deleted',
+    value: syncSummaryValue(summary, 'deleted'),
+    className: 'border-red-100 bg-red-50 text-red-700',
+  },
+  {
+    key: 'skipped',
+    label: 'Skipped',
+    value: syncSummaryValue(summary, 'skipped'),
+    className: 'border-slate-100 bg-slate-50 text-slate-600',
+  },
+];
+
+const SyncSummaryGrid = ({ summary }: { summary: SyncSummarySource | null | undefined }) => (
+  <div className="grid grid-cols-2 gap-2 2xl:grid-cols-3">
+    {syncReviewItems(summary).map((item) => (
+      <div key={item.key} className={`min-w-0 rounded-xl border px-3 py-2 ${item.className}`}>
+        <div className="text-xl font-semibold leading-none">{item.value}</div>
+        <div className="mt-1 break-words text-[11px] font-medium uppercase tracking-[0.08em]">
+          {item.label}
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 const reviewActionMeta: Record<
   GoogleSheetImportReviewItem['action'],
@@ -318,6 +372,11 @@ const GoogleSheetsSettings: React.FC = () => {
   const [historyConfig, setHistoryConfig] = useState<GoogleSheetSyncConfig | null>(null);
   const [syncRuns, setSyncRuns] = useState<GoogleSheetSyncRun[]>([]);
   const [syncRunsLoading, setSyncRunsLoading] = useState(false);
+  const [syncReview, setSyncReview] = useState<{
+    config: GoogleSheetSyncConfig;
+    result: GoogleSheetSyncConfig['last_result'];
+    force: boolean;
+  } | null>(null);
 
   const fields = useMemo(() => FIELD_OPTIONS[draft.target_type], [draft.target_type]);
   const requiredFields = useMemo(() => fields.filter((field) => field.required), [fields]);
@@ -631,9 +690,8 @@ const GoogleSheetsSettings: React.FC = () => {
       const response = force
         ? await resyncGoogleSheetSync(config.id)
         : await runGoogleSheetSync(config.id);
-      messageApi.success(
-        `${force ? 'Resync' : 'Sync'} finished: ${response.data.result.created || 0} created, ${response.data.result.updated || 0} updated, ${response.data.result.archived || 0} archived, ${response.data.result.deleted || 0} deleted`
-      );
+      messageApi.success(`${force ? 'Resync' : 'Sync'} finished`);
+      setSyncReview({ config, result: response.data.result, force });
       (response.data.result.warnings || []).forEach((warning) => {
         messageApi.warning(warning.message);
       });
@@ -1325,8 +1383,8 @@ const GoogleSheetsSettings: React.FC = () => {
               const history = syncHistory(config);
               return (
                 <div key={config.id} className="rounded-xl border border-gray-200 p-4">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-                    <div className="min-w-0 flex-1">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-semibold text-gray-900">{config.name}</h4>
                         <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
@@ -1349,29 +1407,36 @@ const GoogleSheetsSettings: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1 truncate">{config.sheet_url}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Daily at {normalizeTimeInput(config.sync_time)}{' '}
-                        {normalizeTimeZone(config.sync_timezone)}
+                      <p className="mt-2 max-w-full truncate text-sm text-gray-500">
+                        {config.sheet_url}
                       </p>
-                      {config.target_type === 'APPLICATIONS' && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Missing rows:{' '}
-                          {config.missing_row_strategy === 'ARCHIVE_THEN_DELETE'
-                            ? `archive, then delete after ${config.missing_row_delete_after_days || 30} days`
-                            : 'ignore'}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        {config.last_synced_at
-                          ? `Last sync ${new Date(config.last_synced_at).toLocaleString()} - ${resultText(config)}`
-                          : 'Not synced yet'}
-                      </p>
-                      {(config.last_result?.warnings || []).map((warning, index) => (
-                        <p key={index} className="text-xs text-amber-700 mt-1">
-                          {warning.message}
-                        </p>
-                      ))}
+                      <div className="mt-3 grid gap-2 text-xs text-gray-500 sm:grid-cols-2">
+                        <div className="rounded-lg bg-gray-50 px-3 py-2">
+                          <div className="font-medium text-gray-400">Daily Sync</div>
+                          <div className="mt-0.5 text-gray-700">
+                            {normalizeTimeInput(config.sync_time)}{' '}
+                            {normalizeTimeZone(config.sync_timezone)}
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-gray-50 px-3 py-2">
+                          <div className="font-medium text-gray-400">Last Sync</div>
+                          <div className="mt-0.5 text-gray-700">
+                            {config.last_synced_at
+                              ? new Date(config.last_synced_at).toLocaleString()
+                              : 'Not synced yet'}
+                          </div>
+                        </div>
+                        {config.target_type === 'APPLICATIONS' && (
+                          <div className="rounded-lg bg-gray-50 px-3 py-2 sm:col-span-2">
+                            <div className="font-medium text-gray-400">Missing Rows</div>
+                            <div className="mt-0.5 text-gray-700">
+                              {config.missing_row_strategy === 'ARCHIVE_THEN_DELETE'
+                                ? `Archive first, delete after ${config.missing_row_delete_after_days || 30} days`
+                                : 'Ignore missing rows'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       {config.last_error && (
                         <p className="text-xs text-red-600 mt-1">{config.last_error}</p>
                       )}
@@ -1381,64 +1446,83 @@ const GoogleSheetsSettings: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap justify-start gap-2 shrink-0 lg:justify-end">
-                      <Button
-                        size="small"
-                        type="primary"
-                        icon={<SyncOutlined />}
-                        loading={busyId === config.id}
-                        onClick={() => syncConfig(config)}
-                      >
-                        Sync Now
-                      </Button>
-                      {config.target_type === 'APPLICATIONS' && (
+                    <div className="min-w-0 space-y-3">
+                      <div className="flex flex-wrap justify-start gap-2 2xl:justify-end">
                         <Button
                           size="small"
-                          icon={<TableOutlined />}
+                          type="primary"
+                          icon={<SyncOutlined />}
                           loading={busyId === config.id}
-                          onClick={() => openImportReview(config)}
+                          onClick={() => syncConfig(config)}
                         >
-                          Review
+                          Sync Now
                         </Button>
-                      )}
-                      <Button
-                        size="small"
-                        icon={<HistoryOutlined />}
-                        disabled={history.length === 0}
-                        onClick={() => openHistory(config)}
-                      >
-                        History{history.length > 0 ? ` (${history.length})` : ''}
-                      </Button>
-                      <Dropdown
-                        trigger={['click']}
-                        menu={{
-                          items: [
-                            { key: 'edit', label: 'Edit' },
-                            { key: 'test', label: 'Test connection' },
-                            { key: 'resync', label: 'Resync all rows' },
-                            { type: 'divider' },
-                            { key: 'delete', label: 'Delete sync', danger: true },
-                          ],
-                          onClick: ({ key }) => {
-                            if (key === 'edit') {
-                              setDraft(toDraft(config));
-                              setPreview(null);
-                            } else if (key === 'test') {
-                              testConfig(config);
-                            } else if (key === 'resync') {
-                              syncConfig(config, true);
-                            } else if (key === 'delete') {
-                              removeConfig(config);
-                            }
-                          },
-                        }}
-                      >
-                        <Button size="small" icon={<MoreOutlined />} loading={busyId === config.id}>
-                          More
+                        {config.target_type === 'APPLICATIONS' && (
+                          <Button
+                            size="small"
+                            icon={<TableOutlined />}
+                            loading={busyId === config.id}
+                            onClick={() => openImportReview(config)}
+                          >
+                            Review
+                          </Button>
+                        )}
+                        <Button
+                          size="small"
+                          icon={<HistoryOutlined />}
+                          disabled={history.length === 0}
+                          onClick={() => openHistory(config)}
+                        >
+                          History{history.length > 0 ? ` (${history.length})` : ''}
                         </Button>
-                      </Dropdown>
+                        <Dropdown
+                          trigger={['click']}
+                          menu={{
+                            items: [
+                              { key: 'edit', label: 'Edit' },
+                              { key: 'test', label: 'Test connection' },
+                              { key: 'resync', label: 'Resync all rows' },
+                              { type: 'divider' },
+                              { key: 'delete', label: 'Delete sync', danger: true },
+                            ],
+                            onClick: ({ key }) => {
+                              if (key === 'edit') {
+                                setDraft(toDraft(config));
+                                setPreview(null);
+                              } else if (key === 'test') {
+                                testConfig(config);
+                              } else if (key === 'resync') {
+                                syncConfig(config, true);
+                              } else if (key === 'delete') {
+                                removeConfig(config);
+                              }
+                            },
+                          }}
+                        >
+                          <Button
+                            size="small"
+                            icon={<MoreOutlined />}
+                            loading={busyId === config.id}
+                          >
+                            More
+                          </Button>
+                        </Dropdown>
+                      </div>
+                      {config.last_synced_at && <SyncSummaryGrid summary={config.last_result} />}
                     </div>
                   </div>
+                  {(config.last_result?.warnings || []).length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {(config.last_result?.warnings || []).map((warning, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+                        >
+                          {warning.message}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1493,12 +1577,8 @@ const GoogleSheetsSettings: React.FC = () => {
                               {run.status}
                             </Tag>
                           </div>
-                          <div className="mt-1 text-xs text-gray-500">
-                            {(run.summary as any)?.created || 0} created /{' '}
-                            {(run.summary as any)?.updated || 0} updated /{' '}
-                            {(run.summary as any)?.archived || 0} archived /{' '}
-                            {(run.summary as any)?.deleted || 0} deleted /{' '}
-                            {(run.summary as any)?.skipped || 0} skipped
+                          <div className="mt-3 max-w-2xl">
+                            <SyncSummaryGrid summary={run.summary} />
                           </div>
                           {errorText && (
                             <div className="mt-2 max-w-2xl rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -1526,32 +1606,145 @@ const GoogleSheetsSettings: React.FC = () => {
                         )}
                       </div>
                       {run.changes?.length > 0 && (
-                        <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
-                          {run.changes.map((change, i) => (
-                            <div key={i} className="text-sm">
-                              <span className="font-medium text-gray-700 capitalize">
-                                {change.action}
-                              </span>{' '}
-                              row {change.row_number}
-                              {change.diff && Object.keys(change.diff).length > 0 && (
-                                <div className="mt-1 space-y-1 pl-2 border-l-2 border-gray-100">
-                                  {Object.entries(change.diff).map(([field, vals]) => (
-                                    <div key={field} className="text-xs text-gray-600">
-                                      <span className="font-medium capitalize">
-                                        {field.replace(/_/g, ' ')}:
-                                      </span>{' '}
-                                      {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                        <div className="border-t border-gray-100 px-4 py-3">
+                          <Collapse
+                            ghost
+                            items={[
+                              {
+                                key: 'details',
+                                label: (
+                                  <span className="text-sm font-semibold text-gray-700">
+                                    Details ({run.changes.length})
+                                  </span>
+                                ),
+                                children: (
+                                  <div className="max-h-[300px] space-y-2 overflow-y-auto pr-1">
+                                    {run.changes.map((change, i) => (
+                                      <div key={i} className="text-sm">
+                                        <span className="font-medium text-gray-700 capitalize">
+                                          {change.action}
+                                        </span>{' '}
+                                        row {change.row_number}
+                                        {change.diff && Object.keys(change.diff).length > 0 && (
+                                          <div className="mt-1 space-y-1 border-l-2 border-gray-100 pl-2">
+                                            {Object.entries(change.diff).map(([field, vals]) => (
+                                              <div key={field} className="text-xs text-gray-600">
+                                                <span className="font-medium capitalize">
+                                                  {field.replace(/_/g, ' ')}:
+                                                </span>{' '}
+                                                {vals.old || 'blank'} {'->'} {vals.new || 'blank'}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ),
+                              },
+                            ]}
+                          />
                         </div>
                       )}
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
+
+      <Modal
+        title={
+          syncReview
+            ? `${syncReview.force ? 'Resync' : 'Sync'} Review: ${syncReview.config.name}`
+            : 'Sync Review'
+        }
+        open={Boolean(syncReview)}
+        onCancel={() => setSyncReview(null)}
+        width={760}
+        footer={[
+          syncReview ? (
+            <Button
+              key="history"
+              icon={<HistoryOutlined />}
+              onClick={() => {
+                const config = syncReview.config;
+                setSyncReview(null);
+                openHistory(config);
+              }}
+            >
+              View History
+            </Button>
+          ) : null,
+          <Button key="done" type="primary" onClick={() => setSyncReview(null)}>
+            Done
+          </Button>,
+        ].filter(Boolean)}
+      >
+        {syncReview ? (
+          <div className="space-y-4">
+            <SyncSummaryGrid summary={syncReview.result} />
+            {syncMissingFromSheet(syncReview.result) > 0 && (
+              <div className="rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+                {syncMissingFromSheet(syncReview.result)} row
+                {syncMissingFromSheet(syncReview.result) === 1 ? '' : 's'} were missing from the
+                sheet. CareerHub archived new missing records first, and only permanently deletes
+                records after the configured retention window.
+              </div>
+            )}
+            {(syncReview.result.warnings || []).length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-amber-700">
+                  Warnings
+                </div>
+                {(syncReview.result.warnings || []).map((warning, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+                  >
+                    {warning.message}
+                  </div>
+                ))}
+              </div>
+            )}
+            {(syncReview.result.errors || []).length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-red-700">
+                  Errors
+                </div>
+                {(syncReview.result.errors || []).map((error, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700"
+                  >
+                    {error.row ? `Row ${error.row}: ` : ''}
+                    {error.error}
+                  </div>
+                ))}
+              </div>
+            )}
+            {(syncReview.result.history || []).length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                  What Changed
+                </div>
+                <div className="max-h-[260px] space-y-2 overflow-y-auto pr-1">
+                  {(syncReview.result.history || []).slice(0, 20).map((entry, index) => (
+                    <div key={index} className="rounded-lg border border-gray-100 px-3 py-2">
+                      <div className="text-sm text-gray-800">{entry.message}</div>
+                      {entry.row && (
+                        <div className="mt-1 text-xs text-gray-400">Row {entry.row}</div>
+                      )}
+                    </div>
+                  ))}
+                  {(syncReview.result.history || []).length > 20 && (
+                    <div className="text-center text-xs text-gray-400">
+                      Showing the first 20 changes. Open History for the full run.
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
