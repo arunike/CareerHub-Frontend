@@ -210,11 +210,6 @@ const Applications = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
-  const jobImportBookmarklet = useMemo(() => {
-    const target = `${window.location.origin}/applications?jobUrl=`;
-    return `javascript:(()=>{window.open(${JSON.stringify(target)}+encodeURIComponent(location.href),'_blank','noopener');})();`;
-  }, []);
-
   const officeLocationOptions = useMemo(() => {
     const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9,\s]/g, '');
     const query = normalize(locationSearchText).trim();
@@ -486,6 +481,8 @@ const Applications = () => {
         company: response.data.company,
         role_title: response.data.role_title,
         office_location: response.data.location,
+        employment_type: response.data.employment_type || 'full_time',
+        salary_range: response.data.salary_range,
         job_description: response.data.job_description,
       });
       messageApi.success('Job details extracted');
@@ -508,8 +505,9 @@ const Applications = () => {
         company_name: values.company,
         role_title: values.role_title,
         status: 'APPLIED',
-        employment_type: 'full_time',
+        employment_type: values.employment_type || 'full_time',
         job_link: jobImportPreview.source_url,
+        salary_range: values.salary_range || '',
         office_location: values.office_location || '',
         location: values.office_location || '',
         notes: values.job_description
@@ -530,16 +528,6 @@ const Applications = () => {
       console.error(error);
     } finally {
       setJobImportSaving(false);
-    }
-  };
-
-  const copyJobImportBookmarklet = async () => {
-    try {
-      await navigator.clipboard.writeText(jobImportBookmarklet);
-      messageApi.success('Bookmarklet copied');
-    } catch (error) {
-      messageApi.error('Failed to copy bookmarklet');
-      console.error(error);
     }
   };
 
@@ -1467,19 +1455,14 @@ const Applications = () => {
       >
         <div className="space-y-4">
           <div className="rounded-2xl border border-sky-100 bg-sky-50/50 px-4 py-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">
-                  Paste a supported job posting URL
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  Uses your saved AI provider when available, then falls back to the built-in
-                  parser. Extracted fields stay editable.
-                </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-900">
+                Paste a supported job posting URL
               </div>
-              <Button size="small" onClick={copyJobImportBookmarklet}>
-                Copy Bookmarklet
-              </Button>
+              <div className="mt-1 text-xs text-slate-500">
+                Paste a LinkedIn, Greenhouse, Lever, or Workday link. CareerHub will extract the
+                fields and keep them editable before saving.
+              </div>
             </div>
           </div>
 
@@ -1516,6 +1499,22 @@ const Applications = () => {
                 <Col span={24}>
                   <Form.Item name="office_location" label="Location">
                     <Input placeholder="Remote, San Francisco, CA, ..." />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item name="employment_type" label="Employment Type">
+                    <Select>
+                      {empTypes.map((type) => (
+                        <Option key={type.value} value={type.value}>
+                          {type.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <Form.Item name="salary_range" label="Salary">
+                    <Input placeholder="$150k - $180k" />
                   </Form.Item>
                 </Col>
                 <Col span={24}>
