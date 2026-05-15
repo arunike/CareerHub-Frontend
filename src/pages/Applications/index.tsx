@@ -4,6 +4,7 @@ import {
   Button,
   Input,
   Select,
+  Spin,
   Modal,
   Form,
   Space,
@@ -65,6 +66,38 @@ import { loadUsCityOptions } from '../../lib/usCityOptions';
 const { Text, Link } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
+
+const APPLICATION_IMPORT_REVIEW_FIELDS = [
+  { key: 'company_name', label: 'Company', required: true },
+  { key: 'role_title', label: 'Role', required: true },
+  { key: 'status', label: 'Status', required: false },
+  { key: 'location', label: 'Location', required: false },
+  { key: 'salary_range', label: 'Salary', required: false },
+  { key: 'job_link', label: 'Link', required: false },
+] as const;
+
+type ApplicationImportReviewFieldKey = (typeof APPLICATION_IMPORT_REVIEW_FIELDS)[number]['key'];
+const APPLICATION_IMPORT_REVIEW_FIELD_KEYS = new Set<string>(
+  APPLICATION_IMPORT_REVIEW_FIELDS.map((field) => field.key)
+);
+
+const getCoreImportMapping = (mapping: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(mapping).filter(([fieldKey]) =>
+      APPLICATION_IMPORT_REVIEW_FIELD_KEYS.has(fieldKey)
+    )
+  );
+
+type EditableApplicationImportItem = {
+  row: number;
+  action: 'create' | 'update' | 'error';
+  detail: string;
+  company_name: string;
+  role_title: string;
+  status: string;
+  local_object_id?: number | null;
+  raw: Record<string, string>;
+};
 
 type ApplicationFormValues = {
   company?: string;
@@ -141,6 +174,10 @@ const Applications = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [applicationImportPreview, setApplicationImportPreview] =
     useState<ApplicationFileImportPreview | null>(null);
+  const [applicationImportRows, setApplicationImportRows] = useState<Array<Record<string, string>>>(
+    []
+  );
+  const [applicationImportFileName, setApplicationImportFileName] = useState('');
   const [applicationImportMapping, setApplicationImportMapping] = useState<Record<string, string>>(
     {}
   );
@@ -562,15 +599,20 @@ const Applications = () => {
   const importProps: UploadProps = {
     name: 'file',
     multiple: false,
+    showUploadList: false,
     beforeUpload: (file) => {
       const formData = new FormData();
       formData.append('file', file);
+      setApplicationImportFileName(file.name);
+      setApplicationImportPreview(null);
+      setApplicationImportRows([]);
+      setApplicationImportMapping({});
       setApplicationImportPreviewing(true);
       previewImportApplications(formData)
         .then((response) => {
           setApplicationImportPreview(response.data.preview);
-          setApplicationImportMapping(response.data.preview.mapping);
-          messageApi.success('Import preview ready. Review the mapping before applying.');
+          setApplicationImportRows(response.data.preview.rows);
+          setApplicationImportMapping(getCoreImportMapping(response.data.preview.mapping));
         })
         .catch((error) => {
           messageApi.error(error?.response?.data?.error || 'Import preview failed');
@@ -585,6 +627,8 @@ const Applications = () => {
   const closeImportModal = () => {
     setIsImportModalOpen(false);
     setApplicationImportPreview(null);
+    setApplicationImportRows([]);
+    setApplicationImportFileName('');
     setApplicationImportMapping({});
   };
 
@@ -600,6 +644,93 @@ const Applications = () => {
     });
   };
 
+  const getImportFieldValue = useCallback(
+    (row: Record<string, string>, fieldKey: ApplicationImportReviewFieldKey) => {
+      const header = applicationImportMapping[fieldKey];
+      return header ? row[header] || '' : '';
+    },
+    [applicationImportMapping]
+  );
+
+  const updateImportRowValue = (
+    rowIndex: number,
+    fieldKey: ApplicationImportReviewFieldKey,
+    value: string
+  ) => {
+    const header = applicationImportMapping[fieldKey];
+    if (!header) {
+      messageApi.warning('Map this field to a column before editing its values.');
+      return;
+    }
+    setApplicationImportRows((current) =>
+      current.map((row, index) => (index === rowIndex ? { ...row, [header]: value } : row))
+    );
+  };
+
+  const editableImportReview = useMemo(() => {
+    if (!applicationImportPreview) return null;
+    const companyApplications = new Map<string, CareerApplication[]>();
+    applications.forEach((application) => {
+      const companyName = application.company_details?.name || '';
+      if (!companyName) return;
+      const current = companyApplications.get(companyName) || [];
+      current.push(application);
+      companyApplications.set(companyName, current);
+    });
+
+    const items: EditableApplicationImportItem[] = applicationImportRows.map((row, index) => {
+      const companyName = getImportFieldValue(row, 'company_name').trim();
+      const roleTitle = getImportFieldValue(row, 'role_title').trim();
+      const statusValue = getImportFieldValue(row, 'status').trim() || 'APPLIED';
+      let action: EditableApplicationImportItem['action'] = 'error';
+      let detail = 'Company and role are required.';
+      let localObjectId: number | null = null;
+
+      if (companyName && roleTitle) {
+        const existing = (companyApplications.get(companyName) || []).find(
+          (application) => application.role_title === roleTitle
+        );
+        if (existing) {
+          action = 'update';
+          detail = 'Matches an existing application by company and role.';
+          localObjectId = existing.id;
+        } else {
+          action = 'create';
+          detail = 'New application.';
+        }
+      }
+
+      return {
+        row: index + 2,
+        action,
+        detail,
+        company_name: companyName,
+        role_title: roleTitle,
+        status: statusValue,
+        local_object_id: localObjectId,
+        raw: row,
+      };
+    });
+
+    return {
+      items,
+      summary: {
+        total_rows: applicationImportRows.length,
+        creates: items.filter((item) => item.action === 'create').length,
+        updates: items.filter((item) => item.action === 'update').length,
+        errors: items.filter((item) => item.action === 'error').length,
+      },
+    };
+  }, [applicationImportPreview, applicationImportRows, applications, getImportFieldValue]);
+
+  const visibleImportReviewFields = useMemo(
+    () =>
+      APPLICATION_IMPORT_REVIEW_FIELDS.filter(
+        (field) => field.required || applicationImportMapping[field.key]
+      ),
+    [applicationImportMapping]
+  );
+
   const applyApplicationImport = async () => {
     if (!applicationImportPreview) return;
     if (!applicationImportMapping.company_name || !applicationImportMapping.role_title) {
@@ -609,7 +740,7 @@ const Applications = () => {
     setApplicationImportApplying(true);
     try {
       const response = await applyImportApplications(
-        applicationImportPreview.rows,
+        applicationImportRows,
         applicationImportMapping
       );
       const { result } = response.data;
@@ -1423,7 +1554,7 @@ const Applications = () => {
         title="Import Applications"
         open={isImportModalOpen}
         onCancel={closeImportModal}
-        width={820}
+        width={1100}
         footer={
           applicationImportPreview
             ? [
@@ -1433,6 +1564,7 @@ const Applications = () => {
                 <Button
                   key="apply"
                   type="primary"
+                  disabled={(editableImportReview?.summary.errors || 0) > 0}
                   loading={applicationImportApplying}
                   onClick={applyApplicationImport}
                 >
@@ -1442,16 +1574,35 @@ const Applications = () => {
             : null
         }
       >
-        {!applicationImportPreview ? (
-          <Dragger {...importProps} disabled={applicationImportPreviewing}>
+        {applicationImportPreviewing ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-10">
+            <div className="mx-auto flex max-w-md flex-col items-center text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <Spin />
+              </div>
+              <div className="text-base font-semibold text-slate-900">Preparing import preview</div>
+              <div className="mt-2 text-sm text-slate-500">
+                Reading {applicationImportFileName || 'your file'}, detecting columns, and checking
+                rows against existing applications.
+              </div>
+              <div className="mt-5 grid w-full grid-cols-3 gap-2 text-left">
+                {['Read file', 'Map fields', 'Check rows'].map((step, index) => (
+                  <div key={step} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      Step {index + 1}
+                    </div>
+                    <div className="mt-1 text-xs font-medium text-slate-700">{step}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : !applicationImportPreview ? (
+          <Dragger {...importProps}>
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="ant-upload-text">
-              {applicationImportPreviewing
-                ? 'Reading file and generating preview...'
-                : 'Click or drag a CSV/XLSX file to preview'}
-            </p>
+            <p className="ant-upload-text">Click or drag a CSV/XLSX file to preview</p>
             <p className="ant-upload-hint">
               We infer column mapping first. Nothing is created until you confirm.
             </p>
@@ -1460,12 +1611,12 @@ const Applications = () => {
           <div className="space-y-4">
             <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
               <div className="text-sm font-semibold text-slate-900">
-                {applicationImportPreview.summary.total_rows} rows ready for review
+                {editableImportReview?.summary.total_rows || 0} rows ready for review
               </div>
               <div className="mt-1 text-xs text-slate-600">
-                {applicationImportPreview.summary.creates} new /{' '}
-                {applicationImportPreview.summary.updates} updates /{' '}
-                {applicationImportPreview.summary.errors} need attention
+                {editableImportReview?.summary.creates || 0} new /{' '}
+                {editableImportReview?.summary.updates || 0} updates /{' '}
+                {editableImportReview?.summary.errors || 0} need attention
               </div>
               <div
                 className={`mt-2 text-xs font-medium ${
@@ -1476,7 +1627,47 @@ const Applications = () => {
                       : 'text-amber-700'
                 }`}
               >
-                {applicationImportPreview.ai_message}
+                {applicationImportPreview.ai_status === 'success'
+                  ? 'AI mapped the columns. Review before importing.'
+                  : applicationImportPreview.ai_status === 'failed'
+                    ? 'AI mapping was unavailable, so built-in matching was used.'
+                    : 'Built-in matching was used. Configure AI provider for multilingual mapping.'}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">AI Recognized Fields</div>
+                  <div className="text-xs text-slate-500">
+                    Review the detected columns, then fix any row values below before importing.
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {visibleImportReviewFields.map((field) => {
+                  const mappedHeader = applicationImportMapping[field.key];
+                  return (
+                    <div
+                      key={field.key}
+                      className={`rounded-lg border px-3 py-2 ${
+                        mappedHeader
+                          ? 'border-slate-200 bg-slate-50'
+                          : field.required
+                            ? 'border-rose-200 bg-rose-50'
+                            : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        {field.label}
+                        {field.required ? <span className="text-rose-500"> *</span> : null}
+                      </div>
+                      <div className="mt-1 truncate text-sm font-medium text-slate-900">
+                        {mappedHeader || 'Needs mapping'}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1485,7 +1676,7 @@ const Applications = () => {
                 Confirm Column Mapping
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
-                {applicationImportPreview.field_options.map((field) => (
+                {APPLICATION_IMPORT_REVIEW_FIELDS.map((field) => (
                   <label key={field.key} className="space-y-1">
                     <span className="text-xs font-medium text-slate-600">
                       {field.label}
@@ -1495,7 +1686,7 @@ const Applications = () => {
                       className="w-full"
                       allowClear
                       value={applicationImportMapping[field.key]}
-                      placeholder="Do not import"
+                      placeholder={field.required ? 'Select column' : 'Optional'}
                       onChange={(value) => updateImportMapping(field.key, value || '')}
                       options={applicationImportPreview.headers.map((header) => ({
                         value: header,
@@ -1507,42 +1698,65 @@ const Applications = () => {
               </div>
             </div>
 
-            <div className="max-h-72 overflow-auto rounded-xl border border-slate-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2">Row</th>
-                    <th className="px-3 py-2">Action</th>
-                    <th className="px-3 py-2">Company</th>
-                    <th className="px-3 py-2">Role</th>
-                    <th className="px-3 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {applicationImportPreview.items.slice(0, 50).map((item) => (
-                    <tr key={item.row}>
-                      <td className="px-3 py-2 text-slate-500">{item.row}</td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            item.action === 'create'
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : item.action === 'update'
-                                ? 'bg-blue-50 text-blue-700'
-                                : 'bg-rose-50 text-rose-700'
-                          }`}
-                        >
-                          {item.action}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">{item.company_name || '-'}</td>
-                      <td className="px-3 py-2">{item.role_title || '-'}</td>
-                      <td className="px-3 py-2">{item.status || '-'}</td>
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 px-4 py-3">
+                <div className="text-sm font-semibold text-slate-900">Review Row Values</div>
+                <div className="text-xs text-slate-500">
+                  Edit the values CareerHub will save. Changes here are included when you confirm.
+                </div>
+              </div>
+              <div className="max-h-96 overflow-auto">
+                <table className="min-w-[980px] text-sm">
+                  <thead className="bg-slate-50 text-left text-xs text-slate-500">
+                    <tr>
+                      <th className="w-14 px-3 py-2">Row</th>
+                      <th className="w-24 px-3 py-2">Action</th>
+                      {visibleImportReviewFields.map((field) => (
+                        <th key={field.key} className="min-w-36 px-3 py-2">
+                          {field.label}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {applicationImportPreview.items.length > 50 ? (
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(editableImportReview?.items || []).slice(0, 50).map((item, rowIndex) => (
+                      <tr key={item.row}>
+                        <td className="px-3 py-2 align-top text-slate-500">{item.row}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              item.action === 'create'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : item.action === 'update'
+                                  ? 'bg-blue-50 text-blue-700'
+                                  : 'bg-rose-50 text-rose-700'
+                            }`}
+                          >
+                            {item.action}
+                          </span>
+                        </td>
+                        {visibleImportReviewFields.map((field) => {
+                          const mappedHeader = applicationImportMapping[field.key];
+                          return (
+                            <td key={field.key} className="px-3 py-2 align-top">
+                              <Input
+                                size="small"
+                                disabled={!mappedHeader}
+                                value={getImportFieldValue(item.raw, field.key)}
+                                placeholder={mappedHeader ? field.label : 'Map column first'}
+                                onChange={(event) =>
+                                  updateImportRowValue(rowIndex, field.key, event.target.value)
+                                }
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {(editableImportReview?.items.length || 0) > 50 ? (
                 <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
                   Showing first 50 rows.
                 </div>
