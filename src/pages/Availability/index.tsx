@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
+  cancelHostPublicBooking,
   deactivateShareLink,
   deactivateSpecificShareLink,
   deletePublicBooking,
@@ -37,6 +38,7 @@ import {
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { message } from 'antd';
+import { Modal } from 'antd';
 import type { ShareLink } from '../../types';
 import {
   AvailabilityBookingCard,
@@ -48,6 +50,19 @@ import {
 } from './components';
 import { useAuth } from '../../context/AuthContext';
 import { getBrowserTimeZone } from '../../lib/timezones';
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { error?: unknown } } }).response?.data?.error ===
+      'string'
+  ) {
+    return (error as { response: { data: { error: string } } }).response.data.error;
+  }
+  return fallback;
+};
 
 const canMergeAvailabilityDates = (previousDate: string, nextDate: string) => {
   const previous = parseISO(previousDate);
@@ -86,6 +101,7 @@ const Availability = () => {
   const [bufferMinutes, setBufferMinutes] = useState<number>(10);
   const [maxBookingsPerDay, setMaxBookingsPerDay] = useState<number>(3);
   const [allowRescheduleCancel, setAllowRescheduleCancel] = useState(true);
+  const [rescheduleCancelDeadlineHours, setRescheduleCancelDeadlineHours] = useState(24);
   const [intakeQuestions, setIntakeQuestions] = useState<BookingIntakeQuestion[]>([]);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [deactivatingLink, setDeactivatingLink] = useState(false);
@@ -150,6 +166,7 @@ const Availability = () => {
           setHostEmail(activeLink.host_email);
         }
         setAllowRescheduleCancel(activeLink.allow_reschedule_cancel);
+        setRescheduleCancelDeadlineHours(activeLink.reschedule_cancel_deadline_hours || 0);
         setIntakeQuestions(activeLink.intake_questions || []);
       } else {
         if (settingsResp.data.display_name) {
@@ -213,6 +230,7 @@ const Availability = () => {
         buffer_minutes: bufferMinutes,
         max_bookings_per_day: maxBookingsPerDay,
         allow_reschedule_cancel: allowRescheduleCancel,
+        reschedule_cancel_deadline_hours: allowRescheduleCancel ? rescheduleCancelDeadlineHours : 0,
         intake_questions: intakeQuestions.filter((question) => question.label.trim()),
       });
       setShareLink(resp.data);
@@ -324,6 +342,27 @@ const Availability = () => {
       messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some bookings`);
       console.error(error);
     }
+  };
+
+  const handleCancelHostBooking = (booking: PublicBooking) => {
+    Modal.confirm({
+      title: `Cancel booking with ${booking.name}?`,
+      content:
+        'This cancels the booking from your host account and removes its locked calendar event. Guest reschedule/cancel cutoff settings do not apply to host actions.',
+      okText: 'Cancel booking',
+      okType: 'danger',
+      cancelText: 'Keep booking',
+      onOk: async () => {
+        try {
+          const resp = await cancelHostPublicBooking(booking.id);
+          await fetchShareLink();
+          messageApi.success(resp.data.message || 'Booking canceled');
+        } catch (error) {
+          messageApi.error(getErrorMessage(error, 'Could not cancel booking from host account.'));
+          console.error(error);
+        }
+      },
+    });
   };
 
   const handleBulkUpdateLinks = async (ids: number[], updates: Partial<ShareLink>) => {
@@ -508,6 +547,8 @@ const Availability = () => {
             onMaxBookingsPerDayChange={setMaxBookingsPerDay}
             allowRescheduleCancel={allowRescheduleCancel}
             onAllowRescheduleCancelChange={setAllowRescheduleCancel}
+            rescheduleCancelDeadlineHours={rescheduleCancelDeadlineHours}
+            onRescheduleCancelDeadlineHoursChange={setRescheduleCancelDeadlineHours}
             intakeQuestions={intakeQuestions}
             onIntakeQuestionsChange={setIntakeQuestions}
             generatingLink={generatingLink}
@@ -530,6 +571,7 @@ const Availability = () => {
             onToggleLockLinks={handleBulkToggleLockLinks}
             onToggleLockBookings={handleBulkToggleLockBookings}
             onBulkUpdateLinks={handleBulkUpdateLinks}
+            onCancelBooking={handleCancelHostBooking}
           />
 
           <AvailabilityTextControls
