@@ -20,6 +20,7 @@ import {
 import { downloadDocument } from '../../api';
 import type { Document } from '../../types';
 import type { CareerApplication } from '../../types/application';
+import ApplicationPrepWorkspace from './ApplicationPrepWorkspace';
 import ApplicationTimelinePanel from './ApplicationTimelinePanel';
 import RichNotesEditor from './RichNotesEditor';
 import { formatDateOnly } from '../../utils/dateOnly';
@@ -135,8 +136,18 @@ const ApplicationDetailDrawer = ({
       ) : (
         <div className="px-6 pb-6">
           <Tabs
-            defaultActiveKey="overview"
+            defaultActiveKey="prep"
             items={[
+              {
+                key: 'prep',
+                label: 'Prep',
+                children: (
+                  <ApplicationPrepWorkspace
+                    application={application}
+                    onGenerateCoverLetter={onGenerateCoverLetter}
+                  />
+                ),
+              },
               {
                 key: 'overview',
                 label: 'Overview',

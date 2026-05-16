@@ -8,6 +8,15 @@ export interface StoredReport extends JDMatchResult {
   jdSnippet: string;
   title?: string;
   isLocked?: boolean;
+  applicationId?: number;
+  companyName?: string;
+  roleTitle?: string;
+}
+
+export interface ReportApplicationContext {
+  applicationId: number;
+  companyName?: string;
+  roleTitle?: string;
 }
 
 function generateId(): string {
@@ -30,7 +39,12 @@ export function getAllReports(): StoredReport[] {
   }
 }
 
-export function saveReport(report: JDMatchResult, jdText: string): StoredReport {
+export function saveReport(
+  report: JDMatchResult,
+  jdText: string,
+  applicationContext?: ReportApplicationContext,
+  options: { syncBackend?: boolean } = {}
+): StoredReport {
   const newReport: StoredReport = {
     ...report,
     score_label: getStrictScoreLabel(Number(report.score) || 0),
@@ -38,14 +52,19 @@ export function saveReport(report: JDMatchResult, jdText: string): StoredReport 
     savedAt: new Date().toISOString(),
     jdSnippet: jdText.replace(/\s+/g, ' ').trim().slice(0, 180),
     isLocked: false,
+    applicationId: applicationContext?.applicationId,
+    companyName: applicationContext?.companyName,
+    roleTitle: applicationContext?.roleTitle,
   };
   const existing = getAllReports();
 
   const updated = [newReport, ...existing].slice(0, 50);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  void import('./aiArtifactStorage')
-    .then(({ syncReportArtifact }) => syncReportArtifact(newReport))
-    .catch(() => {});
+  if (options.syncBackend !== false) {
+    void import('./aiArtifactStorage')
+      .then(({ syncReportArtifact }) => syncReportArtifact(newReport))
+      .catch(() => {});
+  }
   return newReport;
 }
 
