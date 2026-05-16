@@ -41,6 +41,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Year filter with persisted state
 - Bulk select → bulk lock / unlock / delete
 - In-context application detail drawer consolidates overview, timeline, linked events, documents, AI outputs, notes, and task-linking readiness from the table
+- Prep workspace tab combines JD fit, best resume evidence, linked documents, saved cover letters, notes, and timeline for one application
 - Company timeline modal for Applied → OA → phone → onsite → offer/reject stages with per-stage notes and document attachments
 - Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
 - Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, with private sheets supported through Google OAuth
@@ -106,7 +107,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### 📅 Availability & Events
 
-- **Availability** (`/`): Weekly calendar with user-defined week-long availability text generation, federal holiday integration, event badges, date navigation, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, and **instant auto-prefill** of host information from the user profile.
+- **Availability** (`/`): Weekly calendar with user-defined week-long availability text generation, federal holiday integration, event badges, date navigation, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, reschedule/cancel cutoff settings, link-level booking status, host-side booking cancel, and **instant auto-prefill** of host information from the user profile.
 - **Events** (`/events`): Create/edit/delete interview events; link to applications; timezone display; event type tags
 - Google Sheets sync can import mapped sheet rows as Events for interview calendars
 - **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
@@ -273,6 +274,7 @@ frontend/
 │   │   ├── Applications/
 │   │   │   ├── index.tsx            # Application tracker page
 │   │   │   ├── ApplicationDetailDrawer.tsx # In-context detail drawer for timeline/events/docs/AI/notes
+│   │   │   ├── ApplicationPrepWorkspace.tsx # Prep tab for JD fit, docs, cover letters, notes, and timeline
 │   │   │   ├── ApplicationTimelineModal.tsx # Per-company stage timeline with notes/docs
 │   │   │   └── CoverLetterModal.tsx # AI cover letter generator (auto-saves)
 │   │   ├── CoverLetters/
@@ -369,7 +371,7 @@ frontend/
 | `/analytics`                        | Analytics           | Custom widget dashboard with timeline-driven job hunt insights                                                |
 | `/settings`                         | Settings            | User preferences with layered locking                                                                         |
 | `/profile`                          | Profile             | Standalone identity and security management page                                                              |
-| `/book/:uuid`                       | Public Booking      | Public-facing booking page (no auth)                                                                          |
+| `/book/:uuid`                       | Public Booking      | Public-facing booking page (no auth) with timezone-aware confirmation preview                                 |
 | `/jd-report/:id`                    | JD Report Detail    | Full JD match report with PDF export                                                                          |
 | `/negotiation-result/:id`           | Negotiation Detail  | Full negotiation advisory report                                                                              |
 
