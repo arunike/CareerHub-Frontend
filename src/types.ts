@@ -444,7 +444,14 @@ export interface ShareLink {
   buffer_minutes: number;
   max_bookings_per_day: number;
   allow_reschedule_cancel: boolean;
+  reschedule_cancel_deadline_hours: number;
   intake_questions: BookingIntakeQuestion[];
+  booking_analytics?: {
+    total: number;
+    active: number;
+    canceled: number;
+    upcoming: number;
+  };
   created_at: string;
   expires_at: string;
   is_active: boolean;
@@ -471,6 +478,7 @@ export interface PublicBooking {
   timezone: string;
   notes: string;
   intake_answers?: Record<string, string>;
+  cancel_reason?: string;
   status: 'active' | 'canceled';
   is_locked: boolean;
   reschedule_url?: string;

@@ -18,6 +18,22 @@ import type {
 } from '../../types';
 import { formatDateOnly, todayDateOnlyLocal } from '../../utils/dateOnly';
 import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { error?: unknown } } }).response?.data?.error ===
+      'string'
+  ) {
+    return (error as { response: { data: { error: string } } }).response.data.error;
+  }
+  return fallback;
+};
+
 type StoredGuestBooking = {
   booking_uuid: string;
   email?: string;
@@ -78,6 +94,7 @@ const PublicBookingPage = () => {
   const [publicNote, setPublicNote] = useState('');
   const [bookingBlockMinutes, setBookingBlockMinutes] = useState(30);
   const [allowRescheduleCancel, setAllowRescheduleCancel] = useState(true);
+  const [rescheduleCancelDeadlineHours, setRescheduleCancelDeadlineHours] = useState(0);
   const [intakeQuestions, setIntakeQuestions] = useState<BookingIntakeQuestion[]>([]);
   const [timezone, setTimezone] = useState<string>(() => getBrowserTimeZone());
   const [selectedDate, setSelectedDate] = useState<string>(() => todayDateOnlyLocal());
@@ -87,7 +104,9 @@ const PublicBookingPage = () => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
   const [notes, setNotes] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
   const [intakeAnswers, setIntakeAnswers] = useState<Record<string, string>>({});
   const [managedBooking, setManagedBooking] = useState<PublicBooking | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<PublicBooking | null>(null);
@@ -117,6 +136,7 @@ const PublicBookingPage = () => {
       setPublicNote(resp.data.public_note || '');
       setBookingBlockMinutes(resp.data.booking_block_minutes || 30);
       setAllowRescheduleCancel(resp.data.allow_reschedule_cancel);
+      setRescheduleCancelDeadlineHours(resp.data.reschedule_cancel_deadline_hours || 0);
       setIntakeQuestions(resp.data.intake_questions || []);
       setDays(resp.data.days || []);
       setLinkInvalid(false);
@@ -155,12 +175,14 @@ const PublicBookingPage = () => {
       setPublicNote(link.public_note || '');
       setBookingBlockMinutes(link.booking_block_minutes || 30);
       setAllowRescheduleCancel(link.allow_reschedule_cancel);
+      setRescheduleCancelDeadlineHours(link.reschedule_cancel_deadline_hours || 0);
       setIntakeQuestions(link.intake_questions || []);
       setTimezone(normalizeTimeZone(booking.timezone));
       setSelectedDate(booking.date);
       setName(booking.name);
       setEmail(booking.email);
       setNotes(booking.notes || '');
+      setCancelReason(booking.cancel_reason || '');
       setIntakeAnswers(booking.intake_answers || {});
       if (booking.status === 'active') {
         saveGuestBooking(uuid, booking);
@@ -194,12 +216,14 @@ const PublicBookingPage = () => {
       setPublicNote(link.public_note || '');
       setBookingBlockMinutes(link.booking_block_minutes || 30);
       setAllowRescheduleCancel(link.allow_reschedule_cancel);
+      setRescheduleCancelDeadlineHours(link.reschedule_cancel_deadline_hours || 0);
       setIntakeQuestions(link.intake_questions || []);
       setTimezone(normalizeTimeZone(booking.timezone));
       setSelectedDate(booking.date);
       setName(booking.name);
       setEmail(booking.email);
       setNotes(booking.notes || '');
+      setCancelReason(booking.cancel_reason || '');
       setIntakeAnswers(booking.intake_answers || {});
     } catch (error) {
       console.error(error);
@@ -238,6 +262,8 @@ const PublicBookingPage = () => {
     () => days.find((d) => d.date === selectedDate),
     [days, selectedDate]
   );
+  const trimmedEmail = email.trim();
+  const emailIsInvalid = Boolean(trimmedEmail) && !EMAIL_PATTERN.test(trimmedEmail);
 
   useEffect(() => {
     setSelectedSlot(null);
@@ -249,12 +275,12 @@ const PublicBookingPage = () => {
       if (!bookingUuid) return;
       setSubmitting(true);
       try {
-        const resp = await cancelPublicBooking(uuid, bookingUuid);
+        const resp = await cancelPublicBooking(uuid, bookingUuid, cancelReason);
         setManagedBooking(resp.data.booking);
         clearGuestBooking(uuid);
         messageApi.success('Booking canceled.');
       } catch (error) {
-        messageApi.error('Failed to cancel booking.');
+        messageApi.error(getErrorMessage(error, 'Failed to cancel booking.'));
         console.error(error);
       } finally {
         setSubmitting(false);
@@ -264,7 +290,13 @@ const PublicBookingPage = () => {
 
     if (!selectedSlot) return;
     if (!manageAction && (!name.trim() || !email.trim())) {
+      setEmailTouched(true);
       messageApi.error('Please enter your name and email.');
+      return;
+    }
+    if (!manageAction && emailIsInvalid) {
+      setEmailTouched(true);
+      messageApi.error('Please enter a valid email address.');
       return;
     }
     for (const question of intakeQuestions) {
@@ -312,9 +344,12 @@ const PublicBookingPage = () => {
       }
     } catch (error) {
       messageApi.error(
-        manageAction
-          ? 'Failed to update booking. Please refresh and retry.'
-          : 'Failed to book slot. Please refresh and retry.'
+        getErrorMessage(
+          error,
+          manageAction
+            ? 'Failed to update booking. Please refresh and retry.'
+            : 'Failed to book slot. Please refresh and retry.'
+        )
       );
       console.error(error);
     } finally {
@@ -387,9 +422,16 @@ const PublicBookingPage = () => {
                     )}
                   </div>
                 </div>
-                <div className="mt-5 pt-5 border-t border-slate-200/60 flex items-center gap-2 text-slate-600 text-sm font-semibold">
-                  <ClockCircleOutlined className="text-blue-500" />
-                  {bookingBlockMinutes} min session
+                <div className="mt-5 pt-5 border-t border-slate-200/60 flex flex-wrap items-center gap-2 text-slate-600 text-sm font-semibold">
+                  <span className="inline-flex items-center gap-2">
+                    <ClockCircleOutlined className="text-blue-500" />
+                    {bookingBlockMinutes} min session
+                  </span>
+                  {allowRescheduleCancel && rescheduleCancelDeadlineHours > 0 && (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                      Changes close {rescheduleCancelDeadlineHours}h before start
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -681,10 +723,21 @@ const PublicBookingPage = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setEmailTouched(true)}
                       disabled={!!manageAction}
                       placeholder="your@email.com"
-                      className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
+                      aria-invalid={!manageAction && emailTouched && emailIsInvalid}
+                      className={`w-full rounded-2xl border bg-slate-50/50 px-4 py-3.5 text-sm font-semibold focus:outline-none focus:ring-4 transition-all ${
+                        !manageAction && emailTouched && emailIsInvalid
+                          ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/10'
+                          : 'border-slate-100 focus:border-blue-500 focus:ring-blue-500/5'
+                      }`}
                     />
+                    {!manageAction && emailTouched && emailIsInvalid && (
+                      <p className="ml-1 text-xs font-bold text-rose-600">
+                        Enter a valid email address.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -718,18 +771,35 @@ const PublicBookingPage = () => {
                       </div>
                     ))}
 
+                  {manageAction === 'cancel' && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                        Cancel Reason
+                      </label>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Optional context for the host..."
+                        className="w-full rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold min-h-[90px] focus:outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-500 transition-all resize-none"
+                      />
+                    </div>
+                  )}
+
                   <div className="pt-6">
                     {selectedSlot && (
-                      <div className="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-between animate-in zoom-in-95 duration-200">
+                      <div className="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-between gap-4 animate-in zoom-in-95 duration-200">
                         <div>
                           <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest">
-                            Selected Slot
+                            Confirm This Time
                           </div>
                           <div className="text-sm font-black text-blue-700">
                             {selectedSlot.label}
                           </div>
                           <div className="text-[10px] font-bold text-blue-500">
-                            {formatDateOnly(selectedDate)}
+                            {formatDateOnly(selectedDate)} · {timezone}
+                          </div>
+                          <div className="mt-1 text-[10px] font-bold text-blue-500/80">
+                            Host receives the calendar hold in their saved timezone.
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
@@ -797,8 +867,7 @@ const PublicBookingPage = () => {
                       )}
                     </button>
                     <p className="mt-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                      By confirming, an invitation will be sent to both parties and added to the
-                      host's calendar.
+                      By confirming, the host will receive the booking details and calendar file.
                     </p>
                   </div>
                 </div>

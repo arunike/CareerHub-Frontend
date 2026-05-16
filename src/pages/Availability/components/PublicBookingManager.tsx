@@ -26,6 +26,7 @@ type Props = {
   onToggleLockLinks?: (ids: number[], lock: boolean) => void;
   onToggleLockBookings?: (ids: number[], lock: boolean) => void;
   onBulkUpdateLinks?: (ids: number[], updates: Partial<ShareLink>) => void;
+  onCancelBooking?: (booking: PublicBooking) => void;
 };
 
 const formatTime = (value: string) => {
@@ -39,6 +40,39 @@ const formatTime = (value: string) => {
   return `${normalizedHour}:${String(minute).padStart(2, '0')} ${suffix}`;
 };
 
+const getLinkBookingState = (link: ShareLink) => {
+  const analytics = link.booking_analytics;
+  const total = analytics?.total ?? 0;
+  const active = analytics?.active ?? 0;
+  const canceled = analytics?.canceled ?? 0;
+
+  if (active > 0) {
+    return {
+      label: active === 1 ? '1 active booking' : `${active} active bookings`,
+      className: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    };
+  }
+
+  if (total === 0) {
+    return {
+      label: 'No booking yet',
+      className: 'border-slate-100 bg-white text-slate-500',
+    };
+  }
+
+  if (canceled === total) {
+    return {
+      label: total === 1 ? 'Canceled booking' : `${total} canceled bookings`,
+      className: 'border-rose-100 bg-rose-50 text-rose-700',
+    };
+  }
+
+  return {
+    label: `${total} bookings`,
+    className: 'border-slate-100 bg-white text-slate-600',
+  };
+};
+
 const PublicBookingManager = ({
   links,
   bookings,
@@ -50,6 +84,7 @@ const PublicBookingManager = ({
   onToggleLockLinks,
   onToggleLockBookings,
   onBulkUpdateLinks,
+  onCancelBooking,
 }: Props) => {
   const [selectedLinkIds, setSelectedLinkIds] = useState<number[]>([]);
   const [selectedBookingIds, setSelectedBookingIds] = useState<number[]>([]);
@@ -138,6 +173,8 @@ const PublicBookingManager = ({
         updates.booking_block_minutes = values.booking_block_minutes;
       if (values.max_bookings_per_day !== undefined)
         updates.max_bookings_per_day = values.max_bookings_per_day;
+      if (values.reschedule_cancel_deadline_hours !== undefined)
+        updates.reschedule_cancel_deadline_hours = values.reschedule_cancel_deadline_hours;
 
       if (onBulkUpdateLinks) {
         onBulkUpdateLinks(selectedLinkIds, updates);
@@ -219,90 +256,107 @@ const PublicBookingManager = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {links.map((link) => (
-              <div
-                key={link.id}
-                className={`rounded-xl border transition-all p-4 ${
-                  selectedLinkIds.includes(link.id)
-                    ? 'border-blue-200 bg-blue-50/30'
-                    : 'border-gray-100 bg-slate-50/70'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={selectedLinkIds.includes(link.id)}
-                    onChange={(e) => handleSelectLink(link.id, e.target.checked)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-bold text-gray-900 m-0">{link.title}</h3>
-                          {link.is_locked && <LockOutlined className="text-amber-500 text-xs" />}
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${
-                              link.is_active && !link.is_expired
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                : 'bg-gray-100 text-gray-500 border-gray-200'
-                            }`}
-                          >
-                            {link.is_active && !link.is_expired ? 'Active' : 'Inactive'}
-                          </span>
+            {links.map((link) => {
+              const bookingState = getLinkBookingState(link);
+              return (
+                <div
+                  key={link.id}
+                  className={`rounded-xl border transition-all p-4 ${
+                    selectedLinkIds.includes(link.id)
+                      ? 'border-blue-200 bg-blue-50/30'
+                      : 'border-gray-100 bg-slate-50/70'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={selectedLinkIds.includes(link.id)}
+                      onChange={(e) => handleSelectLink(link.id, e.target.checked)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-bold text-gray-900 m-0">{link.title}</h3>
+                            {link.is_locked && <LockOutlined className="text-amber-500 text-xs" />}
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${
+                                link.is_active && !link.is_expired
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                  : 'bg-gray-100 text-gray-500 border-gray-200'
+                              }`}
+                            >
+                              {link.is_active && !link.is_expired ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1 truncate">/book/{link.uuid}</p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                            <span>{link.booking_block_minutes} min slots</span>
+                            <span>{link.buffer_minutes || 0} min buffer</span>
+                            <span>
+                              {link.max_bookings_per_day
+                                ? `${link.max_bookings_per_day}/day`
+                                : 'No daily cap'}
+                            </span>
+                            <span>
+                              {link.allow_reschedule_cancel
+                                ? 'Guest changes on'
+                                : 'Guest changes off'}
+                            </span>
+                            {link.allow_reschedule_cancel && (
+                              <span>
+                                {link.reschedule_cancel_deadline_hours
+                                  ? `${link.reschedule_cancel_deadline_hours}h cutoff`
+                                  : 'No change cutoff'}
+                              </span>
+                            )}
+                            <span>Expires {new Date(link.expires_at).toLocaleDateString()}</span>
+                          </div>
+                          <div className="mt-3">
+                            <span
+                              className={`inline-flex rounded-lg border px-2.5 py-1 text-[11px] font-semibold ${bookingState.className}`}
+                            >
+                              {bookingState.label}
+                            </span>
+                          </div>
+                          {link.intake_questions?.length > 0 && (
+                            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                              Intake:{' '}
+                              {link.intake_questions.map((question) => question.label).join(', ')}
+                            </p>
+                          )}
+                          {link.public_note && (
+                            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                              {link.public_note}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1 truncate">/book/{link.uuid}</p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
-                          <span>{link.booking_block_minutes} min slots</span>
-                          <span>{link.buffer_minutes || 0} min buffer</span>
-                          <span>
-                            {link.max_bookings_per_day
-                              ? `${link.max_bookings_per_day}/day`
-                              : 'No daily cap'}
-                          </span>
-                          <span>
-                            {link.allow_reschedule_cancel
-                              ? 'Guest changes on'
-                              : 'Guest changes off'}
-                          </span>
-                          <span>Expires {new Date(link.expires_at).toLocaleDateString()}</span>
-                        </div>
-                        {link.intake_questions?.length > 0 && (
-                          <p className="mt-2 text-xs leading-relaxed text-gray-600">
-                            Intake:{' '}
-                            {link.intake_questions.map((question) => question.label).join(', ')}
-                          </p>
-                        )}
-                        {link.public_note && (
-                          <p className="mt-2 text-xs leading-relaxed text-gray-600">
-                            {link.public_note}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => onCopyLink(link)}
-                          className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-blue-600 hover:border-blue-200 transition-colors"
-                          title="Copy booking link"
-                        >
-                          <CopyOutlined />
-                        </button>
-                        {link.is_active && !link.is_expired && (
+                        <div className="flex gap-2 shrink-0">
                           <button
                             type="button"
-                            onClick={() => onDeactivateLink(link.id)}
-                            className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-red-600 hover:border-red-200 transition-colors"
-                            title="Deactivate link"
+                            onClick={() => onCopyLink(link)}
+                            className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                            title="Copy booking link"
                           >
-                            <StopOutlined />
+                            <CopyOutlined />
                           </button>
-                        )}
+                          {link.is_active && !link.is_expired && (
+                            <button
+                              type="button"
+                              onClick={() => onDeactivateLink(link.id)}
+                              className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-red-600 hover:border-red-200 transition-colors"
+                              title="Deactivate link"
+                            >
+                              <StopOutlined />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -412,6 +466,11 @@ const PublicBookingManager = ({
                         {booking.notes}
                       </p>
                     )}
+                    {booking.cancel_reason && (
+                      <p className="mt-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs leading-relaxed text-rose-900">
+                        <span className="font-bold">Cancel reason:</span> {booking.cancel_reason}
+                      </p>
+                    )}
                     {booking.intake_answers && Object.keys(booking.intake_answers).length > 0 && (
                       <div className="mt-2 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs leading-relaxed text-sky-900">
                         {Object.entries(booking.intake_answers).map(([key, value]) => (
@@ -432,10 +491,14 @@ const PublicBookingManager = ({
                           Reschedule link
                         </a>
                       )}
-                      {booking.cancel_url && booking.status !== 'canceled' && (
-                        <a className="text-rose-600 hover:underline" href={booking.cancel_url}>
-                          Cancel link
-                        </a>
+                      {booking.status !== 'canceled' && (
+                        <button
+                          type="button"
+                          onClick={() => onCancelBooking?.(booking)}
+                          className="p-0 text-left text-rose-600 hover:underline"
+                        >
+                          Cancel booking
+                        </button>
                       )}
                     </div>
                   </div>
@@ -476,6 +539,9 @@ const PublicBookingManager = ({
           </div>
           <Form.Item name="max_bookings_per_day" label="Daily Booking Limit (0 for no limit)">
             <InputNumber min={0} max={20} className="w-full" />
+          </Form.Item>
+          <Form.Item name="reschedule_cancel_deadline_hours" label="Reschedule/Cancel Cutoff Hours">
+            <InputNumber min={0} max={168} className="w-full" />
           </Form.Item>
         </Form>
       </Modal>

@@ -85,6 +85,7 @@ export const generateShareLink = (data: {
   buffer_minutes?: number;
   max_bookings_per_day?: number;
   allow_reschedule_cancel?: boolean;
+  reschedule_cancel_deadline_hours?: number;
   intake_questions?: BookingIntakeQuestion[];
 }) => api.post<ShareLink>('/share-links/generate/', data);
 export const deactivateShareLink = () => api.post('/share-links/deactivate/');
@@ -97,6 +98,10 @@ export const getPublicBookings = () => api.get<PublicBooking[]>('/share-links/bo
 export const deletePublicBooking = (id: number) => api.delete(`/public-bookings/${id}/`);
 export const updatePublicBooking = (id: number, data: Partial<PublicBooking>) =>
   api.patch<PublicBooking>(`/public-bookings/${id}/`, data);
+export const cancelHostPublicBooking = (id: number, cancelReason?: string) =>
+  api.post<{ message: string; booking: PublicBooking }>(`/public-bookings/${id}/cancel/`, {
+    cancel_reason: cancelReason?.trim() || 'Canceled by host.',
+  });
 export const getPublicBookingSlots = (
   uuid: string,
   date?: string,
@@ -115,6 +120,7 @@ export const getPublicBookingSlots = (
     buffer_minutes: number;
     max_bookings_per_day: number;
     allow_reschedule_cancel: boolean;
+    reschedule_cancel_deadline_hours: number;
     intake_questions: BookingIntakeQuestion[];
     days: Array<{
       date: string;
@@ -150,9 +156,10 @@ export const reschedulePublicBooking = (
     `/booking/${uuid}/manage/${bookingUuid}/reschedule/`,
     data
   );
-export const cancelPublicBooking = (uuid: string, bookingUuid: string) =>
+export const cancelPublicBooking = (uuid: string, bookingUuid: string, cancelReason?: string) =>
   api.post<{ message: string; booking: PublicBooking }>(
-    `/booking/${uuid}/manage/${bookingUuid}/cancel/`
+    `/booking/${uuid}/manage/${bookingUuid}/cancel/`,
+    { cancel_reason: cancelReason?.trim() || '' }
   );
 
 export const exportEvents = (format: string = 'csv') =>

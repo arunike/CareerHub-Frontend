@@ -22,6 +22,8 @@ type Props = {
   onMaxBookingsPerDayChange: (value: number) => void;
   allowRescheduleCancel: boolean;
   onAllowRescheduleCancelChange: (value: boolean) => void;
+  rescheduleCancelDeadlineHours: number;
+  onRescheduleCancelDeadlineHoursChange: (value: number) => void;
   intakeQuestions: BookingIntakeQuestion[];
   onIntakeQuestionsChange: (value: BookingIntakeQuestion[]) => void;
   generatingLink: boolean;
@@ -53,6 +55,8 @@ const AvailabilityBookingCard = ({
   onMaxBookingsPerDayChange,
   allowRescheduleCancel,
   onAllowRescheduleCancelChange,
+  rescheduleCancelDeadlineHours,
+  onRescheduleCancelDeadlineHoursChange,
   intakeQuestions,
   onIntakeQuestionsChange,
   generatingLink,
@@ -104,6 +108,9 @@ const AvailabilityBookingCard = ({
                   ? ` · max ${shareLink.max_bookings_per_day}/day`
                   : ''}
                 {shareLink.allow_reschedule_cancel ? ' · reschedule/cancel enabled' : ''}
+                {shareLink.allow_reschedule_cancel && shareLink.reschedule_cancel_deadline_hours
+                  ? ` · ${shareLink.reschedule_cancel_deadline_hours}h change cutoff`
+                  : ''}
               </p>
               {shareLink.intake_questions?.length > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -239,6 +246,26 @@ const AvailabilityBookingCard = ({
                       <option value={4}>Max 4/day</option>
                       <option value={5}>Max 5/day</option>
                       <option value={8}>Max 8/day</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                      Change Cutoff
+                    </label>
+                    <select
+                      value={rescheduleCancelDeadlineHours}
+                      onChange={(e) =>
+                        onRescheduleCancelDeadlineHoursChange(Number(e.target.value))
+                      }
+                      disabled={!allowRescheduleCancel}
+                      className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                      <option value={0}>No cutoff</option>
+                      <option value={2}>2 hours before</option>
+                      <option value={6}>6 hours before</option>
+                      <option value={12}>12 hours before</option>
+                      <option value={24}>24 hours before</option>
+                      <option value={48}>48 hours before</option>
                     </select>
                   </div>
                   <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 md:col-span-2">
