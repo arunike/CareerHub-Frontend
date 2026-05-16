@@ -24,9 +24,14 @@ const payloadOf = (artifact: AIArtifact) => artifact.payload || {};
 export const reportToArtifactPayload = (report: StoredReport) => ({
   artifact_type: 'JD_REPORT' as AIArtifactType,
   client_id: report.id,
-  title: report.title || report.jdSnippet || 'Untitled Match',
+  title:
+    report.title ||
+    (report.roleTitle && report.companyName ? `${report.roleTitle} @ ${report.companyName}` : '') ||
+    report.jdSnippet ||
+    'Untitled Match',
   summary: report.summary || '',
   payload: report as unknown as Record<string, unknown>,
+  source_application: report.applicationId ?? null,
   is_locked: Boolean(report.isLocked),
   saved_at: report.savedAt,
 });

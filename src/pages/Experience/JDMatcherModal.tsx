@@ -13,12 +13,15 @@ import { getExperiences } from '../../api/career';
 import { matchJobDescriptionWithBrowserAI } from '../../lib/browserAi';
 import { saveReport } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
+import type { CareerApplication } from '../../types/application';
 
 const { TextArea } = Input;
 
 interface Props {
   open: boolean;
   onCancel: () => void;
+  application?: CareerApplication;
+  onSaved?: (report: StoredReport) => void;
 }
 
 const getScoreMeta = (score: number) => {
@@ -55,7 +58,7 @@ const getScoreMeta = (score: number) => {
   };
 };
 
-const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
+const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved }) => {
   const navigate = useNavigate();
   const [jdText, setJdText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -72,7 +75,23 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
         jdText,
         experiences: experiencesResponse.data,
       });
-      setSavedReport(saveReport(data, jdText));
+      const report = saveReport(
+        data,
+        jdText,
+        application
+          ? {
+              applicationId: application.id,
+              companyName: application.company_details?.name,
+              roleTitle: application.role_title,
+            }
+          : undefined,
+        { syncBackend: false }
+      );
+      await import('../../utils/aiArtifactStorage')
+        .then(({ syncReportArtifact }) => syncReportArtifact(report))
+        .catch(() => {});
+      setSavedReport(report);
+      onSaved?.(report);
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : 'Analysis failed. Please try again.');
     } finally {
@@ -107,6 +126,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
       onCancel={onCancel}
       footer={null}
       width={520}
+      zIndex={1500}
       destroyOnClose
       afterClose={handleReset}
       styles={{ body: { padding: '16px 24px 24px' } }}
@@ -124,8 +144,9 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel }) => {
             />
           )}
           <p style={{ margin: 0, color: '#6b7280', fontSize: 13, lineHeight: 1.6 }}>
-            Paste a full Job Description below. Our AI will cross-reference it against your entire
-            Career History and generate a full evaluation report.
+            {application
+              ? `Paste the Job Description for ${application.role_title}. This report will be linked to this application.`
+              : 'Paste a full Job Description below. Our AI will cross-reference it against your entire Career History and generate a full evaluation report.'}
           </p>
           <TextArea
             rows={9}

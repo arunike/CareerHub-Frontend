@@ -9,6 +9,7 @@ import type {
   GoogleSheetImportReview,
   GoogleSheetSyncPreview,
   GoogleSheetSyncRun,
+  Document,
   Task,
   Experience,
   WeeklyReview,
@@ -129,6 +130,33 @@ export const updateApplicationTimelineEntry = (
 ) => api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const getApplicationTimelineAnalytics = () =>
   api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
+
+export interface ApplicationPrepWorkspace {
+  application: Record<string, unknown>;
+  notes: string;
+  documents: Document[];
+  timeline: ApplicationTimelineEntry[];
+  jd_reports: AIArtifact[];
+  cover_letters: AIArtifact[];
+  latest_jd_report: AIArtifact | null;
+  evidence: {
+    best_experiences: Array<Record<string, unknown>>;
+    tailored_bullets: Array<Record<string, unknown>>;
+    matched_skills: unknown[];
+    missing_skills: unknown[];
+  };
+  readiness: {
+    linked_documents: number;
+    timeline_entries: number;
+    jd_reports: number;
+    cover_letters: number;
+    has_notes: boolean;
+    has_job_link: boolean;
+  };
+}
+
+export const getApplicationPrepWorkspace = (applicationId: number) =>
+  api.get<ApplicationPrepWorkspace>(`/career/applications/${applicationId}/prep_workspace/`);
 export const previewImportApplications = (formData: FormData) =>
   api.post<{ ok: true; preview: ApplicationFileImportPreview }>('/career/import/', formData, {
     headers: { 'Content-Type': undefined },
