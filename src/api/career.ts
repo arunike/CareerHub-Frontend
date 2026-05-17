@@ -14,6 +14,7 @@ import type {
   Experience,
   WeeklyReview,
 } from '../types';
+import type { AxiosRequestConfig } from 'axios';
 import api from './client';
 
 export interface JobBoardImportResult {
@@ -182,10 +183,14 @@ export const updateGoogleSheetSync = (id: number, data: Partial<GoogleSheetSyncC
   api.patch<GoogleSheetSyncConfig>(`/career/google-sheet-syncs/${id}/`, data);
 export const deleteGoogleSheetSync = (id: number) =>
   api.delete(`/career/google-sheet-syncs/${id}/`);
-export const previewGoogleSheetSync = (data: Partial<GoogleSheetSyncConfig>) =>
+export const previewGoogleSheetSync = (
+  data: Partial<GoogleSheetSyncConfig>,
+  config?: AxiosRequestConfig
+) =>
   api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(
     '/career/google-sheet-syncs/preview/',
-    data
+    data,
+    config
   );
 export const getGoogleOAuthStatus = () =>
   api.get<GoogleOAuthStatus>('/career/google-oauth/status/');
@@ -197,37 +202,56 @@ export const disconnectGoogleOAuth = () =>
   api.post<{ ok: true }>('/career/google-oauth/disconnect/');
 export const getGoogleSpreadsheets = () =>
   api.get<{ spreadsheets: GoogleSpreadsheetFile[] }>('/career/google-oauth/spreadsheets/');
-export const getGoogleSpreadsheetTabs = (spreadsheetId: string) =>
+export const getGoogleSpreadsheetTabs = (spreadsheetId: string, config?: AxiosRequestConfig) =>
   api.get<{ tabs: GoogleSpreadsheetTab[] }>('/career/google-oauth/spreadsheet-tabs/', {
     params: { spreadsheet_id: spreadsheetId },
+    ...config,
   });
-export const testGoogleSheetSync = (id: number) =>
-  api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(`/career/google-sheet-syncs/${id}/test/`);
-export const runGoogleSheetSync = (id: number) =>
-  api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
-    `/career/google-sheet-syncs/${id}/sync-now/`
+export const testGoogleSheetSync = (id: number, config?: AxiosRequestConfig) =>
+  api.post<{ ok: true; preview: GoogleSheetSyncPreview }>(
+    `/career/google-sheet-syncs/${id}/test/`,
+    undefined,
+    config
   );
-export const resyncGoogleSheetSync = (id: number) =>
+export const runGoogleSheetSync = (id: number, config?: AxiosRequestConfig) =>
   api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
-    `/career/google-sheet-syncs/${id}/resync/`
+    `/career/google-sheet-syncs/${id}/sync-now/`,
+    undefined,
+    config
   );
-export const getGoogleSheetImportReview = (id: number, force = false) =>
+export const resyncGoogleSheetSync = (id: number, config?: AxiosRequestConfig) =>
+  api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
+    `/career/google-sheet-syncs/${id}/resync/`,
+    undefined,
+    config
+  );
+export const getGoogleSheetImportReview = (
+  id: number,
+  force = false,
+  config?: AxiosRequestConfig
+) =>
   api.post<{ ok: true; review: GoogleSheetImportReview }>(
     `/career/google-sheet-syncs/${id}/import-review/`,
-    { force }
+    { force },
+    config
   );
 export const applyGoogleSheetImportReview = (
   id: number,
   approvedItemIds: string[],
   duplicateResolutions: Record<string, GoogleSheetDuplicateResolution> = {},
-  force = false
+  force = false,
+  config?: AxiosRequestConfig
 ) =>
   api.post<{ ok: true; result: GoogleSheetSyncConfig['last_result'] }>(
     `/career/google-sheet-syncs/${id}/apply-import-review/`,
-    { approved_item_ids: approvedItemIds, duplicate_resolutions: duplicateResolutions, force }
+    { approved_item_ids: approvedItemIds, duplicate_resolutions: duplicateResolutions, force },
+    config
   );
-export const getGoogleSheetSyncRuns = (id: number) =>
-  api.get<{ ok: true; runs: GoogleSheetSyncRun[] }>(`/career/google-sheet-syncs/${id}/runs/`);
+export const getGoogleSheetSyncRuns = (id: number, config?: AxiosRequestConfig) =>
+  api.get<{ ok: true; runs: GoogleSheetSyncRun[] }>(
+    `/career/google-sheet-syncs/${id}/runs/`,
+    config
+  );
 export const rollbackGoogleSheetSyncRun = (id: number, runId: number) =>
   api.post<{ ok: true }>(`/career/google-sheet-syncs/${id}/rollback/`, { run_id: runId });
 

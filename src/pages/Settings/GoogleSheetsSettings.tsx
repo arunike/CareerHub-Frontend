@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircleOutlined,
   DeleteOutlined,
@@ -377,6 +377,62 @@ const GoogleSheetsSettings: React.FC = () => {
     result: GoogleSheetSyncConfig['last_result'];
     force: boolean;
   } | null>(null);
+  const actionAbortRef = useRef<AbortController | null>(null);
+  const reviewAbortRef = useRef<AbortController | null>(null);
+  const historyAbortRef = useRef<AbortController | null>(null);
+
+  const isCanceledRequest = (error: unknown) =>
+    typeof error === 'object' &&
+    error !== null &&
+    ('code' in error || 'name' in error) &&
+    ((error as { code?: string }).code === 'ERR_CANCELED' ||
+      (error as { name?: string }).name === 'CanceledError' ||
+      (error as { name?: string }).name === 'AbortError');
+
+  const cancelActionRequest = useCallback(() => {
+    actionAbortRef.current?.abort();
+    actionAbortRef.current = null;
+    setBusyId(null);
+    setPreviewing(false);
+  }, []);
+
+  const cancelReviewRequest = useCallback(() => {
+    reviewAbortRef.current?.abort();
+    reviewAbortRef.current = null;
+    setReviewLoading(false);
+    setBusyId(null);
+  }, []);
+
+  const closeImportReview = useCallback(() => {
+    if (applyingReview) return;
+    cancelReviewRequest();
+    setReviewConfig(null);
+    setImportReview(null);
+    setSelectedReviewIds([]);
+    setDuplicateResolutions({});
+  }, [applyingReview, cancelReviewRequest]);
+
+  const closeHistory = useCallback(() => {
+    historyAbortRef.current?.abort();
+    historyAbortRef.current = null;
+    setHistoryConfig(null);
+    setSyncRuns([]);
+    setSyncRunsLoading(false);
+  }, []);
+
+  const closeSyncReview = useCallback(() => {
+    cancelActionRequest();
+    setSyncReview(null);
+  }, [cancelActionRequest]);
+
+  useEffect(
+    () => () => {
+      actionAbortRef.current?.abort();
+      reviewAbortRef.current?.abort();
+      historyAbortRef.current?.abort();
+    },
+    []
+  );
 
   const fields = useMemo(() => FIELD_OPTIONS[draft.target_type], [draft.target_type]);
   const requiredFields = useMemo(() => fields.filter((field) => field.required), [fields]);
@@ -611,9 +667,12 @@ const GoogleSheetsSettings: React.FC = () => {
       messageApi.warning('Paste a Google Sheet link first');
       return;
     }
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setPreviewing(true);
     try {
-      const response = await previewGoogleSheetSync(draftPayload());
+      const response = await previewGoogleSheetSync(draftPayload(), { signal: controller.signal });
       setPreview(response.data.preview);
       const autoMapping = applyAutoMapping(response.data.preview.headers, draft.target_type);
       if (Object.keys(autoMapping).length > 0) {
@@ -622,10 +681,14 @@ const GoogleSheetsSettings: React.FC = () => {
         messageApi.warning('Preview loaded, but no matching columns were found');
       }
     } catch (error) {
+      if (isCanceledRequest(error)) return;
       messageApi.error('Could not preview this sheet');
       console.error('Failed to preview Google Sheet sync', error);
     } finally {
-      setPreviewing(false);
+      if (actionAbortRef.current === controller) {
+        actionAbortRef.current = null;
+        setPreviewing(false);
+      }
     }
   };
 
@@ -662,9 +725,12 @@ const GoogleSheetsSettings: React.FC = () => {
   };
 
   const testConfig = async (config: GoogleSheetSyncConfig) => {
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setBusyId(config.id);
     try {
-      const response = await testGoogleSheetSync(config.id);
+      const response = await testGoogleSheetSync(config.id, { signal: controller.signal });
       setPreview(response.data.preview);
       const autoMapping = buildAutoMapping(config.target_type, response.data.preview.headers);
       if (Object.keys(autoMapping).length > 0) {
@@ -677,19 +743,26 @@ const GoogleSheetsSettings: React.FC = () => {
         messageApi.warning('Sheet connection works, but no matching columns were found.');
       }
     } catch (error) {
+      if (isCanceledRequest(error)) return;
       messageApi.error('Could not read this sheet');
       console.error('Failed to test Google Sheet sync', error);
     } finally {
-      setBusyId(null);
+      if (actionAbortRef.current === controller) {
+        actionAbortRef.current = null;
+        setBusyId(null);
+      }
     }
   };
 
   const syncConfig = async (config: GoogleSheetSyncConfig, force = false) => {
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
     setBusyId(config.id);
     try {
       const response = force
-        ? await resyncGoogleSheetSync(config.id)
-        : await runGoogleSheetSync(config.id);
+        ? await resyncGoogleSheetSync(config.id, { signal: controller.signal })
+        : await runGoogleSheetSync(config.id, { signal: controller.signal });
       messageApi.success(`${force ? 'Resync' : 'Sync'} finished`);
       setSyncReview({ config, result: response.data.result, force });
       (response.data.result.warnings || []).forEach((warning) => {
@@ -697,20 +770,29 @@ const GoogleSheetsSettings: React.FC = () => {
       });
       fetchConfigs();
     } catch (error) {
+      if (isCanceledRequest(error)) return;
       messageApi.error(force ? 'Resync failed' : 'Sync failed');
       console.error('Failed to run Google Sheet sync', error);
       fetchConfigs();
     } finally {
-      setBusyId(null);
+      if (actionAbortRef.current === controller) {
+        actionAbortRef.current = null;
+        setBusyId(null);
+      }
     }
   };
 
   const openImportReview = async (config: GoogleSheetSyncConfig, force = false) => {
+    reviewAbortRef.current?.abort();
+    const controller = new AbortController();
+    reviewAbortRef.current = controller;
     setBusyId(config.id);
     setReviewLoading(true);
     setReviewConfig(config);
     try {
-      const response = await getGoogleSheetImportReview(config.id, force);
+      const response = await getGoogleSheetImportReview(config.id, force, {
+        signal: controller.signal,
+      });
       setImportReview(response.data.review);
       setSelectedReviewIds(response.data.review.items.map((item) => item.id));
       setDuplicateResolutions(
@@ -728,26 +810,37 @@ const GoogleSheetsSettings: React.FC = () => {
         messageApi.success('No import changes need review');
       }
     } catch (error) {
+      if (isCanceledRequest(error)) return;
       messageApi.error('Failed to analyze sheet for import');
       console.error('Failed to load Google Sheet import review', error);
       setReviewConfig(null);
     } finally {
-      setReviewLoading(false);
-      setBusyId(null);
+      if (reviewAbortRef.current === controller) {
+        reviewAbortRef.current = null;
+        setReviewLoading(false);
+        setBusyId(null);
+      }
     }
   };
 
   const openHistory = async (config: GoogleSheetSyncConfig) => {
+    historyAbortRef.current?.abort();
+    const controller = new AbortController();
+    historyAbortRef.current = controller;
     setHistoryConfig(config);
     setSyncRunsLoading(true);
     setSyncRuns([]);
     try {
-      const response = await getGoogleSheetSyncRuns(config.id);
+      const response = await getGoogleSheetSyncRuns(config.id, { signal: controller.signal });
       setSyncRuns(response.data.runs);
     } catch (error) {
+      if (isCanceledRequest(error)) return;
       messageApi.error('Failed to load sync runs');
     } finally {
-      setSyncRunsLoading(false);
+      if (historyAbortRef.current === controller) {
+        historyAbortRef.current = null;
+        setSyncRunsLoading(false);
+      }
     }
   };
 
@@ -1533,10 +1626,10 @@ const GoogleSheetsSettings: React.FC = () => {
       <Modal
         title={historyConfig ? `Sync Change History: ${historyConfig.name}` : 'Sync Change History'}
         open={Boolean(historyConfig)}
-        onCancel={() => setHistoryConfig(null)}
+        onCancel={closeHistory}
         width={780}
         footer={[
-          <Button key="close" type="primary" onClick={() => setHistoryConfig(null)}>
+          <Button key="close" type="primary" onClick={closeHistory}>
             Done
           </Button>,
         ]}
@@ -1662,7 +1755,7 @@ const GoogleSheetsSettings: React.FC = () => {
             : 'Sync Review'
         }
         open={Boolean(syncReview)}
-        onCancel={() => setSyncReview(null)}
+        onCancel={closeSyncReview}
         width={760}
         footer={[
           syncReview ? (
@@ -1678,7 +1771,7 @@ const GoogleSheetsSettings: React.FC = () => {
               View History
             </Button>
           ) : null,
-          <Button key="done" type="primary" onClick={() => setSyncReview(null)}>
+          <Button key="done" type="primary" onClick={closeSyncReview}>
             Done
           </Button>,
         ].filter(Boolean)}
@@ -1754,25 +1847,10 @@ const GoogleSheetsSettings: React.FC = () => {
       <Modal
         title={reviewConfig ? `Review Import: ${reviewConfig.name}` : 'Review Import'}
         open={Boolean(reviewConfig)}
-        onCancel={() => {
-          if (applyingReview) return;
-          setReviewConfig(null);
-          setImportReview(null);
-          setSelectedReviewIds([]);
-          setDuplicateResolutions({});
-        }}
+        onCancel={closeImportReview}
         width={860}
         footer={[
-          <Button
-            key="cancel"
-            disabled={applyingReview}
-            onClick={() => {
-              setReviewConfig(null);
-              setImportReview(null);
-              setSelectedReviewIds([]);
-              setDuplicateResolutions({});
-            }}
-          >
+          <Button key="cancel" disabled={applyingReview} onClick={closeImportReview}>
             Cancel
           </Button>,
           <Button
