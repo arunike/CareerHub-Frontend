@@ -216,16 +216,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const SidebarContent = (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
       <div
-        className={`shrink-0 border-b border-gray-50 ${
+        className={`relative shrink-0 border-b border-gray-50 ${
           isDesktopSidebarCollapsed
-            ? 'h-[116px] px-3 py-4 flex flex-col items-center justify-center gap-3'
-            : 'px-6 py-5 flex items-center justify-between'
+            ? 'h-[108px] px-0 py-4 flex flex-col items-center justify-center gap-2'
+            : 'h-[104px] px-5 py-4 flex items-center justify-between gap-3'
         }`}
       >
         <img
           src={isDesktopSidebarCollapsed ? logo : logoWithText}
           alt="CareerHub"
-          className={isDesktopSidebarCollapsed ? 'h-11 w-11 object-contain' : 'h-24'}
+          className={isDesktopSidebarCollapsed ? 'h-11 w-11 object-contain' : 'h-16 object-contain'}
         />
         {screens.lg ? (
           <Tooltip
@@ -237,7 +237,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               icon={isDesktopSidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={toggleDesktopSidebar}
               aria-label={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="!h-9 !w-9 !rounded-xl !text-slate-400 hover:!text-sky-600 hover:!bg-sky-50"
+              className={
+                isDesktopSidebarCollapsed
+                  ? '!h-8 !w-8 !rounded-xl !text-slate-400 hover:!text-sky-600 hover:!bg-sky-50'
+                  : '!h-8 !w-8 !shrink-0 !rounded-xl !text-slate-400 hover:!text-sky-600 hover:!bg-sky-50'
+              }
             />
           </Tooltip>
         ) : (
