@@ -1,14 +1,16 @@
 import { format } from 'date-fns';
 import { ClockCircleOutlined } from '@ant-design/icons';
+import type { Event } from '../../types';
 import { hasDayItems } from './utils';
 import type { DayData } from './types';
 
 type Props = {
   selectedDate: Date;
   dayData: DayData;
+  onEventSelect?: (event: Event) => void;
 };
 
-const CalendarDetailsPanel = ({ selectedDate, dayData }: Props) => {
+const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) => {
   return (
     <div className="mt-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
       <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -40,16 +42,18 @@ const CalendarDetailsPanel = ({ selectedDate, dayData }: Props) => {
               </div>
             ))}
             {dayData.events.map((event) => (
-              <div
+              <button
+                type="button"
                 key={event.id}
-                className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-100"
+                onClick={() => onEventSelect?.(event)}
+                className="flex w-full items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-left text-sm text-blue-700 transition-colors hover:border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               >
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                 <span className="font-mono text-blue-600 bg-blue-100 px-1 rounded">
                   {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
                 </span>
                 <span className="font-medium">{event.name}</span>
-              </div>
+              </button>
             ))}
           </>
         )}
