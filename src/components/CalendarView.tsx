@@ -13,9 +13,15 @@ interface CalendarViewProps {
   events: Event[];
   customHolidays: Holiday[];
   federalHolidays: Holiday[];
+  onEventSelect?: (event: Event) => void;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, federalHolidays }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({
+  events,
+  customHolidays,
+  federalHolidays,
+  onEventSelect,
+}) => {
   const today = new Date();
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [anchorDate, setAnchorDate] = useState(today);
@@ -108,6 +114,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
           today={today}
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
+          onEventSelect={onEventSelect}
           getDayData={getDayData}
         />
       )}
@@ -117,6 +124,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
           today={today}
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
+          onEventSelect={onEventSelect}
           getDayData={getDayData}
         />
       )}
@@ -130,7 +138,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ events, customHolidays, fed
         />
       )}
 
-      <CalendarDetailsPanel selectedDate={selectedDate} dayData={selectedDayData} />
+      <CalendarDetailsPanel
+        selectedDate={selectedDate}
+        dayData={selectedDayData}
+        onEventSelect={onEventSelect}
+      />
     </div>
   );
 };

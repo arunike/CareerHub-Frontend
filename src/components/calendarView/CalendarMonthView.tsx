@@ -10,6 +10,7 @@ import {
 } from 'date-fns';
 import clsx from 'clsx';
 import { CalendarCompactDayEntries } from './CalendarDayContent';
+import type { Event } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
 
@@ -18,6 +19,7 @@ type Props = {
   today: Date;
   selectedDate: Date;
   onDateSelect: (day: Date) => void;
+  onEventSelect?: (event: Event) => void;
   getDayData: GetDayData;
 };
 
@@ -26,6 +28,7 @@ const CalendarMonthView = ({
   today,
   selectedDate,
   onDateSelect,
+  onEventSelect,
   getDayData,
 }: Props) => {
   const monthStart = startOfMonth(anchorDate);
@@ -66,7 +69,7 @@ const CalendarMonthView = ({
             </span>
           </div>
 
-          <CalendarCompactDayEntries dayData={dayData} />
+          <CalendarCompactDayEntries dayData={dayData} onEventSelect={onEventSelect} />
         </div>
       );
       day = addDays(day, 1);
