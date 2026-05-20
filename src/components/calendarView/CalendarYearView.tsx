@@ -12,6 +12,7 @@ import {
 import { Tooltip } from 'antd';
 import clsx from 'clsx';
 import { CalendarDayTooltipContent } from './CalendarDayContent';
+import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { GetDayData } from './types';
 import { MINI_WEEKDAY_LABELS } from './types';
 
@@ -43,6 +44,9 @@ const CalendarYearView = ({ anchorDate, today, selectedDate, onDateSelect, getDa
           const isTodayDate = isSameDay(cloneDay, today);
           const isSelected = isSameDay(cloneDay, selectedDate);
           const isCurrentMonth = isSameMonth(cloneDay, monthStart);
+          const customHolidayColor = dayData.customHolidays[0]
+            ? getHolidayTabColor(dayData.customHolidays[0].tab_color).dot
+            : undefined;
 
           dayCells.push(
             <Tooltip
@@ -74,7 +78,10 @@ const CalendarYearView = ({ anchorDate, today, selectedDate, onDateSelect, getDa
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                   )}
                   {dayData.customHolidays.length > 0 && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: customHolidayColor }}
+                    />
                   )}
                   {dayData.federalHolidays.length > 0 && (
                     <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />

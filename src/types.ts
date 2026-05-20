@@ -26,6 +26,7 @@ export interface RaiseEntry {
 export interface HolidayTab {
   id: string;
   name: string;
+  color?: string;
   locked?: boolean;
 }
 
@@ -103,6 +104,8 @@ export interface Holiday {
   is_locked: boolean;
   is_ignored?: boolean;
   tab?: string | null;
+  tab_color?: string;
+  tab_name?: string;
 }
 
 export interface Availability {

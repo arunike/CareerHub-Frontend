@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import type { Event, Holiday } from '../types';
+import type { Event, Holiday, HolidayTab } from '../types';
 import CalendarDetailsPanel from './calendarView/CalendarDetailsPanel';
 import CalendarHeader from './calendarView/CalendarHeader';
 import CalendarMonthView from './calendarView/CalendarMonthView';
@@ -13,6 +13,7 @@ interface CalendarViewProps {
   events: Event[];
   customHolidays: Holiday[];
   federalHolidays: Holiday[];
+  holidayTabs?: HolidayTab[];
   onEventSelect?: (event: Event) => void;
 }
 
@@ -20,6 +21,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   events,
   customHolidays,
   federalHolidays,
+  holidayTabs = [],
   onEventSelect,
 }) => {
   const today = new Date();
@@ -41,15 +43,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   const datedCustomHolidays: Record<string, Holiday[]> = {};
   const recurringCustomHolidays: Record<string, Holiday[]> = {};
+  const holidayTabsById = holidayTabs.reduce<Record<string, HolidayTab>>((acc, tab) => {
+    acc[tab.id] = tab;
+    return acc;
+  }, {});
 
   customHolidays.forEach((holiday) => {
     const key = holiday.is_recurring ? holiday.date.substring(5) : holiday.date;
     const target = holiday.is_recurring ? recurringCustomHolidays : datedCustomHolidays;
+    const holidayTab = holiday.tab ? holidayTabsById[holiday.tab] : undefined;
+    const displayHoliday = {
+      ...holiday,
+      tab_color: holidayTab?.color,
+      tab_name: holidayTab?.name,
+    };
 
     if (!target[key]) {
       target[key] = [];
     }
-    target[key].push(holiday);
+    target[key].push(displayHoliday);
   });
 
   const federalHolidaysByDate: Record<string, Holiday[]> = {};
@@ -106,6 +118,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onViewModeChange={handleViewModeChange}
         onShiftRange={shiftRange}
         onGoToToday={goToToday}
+        holidayTabs={holidayTabs}
       />
 
       {viewMode === 'month' && (

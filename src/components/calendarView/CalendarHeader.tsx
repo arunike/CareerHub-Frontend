@@ -1,4 +1,6 @@
 import { CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import type { HolidayTab } from '../../types';
+import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import SegmentedToggle from '../SegmentedToggle';
 import type { CalendarViewMode } from './types';
 import { VIEW_OPTIONS } from './types';
@@ -9,6 +11,7 @@ type Props = {
   onViewModeChange: (nextViewMode: CalendarViewMode) => void;
   onShiftRange: (direction: 'prev' | 'next') => void;
   onGoToToday: () => void;
+  holidayTabs?: HolidayTab[];
 };
 
 const CalendarHeader = ({
@@ -17,6 +20,7 @@ const CalendarHeader = ({
   onViewModeChange,
   onShiftRange,
   onGoToToday,
+  holidayTabs = [],
 }: Props) => {
   return (
     <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -62,6 +66,19 @@ const CalendarHeader = ({
             <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
             <span>My Holiday</span>
           </div>
+          {holidayTabs.map((tab) => {
+            const tabColor = getHolidayTabColor(tab.color);
+
+            return (
+              <div key={tab.id} className="flex items-center gap-1">
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: tabColor.dot }}
+                ></span>
+                <span>{tab.name}</span>
+              </div>
+            );
+          })}
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full bg-gray-400"></span>
             <span>Federal</span>

@@ -51,6 +51,7 @@ import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
+import { getHolidayTabColor } from '../../utils/holidayTabColors';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -878,7 +879,15 @@ const Holidays = () => {
     },
     ...customTabs.map((t) => ({
       key: t.id,
-      label: t.name,
+      label: (
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: getHolidayTabColor(t.color).dot }}
+          />
+          {t.name}
+        </span>
+      ),
       children: renderHolidayListTab(t.id, t.name),
     })),
     {

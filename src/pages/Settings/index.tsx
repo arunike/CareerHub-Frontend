@@ -35,6 +35,11 @@ import {
 import GoogleSheetsSettings from './GoogleSheetsSettings';
 import SecurityDashboard from './SecurityDashboard';
 import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
+import {
+  DEFAULT_HOLIDAY_TAB_COLOR,
+  HOLIDAY_TAB_COLOR_OPTIONS,
+  getHolidayTabColor,
+} from '../../utils/holidayTabColors';
 
 dayjs.extend(customParseFormat);
 
@@ -171,6 +176,7 @@ const Settings: React.FC = () => {
   const [isAddingHolidayTab, setIsAddingHolidayTab] = useState(false);
   const [editingHolidayTab, setEditingHolidayTab] = useState<HolidayTab | null>(null);
   const [newTabName, setNewTabName] = useState('');
+  const [newTabColor, setNewTabColor] = useState(DEFAULT_HOLIDAY_TAB_COLOR);
 
   const getHolidayTabs = (): HolidayTab[] => settings?.holiday_tabs || [];
 
@@ -190,7 +196,7 @@ const Settings: React.FC = () => {
           ? {
               ...prev,
               holiday_tabs: current.map((t) =>
-                t.id === editingHolidayTab.id ? { ...t, name: newTabName } : t
+                t.id === editingHolidayTab.id ? { ...t, name: newTabName, color: newTabColor } : t
               ),
             }
           : null
@@ -202,7 +208,7 @@ const Settings: React.FC = () => {
         prev
           ? {
               ...prev,
-              holiday_tabs: [...current, { id, name: newTabName }],
+              holiday_tabs: [...current, { id, name: newTabName, color: newTabColor }],
             }
           : null
       );
@@ -210,11 +216,13 @@ const Settings: React.FC = () => {
     setIsAddingHolidayTab(false);
     setEditingHolidayTab(null);
     setNewTabName('');
+    setNewTabColor(DEFAULT_HOLIDAY_TAB_COLOR);
   };
 
   const handleEditHolidayTab = (t: HolidayTab) => {
     setEditingHolidayTab(t);
     setNewTabName(t.name);
+    setNewTabColor(t.color || DEFAULT_HOLIDAY_TAB_COLOR);
     setIsAddingHolidayTab(true);
   };
 
@@ -233,6 +241,7 @@ const Settings: React.FC = () => {
     setIsAddingHolidayTab(false);
     setEditingHolidayTab(null);
     setNewTabName('');
+    setNewTabColor(DEFAULT_HOLIDAY_TAB_COLOR);
   };
 
   const [isAppStagesLocked, setIsAppStagesLocked] = useState(true);
@@ -1460,7 +1469,7 @@ const Settings: React.FC = () => {
 
             {isAddingHolidayTab && !isHolidayTabsLocked && (
               <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
-                <div className="flex gap-3 items-end">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Tab Name</label>
                     <input
@@ -1477,6 +1486,31 @@ const Settings: React.FC = () => {
                         ID: <code>{toTabId(newTabName)}</code>
                       </p>
                     )}
+                  </div>
+                  <div className="lg:w-64">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {HOLIDAY_TAB_COLOR_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setNewTabColor(option.value)}
+                          className={`h-9 rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                            newTabColor === option.value
+                              ? 'border-gray-900 shadow-sm'
+                              : 'border-gray-200 hover:border-gray-400'
+                          }`}
+                          style={{ backgroundColor: option.bg }}
+                          title={option.label}
+                          aria-label={`${option.label} tab color`}
+                        >
+                          <span
+                            className="mx-auto block h-3 w-3 rounded-full"
+                            style={{ backgroundColor: option.dot }}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <button
                     onClick={handleSaveHolidayTab}
@@ -1516,8 +1550,14 @@ const Settings: React.FC = () => {
                     onEdit={() => handleEditHolidayTab(t)}
                     onDelete={() => handleDeleteHolidayTab(t.id)}
                   >
-                    <span className="font-medium text-gray-800">{t.name}</span>
-                    <span className="text-xs text-gray-400 font-mono">{t.id}</span>
+                    <span
+                      className="h-3 w-3 shrink-0 rounded-full"
+                      style={{ backgroundColor: getHolidayTabColor(t.color).dot }}
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-gray-800">{t.name}</span>
+                      <span className="block truncate text-xs text-gray-400 font-mono">{t.id}</span>
+                    </span>
                   </LockableListItem>
                 ))}
               </div>
