@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { Tooltip } from 'antd';
 import type { MouseEvent } from 'react';
 import type { Event } from '../../types';
+import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { DayData } from './types';
 import { hasDayItems } from './utils';
 
@@ -65,10 +66,16 @@ export const CalendarCompactDayEntries = ({ dayData, onEventSelect }: DayDataPro
     {dayData.customHolidays.map((holiday, index) => (
       <Tooltip
         key={`cust-${index}-${holiday.description}`}
-        title={`My Holiday: ${holiday.description}`}
+        title={`${holiday.tab_name || 'My Holiday'}: ${holiday.description}`}
         mouseEnterDelay={0}
       >
-        <div className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded truncate">
+        <div
+          className="px-1.5 py-0.5 rounded truncate"
+          style={{
+            backgroundColor: getHolidayTabColor(holiday.tab_color).bg,
+            color: getHolidayTabColor(holiday.tab_color).text,
+          }}
+        >
           ★ {holiday.description}
         </div>
       </Tooltip>
@@ -116,10 +123,15 @@ export const CalendarDayAgendaEntries = ({ dayData, onEventSelect }: DayDataProp
       {dayData.customHolidays.map((holiday, index) => (
         <div
           key={`cust-${index}-${holiday.description}`}
-          className="rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-sm text-green-800"
+          className="rounded-xl border px-3 py-2 text-sm"
+          style={{
+            borderColor: getHolidayTabColor(holiday.tab_color).border,
+            backgroundColor: getHolidayTabColor(holiday.tab_color).bg,
+            color: getHolidayTabColor(holiday.tab_color).text,
+          }}
         >
-          <div className="text-xs font-semibold uppercase tracking-wide text-green-500">
-            My Holiday
+          <div className="text-xs font-semibold uppercase tracking-wide opacity-75">
+            {holiday.tab_name || 'My Holiday'}
           </div>
           <div className="mt-1">
             {holiday.description}

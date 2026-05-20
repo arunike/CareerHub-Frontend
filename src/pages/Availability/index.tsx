@@ -31,6 +31,7 @@ import type {
   Event,
   EventCategory,
   Holiday,
+  HolidayTab,
   PublicBooking,
   RecurrenceRule,
 } from '../../types';
@@ -133,6 +134,7 @@ const Availability = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
+  const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [applications, setApplications] = useState<
     Array<{
@@ -204,6 +206,7 @@ const Availability = () => {
       if (settingsResp.data.default_event_duration) {
         setDefaultDuration(parseInt(settingsResp.data.default_event_duration));
       }
+      setHolidayTabs(settingsResp.data.holiday_tabs || []);
 
       if (activeLink) {
         if (activeLink.booking_block_minutes) {
@@ -652,6 +655,7 @@ const Availability = () => {
           events={events}
           customHolidays={customHolidays}
           federalHolidays={federalHolidays}
+          holidayTabs={holidayTabs}
           onEventSelect={handleCalendarEventSelect}
         />
       ) : (

@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import type { Event } from '../../types';
+import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import { hasDayItems } from './utils';
 import type { DayData } from './types';
 
@@ -31,16 +32,28 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) =
                 <span className="font-medium">Federal Holiday:</span> {holiday.description}
               </div>
             ))}
-            {dayData.customHolidays.map((holiday, index) => (
-              <div
-                key={`selected-cust-${index}-${holiday.description}`}
-                className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-2 rounded-lg border border-green-100"
-              >
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <span className="font-medium">My Holiday:</span> {holiday.description}{' '}
-                {holiday.is_recurring && '(Yearly)'}
-              </div>
-            ))}
+            {dayData.customHolidays.map((holiday, index) => {
+              const tabColor = getHolidayTabColor(holiday.tab_color);
+
+              return (
+                <div
+                  key={`selected-cust-${index}-${holiday.description}`}
+                  className="flex items-center gap-2 rounded-lg border p-2 text-sm"
+                  style={{
+                    borderColor: tabColor.border,
+                    backgroundColor: tabColor.bg,
+                    color: tabColor.text,
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: tabColor.dot }}
+                  ></span>
+                  <span className="font-medium">{holiday.tab_name || 'My Holiday'}:</span>
+                  {holiday.description} {holiday.is_recurring && '(Yearly)'}
+                </div>
+              );
+            })}
             {dayData.events.map((event) => (
               <button
                 type="button"
