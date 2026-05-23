@@ -1,8 +1,24 @@
-import { Card, Empty, Space, Tag, Tooltip, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Dropdown,
+  Empty,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+  type MenuProps,
+} from 'antd';
 import {
   CalendarOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
   EnvironmentOutlined,
+  EyeOutlined,
+  LockOutlined,
+  MoreOutlined,
+  UnlockOutlined,
   VideoCameraOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -50,6 +66,41 @@ const EventsGrid = ({
     return <Empty description="No events found" image={Empty.PRESENTED_IMAGE_SIMPLE} />;
   }
 
+  const getMobileActionItems = (event: Event): MenuProps['items'] => [
+    {
+      key: 'lock',
+      icon: event.is_locked ? <UnlockOutlined /> : <LockOutlined />,
+      label: event.is_locked ? 'Unlock' : 'Lock',
+    },
+    {
+      key: 'view',
+      icon: <EyeOutlined />,
+      label: 'View',
+    },
+    ...(event.is_locked
+      ? []
+      : [
+          {
+            key: 'edit',
+            icon: <EditOutlined />,
+            label: 'Edit',
+          },
+          {
+            key: 'delete',
+            icon: <DeleteOutlined />,
+            label: 'Delete',
+            danger: true,
+          },
+        ]),
+  ];
+
+  const handleMobileAction = (event: Event, actionKey: string) => {
+    if (actionKey === 'lock') onToggleLock(event);
+    if (actionKey === 'view') onView(event);
+    if (actionKey === 'edit' && !event.is_locked) onEdit(event);
+    if (actionKey === 'delete' && !event.is_locked) onDelete(event);
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
       {events.map((event) => (
@@ -59,28 +110,51 @@ const EventsGrid = ({
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             bodyStyle={{ flex: 1 }}
             title={
-              <Space>
+              <div className="flex min-w-0 items-center gap-3">
                 <Checkbox
                   checked={selectedIds.includes(event.id)}
                   onChange={(e) => onSelectChange(event.id, e.target.checked)}
                 />
                 <Tooltip title={event.name} mouseEnterDelay={0}>
-                  <Text strong ellipsis style={{ maxWidth: 150, display: 'inline-block' }}>
+                  <Text strong ellipsis className="min-w-0 flex-1">
                     {event.name}
                   </Text>
                 </Tooltip>
-              </Space>
+              </div>
             }
             extra={
-              <RowActions
-                isLocked={event.is_locked}
-                onToggleLock={() => onToggleLock(event)}
-                onView={() => onView(event)}
-                onEdit={event.is_locked ? undefined : () => onEdit(event)}
-                onDelete={event.is_locked ? undefined : () => onDelete(event)}
-                confirmDelete={false}
-                size="small"
-              />
+              <>
+                <div className="hidden sm:block">
+                  <RowActions
+                    isLocked={event.is_locked}
+                    onToggleLock={() => onToggleLock(event)}
+                    onView={() => onView(event)}
+                    onEdit={event.is_locked ? undefined : () => onEdit(event)}
+                    onDelete={event.is_locked ? undefined : () => onDelete(event)}
+                    confirmDelete={false}
+                    size="small"
+                  />
+                </div>
+                <Dropdown
+                  trigger={['click']}
+                  placement="bottomRight"
+                  menu={{
+                    items: getMobileActionItems(event),
+                    onClick: ({ key, domEvent }) => {
+                      domEvent.stopPropagation();
+                      handleMobileAction(event, key);
+                    },
+                  }}
+                >
+                  <Button
+                    type="text"
+                    icon={<MoreOutlined />}
+                    aria-label={`More actions for ${event.name}`}
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center sm:hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </Dropdown>
+              </>
             }
             actions={[
               <Space key="time">
