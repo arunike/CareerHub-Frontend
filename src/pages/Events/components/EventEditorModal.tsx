@@ -74,6 +74,7 @@ const EventEditorModal = ({
       title={editingId ? 'Edit Event' : 'Add Event'}
       open={open}
       onCancel={onCancel}
+      destroyOnHidden
       footer={null}
       width={600}
     >
