@@ -326,3 +326,84 @@ body {
     padding-bottom: 2px;
   }
 }
+
+/* Dynamic glowing gradient background blobs */
+.glow-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(100px);
+  opacity: 0.15;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.glow-blob-blue {
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(37, 99, 235, 0) 70%);
+}
+
+.glow-blob-sky {
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 70%);
+}
+
+/* Glassmorphic tags and badges */
+.glass-pill {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.glass-pill-active {
+  background-color: rgba(239, 246, 255, 0.85);
+  border-color: rgba(191, 219, 254, 0.8);
+  color: #2563eb;
+}
+
+/* Premium Card and Container Refinements */
+.enterprise-card {
+  background-color: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.01),
+    0 1px 2px -1px rgba(0, 0, 0, 0.01);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.enterprise-card:hover {
+  transform: translateY(-2px);
+  border-color: #e2e8f0;
+  box-shadow:
+    0 12px 30px -4px rgba(0, 0, 0, 0.03),
+    0 4px 12px -2px rgba(0, 0, 0, 0.02);
+}
+
+/* Floating animation */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Pulse animation for glow blobs */
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 10s ease-in-out infinite;
+}

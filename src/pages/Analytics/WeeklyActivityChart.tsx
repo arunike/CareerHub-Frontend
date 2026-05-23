@@ -10,27 +10,61 @@ type Props = {
   data: WeeklyActivityPoint[];
 };
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 backdrop-blur-md border border-slate-100 shadow-[0_8px_30px_rgba(37,99,235,0.06)] rounded-xl p-3.5">
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+          {label}
+        </p>
+        <p className="text-sm font-bold text-slate-900">
+          {payload[0].value} Application{payload[0].value !== 1 ? 's' : ''}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const WeeklyActivityChart = ({ data }: Props) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+    <div className="enterprise-card p-4 sm:p-6">
       <div className="mb-6 flex items-center gap-2">
-        <RiseOutlined className="mr-2 text-xl text-gray-600" />
+        <RiseOutlined className="mr-2 text-xl text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900">Weekly Activity (Last 12 Weeks)</h3>
       </div>
       <div className="h-[280px] w-full sm:h-75">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip
-              contentStyle={{
-                borderRadius: '8px',
-                border: 'none',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-              }}
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="activityBarGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.9} />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.35} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              stroke="#94a3b8"
+              fontSize={11}
+              tickMargin={8}
             />
-            <Bar dataKey="count" name="Applications" fill="#1890ff" radius={[4, 4, 0, 0]} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              stroke="#94a3b8"
+              fontSize={11}
+              tickMargin={8}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(37, 99, 235, 0.03)' }} />
+            <Bar
+              dataKey="count"
+              name="Applications"
+              fill="url(#activityBarGradient)"
+              radius={[4, 4, 0, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

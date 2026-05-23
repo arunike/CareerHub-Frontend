@@ -214,9 +214,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
 
   const SidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div className="flex flex-col h-full bg-white border-r border-slate-100">
       <div
-        className={`relative shrink-0 border-b border-gray-50 ${
+        className={`relative shrink-0 border-b border-slate-100/80 ${
           isDesktopSidebarCollapsed
             ? 'h-[108px] px-0 py-4 flex flex-col items-center justify-center gap-2'
             : 'h-[104px] px-5 py-4 flex items-center justify-between gap-3'
@@ -239,8 +239,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               aria-label={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               className={
                 isDesktopSidebarCollapsed
-                  ? '!h-8 !w-8 !rounded-xl !text-slate-400 hover:!text-sky-600 hover:!bg-sky-50'
-                  : '!h-8 !w-8 !shrink-0 !rounded-xl !text-slate-400 hover:!text-sky-600 hover:!bg-sky-50'
+                  ? '!h-8 !w-8 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50'
+                  : '!h-8 !w-8 !shrink-0 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50'
               }
             />
           </Tooltip>
@@ -259,14 +259,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           theme={{
             components: {
               Menu: {
-                itemHeight: 48,
-                itemMarginInline: 16,
-                itemMarginBlock: 4,
-                collapsedWidth: 64,
-                collapsedIconSize: 20,
-                iconSize: 20,
-                iconMarginInlineEnd: 16,
-                fontSize: 16,
+                itemHeight: 40,
+                itemMarginInline: 12,
+                itemMarginBlock: 2,
+                collapsedWidth: 56,
+                collapsedIconSize: 18,
+                iconSize: 18,
+                iconMarginInlineEnd: 12,
+                fontSize: 14,
               },
             },
           }}
@@ -284,7 +284,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </ConfigProvider>
       </div>
 
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-4 border-t border-slate-100">
         {isDesktopSidebarCollapsed ? (
           <div className="flex flex-col items-center gap-3">
             <NotificationBell placement="top-left" />
@@ -293,7 +293,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 type="button"
                 onClick={() => navigate('/profile')}
                 aria-label="Open profile"
-                className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-sky-100 hover:shadow-lg hover:shadow-sky-500/5 transition-all"
+                className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/5 transition-all"
               >
                 <IdentityAvatar
                   imageUrl={profilePic}
@@ -325,12 +325,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         ) : (
           <>
             <div className="flex items-center justify-between px-2 mb-2">
-              <span className="text-xs text-gray-400 font-medium">Notifications</span>
+              <span className="text-xs text-slate-400 font-medium">Notifications</span>
               <NotificationBell placement="top-left" />
             </div>
             <div
               onClick={() => navigate('/profile')}
-              className="group px-3 py-4 rounded-[20px] bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-sky-100 hover:shadow-xl hover:shadow-sky-500/5 transition-all duration-300"
+              className="group px-3 py-4 rounded-xl bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-3">
                 <IdentityAvatar
@@ -343,7 +343,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
                     Account
                   </p>
-                  <p className="text-sm font-bold text-slate-900 truncate group-hover:text-sky-600 transition-colors">
+                  <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
                     {displayName || 'CareerHub User'}
                   </p>
                 </div>
@@ -405,7 +405,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      <AntLayout className="min-h-screen bg-gray-50 transition-all duration-300">
+      <AntLayout className="min-h-screen bg-[#f8fafc] transition-all duration-300">
         <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
           <div
             className={`max-w-400 mx-auto p-4 md:p-6 lg:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}
@@ -427,7 +427,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   onClick={() => navigate(item.key)}
                   className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
                     isActive
-                      ? 'bg-sky-50 text-sky-600'
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
