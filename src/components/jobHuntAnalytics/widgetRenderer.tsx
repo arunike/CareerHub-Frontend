@@ -68,38 +68,38 @@ export const renderJobHuntWidget = (
   switch (id) {
     case 'total':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Total Applications</p>
             <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
-            <FileTextOutlined className="mr-1.5 text-base" />
+          <div className="mt-4 flex items-center text-sm text-gray-400">
+            <FileTextOutlined className="mr-1.5 text-base text-gray-400" />
             <span>Tracked</span>
           </div>
         </div>
       );
     case 'active':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Active Pipeline</p>
             <p className="text-3xl font-bold text-gray-900">{stats.activeInterviews}</p>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
-            <ClockCircleOutlined className="mr-1.5 text-blue-500 text-base" />
+          <div className="mt-4 flex items-center text-sm text-gray-400">
+            <ClockCircleOutlined className="mr-1.5 text-blue-600 text-base" />
             <span>{stats.totalInterviews} reached interview stages</span>
           </div>
         </div>
       );
     case 'outcomes':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Outcomes</p>
             <div className="flex gap-4">
               <div>
-                <p className="text-2xl font-bold text-green-600">{stats.offers}</p>
+                <p className="text-2xl font-bold text-emerald-600">{stats.offers}</p>
                 <p className="text-xs text-gray-500">Offers</p>
               </div>
               <div className="w-px bg-gray-200 h-10"></div>
@@ -110,7 +110,7 @@ export const renderJobHuntWidget = (
             </div>
           </div>
           <div className="mt-2 flex items-center text-sm text-gray-400">
-            <CheckCircleOutlined className="mr-1.5 text-green-500 text-base" />
+            <CheckCircleOutlined className="mr-1.5 text-emerald-500 text-base" />
             <span>vs</span>
             <CloseCircleOutlined className="ml-1.5 text-red-500 text-base" />
           </div>
@@ -118,12 +118,12 @@ export const renderJobHuntWidget = (
       );
     case 'ghosted':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">No Response</p>
             <p className="text-3xl font-bold text-gray-700">{stats.ghosted}</p>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
+          <div className="mt-4 flex items-center text-sm text-gray-400">
             <QuestionCircleOutlined className="mr-1.5 text-gray-400 text-base" />
             <span>Ghosted</span>
           </div>
@@ -131,25 +131,25 @@ export const renderJobHuntWidget = (
       );
     case 'response_rate':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Response Rate</p>
-            <p className="text-3xl font-bold text-sky-600">{stats.responseRate}%</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.responseRate}%</p>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
-            <LineChartOutlined className="mr-1.5 text-sky-500 text-base" />
+          <div className="mt-4 flex items-center text-sm text-gray-400">
+            <LineChartOutlined className="mr-1.5 text-blue-600 text-base" />
             <span>{stats.respondedCount} responded</span>
           </div>
         </div>
       );
     case 'offer_rate':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Offer Rate</p>
             <p className="text-3xl font-bold text-emerald-600">{stats.offerRate}%</p>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
+          <div className="mt-4 flex items-center text-sm text-gray-400">
             <CheckCircleOutlined className="mr-1.5 text-emerald-500 text-base" />
             <span>
               {stats.offers} offer{stats.offers !== 1 ? 's' : ''}
@@ -159,20 +159,20 @@ export const renderJobHuntWidget = (
       );
     case 'recent_applications':
       return (
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full">
+        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">Last 30 Days</p>
-            <p className="text-3xl font-bold text-sky-600">{stats.recentApplications30d}</p>
+            <p className="text-3xl font-bold text-blue-600">{stats.recentApplications30d}</p>
           </div>
-          <div className="mt-4 flex items-center text-sm text-gray-500">
-            <ClockCircleOutlined className="mr-1.5 text-sky-500 text-base" />
+          <div className="mt-4 flex items-center text-sm text-gray-400">
+            <ClockCircleOutlined className="mr-1.5 text-blue-600 text-base" />
             <span>Recent applications</span>
           </div>
         </div>
       );
     case 'locations':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+        <div className="enterprise-card p-6 h-full">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <EnvironmentOutlined className="text-xl text-gray-600" />
@@ -199,7 +199,7 @@ export const renderJobHuntWidget = (
                 <div className="flex items-center gap-3">
                   <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-500 rounded-full"
+                      className="h-full bg-blue-600 rounded-full"
                       style={{ width: `${(loc.count / stats.total) * 100}%` }}
                     ></div>
                   </div>
@@ -215,7 +215,7 @@ export const renderJobHuntWidget = (
       );
     case 'top_companies':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+        <div className="enterprise-card p-6 h-full">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <BankOutlined className="text-xl text-gray-600" />
@@ -229,9 +229,9 @@ export const renderJobHuntWidget = (
                   <span
                     className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium shrink-0 ${
                       idx === 0
-                        ? 'bg-sky-100 text-sky-700'
+                        ? 'bg-blue-100 text-blue-700'
                         : idx === 1
-                          ? 'bg-sky-50 text-sky-600'
+                          ? 'bg-blue-50 text-blue-600'
                           : 'bg-gray-100 text-gray-600'
                     }`}
                   >
@@ -242,7 +242,7 @@ export const renderJobHuntWidget = (
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-sky-500 rounded-full"
+                      className="h-full bg-blue-600 rounded-full"
                       style={{
                         width: `${stats.total > 0 ? (company.count / stats.total) * 100 : 0}%`,
                       }}
@@ -260,7 +260,7 @@ export const renderJobHuntWidget = (
       );
     case 'work_modes':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+        <div className="enterprise-card p-6 h-full">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <ApartmentOutlined className="text-xl text-gray-600" />
@@ -295,12 +295,12 @@ export const renderJobHuntWidget = (
       const staleCount = analytics?.stale_in_stage.length || 0;
 
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+        <div className="enterprise-card p-6 h-full">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <NodeIndexOutlined className="text-lg text-sky-600" />
+                  <NodeIndexOutlined className="text-lg text-blue-600" />
                   <h3 className="text-lg font-semibold text-gray-900">Timeline Analytics</h3>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">
@@ -308,23 +308,23 @@ export const renderJobHuntWidget = (
                 </p>
               </div>
               <div className="flex gap-2">
-                <div className="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-right min-w-[100px]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500">
+                <div className="rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-right min-w-[100px]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
                     Avg to Interview
                   </p>
-                  <p className="text-2xl font-bold text-sky-700">
+                  <p className="text-2xl font-bold text-blue-700">
                     {stats.timelineAnalyticsLoading
                       ? '...'
                       : analytics?.average_time_to_interview_days != null
                         ? `${analytics.average_time_to_interview_days}d`
                         : '-'}
                   </p>
-                  <p className="text-xs text-sky-500">
+                  <p className="text-xs text-blue-600">
                     {analytics?.time_to_interview_sample_size || 0} sample
                     {analytics?.time_to_interview_sample_size === 1 ? '' : 's'}
                   </p>
                 </div>
-                <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2 text-right min-w-[100px]">
+                <div className="rounded-lg border border-purple-100 bg-purple-50/50 px-3 py-2 text-right min-w-[100px]">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-purple-500">
                     Avg to Offer
                   </p>

@@ -57,24 +57,24 @@ const securityTransparency = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-sky-500/30">
+    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-blue-500/30">
       <PublicHeader />
 
       <div className="flex min-h-screen w-full flex-col pt-24 sm:pt-32">
         <section className="relative px-5 py-10 sm:px-8 lg:px-10 lg:py-16">
-          <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
-          <div className="pointer-events-none absolute right-0 top-1/4 h-[500px] w-[500px] translate-x-1/3 rounded-full bg-sky-400/20 opacity-50 blur-[100px]" />
+          <div className="pointer-events-none absolute left-0 top-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 glow-blob glow-blob-blue animate-pulse-slow" />
+          <div className="pointer-events-none absolute right-0 top-1/4 h-[500px] w-[500px] translate-x-1/3 glow-blob glow-blob-sky animate-pulse-slow" />
 
           <div className="relative mx-auto grid w-full max-w-[1440px] gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(600px,1.08fr)] lg:items-center xl:gap-16">
             <div className="max-w-[640px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-700 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm">
                 <SafetyCertificateOutlined />
                 Private career operating system
               </div>
 
               <h1 className="mt-8 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-5xl xl:text-[64px]">
                 Your private command center for every{' '}
-                <span className="bg-gradient-to-r from-sky-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
                   job application.
                 </span>
               </h1>
@@ -87,14 +87,14 @@ export default function HomePage() {
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   to="/login"
-                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-blue-600 px-6 text-sm font-bold text-white shadow-lg shadow-sky-200 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-sky-300"
+                  className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 text-sm font-bold text-white shadow-lg shadow-blue-200/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-300/60"
                 >
                   Start tracking
                   <ArrowRightOutlined />
                 </Link>
                 <Link
                   to="/privacy"
-                  className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-sky-300 hover:bg-slate-50"
+                  className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-blue-300 hover:bg-slate-50"
                 >
                   View privacy policy
                 </Link>
@@ -110,12 +110,12 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="relative min-w-0">
-              <div className="absolute -inset-4 rounded-[40px] bg-gradient-to-br from-sky-200/50 via-sky-200/50 to-transparent blur-2xl" />
-              <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/90 shadow-2xl shadow-sky-900/10 backdrop-blur-xl">
-                <div className="grid gap-4 bg-slate-50/50 p-4 sm:grid-cols-3">
+            <div className="relative min-w-0 animate-float">
+              <div className="absolute -inset-4 rounded-[32px] bg-gradient-to-br from-blue-200/10 via-sky-100/20 to-transparent blur-2xl animate-pulse-slow" />
+              <div className="relative overflow-hidden rounded-[24px] border border-white/60 bg-white/70 shadow-2xl shadow-blue-900/5 backdrop-blur-xl">
+                <div className="grid gap-4 bg-slate-100/30 p-4 sm:grid-cols-3">
                   {/* Card 1: Application Pipeline (col-span-2) */}
-                  <section className="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-2">
+                  <section className="col-span-3 rounded-xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-md sm:col-span-2">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
@@ -125,7 +125,7 @@ export default function HomePage() {
                           Application Tracking
                         </p>
                       </div>
-                      <BarChartOutlined className="text-xl text-sky-500" />
+                      <BarChartOutlined className="text-xl text-blue-600" />
                     </div>
 
                     <div className="mt-4 flex gap-3 overflow-hidden">
@@ -139,10 +139,10 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="w-1/3 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-sky-500">
+                        <p className="px-2 py-1 text-[10px] font-bold uppercase text-blue-600">
                           Onsite
                         </p>
-                        <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50/50 p-2.5 shadow-sm">
+                        <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50/30 p-2.5 shadow-sm">
                           <p className="text-xs font-bold text-slate-900">Google</p>
                           <p className="mt-0.5 text-[10px] text-slate-500">L4 Engineer</p>
                         </div>
@@ -151,7 +151,7 @@ export default function HomePage() {
                         <p className="px-2 py-1 text-[10px] font-bold uppercase text-emerald-500">
                           Offer
                         </p>
-                        <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/50 p-2.5 shadow-sm">
+                        <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/30 p-2.5 shadow-sm">
                           <p className="text-xs font-bold text-slate-900">OpenAI</p>
                           <p className="mt-0.5 text-[10px] text-slate-500">MTS</p>
                         </div>
@@ -160,17 +160,17 @@ export default function HomePage() {
                   </section>
 
                   {/* Card 2: BYOK AI (col-span-1) */}
-                  <section className="col-span-3 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm sm:col-span-1">
+                  <section className="col-span-3 rounded-xl border border-blue-100/50 bg-gradient-to-br from-blue-50/40 to-white/90 p-5 shadow-sm backdrop-blur-md sm:col-span-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-sky-500">
+                        <p className="text-[11px] font-black uppercase tracking-wider text-blue-600">
                           Smart Tools
                         </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">BYOK AI</p>
                       </div>
-                      <RobotOutlined className="text-xl text-sky-500" />
+                      <RobotOutlined className="text-xl text-blue-600" />
                     </div>
-                    <div className="mt-4 rounded-xl border border-sky-100 bg-white p-3 shadow-sm">
+                    <div className="mt-4 rounded-xl border border-blue-50 bg-white/80 p-3 shadow-sm">
                       <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                         <ThunderboltFilled className="text-amber-400" />
                         <span className="text-xs font-bold text-slate-700">JD Matcher</span>
@@ -187,7 +187,7 @@ export default function HomePage() {
                   </section>
 
                   {/* Card 3: Document Vault (col-span-1) */}
-                  <section className="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-1">
+                  <section className="col-span-3 rounded-xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-md sm:col-span-1">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
@@ -218,7 +218,7 @@ export default function HomePage() {
                   </section>
 
                   {/* Card 4: Total Compensation Simulator (col-span-2) */}
-                  <section className="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-2">
+                  <section className="col-span-3 rounded-xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-md sm:col-span-2">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
@@ -226,25 +226,25 @@ export default function HomePage() {
                         </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">Total Compensation</p>
                       </div>
-                      <DollarOutlined className="text-xl text-emerald-500" />
+                      <DollarOutlined className="text-xl text-emerald-600" />
                     </div>
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                      <div className="flex-1 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                      <div className="flex-1 rounded-xl border border-emerald-100 bg-emerald-50/30 p-4">
                         <p className="text-[10px] font-black uppercase text-emerald-600">
                           Base Salary
                         </p>
                         <p className="mt-1 text-2xl font-black text-slate-900">$180k</p>
-                        <div className="mt-2 h-1.5 w-full rounded-full bg-emerald-200">
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-emerald-100">
                           <div className="h-full w-[60%] rounded-full bg-emerald-500" />
                         </div>
                       </div>
-                      <div className="flex-1 rounded-xl border border-sky-100 bg-sky-50/50 p-4">
-                        <p className="text-[10px] font-black uppercase text-sky-600">
+                      <div className="flex-1 rounded-xl border border-blue-100 bg-blue-50/30 p-4">
+                        <p className="text-[10px] font-black uppercase text-blue-600">
                           Annual Equity
                         </p>
                         <p className="mt-1 text-2xl font-black text-slate-900">$120k</p>
-                        <div className="mt-2 h-1.5 w-full rounded-full bg-sky-200">
-                          <div className="h-full w-[40%] rounded-full bg-sky-500" />
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-blue-100">
+                          <div className="h-full w-[40%] rounded-full bg-blue-600" />
                         </div>
                       </div>
                     </div>
@@ -261,7 +261,7 @@ export default function HomePage() {
           <div className="relative mx-auto w-full max-w-[1440px]">
             <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-600">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">
                   Why register
                 </p>
                 <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
@@ -270,7 +270,7 @@ export default function HomePage() {
               </div>
               <Link
                 to="/login"
-                className="inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-6 py-4 text-sm font-bold text-slate-900 shadow-sm border border-slate-200 transition hover:bg-slate-50 hover:border-slate-300"
+                className="inline-flex w-fit items-center gap-2 rounded-xl bg-white px-6 py-4 text-sm font-bold text-slate-900 shadow-sm border border-slate-200 transition hover:bg-slate-50 hover:border-slate-300"
               >
                 Login to CareerHub
                 <ArrowRightOutlined />
@@ -281,11 +281,8 @@ export default function HomePage() {
               {valueCards.map((card) => {
                 const Icon = card.icon;
                 return (
-                  <article
-                    key={card.title}
-                    className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-sky-200 hover:shadow-xl hover:shadow-sky-500/5"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-xl text-sky-600 transition-transform group-hover:scale-110">
+                  <article key={card.title} className="group enterprise-card p-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-xl text-blue-600 transition-transform group-hover:scale-105">
                       <Icon />
                     </div>
                     <h2 className="mt-6 text-lg font-bold text-slate-900">{card.title}</h2>
@@ -298,10 +295,10 @@ export default function HomePage() {
         </section>
 
         <section className="px-5 pb-20 sm:px-8 lg:px-10">
-          <div className="mx-auto grid w-full max-w-[1440px] gap-6 rounded-[32px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 lg:grid-cols-[0.68fr_1.32fr] lg:p-6">
-            <div className="relative overflow-hidden rounded-[24px] border border-sky-100 bg-sky-50/50 p-8">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-200/50 blur-3xl" />
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl text-sky-600 border border-sky-100 shadow-sm">
+          <div className="mx-auto grid w-full max-w-[1440px] gap-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-xl shadow-blue-900/5 lg:grid-cols-[0.68fr_1.32fr] lg:p-6">
+            <div className="relative overflow-hidden rounded-2xl border border-blue-50 bg-blue-50/20 p-8">
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-200/20 blur-3xl animate-pulse-slow" />
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-white text-2xl text-blue-600 border border-blue-100/50 shadow-sm">
                 <SafetyCertificateOutlined />
               </div>
               <h2 className="relative mt-6 text-3xl font-black tracking-tight text-slate-900">
@@ -313,7 +310,7 @@ export default function HomePage() {
               </p>
               <Link
                 to="/privacy"
-                className="relative mt-8 inline-flex items-center text-sm font-bold text-sky-600 transition hover:text-sky-700"
+                className="relative mt-8 inline-flex items-center text-sm font-bold text-blue-600 transition hover:text-blue-700"
               >
                 Read the Privacy Policy
                 <ArrowRightOutlined className="ml-2 transition-transform group-hover:translate-x-1" />
@@ -326,7 +323,7 @@ export default function HomePage() {
                 return (
                   <article
                     key={item.title}
-                    className="rounded-3xl border border-slate-100 bg-slate-50/50 p-6 transition hover:bg-slate-50 hover:border-slate-200"
+                    className="rounded-2xl border border-slate-100 bg-slate-50/50 p-6 transition hover:bg-white hover:border-slate-200/80 hover:shadow-lg hover:shadow-blue-900/5 duration-200"
                   >
                     <Icon className="text-2xl text-slate-400" />
                     <h3 className="mt-5 text-base font-bold text-slate-900">{item.title}</h3>

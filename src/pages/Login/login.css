@@ -51,7 +51,7 @@
 }
 
 .login-page__title-accent {
-  background: linear-gradient(90deg, #0ea5e9, #3b82f6);
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -89,8 +89,8 @@
 }
 
 .login-page__feature-item:hover {
-  border-color: #bae6fd;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
 }
 
 .login-page__feature-icon {
@@ -101,8 +101,8 @@
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 0.5rem;
-  background: #f0f9ff;
-  color: #0ea5e9;
+  background: #eff6ff;
+  color: #2563eb;
   font-size: 0.88rem;
 }
 
@@ -165,7 +165,7 @@
 }
 
 .login-page__panel-brand-icon {
-  color: #0ea5e9;
+  color: #2563eb;
   font-size: 1rem;
 }
 
@@ -290,13 +290,13 @@
   height: 3rem;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 0.625rem;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
   transition: all 0.2s ease;
 }
 
 .login-page__submit.ant-btn:not(:disabled):hover {
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
   transform: translateY(-1px);
 }
 
@@ -324,7 +324,7 @@
 }
 
 .login-page__legal-links a:hover {
-  color: #0284c7;
+  color: #2563eb;
 }
 
 .login-page__empty-state {
