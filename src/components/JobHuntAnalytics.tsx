@@ -66,7 +66,6 @@ const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
   },
 ];
 
-const NON_FUNNEL_STATUSES = new Set(['ACCEPTED', 'REJECTED', 'GHOSTED', 'REMOVED_FROM_SHEET']);
 const INACTIVE_STATUSES = new Set([
   'APPLIED',
   'REJECTED',
@@ -76,45 +75,10 @@ const INACTIVE_STATUSES = new Set([
 ]);
 const RESPONDED_EXCLUDE_STATUSES = new Set(['APPLIED', 'GHOSTED', 'REMOVED_FROM_SHEET']);
 
-const toTitleCase = (value: string) =>
-  value
-    .toLowerCase()
-    .split('_')
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-
-const getStageLabel = (stage: ApplicationStage) => {
-  if (/^ROUND_\d+$/.test(stage.key)) {
-    return stage.label || toTitleCase(stage.key);
-  }
-  return stage.shortLabel || stage.label || toTitleCase(stage.key);
-};
-
 const getApplicationRound = (application: CareerApplication) => {
   const roundStatus = application.status.match(/^ROUND_(\d+)$/);
   if (roundStatus) return Number(roundStatus[1]);
   return application.current_round || 0;
-};
-
-const getStageColor = (stage: ApplicationStage) => {
-  const color = stage.tone?.match(/bg-([a-z]+)-/)?.[1] || 'gray';
-  const palette: Record<string, string> = {
-    blue: 'bg-blue-100 border-blue-300 text-blue-700',
-    purple: 'bg-purple-100 border-purple-300 text-purple-700',
-    sky: 'bg-sky-100 border-sky-300 text-sky-700',
-    cyan: 'bg-cyan-100 border-cyan-300 text-cyan-700',
-    amber: 'bg-amber-100 border-amber-300 text-amber-700',
-    orange: 'bg-orange-100 border-orange-300 text-orange-700',
-    red: 'bg-red-100 border-red-300 text-red-700',
-    rose: 'bg-rose-100 border-rose-300 text-rose-700',
-    pink: 'bg-pink-100 border-pink-300 text-pink-700',
-    emerald: 'bg-emerald-100 border-emerald-300 text-emerald-700',
-    green: 'bg-green-100 border-green-300 text-green-700',
-    slate: 'bg-slate-100 border-slate-300 text-slate-700',
-    gray: 'bg-gray-100 border-gray-300 text-gray-700',
-  };
-  return palette[color] || palette.gray;
 };
 
 const SortableItem = ({
@@ -418,51 +382,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       { name: 'Unknown', count: workModeCounts.Unknown, color: 'bg-slate-400' },
     ];
 
-    const roundCounts: Record<string, number> = {};
-    applications.forEach((a) => {
-      const r = getApplicationRound(a);
-      if (r > 0) {
-        const label = `Round ${r}`;
-        roundCounts[label] = (roundCounts[label] || 0) + 1;
-      }
-    });
-
-    const rounds = Object.entries(roundCounts)
-      .map(([name, count]) => ({
-        name,
-        count,
-        roundNum: parseInt(name.replace('Round ', '')),
-      }))
-      .sort((a, b) => a.roundNum - b.roundNum)
-      .map(({ name, count }) => ({ name, count }));
-
-    let daysToOfferSum = 0;
-    let daysToOfferCount = 0;
-    const stageMap = new Map<string, ApplicationStage>();
-    const configuredStages = applicationStages.length
-      ? applicationStages
-      : DEFAULT_APPLICATION_STAGES;
-    configuredStages.forEach((stage) => {
-      if (stage.key && !stageMap.has(stage.key)) {
-        stageMap.set(stage.key, stage);
-      }
-    });
-
-    applications.forEach((a) => {
-      if (!stageMap.has(a.status)) {
-        stageMap.set(a.status, {
-          key: a.status,
-          label: toTitleCase(a.status),
-          shortLabel: toTitleCase(a.status),
-          tone: 'bg-gray-500',
-        });
-      }
-    });
-
-    const funnelSteps: Record<string, number> = {};
-    Array.from(stageMap.keys()).forEach((status) => {
-      funnelSteps[status] = 0;
-    });
     const now = Date.now();
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const recentApplications30d = applications.filter((a) => {
@@ -471,43 +390,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       const timestamp = parseDateOnlyLocal(sourceDate)?.getTime() ?? new Date(sourceDate).getTime();
       return !Number.isNaN(timestamp) && now - timestamp <= THIRTY_DAYS_MS;
     }).length;
-
-    applications.forEach((a) => {
-      const status = a.status as string;
-      if (Object.prototype.hasOwnProperty.call(funnelSteps, status)) {
-        funnelSteps[status]++;
-      }
-
-      if (status === 'OFFER' && a.offer && a.date_applied) {
-        try {
-          const offer = a.offer as { created_at?: string };
-          const offerDate = new Date(offer.created_at || '');
-          const appliedDate =
-            parseDateOnlyLocal(a.date_applied as string) ?? new Date(a.date_applied as string);
-          if (!isNaN(offerDate.getTime()) && !isNaN(appliedDate.getTime())) {
-            const days = Math.floor(
-              (offerDate.getTime() - appliedDate.getTime()) / (1000 * 3600 * 24)
-            );
-            if (days >= 0) {
-              daysToOfferSum += days;
-              daysToOfferCount++;
-            }
-          }
-        } catch (error) {
-          console.error('Failed to calculate days to offer', error);
-        }
-      }
-    });
-
-    const avgDaysToOffer =
-      daysToOfferCount > 0 ? Math.round(daysToOfferSum / daysToOfferCount) : null;
-    const funnel = Array.from(stageMap.values())
-      .filter((stage) => !NON_FUNNEL_STATUSES.has(stage.key) || (funnelSteps[stage.key] || 0) > 0)
-      .map((stage) => ({
-        label: getStageLabel(stage),
-        value: funnelSteps[stage.key] || 0,
-        color: getStageColor(stage),
-      }));
 
     return {
       total,
@@ -524,10 +406,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       locations,
       topCompanies,
       workModes,
-      rounds,
-      funnel,
-      avgDaysToOffer,
-      avgDaysToOfferSampleSize: daysToOfferCount,
       timelineAnalytics,
       timelineAnalyticsLoading,
     };
