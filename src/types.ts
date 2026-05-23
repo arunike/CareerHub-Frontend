@@ -353,6 +353,8 @@ export interface ApplicationTimelineEntry {
 export interface ApplicationTimelineAnalytics {
   average_time_to_interview_days: number | null;
   time_to_interview_sample_size: number;
+  average_days_to_offer: number | null;
+  days_to_offer_sample_size: number;
   stage_conversion: Array<{
     key: string;
     label: string;
