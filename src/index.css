@@ -72,6 +72,17 @@ body {
   border-color: #e2e8f0 !important;
 }
 
+.analytics-help-tooltip .ant-tooltip-inner {
+  border-radius: 8px;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.18),
+    0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.analytics-help-tooltip .ant-tooltip-arrow::before {
+  border-radius: 2px;
+}
+
 /* Better focus ring */
 .ant-input:focus,
 .ant-input-focused,

@@ -1,16 +1,14 @@
 import {
-  ApartmentOutlined,
-  BankOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
-  LineChartOutlined,
   NodeIndexOutlined,
   QuestionCircleOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import CustomWidgetCard from '../CustomWidgetCard';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { ApplicationTimelineAnalytics } from '../../types';
@@ -28,10 +26,11 @@ export type JobHuntStats = {
   offerRate: string;
   recentApplications30d: number;
   locations: { name: string; count: number }[];
-  topCompanies: { name: string; count: number }[];
-  workModes: { name: string; count: number; color: string }[];
+  statusBreakdown: { name: string; count: number }[];
+  applicationAgeBreakdown: { name: string; count: number }[];
   timelineAnalytics?: ApplicationTimelineAnalytics | null;
   timelineAnalyticsLoading?: boolean;
+  timelineAnalyticsError?: boolean;
 };
 
 const getStageGradient = (key: string) => {
@@ -59,6 +58,108 @@ const getStageGradient = (key: string) => {
   }
 };
 
+const percentageColor = (index: number) => {
+  const colors = [
+    'bg-blue-500',
+    'bg-sky-500',
+    'bg-amber-500',
+    'bg-orange-500',
+    'bg-rose-500',
+    'bg-emerald-500',
+  ];
+  return colors[index % colors.length];
+};
+
+const TooltipLabel = ({
+  children,
+  title,
+  className = '',
+}: {
+  children: React.ReactNode;
+  title: string;
+  className?: string;
+}) => (
+  <Tooltip title={title} placement="top" overlayClassName="analytics-help-tooltip">
+    <span className={`inline-flex cursor-help items-center gap-1 ${className}`}>
+      <span>{children}</span>
+      <QuestionCircleOutlined className="text-[11px] opacity-60" />
+    </span>
+  </Tooltip>
+);
+
+const renderPercentageList = (
+  items: { name: string; count: number }[],
+  total: number,
+  emptyText: string,
+  maxItems = 6
+) => (
+  <div className="space-y-3">
+    {items.slice(0, maxItems).map((item, index) => {
+      const percent = total > 0 ? (item.count / total) * 100 : 0;
+      const roundedPercent = Math.round(percent);
+      return (
+        <div
+          key={item.name}
+          className="group/metric relative grid grid-cols-[96px_1fr_44px] items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-slate-50"
+        >
+          <span className="truncate text-sm font-medium text-gray-700" title={item.name}>
+            {item.name}
+          </span>
+          <div className="relative h-2 overflow-visible rounded-full bg-gray-100">
+            <div
+              className={`h-full rounded-full ${percentageColor(index)} transition-all duration-300`}
+              style={{ width: `${Math.max(percent, item.count > 0 ? 4 : 0)}%` }}
+            />
+            <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-95 whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-center text-xs text-white opacity-0 shadow-xl transition-all duration-150 group-hover/metric:scale-100 group-hover/metric:opacity-100">
+              <span className="block font-bold text-slate-100">{item.name}</span>
+              <span className="mt-0.5 block text-[11px] text-slate-300">
+                {item.count} application{item.count === 1 ? '' : 's'} ({roundedPercent}%)
+              </span>
+              <span className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-800 bg-slate-900" />
+            </div>
+          </div>
+          <span className="text-right text-xs font-semibold text-blue-600">{roundedPercent}%</span>
+        </div>
+      );
+    })}
+    {items.length === 0 && (
+      <div className="py-6 text-center text-sm text-gray-400">{emptyText}</div>
+    )}
+  </div>
+);
+
+const MetricTile = ({
+  label,
+  value,
+  detail,
+  tooltip,
+  tone = 'blue',
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  tooltip: string;
+  tone?: 'blue' | 'purple' | 'emerald' | 'amber' | 'slate';
+}) => {
+  const tones = {
+    blue: 'border-blue-100 bg-blue-50/60 text-blue-700',
+    purple: 'border-purple-100 bg-purple-50/60 text-purple-700',
+    emerald: 'border-emerald-100 bg-emerald-50/60 text-emerald-700',
+    amber: 'border-amber-100 bg-amber-50/70 text-amber-700',
+    slate: 'border-slate-100 bg-slate-50 text-slate-700',
+  };
+
+  return (
+    <div className={`rounded-lg border px-3 py-3 ${tones[tone]}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
+        <TooltipLabel title={tooltip}>{label}</TooltipLabel>
+      </p>
+      <p className="mt-1 text-2xl font-bold leading-none">{value}</p>
+      <p className="mt-1.5 text-xs opacity-75">{detail}</p>
+    </div>
+  );
+};
+
 export const renderJobHuntWidget = (
   id: string,
   stats: JobHuntStats,
@@ -70,7 +171,11 @@ export const renderJobHuntWidget = (
       return (
         <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Total Applications</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              <TooltipLabel title="All applications currently saved in your tracker.">
+                Total Applications
+              </TooltipLabel>
+            </p>
             <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-400">
@@ -83,7 +188,11 @@ export const renderJobHuntWidget = (
       return (
         <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Active Pipeline</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              <TooltipLabel title="Applications that are not applied-only, rejected, ghosted, accepted, or removed from a synced sheet.">
+                Active Pipeline
+              </TooltipLabel>
+            </p>
             <p className="text-3xl font-bold text-gray-900">{stats.activeInterviews}</p>
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-400">
@@ -96,16 +205,28 @@ export const renderJobHuntWidget = (
       return (
         <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Outcomes</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              <TooltipLabel title="Final results currently marked as offers or rejections.">
+                Outcomes
+              </TooltipLabel>
+            </p>
             <div className="flex gap-4">
               <div>
                 <p className="text-2xl font-bold text-emerald-600">{stats.offers}</p>
-                <p className="text-xs text-gray-500">Offers</p>
+                <p className="text-xs text-gray-500">
+                  <TooltipLabel title="Applications whose current status is Offer.">
+                    Offers
+                  </TooltipLabel>
+                </p>
               </div>
               <div className="w-px bg-gray-200 h-10"></div>
               <div>
                 <p className="text-2xl font-bold text-red-500">{stats.rejections}</p>
-                <p className="text-xs text-gray-500">Rejections</p>
+                <p className="text-xs text-gray-500">
+                  <TooltipLabel title="Applications whose current status is Rejected.">
+                    Rejections
+                  </TooltipLabel>
+                </p>
               </div>
             </div>
           </div>
@@ -120,7 +241,11 @@ export const renderJobHuntWidget = (
       return (
         <div className="enterprise-card p-5 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">No Response</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              <TooltipLabel title="Applications currently marked as Ghosted.">
+                No Response
+              </TooltipLabel>
+            </p>
             <p className="text-3xl font-bold text-gray-700">{stats.ghosted}</p>
           </div>
           <div className="mt-4 flex items-center text-sm text-gray-400">
@@ -129,167 +254,70 @@ export const renderJobHuntWidget = (
           </div>
         </div>
       );
-    case 'response_rate':
-      return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Response Rate</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.responseRate}%</p>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-gray-400">
-            <LineChartOutlined className="mr-1.5 text-blue-600 text-base" />
-            <span>{stats.respondedCount} responded</span>
-          </div>
-        </div>
-      );
-    case 'offer_rate':
-      return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Offer Rate</p>
-            <p className="text-3xl font-bold text-emerald-600">{stats.offerRate}%</p>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-gray-400">
-            <CheckCircleOutlined className="mr-1.5 text-emerald-500 text-base" />
-            <span>
-              {stats.offers} offer{stats.offers !== 1 ? 's' : ''}
-            </span>
-          </div>
-        </div>
-      );
-    case 'recent_applications':
-      return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Last 30 Days</p>
-            <p className="text-3xl font-bold text-blue-600">{stats.recentApplications30d}</p>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-gray-400">
-            <ClockCircleOutlined className="mr-1.5 text-blue-600 text-base" />
-            <span>Recent applications</span>
-          </div>
-        </div>
-      );
-    case 'locations':
+    case 'pipeline_breakdown':
       return (
         <div className="enterprise-card p-6 h-full">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <EnvironmentOutlined className="text-xl text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Top Locations</h3>
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <NodeIndexOutlined className="text-lg text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  <TooltipLabel title="A percentage view of where applications are concentrated across stage, location, and age.">
+                    Pipeline Breakdown
+                  </TooltipLabel>
+                </h3>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Current stage mix, location concentration, and application age
+              </p>
             </div>
           </div>
-          <div className="space-y-4">
-            {stats.locations.slice(0, 8).map((loc, idx) => (
-              <div key={loc.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                      idx === 0
-                        ? 'bg-blue-100 text-blue-700'
-                        : idx === 1
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {idx + 1}
-                  </span>
-                  <span className="text-gray-700 font-medium">{loc.name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 rounded-full"
-                      style={{ width: `${(loc.count / stats.total) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="font-mono text-gray-900 font-bold">{loc.count}</span>
-                </div>
+          <div className="grid gap-6 xl:grid-cols-3">
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <NodeIndexOutlined className="text-gray-500" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <TooltipLabel title="Distribution of applications by their current status. Hover each bar for the exact count.">
+                    Current Stage Mix
+                  </TooltipLabel>
+                </p>
               </div>
-            ))}
-            {stats.locations.length === 0 && (
-              <div className="text-center py-8 text-gray-400">No location data found</div>
-            )}
-          </div>
-        </div>
-      );
-    case 'top_companies':
-      return (
-        <div className="enterprise-card p-6 h-full">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <BankOutlined className="text-xl text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Top Companies</h3>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {stats.topCompanies.slice(0, 8).map((company, idx) => (
-              <div key={company.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium shrink-0 ${
-                      idx === 0
-                        ? 'bg-blue-100 text-blue-700'
-                        : idx === 1
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {idx + 1}
-                  </span>
-                  <span className="text-gray-700 font-medium truncate">{company.name}</span>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 rounded-full"
-                      style={{
-                        width: `${stats.total > 0 ? (company.count / stats.total) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="font-mono text-gray-900 font-bold">{company.count}</span>
-                </div>
+              {renderPercentageList(stats.statusBreakdown, stats.total, 'No status data')}
+            </section>
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <EnvironmentOutlined className="text-gray-500" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <TooltipLabel title="Most common application locations, grouped by city or Remote. Hover each bar for the exact count.">
+                    Top Locations
+                  </TooltipLabel>
+                </p>
               </div>
-            ))}
-            {stats.topCompanies.length === 0 && (
-              <div className="text-center py-8 text-gray-400">No company data found</div>
-            )}
-          </div>
-        </div>
-      );
-    case 'work_modes':
-      return (
-        <div className="enterprise-card p-6 h-full">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <ApartmentOutlined className="text-xl text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Work Modes</h3>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {stats.workModes.map((mode) => (
-              <div key={mode.name} className="flex items-center justify-between gap-4">
-                <div className="min-w-[88px] text-sm font-medium text-gray-700">{mode.name}</div>
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${mode.color}`}
-                    style={{ width: `${stats.total > 0 ? (mode.count / stats.total) * 100 : 0}%` }}
-                  />
-                </div>
-                <div className="w-10 text-right font-mono text-gray-900 font-bold">
-                  {mode.count}
-                </div>
+              {renderPercentageList(stats.locations, stats.total, 'No location data')}
+            </section>
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <ClockCircleOutlined className="text-gray-500" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <TooltipLabel title="How long ago applications were submitted, using Date Applied when available and Created At as fallback.">
+                    Application Age
+                  </TooltipLabel>
+                </p>
               </div>
-            ))}
-            {stats.workModes.every((mode) => mode.count === 0) && (
-              <div className="text-center py-8 text-gray-400">No work-mode data found</div>
-            )}
+              {renderPercentageList(
+                stats.applicationAgeBreakdown,
+                stats.total,
+                'No application age data',
+                5
+              )}
+            </section>
           </div>
         </div>
       );
     case 'timeline_analytics': {
       const analytics = stats.timelineAnalytics;
+      const isLoading = Boolean(stats.timelineAnalyticsLoading);
+      const hasError = Boolean(stats.timelineAnalyticsError);
       const topStages = analytics?.stage_conversion.slice(0, 6) || [];
       const topSource = analytics?.offer_rate_by_source[0];
       const staleCount = analytics?.stale_in_stage.length || 0;
@@ -301,49 +329,105 @@ export const renderJobHuntWidget = (
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <NodeIndexOutlined className="text-lg text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Timeline Analytics</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    <TooltipLabel title="Timeline-based metrics from application status history, synced sheet provenance, and saved timeline entries.">
+                      Timeline Analytics
+                    </TooltipLabel>
+                  </h3>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">
                   Synced status history, stage movement, and sheet outcomes
                 </p>
               </div>
-              <div className="flex gap-2">
-                <div className="rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-right min-w-[100px]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
-                    Avg to Interview
-                  </p>
-                  <p className="text-2xl font-bold text-blue-700">
-                    {stats.timelineAnalyticsLoading
-                      ? '...'
-                      : analytics?.average_time_to_interview_days != null
-                        ? `${analytics.average_time_to_interview_days}d`
-                        : '-'}
-                  </p>
-                  <p className="text-xs text-blue-600">
-                    {analytics?.time_to_interview_sample_size || 0} sample
-                    {analytics?.time_to_interview_sample_size === 1 ? '' : 's'}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-purple-100 bg-purple-50/50 px-3 py-2 text-right min-w-[100px]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-purple-500">
-                    Avg to Offer
-                  </p>
-                  <p className="text-2xl font-bold text-purple-700">
-                    {stats.timelineAnalyticsLoading
-                      ? '...'
-                      : analytics?.average_days_to_offer != null
-                        ? `${analytics.average_days_to_offer}d`
-                        : '-'}
-                  </p>
-                  <p className="text-xs text-purple-500">
-                    {analytics?.days_to_offer_sample_size || 0} offer
-                    {analytics?.days_to_offer_sample_size === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </div>
             </div>
 
-            {!analytics && !stats.timelineAnalyticsLoading && (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+              <MetricTile
+                label="Avg to Interview"
+                tooltip="Average days from applying to the first interview-stage timeline entry. Applied, offer, rejected, and ghosted are not counted as interview stages."
+                value={
+                  isLoading
+                    ? '...'
+                    : analytics?.average_time_to_interview_days != null
+                      ? `${analytics.average_time_to_interview_days}d`
+                      : '-'
+                }
+                detail={
+                  isLoading
+                    ? 'Loading'
+                    : `${analytics?.time_to_interview_sample_size || 0} sample${
+                        analytics?.time_to_interview_sample_size === 1 ? '' : 's'
+                      }`
+                }
+              />
+              <MetricTile
+                label="Avg to Offer"
+                tooltip="Average days from Date Applied to the offer creation date for applications with offers."
+                value={
+                  isLoading
+                    ? '...'
+                    : analytics?.average_days_to_offer != null
+                      ? `${analytics.average_days_to_offer}d`
+                      : '-'
+                }
+                detail={
+                  isLoading
+                    ? 'Loading'
+                    : `${analytics?.days_to_offer_sample_size || 0} offer${
+                        analytics?.days_to_offer_sample_size === 1 ? '' : 's'
+                      }`
+                }
+                tone="purple"
+              />
+              <MetricTile
+                label="Response Rate"
+                tooltip="Applications that moved beyond applied/ghosted/removed, divided by total applications."
+                value={`${stats.responseRate}%`}
+                detail={`${stats.respondedCount} responded`}
+              />
+              <MetricTile
+                label="Offer Rate"
+                tooltip="Applications currently marked as Offer, divided by total applications."
+                value={`${stats.offerRate}%`}
+                detail={`${stats.offers} offer${stats.offers === 1 ? '' : 's'}`}
+                tone="emerald"
+              />
+              <MetricTile
+                label="Last 30 Days"
+                tooltip="Applications submitted in the last 30 days, using Date Applied when available and Created At as fallback."
+                value={stats.recentApplications30d}
+                detail="Recent applications"
+                tone="slate"
+              />
+              <MetricTile
+                label="Stale In Stage"
+                tooltip="Active applications sitting in their current stage for at least your ghosting threshold."
+                value={analytics ? staleCount : isLoading ? '...' : '-'}
+                detail={analytics ? `Over ${analytics.stale_threshold_days}d` : 'Timeline signal'}
+                tone={staleCount > 0 ? 'amber' : 'slate'}
+              />
+            </div>
+
+            {isLoading && !analytics && (
+              <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-6">
+                <div className="flex items-center gap-3 text-sm font-medium text-blue-700">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
+                  Loading timeline analytics...
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-blue-100" />
+                  <div className="h-2.5 w-1/2 animate-pulse rounded-full bg-blue-100" />
+                </div>
+              </div>
+            )}
+
+            {hasError && !isLoading && (
+              <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-6 text-center text-sm text-rose-600">
+                Timeline analytics could not load. Try refreshing the dashboard.
+              </div>
+            )}
+
+            {!analytics && !isLoading && !hasError && (
               <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
                 Timeline analytics will appear after applications have timeline or sync history.
               </div>
@@ -351,25 +435,12 @@ export const renderJobHuntWidget = (
 
             {analytics && (
               <>
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Stale In Stage
-                    </p>
-                    <div className="mt-2 flex items-end gap-2">
-                      <span
-                        className={`text-2xl font-bold ${staleCount > 0 ? 'text-amber-600' : 'text-gray-900'}`}
-                      >
-                        {staleCount}
-                      </span>
-                      <span className="pb-1 text-xs text-gray-500">
-                        over {analytics.stale_threshold_days}d
-                      </span>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Best Sheet Source
+                      <TooltipLabel title="The synced Google Sheet source with the highest offer rate among tracked applications.">
+                        Best Sheet Source
+                      </TooltipLabel>
                     </p>
                     <p
                       className="mt-2 truncate text-sm font-semibold text-gray-900"
@@ -385,7 +456,9 @@ export const renderJobHuntWidget = (
                   </div>
                   <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Top Company Rate
+                      <TooltipLabel title="The company with the highest offer rate among companies represented in your applications.">
+                        Top Company Rate
+                      </TooltipLabel>
                     </p>
                     <p
                       className="mt-2 truncate text-sm font-semibold text-gray-900"
@@ -404,7 +477,9 @@ export const renderJobHuntWidget = (
                 <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Stage Conversion
+                      <TooltipLabel title="Share of total applications that reached each stage. Hover a bar for the exact count.">
+                        Stage Conversion
+                      </TooltipLabel>
                     </p>
                     <div className="space-y-3">
                       {topStages.map((stage) => (
@@ -448,7 +523,9 @@ export const renderJobHuntWidget = (
 
                   <div>
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Watch List
+                      <TooltipLabel title="Active applications that have stayed in the same stage longer than your ghosting threshold.">
+                        Watch List
+                      </TooltipLabel>
                     </p>
                     <div className="space-y-2">
                       {analytics.stale_in_stage.slice(0, 3).map((item) => (
@@ -504,8 +581,8 @@ export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[
       : 'col-span-1';
   }
 
-  if (['locations', 'top_companies', 'work_modes', 'timeline_analytics'].includes(id)) {
-    return 'col-span-1 md:col-span-2 lg:col-span-2';
+  if (id === 'timeline_analytics' || id === 'pipeline_breakdown') {
+    return 'col-span-1 md:col-span-2 lg:col-span-4';
   }
   return 'col-span-1';
 };

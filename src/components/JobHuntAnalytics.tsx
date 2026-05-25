@@ -33,38 +33,15 @@ import {
 } from './jobHuntAnalytics/widgetRenderer';
 import { getApplicationTimelineAnalytics } from '../api/career';
 
-import type { ApplicationTimelineAnalytics, UserSettings } from '../types';
+import type { ApplicationTimelineAnalytics } from '../types';
 import type { CareerApplication } from '../types/application';
 const { Text } = Typography;
 
-type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
-
 interface AnalyticsProps {
   applications: CareerApplication[];
-  applicationStages?: ApplicationStage[];
 }
 
 type ValidationResult = NonNullable<CustomWidget['cachedData']>;
-
-const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
-  { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-  { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
-  { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
-  { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
-  { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
-  { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
-  { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
-  { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
-  { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
-  { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
-  { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
-  {
-    key: 'REMOVED_FROM_SHEET',
-    label: 'Removed from Sheet',
-    shortLabel: 'Removed',
-    tone: 'bg-slate-500',
-  },
-];
 
 const INACTIVE_STATUSES = new Set([
   'APPLIED',
@@ -74,11 +51,62 @@ const INACTIVE_STATUSES = new Set([
   'REMOVED_FROM_SHEET',
 ]);
 const RESPONDED_EXCLUDE_STATUSES = new Set(['APPLIED', 'GHOSTED', 'REMOVED_FROM_SHEET']);
+const RETIRED_WIDGET_IDS = new Set([
+  'response_rate',
+  'offer_rate',
+  'recent_applications',
+  'locations',
+  'top_companies',
+  'work_modes',
+]);
+const PIPELINE_BREAKDOWN_SOURCE_IDS = new Set(['locations']);
+const AVAILABLE_WIDGET_IDS = new Set(AVAILABLE_WIDGETS.map((widget) => widget.id));
+const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEnabled).map(
+  (widget) => widget.id
+);
+
+const normalizeEnabledWidgets = (ids: string[]) => {
+  const normalized = ids.filter(
+    (id) => AVAILABLE_WIDGET_IDS.has(id) && !RETIRED_WIDGET_IDS.has(id)
+  );
+  if (
+    ids.some((id) => PIPELINE_BREAKDOWN_SOURCE_IDS.has(id)) &&
+    !normalized.includes('pipeline_breakdown')
+  ) {
+    normalized.push('pipeline_breakdown');
+  }
+  return normalized.length > 0 ? normalized : DEFAULT_WIDGET_IDS;
+};
 
 const getApplicationRound = (application: CareerApplication) => {
   const roundStatus = application.status.match(/^ROUND_(\d+)$/);
   if (roundStatus) return Number(roundStatus[1]);
   return application.current_round || 0;
+};
+
+const formatStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    APPLIED: 'Applied',
+    OA: 'Online Assessment',
+    SCREEN: 'Phone Screen',
+    ROUND_1: '1st Round',
+    ROUND_2: '2nd Round',
+    ROUND_3: '3rd Round',
+    ROUND_4: '4th Round',
+    ONSITE: 'Onsite',
+    OFFER: 'Offer',
+    ACCEPTED: 'Accepted',
+    REJECTED: 'Rejected',
+    GHOSTED: 'Ghosted',
+    REMOVED_FROM_SHEET: 'Removed',
+  };
+  return (
+    labels[status] ||
+    status
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  );
 };
 
 const SortableItem = ({
@@ -116,10 +144,7 @@ const SortableItem = ({
   );
 };
 
-const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
-  applications,
-  applicationStages = DEFAULT_APPLICATION_STAGES,
-}) => {
+const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -127,12 +152,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     const saved = localStorage.getItem('job_hunt_analytics_enabled');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const normalized = normalizeEnabledWidgets(JSON.parse(saved));
+        localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(normalized));
+        return normalized;
       } catch (error) {
         console.error('Failed to parse enabled widgets', error);
       }
     }
-    return AVAILABLE_WIDGETS.filter((w) => w.defaultEnabled).map((w) => w.id);
+    return DEFAULT_WIDGET_IDS;
   });
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -143,7 +170,8 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     if (saved) {
       try {
         const order = JSON.parse(saved);
-        return order.filter((id: string) => enabledWidgets.includes(id));
+        const normalized = normalizeEnabledWidgets(order);
+        return normalized.filter((id: string) => enabledWidgets.includes(id));
       } catch (error) {
         console.error('Failed to parse widget order', error);
       }
@@ -157,6 +185,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     null
   );
   const [timelineAnalyticsLoading, setTimelineAnalyticsLoading] = useState(false);
+  const [timelineAnalyticsError, setTimelineAnalyticsError] = useState(false);
 
   const { customWidgets, addCustomWidget, deleteCustomWidget, testQuery } = useCustomWidgets(
     'job_hunt_analytics_custom',
@@ -195,8 +224,11 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
   }, []);
 
   useEffect(() => {
+    if (!enabledWidgets.includes('timeline_analytics')) return;
+
     let mounted = true;
     setTimelineAnalyticsLoading(true);
+    setTimelineAnalyticsError(false);
     getApplicationTimelineAnalytics()
       .then((response) => {
         if (mounted) {
@@ -205,6 +237,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       })
       .catch((error) => {
         console.error('Failed to load timeline analytics', error);
+        if (mounted) {
+          setTimelineAnalyticsError(true);
+        }
       })
       .finally(() => {
         if (mounted) {
@@ -214,7 +249,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [enabledWidgets]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -340,13 +375,16 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     const offerRate = total > 0 ? ((offers / total) * 100).toFixed(1) : '0.0';
 
     const locationCounts: Record<string, number> = {};
-    const companyCounts: Record<string, number> = {};
-    const workModeCounts: Record<string, number> = {
-      Remote: 0,
-      Hybrid: 0,
-      Onsite: 0,
-      Unknown: 0,
+    const statusCounts: Record<string, number> = {};
+    const ageCounts: Record<string, number> = {
+      'Last 7 days': 0,
+      '8-30 days': 0,
+      '31-90 days': 0,
+      '90+ days': 0,
+      Undated: 0,
     };
+    const now = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
 
     applications.forEach((a) => {
       let loc = (a.office_location || a.location || '').trim();
@@ -356,33 +394,34 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       loc = loc.charAt(0).toUpperCase() + loc.slice(1);
       locationCounts[loc] = (locationCounts[loc] || 0) + 1;
 
-      const companyName = (a.company_details?.name || 'Unknown').trim() || 'Unknown';
-      companyCounts[companyName] = (companyCounts[companyName] || 0) + 1;
+      const statusLabel = formatStatusLabel(a.status);
+      statusCounts[statusLabel] = (statusCounts[statusLabel] || 0) + 1;
 
-      const workMode = (() => {
-        const value = (a.rto_policy || 'UNKNOWN').toString().toUpperCase();
-        if (value === 'REMOTE') return 'Remote';
-        if (value === 'HYBRID') return 'Hybrid';
-        if (value === 'ONSITE') return 'Onsite';
-        return 'Unknown';
-      })();
-      workModeCounts[workMode] = (workModeCounts[workMode] || 0) + 1;
+      const sourceDate = a.date_applied || a.created_at;
+      const timestamp = sourceDate
+        ? (parseDateOnlyLocal(sourceDate)?.getTime() ?? new Date(sourceDate).getTime())
+        : Number.NaN;
+      if (Number.isNaN(timestamp)) {
+        ageCounts.Undated += 1;
+      } else {
+        const ageDays = Math.max(0, Math.floor((now - timestamp) / DAY_MS));
+        if (ageDays <= 7) ageCounts['Last 7 days'] += 1;
+        else if (ageDays <= 30) ageCounts['8-30 days'] += 1;
+        else if (ageDays <= 90) ageCounts['31-90 days'] += 1;
+        else ageCounts['90+ days'] += 1;
+      }
     });
 
     const locations = Object.entries(locationCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-    const topCompanies = Object.entries(companyCounts)
+    const statusBreakdown = Object.entries(statusCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
-    const workModes = [
-      { name: 'Remote', count: workModeCounts.Remote, color: 'bg-emerald-500' },
-      { name: 'Hybrid', count: workModeCounts.Hybrid, color: 'bg-amber-500' },
-      { name: 'Onsite', count: workModeCounts.Onsite, color: 'bg-rose-500' },
-      { name: 'Unknown', count: workModeCounts.Unknown, color: 'bg-slate-400' },
-    ];
+    const applicationAgeBreakdown = Object.entries(ageCounts)
+      .map(([name, count]) => ({ name, count }))
+      .filter((row) => row.count > 0);
 
-    const now = Date.now();
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const recentApplications30d = applications.filter((a) => {
       const sourceDate = a.date_applied || a.created_at;
@@ -404,12 +443,13 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       offerRate,
       recentApplications30d,
       locations,
-      topCompanies,
-      workModes,
+      statusBreakdown,
+      applicationAgeBreakdown,
       timelineAnalytics,
       timelineAnalyticsLoading,
+      timelineAnalyticsError,
     };
-  }, [applications, applicationStages, timelineAnalytics, timelineAnalyticsLoading]);
+  }, [applications, timelineAnalytics, timelineAnalyticsLoading, timelineAnalyticsError]);
 
   return (
     <>

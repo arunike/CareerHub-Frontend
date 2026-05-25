@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import type { Event, UserSettings } from '../../types';
-import { getEvents, getApplications, getUserSettings } from '../../api';
+import type { Event } from '../../types';
+import { getEvents, getApplications } from '../../api';
 import {
   format,
   parseISO,
@@ -14,13 +14,12 @@ import {
 import type { CareerApplication } from '../../types/application';
 import { message, Spin } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
+import PageActionToolbar from '../../components/PageActionToolbar';
 import { parseDateOnlyLocal } from '../../utils/dateOnly';
 
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
-const CohortAnalysis = lazy(() => import('./CohortAnalysis'));
-type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
 
 const SectionFallback = () => (
   <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -34,7 +33,6 @@ const Analytics: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [applications, setApplications] = useState<CareerApplication[]>([]);
-  const [applicationStages, setApplicationStages] = useState<ApplicationStage[]>([]);
 
   const [availabilityStats, setAvailabilityStats] = useState({
     totalEvents: 0,
@@ -61,18 +59,12 @@ const Analytics: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const [eventsResp, appsResp, settingsResp] = await Promise.all([
-        getEvents(),
-        getApplications(),
-        getUserSettings().catch(() => null),
-      ]);
+      const [eventsResp, appsResp] = await Promise.all([getEvents(), getApplications()]);
 
       const eventsData = eventsResp.data;
       const appsData = appsResp.data;
-      const stages = settingsResp?.data.application_stages;
 
       setApplications(appsData);
-      setApplicationStages(stages && stages.length > 0 ? stages : []);
 
       processAvailabilityData(eventsData);
       processCareerData(appsData);
@@ -220,33 +212,30 @@ const Analytics: React.FC = () => {
   return (
     <div className="space-y-6 w-full">
       {contextHolder}
-      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-          </div>
-
-          <div className="w-full sm:w-auto">
-            <SegmentedToggle
-              value={activeTab}
-              onChange={setActiveTab}
-              wrapperClassName="grid grid-cols-2 sm:flex"
-              options={[
-                {
-                  value: 'availability',
-                  label: 'Availability',
-                  activeClassName: 'bg-white text-gray-900 shadow-sm',
-                },
-                {
-                  value: 'career',
-                  label: 'Job Hunt',
-                  activeClassName: 'bg-white text-blue-600 shadow-sm',
-                },
-              ]}
-            />
-          </div>
-        </div>
-      </div>
+      <PageActionToolbar
+        title="Analytics Dashboard"
+        subtitle="Track availability patterns and job hunt performance."
+        extraActions={
+          <SegmentedToggle
+            value={activeTab}
+            onChange={setActiveTab}
+            wrapperClassName="grid grid-cols-2 sm:flex"
+            options={[
+              {
+                value: 'availability',
+                label: 'Availability',
+                activeClassName: 'bg-white text-gray-900 shadow-sm',
+              },
+              {
+                value: 'career',
+                label: 'Job Hunt',
+                activeClassName: 'bg-white text-blue-600 shadow-sm',
+              },
+            ]}
+          />
+        }
+        singleRowDesktop
+      />
 
       {activeTab === 'availability' && (
         <Suspense fallback={<SectionFallback />}>
@@ -257,15 +246,11 @@ const Analytics: React.FC = () => {
       {activeTab === 'career' && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <Suspense fallback={<SectionFallback />}>
-            <JobHuntAnalytics applications={applications} applicationStages={applicationStages} />
+            <JobHuntAnalytics applications={applications} />
           </Suspense>
 
           <Suspense fallback={<SectionFallback />}>
             <WeeklyActivityChart data={careerStats.weeklyActivity} />
-          </Suspense>
-
-          <Suspense fallback={<SectionFallback />}>
-            <CohortAnalysis applications={applications} />
           </Suspense>
         </div>
       )}
