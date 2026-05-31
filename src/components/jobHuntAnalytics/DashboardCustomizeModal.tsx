@@ -1,5 +1,10 @@
-import { EyeInvisibleOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Modal, Switch, Typography } from 'antd';
+import {
+  EyeInvisibleOutlined,
+  EyeOutlined,
+  SettingOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
+import { Button, Modal, Switch, Typography, Popconfirm } from 'antd';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { WidgetDefinition } from './types';
 
@@ -13,6 +18,7 @@ type Props = {
   enabledWidgets: string[];
   toggleWidget: (id: string) => void;
   customWidgets: CustomWidget[];
+  onDeleteCustomWidget?: (id: string) => void;
 };
 
 const DashboardCustomizeModal = ({
@@ -23,6 +29,7 @@ const DashboardCustomizeModal = ({
   enabledWidgets,
   toggleWidget,
   customWidgets,
+  onDeleteCustomWidget,
 }: Props) => {
   return (
     <Modal
@@ -101,17 +108,41 @@ const DashboardCustomizeModal = ({
                       isEnabled ? 'border-purple-200 bg-purple-50' : 'border-gray-200 bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="font-medium text-gray-900">{widget.name}</div>
-                        <div className="text-xs text-gray-400 mt-1">Custom • {widget.query}</div>
+                        <div
+                          className="text-xs text-gray-400 mt-1 font-mono max-w-[320px] truncate"
+                          title={widget.query}
+                        >
+                          Custom • {widget.query}
+                        </div>
                       </div>
-                      <Switch
-                        checked={isEnabled}
-                        onChange={() => toggleWidget(widget.id)}
-                        checkedChildren={<EyeOutlined />}
-                        unCheckedChildren={<EyeInvisibleOutlined />}
-                      />
+                      <div className="flex items-center gap-3">
+                        {onDeleteCustomWidget && (
+                          <Popconfirm
+                            title="Delete custom widget"
+                            description="Are you sure you want to delete this custom widget?"
+                            onConfirm={() => onDeleteCustomWidget(widget.id)}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="topRight"
+                          >
+                            <Button
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                              title="Delete Custom Widget"
+                            />
+                          </Popconfirm>
+                        )}
+                        <Switch
+                          checked={isEnabled}
+                          onChange={() => toggleWidget(widget.id)}
+                          checkedChildren={<EyeOutlined />}
+                          unCheckedChildren={<EyeInvisibleOutlined />}
+                        />
+                      </div>
                     </div>
                   </div>
                 );

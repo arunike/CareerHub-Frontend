@@ -5,11 +5,15 @@ import {
   RiseOutlined,
   PieChartOutlined,
   BarChartOutlined,
-  CloseCircleOutlined,
   FileTextOutlined,
   TrophyOutlined,
   EnvironmentOutlined,
   NumberOutlined,
+  DollarOutlined,
+  HomeOutlined,
+  SendOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import {
   ResponsiveContainer,
@@ -28,12 +32,12 @@ import type { CustomWidget } from '../hooks/useCustomWidgets';
 
 interface CustomWidgetCardProps {
   widget: CustomWidget;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#60a5fa', '#ec4899'];
 
-const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete }) => {
+const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
   const { cachedData, color, icon, name } = widget;
 
   const colorMap: Record<string, { bg: string; text: string; fill: string }> = {
@@ -66,7 +70,17 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
                     ? EnvironmentOutlined
                     : icon === 'NumberOutlined'
                       ? NumberOutlined
-                      : CalendarOutlined;
+                      : icon === 'DollarOutlined'
+                        ? DollarOutlined
+                        : icon === 'HomeOutlined'
+                          ? HomeOutlined
+                          : icon === 'SendOutlined'
+                            ? SendOutlined
+                            : icon === 'CheckCircleOutlined'
+                              ? CheckCircleOutlined
+                              : icon === 'WarningOutlined'
+                                ? WarningOutlined
+                                : CalendarOutlined;
 
   if (widget.widgetType === 'metric') {
     const value = cachedData?.value ?? '...';
@@ -74,13 +88,6 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
 
     return (
       <div className="enterprise-card group relative h-full p-6">
-        <button
-          onClick={() => onDelete(widget.id)}
-          className="absolute right-2 top-2 z-10 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100"
-          title="Delete custom widget"
-        >
-          <CloseCircleOutlined className="text-sm" />
-        </button>
         <div className="flex items-center gap-4">
           <div className={`flex items-center justify-center w-12 h-12 ${colors.bg} rounded-lg`}>
             <IconComponent className={`text-2xl ${colors.text}`} />
@@ -101,13 +108,6 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
 
     return (
       <div className="enterprise-card group relative h-full p-6">
-        <button
-          onClick={() => onDelete(widget.id)}
-          className="absolute right-2 top-2 z-10 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100"
-          title="Delete custom widget"
-        >
-          <CloseCircleOutlined className="text-sm" />
-        </button>
         <div className="flex items-center gap-2 mb-6">
           <IconComponent className={`w-5 h-5 ${colors.text}`} />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>

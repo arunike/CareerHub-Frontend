@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
 import { loadAnalyticsSourceData, runAnalyticsWidgetQuery } from '../lib/browserAi';
+import { runVisualWidgetQuery } from '../lib/visualWidgetQuery';
+import type { VisualConfig } from '../lib/visualWidgetQuery';
 
 export interface CustomWidget {
   id: string;
@@ -10,6 +12,8 @@ export interface CustomWidget {
   icon: string;
   color: string;
   createdAt: string;
+  queryType?: 'ai' | 'visual';
+  visualConfig?: VisualConfig;
   cachedData?: {
     type: 'metric' | 'chart';
     value?: number | string;
@@ -53,7 +57,12 @@ export const useCustomWidgets = (
       const updatedWidgets = await Promise.all(
         customWidgets.map(async (widget) => {
           try {
-            const data = await runAnalyticsWidgetQuery(widget.query, context, sourceData);
+            let data;
+            if (widget.queryType === 'visual' && widget.visualConfig) {
+              data = runVisualWidgetQuery(widget.visualConfig, sourceData);
+            } else {
+              data = await runAnalyticsWidgetQuery(widget.query, context, sourceData);
+            }
             if (JSON.stringify(widget.cachedData) !== JSON.stringify(data)) {
               hasUpdates = true;
               return { ...widget, cachedData: data };
@@ -101,10 +110,22 @@ export const useCustomWidgets = (
     }
   };
 
+  const testVisualQuery = async (config: VisualConfig) => {
+    try {
+      const sourceData = await loadAnalyticsSourceData();
+      return runVisualWidgetQuery(config, sourceData);
+    } catch (error) {
+      messageApi.error('Visual query calculation failed');
+      console.error('Visual Query Error:', error);
+      throw error;
+    }
+  };
+
   return {
     customWidgets,
     addCustomWidget,
     deleteCustomWidget,
     testQuery,
+    testVisualQuery,
   };
 };
