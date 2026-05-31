@@ -23,6 +23,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
 import CategoryBadge from '../../components/CategoryBadge';
+import { SettingsSkeleton } from '../../components/SkeletonLoader';
 import EditableNumberInput from '../../components/EditableNumberInput';
 import FriendlyTimeInput from '../../components/FriendlyTimeInput';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -612,7 +613,7 @@ const Settings: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading settings...</div>;
+    return <SettingsSkeleton />;
   }
 
   if (!settings) {

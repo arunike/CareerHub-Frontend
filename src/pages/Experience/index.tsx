@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
   Button,
   Typography,
-  Spin,
   message,
   Popconfirm,
   Avatar,
@@ -34,6 +33,7 @@ import {
   UnlockOutlined,
   InboxOutlined,
 } from '@ant-design/icons';
+import { MetricCardsSkeleton, ListSkeleton } from '../../components/SkeletonLoader';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
 import {
@@ -1164,8 +1164,9 @@ const ExperiencePage: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Spin size="large" />
+        <div className="space-y-6">
+          <MetricCardsSkeleton count={4} />
+          <ListSkeleton count={3} />
         </div>
       ) : experiences.length === 0 ? (
         <div className="bg-white p-16 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center shadow-sm">

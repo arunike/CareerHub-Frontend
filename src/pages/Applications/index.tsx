@@ -32,6 +32,7 @@ import {
   DownOutlined,
   UpOutlined,
 } from '@ant-design/icons';
+import { MetricCardsSkeleton, TableSkeleton } from '../../components/SkeletonLoader';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -1116,32 +1117,36 @@ const Applications = () => {
         </div>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {applicationMetrics.map((metric) => (
-          <section
-            key={metric.label}
-            className="enterprise-card px-4 py-3.5 md:px-5 md:py-4"
-            aria-label={metric.label}
-          >
-            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
-              {metric.label}
-            </div>
-            <div
-              className={`mt-2 text-2xl font-[760] leading-none ${
-                metric.tone === 'blue'
-                  ? 'text-blue-600'
-                  : metric.tone === 'emerald'
-                    ? 'text-emerald-700'
-                    : metric.tone === 'amber'
-                      ? 'text-amber-700'
-                      : 'text-slate-950'
-              }`}
+      {loading ? (
+        <MetricCardsSkeleton count={4} />
+      ) : (
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {applicationMetrics.map((metric) => (
+            <section
+              key={metric.label}
+              className="enterprise-card px-4 py-3.5 md:px-5 md:py-4"
+              aria-label={metric.label}
             >
-              {metric.value}
-            </div>
-          </section>
-        ))}
-      </div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                {metric.label}
+              </div>
+              <div
+                className={`mt-2 text-2xl font-[760] leading-none ${
+                  metric.tone === 'blue'
+                    ? 'text-blue-600'
+                    : metric.tone === 'emerald'
+                      ? 'text-emerald-700'
+                      : metric.tone === 'amber'
+                        ? 'text-amber-700'
+                        : 'text-slate-950'
+                }`}
+              >
+                {metric.value}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
 
       {/* Filter bar */}
       {isMobile ? (
@@ -1296,14 +1301,19 @@ const Applications = () => {
       {isMobile ? (
         <div className="space-y-3">
           {loading ? (
-            <div className="enterprise-card space-y-3 px-4 py-5">
-              <div className="h-4 w-5/12 rounded-full bg-slate-100" />
-              <div className="h-3 w-9/12 rounded-full bg-slate-100" />
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <div className="h-10 rounded-xl bg-slate-100" />
-                <div className="h-10 rounded-xl bg-slate-100" />
+            Array.from({ length: 3 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="enterprise-card space-y-3 px-4 py-5 animate-in fade-in duration-300"
+              >
+                <div className="shimmer-bg h-4 w-5/12 rounded-full" />
+                <div className="shimmer-bg h-3 w-9/12 rounded-full" />
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <div className="shimmer-bg h-10 rounded-xl" />
+                  <div className="shimmer-bg h-10 rounded-xl" />
+                </div>
               </div>
-            </div>
+            ))
           ) : filteredData.length === 0 ? (
             <div className="rounded-[18px] border border-dashed border-slate-300/90 bg-white/70 px-4 py-10 text-center shadow-sm backdrop-blur">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm">
@@ -1417,6 +1427,8 @@ const Applications = () => {
             })
           )}
         </div>
+      ) : loading ? (
+        <TableSkeleton />
       ) : (
         <div className="enterprise-table-shell">
           <Table

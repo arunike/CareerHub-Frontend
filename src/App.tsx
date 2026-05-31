@@ -1,10 +1,23 @@
 import { lazy, Suspense } from 'react';
-import { ConfigProvider, Spin } from 'antd';
+import { ConfigProvider } from 'antd';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
+import {
+  PageHeaderSkeleton,
+  MetricCardsSkeleton,
+  TableSkeleton,
+  ListSkeleton,
+  GridSkeleton,
+  CalendarSkeleton,
+  SettingsSkeleton,
+  DocumentGridSkeleton,
+  OfferComparisonSkeleton,
+  SkeletonBlock,
+  AvailabilityTextSkeleton,
+} from './components/SkeletonLoader';
 
 const HomePage = lazy(() => import('./pages/Home'));
 const Availability = lazy(() => import('./pages/Availability'));
@@ -26,20 +39,199 @@ const NegotiationResultPage = lazy(() => import('./pages/NegotiationResult'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const LegalPage = lazy(() => import('./pages/Legal'));
 
-const RouteFallback = () => (
-  <div className="flex min-h-[40vh] items-center justify-center">
-    <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
-      <div className="flex items-center gap-3">
-        <Spin size="small" />
-        <div className="text-sm font-semibold text-slate-700">Loading workspace</div>
+const RouteFallback = () => {
+  const path = window.location.pathname;
+
+  if (path === '/' || path.startsWith('/availability')) {
+    const isCalendar = window.location.search.includes('view=calendar');
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        {isCalendar ? <CalendarSkeleton /> : <AvailabilityTextSkeleton />}
       </div>
-      <div className="space-y-2">
-        <div className="h-3 w-11/12 rounded-full bg-slate-100" />
-        <div className="h-3 w-8/12 rounded-full bg-slate-100" />
+    );
+  }
+
+  if (path.startsWith('/events')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <GridSkeleton count={4} />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/holidays')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <ListSkeleton count={3} />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/analytics')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <MetricCardsSkeleton count={3} />
+        <div className="enterprise-card p-6 min-h-[300px] flex flex-col justify-between">
+          <SkeletonBlock width="140px" height="1.25rem" />
+          <SkeletonBlock width="100%" height="200px" className="opacity-80" />
+        </div>
+      </div>
+    );
+  }
+
+  if (path.startsWith('/settings')) {
+    return <SettingsSkeleton />;
+  }
+
+  if (path.startsWith('/applications')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <MetricCardsSkeleton count={4} />
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/offers')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <OfferComparisonSkeleton />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/documents')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <DocumentGridSkeleton />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/tasks')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <div className="enterprise-card p-5 space-y-4 animate-in fade-in duration-300">
+          <div className="border-b border-slate-100 pb-3 flex justify-between">
+            <SkeletonBlock width="120px" height="1.1rem" />
+            <SkeletonBlock width="80px" height="1.1rem" />
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-b-0"
+              >
+                <SkeletonBlock width="20px" height="20px" circle className="shrink-0" />
+                <SkeletonBlock width="60%" height="0.95rem" />
+                <SkeletonBlock
+                  width="60px"
+                  height="1.25rem"
+                  className="rounded-full ml-auto shrink-0"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (path.startsWith('/experience')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <MetricCardsSkeleton count={4} />
+        <ListSkeleton count={3} />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/jd-reports')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/ai-tools') || path.startsWith('/cover-letters')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+          <div className="md:col-span-1 enterprise-card p-6 space-y-4">
+            <SkeletonBlock width="120px" height="1.1rem" />
+            <SkeletonBlock width="100%" height="2.25rem" />
+            <SkeletonBlock width="100%" height="2.25rem" />
+            <SkeletonBlock width="100%" height="8rem" />
+          </div>
+          <div className="md:col-span-2 enterprise-card p-6 space-y-4">
+            <SkeletonBlock width="180px" height="1.25rem" />
+            <div className="space-y-2 pt-2">
+              <SkeletonBlock width="95%" height="0.9rem" />
+              <SkeletonBlock width="90%" height="0.9rem" />
+              <SkeletonBlock width="95%" height="0.9rem" />
+              <SkeletonBlock width="80%" height="0.9rem" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (path.startsWith('/profile')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <div className="enterprise-card p-6 flex flex-col md:flex-row gap-6 animate-in fade-in duration-300">
+          <div className="flex flex-col items-center shrink-0">
+            <SkeletonBlock width="100px" height="100px" circle />
+            <SkeletonBlock width="120px" height="1.1rem" className="mt-3" />
+            <SkeletonBlock width="80px" height="0.75rem" className="mt-2 opacity-60" />
+          </div>
+          <div className="flex-1 space-y-5">
+            <div className="border-b border-slate-100 pb-2">
+              <SkeletonBlock width="140px" height="1.25rem" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="space-y-2">
+                  <SkeletonBlock width="100px" height="0.8rem" className="opacity-75" />
+                  <SkeletonBlock width="100%" height="2.25rem" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center animate-in fade-in duration-300">
+      <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+        <div className="flex items-center gap-3">
+          <div className="shimmer-bg w-6 h-6 rounded-full" />
+          <SkeletonBlock width="120px" height="1.1rem" />
+        </div>
+        <div className="space-y-2">
+          <SkeletonBlock width="95%" height="0.75rem" />
+          <SkeletonBlock width="70%" height="0.75rem" />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 function AppRoutes() {
   const location = useLocation();
