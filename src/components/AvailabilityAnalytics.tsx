@@ -23,7 +23,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
 import DashboardCustomizeModal from './jobHuntAnalytics/DashboardCustomizeModal';
 import { AVAILABLE_WIDGETS } from './availabilityAnalytics/constants';
-import CreateAvailabilityWidgetModal from './availabilityAnalytics/CreateAvailabilityWidgetModal';
+import CreateCustomWidgetModal from './jobHuntAnalytics/CreateCustomWidgetModal';
+import type { VisualConfig } from '../lib/visualWidgetQuery';
 import {
   getAvailabilityWidgetClass,
   renderAvailabilityWidget,
@@ -110,13 +111,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     messageApi
   );
 
-  const [newWidgetName, setNewWidgetName] = useState('');
-  const [newWidgetQuery, setNewWidgetQuery] = useState('');
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<any>(null);
-  const [newWidgetIcon, setNewWidgetIcon] = useState('CalendarOutlined');
-  const [newWidgetColor, setNewWidgetColor] = useState('blue');
-
   useEffect(() => {
     setWidgetOrder((prev) => {
       const newOrder = prev.filter((id) => enabledWidgets.includes(id));
@@ -175,42 +169,26 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     });
   };
 
-  const handleTestQuery = async () => {
-    if (!newWidgetQuery.trim()) return;
-
-    setIsValidating(true);
-    setValidationResult(null);
-    try {
-      const data = await testQuery(newWidgetQuery);
-      setValidationResult(data);
-      messageApi.success('Query successful!');
-    } catch (error) {
-      messageApi.error('Query failed');
-      console.error('Query failed', error);
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  const handleCreateCustomWidget = () => {
-    if (!newWidgetName.trim()) {
-      messageApi.error('Please enter a widget name');
-      return;
-    }
-    if (!validationResult) {
-      messageApi.error('Please test your query first');
-      return;
-    }
-
+  const handleCreateCustomWidget = (widgetData: {
+    name: string;
+    queryType: 'ai' | 'visual';
+    visualConfig?: VisualConfig;
+    query: string;
+    icon: string;
+    color: string;
+    cachedData: any;
+  }) => {
     const customWidget: any = {
       id: `custom-${Date.now()}`,
-      name: newWidgetName.trim(),
-      query: newWidgetQuery,
-      widgetType: validationResult.type,
-      icon: newWidgetIcon,
-      color: newWidgetColor,
+      name: widgetData.name,
+      query: widgetData.query,
+      widgetType: widgetData.cachedData.type,
+      icon: widgetData.icon,
+      color: widgetData.color,
       createdAt: new Date().toISOString(),
-      cachedData: validationResult,
+      queryType: widgetData.queryType,
+      visualConfig: widgetData.visualConfig,
+      cachedData: widgetData.cachedData,
     };
 
     addCustomWidget(customWidget);
@@ -219,14 +197,13 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     setEnabledWidgets(updatedEnabled);
     localStorage.setItem('availability_analytics_enabled', JSON.stringify(updatedEnabled));
 
-    setNewWidgetName('');
-    setNewWidgetQuery('');
-    setValidationResult(null);
-    setNewWidgetIcon('CalendarOutlined');
-    setNewWidgetColor('blue');
     setIsCreateWidgetOpen(false);
-
     messageApi.success('Custom widget created!');
+  };
+
+  const handleDeleteCustomWidget = (id: string) => {
+    deleteCustomWidget(id);
+    setEnabledWidgets((prev) => prev.filter((wId) => wId !== id));
   };
 
   return (
@@ -288,23 +265,15 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         enabledWidgets={enabledWidgets}
         toggleWidget={toggleWidget}
         customWidgets={customWidgets}
+        onDeleteCustomWidget={handleDeleteCustomWidget}
       />
 
-      <CreateAvailabilityWidgetModal
+      <CreateCustomWidgetModal
         open={isCreateWidgetOpen}
         onCancel={() => setIsCreateWidgetOpen(false)}
         onCreate={handleCreateCustomWidget}
-        newWidgetName={newWidgetName}
-        setNewWidgetName={setNewWidgetName}
-        newWidgetQuery={newWidgetQuery}
-        setNewWidgetQuery={setNewWidgetQuery}
-        isValidating={isValidating}
-        onTestQuery={handleTestQuery}
-        validationResult={validationResult}
-        newWidgetIcon={newWidgetIcon}
-        setNewWidgetIcon={setNewWidgetIcon}
-        newWidgetColor={newWidgetColor}
-        setNewWidgetColor={setNewWidgetColor}
+        testQuery={testQuery}
+        initialDataSource="events"
       />
     </>
   );

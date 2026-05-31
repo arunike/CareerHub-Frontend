@@ -23,6 +23,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
 import type { CustomWidget } from '../hooks/useCustomWidgets';
+import type { VisualConfig } from '../lib/visualWidgetQuery';
 import { AVAILABLE_WIDGETS } from './jobHuntAnalytics/constants';
 import DashboardCustomizeModal from './jobHuntAnalytics/DashboardCustomizeModal';
 import CreateCustomWidgetModal from './jobHuntAnalytics/CreateCustomWidgetModal';
@@ -193,13 +194,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     messageApi
   );
 
-  const [newWidgetName, setNewWidgetName] = useState('');
-  const [newWidgetQuery, setNewWidgetQuery] = useState('');
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
-  const [newWidgetIcon, setNewWidgetIcon] = useState('FileTextOutlined');
-  const [newWidgetColor, setNewWidgetColor] = useState('blue');
-
   useEffect(() => {
     setWidgetOrder((prev) => {
       const newOrder = prev.filter((id) => enabledWidgets.includes(id));
@@ -299,42 +293,26 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     });
   };
 
-  const handleTestQuery = async () => {
-    if (!newWidgetQuery.trim()) return;
-
-    setIsValidating(true);
-    setValidationResult(null);
-    try {
-      const data = await testQuery(newWidgetQuery);
-      setValidationResult(data);
-      messageApi.success('Query successful!');
-    } catch (error) {
-      console.error('Query failed', error);
-      messageApi.error('Query failed');
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  const handleCreateCustomWidget = () => {
-    if (!newWidgetName.trim()) {
-      messageApi.error('Please enter a widget name');
-      return;
-    }
-    if (!validationResult) {
-      messageApi.error('Please test your query first');
-      return;
-    }
-
+  const handleCreateCustomWidget = (widgetData: {
+    name: string;
+    queryType: 'ai' | 'visual';
+    visualConfig?: VisualConfig;
+    query: string;
+    icon: string;
+    color: string;
+    cachedData: ValidationResult;
+  }) => {
     const customWidget: CustomWidget = {
       id: `custom-${Date.now()}`,
-      name: newWidgetName.trim(),
-      query: newWidgetQuery,
-      widgetType: validationResult.type,
-      icon: newWidgetIcon,
-      color: newWidgetColor,
+      name: widgetData.name,
+      query: widgetData.query,
+      widgetType: widgetData.cachedData.type,
+      icon: widgetData.icon,
+      color: widgetData.color,
       createdAt: new Date().toISOString(),
-      cachedData: validationResult,
+      queryType: widgetData.queryType,
+      visualConfig: widgetData.visualConfig,
+      cachedData: widgetData.cachedData,
     };
 
     addCustomWidget(customWidget);
@@ -343,14 +321,13 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     setEnabledWidgets(updatedEnabled);
     localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(updatedEnabled));
 
-    setNewWidgetName('');
-    setNewWidgetQuery('');
-    setValidationResult(null);
-    setNewWidgetIcon('FileTextOutlined');
-    setNewWidgetColor('blue');
     setIsCreateWidgetOpen(false);
-
     messageApi.success('Custom widget created!');
+  };
+
+  const handleDeleteCustomWidget = (id: string) => {
+    deleteCustomWidget(id);
+    setEnabledWidgets((prev) => prev.filter((wId) => wId !== id));
   };
 
   const stats: JobHuntStats = useMemo(() => {
@@ -383,6 +360,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
       '90+ days': 0,
       Undated: 0,
     };
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -507,23 +485,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
         enabledWidgets={enabledWidgets}
         toggleWidget={toggleWidget}
         customWidgets={customWidgets}
+        onDeleteCustomWidget={handleDeleteCustomWidget}
       />
 
       <CreateCustomWidgetModal
         open={isCreateWidgetOpen}
         onCancel={() => setIsCreateWidgetOpen(false)}
         onCreate={handleCreateCustomWidget}
-        newWidgetName={newWidgetName}
-        setNewWidgetName={setNewWidgetName}
-        newWidgetQuery={newWidgetQuery}
-        setNewWidgetQuery={setNewWidgetQuery}
-        isValidating={isValidating}
-        onTestQuery={handleTestQuery}
-        validationResult={validationResult}
-        newWidgetIcon={newWidgetIcon}
-        setNewWidgetIcon={setNewWidgetIcon}
-        newWidgetColor={newWidgetColor}
-        setNewWidgetColor={setNewWidgetColor}
+        testQuery={testQuery}
       />
     </>
   );
