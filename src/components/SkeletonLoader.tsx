@@ -41,7 +41,9 @@ export const PageHeaderSkeleton: React.FC = () => {
 
 export const MetricCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
   return (
-    <div className={`grid grid-cols-2 gap-3 mb-6 ${count === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+    <div
+      className={`grid grid-cols-2 gap-3 mb-6 ${count === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
+    >
       {Array.from({ length: count }).map((_, idx) => {
         // Vary the color block themes (blue, emerald, amber, slate)
         const tones = [
@@ -56,7 +58,9 @@ export const MetricCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 })
           <div key={idx} className="enterprise-card px-4 py-4 md:px-5 md:py-5 space-y-4 bg-white">
             <div className="flex justify-between items-center">
               <SkeletonBlock width="50%" height="0.8rem" className="opacity-60" />
-              <div className={`w-7 h-7 rounded-lg ${tone.bg} flex items-center justify-center shrink-0`}>
+              <div
+                className={`w-7 h-7 rounded-lg ${tone.bg} flex items-center justify-center shrink-0`}
+              >
                 <div className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
               </div>
             </div>
@@ -97,7 +101,11 @@ export const TableSkeleton: React.FC = () => {
         <SkeletonBlock width="40%" height="0.75rem" className="opacity-80 hidden md:block" />
         <SkeletonBlock width="50%" height="0.75rem" className="opacity-80" />
         <SkeletonBlock width="60%" height="0.75rem" className="opacity-80 hidden md:block" />
-        <SkeletonBlock width="50px" height="0.75rem" className="opacity-80 justify-self-end text-right" />
+        <SkeletonBlock
+          width="50px"
+          height="0.75rem"
+          className="opacity-80 justify-self-end text-right"
+        />
       </div>
 
       {/* Fake Table Rows */}
@@ -112,16 +120,25 @@ export const TableSkeleton: React.FC = () => {
           const status = statuses[idx % statuses.length];
 
           return (
-            <div key={idx} className="p-4 grid grid-cols-4 md:grid-cols-6 gap-4 items-center hover:bg-slate-50/30">
+            <div
+              key={idx}
+              className="p-4 grid grid-cols-4 md:grid-cols-6 gap-4 items-center hover:bg-slate-50/30"
+            >
               <div className="flex items-center gap-3 min-w-0">
                 <SkeletonBlock width="16px" height="16px" className="rounded shrink-0 opacity-40" />
-                <SkeletonBlock width="24px" height="24px" className="rounded-lg shrink-0 opacity-80" />
+                <SkeletonBlock
+                  width="24px"
+                  height="24px"
+                  className="rounded-lg shrink-0 opacity-80"
+                />
                 <SkeletonBlock width="70%" height="0.95rem" className="font-semibold" />
               </div>
               <SkeletonBlock width="85%" height="0.95rem" />
               <SkeletonBlock width="65%" height="0.85rem" className="hidden md:block opacity-75" />
               <div className="flex">
-                <div className={`h-5.5 rounded-full ${status.bg} border flex items-center px-2 gap-1.5 shrink-0`}>
+                <div
+                  className={`h-5.5 rounded-full ${status.bg} border flex items-center px-2 gap-1.5 shrink-0`}
+                >
                   <div className={`w-1.5 h-1.5 rounded-full ${status.dot} shrink-0`} />
                   <SkeletonBlock width={status.width} height="0.45rem" className="opacity-75" />
                 </div>
@@ -164,7 +181,11 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <SkeletonBlock width="240px" height="1.1rem" className="font-semibold" />
                   <div className="h-5 rounded-full bg-blue-50/50 border border-blue-100/30 px-2 flex items-center">
-                    <SkeletonBlock width="45px" height="0.45rem" className="opacity-75 bg-blue-300" />
+                    <SkeletonBlock
+                      width="45px"
+                      height="0.45rem"
+                      className="opacity-75 bg-blue-300"
+                    />
                   </div>
                 </div>
                 <div className="flex gap-4 items-center flex-wrap">
@@ -182,7 +203,12 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
           {/* Realistic Skill Tag Row for Journey List items */}
           <div className="pt-3 border-t border-slate-100/60 flex flex-wrap gap-2">
             {Array.from({ length: 3 }).map((_, tIdx) => (
-              <SkeletonBlock key={tIdx} width="65px" height="1.5rem" className="rounded-md opacity-70" />
+              <SkeletonBlock
+                key={tIdx}
+                width="65px"
+                height="1.5rem"
+                className="rounded-md opacity-70"
+              />
             ))}
           </div>
         </div>
@@ -195,7 +221,12 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 animate-in fade-in duration-300">
       {Array.from({ length: count }).map((_, idx) => {
-        const borderColors = ['border-blue-100/50', 'border-emerald-100/50', 'border-amber-100/50', 'border-slate-100/60'];
+        const borderColors = [
+          'border-blue-100/50',
+          'border-emerald-100/50',
+          'border-amber-100/50',
+          'border-slate-100/60',
+        ];
         const tagColors = [
           { bg: 'bg-blue-50/70', dot: 'bg-blue-400' },
           { bg: 'bg-emerald-50/70', dot: 'bg-emerald-400' },
@@ -411,7 +442,12 @@ export const DocumentGridSkeleton: React.FC = () => {
       {Array.from({ length: 8 }).map((_, idx) => (
         <div key={idx} className="enterprise-card p-4 space-y-4 bg-white border border-slate-100">
           <div className="aspect-video bg-slate-50 border border-slate-100/50 rounded-xl flex items-center justify-center p-4">
-            <SkeletonBlock width="36px" height="36px" circle className="opacity-85 bg-blue-100/50" />
+            <SkeletonBlock
+              width="36px"
+              height="36px"
+              circle
+              className="opacity-85 bg-blue-100/50"
+            />
           </div>
           <div className="space-y-2">
             <SkeletonBlock width="85%" height="1.05rem" className="font-semibold" />
