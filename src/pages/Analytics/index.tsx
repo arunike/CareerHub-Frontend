@@ -12,26 +12,30 @@ import {
   subWeeks,
 } from 'date-fns';
 import type { CareerApplication } from '../../types/application';
-import { message, Spin } from 'antd';
+import { message } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { parseDateOnlyLocal } from '../../utils/dateOnly';
+
+import { MetricCardsSkeleton, SkeletonBlock } from '../../components/SkeletonLoader';
 
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
 
 const SectionFallback = () => (
-  <div className="enterprise-section flex min-h-[240px] items-center justify-center p-6">
-    <div className="w-full max-w-lg space-y-4">
-      <div className="flex items-center gap-3">
-        <Spin size="small" />
-        <span className="text-sm font-semibold text-slate-600">Loading analytics</span>
+  <div className="w-full space-y-6 animate-in fade-in duration-300">
+    <MetricCardsSkeleton count={3} />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 enterprise-card p-6 min-h-[360px] flex flex-col justify-between">
+        <SkeletonBlock width="150px" height="1.25rem" />
+        <SkeletonBlock width="100%" height="240px" className="opacity-80" />
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <div className="h-20 rounded-2xl bg-slate-100/80" />
-        <div className="h-20 rounded-2xl bg-slate-100/80" />
-        <div className="h-20 rounded-2xl bg-slate-100/80" />
+      <div className="enterprise-card p-6 min-h-[360px] flex flex-col justify-between">
+        <SkeletonBlock width="120px" height="1.25rem" />
+        <div className="flex items-center justify-center h-full">
+          <SkeletonBlock width="180px" height="180px" circle className="opacity-80" />
+        </div>
       </div>
     </div>
   </div>
@@ -216,7 +220,18 @@ const Analytics: React.FC = () => {
   };
 
   if (loading) {
-    return <SectionFallback />;
+    return (
+      <div className="space-y-6 w-full animate-in fade-in duration-300">
+        {contextHolder}
+        <PageActionToolbar
+          title="Analytics Dashboard"
+          subtitle="Track availability patterns and job hunt performance."
+          extraActions={<div className="w-[180px] h-[38px] shimmer-bg rounded-lg" />}
+          singleRowDesktop
+        />
+        <SectionFallback />
+      </div>
+    );
   }
 
   return (

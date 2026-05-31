@@ -812,6 +812,22 @@ body {
   animation: pulse-slow 10s ease-in-out infinite;
 }
 
+/* Premium Shimmer Animation for Skeleton Screen Loaders */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-bg {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
 /* Pull the tooltip arrow slightly inside the tooltip box to eliminate sub-pixel gaps under zoom/high-DPI */
 .ant-tooltip-placement-top .ant-tooltip-arrow,
 .ant-tooltip-placement-topLeft .ant-tooltip-arrow,

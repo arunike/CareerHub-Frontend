@@ -26,6 +26,7 @@ import { Checkbox } from 'antd';
 import type { Event } from '../../../types';
 import CategoryBadge from '../../../components/CategoryBadge';
 import RowActions from '../../../components/RowActions';
+import { GridSkeleton } from '../../../components/SkeletonLoader';
 
 const { Text } = Typography;
 
@@ -55,20 +56,7 @@ const EventsGrid = ({
   onSelectChange,
 }: EventsGridProps) => {
   if (loading) {
-    return (
-      <div className="grid grid-cols-1 gap-4 p-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="enterprise-card space-y-4 p-5">
-            <div className="h-4 w-8/12 rounded-full bg-slate-100" />
-            <div className="h-3 w-5/12 rounded-full bg-slate-100" />
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <div className="h-8 rounded-xl bg-slate-100" />
-              <div className="h-8 rounded-xl bg-slate-100" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <GridSkeleton count={4} />;
   }
 
   if (events.length === 0) {
