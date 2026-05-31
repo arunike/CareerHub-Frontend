@@ -143,11 +143,13 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
           <div className="min-w-0">
             <Typography.Title
               level={2}
+              className="text-balance"
               style={{
                 margin: 0,
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.2,
+                color: '#111827',
+                fontWeight: 740,
+                letterSpacing: '-0.015em',
+                lineHeight: 1.08,
               }}
             >
               {title}
@@ -155,7 +157,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
             {subtitle ? (
               <Typography.Text
                 type="secondary"
-                style={{ fontSize: '14px', display: 'block', marginTop: '4px' }}
+                style={{ fontSize: '14px', display: 'block', marginTop: '6px' }}
               >
                 {subtitle}
               </Typography.Text>
@@ -164,7 +166,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
 
           <div className="flex flex-col gap-3">
             {primaryActionNode ? (
-              <div className="w-full [&_.ant-btn]:!h-12 [&_.ant-btn]:w-full [&_.ant-btn]:!rounded-2xl [&_.ant-btn]:!font-semibold [&_.ant-btn]:shadow-sm">
+              <div className="w-full [&_.ant-btn]:!h-11 [&_.ant-btn]:w-full [&_.ant-btn]:!rounded-xl [&_.ant-btn]:!font-semibold">
                 {primaryActionNode}
               </div>
             ) : null}
@@ -183,7 +185,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
             ) : null}
 
             {mobileActionsOpen ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="enterprise-filter-bar p-3">
                 <div className="grid grid-cols-1 gap-3">
                   {extraActions ? <div className="w-full">{extraActions}</div> : null}
                   {deleteAllNode ? <div className="w-full">{deleteAllNode}</div> : null}
@@ -205,11 +207,13 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
           <div className="min-w-0">
             <Typography.Title
               level={2}
+              className="text-balance"
               style={{
                 margin: 0,
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.2,
+                color: '#111827',
+                fontWeight: 740,
+                letterSpacing: '-0.015em',
+                lineHeight: 1.08,
               }}
             >
               {title}

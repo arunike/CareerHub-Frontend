@@ -24,7 +24,7 @@ const AvailabilityGeneratorCard = ({
   onGenerate,
 }: Props) => {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="enterprise-section p-6">
       <div className="flex flex-col md:flex-row md:items-end gap-4">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
@@ -73,7 +73,7 @@ const AvailabilityGeneratorCard = ({
           <button
             onClick={onGenerate}
             disabled={loading}
-            className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className="h-[42px] w-full rounded-lg border border-blue-600 bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_10px_18px_-16px_rgba(49,88,183,0.74)] transition-colors hover:border-blue-700 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
           >
             {loading ? 'Calculating...' : 'Generate Availability'}
           </button>

@@ -39,7 +39,7 @@ export const renderAvailabilityWidget = (
   switch (id) {
     case 'total':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full">
+        <div className="enterprise-card h-full p-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
               <CalendarOutlined className="text-2xl text-blue-600" />
@@ -53,7 +53,7 @@ export const renderAvailabilityWidget = (
       );
     case 'weekly':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full">
+        <div className="enterprise-card h-full p-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
               <RiseOutlined className="text-2xl text-green-600" />
@@ -67,7 +67,7 @@ export const renderAvailabilityWidget = (
       );
     case 'duration':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full">
+        <div className="enterprise-card h-full p-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg">
               <ClockCircleOutlined className="text-2xl text-amber-600" />
@@ -81,7 +81,7 @@ export const renderAvailabilityWidget = (
       );
     case 'category':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+        <div className="enterprise-card h-full p-6">
           <div className="flex items-center gap-2 mb-6">
             <PieChartOutlined className="w-5 h-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">Events by Category</h3>
@@ -120,7 +120,7 @@ export const renderAvailabilityWidget = (
       );
     case 'activity':
       return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full">
+        <div className="enterprise-card h-full p-6">
           <div className="flex items-center gap-2 mb-6">
             <BarChartOutlined className="w-5 h-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">Daily Activity (Last 7 Days)</h3>
@@ -130,7 +130,7 @@ export const renderAvailabilityWidget = (
               <BarChart data={stats.dailyActivity}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" />
-                <YAxis yAxisId="left" orientation="left" stroke="#1890ff" />
+                <YAxis yAxisId="left" orientation="left" stroke="#2563eb" />
                 <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" />
                 <Tooltip
                   contentStyle={{
@@ -144,7 +144,7 @@ export const renderAvailabilityWidget = (
                   yAxisId="left"
                   dataKey="count"
                   name="Events"
-                  fill="#1890ff"
+                  fill="#2563eb"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar

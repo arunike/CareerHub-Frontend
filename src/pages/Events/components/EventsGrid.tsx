@@ -56,14 +56,27 @@ const EventsGrid = ({
 }: EventsGridProps) => {
   if (loading) {
     return (
-      <div className="flex justify-center p-12">
-        <Typography.Text type="secondary">Loading events...</Typography.Text>
+      <div className="grid grid-cols-1 gap-4 p-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="enterprise-card space-y-4 p-5">
+            <div className="h-4 w-8/12 rounded-full bg-slate-100" />
+            <div className="h-3 w-5/12 rounded-full bg-slate-100" />
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="h-8 rounded-xl bg-slate-100" />
+              <div className="h-8 rounded-xl bg-slate-100" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (events.length === 0) {
-    return <Empty description="No events found" image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+    return (
+      <div className="enterprise-empty px-4 py-12">
+        <Empty description="No events found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
+    );
   }
 
   const getMobileActionItems = (event: Event): MenuProps['items'] => [
@@ -107,6 +120,7 @@ const EventsGrid = ({
         <div key={event.id} style={{ height: '100%' }}>
           <Card
             hoverable
+            className="enterprise-card"
             style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             bodyStyle={{ flex: 1 }}
             title={
@@ -135,25 +149,27 @@ const EventsGrid = ({
                     size="small"
                   />
                 </div>
-                <Dropdown
-                  trigger={['click']}
-                  placement="bottomRight"
-                  menu={{
-                    items: getMobileActionItems(event),
-                    onClick: ({ key, domEvent }) => {
-                      domEvent.stopPropagation();
-                      handleMobileAction(event, key);
-                    },
-                  }}
-                >
-                  <Button
-                    type="text"
-                    icon={<MoreOutlined />}
-                    aria-label={`More actions for ${event.name}`}
-                    className="inline-flex min-h-11 min-w-11 items-center justify-center sm:hidden"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </Dropdown>
+                <div className="sm:hidden">
+                  <Dropdown
+                    trigger={['click']}
+                    placement="bottomRight"
+                    menu={{
+                      items: getMobileActionItems(event),
+                      onClick: ({ key, domEvent }) => {
+                        domEvent.stopPropagation();
+                        handleMobileAction(event, key);
+                      },
+                    }}
+                  >
+                    <Button
+                      type="text"
+                      icon={<MoreOutlined />}
+                      aria-label={`More actions for ${event.name}`}
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </Dropdown>
+                </div>
               </>
             }
             actions={[
@@ -181,7 +197,7 @@ const EventsGrid = ({
                 <Text type="secondary">{dayjs(event.date).format('MMM D, YYYY')}</Text>
               </Space>
               {event.application_details && (
-                <Tag color="blue">💼 {event.application_details.company}</Tag>
+                <Tag color="blue">{event.application_details.company}</Tag>
               )}
             </Space>
           </Card>

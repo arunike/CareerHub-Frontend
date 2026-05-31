@@ -40,8 +40,8 @@ const OfferComparisonChart = ({ data }: Props) => {
             <YAxis tickFormatter={(val) => `$${val / 1000}k`} />
             <Tooltip formatter={(val: number | undefined) => `$${(val || 0).toLocaleString()}`} />
             <Legend />
-            <Bar dataKey="Base" stackId="a" fill="#1890ff" />
-            <Bar dataKey="Bonus" stackId="a" fill="#3b82f6" />
+            <Bar dataKey="Base" stackId="a" fill="#2563eb" />
+            <Bar dataKey="Bonus" stackId="a" fill="#60a5fa" />
             <Bar dataKey="Equity" stackId="a" fill="#ec4899" />
             <Bar dataKey="SignOn" stackId="a" fill="#14b8a6" />
             <Bar dataKey="Benefits" stackId="a" fill="#f59e0b" />

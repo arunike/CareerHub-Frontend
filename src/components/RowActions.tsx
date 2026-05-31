@@ -55,7 +55,7 @@ const RowActions: React.FC<RowActionsProps> = ({
   };
 
   return (
-    <Space>
+    <Space size={4} className="row-actions">
       {onToggleLock ? (
         <Tooltip title={lockTitle ?? (isLocked ? 'Unlock' : 'Lock')}>
           <Button

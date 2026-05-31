@@ -78,7 +78,7 @@ const AvailabilityBookingCard = ({
   };
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+    <div className="enterprise-section p-4 sm:p-6">
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">

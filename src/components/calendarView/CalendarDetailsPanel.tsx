@@ -13,7 +13,7 @@ type Props = {
 
 const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) => {
   return (
-    <div className="mt-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+    <div className="enterprise-section mt-4 p-4">
       <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
         <ClockCircleOutlined className="text-base text-blue-500 mr-2" />
         Details for {format(selectedDate, 'MMMM d, yyyy')}

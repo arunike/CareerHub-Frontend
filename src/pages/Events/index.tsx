@@ -541,7 +541,7 @@ const Events = () => {
           />
 
           <Card
-            className="rounded-2xl border-gray-100 shadow-sm"
+            className="enterprise-section overflow-hidden"
             title={
               <BulkActionHeader
                 selectedCount={selectedIds.length}
@@ -608,7 +608,7 @@ const Events = () => {
           if (!newCategoryName) return;
           await createCategory({
             name: newCategoryName,
-            color: '#1890ff',
+            color: '#2563eb',
             icon: newCategoryIcon,
           });
           fetchCategories();

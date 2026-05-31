@@ -71,7 +71,7 @@ const Settings: React.FC = () => {
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#1890ff');
+  const [newCategoryColor, setNewCategoryColor] = useState('#2563eb');
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
@@ -454,7 +454,7 @@ const Settings: React.FC = () => {
       }
 
       setNewCategoryName('');
-      setNewCategoryColor('#1890ff');
+      setNewCategoryColor('#2563eb');
       setNewCategoryIcon('tag');
       setIsAddingCategory(false);
       setEditingCategory(null);
@@ -478,7 +478,7 @@ const Settings: React.FC = () => {
     setIsAddingCategory(false);
     setEditingCategory(null);
     setNewCategoryName('');
-    setNewCategoryColor('#1890ff');
+    setNewCategoryColor('#2563eb');
     setNewCategoryIcon('tag');
   };
 

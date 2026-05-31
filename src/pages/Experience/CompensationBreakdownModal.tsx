@@ -41,7 +41,7 @@ type Props = ExperienceCompensationSnapshot & {
 const SEGMENTS = [
   { key: 'base', label: 'Base Salary', color: '#2563eb' },
   { key: 'bonus', label: 'Bonus', color: '#10b981' },
-  { key: 'equity', label: 'Equity / RSU', color: '#3b82f6' },
+  { key: 'equity', label: 'Equity / RSU', color: '#60a5fa' },
 ] as const;
 
 const fmtMoney = (value: number) =>

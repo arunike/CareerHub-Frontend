@@ -370,7 +370,7 @@ const Tasks: React.FC = () => {
         primaryActionIcon={<PlusOutlined />}
       />
 
-      <Card className="overflow-hidden border-sky-100 shadow-sm">
+      <Card className="enterprise-section overflow-hidden">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <div className="flex items-start gap-3 lg:w-[280px]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
@@ -435,7 +435,7 @@ const Tasks: React.FC = () => {
       </Card>
 
       <div>
-        <Card title="Weekly Review" loading={weeklyReviewLoading}>
+        <Card title="Weekly Review" loading={weeklyReviewLoading} className="enterprise-section">
           {weeklyReview ? (
             <div className="space-y-3">
               <div className="text-sm text-gray-600">
@@ -443,24 +443,24 @@ const Tasks: React.FC = () => {
                 {dayjs(weeklyReview.end_date).format('MMM D, YYYY')}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                <div className="enterprise-kpi px-3 py-2">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">
                     Applications Sent
                   </div>
                   <div className="text-2xl font-semibold">{weeklyReview.applications_sent}</div>
                 </div>
-                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                <div className="enterprise-kpi px-3 py-2">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">
                     Interviews Done
                   </div>
                   <div className="text-2xl font-semibold">{weeklyReview.interviews_done}</div>
                 </div>
-                <div className="rounded-lg border border-gray-200 px-3 py-2">
+                <div className="enterprise-kpi px-3 py-2">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">Next Actions</div>
                   <div className="text-2xl font-semibold">{weeklyReview.next_actions_count}</div>
                 </div>
               </div>
-              <div className="rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm text-gray-700">
+              <div className="enterprise-card-list-item px-3 py-2 text-sm text-gray-700">
                 {weeklyReview.summary_text}
               </div>
               {weeklyReview.next_actions.length > 0 ? (
@@ -470,7 +470,7 @@ const Tasks: React.FC = () => {
                     {weeklyReview.next_actions.slice(0, 5).map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between text-sm rounded border border-gray-100 px-2 py-1"
+                        className="enterprise-card-list-item flex items-center justify-between px-2 py-1 text-sm"
                       >
                         <span className="truncate pr-3">{item.title}</span>
                         <span
@@ -497,6 +497,7 @@ const Tasks: React.FC = () => {
           {STATUS_META.map((column) => (
             <Card
               key={column.key}
+              className="enterprise-section"
               title={
                 <div className="flex items-center justify-between">
                   <span>{column.label}</span>
@@ -515,7 +516,7 @@ const Tasks: React.FC = () => {
                   {groupedTasks[column.key].map((task) => (
                     <Card
                       key={task.id}
-                      className="overflow-hidden"
+                      className="enterprise-card overflow-hidden"
                       size="small"
                       hoverable
                       draggable
@@ -557,7 +558,7 @@ const Tasks: React.FC = () => {
           ))}
         </div>
       ) : (
-        <Card loading={loading}>
+        <Card loading={loading} className="enterprise-section">
           {checklistTasks.length === 0 ? (
             <Empty description="No action items yet" />
           ) : (
@@ -565,7 +566,7 @@ const Tasks: React.FC = () => {
               {checklistTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2"
+                  className="enterprise-card-list-item flex items-center justify-between px-3 py-2"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <input

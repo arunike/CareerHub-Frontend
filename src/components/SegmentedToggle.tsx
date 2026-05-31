@@ -25,7 +25,12 @@ const SegmentedToggle = <T extends string>({
   buttonClassName,
 }: Props<T>) => {
   return (
-    <div className={clsx('flex bg-gray-100 p-1 rounded-lg', wrapperClassName)}>
+    <div
+      className={clsx(
+        'flex rounded-[10px] border border-slate-200/80 bg-slate-100/80 p-0.5',
+        wrapperClassName
+      )}
+    >
       {options.map((option) => {
         const isActive = value === option.value;
         return (
@@ -33,11 +38,13 @@ const SegmentedToggle = <T extends string>({
             key={option.value}
             onClick={() => onChange(option.value)}
             className={clsx(
-              'px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap flex items-center justify-center gap-2',
+              'flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-all',
               buttonClassName,
               isActive
-                ? option.activeClassName || 'bg-white text-gray-900 shadow-sm'
-                : option.inactiveClassName || 'text-gray-500 hover:text-gray-700'
+                ? option.activeClassName ||
+                    'bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
+                : option.inactiveClassName ||
+                    'text-slate-500 hover:bg-white/50 hover:text-slate-700'
             )}
           >
             {option.icon}

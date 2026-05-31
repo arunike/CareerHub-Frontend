@@ -13,7 +13,7 @@ type Props = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white/95 backdrop-blur-md border border-slate-100 shadow-[0_8px_30px_rgba(37,99,235,0.06)] rounded-xl p-3.5">
+      <div className="bg-white/95 backdrop-blur-md border border-slate-100 shadow-[0_8px_30px_rgba(49,88,183,0.055)] rounded-xl p-3.5">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
           {label}
         </p>
@@ -38,8 +38,8 @@ const WeeklyActivityChart = ({ data }: Props) => {
           <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="activityBarGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.92} />
+                <stop offset="100%" stopColor="#60a5fa" stopOpacity={0.34} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 3" vertical={false} />
@@ -58,7 +58,7 @@ const WeeklyActivityChart = ({ data }: Props) => {
               fontSize={11}
               tickMargin={8}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(37, 99, 235, 0.03)' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(37, 99, 235, 0.035)' }} />
             <Bar
               dataKey="count"
               name="Applications"

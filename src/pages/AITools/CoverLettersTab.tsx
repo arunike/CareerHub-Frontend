@@ -231,7 +231,7 @@ const CoverLettersTab: React.FC = () => {
 
       {/* Bulk action bar */}
       {selectedIds.length > 0 && (
-        <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm mb-6 animate-in fade-in slide-in-from-top-2">
+        <div className="enterprise-filter-bar mb-6 p-4 animate-in fade-in slide-in-from-top-2">
           <BulkActionHeader
             selectedCount={selectedIds.length}
             totalCount={letters.length}
@@ -264,14 +264,14 @@ const CoverLettersTab: React.FC = () => {
 
       {/* Empty state */}
       {letters.length === 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-24 gap-6">
-          <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center">
+        <div className="enterprise-empty flex flex-col items-center justify-center gap-6 py-24">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50">
             <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
           </div>
           <div className="text-center">
             <h3 className="text-gray-900 font-bold text-xl m-0 mb-2">No cover letters yet</h3>
             <p className="text-gray-500 m-0 max-w-sm">
-              Click ⚡ on any application to generate and auto-save a cover letter here.
+              Generate from any application to save a tailored cover letter here.
             </p>
           </div>
           <Button
@@ -303,10 +303,8 @@ const CoverLettersTab: React.FC = () => {
           return (
             <div
               key={letter.id}
-              className={`group bg-white rounded-2xl border transition-all duration-200 overflow-hidden cursor-pointer ${
-                isSelected
-                  ? 'border-sky-300 shadow-md ring-1 ring-sky-200'
-                  : 'border-gray-100 shadow-sm hover:shadow-md'
+              className={`group enterprise-card overflow-hidden cursor-pointer ${
+                isSelected ? 'border-sky-300 shadow-md ring-1 ring-sky-200' : ''
               }`}
               onClick={() => toggleSelect(letter.id)}
             >

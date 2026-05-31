@@ -22,8 +22,18 @@ const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAn
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
 
 const SectionFallback = () => (
-  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <Spin size="large" />
+  <div className="enterprise-section flex min-h-[240px] items-center justify-center p-6">
+    <div className="w-full max-w-lg space-y-4">
+      <div className="flex items-center gap-3">
+        <Spin size="small" />
+        <span className="text-sm font-semibold text-slate-600">Loading analytics</span>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="h-20 rounded-2xl bg-slate-100/80" />
+        <div className="h-20 rounded-2xl bg-slate-100/80" />
+        <div className="h-20 rounded-2xl bg-slate-100/80" />
+      </div>
+    </div>
   </div>
 );
 
@@ -163,8 +173,8 @@ const Analytics: React.FC = () => {
     });
 
     const funnelData = [
-      { name: 'Applied', value: stageCounts.APPLIED, fill: '#1890ff' },
-      { name: 'Online Assessment', value: stageCounts.OA, fill: '#3b82f6' },
+      { name: 'Applied', value: stageCounts.APPLIED, fill: '#2563eb' },
+      { name: 'Online Assessment', value: stageCounts.OA, fill: '#60a5fa' },
       { name: 'Phone Screen', value: stageCounts.SCREEN, fill: '#ec4899' },
       { name: 'Onsite', value: stageCounts.ONSITE, fill: '#10b981' },
       { name: 'Offer', value: stageCounts.OFFER, fill: '#059669' },
@@ -206,7 +216,7 @@ const Analytics: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading analytics...</div>;
+    return <SectionFallback />;
   }
 
   return (

@@ -191,7 +191,7 @@ const PublicBookingManager = ({
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] gap-5">
-      <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+      <section className="enterprise-section flex flex-col p-4 sm:p-6">
         <div className="mb-4">
           <BulkActionHeader
             title={
@@ -251,7 +251,7 @@ const PublicBookingManager = ({
         </div>
 
         {links.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5 text-sm text-gray-500">
+          <div className="enterprise-empty p-5 text-sm text-gray-500">
             No public links yet. Create one above when you are ready to share availability.
           </div>
         ) : (
@@ -264,7 +264,7 @@ const PublicBookingManager = ({
                   className={`rounded-xl border transition-all p-4 ${
                     selectedLinkIds.includes(link.id)
                       ? 'border-blue-200 bg-blue-50/30'
-                      : 'border-gray-100 bg-slate-50/70'
+                      : 'border-slate-200 bg-white/70'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -361,7 +361,7 @@ const PublicBookingManager = ({
         )}
       </section>
 
-      <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+      <section className="enterprise-section flex flex-col p-4 sm:p-6">
         <div className="mb-4">
           <BulkActionHeader
             title={
@@ -415,9 +415,7 @@ const PublicBookingManager = ({
         </div>
 
         {bookings.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5 text-sm text-gray-500">
-            No public bookings yet.
-          </div>
+          <div className="enterprise-empty p-5 text-sm text-gray-500">No public bookings yet.</div>
         ) : (
           <div className="space-y-3 max-h-[540px] overflow-auto pr-1">
             {bookings.map((booking) => (
@@ -426,7 +424,7 @@ const PublicBookingManager = ({
                 className={`rounded-xl border transition-all p-4 ${
                   selectedBookingIds.includes(booking.id)
                     ? 'border-blue-200 bg-blue-50/30 shadow-sm'
-                    : 'border-gray-100 bg-white shadow-sm'
+                    : 'border-slate-200 bg-white/70'
                 }`}
               >
                 <div className="flex items-start gap-3">

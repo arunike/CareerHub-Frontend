@@ -150,9 +150,9 @@ const EmploymentBadge: React.FC<{ type?: string; empTypes: EmploymentType[] }> =
 
 const getAvatarStyle = (name: string) => {
   const gradients = [
-    'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)', // Light Blue to Blue
+    'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)', // Light Blue to Blue
     'linear-gradient(135deg, #34d399 0%, #10b981 100%)', // Emerald
-    'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)', // Purple to Violet
+    'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)', // Purple to Violet
     'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', // Sky to Blue
   ];
   let hash = 0;

@@ -31,17 +31,17 @@ interface CustomWidgetCardProps {
   onDelete: (id: string) => void;
 }
 
-const COLORS = ['#1890ff', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
+const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#60a5fa', '#ec4899'];
 
 const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete }) => {
   const { cachedData, color, icon, name } = widget;
 
   const colorMap: Record<string, { bg: string; text: string; fill: string }> = {
-    blue: { bg: 'bg-blue-100', text: 'text-blue-600', fill: '#1890ff' },
+    blue: { bg: 'bg-blue-100', text: 'text-blue-600', fill: '#2563eb' },
     green: { bg: 'bg-green-100', text: 'text-green-600', fill: '#10b981' },
     amber: { bg: 'bg-amber-100', text: 'text-amber-600', fill: '#f59e0b' },
     red: { bg: 'bg-red-100', text: 'text-red-600', fill: '#ef4444' },
-    purple: { bg: 'bg-purple-100', text: 'text-purple-600', fill: '#3b82f6' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-600', fill: '#60a5fa' },
     pink: { bg: 'bg-pink-100', text: 'text-pink-600', fill: '#ec4899' },
   };
 
@@ -73,10 +73,10 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
     const unit = cachedData?.unit || '';
 
     return (
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full relative group">
+      <div className="enterprise-card group relative h-full p-6">
         <button
           onClick={() => onDelete(widget.id)}
-          className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded shadow-sm z-10"
+          className="absolute right-2 top-2 z-10 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100"
           title="Delete custom widget"
         >
           <CloseCircleOutlined className="text-sm" />
@@ -100,10 +100,10 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget, onDelete })
     const chartType = cachedData.chartType || 'bar';
 
     return (
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-full relative group">
+      <div className="enterprise-card group relative h-full p-6">
         <button
           onClick={() => onDelete(widget.id)}
-          className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded shadow-sm z-10"
+          className="absolute right-2 top-2 z-10 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100"
           title="Delete custom widget"
         >
           <CloseCircleOutlined className="text-sm" />
