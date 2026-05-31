@@ -214,18 +214,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
 
   const SidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-slate-100">
+    <div className="enterprise-shell flex h-full flex-col">
       <div
-        className={`relative shrink-0 border-b border-slate-100/80 ${
+        className={`relative shrink-0 border-b border-slate-200/70 ${
           isDesktopSidebarCollapsed
-            ? 'h-[108px] px-0 py-4 flex flex-col items-center justify-center gap-2'
-            : 'h-[104px] px-5 py-4 flex items-center justify-between gap-3'
+            ? 'h-[96px] px-0 py-4 flex flex-col items-center justify-center gap-2'
+            : 'h-[96px] px-5 py-4 flex items-center justify-between gap-3'
         }`}
       >
         <img
           src={isDesktopSidebarCollapsed ? logo : logoWithText}
           alt="CareerHub"
-          className={isDesktopSidebarCollapsed ? 'h-11 w-11 object-contain' : 'h-16 object-contain'}
+          className={isDesktopSidebarCollapsed ? 'h-10 w-10 object-contain' : 'h-14 object-contain'}
         />
         {screens.lg ? (
           <Tooltip
@@ -254,12 +254,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4">
+      <div className="flex-1 overflow-y-auto py-3">
         <ConfigProvider
           theme={{
             components: {
               Menu: {
-                itemHeight: 40,
+                itemHeight: 38,
                 itemMarginInline: 12,
                 itemMarginBlock: 2,
                 collapsedWidth: 56,
@@ -267,6 +267,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 iconSize: 18,
                 iconMarginInlineEnd: 12,
                 fontSize: 14,
+                itemSelectedBg: '#eff6ff',
+                itemSelectedColor: '#2563eb',
+                itemHoverBg: '#f8fafc',
               },
             },
           }}
@@ -284,7 +287,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </ConfigProvider>
       </div>
 
-      <div className="p-4 border-t border-slate-100">
+      <div className="border-t border-slate-200/70 p-4">
         {isDesktopSidebarCollapsed ? (
           <div className="flex flex-col items-center gap-3">
             <NotificationBell placement="top-left" />
@@ -293,7 +296,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 type="button"
                 onClick={() => navigate('/profile')}
                 aria-label="Open profile"
-                className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-center hover:bg-white hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/5 transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white/75 shadow-sm transition-all hover:border-blue-200 hover:bg-white hover:shadow-lg hover:shadow-blue-900/5"
               >
                 <IdentityAvatar
                   imageUrl={profilePic}
@@ -324,26 +327,26 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between px-2 mb-2">
-              <span className="text-xs text-slate-400 font-medium">Notifications</span>
+            <div className="mb-2 flex items-center justify-between px-2">
+              <span className="enterprise-data-label">Notifications</span>
               <NotificationBell placement="top-left" />
             </div>
             <div
               onClick={() => navigate('/profile')}
-              className="group px-3 py-4 rounded-xl bg-slate-50/50 border border-slate-100 mb-4 cursor-pointer hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300"
+              className="group mb-4 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 px-3 py-3 shadow-sm transition-all duration-300 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-900/5"
             >
-              <div className="flex items-center gap-3 mb-3">
+              <div className="mb-3 flex items-center gap-3">
                 <IdentityAvatar
                   imageUrl={profilePic}
                   name={displayName || user?.full_name}
                   email={user?.email}
                   size="sm"
                 />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-[10px] font-black uppercase leading-none tracking-widest text-slate-400">
                     Account
                   </p>
-                  <p className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                  <p className="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-blue-600">
                     {displayName || 'CareerHub User'}
                   </p>
                 </div>
@@ -362,12 +365,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     setIsLoggingOut(false);
                   }
                 }}
-                className="w-full !flex !items-center !justify-center !h-9 !rounded-xl !bg-white !border !border-slate-100 !text-slate-400 hover:!text-rose-500 hover:!border-rose-100 hover:!bg-rose-50/30 !text-xs font-bold transition-all"
+                className="w-full !flex !items-center !justify-center !h-9 !rounded-lg !bg-white !border !border-slate-200/80 !text-slate-500 hover:!text-rose-500 hover:!border-rose-100 hover:!bg-rose-50/30 !text-xs font-bold transition-all"
               >
                 Sign Out
               </Button>
             </div>
-            <p className="text-[10px] text-gray-300 text-center mt-2">© 2026 CareerHub</p>
+            <p className="mt-2 text-center text-[10px] font-medium text-slate-300">
+              © 2026 CareerHub
+            </p>
           </>
         )}
       </div>
@@ -405,10 +410,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      <AntLayout className="min-h-screen bg-[#f8fafc] transition-all duration-300">
+      <AntLayout className="min-h-screen bg-transparent transition-all duration-300">
         <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
           <div
-            className={`max-w-400 mx-auto p-4 md:p-6 lg:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}
+            className={`enterprise-page mx-auto w-full max-w-[1560px] p-4 md:p-6 lg:p-7 xl:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}
           >
             {children}
           </div>
@@ -416,7 +421,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </AntLayout>
 
       {!screens.lg ? (
-        <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 bg-white/90 shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl">
           <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-2 pt-2">
             {mobilePrimaryNavItems.map((item) => {
               const isActive = matchesNavKey(item.key);
@@ -425,9 +430,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   key={item.key}
                   type="button"
                   onClick={() => navigate(item.key)}
-                  className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
+                  className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600'
+                      ? 'bg-blue-50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
@@ -440,9 +445,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <button
               type="button"
               onClick={() => setCollapsed(false)}
-              className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
+              className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
                 isMoreActive || !collapsed
-                  ? 'bg-slate-900 text-white'
+                  ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
               }`}
               aria-label="Open more navigation"

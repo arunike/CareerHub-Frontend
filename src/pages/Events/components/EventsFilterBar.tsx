@@ -37,7 +37,7 @@ const EventsFilterBar = ({
 
   if (isMobile) {
     return (
-      <Card bodyStyle={{ padding: '16px' }} className="rounded-2xl border-gray-100 shadow-sm">
+      <Card bodyStyle={{ padding: '16px' }} className="enterprise-filter-bar">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-slate-900">Event Filters</div>
@@ -97,7 +97,7 @@ const EventsFilterBar = ({
   }
 
   return (
-    <Card bodyStyle={{ padding: '16px' }}>
+    <Card bodyStyle={{ padding: '16px' }} className="enterprise-filter-bar">
       <Row gutter={[16, 16]} align="middle">
         <Col xs={24} sm={8} md={6}>
           <Select

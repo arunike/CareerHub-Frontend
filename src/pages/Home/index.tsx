@@ -57,7 +57,7 @@ const securityTransparency = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-blue-500/30">
+    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-blue-500/20">
       <PublicHeader />
 
       <div className="flex min-h-screen w-full flex-col pt-24 sm:pt-32">
@@ -67,16 +67,14 @@ export default function HomePage() {
 
           <div className="relative mx-auto grid w-full max-w-[1440px] gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(600px,1.08fr)] lg:items-center xl:gap-16">
             <div className="max-w-[640px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm backdrop-blur">
                 <SafetyCertificateOutlined />
                 Private career operating system
               </div>
 
               <h1 className="mt-8 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-5xl xl:text-[64px]">
                 Your private command center for every{' '}
-                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
-                  job application.
-                </span>
+                <span className="text-blue-600">job application.</span>
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
@@ -87,14 +85,14 @@ export default function HomePage() {
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   to="/login"
-                  className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 text-sm font-bold text-white shadow-lg shadow-blue-200/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-300/60"
+                  className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-bold text-white shadow-lg shadow-blue-900/15 transition-all hover:scale-[1.02] hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-900/20"
                 >
                   Start tracking
                   <ArrowRightOutlined />
                 </Link>
                 <Link
                   to="/privacy"
-                  className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-blue-300 hover:bg-slate-50"
+                  className="inline-flex min-h-[50px] items-center justify-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-slate-50"
                 >
                   View privacy policy
                 </Link>
@@ -112,7 +110,7 @@ export default function HomePage() {
 
             <div className="relative min-w-0 animate-float">
               <div className="absolute -inset-4 rounded-[32px] bg-gradient-to-br from-blue-200/10 via-sky-100/20 to-transparent blur-2xl animate-pulse-slow" />
-              <div className="relative overflow-hidden rounded-[24px] border border-white/60 bg-white/70 shadow-2xl shadow-blue-900/5 backdrop-blur-xl">
+              <div className="relative overflow-hidden rounded-[24px] border border-white/70 bg-white/75 shadow-2xl shadow-slate-900/5 backdrop-blur-xl">
                 <div className="grid gap-4 bg-slate-100/30 p-4 sm:grid-cols-3">
                   {/* Card 1: Application Pipeline (col-span-2) */}
                   <section className="col-span-3 rounded-xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-md sm:col-span-2">
@@ -160,7 +158,7 @@ export default function HomePage() {
                   </section>
 
                   {/* Card 2: BYOK AI (col-span-1) */}
-                  <section className="col-span-3 rounded-xl border border-blue-100/50 bg-gradient-to-br from-blue-50/40 to-white/90 p-5 shadow-sm backdrop-blur-md sm:col-span-1">
+                  <section className="col-span-3 rounded-xl border border-blue-100/70 bg-gradient-to-br from-blue-50/45 to-white/90 p-5 shadow-sm backdrop-blur-md sm:col-span-1">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[11px] font-black uppercase tracking-wider text-blue-600">
@@ -295,10 +293,10 @@ export default function HomePage() {
         </section>
 
         <section className="px-5 pb-20 sm:px-8 lg:px-10">
-          <div className="mx-auto grid w-full max-w-[1440px] gap-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-xl shadow-blue-900/5 lg:grid-cols-[0.68fr_1.32fr] lg:p-6">
-            <div className="relative overflow-hidden rounded-2xl border border-blue-50 bg-blue-50/20 p-8">
+          <div className="mx-auto grid w-full max-w-[1440px] gap-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-xl shadow-slate-900/5 lg:grid-cols-[0.68fr_1.32fr] lg:p-6">
+            <div className="relative overflow-hidden rounded-2xl border border-blue-50 bg-blue-50/25 p-8">
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-200/20 blur-3xl animate-pulse-slow" />
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-white text-2xl text-blue-600 border border-blue-100/50 shadow-sm">
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-xl border border-blue-100/60 bg-white text-2xl text-blue-600 shadow-sm">
                 <SafetyCertificateOutlined />
               </div>
               <h2 className="relative mt-6 text-3xl font-black tracking-tight text-slate-900">
@@ -323,7 +321,7 @@ export default function HomePage() {
                 return (
                   <article
                     key={item.title}
-                    className="rounded-2xl border border-slate-100 bg-slate-50/50 p-6 transition hover:bg-white hover:border-slate-200/80 hover:shadow-lg hover:shadow-blue-900/5 duration-200"
+                    className="rounded-2xl border border-slate-100 bg-slate-50/50 p-6 transition duration-200 hover:border-slate-200/80 hover:bg-white hover:shadow-lg hover:shadow-slate-900/5"
                   >
                     <Icon className="text-2xl text-slate-400" />
                     <h3 className="mt-5 text-base font-bold text-slate-900">{item.title}</h3>

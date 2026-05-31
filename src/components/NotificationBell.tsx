@@ -205,7 +205,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors outline-none focus:ring-2 focus:ring-blue-100"
+        className="relative rounded-xl p-2 text-slate-500 outline-none transition-colors hover:bg-blue-50 hover:text-blue-600 focus:ring-2 focus:ring-blue-100"
       >
         <BellOutlined className="text-xl" />
         {totalNotifications > 0 && (
@@ -220,7 +220,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       {isOpen && (
         <div
           className={`
-            absolute w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100
+            absolute w-80 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)] z-50 animate-in fade-in zoom-in-95 duration-100
             ${
               placement === 'bottom-right'
                 ? 'top-full right-0 mt-2 origin-top-right'
@@ -228,8 +228,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             }
           `}
         >
-          <div className="px-4 py-3 border-b border-gray-50 bg-gray-50 flex justify-between items-center">
-            <h3 className="font-semibold text-sm text-gray-900">Notifications</h3>
+          <div className="flex items-center justify-between border-b border-slate-200/80 bg-slate-50/80 px-4 py-3">
+            <h3 className="text-sm font-bold tracking-[-0.01em] text-slate-950">Notifications</h3>
             <Link
               to="/?view=calendar"
               className="text-xs text-blue-600 hover:text-blue-700 font-medium"
@@ -244,8 +244,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
               <div className="p-4 text-center text-xs text-gray-400">Loading...</div>
             ) : totalNotifications === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-sm text-gray-500">No notifications</p>
-                <p className="text-xs text-gray-400 mt-1">You're all clear!</p>
+                <p className="text-sm font-semibold text-slate-600">No notifications</p>
+                <p className="mt-1 text-xs text-slate-400">You're all clear</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -324,7 +324,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                           <div className="flex items-center gap-2">
                             <button
                               onClick={(e) => markTaskDone(deadline.taskId, deadline.id, e)}
-                              className="text-[10px] bg-green-50 border border-green-200 text-green-700 px-2 py-1 rounded hover:bg-green-600 hover:text-white transition-colors"
+                              className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
                             >
                               Done
                             </button>

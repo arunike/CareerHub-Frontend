@@ -353,16 +353,27 @@ const Documents: React.FC = () => {
       {isMobile ? (
         <div className="space-y-3">
           {loading ? (
-            <Card className="rounded-2xl border-gray-100 shadow-sm">
-              <div className="py-8 text-center text-sm text-gray-500">Loading documents...</div>
+            <Card className="enterprise-card">
+              <div className="space-y-3 py-3">
+                <div className="h-4 w-6/12 rounded-full bg-slate-100" />
+                <div className="h-3 w-9/12 rounded-full bg-slate-100" />
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <div className="h-10 rounded-xl bg-slate-100" />
+                  <div className="h-10 rounded-xl bg-slate-100" />
+                </div>
+              </div>
             </Card>
           ) : filteredDocuments.length === 0 ? (
-            <Card className="rounded-2xl border-gray-100 shadow-sm">
-              <div className="py-8 text-center text-sm text-gray-500">No documents found.</div>
-            </Card>
+            <div className="enterprise-empty px-4 py-12 text-center">
+              <FileOutlined className="text-3xl text-slate-300" />
+              <div className="mt-3 text-sm font-semibold text-slate-900">No documents found</div>
+              <div className="mt-1 text-xs text-slate-500">
+                Upload a resume, cover letter, or portfolio file to build your vault.
+              </div>
+            </div>
           ) : (
             filteredDocuments.map((record) => (
-              <Card key={record.id} className="rounded-3xl border-gray-100 shadow-sm">
+              <Card key={record.id} className="enterprise-card">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 shrink-0">{getFileIcon(record.file_name)}</div>
@@ -427,7 +438,7 @@ const Documents: React.FC = () => {
           )}
         </div>
       ) : (
-        <Card className="overflow-hidden rounded-xl border-gray-100 shadow-sm">
+        <Card className="enterprise-table-shell">
           <Table
             columns={columns}
             dataSource={filteredDocuments}

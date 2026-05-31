@@ -850,7 +850,7 @@ const PublicBookingPage = () => {
                       className={`w-full py-4 px-8 text-white text-base font-black rounded-2xl shadow-xl disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${
                         manageAction === 'cancel'
                           ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200/50'
-                          : 'bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 shadow-blue-200/50'
+                          : 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/10'
                       }`}
                     >
                       {submitting ? (

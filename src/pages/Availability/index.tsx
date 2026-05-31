@@ -382,7 +382,7 @@ const Availability = () => {
 
     await createCategory({
       name: newCategoryName.trim(),
-      color: '#1890ff',
+      color: '#2563eb',
       icon: newCategoryIcon,
     });
     setNewCategoryName('');

@@ -37,7 +37,7 @@ const getScoreMeta = (score: number) => {
     return {
       label: 'Good fit with minor gaps',
       stroke: '#3b82f6',
-      bg: 'linear-gradient(135deg, #eff6ff, #f0f7ff)',
+      bg: 'linear-gradient(135deg, #eff6ff, #f6f9ff)',
       badgeBg: '#dbeafe',
       badgeText: '#1e40af',
     };

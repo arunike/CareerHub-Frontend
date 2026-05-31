@@ -40,7 +40,7 @@ const CalendarRangeView = ({
             <div
               key={day.toString()}
               className={clsx(
-                'overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all',
+                'enterprise-section overflow-hidden transition-all',
                 isSelected && 'ring-2 ring-blue-500 ring-inset'
               )}
             >

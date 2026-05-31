@@ -101,7 +101,7 @@ const GroupedHolidayItem = ({
               onChange={() => onSelectGroup(item.items, !allSelected)}
               style={{ marginTop: 8 }}
             />
-            <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+            <CalendarOutlined style={{ fontSize: 20, color: '#2563eb', marginTop: 8 }} />
           </div>
         }
         title={
@@ -842,7 +842,7 @@ const Holidays = () => {
                         onChange={(e) => handleSelectChange(item.id, e.target.checked)}
                         style={{ marginTop: 8 }}
                       />
-                      <CalendarOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 8 }} />
+                      <CalendarOutlined style={{ fontSize: 20, color: '#2563eb', marginTop: 8 }} />
                     </div>
                   }
                   title={
@@ -898,7 +898,7 @@ const Holidays = () => {
           <Card>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <Space align="start">
-                <LockOutlined style={{ fontSize: 20, color: '#1890ff', marginTop: 4 }} />
+                <LockOutlined style={{ fontSize: 20, color: '#2563eb', marginTop: 4 }} />
                 <div>
                   <Text strong>Federal Holidays are Automatic</Text>
                   <div>

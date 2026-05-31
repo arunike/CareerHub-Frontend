@@ -38,7 +38,7 @@ const BulkActionHeader: React.FC<BulkActionHeaderProps> = ({
           />
         )}
         {isBulkMode ? (
-          <Title level={5} style={{ margin: 0, color: '#1890ff' }}>
+          <Title level={5} style={{ margin: 0, color: '#2563eb' }}>
             {selectedCount} Selected
           </Title>
         ) : (

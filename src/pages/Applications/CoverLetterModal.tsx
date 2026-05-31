@@ -149,7 +149,7 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
       {loading && (
         <div
           style={{
-            background: 'linear-gradient(135deg, #eff6ff, #f0f9ff)',
+            background: 'linear-gradient(135deg, #eff6ff, #f6f9ff)',
             border: '1px solid #e0e7ff',
             borderRadius: 12,
             padding: '32px 24px',
