@@ -17,6 +17,7 @@ import {
   Tooltip,
   Grid,
   Checkbox,
+  Pagination,
 } from 'antd';
 import {
   PlusOutlined,
@@ -198,6 +199,7 @@ const Applications = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
 
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchText, setSearchText] = useState('');
   const [locationSearchText, setLocationSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -237,6 +239,10 @@ const Applications = () => {
 
     return scored;
   }, [allUsCityOptions, locationSearchText]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, locationSearchText, statusFilter, empTypeFilter, locationFilter, selectedYear]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -759,6 +765,10 @@ const Applications = () => {
     const matchesLocation = locationFilter === 'ALL' || appLocation === locationFilter;
     return matchesSearch && matchesStatus && matchesEmpType && matchesLocation;
   });
+
+  const paginatedData = useMemo(() => {
+    return filteredData.slice((currentPage - 1) * 10, currentPage * 10);
+  }, [filteredData, currentPage]);
 
   const applicationMetrics = useMemo(() => {
     const offerCount = filteredData.filter((app) => app.status === 'OFFER').length;
@@ -1325,106 +1335,120 @@ const Applications = () => {
               </div>
             </div>
           ) : (
-            filteredData.map((record) => {
-              const isSelected = selectedRowKeys.includes(record.id);
-              return (
-                <article
-                  key={record.id}
-                  className={`enterprise-card p-4 ${
-                    isSelected ? 'border-blue-200 ring-2 ring-blue-100' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={(event) =>
-                        toggleSelectedApplication(record.id, event.target.checked)
-                      }
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-base font-semibold text-slate-900">
-                            {record.company_details?.name || 'Unknown company'}
+            <>
+              {paginatedData.map((record) => {
+                const isSelected = selectedRowKeys.includes(record.id);
+                return (
+                  <article
+                    key={record.id}
+                    className={`enterprise-card p-4 ${
+                      isSelected ? 'border-blue-200 ring-2 ring-blue-100' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={(event) =>
+                          toggleSelectedApplication(record.id, event.target.checked)
+                        }
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-base font-semibold text-slate-900">
+                              {record.company_details?.name || 'Unknown company'}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-600">{record.role_title}</div>
                           </div>
-                          <div className="mt-1 text-sm text-slate-600">{record.role_title}</div>
+                          <StatusBadge status={record.status} />
                         </div>
-                        <StatusBadge status={record.status} />
-                      </div>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                          Applied {formatDateOnly(record.date_applied, 'Unknown')}
-                        </span>
-                        {record.office_location || record.location ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
                           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                            {record.office_location || record.location}
+                            Applied {formatDateOnly(record.date_applied, 'Unknown')}
                           </span>
-                        ) : null}
-                        <EmploymentTypeBadge type={record.employment_type} />
-                        {record.is_locked ? (
-                          <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-                            Locked
-                          </span>
-                        ) : null}
-                      </div>
+                          {record.office_location || record.location ? (
+                            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                              {record.office_location || record.location}
+                            </span>
+                          ) : null}
+                          <EmploymentTypeBadge type={record.employment_type} />
+                          {record.is_locked ? (
+                            <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                              Locked
+                            </span>
+                          ) : null}
+                        </div>
 
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        <Button
-                          size="large"
-                          icon={<ThunderboltOutlined />}
-                          onClick={() => setCoverLetterApp(record)}
-                        >
-                          Letter
-                        </Button>
-                        <Button
-                          size="large"
-                          icon={<InboxOutlined />}
-                          onClick={() => openDetailDrawer(record)}
-                        >
-                          Details
-                        </Button>
-                        <Button size="large" onClick={() => openEditDrawer(record)}>
-                          Edit
-                        </Button>
-                        <Button
-                          size="large"
-                          icon={record.is_locked ? <UnlockOutlined /> : <LockOutlined />}
-                          onClick={() => toggleLock(record)}
-                        >
-                          {record.is_locked ? 'Unlock' : 'Lock'}
-                        </Button>
-                      </div>
-
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        {record.job_link ? (
+                        <div className="mt-4 grid grid-cols-2 gap-2">
                           <Button
                             size="large"
-                            icon={<GlobalOutlined />}
-                            onClick={() =>
-                              window.open(record.job_link || '', '_blank', 'noopener,noreferrer')
-                            }
+                            icon={<ThunderboltOutlined />}
+                            onClick={() => setCoverLetterApp(record)}
                           >
-                            Open Link
+                            Letter
                           </Button>
-                        ) : (
-                          <div />
-                        )}
-                        <Button
-                          danger
-                          size="large"
-                          icon={<DeleteOutlined />}
-                          disabled={record.is_locked}
-                          onClick={() => handleDelete(record.id)}
-                        >
-                          Delete
-                        </Button>
+                          <Button
+                            size="large"
+                            icon={<InboxOutlined />}
+                            onClick={() => openDetailDrawer(record)}
+                          >
+                            Details
+                          </Button>
+                          <Button size="large" onClick={() => openEditDrawer(record)}>
+                            Edit
+                          </Button>
+                          <Button
+                            size="large"
+                            icon={record.is_locked ? <UnlockOutlined /> : <LockOutlined />}
+                            onClick={() => toggleLock(record)}
+                          >
+                            {record.is_locked ? 'Unlock' : 'Lock'}
+                          </Button>
+                        </div>
+
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          {record.job_link ? (
+                            <Button
+                              size="large"
+                              icon={<GlobalOutlined />}
+                              onClick={() =>
+                                window.open(record.job_link || '', '_blank', 'noopener,noreferrer')
+                              }
+                            >
+                              Open Link
+                            </Button>
+                          ) : (
+                            <div />
+                          )}
+                          <Button
+                            danger
+                            size="large"
+                            icon={<DeleteOutlined />}
+                            disabled={record.is_locked}
+                            onClick={() => handleDelete(record.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })
+                  </article>
+                );
+              })}
+              {filteredData.length > 10 && (
+                <div className="flex justify-end mt-4 pb-2 px-1">
+                  <Pagination
+                    current={currentPage}
+                    pageSize={10}
+                    total={filteredData.length}
+                    onChange={(page) => setCurrentPage(page)}
+                    showSizeChanger={false}
+                    size="small"
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       ) : loading ? (
@@ -1440,7 +1464,12 @@ const Applications = () => {
             columns={columns}
             dataSource={filteredData}
             rowKey="id"
-            pagination={{ pageSize: 10, showSizeChanger: false }}
+            pagination={{
+              current: currentPage,
+              pageSize: 10,
+              onChange: (page) => setCurrentPage(page),
+              showSizeChanger: false,
+            }}
             scroll={{ x: 900 }}
           />
         </div>

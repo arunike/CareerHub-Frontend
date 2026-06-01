@@ -9,8 +9,22 @@ import type {
 } from '../types';
 import api from './client';
 
-export const getEvents = (startDate?: string, endDate?: string) =>
-  api.get('/events/', { params: { start_date: startDate, end_date: endDate } });
+export const getEvents = (
+  startDateOrParams?:
+    | string
+    | { start_date?: string; end_date?: string; page?: number; page_size?: number },
+  endDate?: string
+) => {
+  if (typeof startDateOrParams === 'object' && startDateOrParams !== null) {
+    return api.get('/events/', { params: startDateOrParams });
+  }
+  return api.get('/events/', {
+    params: {
+      start_date: startDateOrParams,
+      end_date: endDate,
+    },
+  });
+};
 
 export const createEvent = (data: Partial<Event>, params?: Record<string, unknown>) =>
   api.post('/events/', data, { params });
