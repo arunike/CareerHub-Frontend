@@ -45,6 +45,7 @@ const Documents: React.FC = () => {
   const [applications, setApplications] = useState<
     Array<{ id: number; role_title: string; company_details?: { name: string } }>
   >([]);
+  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
   const [form] = Form.useForm();
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'documentsSelectedYear',
@@ -70,13 +71,14 @@ const Documents: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-    fetchApplications();
   }, []);
 
-  const fetchApplications = async () => {
+  const ensureApplicationsLoaded = async () => {
+    if (hasLoadedApplications) return;
     try {
       const response = await getApplications();
       setApplications(response.data);
+      setHasLoadedApplications(true);
     } catch (error) {
       console.error('Failed to load applications', error);
     }
@@ -141,6 +143,7 @@ const Documents: React.FC = () => {
       application: record.application ?? undefined,
     });
     setIsEditModalOpen(true);
+    void ensureApplicationsLoaded();
   };
 
   const handleSaveEdit = async () => {

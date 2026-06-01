@@ -53,7 +53,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
   const [events, setEvents] = useState<Event[]>([]);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
   const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [snoozed, setSnoozed] = useState<Record<string, string>>(() => {
     const raw = localStorage.getItem(DEADLINE_SNOOZE_KEY);
@@ -67,8 +67,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchData();
-
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -80,11 +78,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
   useEffect(() => {
     const refreshOnTaskUpdate = () => {
-      fetchData();
+      if (isOpen) {
+        fetchData();
+      }
     };
     window.addEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
     return () => window.removeEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {

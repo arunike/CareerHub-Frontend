@@ -144,6 +144,7 @@ const Availability = () => {
       [key: string]: unknown;
     }>
   >([]);
+  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
@@ -169,22 +170,32 @@ const Availability = () => {
 
   const fetchCalendarData = async () => {
     try {
-      const [eventsResp, holidaysResp, fedResp, categoriesResp, applicationsResp] =
-        await Promise.all([
-          getEvents(),
-          getHolidays(),
-          getFederalHolidays(),
-          getCategories(),
-          getApplications(),
-        ]);
+      const [eventsResp, holidaysResp, fedResp, categoriesResp] = await Promise.all([
+        getEvents(),
+        getHolidays(),
+        getFederalHolidays(),
+        getCategories(),
+      ]);
       setEvents(eventsResp.data);
       setCustomHolidays(holidaysResp.data);
       setFederalHolidays(fedResp.data);
       setCategories(categoriesResp.data);
-      setApplications(applicationsResp.data);
     } catch (error) {
       messageApi.error('Failed to fetch calendar data');
       console.error('Failed to fetch calendar data', error);
+    }
+  };
+
+  const ensureApplicationsLoaded = async () => {
+    if (hasLoadedApplications) return;
+
+    try {
+      const applicationsResp = await getApplications();
+      setApplications(applicationsResp.data);
+      setHasLoadedApplications(true);
+    } catch (error) {
+      messageApi.error('Failed to load applications');
+      console.error('Failed to load applications', error);
     }
   };
 
@@ -310,6 +321,7 @@ const Availability = () => {
     setViewingEvent(null);
     setEditingEventId(event.id);
     setIsEventFormOpen(true);
+    void ensureApplicationsLoaded();
     setRecurrenceRule((event.recurrence_rule as RecurrenceRule) || null);
     setLocationType(event.location_type || 'virtual');
 
