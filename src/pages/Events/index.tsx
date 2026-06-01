@@ -78,6 +78,7 @@ const Events = () => {
       [key: string]: unknown;
     }>
   >([]);
+  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
 
   const [categoryFilter, setCategoryFilter] = useState<number | 'ALL'>('ALL');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
@@ -181,10 +182,13 @@ const Events = () => {
     }
   };
 
-  const fetchApplications = async () => {
+  const ensureApplicationsLoaded = async () => {
+    if (hasLoadedApplications) return;
+
     try {
       const res = await getApplications();
       setApplications(res.data);
+      setHasLoadedApplications(true);
     } catch (error) {
       messageApi.error('Failed to load applications');
       console.error(error);
@@ -194,7 +198,6 @@ const Events = () => {
   useEffect(() => {
     fetchData();
     fetchCategories();
-    fetchApplications();
   }, []);
 
   const filteredEvents = filterByYear(events, selectedYear, 'date')
@@ -230,6 +233,7 @@ const Events = () => {
     setRecurrenceRule(null);
     setLocationType('virtual');
     setIsFormOpen(true);
+    void ensureApplicationsLoaded();
     form.resetFields();
 
     const now = dayjs();
@@ -253,6 +257,7 @@ const Events = () => {
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
     setIsFormOpen(true);
+    void ensureApplicationsLoaded();
     setRecurrenceRule(event.recurrence_rule as RecurrenceRule);
     setLocationType(event.location_type);
 

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import type { Event } from '../../types';
 import { getEvents, getApplications } from '../../api';
 import {
@@ -45,6 +45,8 @@ const Analytics: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [activeTab, setActiveTab] = useState<'availability' | 'career'>('availability');
   const [loading, setLoading] = useState(true);
+  const [careerLoading, setCareerLoading] = useState(false);
+  const [hasLoadedCareer, setHasLoadedCareer] = useState(false);
 
   const [applications, setApplications] = useState<CareerApplication[]>([]);
 
@@ -65,30 +67,47 @@ const Analytics: React.FC = () => {
     weeklyActivity: [] as { date: string; count: number }[],
   });
 
-  useEffect(() => {
-    fetchAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchAnalytics = async () => {
+  const fetchAvailabilityAnalytics = useCallback(async () => {
     try {
       setLoading(true);
-      const [eventsResp, appsResp] = await Promise.all([getEvents(), getApplications()]);
-
+      const eventsResp = await getEvents();
       const eventsData = eventsResp.data;
-      const appsData = appsResp.data;
-
-      setApplications(appsData);
 
       processAvailabilityData(eventsData);
-      processCareerData(appsData);
     } catch (error) {
       messageApi.error('Error fetching analytics');
       console.error('Error fetching analytics:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
+
+  const fetchCareerAnalytics = useCallback(async () => {
+    if (hasLoadedCareer || careerLoading) return;
+    try {
+      setCareerLoading(true);
+      const appsResp = await getApplications();
+      const appsData = appsResp.data;
+      setApplications(appsData);
+      processCareerData(appsData);
+      setHasLoadedCareer(true);
+    } catch (error) {
+      messageApi.error('Error fetching job hunt analytics');
+      console.error('Error fetching job hunt analytics:', error);
+    } finally {
+      setCareerLoading(false);
+    }
+  }, [careerLoading, hasLoadedCareer, messageApi]);
+
+  useEffect(() => {
+    fetchAvailabilityAnalytics();
+  }, [fetchAvailabilityAnalytics]);
+
+  useEffect(() => {
+    if (activeTab === 'career') {
+      void fetchCareerAnalytics();
+    }
+  }, [activeTab, fetchCareerAnalytics]);
 
   const processAvailabilityData = (data: Event[]) => {
     const now = new Date();
@@ -270,13 +289,19 @@ const Analytics: React.FC = () => {
 
       {activeTab === 'career' && (
         <div className="space-y-6 animate-in fade-in duration-500">
-          <Suspense fallback={<SectionFallback />}>
-            <JobHuntAnalytics applications={applications} />
-          </Suspense>
+          {careerLoading ? (
+            <SectionFallback />
+          ) : (
+            <>
+              <Suspense fallback={<SectionFallback />}>
+                <JobHuntAnalytics applications={applications} />
+              </Suspense>
 
-          <Suspense fallback={<SectionFallback />}>
-            <WeeklyActivityChart data={careerStats.weeklyActivity} />
-          </Suspense>
+              <Suspense fallback={<SectionFallback />}>
+                <WeeklyActivityChart data={careerStats.weeklyActivity} />
+              </Suspense>
+            </>
+          )}
         </div>
       )}
     </div>
