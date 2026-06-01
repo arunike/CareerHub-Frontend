@@ -11,6 +11,7 @@ import {
   Tooltip,
   Button,
   Grid,
+  Pagination,
 } from 'antd';
 import { PlusOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -80,10 +81,13 @@ const Events = () => {
   >([]);
   const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+
   const [categoryFilter, setCategoryFilter] = useState<number | 'ALL'>('ALL');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'duration'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [userTimezone, setUserTimezone] = usePersistedState<string>(
     'userTimezone',
     getBrowserTimeZone,
@@ -200,6 +204,10 @@ const Events = () => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, dateRange, sortBy, sortOrder, selectedYear]);
+
   const filteredEvents = filterByYear(events, selectedYear, 'date')
     .filter((event) => {
       if (categoryFilter !== 'ALL' && event.category !== categoryFilter) return false;
@@ -221,6 +229,11 @@ const Events = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
+
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const availableYears = getAvailableYears(events, 'date');
 
@@ -583,7 +596,7 @@ const Events = () => {
           >
             <EventsGrid
               loading={loading}
-              events={filteredEvents}
+              events={paginatedEvents}
               userTimezone={userTimezone}
               onToggleLock={toggleLock}
               onView={setViewingEvent}
@@ -593,6 +606,26 @@ const Events = () => {
               selectedIds={selectedIds}
               onSelectChange={handleSelectChange}
             />
+
+            {!loading && filteredEvents.length > pageSize && (
+              <div className="flex justify-end mt-6 pb-4 px-4">
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={filteredEvents.length}
+                  onChange={(page, size) => {
+                    setCurrentPage(page);
+                    if (size && size !== pageSize) {
+                      setPageSize(size);
+                      setCurrentPage(1);
+                    }
+                  }}
+                  showSizeChanger
+                  pageSizeOptions={['12', '24', '48', '96']}
+                  size={isMobile ? 'small' : undefined}
+                />
+              </div>
+            )}
           </Card>
         </Space>
       </div>

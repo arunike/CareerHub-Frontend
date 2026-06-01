@@ -112,7 +112,11 @@ export const updateCompany = (id: number, data: Record<string, unknown>) =>
   api.put(`/career/companies/${id}/`, data);
 export const deleteCompany = (id: number) => api.delete(`/career/companies/${id}/`);
 
-export const getApplications = () => api.get('/career/applications/');
+export const getApplications = (params?: {
+  page?: number;
+  page_size?: number;
+  [key: string]: unknown;
+}) => api.get('/career/applications/', { params });
 export const createApplication = (data: Record<string, unknown>) =>
   api.post('/career/applications/', data);
 export const updateApplication = (id: number, data: Record<string, unknown>) =>
