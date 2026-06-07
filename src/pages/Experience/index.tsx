@@ -59,6 +59,7 @@ import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
 import TeamHistoryModal from './TeamHistoryModal';
 import SchedulePhasesModal from './SchedulePhasesModal';
 import CompensationBreakdownModal from './CompensationBreakdownModal';
+import PromotionReviewModal from './PromotionReviewModal';
 import type { OfferLike as Offer } from '../OfferComparison/calculations';
 import type { RaiseEntry, TeamEntry } from '../../types';
 import { buildHourlyCompensationSnapshot, getExperienceCompensationSnapshot } from './compensation';
@@ -184,6 +185,7 @@ const ExperiencePage: React.FC = () => {
   const [overallInternshipBreakdownOpen, setOverallInternshipBreakdownOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [aiProviderConfigured, setAiProviderConfigured] = useState(false);
+  const [promotionReviewExp, setPromotionReviewExp] = useState<Experience | null>(null);
 
   const fetchOffersData = async () => {
     try {
@@ -1232,8 +1234,8 @@ const ExperiencePage: React.FC = () => {
                 const salaryComp = comp?.kind === 'salary' ? comp : null;
                 return (
                   <div className="p-7">
-                    <div className="flex justify-between items-start mb-5">
-                      <div>
+                    <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-5">
+                      <div className="min-w-0 flex-1">
                         <div className="flex md:hidden items-center gap-3 mb-3">
                           {logoSrc ? (
                             <Avatar size={40} src={logoSrc} className="shadow-sm" />
@@ -1370,14 +1372,24 @@ const ExperiencePage: React.FC = () => {
                             ) : null;
                           })()}
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                      <div className="flex items-center flex-wrap gap-2 shrink-0 w-full lg:w-auto justify-start lg:justify-end">
+                        <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 flex flex-wrap items-center gap-2 opacity-100">
+                          <Tooltip title="Evaluate promotion readiness for this role">
+                            <Button
+                              size="small"
+                              icon={<RiseOutlined />}
+                              onClick={() => setPromotionReviewExp(exp)}
+                              className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
+                            >
+                              Promotion
+                            </Button>
+                          </Tooltip>
                           <Tooltip title="View / edit team norms for this role">
                             <Button
                               size="small"
                               icon={<TeamOutlined />}
                               onClick={() => setTeamHistoryExp(exp)}
-                              className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700"
+                              className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
                             >
                               Team Norms
                             </Button>
@@ -1385,13 +1397,13 @@ const ExperiencePage: React.FC = () => {
                           {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
                         </div>
                         {getLinkedOffer(exp) && (
-                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 opacity-100">
                             <Tooltip title="View / edit raise history for this role">
                               <Button
                                 size="small"
                                 icon={<TrophyOutlined />}
                                 onClick={() => handleRaiseHistoryClick(exp)}
-                                className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700"
+                                className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
                               >
                                 Raise History
                               </Button>
@@ -1399,7 +1411,11 @@ const ExperiencePage: React.FC = () => {
                           </div>
                         )}
                         <div
-                          className={`transition-all duration-200 ${exp.is_locked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                          className={`transition-all duration-200 ${
+                            exp.is_locked
+                              ? 'opacity-100'
+                              : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
+                          }`}
                         >
                           <RowActions
                             isLocked={exp.is_locked}
@@ -1556,7 +1572,7 @@ const ExperiencePage: React.FC = () => {
                               <div className="w-2 h-2 rounded-full bg-gray-400" />
                             </div>
 
-                            <div className="flex justify-between items-start">
+                            <div className="flex flex-col lg:flex-row justify-between items-start gap-3">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-semibold text-[17px] text-gray-900 leading-snug">
@@ -1666,13 +1682,23 @@ const ExperiencePage: React.FC = () => {
                                     ) : null;
                                   })()}
                               </div>
-                              <div className="flex items-center gap-2 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                              <div className="flex items-center flex-wrap gap-2 shrink-0 w-full lg:w-auto justify-start lg:justify-end lg:ml-2 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 opacity-100">
+                                <Tooltip title="Evaluate promotion readiness for this role">
+                                  <Button
+                                    size="small"
+                                    icon={<RiseOutlined />}
+                                    onClick={() => setPromotionReviewExp(exp)}
+                                    className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
+                                  >
+                                    Promotion
+                                  </Button>
+                                </Tooltip>
                                 <Tooltip title="View / edit team norms for this role">
                                   <Button
                                     size="small"
                                     icon={<TeamOutlined />}
                                     onClick={() => setTeamHistoryExp(exp)}
-                                    className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700"
+                                    className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
                                   >
                                     Team Norms
                                   </Button>
@@ -1684,7 +1710,7 @@ const ExperiencePage: React.FC = () => {
                                       size="small"
                                       icon={<TrophyOutlined />}
                                       onClick={() => handleRaiseHistoryClick(exp)}
-                                      className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700"
+                                      className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
                                     >
                                       Raise History
                                     </Button>
@@ -1695,14 +1721,18 @@ const ExperiencePage: React.FC = () => {
                                       size="small"
                                       icon={<LinkOutlined />}
                                       onClick={() => openEditModal(exp)}
-                                      className="text-gray-400 border-gray-200 hover:!text-blue-600 hover:!border-blue-300"
+                                      className="text-gray-400 border-gray-200 hover:!text-blue-600 hover:!border-blue-300 whitespace-nowrap"
                                     >
                                       Link Offer
                                     </Button>
                                   </Tooltip>
                                 )}
                                 <div
-                                  className={`transition-all duration-200 ${exp.is_locked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                  className={`transition-all duration-200 ${
+                                    exp.is_locked
+                                      ? 'opacity-100'
+                                      : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
+                                  }`}
                                 >
                                   <RowActions
                                     isLocked={exp.is_locked}
@@ -1918,6 +1948,12 @@ const ExperiencePage: React.FC = () => {
       />
 
       <JDMatcherModal open={jdModalOpen} onCancel={() => setJdModalOpen(false)} />
+
+      <PromotionReviewModal
+        open={!!promotionReviewExp}
+        experience={promotionReviewExp}
+        onClose={() => setPromotionReviewExp(null)}
+      />
 
       <Modal
         title="Import Experiences"

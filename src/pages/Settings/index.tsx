@@ -46,6 +46,94 @@ dayjs.extend(customParseFormat);
 
 type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
 
+const unquoteShellValue = (value: string) => {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+};
+
+const parseAIProviderCurl = (curlText: string) => {
+  const normalized = curlText
+    .replace(/\\\s*\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const urlMatch = normalized.match(/curl\s+(?:-[A-Za-z]\s+\S+\s+)*(['"]?)(https?:\/\/[^\s'"]+)\1/);
+  const authMatch = normalized.match(/authorization:\s*bearer\s+([^'"\s]+)/i);
+  const dataMatch = normalized.match(/(?:--data(?:-raw)?|-d)\s+('(?:\\'|[^'])*'|"(?:\\"|[^"])*")/i);
+
+  let model = '';
+  if (dataMatch?.[1]) {
+    try {
+      const payload = JSON.parse(unquoteShellValue(dataMatch[1]));
+      if (typeof payload.model === 'string') {
+        model = payload.model;
+      }
+    } catch {
+      /* ignore malformed curl body */
+    }
+  }
+
+  return {
+    endpoint: urlMatch?.[2] || '',
+    apiKey: authMatch?.[1]?.startsWith('$') ? '' : authMatch?.[1] || '',
+    model,
+  };
+};
+
+const maskedProviderKey = (settings: AIProviderSettings) => {
+  if (settings.apiKey.trim()) return '<entered key>';
+  if (settings.apiKeyConfigured) return settings.apiKeyMasked || '<stored encrypted key>';
+  return '<provider key>';
+};
+
+const chatMessagesPreview = '[{"role":"user","content":"Hello"}]';
+
+const buildAIProviderCurlPreview = (settings: AIProviderSettings) => {
+  const endpoint = settings.endpoint.trim() || '<endpoint>';
+  const model = settings.model.trim() || '<model>';
+  const key = maskedProviderKey(settings);
+
+  if (settings.adapter === 'gemini') {
+    const baseEndpoint = endpoint.endsWith(':generateContent')
+      ? endpoint
+      : `${endpoint.replace(/\/$/, '')}/models/${encodeURIComponent(model)}:generateContent`;
+    return `curl '${baseEndpoint}' \\
+  -H 'Content-Type: application/json' \\
+  -H 'x-goog-api-key: ${key}' \\
+  -d '{"contents":[{"role":"user","parts":[{"text":"Hello"}]}],"generationConfig":{"temperature":0.2}}'`;
+  }
+
+  if (settings.adapter === 'claude') {
+    const baseEndpoint = endpoint.endsWith('/v1/messages')
+      ? endpoint
+      : endpoint.endsWith('/v1')
+        ? `${endpoint}/messages`
+        : `${endpoint.replace(/\/$/, '')}/v1/messages`;
+    return `curl '${baseEndpoint}' \\
+  -H 'Content-Type: application/json' \\
+  -H 'x-api-key: ${key}' \\
+  -H 'anthropic-version: 2023-06-01' \\
+  -d '{"model":"${model}","max_tokens":4096,"messages":${chatMessagesPreview},"temperature":0.2}'`;
+  }
+
+  const extraHeaders =
+    settings.adapter === 'openrouter'
+      ? ` \\
+  -H 'HTTP-Referer: https://careerhub.local' \\
+  -H 'X-OpenRouter-Title: CareerHub'`
+      : '';
+
+  return `curl '${endpoint}' \\
+  -H 'Authorization: Bearer ${key}' \\
+  -H 'Content-Type: application/json'${extraHeaders} \\
+  -d '{"model":"${model}","messages":${chatMessagesPreview},"temperature":0.2}'`;
+};
+
 const Settings: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -68,6 +156,7 @@ const Settings: React.FC = () => {
   );
   const [aiApiKeyChanged, setAiApiKeyChanged] = useState(false);
   const [showAiApiKey, setShowAiApiKey] = useState(false);
+  const [aiProviderCurl, setAiProviderCurl] = useState('');
   const originalSettingsRef = useRef<string>('');
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
@@ -532,6 +621,10 @@ const Settings: React.FC = () => {
         endpoint: 'https://openrouter.ai/api/v1/chat/completions',
         model: 'openai/gpt-5.2',
       },
+      custom: {
+        endpoint: 'https://api.mistral.ai/v1/chat/completions',
+        model: 'mistral-medium-latest',
+      },
     };
     const preset = presets[adapter];
     setAiSettings((prev) => ({
@@ -540,6 +633,42 @@ const Settings: React.FC = () => {
       endpoint: preset.endpoint,
       model: preset.model,
     }));
+  };
+
+  const applyParsedAiProviderCurl = (curlText: string, successMessage?: string) => {
+    const parsed = parseAIProviderCurl(curlText);
+    if (!parsed.endpoint && !parsed.model && !parsed.apiKey) {
+      return false;
+    }
+    setAiSettings((prev) => ({
+      ...prev,
+      adapter: 'custom',
+      endpoint: parsed.endpoint || prev.endpoint,
+      model: parsed.model || prev.model,
+      apiKey: parsed.apiKey || prev.apiKey,
+    }));
+    if (parsed.apiKey) {
+      setAiApiKeyChanged(true);
+    }
+    if (successMessage) {
+      messageApi.success(successMessage);
+    }
+    return true;
+  };
+
+  const handleApplyAiProviderCurl = () => {
+    const applied = applyParsedAiProviderCurl(aiProviderCurl, 'Curl parsed into a custom provider');
+    if (!applied) {
+      messageApi.error('Could not parse endpoint, model, or Bearer key from that curl command');
+    }
+  };
+
+  const handleAiProviderCurlPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = event.clipboardData.getData('text');
+    if (!pastedText.trim()) return;
+    window.setTimeout(() => {
+      applyParsedAiProviderCurl(pastedText, 'Curl pasted and fields filled');
+    }, 0);
   };
 
   const handleSaveAiSettings = async () => {
@@ -1056,11 +1185,11 @@ const Settings: React.FC = () => {
                   <option value="gemini">Gemini</option>
                   <option value="openai">OpenAI</option>
                   <option value="openrouter">OpenRouter</option>
+                  <option value="custom">Custom</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-2">
-                  CareerHub currently supports Claude, Gemini, OpenAI, and OpenRouter. Each option
-                  uses that provider&apos;s expected request format behind the same app-level AI
-                  features.
+                  Use Custom for providers with an chat completions endpoint, including Mistral and
+                  other BYOK APIs.
                 </p>
               </div>
 
@@ -1082,7 +1211,9 @@ const Settings: React.FC = () => {
                           ? 'https://api.anthropic.com'
                           : aiSettings.adapter === 'openrouter'
                             ? 'https://openrouter.ai/api/v1/chat/completions'
-                            : 'https://.../chat/completions'
+                            : aiSettings.adapter === 'custom'
+                              ? 'https://api.mistral.ai/v1/chat/completions'
+                              : 'https://.../chat/completions'
                     }
                   />
                 </div>
@@ -1102,7 +1233,9 @@ const Settings: React.FC = () => {
                         ? 'claude-sonnet-4-20250514'
                         : aiSettings.adapter === 'openrouter'
                           ? 'openai/gpt-5.2'
-                          : 'gpt-4o-mini'
+                          : aiSettings.adapter === 'custom'
+                            ? 'mistral-medium-latest'
+                            : 'gpt-4o-mini'
                   }
                 />
               </div>
@@ -1110,13 +1243,15 @@ const Settings: React.FC = () => {
               <div>
                 <div className="flex items-center justify-between gap-3 mb-1.5">
                   <label className="block text-sm font-medium text-gray-700">API Key</label>
-                  <button
-                    type="button"
-                    onClick={() => setShowAiApiKey((current) => !current)}
-                    className="text-xs font-medium text-sky-600 hover:text-sky-700"
-                  >
-                    {showAiApiKey ? 'Hide key' : 'Show key'}
-                  </button>
+                  {aiSettings.apiKey && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAiApiKey((current) => !current)}
+                      className="text-xs font-medium text-sky-600 hover:text-sky-700"
+                    >
+                      {showAiApiKey ? 'Hide key' : 'Show key'}
+                    </button>
+                  )}
                 </div>
                 <input
                   type={showAiApiKey ? 'text' : 'password'}
@@ -1143,10 +1278,58 @@ const Settings: React.FC = () => {
                 )}
               </div>
 
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-slate-700">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900">
+                      Request preview
+                    </label>
+                    <p className="text-xs text-slate-500 mt-1">
+                      This is the server-side request CareerHub will make from the saved adapter,
+                      endpoint, model, and encrypted key.
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                    {aiSettings.adapter}
+                  </span>
+                </div>
+                <pre className="m-0 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-200/50 border border-slate-200/80 p-3 font-mono text-xs leading-relaxed text-slate-800">
+                  {buildAIProviderCurlPreview(aiSettings)}
+                </pre>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900">
+                      Import from provider curl
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Optional shortcut. Paste a chat-completions curl command to fill endpoint,
+                      Bearer key, and model.
+                    </p>
+                  </div>
+                  <Button size="small" onClick={handleApplyAiProviderCurl}>
+                    Fill fields
+                  </Button>
+                </div>
+                <textarea
+                  className="w-full min-h-[96px] rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 font-mono text-xs text-gray-700 outline-none focus:ring-2 focus:ring-sky-500"
+                  value={aiProviderCurl}
+                  onChange={(e) => setAiProviderCurl(e.target.value)}
+                  onPaste={handleAiProviderCurlPaste}
+                  placeholder={`curl https://api.mistral.ai/v1/chat/completions \\
+  -H "Authorization: Bearer $MISTRAL_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"mistral-medium-latest","messages":[{"role":"user","content":"Hello"}]}'`}
+                  spellCheck={false}
+                />
+              </div>
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
                 <div className="text-xs text-gray-500">
-                  Claude uses Messages, Gemini uses generateContent, and OpenAI/OpenRouter use chat
-                  completions.
+                  Claude uses Messages, Gemini uses generateContent, and OpenAI/OpenRouter/Custom
+                  use chat completions.
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button
@@ -1739,6 +1922,7 @@ const Settings: React.FC = () => {
                         { key: '/jd-reports', label: 'JD Reports' },
                         { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
                         { key: '/ai-tools?tab=negotiation-results', label: 'Negotiation Results' },
+                        { key: '/ai-tools?tab=promotion-reviews', label: 'Promotion Reviews' },
                       ],
                     },
                   ],

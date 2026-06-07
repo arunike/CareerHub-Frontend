@@ -1,7 +1,7 @@
 import type { UserSettings } from '../types';
 
 export interface AIProviderSettings {
-  adapter: 'claude' | 'gemini' | 'openai' | 'openrouter';
+  adapter: 'claude' | 'gemini' | 'openai' | 'openrouter' | 'custom';
   endpoint: string;
   model: string;
   apiKey: string;
@@ -25,7 +25,8 @@ const normalizeAIProviderAdapter = (adapter?: string): AIProviderSettings['adapt
     adapter === 'claude' ||
     adapter === 'gemini' ||
     adapter === 'openai' ||
-    adapter === 'openrouter'
+    adapter === 'openrouter' ||
+    adapter === 'custom'
   ) {
     return adapter;
   }

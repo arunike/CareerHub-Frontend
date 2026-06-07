@@ -126,6 +126,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             { key: '/jd-reports', label: 'JD Reports' },
             { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
             { key: '/ai-tools?tab=negotiation-results', label: 'Negotiation Results' },
+            { key: '/ai-tools?tab=promotion-reviews', label: 'Promotion Reviews' },
           ],
         },
       ],
@@ -180,6 +181,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       children: filterChildren(group.children),
     }))
     .filter((group) => (group.children?.length ?? 0) > 0);
+
+  const menuDisplayItems = isDesktopSidebarCollapsed
+    ? visibleMenuItems.flatMap((group, idx) => {
+        const items = group.children || [];
+        if (idx > 0 && items.length > 0) {
+          return [{ type: 'divider' as const, key: `div-${idx}` }, ...items];
+        }
+        return items;
+      })
+    : visibleMenuItems;
 
   const handleMenuClick = ({ key }: { key: string }) => {
     if (key.startsWith('/')) {
@@ -262,7 +273,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 itemHeight: 38,
                 itemMarginInline: 12,
                 itemMarginBlock: 2,
-                collapsedWidth: 56,
+                collapsedWidth: 76,
                 collapsedIconSize: 18,
                 iconSize: 18,
                 iconMarginInlineEnd: 12,
@@ -279,7 +290,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             selectedKeys={[selectedKey]}
             defaultOpenKeys={isIntelligence ? ['intelligence'] : []}
             inlineCollapsed={isDesktopSidebarCollapsed}
-            items={visibleMenuItems}
+            items={menuDisplayItems}
             onClick={handleMenuClick}
             style={{ borderRight: 0 }}
             className="border-none bg-transparent"
@@ -394,7 +405,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           position: screens.lg ? 'sticky' : 'fixed',
           top: 0,
           left: 0,
-          zIndex: 1005,
+          zIndex: screens.lg ? 100 : 1005,
           boxShadow: !collapsed && !screens.lg ? '4px 0 24px rgba(0,0,0,0.1)' : 'none',
         }}
         className={!screens.lg && !collapsed ? 'fixed-sider-mobile' : ''}

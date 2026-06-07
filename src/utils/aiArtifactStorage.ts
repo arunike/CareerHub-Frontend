@@ -13,6 +13,19 @@ import type { StoredNegotiationResult } from './negotiationStorage';
 import { getAllNegotiationResults } from './negotiationStorage';
 import type { StoredReport } from './reportStorage';
 import { getAllReports } from './reportStorage';
+import type { PromotionReviewContext, PromotionReviewResult } from '../lib/browserAi';
+
+export interface StoredPromotionReview {
+  id: string;
+  title: string;
+  companyName: string;
+  roleTitle: string;
+  sourceExperienceId: number;
+  inputContext: PromotionReviewContext;
+  review: PromotionReviewResult;
+  savedAt: string;
+  isLocked?: boolean;
+}
 
 const MIGRATION_KEY = 'careerhub.ai_artifacts.local_migrated.v1';
 
@@ -56,6 +69,17 @@ export const negotiationResultToArtifactPayload = (result: StoredNegotiationResu
   saved_at: result.savedAt,
 });
 
+export const promotionReviewToArtifactPayload = (review: StoredPromotionReview) => ({
+  artifact_type: 'PROMOTION_REVIEW' as AIArtifactType,
+  client_id: review.id,
+  title: review.title,
+  summary: review.review.readiness_verdict?.summary || '',
+  payload: review as unknown as Record<string, unknown>,
+  source_experience: review.sourceExperienceId,
+  is_locked: Boolean(review.isLocked),
+  saved_at: review.savedAt,
+});
+
 export const artifactToReport = (artifact: AIArtifact): StoredReport => {
   const payload = payloadOf(artifact) as unknown as StoredReport;
   return {
@@ -89,6 +113,18 @@ export const artifactToNegotiationResult = (artifact: AIArtifact): StoredNegotia
   };
 };
 
+export const artifactToPromotionReview = (artifact: AIArtifact): StoredPromotionReview => {
+  const payload = payloadOf(artifact) as unknown as StoredPromotionReview;
+  return {
+    ...payload,
+    id: artifact.client_id,
+    title: artifact.title || payload.title,
+    sourceExperienceId: artifact.source_experience || payload.sourceExperienceId,
+    isLocked: artifact.is_locked,
+    savedAt: payload.savedAt || savedAt(artifact),
+  };
+};
+
 export const migrateLocalAIArtifacts = async () => {
   if (typeof window === 'undefined' || window.localStorage.getItem(MIGRATION_KEY)) return;
   const localItems = [
@@ -111,6 +147,9 @@ export const syncCoverLetterArtifact = async (letter: StoredCoverLetter) =>
 export const syncNegotiationResultArtifact = async (result: StoredNegotiationResult) =>
   createAIArtifact(negotiationResultToArtifactPayload(result));
 
+export const syncPromotionReviewArtifact = async (review: StoredPromotionReview) =>
+  createAIArtifact(promotionReviewToArtifactPayload(review));
+
 export const loadReportsFromArtifacts = async () => {
   await migrateLocalAIArtifacts();
   const response = await getAIArtifacts('JD_REPORT');
@@ -129,6 +168,12 @@ export const loadNegotiationResultsFromArtifacts = async () => {
   return response.data.map(artifactToNegotiationResult);
 };
 
+export const loadPromotionReviewsFromArtifacts = async () => {
+  await migrateLocalAIArtifacts();
+  const response = await getAIArtifacts('PROMOTION_REVIEW');
+  return response.data.map(artifactToPromotionReview);
+};
+
 export const getReportArtifactByClientId = async (clientId: string) => {
   await migrateLocalAIArtifacts();
   const response = await getAIArtifacts('JD_REPORT');
@@ -141,6 +186,13 @@ export const getNegotiationArtifactByClientId = async (clientId: string) => {
   const response = await getAIArtifacts('NEGOTIATION_RESULT');
   const artifact = response.data.find((item) => item.client_id === clientId);
   return artifact ? artifactToNegotiationResult(artifact) : null;
+};
+
+export const getPromotionReviewArtifactByClientId = async (clientId: string) => {
+  await migrateLocalAIArtifacts();
+  const response = await getAIArtifacts('PROMOTION_REVIEW');
+  const artifact = response.data.find((item) => item.client_id === clientId);
+  return artifact ? artifactToPromotionReview(artifact) : null;
 };
 
 export const updateArtifactTitle = async (

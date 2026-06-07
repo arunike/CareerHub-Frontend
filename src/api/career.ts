@@ -341,7 +341,11 @@ export const getCareerReferenceData = () => api.get('/career/reference-data/');
 export const getCareerRentEstimate = (city: string) =>
   api.get('/career/rent-estimate/', { params: { city } });
 
-export type AIArtifactType = 'JD_REPORT' | 'COVER_LETTER' | 'NEGOTIATION_RESULT';
+export type AIArtifactType =
+  | 'JD_REPORT'
+  | 'COVER_LETTER'
+  | 'NEGOTIATION_RESULT'
+  | 'PROMOTION_REVIEW';
 
 export interface AIArtifact {
   id: number;
@@ -352,6 +356,7 @@ export interface AIArtifact {
   payload: Record<string, unknown>;
   source_application: number | null;
   source_offer: number | null;
+  source_experience: number | null;
   is_locked: boolean;
   saved_at: string | null;
   created_at: string;
