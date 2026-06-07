@@ -77,8 +77,9 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **JD Report Detail** (`/jd-report/:id`): Full standalone page with progress ring, strengths/gaps columns, resume evidence gaps, supported JD keywords, bullet rewrite suggestions, best matching experience evidence, recommendations, and PDF download. Top bar uses `BulkActionHeader`.
 - **Cover Letters** (`/ai-tools?tab=cover-letters`): Auto-saved whenever a cover letter is generated from the Applications page. Card list with view modal (serif font, Copy to Clipboard), rename, lock/delete, bulk actions, CSV/JSON export.
 - **Negotiation Results** (`/ai-tools?tab=negotiation-results`): Auto-saved whenever the Negotiation Advisor runs. Card list showing offer snapshot chips, advice summary counts, lock/delete, bulk actions, CSV/JSON export, and "View Full Report" link.
+- **Promotion Reviews** (`/ai-tools?tab=promotion-reviews`): Auto-saved whenever Promotion Readiness Review runs from an Experience entry. Card list shows verdict/confidence, source role, lock/delete/rename, bulk actions, JSON export, and detail modal.
 - **Negotiation Result Detail** (`/negotiation-result/:id`): Full standalone page mirroring `JDReport` layout — offer snapshot, Suggested Counter-Ask panel, Leverage Points, Talking Points & Scripts, Watch Out For. Top bar uses `BulkActionHeader`.
-- **Backend AI Artifact Library**: JD reports, cover letters, and negotiation results are saved to authenticated backend records for cross-device access. Existing localStorage artifacts migrate automatically on first load and remain as a browser fallback if the API is unavailable.
+- **Backend AI Artifact Library**: JD reports, cover letters, negotiation results, and promotion reviews are saved to authenticated backend records for cross-device access. Existing localStorage artifacts migrate automatically on first load and remain as a browser fallback if the API is unavailable.
 
 ### 📄 Document Vault (`/documents`)
 
@@ -94,6 +95,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - Skills auto-extracted by backend fallback logic, then AI-refined after save when an API key is configured in Settings
 - Inline skill tag editing
 - JD Matcher modal accessible from this page; reports now include fit scoring plus resume tailoring suggestions
+- Promotion Readiness Review modal accessible from experience entries; uses saved role evidence plus optional context to generate manager talking points, evidence gaps, 30/60/90 day plan, and promo packet outline
 - **Employment type badges** — dynamically driven by user-configured types from Settings (10 color options); first type (Full-time) hidden by default
 - **Exact duration display** — all date ranges and tenure stats show `(N days)` alongside human-readable duration
 - **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; persisted through the backend upload API and stored in Vercel Blob on hosted deployments
@@ -131,7 +133,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### ⚙️ Settings (`/settings`)
 
 - **Availability & Job Hunt Settings**: work hours, work days, availability range, default event duration, buffer time, primary timezone, ghosting threshold, default event category
-- **AI Provider**: configure Claude, Gemini, OpenAI, or OpenRouter for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; the key is stored encrypted on the backend and never re-shown after save
+- **AI Provider**: configure Claude, Gemini, OpenAI, OpenRouter, or Custom providers for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; paste a chat-completions curl command to fill endpoint/model/key; the key is stored encrypted on the backend and never re-shown after save
 - **Integrations**: connect/disconnect Google OAuth for private read-only Sheets access, pick from available Google spreadsheets and worksheet tabs, create Google Sheets syncs, select Applications or Events, auto-map sheet columns, configure the daily sync time/timezone, adjust/add/remove mapped fields when needed, preview rows, review detected application imports, compare possible duplicates side by side, resolve duplicates, inspect last-run change history, and run syncs immediately
 - **Security Dashboard**: review deployment posture, auth throttles, Google Sheets sync health, OAuth scope readiness, and Vercel edge/WAF setup status from one Settings tab
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows per day (e.g., 11am–12pm and 2pm–5pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
@@ -292,6 +294,7 @@ frontend/
 │   │   │   ├── index.tsx            # Experience management, analytics cards, import/export, overall pay breakdowns
 │   │   │   ├── ExperienceModal.tsx  # Manual entry + quick-import parsing for experience records
 │   │   │   ├── JDMatcherModal.tsx   # AI JD evaluation modal
+│   │   │   ├── PromotionReviewModal.tsx # AI promotion readiness review modal
 │   │   │   ├── TeamHistoryModal.tsx # Team history / norms editor
 │   │   │   ├── SchedulePhasesModal.tsx # Internship multi-phase schedule editor + weekly quick import
 │   │   │   ├── CompensationBreakdownModal.tsx # Per-role and overall earnings breakdown UI
@@ -303,7 +306,8 @@ frontend/
 │   │   ├── AITools/
 │   │   │   ├── index.tsx            # Route handler — renders tab by ?tab= param
 │   │   │   ├── CoverLettersTab.tsx  # Cover letters management
-│   │   │   └── NegotiationResultsTab.tsx  # Negotiation results management
+│   │   │   ├── NegotiationResultsTab.tsx  # Negotiation results management
+│   │   │   └── PromotionReviewsTab.tsx # Promotion reviews management
 │   │   ├── NegotiationResult/
 │   │   │   └── index.tsx            # Negotiation advisory detail page (standalone)
 │   │   ├── Availability/            # Availability calendar
@@ -364,10 +368,11 @@ frontend/
 | `/offers`                           | Offer Comparison    | Offer analysis with weighted decision scorecard and AI negotiation advisor                                    |
 | `/documents`                        | Documents           | Document vault with versioning                                                                                |
 | `/tasks`                            | Action Items        | Kanban task board with smart reminder creation                                                                |
-| `/experience`                       | Experience          | Work history, team history, schedule phases, internship earnings breakdowns, import/export, and AI JD matcher |
+| `/experience`                       | Experience          | Work history, team history, schedule phases, internship earnings breakdowns, import/export, AI JD matcher, and promotion review |
 | `/jd-reports`                       | JD Reports          | Saved AI JD match report history                                                                              |
 | `/ai-tools?tab=cover-letters`       | Cover Letters       | Saved AI cover letter history                                                                                 |
 | `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history                                                                           |
+| `/ai-tools?tab=promotion-reviews`   | Promotion Reviews   | Saved AI promotion readiness review history                                                                   |
 | `/analytics`                        | Analytics           | Custom widget dashboard with timeline-driven job hunt insights                                                |
 | `/settings`                         | Settings            | User preferences with layered locking                                                                         |
 | `/profile`                          | Profile             | Standalone identity and security management page                                                              |
