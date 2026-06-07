@@ -38,6 +38,7 @@ const LoginPage = lazy(() => import('./pages/Login'));
 const NegotiationResultPage = lazy(() => import('./pages/NegotiationResult'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const LegalPage = lazy(() => import('./pages/Legal'));
+const PromotionReviewPage = lazy(() => import('./pages/Experience/PromotionReviewPage'));
 
 const RouteFallback = () => {
   const path = window.location.pathname;
@@ -164,7 +165,11 @@ const RouteFallback = () => {
     );
   }
 
-  if (path.startsWith('/ai-tools') || path.startsWith('/cover-letters')) {
+  if (
+    path.startsWith('/ai-tools') ||
+    path.startsWith('/cover-letters') ||
+    path.startsWith('/promotion-review')
+  ) {
     return (
       <div className="w-full space-y-6">
         <PageHeaderSkeleton />
@@ -308,6 +313,7 @@ function AppRoutes() {
             <Route path="/cover-letters" element={<AIToolsPage />} />
             <Route path="/ai-tools" element={<AIToolsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/promotion-review/:id" element={<PromotionReviewPage />} />
           </Routes>
         </Suspense>
       </Layout>
