@@ -242,10 +242,7 @@ function AppRoutes() {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const isPublicBooking = location.pathname.startsWith('/book/');
-  const isStandalone =
-    isPublicBooking ||
-    location.pathname.startsWith('/jd-report/') ||
-    location.pathname.startsWith('/negotiation-result/');
+  const isStandalone = isPublicBooking;
   const isLoginPage = location.pathname === '/login';
   const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms';
   const isHomePage = location.pathname === '/';
@@ -256,8 +253,6 @@ function AppRoutes() {
         <Routes>
           <Route path="/book/:uuid" element={<PublicBookingPage />} />
           <Route path="/book/:uuid/:bookingUuid/:action" element={<PublicBookingPage />} />
-          <Route path="/jd-report/:id" element={<JDReportPage />} />
-          <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
         </Routes>
       </Suspense>
     );
@@ -314,6 +309,8 @@ function AppRoutes() {
             <Route path="/ai-tools" element={<AIToolsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/promotion-review/:id" element={<PromotionReviewPage />} />
+            <Route path="/jd-report/:id" element={<JDReportPage />} />
+            <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
           </Routes>
         </Suspense>
       </Layout>

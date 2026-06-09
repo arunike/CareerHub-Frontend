@@ -15,6 +15,7 @@ import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
 import { getNegotiationArtifactByClientId } from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
+import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
 
 const { Text } = Typography;
 
@@ -140,22 +141,14 @@ const NegotiationResultPage: React.FC = () => {
       <div className="min-h-screen bg-slate-50/50 py-12 px-4 shadow-inner">
         <div className="max-w-4xl mx-auto flex flex-col gap-8">
           {/* Header */}
-          <div>
-            <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-3 py-1 mb-4 shadow-sm">
-              <ThunderboltOutlined className="text-sky-500 text-xs" />
-              <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">
-                AI Negotiation Advisory Report
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight tracking-tight">
-              {displayTitle}
-            </h1>
-            <div className="flex items-center gap-3 text-gray-400 text-xs font-medium">
-              <span>{date}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span>Negotiation Advisor</span>
-            </div>
-          </div>
+          <ArtifactHeaderCard
+            typeLabel="AI Negotiation Advisory Report"
+            typeIcon={<ThunderboltOutlined />}
+            title={displayTitle}
+            date={date}
+            subtitle={`${result.roleTitle || 'Role'} @ ${result.companyName || 'Company'}`}
+            themeColor="indigo"
+          />
 
           {/* Offer snapshot */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

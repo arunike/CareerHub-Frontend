@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, Tooltip, Input, Typography, Checkbox, message, Space } from 'antd';
+import { Button, Modal, Tooltip, Input, Typography, Checkbox, message } from 'antd';
 import {
   FileTextOutlined,
   DeleteOutlined,
@@ -13,6 +13,7 @@ import {
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
+import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
 import {
   getAllCoverLetters,
   deleteCoverLetter,
@@ -386,42 +387,56 @@ const CoverLettersTab: React.FC = () => {
       {/* View modal */}
       <Modal
         open={!!viewingLetter}
-        title={
-          <Space>
-            <FileTextOutlined style={{ color: '#0ea5e9' }} />
-            <span>
-              {viewingLetter?.title ||
-                `${viewingLetter?.roleTitle} @ ${viewingLetter?.companyName}`}
-            </span>
-          </Space>
-        }
+        title={null}
         onCancel={() => setViewingLetter(null)}
         footer={
           <Button
+            type="primary"
             icon={<CopyOutlined />}
             onClick={() => viewingLetter && handleCopy(viewingLetter.coverLetter)}
+            style={{ borderRadius: 8 }}
           >
             Copy to Clipboard
           </Button>
         }
         width={720}
+        bodyStyle={{ paddingTop: 24 }}
       >
         {viewingLetter && (
-          <div
-            style={{
-              background: '#f9f9f9',
-              border: '1px solid #e8e8e8',
-              borderRadius: 6,
-              padding: '20px 24px',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'Georgia, serif',
-              lineHeight: 1.9,
-              fontSize: 14,
-              maxHeight: 500,
-              overflowY: 'auto',
-            }}
-          >
-            {viewingLetter.coverLetter}
+          <div className="flex flex-col gap-6">
+            <ArtifactHeaderCard
+              typeLabel="AI Tailored Cover Letter"
+              typeIcon={<FileTextOutlined />}
+              title={
+                viewingLetter.title || `${viewingLetter.roleTitle} @ ${viewingLetter.companyName}`
+              }
+              date={new Date(viewingLetter.savedAt).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              subtitle={`${viewingLetter.roleTitle} @ ${viewingLetter.companyName}`}
+              themeColor="sky"
+            />
+            <div
+              style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: 16,
+                padding: '24px 28px',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'Georgia, serif',
+                lineHeight: 1.9,
+                fontSize: 15,
+                maxHeight: 450,
+                overflowY: 'auto',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              {viewingLetter.coverLetter}
+            </div>
           </div>
         )}
       </Modal>

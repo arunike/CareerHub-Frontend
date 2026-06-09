@@ -1279,14 +1279,17 @@ const ExperiencePage: React.FC = () => {
                         <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">
                           {exp.company}
                         </div>
-                        <div className="flex flex-nowrap shrink-0 items-center gap-x-4 text-sm text-gray-500 font-medium bg-gray-50 inline-flex px-3 py-1.5 rounded-lg border border-gray-100 max-w-full overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                          <div className="flex items-center gap-2 text-sky-600 bg-sky-50/80 border border-sky-100/50 px-2 py-0.5 rounded-md">
-                            <CalendarOutlined />
+                        <div className="flex flex-wrap items-center gap-2 max-w-full">
+                          <div className="flex items-center gap-1.5 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                            <CalendarOutlined style={{ fontSize: 11 }} />
                             <span className="font-semibold">{formatDuration(exp)}</span>
                           </div>
                           {exp.location && (
-                            <div className="flex items-center gap-1.5">
-                              <EnvironmentOutlined className="text-gray-400" />
+                            <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                              <EnvironmentOutlined
+                                className="text-gray-400"
+                                style={{ fontSize: 11 }}
+                              />
                               <span>{exp.location}</span>
                             </div>
                           )}
@@ -1294,8 +1297,11 @@ const ExperiencePage: React.FC = () => {
                             (() => {
                               const team = getLatestTeam(exp);
                               return team ? (
-                                <div className="flex items-center gap-1.5">
-                                  <TeamOutlined className="text-gray-400" />
+                                <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                  <TeamOutlined
+                                    className="text-gray-400"
+                                    style={{ fontSize: 11 }}
+                                  />
                                   <span>{team.name}</span>
                                 </div>
                               ) : null;
@@ -1305,9 +1311,9 @@ const ExperiencePage: React.FC = () => {
                               type="button"
                               onClick={() => setCompBreakdownExp(exp)}
                               title="View internship earnings breakdown"
-                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors"
+                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
                             >
-                              <DollarOutlined />
+                              <DollarOutlined style={{ fontSize: 11 }} />
                               <span>
                                 $
                                 {internshipComp.total.toLocaleString(undefined, {
@@ -1320,38 +1326,40 @@ const ExperiencePage: React.FC = () => {
                           {exp.employment_type === 'internship' &&
                             !internshipComp &&
                             exp.hourly_rate != null && (
-                              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                <DollarOutlined />
+                              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                <DollarOutlined style={{ fontSize: 11 }} />
                                 <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
                               </div>
                             )}
                           {exp.employment_type !== 'internship' &&
                             (() => {
                               return salaryComp ? (
-                                <div className="flex items-center flex-wrap">
+                                <div className="flex items-center shrink-0">
                                   {exp.employment_type === 'full_time' ? (
                                     <button
                                       type="button"
                                       onClick={() => setCompBreakdownExp(exp)}
                                       title="View pay structure breakdown"
-                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors"
+                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
                                     >
-                                      <DollarOutlined />
+                                      <DollarOutlined style={{ fontSize: 11 }} />
                                       <span>
                                         ${salaryComp.total.toLocaleString()} total earnings
                                       </span>
                                     </button>
                                   ) : (
-                                    <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                                      <DollarOutlined />
-                                      <span>${salaryComp.base.toLocaleString()} base</span>
+                                    <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
+                                      <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
+                                        <DollarOutlined style={{ fontSize: 11 }} />
+                                        <span>${salaryComp.base.toLocaleString()} base</span>
+                                      </div>
                                       {salaryComp.bonus > 0 && (
-                                        <span className="text-gray-400 font-normal">
+                                        <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
                                           + ${salaryComp.bonus.toLocaleString()} bonus
                                         </span>
                                       )}
                                       {salaryComp.equity > 0 && (
-                                        <span className="text-gray-400 font-normal">
+                                        <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
                                           + ${salaryComp.equity.toLocaleString()} RSU/yr
                                         </span>
                                       )}
@@ -1590,8 +1598,8 @@ const ExperiencePage: React.FC = () => {
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex flex-nowrap shrink-0 items-center gap-x-4 mt-1 text-sm text-gray-500 font-medium bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 w-fit max-w-full overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                                  <div className="flex items-center gap-2 text-sky-600 bg-sky-50/80 border border-sky-100/50 px-2 py-0.5 rounded-md shrink-0">
+                                <div className="flex flex-wrap items-center gap-2 mt-1 max-w-full">
+                                  <div className="flex items-center gap-2 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
                                     <CalendarOutlined style={{ fontSize: 11 }} />
                                     <span className="font-semibold">
                                       {formatRoleDateRange(
@@ -1601,8 +1609,11 @@ const ExperiencePage: React.FC = () => {
                                     </span>
                                   </div>
                                   {exp.location && (
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <EnvironmentOutlined className="text-gray-400" />
+                                    <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md">
+                                      <EnvironmentOutlined
+                                        className="text-gray-400"
+                                        style={{ fontSize: 11 }}
+                                      />
                                       <span>{exp.location}</span>
                                     </div>
                                   )}
@@ -1610,9 +1621,12 @@ const ExperiencePage: React.FC = () => {
                                     (() => {
                                       const team = getLatestTeam(exp);
                                       return team ? (
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                          <TeamOutlined className="text-gray-400" />
-                                          {team.name}
+                                        <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md">
+                                          <TeamOutlined
+                                            className="text-gray-400"
+                                            style={{ fontSize: 11 }}
+                                          />
+                                          <span>{team.name}</span>
                                         </div>
                                       ) : null;
                                     })()}
@@ -1621,20 +1635,24 @@ const ExperiencePage: React.FC = () => {
                                       type="button"
                                       onClick={() => setCompBreakdownExp(exp)}
                                       title="View internship earnings breakdown"
-                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shrink-0"
+                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
                                     >
-                                      <DollarOutlined />$
-                                      {internshipComp.total.toLocaleString(undefined, {
-                                        maximumFractionDigits: 2,
-                                      })}{' '}
-                                      total earnings
+                                      <DollarOutlined style={{ fontSize: 11 }} />
+                                      <span>
+                                        $
+                                        {internshipComp.total.toLocaleString(undefined, {
+                                          maximumFractionDigits: 2,
+                                        })}{' '}
+                                        total earnings
+                                      </span>
                                     </button>
                                   )}
                                   {exp.employment_type === 'internship' &&
                                     !internshipComp &&
                                     exp.hourly_rate != null && (
-                                      <div className="flex items-center gap-1.5 text-emerald-600 font-semibold shrink-0">
-                                        <DollarOutlined />${Number(exp.hourly_rate).toFixed(2)}/hr
+                                      <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                        <DollarOutlined style={{ fontSize: 11 }} />
+                                        <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
                                       </div>
                                     )}
                                   {exp.employment_type !== 'internship' &&
@@ -1646,22 +1664,28 @@ const ExperiencePage: React.FC = () => {
                                               type="button"
                                               onClick={() => setCompBreakdownExp(exp)}
                                               title="View pay structure breakdown"
-                                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shrink-0"
+                                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
                                             >
-                                              <DollarOutlined />${salaryComp.total.toLocaleString()}{' '}
-                                              total earnings
+                                              <DollarOutlined style={{ fontSize: 11 }} />
+                                              <span>
+                                                ${salaryComp.total.toLocaleString()} total earnings
+                                              </span>
                                             </button>
                                           ) : (
-                                            <div className="flex items-center gap-1.5 text-emerald-600 font-semibold shrink-0">
-                                              <DollarOutlined />${salaryComp.base.toLocaleString()}{' '}
-                                              base
+                                            <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
+                                              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
+                                                <DollarOutlined style={{ fontSize: 11 }} />
+                                                <span>
+                                                  ${salaryComp.base.toLocaleString()} base
+                                                </span>
+                                              </div>
                                               {salaryComp.bonus > 0 && (
-                                                <span className="text-gray-400 font-normal">
+                                                <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
                                                   + ${salaryComp.bonus.toLocaleString()} bonus
                                                 </span>
                                               )}
                                               {salaryComp.equity > 0 && (
-                                                <span className="text-gray-400 font-normal">
+                                                <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
                                                   + ${salaryComp.equity.toLocaleString()} RSU/yr
                                                 </span>
                                               )}

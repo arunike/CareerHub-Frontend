@@ -86,7 +86,13 @@ const parseAIProviderCurl = (curlText: string) => {
 };
 
 const maskedProviderKey = (settings: AIProviderSettings) => {
-  if (settings.apiKey.trim()) return '<entered key>';
+  const enteredKey = settings.apiKey.trim();
+  if (enteredKey) {
+    if (enteredKey.length <= 4) {
+      return '•'.repeat(enteredKey.length);
+    }
+    return '••••••••' + enteredKey.slice(-4);
+  }
   if (settings.apiKeyConfigured) return settings.apiKeyMasked || '<stored encrypted key>';
   return '<provider key>';
 };
