@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Input, Modal, Spin, Tag, Typography, message } from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Input, Modal, Progress, Spin, Tag, Typography, message } from 'antd';
 import {
   BulbOutlined,
   CheckCircleOutlined,
@@ -10,19 +10,38 @@ import {
 import type { Experience } from '../../types';
 import { Link } from 'react-router-dom';
 import {
-  generatePromotionReviewWithBrowserAI,
+  buildPromotionReviewMessages,
+  generatePromotionClarifyingQuestions,
+  type PromotionClarifyingQuestion,
   type PromotionReviewContext,
   type PromotionReviewResult,
 } from '../../lib/browserAi';
-import { isLLMConfigurationError } from '../../lib/llmClient';
 import {
-  syncPromotionReviewArtifact,
+  getPromotionReviewArtifactByClientId,
   loadPromotionReviewsFromArtifacts,
   type StoredPromotionReview,
 } from '../../utils/aiArtifactStorage';
+import { parseInlineMarkdown } from '../../utils/simpleMarkdown';
+import { createAIArtifactGenerationJob, getAIArtifactGenerationJob } from '../../api';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
+
+const generationStageProgress = {
+  starting: 8,
+  queued: 18,
+  running: 58,
+  saving: 88,
+} as const;
+
+type GenerationStage = keyof typeof generationStageProgress;
+
+const formatElapsedSeconds = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes <= 0) return `${remainingSeconds}s`;
+  return `${minutes}m ${remainingSeconds.toString().padStart(2, '0')}s`;
+};
 
 const optionalFieldGroups: Array<{
   title: string;
@@ -31,25 +50,28 @@ const optionalFieldGroups: Array<{
     label: string;
     placeholder: string;
     rows?: number;
+    required?: boolean;
   }>;
 }> = [
   {
     title: 'Target',
     fields: [
       {
-        key: 'targetLevel',
-        label: 'Target level',
-        placeholder: 'Senior Software Engineer, L5, Staff',
+        key: 'currentLevel',
+        label: 'Current title / level',
+        placeholder: 'Software Engineer I, E4, L4, Senior Software Engineer',
       },
       {
         key: 'targetTitle',
-        label: 'Target title',
-        placeholder: 'Senior Backend Engineer',
+        label: 'Target title / level',
+        placeholder: 'Senior Software Engineer / E5',
+        required: true,
       },
       {
         key: 'promotionTimeline',
         label: 'Timeline',
-        placeholder: 'Promo cycle, target conversation date',
+        placeholder: 'Next cycle, within 6 months, Q1 2027, not sure',
+        required: true,
       },
     ],
   },
@@ -109,6 +131,19 @@ const optionalFieldGroups: Array<{
 
 const asList = (items?: string[]) => (Array.isArray(items) ? items.filter(Boolean) : []);
 
+const buildDefaultPromotionContext = (experience: Experience): PromotionReviewContext => ({
+  currentLevel: experience.title || '',
+  targetTitle: '',
+  promotionTimeline: '',
+});
+
+const checklistToneClass = (status?: string) => {
+  const normalized = (status || '').toLowerCase();
+  if (normalized.includes('strong')) return 'border-emerald-100 bg-emerald-50 text-emerald-900';
+  if (normalized.includes('partial')) return 'border-amber-100 bg-amber-50 text-amber-950';
+  return 'border-slate-200 bg-slate-50 text-slate-700';
+};
+
 const ListBlock: React.FC<{ items?: string[]; empty?: string }> = ({ items, empty }) => {
   const rows = asList(items);
   if (!rows.length) return <Text type="secondary">{empty || 'No items provided.'}</Text>;
@@ -116,7 +151,7 @@ const ListBlock: React.FC<{ items?: string[]; empty?: string }> = ({ items, empt
     <ul className="m-0 pl-5 space-y-1.5">
       {rows.map((item, index) => (
         <li key={`${item}-${index}`} className="text-sm leading-relaxed text-gray-700">
-          {item}
+          {parseInlineMarkdown(item)}
         </li>
       ))}
     </ul>
@@ -131,6 +166,7 @@ const ContextField: React.FC<{
   <label className={field.rows && field.rows >= 4 ? 'md:col-span-2 block' : 'block'}>
     <span className="mb-2 block text-[12px] font-semibold uppercase tracking-wide text-slate-500">
       {field.label}
+      {field.required && <span className="ml-1 text-blue-600">Required</span>}
     </span>
     {field.rows ? (
       <TextArea
@@ -170,139 +206,156 @@ const EvidenceRow: React.FC<{ label: string; tone?: 'good' | 'muted' }> = ({
 const PromotionReviewResultView: React.FC<{
   result: PromotionReviewResult;
   activeReviewId: string | null;
-}> = ({ result, activeReviewId }) => (
+  historyReviews: StoredPromotionReview[];
+}> = ({ activeReviewId, result, historyReviews }) => (
   <div className="space-y-6">
-    {/* Question 1: Am I qualified for promotion? */}
-    <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-6 shadow-sm">
-      <Title
-        level={4}
-        className="!mt-0 !mb-4 !text-base !font-bold text-blue-900 flex items-center gap-2"
-      >
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-          1
-        </span>
-        Am I qualified for promotion?
-      </Title>
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <Tag
-          color="blue"
-          className="m-0 font-semibold px-2.5 py-0.5 rounded-md text-sm border-blue-200"
-        >
-          {result.readiness_verdict?.label || 'Promotion review'}
-        </Tag>
-        <Tag className="m-0 px-2.5 py-0.5 rounded-md text-xs border-gray-200">
-          Confidence: {result.readiness_verdict?.confidence || 'unknown'}
-        </Tag>
-      </div>
-      <Text className="text-gray-800 text-[15px] leading-relaxed block font-medium">
-        {result.readiness_verdict?.summary}
-      </Text>
-    </div>
-
-    {/* Question 2: How am I standing right now? */}
-    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm space-y-4">
-      <Title
-        level={4}
-        className="!mt-0 !mb-2 !text-base !font-bold text-slate-900 flex items-center gap-2"
-      >
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
-          2
-        </span>
-        How am I standing right now?
-      </Title>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="rounded-xl border border-gray-100 bg-slate-50/50 p-5">
-          <Title
-            level={5}
-            className="!mt-0 !mb-3 text-[12px] font-bold text-gray-500 uppercase tracking-wider"
-          >
-            Strongest Evidence
-          </Title>
-          <ListBlock items={result.evidence_summary?.strongest_evidence} />
-        </div>
-        <div className="rounded-xl border border-gray-100 bg-slate-50/50 p-5">
-          <Title
-            level={5}
-            className="!mt-0 !mb-3 text-[12px] font-bold text-gray-500 uppercase tracking-wider"
-          >
-            Missing Context / Gaps
-          </Title>
-          <ListBlock items={result.evidence_summary?.missing_context} />
-        </div>
-      </div>
-
-      {result.evidence_summary?.data_quality_note && (
-        <Alert
-          type="info"
-          showIcon
-          message="Evidence Quality Assessment"
-          description={result.evidence_summary.data_quality_note}
-          className="!rounded-xl !border-slate-100 !bg-slate-50/80"
-        />
-      )}
-    </div>
-
-    {/* Question 3: What do I need to do? */}
-    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm space-y-4">
-      <Title
-        level={4}
-        className="!mt-0 !mb-2 !text-base !font-bold text-slate-900 flex items-center gap-2"
-      >
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
-          3
-        </span>
-        What do I need to do?
-      </Title>
-
-      {result.growth_plan?.next_30_days && result.growth_plan.next_30_days.length > 0 && (
-        <div className="rounded-xl border border-amber-100 bg-amber-50/40 p-5">
-          <Title
-            level={5}
-            className="!mt-0 !mb-3 text-[12px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5"
-          >
-            <RiseOutlined /> Immediate Next 30 Days Action Items
-          </Title>
-          <ListBlock items={result.growth_plan.next_30_days} />
-        </div>
-      )}
-
-      <div className="space-y-4">
-        <div>
-          <Title
-            level={5}
-            className="!mt-0 !mb-2 text-[12px] font-bold text-gray-500 uppercase tracking-wider"
-          >
-            Manager Strategy & Guidance
-          </Title>
-          <Text className="text-gray-700 text-sm leading-relaxed block">
-            {result.manager_conversation?.recommendation}
-          </Text>
-        </div>
-
-        {result.manager_conversation?.draft_message && (
-          <div className="space-y-2">
-            <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
-              Quick Email/Slack Template
+    {result.promotion_prediction && (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              Prediction
             </Text>
-            <div className="relative rounded-xl bg-slate-50 border border-slate-100 p-4 text-[13px] leading-relaxed text-gray-800 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
-              {result.manager_conversation.draft_message}
+            <Title level={4} className="!mb-0 !mt-1 !text-base !font-bold text-slate-950">
+              Promotion chances and timing
+            </Title>
+          </div>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-3 text-center">
+            <div className="text-3xl font-black leading-none text-blue-700">
+              {result.promotion_prediction.probability_percent}%
+            </div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wide text-blue-700">
+              {result.promotion_prediction.chance_label} chance
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Likely
+            </Text>
+            <Text className="mt-1 block text-sm font-bold text-slate-950">
+              {result.promotion_prediction.likely_timeline}
+            </Text>
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+              Best case
+            </Text>
+            <Text className="mt-1 block text-sm font-bold text-emerald-950">
+              {result.promotion_prediction.earliest_reasonable_timeline}
+            </Text>
+          </div>
+          <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-amber-700">
+              If gaps remain
+            </Text>
+            <Text className="mt-1 block text-sm font-bold text-amber-950">
+              {result.promotion_prediction.latest_likely_timeline}
+            </Text>
+          </div>
+        </div>
+        <p className="mb-0 mt-4 text-sm leading-6 text-slate-700">
+          {parseInlineMarkdown(result.promotion_prediction.rationale)}
+        </p>
+        {historyReviews.filter((review) => review.review?.promotion_prediction).length > 1 && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Prediction history
+            </Text>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {historyReviews
+                .filter((review) => review.review?.promotion_prediction)
+                .slice(0, 5)
+                .reverse()
+                .map((review) => (
+                  <Tag
+                    key={review.id}
+                    className={`m-0 rounded-full px-3 py-1 text-xs font-bold ${
+                      review.id === activeReviewId
+                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                  >
+                    {review.review.promotion_prediction?.probability_percent}%
+                  </Tag>
+                ))}
             </div>
           </div>
         )}
       </div>
-    </div>
+    )}
+
+    {result.readiness_dashboard && (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              Readiness dashboard
+            </Text>
+            <Title level={4} className="!mb-0 !mt-1 !text-base !font-bold text-slate-950">
+              Packet and conversation readiness
+            </Title>
+          </div>
+          <Tag className="m-0 rounded-full px-3 py-1 text-xs font-bold capitalize">
+            {result.readiness_dashboard.manager_conversation_readiness}
+          </Tag>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[150px_minmax(0,1fr)]">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Packet score
+            </Text>
+            <div className="mt-1 text-3xl font-black leading-none text-slate-950">
+              {result.readiness_dashboard.packet_readiness_score}
+            </div>
+            <div className="mt-1 text-xs font-bold capitalize text-slate-500">
+              {result.readiness_dashboard.packet_readiness_label}
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              Why confidence is what it is
+            </Text>
+            <p className="mb-0 mt-1 text-sm leading-6 text-slate-700">
+              {parseInlineMarkdown(result.readiness_dashboard.confidence_explanation)}
+            </p>
+          </div>
+        </div>
+        {result.readiness_dashboard.top_odds_improvers?.length > 0 && (
+          <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+            <Text className="block text-[11px] font-bold uppercase tracking-wide text-blue-700">
+              Fastest ways to raise odds
+            </Text>
+            <ListBlock items={result.readiness_dashboard.top_odds_improvers.slice(0, 3)} />
+          </div>
+        )}
+        {result.readiness_dashboard.evidence_checklist?.length > 0 && (
+          <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+            {result.readiness_dashboard.evidence_checklist.slice(0, 6).map((item) => (
+              <div
+                key={item.item}
+                className={`rounded-xl border px-3 py-2 ${checklistToneClass(item.status)}`}
+              >
+                <div className="text-xs font-bold capitalize">{item.status}</div>
+                <div className="mt-0.5 text-sm font-semibold">{item.item}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
 
     {/* View Detailed Breakdown Footer Banner */}
     <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-5 shadow-sm flex items-start gap-3">
       <BulbOutlined className="text-indigo-600 text-lg mt-0.5 shrink-0" />
       <div>
         <Text strong className="text-indigo-950 text-[15px] block">
-          Full Detailed Breakdown Available
+          Continue on the full review page
         </Text>
         <Text className="text-sm text-indigo-800 block mt-1 leading-relaxed">
-          The full 10-dimension evaluation (Impact, Leadership, Strategic Judgment, etc.),
-          30/60/90-day growth plans, and promotion packet outlines have been automatically saved to
-          your account.
+          Open the full detailed review for evidence, 30/60/90 actions, manager talking points, and
+          the follow-up coach chat.
         </Text>
         <Link
           to={
@@ -339,6 +392,13 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
   const [isEditing, setIsEditing] = useState(true);
   const [historyReviews, setHistoryReviews] = useState<StoredPromotionReview[]>([]);
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+  const [jobStatusText, setJobStatusText] = useState('');
+  const [generationStage, setGenerationStage] = useState<GenerationStage>('starting');
+  const [generationElapsedSeconds, setGenerationElapsedSeconds] = useState(0);
+  const [clarifying, setClarifying] = useState(false);
+  const [clarifyingQuestions, setClarifyingQuestions] = useState<PromotionClarifyingQuestion[]>([]);
+  const [clarificationAnswers, setClarificationAnswers] = useState<Record<string, string>>({});
+  const pollingRunRef = useRef(0);
 
   const loadHistory = async (shouldAutoSelectLatest = false) => {
     if (!experience?.id) return;
@@ -351,7 +411,10 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
       if (shouldAutoSelectLatest && filtered.length > 0) {
         const latest = filtered[0];
         setResult(latest.review);
-        setContext(latest.inputContext || {});
+        setContext({
+          ...(latest.inputContext || {}),
+          currentLevel: buildDefaultPromotionContext(experience).currentLevel,
+        });
         setActiveReviewId(latest.id);
         setIsEditing(false);
       }
@@ -362,13 +425,36 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
 
   useEffect(() => {
     if (open && experience) {
+      pollingRunRef.current += 1;
       setResult(null);
       setIsEditing(true);
-      setContext({});
+      setContext(buildDefaultPromotionContext(experience));
       setActiveReviewId(null);
+      setJobStatusText('');
+      setGenerationStage('starting');
+      setGenerationElapsedSeconds(0);
+      setClarifying(false);
+      setClarifyingQuestions([]);
+      setClarificationAnswers({});
       void loadHistory(true);
+    } else if (!open) {
+      pollingRunRef.current += 1;
     }
   }, [open, experience]);
+
+  useEffect(() => {
+    if (!generating) {
+      setGenerationElapsedSeconds(0);
+      return;
+    }
+
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setGenerationElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [generating]);
 
   const evidenceFacts = useMemo(() => {
     if (!experience) return [];
@@ -390,38 +476,159 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
     setContext((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleGenerate = async () => {
-    if (!experience?.id) return;
-    setGenerating(true);
-    try {
-      const review = await generatePromotionReviewWithBrowserAI({ experience, context });
-      const savedAt = new Date().toISOString();
-      const stored: StoredPromotionReview = {
-        id: `promotion-review-${experience.id}-${Date.now()}`,
-        title: `Promotion Review - ${experience.title} @ ${experience.company}`,
-        companyName: experience.company,
-        roleTitle: experience.title,
-        sourceExperienceId: experience.id,
-        inputContext: context,
-        review,
-        savedAt,
-      };
-      await syncPromotionReviewArtifact(stored);
-      setResult(review);
+  const updateClarificationAnswer = (id: string, value: string) => {
+    setClarificationAnswers((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const validateRequiredContext = () => {
+    if (!context.targetTitle?.trim()) {
+      messageApi.warning('Add the target title / level so the prediction has a real bar.');
+      return false;
+    }
+    if (!context.promotionTimeline?.trim()) {
+      messageApi.warning('Add a promotion timeline, even if it is just "not sure".');
+      return false;
+    }
+    return true;
+  };
+
+  const buildClarificationSummary = () => {
+    const lines = clarifyingQuestions
+      .map((question, index) => {
+        const answer = clarificationAnswers[question.id]?.trim();
+        if (!answer) return '';
+        return `${index + 1}. ${question.question}\nAnswer: ${answer}`;
+      })
+      .filter(Boolean);
+
+    return lines.length ? lines.join('\n\n') : '';
+  };
+
+  const buildContextForGeneration = (): PromotionReviewContext => {
+    const clarificationSummary = buildClarificationSummary();
+    return clarificationSummary
+      ? { ...context, clarificationAnswers: clarificationSummary }
+      : context;
+  };
+
+  const generationProgress = useMemo(() => {
+    const stageBase = generationStageProgress[generationStage];
+    if (generationStage !== 'running') return stageBase;
+    return Math.min(84, stageBase + Math.floor(generationElapsedSeconds / 8));
+  }, [generationElapsedSeconds, generationStage]);
+
+  const pollGenerationJob = async (jobId: number, clientId: string, runId: number) => {
+    setGenerationStage('queued');
+    setJobStatusText('Queued. CareerHub is preparing the detailed review.');
+
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      if (pollingRunRef.current !== runId) return;
+      await new Promise((resolve) => window.setTimeout(resolve, attempt === 0 ? 1200 : 3000));
+      if (pollingRunRef.current !== runId) return;
+
+      const response = await getAIArtifactGenerationJob(jobId);
+      const job = response.data;
+
+      if (job.status === 'QUEUED') {
+        setGenerationStage('queued');
+        setJobStatusText('Queued. Waiting for the AI worker to pick this up.');
+        continue;
+      }
+      if (job.status === 'RUNNING') {
+        setGenerationStage('running');
+        setJobStatusText('Generating a detailed promotion prediction and evidence review...');
+        continue;
+      }
+      if (job.status === 'FAILED') {
+        throw new Error(
+          job.error_message ||
+            'Promotion review generation failed. Check the AI provider settings and try again.'
+        );
+      }
+
+      setGenerationStage('saving');
+      setJobStatusText('Saving the completed review to your AI Tools history...');
+      const stored = await getPromotionReviewArtifactByClientId(
+        job.artifact_client_id || job.result_payload.artifact_client_id || clientId
+      );
+      if (!stored)
+        throw new Error('Promotion review finished, but the saved artifact was not found.');
+
+      setResult(stored.review);
       setActiveReviewId(stored.id);
       setIsEditing(false);
+      setJobStatusText('');
       messageApi.success('Promotion review saved');
       void loadHistory(false);
+      return;
+    }
+
+    throw new Error(
+      'Promotion review is still running. You can close this and check Review History later.'
+    );
+  };
+
+  const handleClarify = async () => {
+    if (!experience?.id) return;
+    if (!validateRequiredContext()) return;
+    setClarifying(true);
+    try {
+      const questions = await generatePromotionClarifyingQuestions({ experience, context });
+      setClarifyingQuestions(questions);
+      setClarificationAnswers({});
+      if (!questions.length) {
+        messageApi.info('No extra questions needed. You can generate the review now.');
+      }
     } catch (error) {
       messageApi.error(
-        isLLMConfigurationError(error)
-          ? 'Check Settings > AI Provider before generating a promotion review.'
-          : error instanceof Error
-            ? error.message
-            : 'Failed to generate promotion review'
+        error instanceof Error
+          ? error.message
+          : 'Failed to prepare clarifying questions. You can still generate the review.'
+      );
+      setClarifyingQuestions([]);
+    } finally {
+      setClarifying(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!experience?.id) return;
+    if (!validateRequiredContext()) return;
+    setGenerating(true);
+    setGenerationStage('starting');
+    setGenerationElapsedSeconds(0);
+    setJobStatusText('Starting background generation...');
+    const runId = pollingRunRef.current + 1;
+    pollingRunRef.current = runId;
+    try {
+      const clientId = `promotion-review-${experience.id}-${Date.now()}`;
+      const title = `Promotion Review - ${experience.title} @ ${experience.company}`;
+      const generationContext = buildContextForGeneration();
+      const response = await createAIArtifactGenerationJob({
+        kind: 'PROMOTION_REVIEW',
+        input_payload: {
+          messages: buildPromotionReviewMessages({ experience, context: generationContext }),
+          temperature: 0.25,
+          artifact: {
+            client_id: clientId,
+            title,
+            companyName: experience.company,
+            roleTitle: experience.title,
+            sourceExperienceId: experience.id,
+            inputContext: generationContext,
+          },
+        },
+      });
+      await pollGenerationJob(response.data.id, clientId, runId);
+    } catch (error) {
+      messageApi.error(
+        error instanceof Error ? error.message : 'Failed to generate promotion review'
       );
     } finally {
-      setGenerating(false);
+      if (pollingRunRef.current === runId) {
+        setGenerating(false);
+        setJobStatusText('');
+      }
     }
   };
 
@@ -459,7 +666,7 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
                   Saved evidence first
                 </Tag>
                 <Tag className="m-0 rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-                  Rubric optional
+                  Predicts odds + timing
                 </Tag>
               </div>
             </div>
@@ -560,57 +767,150 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
               </aside>
 
               <main className="space-y-6 bg-white p-6 md:p-7">
-                {isEditing ? (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.55)]">
-                    <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                          Optional context
-                        </Text>
-                        <Title level={4} className="!mb-0 !mt-1 !text-lg !tracking-tight">
-                          Add anything CareerHub has not captured yet
-                        </Title>
+                {generating ? (
+                  <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-slate-200 bg-slate-50 px-6 py-20 text-center">
+                    <Spin size="large" />
+                    <Text className="text-base font-bold text-slate-800">
+                      Building your detailed promotion review
+                    </Text>
+                    <div className="w-full max-w-xl">
+                      <Progress
+                        percent={generationProgress}
+                        showInfo={false}
+                        strokeColor="#2563eb"
+                        trailColor="#dbe4f0"
+                      />
+                      <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+                        <span className="capitalize">{generationStage}</span>
+                        <span>{formatElapsedSeconds(generationElapsedSeconds)}</span>
                       </div>
-                      <Text className="text-sm text-slate-500">All fields are optional</Text>
                     </div>
-
-                    <div className="space-y-7">
-                      {optionalFieldGroups.map((group) => (
-                        <section key={group.title} className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-px flex-1 bg-slate-200" />
-                            <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                              {group.title}
+                    <div className="max-w-xl space-y-2">
+                      <Text className="block text-sm leading-6 text-slate-500">
+                        {jobStatusText ||
+                          'CareerHub is running this in the background so the AI provider can take the time it needs.'}
+                      </Text>
+                      <Text className="block text-xs leading-5 text-slate-400">
+                        Provider progress is not streamed, so this bar tracks CareerHub job state
+                        and elapsed time.
+                      </Text>
+                    </div>
+                  </div>
+                ) : isEditing ? (
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_50px_-34px_rgba(15,23,42,0.55)]">
+                    {clarifyingQuestions.length > 0 ? (
+                      <div>
+                        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
+                              Guided follow-up
                             </Text>
-                            <div className="h-px flex-1 bg-slate-200" />
+                            <Title level={4} className="!mb-0 !mt-1 !text-lg !tracking-tight">
+                              Answer what you can, then generate the review
+                            </Title>
                           </div>
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {group.fields.map((field) => (
-                              <ContextField
-                                key={field.key}
-                                field={field}
-                                value={context[field.key] || ''}
-                                onChange={(value) => updateContext(field.key, value)}
+                          <Button
+                            type="text"
+                            onClick={() => setClarifyingQuestions([])}
+                            className="!rounded-xl !font-semibold"
+                          >
+                            Back to context
+                          </Button>
+                        </div>
+
+                        <Alert
+                          type="info"
+                          showIcon
+                          className="!mb-5 !rounded-2xl !border-blue-100 !bg-blue-50"
+                          message="These answers are optional, but they help the AI avoid guessing."
+                          description="Short bullets are enough. Leave a question blank if you do not know yet."
+                        />
+
+                        <div className="space-y-4">
+                          {clarifyingQuestions.map((question, index) => (
+                            <div
+                              key={question.id}
+                              className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                            >
+                              <div className="mb-3 flex items-start gap-3">
+                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <Text className="block text-sm font-bold leading-6 text-slate-900">
+                                    {parseInlineMarkdown(question.question)}
+                                  </Text>
+                                  <Text className="mt-1 block text-xs leading-5 text-slate-500">
+                                    {parseInlineMarkdown(question.why)}
+                                  </Text>
+                                </div>
+                              </div>
+                              <TextArea
+                                value={clarificationAnswers[question.id] || ''}
+                                onChange={(event) =>
+                                  updateClarificationAnswer(question.id, event.target.value)
+                                }
+                                placeholder="Answer with a few bullets, examples, names of systems, decisions you drove, or manager signals..."
+                                rows={3}
+                                className="!rounded-xl !border-slate-200 !bg-white !px-3.5 !py-3 !text-[14px] !leading-relaxed shadow-[0_1px_0_rgba(15,23,42,0.03)] placeholder:!text-slate-400 hover:!border-slate-300 focus:!border-slate-400 focus:!shadow-none"
                               />
-                            ))}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                              Prediction context
+                            </Text>
+                            <Title level={4} className="!mb-0 !mt-1 !text-lg !tracking-tight">
+                              Confirm the target, then add anything CareerHub has not captured
+                            </Title>
                           </div>
-                        </section>
-                      ))}
-                    </div>
+                          <Text className="text-sm text-slate-500">
+                            Next step: AI asks a few targeted follow-up questions
+                          </Text>
+                        </div>
+
+                        <div className="space-y-7">
+                          {optionalFieldGroups.map((group) => (
+                            <section key={group.title} className="space-y-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-px flex-1 bg-slate-200" />
+                                <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                                  {group.title}
+                                </Text>
+                                <div className="h-px flex-1 bg-slate-200" />
+                              </div>
+                              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {group.fields.map((field) => (
+                                  <ContextField
+                                    key={field.key}
+                                    field={field}
+                                    value={context[field.key] || ''}
+                                    onChange={(value) => updateContext(field.key, value)}
+                                  />
+                                ))}
+                              </div>
+                            </section>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   result && (
-                    <PromotionReviewResultView result={result} activeReviewId={activeReviewId} />
+                    <PromotionReviewResultView
+                      result={result}
+                      activeReviewId={activeReviewId}
+                      historyReviews={historyReviews}
+                    />
                   )
                 )}
 
-                {generating && (
-                  <div className="flex items-center justify-center rounded-3xl border border-slate-200 bg-slate-50 py-14">
-                    <Spin tip="Evaluating promotion evidence..." />
-                  </div>
-                )}
-
-                {!result && !generating && (
+                {!result && !generating && !isEditing && (
                   <Alert
                     type="warning"
                     showIcon
@@ -631,22 +931,41 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
             {result && !isEditing ? (
               <Button
                 type="default"
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  setClarifyingQuestions([]);
+                  setClarificationAnswers({});
+                  setIsEditing(true);
+                }}
                 className="!h-10 !rounded-xl !px-5 !font-semibold"
               >
                 Edit Context & Regenerate
               </Button>
             ) : (
-              <Button
-                type="primary"
-                icon={<MessageOutlined />}
-                loading={generating}
-                disabled={!experience?.id}
-                onClick={handleGenerate}
-                className="!h-10 !rounded-xl !px-5 !font-semibold"
-              >
-                {result ? 'Regenerate Review' : 'Generate Review'}
-              </Button>
+              <>
+                {clarifyingQuestions.length === 0 && (
+                  <Button
+                    className="!h-10 !rounded-xl !px-5 !font-semibold"
+                    disabled={!experience?.id || generating || clarifying}
+                    onClick={handleGenerate}
+                  >
+                    Generate without Follow-up
+                  </Button>
+                )}
+                <Button
+                  type="primary"
+                  icon={<MessageOutlined />}
+                  loading={generating || clarifying}
+                  disabled={!experience?.id}
+                  onClick={clarifyingQuestions.length > 0 ? handleGenerate : handleClarify}
+                  className="!h-10 !rounded-xl !px-5 !font-semibold"
+                >
+                  {clarifyingQuestions.length > 0
+                    ? result
+                      ? 'Regenerate Review'
+                      : 'Generate Review'
+                    : 'Ask Follow-up Questions'}
+                </Button>
+              </>
             )}
           </div>
         </div>

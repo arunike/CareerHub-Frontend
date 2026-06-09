@@ -48,7 +48,7 @@ const BulkActionHeader: React.FC<BulkActionHeaderProps> = ({
         )}
       </div>
 
-      <Space wrap>
+      <Space wrap className={isBulkMode ? 'pt-3 pb-1 sm:pl-4' : undefined}>
         {isBulkMode ? (
           <>
             {bulkActions}

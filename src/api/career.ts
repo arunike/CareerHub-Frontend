@@ -123,6 +123,34 @@ export const updateApplication = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/applications/${id}/`, data);
 export const deleteApplication = (id: number) => api.delete(`/career/applications/${id}/`);
 export const deleteAllApplications = () => api.delete('/career/applications/delete_all/');
+
+export interface AIArtifactGenerationJob {
+  id: number;
+  kind: 'PROMOTION_REVIEW';
+  status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  input_payload: Record<string, unknown>;
+  result_payload: {
+    review?: unknown;
+    artifact_client_id?: string;
+    artifact_id?: number;
+  };
+  error_message: string;
+  artifact: number | null;
+  artifact_client_id?: string;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const createAIArtifactGenerationJob = (data: {
+  kind: 'PROMOTION_REVIEW';
+  input_payload: Record<string, unknown>;
+}) => api.post<AIArtifactGenerationJob>('/career/ai-artifact-jobs/', data);
+
+export const getAIArtifactGenerationJob = (id: number) =>
+  api.get<AIArtifactGenerationJob>(`/career/ai-artifact-jobs/${id}/`);
+
 export const getApplicationTimeline = (applicationId: number) =>
   api.get<ApplicationTimelineEntry[]>('/career/application-timeline/', {
     params: { application: applicationId },

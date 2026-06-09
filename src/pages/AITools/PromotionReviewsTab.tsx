@@ -19,6 +19,7 @@ import {
   updateArtifactTitle,
   type StoredPromotionReview,
 } from '../../utils/aiArtifactStorage';
+import { parseInlineMarkdown } from '../../utils/simpleMarkdown';
 
 const { Text, Title } = Typography;
 
@@ -28,6 +29,15 @@ const verdictColor = (label?: string) => {
   if (normalized.includes('ready')) return 'blue';
   if (normalized.includes('building')) return 'gold';
   return 'default';
+};
+
+const ratingToneClass = (label?: string) => {
+  const normalized = (label || '').toLowerCase();
+  if (normalized.includes('strong') || normalized.includes('ready')) {
+    return 'border-l-emerald-500';
+  }
+  if (normalized.includes('building')) return 'border-l-amber-500';
+  return 'border-l-slate-300';
 };
 
 const PromotionReviewsTab: React.FC = () => {
@@ -168,14 +178,19 @@ const PromotionReviewsTab: React.FC = () => {
         <div className="mt-6 grid grid-cols-1 gap-4">
           {reviews.map((item) => {
             const verdict = item.review?.readiness_verdict;
+            const prediction = item.review?.promotion_prediction;
+            const dashboard = item.review?.readiness_dashboard;
             return (
               <div
                 key={item.id}
-                className="rounded-lg border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+                className={`rounded-2xl border border-slate-200 border-l-4 bg-white p-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-shadow hover:shadow-[0_24px_70px_-48px_rgba(15,23,42,0.8)] ${ratingToneClass(
+                  verdict?.label
+                )}`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0">
+                <div className="flex items-start justify-between gap-5">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
                     <Checkbox
+                      className="mt-1"
                       checked={selectedIds.includes(item.id)}
                       onChange={() =>
                         setSelectedIds((prev) =>
@@ -185,21 +200,64 @@ const PromotionReviewsTab: React.FC = () => {
                         )
                       }
                     />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <Title level={4} className="!m-0 truncate">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <Title level={4} className="!m-0 min-w-0 truncate !text-lg !leading-6">
                           {item.title}
                         </Title>
-                        <Tag color={verdictColor(verdict?.label)} className="m-0">
+                        <Tag
+                          color={verdictColor(verdict?.label)}
+                          className="m-0 rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                        >
                           {verdict?.label || 'Review'}
                         </Tag>
                         {item.isLocked && <Tag icon={<LockOutlined />}>Locked</Tag>}
                       </div>
-                      <Text type="secondary">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
                         {item.roleTitle} @ {item.companyName} ·{' '}
                         {new Date(item.savedAt).toLocaleString()}
-                      </Text>
-                      <Text className="block mt-3 text-gray-700">{verdict?.summary}</Text>
+                      </div>
+                      <p className="mt-4 line-clamp-3 max-w-[96ch] text-sm leading-6 text-slate-700">
+                        {parseInlineMarkdown(verdict?.summary)}
+                      </p>
+                      {prediction && (
+                        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+                          <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                            <div className="text-xl font-black leading-none text-blue-700">
+                              {prediction.probability_percent}%
+                            </div>
+                            <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                              {prediction.chance_label} chance
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                              Likely timing
+                            </div>
+                            <div className="mt-1 text-sm font-bold text-slate-900">
+                              {prediction.likely_timeline}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => navigate(`/promotion-review/${item.id}`)}
+                        >
+                          View Review
+                        </Button>
+                        <Tag className="m-0 rounded-md px-2.5 py-0.5 text-xs font-semibold">
+                          Confidence: {verdict?.confidence || 'unknown'}
+                        </Tag>
+                        {dashboard && (
+                          <Tag className="m-0 rounded-md px-2.5 py-0.5 text-xs font-semibold">
+                            Packet: {dashboard.packet_readiness_score} ·{' '}
+                            {dashboard.packet_readiness_label}
+                          </Tag>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <RowActions
@@ -211,16 +269,6 @@ const PromotionReviewsTab: React.FC = () => {
                     deleteDescription="This removes the saved AI review."
                     disableDelete={item.isLocked}
                   />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={() => navigate(`/promotion-review/${item.id}`)}
-                  >
-                    View Review
-                  </Button>
-                  <Tag className="m-0">Confidence: {verdict?.confidence || 'unknown'}</Tag>
                 </div>
               </div>
             );

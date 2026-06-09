@@ -13,7 +13,12 @@ import type { StoredNegotiationResult } from './negotiationStorage';
 import { getAllNegotiationResults } from './negotiationStorage';
 import type { StoredReport } from './reportStorage';
 import { getAllReports } from './reportStorage';
-import type { PromotionReviewContext, PromotionReviewResult } from '../lib/browserAi';
+import {
+  sanitizePromotionReviewResult,
+  type PromotionReviewChatMessage,
+  type PromotionReviewContext,
+  type PromotionReviewResult,
+} from '../lib/browserAi';
 
 export interface StoredPromotionReview {
   id: string;
@@ -23,6 +28,7 @@ export interface StoredPromotionReview {
   sourceExperienceId: number;
   inputContext: PromotionReviewContext;
   review: PromotionReviewResult;
+  chatMessages?: PromotionReviewChatMessage[];
   savedAt: string;
   isLocked?: boolean;
 }
@@ -120,6 +126,7 @@ export const artifactToPromotionReview = (artifact: AIArtifact): StoredPromotion
     id: artifact.client_id,
     title: artifact.title || payload.title,
     sourceExperienceId: artifact.source_experience || payload.sourceExperienceId,
+    review: sanitizePromotionReviewResult(payload.review),
     isLocked: artifact.is_locked,
     savedAt: payload.savedAt || savedAt(artifact),
   };
@@ -193,6 +200,32 @@ export const getPromotionReviewArtifactByClientId = async (clientId: string) => 
   const response = await getAIArtifacts('PROMOTION_REVIEW');
   const artifact = response.data.find((item) => item.client_id === clientId);
   return artifact ? artifactToPromotionReview(artifact) : null;
+};
+
+export const updatePromotionReviewChatMessages = async (
+  clientId: string,
+  chatMessages: PromotionReviewChatMessage[]
+) => {
+  const response = await getAIArtifacts('PROMOTION_REVIEW');
+  const artifact = response.data.find((item) => item.client_id === clientId);
+  if (!artifact) return null;
+
+  const payload = payloadOf(artifact) as unknown as StoredPromotionReview;
+  const updatedPayload: StoredPromotionReview = {
+    ...payload,
+    id: clientId,
+    title: artifact.title || payload.title,
+    sourceExperienceId: artifact.source_experience || payload.sourceExperienceId,
+    savedAt: payload.savedAt || savedAt(artifact),
+    isLocked: artifact.is_locked,
+    chatMessages,
+  };
+
+  const updated = await updateAIArtifact(artifact.id, {
+    payload: updatedPayload as unknown as Record<string, unknown>,
+  });
+
+  return artifactToPromotionReview(updated.data);
 };
 
 export const updateArtifactTitle = async (

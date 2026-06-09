@@ -17,6 +17,7 @@ import { getReportById } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
 import { getReportArtifactByClientId } from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
+import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
 
 const getScoreMeta = (score: number) => {
   if (score >= 90)
@@ -173,24 +174,18 @@ const JDReportPage: React.FC = () => {
       <div className="min-h-screen bg-slate-50/50 py-12 px-4 shadow-inner">
         <div className="max-w-4xl mx-auto flex flex-col gap-8">
           {/* Header */}
-          <div className="flex flex-col gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-3 py-1 mb-4 shadow-sm">
-                <RobotOutlined className="text-sky-500 text-xs" />
-                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest">
-                  AI Resume Evaluation Report
-                </span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight tracking-tight">
-                {report.title || 'Job Match Analysis'}
-              </h1>
-              <div className="flex items-center gap-3 text-gray-400 text-xs font-medium">
-                <span>{date}</span>
-                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>Job Matching System</span>
-              </div>
-            </div>
-          </div>
+          <ArtifactHeaderCard
+            typeLabel="AI Resume Evaluation Report"
+            typeIcon={<RobotOutlined />}
+            title={report.title || 'Job Match Analysis'}
+            date={date}
+            subtitle={
+              report.roleTitle && report.companyName
+                ? `${report.roleTitle} @ ${report.companyName}`
+                : 'Job Matching System'
+            }
+            themeColor="sky"
+          />
 
           {/* Score Hero */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">

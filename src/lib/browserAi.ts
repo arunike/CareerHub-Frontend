@@ -16,7 +16,7 @@ export interface AnalyticsWidgetResult {
 }
 
 export interface PromotionReviewContext {
-  targetLevel?: string;
+  currentLevel?: string;
   targetTitle?: string;
   recentWork?: string;
   majorProjects?: string;
@@ -27,6 +27,19 @@ export interface PromotionReviewContext {
   concerns?: string;
   promotionTimeline?: string;
   companyRubric?: string;
+  clarificationAnswers?: string;
+}
+
+export interface PromotionClarifyingQuestion {
+  id: string;
+  question: string;
+  why: string;
+}
+
+export interface PromotionReviewChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
 }
 
 export interface PromotionReviewResult {
@@ -35,13 +48,42 @@ export interface PromotionReviewResult {
     confidence: 'low' | 'medium' | 'high' | string;
     summary: string;
   };
-  evidence_summary: {
+  promotion_prediction?: {
+    probability_percent: number;
+    chance_label: 'low' | 'moderate' | 'good' | 'strong' | string;
+    likely_timeline: string;
+    earliest_reasonable_timeline: string;
+    latest_likely_timeline: string;
+    confidence: 'low' | 'medium' | 'high' | string;
+    rationale: string;
+    assumptions: string[];
+    chance_blockers: string[];
+    chance_improvers: string[];
+  };
+  readiness_dashboard?: {
+    packet_readiness_score: number;
+    packet_readiness_label: 'weak' | 'building' | 'ready soon' | 'ready' | string;
+    manager_conversation_readiness:
+      | 'not ready'
+      | 'calibration ready'
+      | 'promotion ask ready'
+      | 'packet review ready'
+      | string;
+    confidence_explanation: string;
+    evidence_checklist: Array<{
+      item: string;
+      status: 'missing' | 'partial' | 'strong' | string;
+      note: string;
+    }>;
+    top_odds_improvers: string[];
+  };
+  evidence_summary?: {
     role_snapshot: string[];
     strongest_evidence: string[];
     missing_context: string[];
     data_quality_note: string;
   };
-  dimension_scores: Array<{
+  dimension_scores?: Array<{
     dimension: string;
     rating: 'weak' | 'developing' | 'solid' | 'strong' | string;
     confidence: 'low' | 'medium' | 'high' | string;
@@ -49,22 +91,27 @@ export interface PromotionReviewResult {
     missing_evidence: string[];
     how_to_strengthen: string;
   }>;
-  manager_conversation: {
+  manager_conversation?: {
     recommendation: string;
     talking_points: string[];
     questions_to_ask: string[];
     avoid_saying: string[];
     draft_message: string;
   };
-  risk_assessment: {
+  risk_assessment?: {
     raising_now_risk: 'low' | 'medium' | 'high' | string;
     risks: string[];
     mitigations: string[];
   };
-  growth_plan: {
+  growth_plan?: {
     next_30_days: string[];
     next_60_days: string[];
     next_90_days: string[];
+  };
+  general_calibration?: {
+    disclaimer: string;
+    heuristics: string[];
+    questions_to_validate: string[];
   };
   promo_packet_outline: Array<{
     section: string;
@@ -235,86 +282,102 @@ Respond ONLY with a valid JSON object using exactly this structure:
 }`;
 
 const PROMOTION_REVIEW_SYSTEM_PROMPT = `You are an evidence-based promotion coach.
-Evaluate whether the user is ready to discuss promotion for their current role using ONLY the saved CareerHub evidence and optional context provided by the user.
+Evaluate promotion readiness using only the saved CareerHub evidence and optional user context. Be candid, practical, and concise.
 
-Important rules:
-1. Do not invent company-specific leveling rules. If no company rubric is provided, use a general promotion evidence framework and say so.
-2. Treat company rubric, manager feedback, and promo-cycle notes as optional context, not as guaranteed policy.
-3. Distinguish strong evidence from missing evidence. Missing information is a gap, not proof the user lacks the skill.
-4. Give practical advice on whether to raise promotion with the manager now, how to frame it, and what evidence to gather next.
-5. Be candid but supportive. Avoid false certainty.
+Rules:
+1. Do not invent private company-specific policy, public benchmarks, Glassdoor trends, leveling data, tenure norms, or dollar thresholds. If rubric is not provided, use general promotion expectations only and label them as general assumptions.
+2. Missing information is an evidence gap, not proof the user lacks skill.
+3. Prioritize direct answers: readiness, probability, timing, blockers, and next actions.
+4. Do not claim specific promotion cycles, years-at-level requirements, manager decisions, peer reviews, or project facts unless provided in the input.
+5. In the growth plan, avoid invented project examples. Use phrases like "choose one actual initiative from your work" when the exact initiative is not provided.
+6. Keep every string short: usually under 160 characters. Do not quote long user input verbatim; synthesize it.
+7. Use only the number of array items shown in the JSON template. Do not add extra items.
+8. Return only valid JSON. No markdown fences. No text outside JSON.
 
-Evaluate these dimensions:
-- Impact
-- Scope
-- Ownership
-- Execution
-- Leadership
-- Strategic Judgment
-- Cross-functional Influence
-- Visibility
-- Evidence Quality
-- Promotion Timing
-
-Respond ONLY with a valid JSON object using exactly this structure:
+Respond with exactly this JSON structure and no extra keys:
 {
   "readiness_verdict": {
     "label": "<Not yet | Building case | Ready to start conversation | Strong case>",
     "confidence": "<low | medium | high>",
-    "summary": "<2-4 sentence overall assessment>"
+    "summary": "<2 short sentences>"
+  },
+  "promotion_prediction": {
+    "probability_percent": <integer 0-100>,
+    "chance_label": "<low | moderate | good | strong>",
+    "likely_timeline": "<short timing>",
+    "earliest_reasonable_timeline": "<short timing>",
+    "latest_likely_timeline": "<short timing>",
+    "confidence": "<low | medium | high>",
+    "rationale": "<2 short sentences>",
+    "assumptions": ["<general assumption, not company-specific and not tenure-specific>", "<general assumption, not company-specific and not cycle-specific>"],
+    "chance_blockers": ["<short blocker>", "<short blocker>"],
+    "chance_improvers": ["<short action>", "<short action>"]
+  },
+  "readiness_dashboard": {
+    "packet_readiness_score": <integer 0-100>,
+    "packet_readiness_label": "<weak | building | ready soon | ready>",
+    "manager_conversation_readiness": "<not ready | calibration ready | promotion ask ready | packet review ready>",
+    "confidence_explanation": "<1 short sentence>",
+    "evidence_checklist": [
+      {"item": "Impact metrics", "status": "<missing | partial | strong>", "note": "<short note>"},
+      {"item": "Scope and ownership", "status": "<missing | partial | strong>", "note": "<short note>"},
+      {"item": "Leadership and influence", "status": "<missing | partial | strong>", "note": "<short note>"}
+    ],
+    "top_odds_improvers": ["<short action>", "<short action>"]
   },
   "evidence_summary": {
-    "role_snapshot": ["<fact from saved experience>", ...],
-    "strongest_evidence": ["<specific supported evidence>", ...],
-    "missing_context": ["<specific missing info that would improve accuracy>", ...],
-    "data_quality_note": "<short note about whether the saved experience is detailed enough>"
+    "role_snapshot": ["<short fact>", "<short fact>"],
+    "strongest_evidence": ["<short evidence>", "<short evidence>"],
+    "missing_context": ["<short gap>", "<short gap>"],
+    "data_quality_note": "<1 short sentence>"
   },
-  "dimension_scores": [
-    {
-      "dimension": "<one evaluated dimension>",
-      "rating": "<weak | developing | solid | strong>",
-      "confidence": "<low | medium | high>",
-      "supporting_evidence": ["<evidence or empty if missing>", ...],
-      "missing_evidence": ["<what is missing>", ...],
-      "how_to_strengthen": "<specific next action>"
-    }
-  ],
   "manager_conversation": {
-    "recommendation": "<whether to raise promotion now and how>",
-    "talking_points": ["<specific talking point>", ...],
-    "questions_to_ask": ["<question for manager>", ...],
-    "avoid_saying": ["<framing to avoid>", ...],
+    "recommendation": "<1 short sentence>",
+    "talking_points": ["<short talking point>", "<short talking point>"],
+    "questions_to_ask": ["<short question>", "<short question>"],
+    "avoid_saying": ["<short framing to avoid>"],
     "draft_message": "<short Slack/email draft>"
   },
-  "risk_assessment": {
-    "raising_now_risk": "<low | medium | high>",
-    "risks": ["<risk>", ...],
-    "mitigations": ["<mitigation>", ...]
-  },
   "growth_plan": {
-    "next_30_days": ["<action>", ...],
-    "next_60_days": ["<action>", ...],
-    "next_90_days": ["<action>", ...]
+    "next_30_days": ["<specific evidence action using only known work>", "<specific manager alignment action>"],
+    "next_60_days": ["<specific scope or impact action; if unsure, say choose one actual initiative from your work>", "<specific metric action using only known metrics or asking user to define one>"],
+    "next_90_days": ["<specific promo packet action>", "<specific calibration action without inventing reviewers>"]
   },
-  "promo_packet_outline": [
-    {
-      "section": "<packet section>",
-      "content_guidance": "<what to include>",
-      "evidence_needed": ["<evidence item>", ...]
-    }
-  ],
-  "suggested_experience_updates": [
-    {
-      "field": "<description | skills | team_history | compensation | other>",
-      "suggestion": "<truthful update to make the saved experience more promotion-ready>",
-      "reason": "<why it helps>"
-    }
-  ],
-  "company_rubric_alignment": {
-    "rubric_provided": <boolean>,
-    "notes": ["<alignment note or reason this is unavailable>", ...]
+  "general_calibration": {
+    "disclaimer": "These are general promotion heuristics, not company policy.",
+    "heuristics": ["<general promotion heuristic, not company-specific>", "<general promotion heuristic, not company-specific>"],
+    "questions_to_validate": ["<manager question to validate timing, scope, or process>", "<manager question to validate level expectations>"]
   }
 }`;
+
+const PROMOTION_CLARIFICATION_SYSTEM_PROMPT = `You are a promotion evidence interviewer.
+Ask targeted clarifying questions before a promotion review so the final evaluation can avoid guessing.
+
+Rules:
+1. Ask only about missing evidence that would materially improve promotion evaluation quality.
+2. Prioritize leadership, scope, cross-functional influence, manager signal, and concrete examples.
+3. Do not ask for compensation, public benchmarks, private company policy, or personal sensitive data.
+4. Keep questions concise and answerable from memory.
+5. Return only valid JSON. No markdown fences. No text outside JSON.
+
+Respond with exactly this JSON structure:
+{
+  "questions": [
+    {"id": "q1", "question": "<concise question>", "why": "<why this improves the review>"},
+    {"id": "q2", "question": "<concise question>", "why": "<why this improves the review>"},
+    {"id": "q3", "question": "<concise question>", "why": "<why this improves the review>"}
+  ]
+}`;
+
+const PROMOTION_REVIEW_FOLLOW_UP_SYSTEM_PROMPT = `You are a promotion coach answering follow-up questions about one saved promotion review.
+
+Rules:
+1. Use only the saved review, user-provided context, and chat history.
+2. Do not invent private company policy, public benchmarks, compensation data, tenure rules, promotion-cycle facts, or manager decisions.
+3. If the user asks for company-specific process, turn it into manager-calibration questions.
+4. Be concrete, concise, and action-oriented.
+5. If the user asks how to improve the case, focus on evidence the user can gather or wording they can use.
+6. Format for scanning: short paragraphs, brief markdown headings, bullets for actions, blockquotes for suggested wording, and compact tables only when comparison is useful.`;
 
 const ANALYTICS_SYSTEM_PROMPT = `You are an analytics assistant for a job search tracker app.
 Answer the user's query using ONLY the database summary provided. Do not make up data.
@@ -361,8 +424,8 @@ const normalizeSkillList = (skills: unknown): string[] => {
 
 const formatOptionalPromotionContext = (context: PromotionReviewContext = {}) => {
   const labels: Array<[keyof PromotionReviewContext, string]> = [
-    ['targetLevel', 'Target level'],
-    ['targetTitle', 'Target title'],
+    ['currentLevel', 'Current title / level'],
+    ['targetTitle', 'Target title / level'],
     ['recentWork', 'Recent work not yet saved'],
     ['majorProjects', 'Major projects'],
     ['measurableImpact', 'Measurable impact'],
@@ -372,6 +435,7 @@ const formatOptionalPromotionContext = (context: PromotionReviewContext = {}) =>
     ['concerns', 'Concerns or weak spots'],
     ['promotionTimeline', 'Promotion timeline'],
     ['companyRubric', 'Company rubric or promo notes'],
+    ['clarificationAnswers', 'Clarifying question answers'],
   ];
 
   const lines = labels
@@ -406,21 +470,138 @@ const formatSchedulePhases = (experience: Experience) => {
     .join('\n');
 };
 
+const PROMOTION_REVIEW_UNSAFE_PATTERNS = [
+  /\bpublic\s+(data|benchmark|comp|compensation|salary)\b/i,
+  /\b(glassdoor|levels\.fyi|salary\.com|market\s+comp|compensation\s+benchmark)\b/i,
+  /\bTikTok'?s?\s+(formal\s+)?(promotion\s+)?cycles?\b/i,
+  /\bpromotion\s+timelines?\s+at\s+TikTok\b/i,
+  /\b(company|promotion)\s+policy\b/i,
+  /\btenure-locked\b/i,
+  /\byears?-at-level\b/i,
+  /\btypically\s+requires\s+\d+\+?\s+years?\b/i,
+  /\brequires\s+\$[\d,.]+[kKmM]?\+?\b/i,
+  /\b\$[\d,.]+[kKmM]?\+?\s+(total\s+comp|compensation|salary|base)\b/i,
+  /\bmanager\s+(will|would|has\s+already|already)\s+(support|approve|socialized|decided)\b/i,
+  /\bsame\s+manager\s+since\s+(start|the\s+start)\b/i,
+];
+
+const PROMOTION_REVIEW_GENERIC_FALLBACK =
+  'Use manager calibration to validate this against your actual promotion expectations.';
+
+const isUnsafePromotionText = (value: string) =>
+  PROMOTION_REVIEW_UNSAFE_PATTERNS.some((pattern) => pattern.test(value));
+
+const sanitizePromotionText = (
+  value: string | undefined,
+  fallback = PROMOTION_REVIEW_GENERIC_FALLBACK
+) => {
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+  if (!isUnsafePromotionText(trimmed)) return trimmed;
+
+  const safeSentences = trimmed
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence && !isUnsafePromotionText(sentence));
+
+  return safeSentences.join(' ') || fallback;
+};
+
+const sanitizePromotionList = (items?: string[], fallback?: string[]) => {
+  const sanitized = (items || []).map((item) => sanitizePromotionText(item, '')).filter(Boolean);
+  return sanitized.length ? sanitized : fallback || [];
+};
+
+export const sanitizePromotionReviewResult = (
+  result: PromotionReviewResult
+): PromotionReviewResult => ({
+  ...result,
+  readiness_verdict: {
+    ...result.readiness_verdict,
+    summary: sanitizePromotionText(result.readiness_verdict.summary),
+  },
+  promotion_prediction: result.promotion_prediction
+    ? {
+        ...result.promotion_prediction,
+        likely_timeline: sanitizePromotionText(
+          result.promotion_prediction.likely_timeline,
+          'Calibrate timing with your manager.'
+        ),
+        earliest_reasonable_timeline: sanitizePromotionText(
+          result.promotion_prediction.earliest_reasonable_timeline,
+          'Possible after evidence gaps are addressed.'
+        ),
+        latest_likely_timeline: sanitizePromotionText(
+          result.promotion_prediction.latest_likely_timeline,
+          'Later if leadership or scope evidence remains thin.'
+        ),
+        rationale: sanitizePromotionText(result.promotion_prediction.rationale),
+        assumptions: sanitizePromotionList(result.promotion_prediction.assumptions, [
+          'Assumptions are general and should be calibrated with your manager.',
+        ]),
+        chance_blockers: sanitizePromotionList(result.promotion_prediction.chance_blockers),
+        chance_improvers: sanitizePromotionList(result.promotion_prediction.chance_improvers),
+      }
+    : result.promotion_prediction,
+  readiness_dashboard: result.readiness_dashboard
+    ? {
+        ...result.readiness_dashboard,
+        confidence_explanation: sanitizePromotionText(
+          result.readiness_dashboard.confidence_explanation
+        ),
+        evidence_checklist: result.readiness_dashboard.evidence_checklist.map((item) => ({
+          ...item,
+          note: sanitizePromotionText(item.note, 'Calibrate this evidence with your manager.'),
+        })),
+        top_odds_improvers: sanitizePromotionList(result.readiness_dashboard.top_odds_improvers),
+      }
+    : result.readiness_dashboard,
+  evidence_summary: result.evidence_summary
+    ? {
+        ...result.evidence_summary,
+        role_snapshot: sanitizePromotionList(result.evidence_summary.role_snapshot),
+        strongest_evidence: sanitizePromotionList(result.evidence_summary.strongest_evidence),
+        missing_context: sanitizePromotionList(result.evidence_summary.missing_context),
+        data_quality_note: sanitizePromotionText(result.evidence_summary.data_quality_note),
+      }
+    : result.evidence_summary,
+  manager_conversation: result.manager_conversation
+    ? {
+        ...result.manager_conversation,
+        recommendation: sanitizePromotionText(result.manager_conversation.recommendation),
+        talking_points: sanitizePromotionList(result.manager_conversation.talking_points),
+        questions_to_ask: sanitizePromotionList(result.manager_conversation.questions_to_ask),
+        avoid_saying: sanitizePromotionList(result.manager_conversation.avoid_saying),
+        draft_message: sanitizePromotionText(result.manager_conversation.draft_message),
+      }
+    : result.manager_conversation,
+  growth_plan: result.growth_plan
+    ? {
+        next_30_days: sanitizePromotionList(result.growth_plan.next_30_days),
+        next_60_days: sanitizePromotionList(result.growth_plan.next_60_days),
+        next_90_days: sanitizePromotionList(result.growth_plan.next_90_days),
+      }
+    : result.growth_plan,
+  general_calibration: result.general_calibration
+    ? {
+        disclaimer: sanitizePromotionText(
+          result.general_calibration.disclaimer,
+          'These are general promotion heuristics, not company policy.'
+        ),
+        heuristics: sanitizePromotionList(result.general_calibration.heuristics),
+        questions_to_validate: sanitizePromotionList(
+          result.general_calibration.questions_to_validate
+        ),
+      }
+    : result.general_calibration,
+});
+
 const buildPromotionExperienceContext = (experience: Experience) => {
   const endDate = experience.end_date || (experience.is_current ? 'Present' : 'Unknown');
-  const compensation = [
-    experience.base_salary != null
-      ? `Base salary: $${Number(experience.base_salary).toLocaleString()}`
-      : '',
-    experience.bonus != null ? `Bonus: $${Number(experience.bonus).toLocaleString()}` : '',
-    experience.equity != null ? `Equity: $${Number(experience.equity).toLocaleString()}` : '',
-    experience.hourly_rate != null
-      ? `Hourly rate: $${Number(experience.hourly_rate).toLocaleString()}/hr`
-      : '',
-  ].filter(Boolean);
 
   return `CURRENT EXPERIENCE:
 Title: ${experience.title || 'Unknown'}
+Current title / level from saved experience: ${experience.title || 'Unknown'}
 Company: ${experience.company || 'Unknown'}
 Location: ${experience.location || 'Not specified'}
 Dates: ${experience.start_date || 'Unknown'} to ${endDate}
@@ -429,7 +610,6 @@ Employment type: ${experience.employment_type || 'Not specified'}
 Promotion marker: ${experience.is_promotion ? 'Yes' : 'No'}
 Return offer marker: ${experience.is_return_offer ? 'Yes' : 'No'}
 Skills: ${(experience.skills || []).join(', ') || 'None saved'}
-Compensation: ${compensation.join(' | ') || 'Not saved'}
 
 Description:
 ${experience.description?.trim() || 'No description saved.'}
@@ -584,22 +764,45 @@ ${experience.description?.trim() || 'No description provided.'}`,
   return normalizeSkillList(result.skills);
 };
 
-export const generatePromotionReviewWithBrowserAI = async ({
+export const buildPromotionReviewMessages = ({
+  experience,
+  context,
+}: {
+  experience: Experience;
+  context?: PromotionReviewContext;
+}) => [
+  { role: 'system' as const, content: PROMOTION_REVIEW_SYSTEM_PROMPT },
+  {
+    role: 'user' as const,
+    content: `Generate a promotion readiness review for this current job.
+If the saved experience is thin, make that a visible evidence-quality finding instead of filling in missing facts.
+If a company rubric is not provided, use general promotion expectations only. Do not use public benchmarks, compensation data, company policy claims, or tenure rules.
+Put useful non-company-specific calibration context only in general_calibration. Phrase it as general heuristics and manager questions, not as facts about the company.
+The target title / level and timeline are the user's prediction target. Use them heavily in the probability and timing estimate.
+
+${buildPromotionExperienceContext(experience)}
+
+OPTIONAL USER CONTEXT:
+${formatOptionalPromotionContext(context)}`,
+  },
+];
+
+export const generatePromotionClarifyingQuestions = async ({
   experience,
   context,
 }: {
   experience: Experience;
   context?: PromotionReviewContext;
 }) => {
-  return requestJsonCompletion<PromotionReviewResult>({
-    temperature: 0.25,
+  const result = await requestJsonCompletion<{ questions?: PromotionClarifyingQuestion[] }>({
+    temperature: 0.2,
     messages: [
-      { role: 'system', content: PROMOTION_REVIEW_SYSTEM_PROMPT },
+      { role: 'system', content: PROMOTION_CLARIFICATION_SYSTEM_PROMPT },
       {
         role: 'user',
-        content: `Generate a promotion readiness review for this current job.
-If the saved experience is thin, make that a visible evidence-quality finding instead of filling in missing facts.
-If a company rubric is not provided, use the general promotion evidence framework only.
+        content: `Review the saved role and user-provided promotion context.
+Ask the 3 most useful follow-up questions before generating a final promotion readiness review.
+If the context is already strong, still ask questions that would improve evidence specificity.
 
 ${buildPromotionExperienceContext(experience)}
 
@@ -608,6 +811,72 @@ ${formatOptionalPromotionContext(context)}`,
       },
     ],
   });
+
+  return (result.questions || [])
+    .filter((question) => question?.question?.trim())
+    .slice(0, 5)
+    .map((question, index) => ({
+      id: question.id?.trim() || `q${index + 1}`,
+      question: question.question.trim(),
+      why: question.why?.trim() || 'This helps calibrate the promotion evidence.',
+    }));
+};
+
+export const generatePromotionReviewWithBrowserAI = async ({
+  experience,
+  context,
+}: {
+  experience: Experience;
+  context?: PromotionReviewContext;
+}) => {
+  const result = await requestJsonCompletion<PromotionReviewResult>({
+    temperature: 0.25,
+    messages: buildPromotionReviewMessages({ experience, context }),
+  });
+  return sanitizePromotionReviewResult(result);
+};
+
+export const answerPromotionReviewFollowUp = async ({
+  review,
+  context,
+  messages,
+  question,
+}: {
+  review: PromotionReviewResult;
+  context?: PromotionReviewContext;
+  messages?: PromotionReviewChatMessage[];
+  question: string;
+}) => {
+  const recentMessages = (messages || []).slice(-8);
+  const answer = await requestChatCompletion({
+    temperature: 0.25,
+    messages: [
+      { role: 'system', content: PROMOTION_REVIEW_FOLLOW_UP_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `SAVED PROMOTION REVIEW JSON:
+${JSON.stringify(review)}
+
+USER-PROVIDED CONTEXT:
+${formatOptionalPromotionContext(context)}
+
+RECENT CHAT HISTORY:
+${
+  recentMessages.length
+    ? recentMessages.map((message) => `${message.role}: ${message.content}`).join('\n\n')
+    : 'No prior follow-up chat.'
+}
+
+USER QUESTION:
+${question.trim()}`,
+      },
+    ],
+  });
+
+  return sanitizePromotionText(
+    answer,
+    'I cannot verify that from the saved review. Use this as a manager-calibration question.'
+  );
 };
 
 export const generateNegotiationAdviceWithBrowserAI = async ({
