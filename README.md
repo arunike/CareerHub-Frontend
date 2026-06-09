@@ -359,26 +359,26 @@ frontend/
 
 ## 📡 Routes
 
-| Path                                | Page                | Description                                                                                                   |
-| ----------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `/`                                 | Home / Availability | Public homepage when logged out; weekly calendar + availability text generator when authenticated             |
-| `/events`                           | Events              | Interview event management                                                                                    |
-| `/holidays`                         | Holidays            | Federal + custom holiday management with custom tabs                                                          |
-| `/applications`                     | Applications        | Application tracker with timeline view, job URL import, and AI cover letter                                   |
-| `/offers`                           | Offer Comparison    | Offer analysis with weighted decision scorecard and AI negotiation advisor                                    |
-| `/documents`                        | Documents           | Document vault with versioning                                                                                |
-| `/tasks`                            | Action Items        | Kanban task board with smart reminder creation                                                                |
+| Path                                | Page                | Description                                                                                                                     |
+| ----------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                                 | Home / Availability | Public homepage when logged out; weekly calendar + availability text generator when authenticated                               |
+| `/events`                           | Events              | Interview event management                                                                                                      |
+| `/holidays`                         | Holidays            | Federal + custom holiday management with custom tabs                                                                            |
+| `/applications`                     | Applications        | Application tracker with timeline view, job URL import, and AI cover letter                                                     |
+| `/offers`                           | Offer Comparison    | Offer analysis with weighted decision scorecard and AI negotiation advisor                                                      |
+| `/documents`                        | Documents           | Document vault with versioning                                                                                                  |
+| `/tasks`                            | Action Items        | Kanban task board with smart reminder creation                                                                                  |
 | `/experience`                       | Experience          | Work history, team history, schedule phases, internship earnings breakdowns, import/export, AI JD matcher, and promotion review |
-| `/jd-reports`                       | JD Reports          | Saved AI JD match report history                                                                              |
-| `/ai-tools?tab=cover-letters`       | Cover Letters       | Saved AI cover letter history                                                                                 |
-| `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history                                                                           |
-| `/ai-tools?tab=promotion-reviews`   | Promotion Reviews   | Saved AI promotion readiness review history                                                                   |
-| `/analytics`                        | Analytics           | Custom widget dashboard with timeline-driven job hunt insights                                                |
-| `/settings`                         | Settings            | User preferences with layered locking                                                                         |
-| `/profile`                          | Profile             | Standalone identity and security management page                                                              |
-| `/book/:uuid`                       | Public Booking      | Public-facing booking page (no auth) with timezone-aware confirmation preview                                 |
-| `/jd-report/:id`                    | JD Report Detail    | Full JD match report with PDF export                                                                          |
-| `/negotiation-result/:id`           | Negotiation Detail  | Full negotiation advisory report                                                                              |
+| `/jd-reports`                       | JD Reports          | Saved AI JD match report history                                                                                                |
+| `/ai-tools?tab=cover-letters`       | Cover Letters       | Saved AI cover letter history                                                                                                   |
+| `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history                                                                                             |
+| `/ai-tools?tab=promotion-reviews`   | Promotion Reviews   | Saved AI promotion readiness review history                                                                                     |
+| `/analytics`                        | Analytics           | Custom widget dashboard with timeline-driven job hunt insights                                                                  |
+| `/settings`                         | Settings            | User preferences with layered locking                                                                                           |
+| `/profile`                          | Profile             | Standalone identity and security management page                                                                                |
+| `/book/:uuid`                       | Public Booking      | Public-facing booking page (no auth) with timezone-aware confirmation preview                                                   |
+| `/jd-report/:id`                    | JD Report Detail    | Full JD match report with PDF export                                                                                            |
+| `/negotiation-result/:id`           | Negotiation Detail  | Full negotiation advisory report                                                                                                |
 
 ## 🔗 Backend
 
