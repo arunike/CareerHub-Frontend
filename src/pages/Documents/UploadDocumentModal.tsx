@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, Upload, message } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
-import { createDocument, getApplications } from '../../api';
+import { createDocument, getApplicationOptions } from '../../api';
 
 interface UploadDocumentModalProps {
   visible: boolean;
@@ -50,7 +50,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
 
   const fetchApplications = async () => {
     try {
-      const response = await getApplications();
+      const response = await getApplicationOptions({ page_size: 100 });
       setApplications(response.data);
     } catch (error) {
       console.error('Failed to fetch applications', error);

@@ -14,7 +14,7 @@ import {
   getEvents,
   getFederalHolidays,
   getHolidays,
-  getApplications,
+  getApplicationOptions,
   getPublicBookings,
   getShareLinks,
   updatePublicBooking,
@@ -190,7 +190,7 @@ const Availability = () => {
     if (hasLoadedApplications) return;
 
     try {
-      const applicationsResp = await getApplications();
+      const applicationsResp = await getApplicationOptions({ page_size: 100 });
       setApplications(applicationsResp.data);
       setHasLoadedApplications(true);
     } catch (error) {

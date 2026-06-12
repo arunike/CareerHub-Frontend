@@ -60,7 +60,7 @@ import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
 import CoverLetterModal from './CoverLetterModal';
 import ApplicationDetailDrawer from './ApplicationDetailDrawer';
-import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { getCurrentYear } from '../../utils/yearFilter';
 import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
@@ -68,6 +68,19 @@ import { loadUsCityOptions } from '../../lib/usCityOptions';
 const { Text, Link } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
+const APPLICATION_PAGE_SIZE = 10;
+
+interface PaginatedApplicationsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CareerApplication[];
+}
+
+const isPaginatedApplicationsResponse = (
+  data: CareerApplication[] | PaginatedApplicationsResponse
+): data is PaginatedApplicationsResponse =>
+  Boolean(data && !Array.isArray(data) && Array.isArray(data.results));
 
 const APPLICATION_IMPORT_REVIEW_FIELDS = [
   { key: 'company_name', label: 'Company', required: true },
@@ -145,6 +158,7 @@ const Applications = () => {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
+  const [applicationsTotal, setApplicationsTotal] = useState(0);
   const [empTypes, setEmpTypes] = useState<EmploymentType[]>([
     { value: 'full_time', label: 'Full-time', color: 'blue' },
     { value: 'part_time', label: 'Part-time', color: 'blue' },
@@ -201,6 +215,7 @@ const Applications = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchText, setSearchText] = useState('');
+  const [debouncedSearchText, setDebouncedSearchText] = useState('');
   const [locationSearchText, setLocationSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [empTypeFilter, setEmpTypeFilter] = useState('ALL');
@@ -242,24 +257,76 @@ const Applications = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchText, locationSearchText, statusFilter, empTypeFilter, locationFilter, selectedYear]);
+    setSelectedRowKeys([]);
+  }, [debouncedSearchText, statusFilter, empTypeFilter, locationFilter, selectedYear]);
 
-  const fetchData = useCallback(async () => {
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchText(searchText.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchText]);
+
+  const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
-      const [appsResp, docsResp] = await Promise.all([getApplications(), getDocuments()]);
-      setApplications(appsResp.data);
-      setDocuments(docsResp.data);
+      const appsResp = await getApplications({
+        page: currentPage,
+        page_size: APPLICATION_PAGE_SIZE,
+        search: debouncedSearchText || undefined,
+        status: statusFilter !== 'ALL' ? statusFilter : undefined,
+        employment_type: empTypeFilter !== 'ALL' ? empTypeFilter : undefined,
+        location: locationFilter !== 'ALL' ? locationFilter : undefined,
+        year: selectedYear,
+      });
+      const data = appsResp.data as CareerApplication[] | PaginatedApplicationsResponse;
+      if (isPaginatedApplicationsResponse(data)) {
+        setApplications(data.results);
+        setApplicationsTotal(data.count);
+      } else {
+        setApplications(data);
+        setApplicationsTotal(data.length);
+      }
     } catch (error) {
       messageApi.error('Failed to load applications');
       console.error(error);
     } finally {
       setLoading(false);
     }
+  }, [
+    currentPage,
+    debouncedSearchText,
+    empTypeFilter,
+    locationFilter,
+    messageApi,
+    selectedYear,
+    statusFilter,
+  ]);
+
+  const fetchDocuments = useCallback(async () => {
+    try {
+      const docsResp = await getDocuments();
+      setDocuments(docsResp.data);
+    } catch (error) {
+      messageApi.error('Failed to load documents');
+      console.error(error);
+    }
   }, [messageApi]);
 
   useEffect(() => {
-    fetchData();
+    fetchApplications();
+  }, [fetchApplications]);
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(applicationsTotal / APPLICATION_PAGE_SIZE));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [applicationsTotal, currentPage]);
+
+  useEffect(() => {
+    fetchDocuments();
     getUserSettings()
       .then((res) => {
         const types = res.data.employment_types;
@@ -274,7 +341,7 @@ const Applications = () => {
       .catch((error) => {
         console.error('Failed to load US city options', error);
       });
-  }, [fetchData]);
+  }, [fetchDocuments]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -297,7 +364,7 @@ const Applications = () => {
     try {
       await deleteApplication(id);
       messageApi.success('Application deleted');
-      fetchData();
+      fetchApplications();
     } catch (error) {
       messageApi.error('Failed to delete application');
       console.error(error);
@@ -308,7 +375,7 @@ const Applications = () => {
     try {
       await deleteAllApplications();
       messageApi.success('All applications deleted');
-      fetchData();
+      fetchApplications();
     } catch (error) {
       messageApi.error('Failed to delete all applications');
       console.error(error);
@@ -340,10 +407,10 @@ const Applications = () => {
           await Promise.all(selectedRowKeys.map((id) => deleteApplication(id as number)));
           messageApi.success(`${selectedRowKeys.length} applications deleted`);
           setSelectedRowKeys([]);
-          fetchData();
+          fetchApplications();
         } catch {
           messageApi.error('Failed to delete some applications');
-          fetchData();
+          fetchApplications();
         }
       },
     });
@@ -356,10 +423,10 @@ const Applications = () => {
       );
       messageApi.success(`${selectedRowKeys.length} applications ${lock ? 'locked' : 'unlocked'}`);
       setSelectedRowKeys([]);
-      fetchData();
+      fetchApplications();
     } catch {
       messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some applications`);
-      fetchData();
+      fetchApplications();
     }
   };
 
@@ -440,7 +507,7 @@ const Applications = () => {
         }
         messageApi.success('Application created');
         setIsAddModalOpen(false);
-        fetchData();
+        fetchApplications();
       }
       form.resetFields();
       setEditingId(null);
@@ -524,7 +591,7 @@ const Applications = () => {
       });
       messageApi.success('Application imported');
       closeJobImportModal();
-      fetchData();
+      fetchApplications();
     } catch (error: unknown) {
       const formError = error as {
         errorFields?: unknown;
@@ -747,7 +814,7 @@ const Applications = () => {
         messageApi.success(`Import complete: ${result.created} created, ${result.updated} updated`);
       }
       closeImportModal();
-      fetchData();
+      fetchApplications();
     } catch (error: any) {
       messageApi.error(error?.response?.data?.error || 'Failed to apply import');
     } finally {
@@ -755,20 +822,8 @@ const Applications = () => {
     }
   };
 
-  const filteredData = filterByYear(applications, selectedYear, 'date_applied').filter((app) => {
-    const matchesSearch =
-      (app.company_details?.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
-      (app.role_title || '').toLowerCase().includes(searchText.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
-    const matchesEmpType = empTypeFilter === 'ALL' || app.employment_type === empTypeFilter;
-    const appLocation = app.office_location || app.location || '';
-    const matchesLocation = locationFilter === 'ALL' || appLocation === locationFilter;
-    return matchesSearch && matchesStatus && matchesEmpType && matchesLocation;
-  });
-
-  const paginatedData = useMemo(() => {
-    return filteredData.slice((currentPage - 1) * 10, currentPage * 10);
-  }, [filteredData, currentPage]);
+  const filteredData = applications;
+  const paginatedData = applications;
 
   const applicationMetrics = useMemo(() => {
     const offerCount = filteredData.filter((app) => app.status === 'OFFER').length;
@@ -778,23 +833,17 @@ const Applications = () => {
     const lockedCount = filteredData.filter((app) => app.is_locked).length;
 
     return [
-      { label: 'Visible pipeline', value: filteredData.length.toLocaleString(), tone: 'slate' },
-      { label: 'In interviews', value: activeInterviewCount.toLocaleString(), tone: 'blue' },
-      { label: 'Offers', value: offerCount.toLocaleString(), tone: 'emerald' },
-      { label: 'Locked records', value: lockedCount.toLocaleString(), tone: 'amber' },
+      { label: 'Matching records', value: applicationsTotal.toLocaleString(), tone: 'slate' },
+      { label: 'Page interviews', value: activeInterviewCount.toLocaleString(), tone: 'blue' },
+      { label: 'Page offers', value: offerCount.toLocaleString(), tone: 'emerald' },
+      { label: 'Page locked', value: lockedCount.toLocaleString(), tone: 'amber' },
     ];
-  }, [filteredData]);
+  }, [applicationsTotal, filteredData]);
 
-  const uniqueLocations = useMemo(() => {
-    const locations = new Set<string>();
-    applications.forEach((app) => {
-      const loc = app.office_location || app.location;
-      if (loc) locations.add(loc);
-    });
-    return Array.from(locations).sort();
-  }, [applications]);
-
-  const availableYears = getAvailableYears(applications, 'date_applied');
+  const availableYears = useMemo(
+    () => (typeof selectedYear === 'number' ? [selectedYear] : []),
+    [selectedYear]
+  );
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
   };
@@ -1068,7 +1117,7 @@ const Applications = () => {
       <div style={{ marginBottom: 24 }}>
         <PageActionToolbar
           title={<span className="whitespace-nowrap">Job Applications</span>}
-          subtitle={`${applications.length} applications tracked`}
+          subtitle={`${applicationsTotal.toLocaleString()} applications tracked`}
           singleRowDesktop
           selectedYear={selectedYear}
           onYearChange={handleYearChange}
@@ -1217,24 +1266,16 @@ const Applications = () => {
                     </Option>
                   ))}
                 </Select>
-                <Select
+                <Input
                   size="large"
-                  value={locationFilter}
-                  onChange={setLocationFilter}
-                  suffixIcon={<GlobalOutlined />}
-                  showSearch
+                  placeholder="Location"
+                  value={locationFilter === 'ALL' ? '' : locationFilter}
+                  onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
+                  prefix={<GlobalOutlined className="text-gray-400" />}
                   allowClear
-                  onClear={() => setLocationFilter('ALL')}
-                >
-                  <Option value="ALL">All Locations</Option>
-                  {uniqueLocations.map((loc) => (
-                    <Option key={loc} value={loc}>
-                      {loc}
-                    </Option>
-                  ))}
-                </Select>
+                />
                 <Text type="secondary" className="text-sm">
-                  {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+                  {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
                 </Text>
               </div>
             ) : null}
@@ -1279,29 +1320,21 @@ const Applications = () => {
               </Option>
             ))}
           </Select>
-          <Select
+          <Input
             size="large"
-            value={locationFilter}
-            onChange={setLocationFilter}
+            placeholder="Location"
+            value={locationFilter === 'ALL' ? '' : locationFilter}
             style={{ width: 200 }}
-            suffixIcon={<GlobalOutlined />}
-            showSearch
+            onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
+            prefix={<GlobalOutlined className="text-gray-400" />}
             allowClear
-            onClear={() => setLocationFilter('ALL')}
-          >
-            <Option value="ALL">All Locations</Option>
-            {uniqueLocations.map((loc) => (
-              <Option key={loc} value={loc}>
-                {loc}
-              </Option>
-            ))}
-          </Select>
+          />
           {(searchText ||
             statusFilter !== 'ALL' ||
             empTypeFilter !== 'ALL' ||
             locationFilter !== 'ALL') && (
             <Text type="secondary" className="self-center text-sm">
-              {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+              {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
             </Text>
           )}
         </div>
@@ -1436,12 +1469,12 @@ const Applications = () => {
                   </article>
                 );
               })}
-              {filteredData.length > 10 && (
+              {applicationsTotal > APPLICATION_PAGE_SIZE && (
                 <div className="flex justify-end mt-4 pb-2 px-1">
                   <Pagination
                     current={currentPage}
-                    pageSize={10}
-                    total={filteredData.length}
+                    pageSize={APPLICATION_PAGE_SIZE}
+                    total={applicationsTotal}
                     onChange={(page) => setCurrentPage(page)}
                     showSizeChanger={false}
                     size="small"
@@ -1466,7 +1499,8 @@ const Applications = () => {
             rowKey="id"
             pagination={{
               current: currentPage,
-              pageSize: 10,
+              pageSize: APPLICATION_PAGE_SIZE,
+              total: applicationsTotal,
               onChange: (page) => setCurrentPage(page),
               showSizeChanger: false,
             }}

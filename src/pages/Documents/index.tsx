@@ -1,5 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Card, Form, Grid, Input, Modal, Select, Table, Tag, message } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Button,
+  Card,
+  Form,
+  Grid,
+  Input,
+  Modal,
+  Pagination,
+  Select,
+  Table,
+  Tag,
+  message,
+} from 'antd';
 import {
   PlusOutlined,
   FilePdfOutlined,
@@ -8,7 +20,7 @@ import {
   LockOutlined,
 } from '@ant-design/icons';
 import {
-  getApplications,
+  getApplicationOptions,
   getDocuments,
   deleteDocument,
   deleteAllDocuments,
@@ -21,16 +33,27 @@ import {
 import type { Document } from '../../types';
 import UploadDocumentModal from './UploadDocumentModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
-import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { getCurrentYear } from '../../utils/yearFilter';
 import RowActions from '../../components/RowActions';
 import { usePersistedState } from '../../hooks/usePersistedState';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
+const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
+type PaginatedDocumentsResponse = {
+  count: number;
+  results: Document[];
+};
+
+const isPaginatedDocumentsResponse = (
+  data: Document[] | PaginatedDocumentsResponse
+): data is PaginatedDocumentsResponse => !Array.isArray(data) && Array.isArray(data.results);
 
 const Documents: React.FC = () => {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [documentsTotal, setDocumentsTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -56,27 +79,45 @@ const Documents: React.FC = () => {
     }
   );
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getDocuments();
-      setDocuments(response.data);
+      const response = await getDocuments({
+        page: currentPage,
+        page_size: DOCUMENT_PAGE_SIZE,
+        year: selectedYear,
+      });
+      const data = response.data as Document[] | PaginatedDocumentsResponse;
+      if (isPaginatedDocumentsResponse(data)) {
+        setDocuments(data.results);
+        setDocumentsTotal(data.count);
+      } else {
+        setDocuments(data);
+        setDocumentsTotal(data.length);
+      }
     } catch (error) {
       message.error('Failed to load documents');
       console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, selectedYear]);
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(documentsTotal / DOCUMENT_PAGE_SIZE));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [currentPage, documentsTotal]);
 
   const ensureApplicationsLoaded = async () => {
     if (hasLoadedApplications) return;
     try {
-      const response = await getApplications();
+      const response = await getApplicationOptions({ page_size: 100 });
       setApplications(response.data);
       setHasLoadedApplications(true);
     } catch (error) {
@@ -86,6 +127,7 @@ const Documents: React.FC = () => {
 
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
+    setCurrentPage(1);
   };
 
   const handleDeleteAll = async () => {
@@ -107,8 +149,11 @@ const Documents: React.FC = () => {
     };
   };
 
-  const availableYears = getAvailableYears(documents, 'created_at');
-  const filteredDocuments = filterByYear(documents, selectedYear, 'created_at');
+  const availableYears = useMemo(
+    () => (typeof selectedYear === 'number' ? [selectedYear] : []),
+    [selectedYear]
+  );
+  const filteredDocuments = documents;
 
   const handleDelete = async (id: number) => {
     try {
@@ -336,7 +381,7 @@ const Documents: React.FC = () => {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
       <PageActionToolbar
         title="Document Vault"
-        subtitle="Manage your resumes, cover letters, and other career materials."
+        subtitle={`${documentsTotal.toLocaleString()} documents`}
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         availableYears={availableYears}
@@ -344,7 +389,7 @@ const Documents: React.FC = () => {
         deleteAllLabel="Delete All"
         deleteAllConfirmTitle="Delete All Documents?"
         deleteAllConfirmDescription="This will permanently delete all documents."
-        deleteAllDisabled={documents.length === 0}
+        deleteAllDisabled={documentsTotal === 0}
         onExport={handleExportWrapper}
         exportFilename="documents"
         onImport={() => setIsUploadModalVisible(true)}
@@ -375,69 +420,82 @@ const Documents: React.FC = () => {
               </div>
             </div>
           ) : (
-            filteredDocuments.map((record) => (
-              <Card key={record.id} className="enterprise-card">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 shrink-0">{getFileIcon(record.file_name)}</div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <button
-                          type="button"
-                          onClick={() => openDocument(record)}
-                          className="min-w-0 text-left text-base font-semibold text-blue-600"
-                        >
-                          <span className="line-clamp-2">{record.title}</span>
-                        </button>
-                        {record.is_locked ? (
-                          <LockOutlined className="mt-1 shrink-0 text-amber-500" />
-                        ) : null}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Tag color={getTypeColor(record.document_type)}>
-                          {record.document_type.replace('_', ' ')}
-                        </Tag>
-                        <Tag color="geekblue">v{record.version_number || 1}</Tag>
-                        <Tag>{new Date(record.created_at).toLocaleDateString()}</Tag>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {record.application_details
-                          ? `${record.application_details.role} @ ${record.application_details.company}`
-                          : 'Not linked to an application'}
+            <>
+              {filteredDocuments.map((record) => (
+                <Card key={record.id} className="enterprise-card">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 shrink-0">{getFileIcon(record.file_name)}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => openDocument(record)}
+                            className="min-w-0 text-left text-base font-semibold text-blue-600"
+                          >
+                            <span className="line-clamp-2">{record.title}</span>
+                          </button>
+                          {record.is_locked ? (
+                            <LockOutlined className="mt-1 shrink-0 text-amber-500" />
+                          ) : null}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Tag color={getTypeColor(record.document_type)}>
+                            {record.document_type.replace('_', ' ')}
+                          </Tag>
+                          <Tag color="geekblue">v{record.version_number || 1}</Tag>
+                          <Tag>{new Date(record.created_at).toLocaleDateString()}</Tag>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500">
+                          {record.application_details
+                            ? `${record.application_details.role} @ ${record.application_details.company}`
+                            : 'Not linked to an application'}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button size="large" onClick={() => openDocument(record)}>
-                      Open
-                    </Button>
-                    <Button size="large" onClick={() => openVersionsModal(record)}>
-                      History
-                    </Button>
-                    <Button
-                      size="large"
-                      disabled={Boolean(record.is_locked)}
-                      onClick={() => openEditModal(record)}
-                    >
-                      Edit
-                    </Button>
-                    <Button size="large" onClick={() => handleToggleLock(record)}>
-                      {record.is_locked ? 'Unlock' : 'Lock'}
-                    </Button>
-                    <Button
-                      danger
-                      size="large"
-                      className="col-span-2"
-                      disabled={Boolean(record.is_locked)}
-                      onClick={() => handleDelete(record.id)}
-                    >
-                      Delete
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button size="large" onClick={() => openDocument(record)}>
+                        Open
+                      </Button>
+                      <Button size="large" onClick={() => openVersionsModal(record)}>
+                        History
+                      </Button>
+                      <Button
+                        size="large"
+                        disabled={Boolean(record.is_locked)}
+                        onClick={() => openEditModal(record)}
+                      >
+                        Edit
+                      </Button>
+                      <Button size="large" onClick={() => handleToggleLock(record)}>
+                        {record.is_locked ? 'Unlock' : 'Lock'}
+                      </Button>
+                      <Button
+                        danger
+                        size="large"
+                        className="col-span-2"
+                        disabled={Boolean(record.is_locked)}
+                        onClick={() => handleDelete(record.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
+                </Card>
+              ))}
+              {documentsTotal > DOCUMENT_PAGE_SIZE ? (
+                <div className="flex justify-center pt-2">
+                  <Pagination
+                    current={currentPage}
+                    pageSize={DOCUMENT_PAGE_SIZE}
+                    total={documentsTotal}
+                    showSizeChanger={false}
+                    onChange={setCurrentPage}
+                  />
                 </div>
-              </Card>
-            ))
+              ) : null}
+            </>
           )}
         </div>
       ) : (
@@ -447,7 +505,13 @@ const Documents: React.FC = () => {
             dataSource={filteredDocuments}
             rowKey="id"
             loading={loading}
-            pagination={{ pageSize: 10 }}
+            pagination={{
+              current: currentPage,
+              pageSize: DOCUMENT_PAGE_SIZE,
+              total: documentsTotal,
+              showSizeChanger: false,
+              onChange: setCurrentPage,
+            }}
             scroll={{ x: 900 }}
             className="career-table"
           />
