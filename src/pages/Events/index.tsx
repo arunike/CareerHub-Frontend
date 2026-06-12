@@ -32,7 +32,7 @@ import {
   updateRecurringSeries,
   deleteRecurringSeries,
   deleteRecurringInstance,
-  getApplications,
+  getApplicationOptions,
   getUserSettings,
   exportEvents,
 } from '../../api';
@@ -131,7 +131,7 @@ const Events = () => {
       const endStr = today.add(12, 'month').format('YYYY-MM-DD');
 
       const [eventsResp, recurringResp, settingsResp] = await Promise.all([
-        getEvents(),
+        getEvents({ start_date: startStr, end_date: endStr, include_instances: false }),
         getRecurringInstances(startStr, endStr),
         getUserSettings(),
       ]);
@@ -190,7 +190,7 @@ const Events = () => {
     if (hasLoadedApplications) return;
 
     try {
-      const res = await getApplications();
+      const res = await getApplicationOptions({ page_size: 100 });
       setApplications(res.data);
       setHasLoadedApplications(true);
     } catch (error) {

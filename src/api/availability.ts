@@ -12,7 +12,13 @@ import api from './client';
 export const getEvents = (
   startDateOrParams?:
     | string
-    | { start_date?: string; end_date?: string; page?: number; page_size?: number },
+    | {
+        start_date?: string;
+        end_date?: string;
+        include_instances?: boolean;
+        page?: number;
+        page_size?: number;
+      },
   endDate?: string
 ) => {
   if (typeof startDateOrParams === 'object' && startDateOrParams !== null) {

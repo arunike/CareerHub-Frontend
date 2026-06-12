@@ -115,8 +115,15 @@ export const deleteCompany = (id: number) => api.delete(`/career/companies/${id}
 export const getApplications = (params?: {
   page?: number;
   page_size?: number;
+  search?: string;
+  status?: string;
+  employment_type?: string;
+  location?: string;
+  year?: number | 'all';
   [key: string]: unknown;
 }) => api.get('/career/applications/', { params });
+export const getApplicationOptions = (params?: { search?: string; page_size?: number }) =>
+  api.get('/career/applications/options/', { params });
 export const createApplication = (data: Record<string, unknown>) =>
   api.post('/career/applications/', data);
 export const updateApplication = (id: number, data: Record<string, unknown>) =>
@@ -333,7 +340,14 @@ export const updateOfferDecisionSnapshot = (
 export const deleteOfferDecisionSnapshot = (id: number) =>
   api.delete(`/career/offer-decision-snapshots/${id}/`);
 
-export const getDocuments = () => api.get('/career/documents/');
+export const getDocuments = (params?: {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  document_type?: string;
+  year?: number | 'all';
+  [key: string]: unknown;
+}) => api.get('/career/documents/', { params });
 export const deleteAllDocuments = () => api.delete('/career/documents/delete_all/');
 export const exportDocuments = (format: string = 'csv') =>
   api.get('/career/documents/export/', { params: { fmt: format }, responseType: 'blob' });
