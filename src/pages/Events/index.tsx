@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Typography,
   Space,
@@ -20,7 +20,7 @@ import utc from 'dayjs/plugin/utc';
 import timezonePlugin from 'dayjs/plugin/timezone';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
 import {
-  getEvents,
+  getEventFeed,
   deleteEvent,
   createEvent,
   updateEvent,
@@ -28,7 +28,6 @@ import {
   getCategories,
   setRecurrence,
   createCategory,
-  getRecurringInstances,
   updateRecurringSeries,
   deleteRecurringSeries,
   deleteRecurringInstance,
@@ -43,7 +42,7 @@ import EventsFilterBar from './components/EventsFilterBar';
 import EventsGrid from './components/EventsGrid';
 import EventEditorModal from './components/EventEditorModal';
 import EventViewModal from './components/EventViewModal';
-import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 
@@ -61,6 +60,14 @@ type EventFormValues = {
 };
 
 type ApiError = { response?: { status?: number; data?: { conflict?: boolean } } };
+type PaginatedEventsResponse = {
+  count: number;
+  results: Event[];
+};
+
+const isPaginatedEventsResponse = (
+  data: Event[] | PaginatedEventsResponse
+): data is PaginatedEventsResponse => !Array.isArray(data) && Array.isArray(data.results);
 
 const Events = () => {
   const screens = Grid.useBreakpoint();
@@ -69,6 +76,7 @@ const Events = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [eventsTotal, setEventsTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [applications, setApplications] = useState<
@@ -123,16 +131,20 @@ const Events = () => {
   const [defaultDuration, setDefaultDuration] = useState(60);
   const [defaultCategory, setDefaultCategory] = useState<number | undefined>(undefined);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const today = dayjs();
-      const startStr = today.subtract(1, 'month').format('YYYY-MM-DD');
-      const endStr = today.add(12, 'month').format('YYYY-MM-DD');
-
-      const [eventsResp, recurringResp, settingsResp] = await Promise.all([
-        getEvents({ start_date: startStr, end_date: endStr, include_instances: false }),
-        getRecurringInstances(startStr, endStr),
+      const [eventsResp, settingsResp] = await Promise.all([
+        getEventFeed({
+          page: currentPage,
+          page_size: pageSize,
+          year: selectedYear,
+          category: categoryFilter !== 'ALL' ? categoryFilter : undefined,
+          start_date: dateRange?.[0]?.format('YYYY-MM-DD'),
+          end_date: dateRange?.[1]?.format('YYYY-MM-DD'),
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        }),
         getUserSettings(),
       ]);
 
@@ -150,31 +162,31 @@ const Events = () => {
         }
       }
 
-      const regularEvents = eventsResp.data;
-      const recurringInstances = recurringResp.data;
-
-      const virtualEvents = recurringInstances.map(
-        (evt: Record<string, unknown>, index: number) => ({
-          ...evt,
-          id: -1 * (index + 1 + Date.now()),
-          parent_event: evt.parent_event_id,
-          is_virtual: true,
-        })
-      );
-
-      const nonRecurringEvents = regularEvents.filter((e: Event) => !e.is_recurring);
-      const allEvents = [...nonRecurringEvents, ...virtualEvents].sort((a: Event, b: Event) => {
-        return dayjs(`${a.date}T${a.start_time}`).diff(dayjs(`${b.date}T${b.start_time}`));
-      });
-
-      setEvents(allEvents);
+      const data = eventsResp.data as Event[] | PaginatedEventsResponse;
+      if (isPaginatedEventsResponse(data)) {
+        setEvents(data.results);
+        setEventsTotal(data.count);
+      } else {
+        setEvents(data);
+        setEventsTotal(data.length);
+      }
     } catch (error) {
       messageApi.error('Failed to load events');
       console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    categoryFilter,
+    currentPage,
+    dateRange,
+    messageApi,
+    pageSize,
+    selectedYear,
+    setUserTimezone,
+    sortBy,
+    sortOrder,
+  ]);
 
   const fetchCategories = async () => {
     try {
@@ -201,6 +213,9 @@ const Events = () => {
 
   useEffect(() => {
     fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
     fetchCategories();
   }, []);
 
@@ -208,34 +223,19 @@ const Events = () => {
     setCurrentPage(1);
   }, [categoryFilter, dateRange, sortBy, sortOrder, selectedYear]);
 
-  const filteredEvents = filterByYear(events, selectedYear, 'date')
-    .filter((event) => {
-      if (categoryFilter !== 'ALL' && event.category !== categoryFilter) return false;
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        const eventDate = dayjs(event.date);
-        if (eventDate.isBefore(dateRange[0], 'day') || eventDate.isAfter(dateRange[1], 'day'))
-          return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-      if (sortBy === 'date') {
-        comparison = dayjs(`${a.date}T${a.start_time}`).diff(dayjs(`${b.date}T${b.start_time}`));
-      } else {
-        const getDiff = (e: Event) =>
-          dayjs(`${e.date}T${e.end_time}`).diff(dayjs(`${e.date}T${e.start_time}`));
-        comparison = getDiff(a) - getDiff(b);
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(eventsTotal / pageSize));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [currentPage, eventsTotal, pageSize]);
 
-  const paginatedEvents = filteredEvents.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  const filteredEvents = events;
+  const paginatedEvents = events;
+  const availableYears = useMemo(
+    () => (typeof selectedYear === 'number' ? [selectedYear] : []),
+    [selectedYear]
   );
-
-  const availableYears = getAvailableYears(events, 'date');
 
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
@@ -520,7 +520,7 @@ const Events = () => {
           {/* Header & Actions */}
           <PageActionToolbar
             title="Events"
-            subtitle={`${filteredEvents.length} events`}
+            subtitle={`${eventsTotal.toLocaleString()} events`}
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}
@@ -537,7 +537,7 @@ const Events = () => {
               />
             }
             onDeleteAll={() => setIsDeleteAllOpen(true)}
-            deleteAllDisabled={events.length === 0}
+            deleteAllDisabled={eventsTotal === 0}
             onExport={handleExportWrapper}
             exportFilename="events"
             onImport={() => setShowImport(true)}
@@ -563,7 +563,7 @@ const Events = () => {
             title={
               <BulkActionHeader
                 selectedCount={selectedIds.length}
-                totalCount={filteredEvents.length}
+                totalCount={events.length}
                 onSelectAll={handleSelectAll}
                 onCancelSelection={() => setSelectedIds([])}
                 title="All Events"
@@ -607,12 +607,12 @@ const Events = () => {
               onSelectChange={handleSelectChange}
             />
 
-            {!loading && filteredEvents.length > pageSize && (
+            {!loading && eventsTotal > pageSize && (
               <div className="flex justify-end mt-6 pb-4 px-4">
                 <Pagination
                   current={currentPage}
                   pageSize={pageSize}
-                  total={filteredEvents.length}
+                  total={eventsTotal}
                   onChange={(page, size) => {
                     setCurrentPage(page);
                     if (size && size !== pageSize) {
