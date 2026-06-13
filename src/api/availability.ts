@@ -32,6 +32,17 @@ export const getEvents = (
   });
 };
 
+export const getEventFeed = (params?: {
+  page?: number;
+  page_size?: number;
+  year?: number | 'all';
+  category?: number | 'ALL';
+  start_date?: string;
+  end_date?: string;
+  sort_by?: 'date' | 'duration';
+  sort_order?: 'asc' | 'desc';
+}) => api.get('/events/feed/', { params });
+
 export const createEvent = (data: Partial<Event>, params?: Record<string, unknown>) =>
   api.post('/events/', data, { params });
 export const deleteEvent = (id: number) => api.delete(`/events/${id}/`);
