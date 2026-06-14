@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   annualizeAmount,
   type ApplicationLike as Application,
@@ -6,7 +6,7 @@ import {
   type VisaSponsorshipStatus,
 } from './calculations';
 import { Rate, Select, Popconfirm, Tooltip, InputNumber, Popover } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, DownOutlined, RightOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import type { AdjustedOfferMetrics } from './types';
 import type { MaritalStatus, SimulatedOffer } from './calculations';
@@ -799,6 +799,8 @@ const OfferDecisionScorecard = ({
     { deserialize: (raw) => normalizeScoreWeights(JSON.parse(raw)) }
   );
 
+  const [isWeightsExpanded, setIsWeightsExpanded] = useState(false);
+
   const anyImmigrationSignal = useMemo(() => {
     return Object.values(applicationsById).some((app) => hasImmigrationSignal(app));
   }, [applicationsById]);
@@ -1448,160 +1450,188 @@ const OfferDecisionScorecard = ({
 
           {/* Score Weights */}
           <div className="rounded-3xl border border-slate-200 bg-slate-50/50 p-6 shadow-sm">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m3 16 4 4 4-4" />
-                  <path d="M7 20V4" />
-                  <path d="m21 8-4-4-4 4" />
-                  <path d="M17 4v16" />
-                </svg>
+            <div
+              className={clsx(
+                'flex items-center justify-between cursor-pointer select-none',
+                isWeightsExpanded ? 'mb-6' : 'mb-0'
+              )}
+              onClick={() => setIsWeightsExpanded(!isWeightsExpanded)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m3 16 4 4 4-4" />
+                    <path d="M7 20V4" />
+                    <path d="m21 8-4-4-4 4" />
+                    <path d="M17 4v16" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>Score Weights</span>
+                    <Tooltip
+                      title={
+                        <div className="space-y-1.5 p-1 text-[11px] leading-relaxed text-slate-200">
+                          <p className="font-semibold text-white">General Formula</p>
+                          <p>
+                            Each category creates a 0-100 score. Total score = sum(category score ×
+                            weight) / active weight. Detailed field-level math lives in each offer's
+                            Total Score popover.
+                          </p>
+                          <p className="border-t border-slate-700 pt-1 text-[10px] text-slate-400">
+                            Includes money adjustments, location friction, PTO/holidays, manual
+                            signals, and immigration when filled.
+                          </p>
+                        </div>
+                      }
+                      placement="top"
+                      overlayStyle={{ maxWidth: '285px' }}
+                    >
+                      <span
+                        className="inline-flex items-center text-slate-400 hover:text-slate-600 cursor-help"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <InfoCircleOutlined className="text-[11px]" />
+                      </span>
+                    </Tooltip>
+                  </h3>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    Current Distribution
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Score Weights</h3>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                  Current Distribution
-                </p>
+              <div className="text-slate-400">
+                {isWeightsExpanded ? (
+                  <DownOutlined className="text-xs" />
+                ) : (
+                  <RightOutlined className="text-xs" />
+                )}
               </div>
             </div>
 
-            {(() => {
-              const totalWeight = Object.values(weights).reduce((s, v) => s + v, 0);
-              const remaining = 100 - totalWeight;
-              const isOver = totalWeight > 100;
-              const isNear = totalWeight >= 95 && totalWeight < 100;
-              const isExact = totalWeight === 100;
+            {isWeightsExpanded &&
+              (() => {
+                const totalWeight = Object.values(weights).reduce((s, v) => s + v, 0);
+                const remaining = 100 - totalWeight;
+                const isOver = totalWeight > 100;
+                const isNear = totalWeight >= 95 && totalWeight < 100;
+                const isExact = totalWeight === 100;
 
-              const barColor = isOver
-                ? 'bg-rose-500'
-                : isExact
-                  ? 'bg-emerald-500'
-                  : isNear
-                    ? 'bg-amber-400'
-                    : 'bg-sky-500';
+                const barColor = isOver
+                  ? 'bg-rose-500'
+                  : isExact
+                    ? 'bg-emerald-500'
+                    : isNear
+                      ? 'bg-amber-400'
+                      : 'bg-sky-500';
 
-              const labelColor = isOver
-                ? 'text-rose-600'
-                : isExact
-                  ? 'text-emerald-600'
-                  : isNear
-                    ? 'text-amber-600'
-                    : 'text-slate-500';
+                const labelColor = isOver
+                  ? 'text-rose-600'
+                  : isExact
+                    ? 'text-emerald-600'
+                    : isNear
+                      ? 'text-amber-600'
+                      : 'text-slate-500';
 
-              return (
-                <div className="space-y-3">
-                  {/* Total indicator */}
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        Total Weight
-                      </span>
-                      <span className={`text-xs font-bold tabular-nums ${labelColor}`}>
-                        {totalWeight}%{' '}
-                        {isOver
-                          ? '— over limit!'
-                          : isExact
-                            ? '— balanced'
-                            : isNear
-                              ? `(${remaining}% left) — warning`
-                              : `(${remaining}% left)`}
-                      </span>
+                return (
+                  <div className="space-y-3">
+                    {/* Total indicator */}
+                    <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                          Total Weight
+                        </span>
+                        <span className={`text-xs font-bold tabular-nums ${labelColor}`}>
+                          {totalWeight}%{' '}
+                          {isOver
+                            ? '— over limit!'
+                            : isExact
+                              ? '— balanced'
+                              : isNear
+                                ? `(${remaining}% left) — warning`
+                                : `(${remaining}% left)`}
+                        </span>
+                      </div>
+                      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-300 ${barColor}`}
+                          style={{ width: `${Math.min(totalWeight, 100)}%` }}
+                        />
+                      </div>
+                      {isOver && (
+                        <p className="mt-1.5 text-[10px] text-rose-500 font-medium">
+                          Reduce by {totalWeight - 100}% to stay within budget.
+                        </p>
+                      )}
                     </div>
-                    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`absolute inset-y-0 left-0 rounded-full transition-all duration-300 ${barColor}`}
-                        style={{ width: `${Math.min(totalWeight, 100)}%` }}
-                      />
-                    </div>
-                    {isOver && (
-                      <p className="mt-1.5 text-[10px] text-rose-500 font-medium">
-                        Reduce by {totalWeight - 100}% to stay within budget.
-                      </p>
+
+                    {/* Weight sliders */}
+                    {(Object.entries(weights) as [CategoryKey, number][])
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([key, weight]) => {
+                        const isOptional = ['workLife', 'growth', 'brand', 'team'].includes(key);
+                        return (
+                          <div
+                            key={key}
+                            className={clsx(
+                              'flex items-center justify-between rounded-2xl border p-3 shadow-sm transition-colors hover:border-sky-200',
+                              isOver ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'
+                            )}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-700">
+                                {CATEGORY_LABELS[key]}
+                              </span>
+                              {isOptional && (
+                                <span className="text-[10px] font-medium text-slate-400">
+                                  Optional
+                                </span>
+                              )}
+                            </div>
+                            <InputNumber
+                              min={0}
+                              max={100}
+                              value={weight}
+                              onChange={(val) => {
+                                const nextValue =
+                                  typeof val === 'number' && Number.isFinite(val) ? val : 0;
+                                setWeights((prev) => ({ ...prev, [key]: clamp(nextValue) }));
+                              }}
+                              className={clsx(
+                                'w-[72px] text-xs font-bold border-none rounded-md text-right [&_.ant-input-number-input]:!font-bold',
+                                isOver
+                                  ? 'bg-rose-50 text-rose-600 [&_.ant-input-number-input]:!text-rose-600'
+                                  : 'bg-sky-50 text-sky-700 [&_.ant-input-number-input]:!text-sky-700'
+                              )}
+                              controls={false}
+                              formatter={(value) => `${value}%`}
+                              parser={(value) => Number(value?.replace('%', ''))}
+                            />
+                          </div>
+                        );
+                      })}
+
+                    {anyImmigrationSignal && (
+                      <div className="rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2.5">
+                        <span className="text-xs font-bold text-amber-700">Immigration</span>
+                        <p className="text-[10px] text-amber-600 mt-0.5">
+                          Fixed {VISA_OVERLAY_WEIGHT}% overlay — auto-added for offers with visa/GC
+                          data. Other weights scale down proportionally.
+                        </p>
+                      </div>
                     )}
                   </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      General formula
-                    </span>
-                    <p className="mt-1 text-[11px] leading-5 text-slate-600">
-                      Each category creates a 0-100 score. Total score = sum(category score x
-                      weight) / active weight. Detailed field-level math lives in each offer's Total
-                      Score popover.
-                    </p>
-                    <p className="mt-2 border-t border-slate-100 pt-2 text-[10px] leading-4 text-slate-400">
-                      Includes money adjustments, location friction, PTO/holidays, manual signals,
-                      and immigration when filled.
-                    </p>
-                  </div>
-
-                  {/* Weight sliders */}
-                  {(Object.entries(weights) as [CategoryKey, number][])
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([key, weight]) => {
-                      const isOptional = ['workLife', 'growth', 'brand', 'team'].includes(key);
-                      return (
-                        <div
-                          key={key}
-                          className={clsx(
-                            'flex items-center justify-between rounded-2xl border p-3 shadow-sm transition-colors hover:border-sky-200',
-                            isOver ? 'border-rose-200 bg-rose-50/30' : 'border-slate-200 bg-white'
-                          )}
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-700">
-                              {CATEGORY_LABELS[key]}
-                            </span>
-                            {isOptional && (
-                              <span className="text-[10px] font-medium text-slate-400">
-                                Optional
-                              </span>
-                            )}
-                          </div>
-                          <InputNumber
-                            min={0}
-                            max={100}
-                            value={weight}
-                            onChange={(val) => {
-                              const nextValue =
-                                typeof val === 'number' && Number.isFinite(val) ? val : 0;
-                              setWeights((prev) => ({ ...prev, [key]: clamp(nextValue) }));
-                            }}
-                            className={clsx(
-                              'w-[72px] text-xs font-bold border-none rounded-md text-right [&_.ant-input-number-input]:!font-bold',
-                              isOver
-                                ? 'bg-rose-50 text-rose-600 [&_.ant-input-number-input]:!text-rose-600'
-                                : 'bg-sky-50 text-sky-700 [&_.ant-input-number-input]:!text-sky-700'
-                            )}
-                            controls={false}
-                            formatter={(value) => `${value}%`}
-                            parser={(value) => Number(value?.replace('%', ''))}
-                          />
-                        </div>
-                      );
-                    })}
-
-                  {anyImmigrationSignal && (
-                    <div className="rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2.5">
-                      <span className="text-xs font-bold text-amber-700">Immigration</span>
-                      <p className="text-[10px] text-amber-600 mt-0.5">
-                        Fixed {VISA_OVERLAY_WEIGHT}% overlay — auto-added for offers with visa/GC
-                        data. Other weights scale down proportionally.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+                );
+              })()}
           </div>
         </aside>
       </div>

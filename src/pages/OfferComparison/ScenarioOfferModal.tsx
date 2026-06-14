@@ -5,6 +5,7 @@ import OfferFormModalFooter from './components/OfferFormModalFooter';
 import type { ApplicationLike, BenefitItem, MaritalStatus, SimulatedOffer } from './calculations';
 import { computeBenefitsTotal } from './calculations';
 import { buildScenarioFromLinkedApplication } from './scenarioDraft';
+import { getApplication } from '../../api';
 
 type Props = {
   isOpen: boolean;
@@ -38,6 +39,7 @@ type Props = {
   addScenarioBenefitItem: () => void;
   updateScenarioBenefitItem: (id: string, patch: Partial<BenefitItem>) => void;
   removeScenarioBenefitItem: (id: string) => void;
+  onAddLoadedApplication?: (app: ApplicationLike) => void;
 };
 
 const ScenarioOfferModal = ({
@@ -65,6 +67,7 @@ const ScenarioOfferModal = ({
   addScenarioBenefitItem,
   updateScenarioBenefitItem,
   removeScenarioBenefitItem,
+  onAddLoadedApplication,
 }: Props) => {
   return (
     <ModalShell
@@ -93,24 +96,51 @@ const ScenarioOfferModal = ({
               key={`${editingScenarioId ?? 'new'}-${newScenario.application ?? 'custom'}`}
               showLinkApplication
               linkedApplicationId={newScenario.application ?? null}
-              onLinkedApplicationChange={(nextAppId) =>
-                setNewScenario((prev) =>
-                  buildScenarioFromLinkedApplication({
-                    prev,
-                    nextAppId,
-                    applications,
-                    scenarioBenefitItems,
-                    maritalStatus,
-                    stateTaxRate,
-                    stateNameToAbbr,
-                    cityCostOfLiving,
-                    stateColBase,
-                    effectiveMonthlyRent,
-                    referenceColIndex,
-                    referenceLocation,
-                  })
-                )
-              }
+              onLinkedApplicationChange={async (nextAppId) => {
+                if (!nextAppId) {
+                  setNewScenario((prev) => ({
+                    ...prev,
+                    application: undefined,
+                  }));
+                  return;
+                }
+
+                let app = applications.find((a) => a.id === nextAppId);
+                if (!app) {
+                  try {
+                    const response = await getApplication(nextAppId);
+                    const fetchedApp: ApplicationLike = {
+                      ...response.data,
+                      company_name: response.data.company_details?.name || '',
+                    };
+                    app = fetchedApp;
+                    onAddLoadedApplication?.(fetchedApp);
+                  } catch (error) {
+                    console.error('Failed to fetch application details:', error);
+                    return;
+                  }
+                }
+
+                const finalApp = app;
+                if (finalApp) {
+                  setNewScenario((prev) =>
+                    buildScenarioFromLinkedApplication({
+                      prev,
+                      nextAppId,
+                      applications: [...applications, finalApp],
+                      scenarioBenefitItems,
+                      maritalStatus,
+                      stateTaxRate,
+                      stateNameToAbbr,
+                      cityCostOfLiving,
+                      stateColBase,
+                      effectiveMonthlyRent,
+                      referenceColIndex,
+                      referenceLocation,
+                    })
+                  );
+                }
+              }}
               applicationOptions={applications.map((app) => ({
                 id: app.id,
                 label: `${app.company_name} - ${app.role_title}`,

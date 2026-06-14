@@ -5,6 +5,7 @@ import {
   updateOffer,
   deleteOffer,
   getApplications,
+  getApplication,
   createApplication,
   updateApplication,
   deleteApplication,
@@ -16,7 +17,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { todayDateOnlyLocal } from '../../utils/dateOnly';
-import { Button, message, Select, Spin } from 'antd';
+import { message, Select, Spin } from 'antd';
 import { useSafeNullableFormState, useSafeFormState } from './useSafeFormState';
 import { useScenarioRows } from './useScenarioRows';
 import { useOfferReferenceData } from './useOfferReferenceData';
@@ -121,6 +122,7 @@ const OfferComparison = () => {
 
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
+  const [linkedJobAppId, setLinkedJobAppId] = useState<number | null>(null);
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
   const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
   const [snapshotOffer, setSnapshotOffer] = useState<Offer | null>(null);
@@ -155,8 +157,36 @@ const OfferComparison = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [offersResp, appsResp] = await Promise.all([getOffers(), getApplications()]);
-      setOffers(offersResp.data);
+      const offersResp = await getOffers();
+      const offersData = offersResp.data || [];
+      setOffers(offersData);
+
+      let simulatedOffersLocal: any[] = [];
+      try {
+        const raw = localStorage.getItem(OFFER_ADJUSTMENT_SETTINGS_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (Array.isArray(saved.simulatedOffers)) {
+            simulatedOffersLocal = saved.simulatedOffers;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to read simulated offers from local storage', err);
+      }
+
+      const linkedAppIds = Array.from(
+        new Set(
+          [
+            ...offersData.map((o: any) => o.application),
+            ...simulatedOffersLocal.map((o: any) => o.application),
+          ].filter(Boolean)
+        )
+      ) as number[];
+
+      const appsResp =
+        linkedAppIds.length > 0
+          ? await getApplications({ ids: linkedAppIds.join(',') })
+          : { data: [] };
 
       const formattedApps = appsResp.data.map(
         (app: { company_details?: { name: string }; [key: string]: unknown }) => ({
@@ -437,38 +467,91 @@ const OfferComparison = () => {
 
   const handleAddCurrentJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newJobName) return;
+    if (!newJobName && !linkedJobAppId) return;
 
     try {
-      const appResp = await createApplication({
-        company_name: newJobName,
-        role_title: 'Current Role',
-        status: 'ACCEPTED',
-        date_applied: todayDateOnlyLocal(),
-        office_location: '',
-        visa_sponsorship: '',
-        day_one_gc: '',
-      });
-      const appId = appResp.data.id;
+      let appId = linkedJobAppId;
+      let finalAppName = newJobName;
+      let appData: any = null;
 
-      await createOffer({
-        application: appId,
-        base_salary: 0,
-        is_current: true,
-        bonus: 0,
-        equity: 0,
-        sign_on: 0,
-        benefits_value: 0,
-        benefit_items: [],
-        pto_days: 15,
-        is_unlimited_pto: false,
-        holiday_days: 11,
-      });
+      if (appId) {
+        const response = await getApplication(appId);
+        appData = response.data;
+        finalAppName = appData.company_details?.name || appData.company_name || newJobName;
+      } else {
+        const appResp = await createApplication({
+          company_name: newJobName,
+          role_title: 'Current Role',
+          status: 'ACCEPTED',
+          date_applied: todayDateOnlyLocal(),
+          office_location: '',
+          visa_sponsorship: '',
+          day_one_gc: '',
+        });
+        appId = appResp.data.id;
+        appData = appResp.data;
+      }
 
-      fetchData();
-      messageApi.success('Current job added!');
+      let newOffer: any = null;
+      if (appData && appData.offer) {
+        const offerResp = await updateOffer(appData.offer.id, {
+          ...appData.offer,
+          is_current: true,
+        });
+        newOffer = offerResp.data;
+      } else {
+        const offerResp = await createOffer({
+          application: appId,
+          base_salary: 0,
+          is_current: true,
+          bonus: 0,
+          equity: 0,
+          sign_on: 0,
+          benefits_value: 0,
+          benefit_items: [],
+          pto_days: 15,
+          is_unlimited_pto: false,
+          holiday_days: 11,
+        });
+        newOffer = offerResp.data;
+      }
+
+      const newApp = {
+        ...appData,
+        company_name: appData.company_details?.name || appData.company_name || finalAppName,
+        rto_days_per_week:
+          typeof appData.rto_days_per_week === 'number' ? appData.rto_days_per_week : 3,
+        commute_cost_value: Number(appData.commute_cost_value || 0),
+        commute_cost_frequency: appData.commute_cost_frequency || 'MONTHLY',
+        free_food_perk_value: Number(appData.free_food_perk_value || 0),
+        free_food_perk_frequency: appData.free_food_perk_frequency || 'YEARLY',
+      };
+
       setIsAddJobOpen(false);
       setNewJobName('Current Employer');
+      setLinkedJobAppId(null);
+      messageApi.success('Current job added! Please fill in your compensation details.');
+
+      await fetchData();
+
+      setEditingOffer({ ...newOffer, is_unlimited_pto: !!newOffer.is_unlimited_pto });
+      setEditingApp(newApp);
+      setOfferModalMode('edit');
+
+      const benefitItems =
+        Array.isArray(newOffer.benefit_items) && newOffer.benefit_items.length > 0
+          ? newOffer.benefit_items.map((item: any, idx: number) =>
+              normalizeBenefitItem(item, `edit-benefit-${newOffer.id || Date.now()}-${idx}`)
+            )
+          : [
+              {
+                id: `edit-benefit-${Date.now()}`,
+                label: 'Benefits',
+                amount: Number(newOffer.benefits_value) || 0,
+                frequency: 'YEARLY' as const,
+              },
+            ];
+      setEditingBenefitItems(benefitItems);
     } catch (error) {
       messageApi.error('Failed to add current job');
       console.error(error);
@@ -518,6 +601,13 @@ const OfferComparison = () => {
     storageKey: OFFER_ADJUSTMENT_SETTINGS_KEY,
     normalizeSimulatedOffers,
   });
+
+  const handleAddLoadedApplication = useCallback((app: Application) => {
+    setApplications((prev) => {
+      if (prev.some((a) => a.id === app.id)) return prev;
+      return [...prev, app];
+    });
+  }, []);
 
   const applicationsById = useMemo(
     () =>
@@ -1038,19 +1128,6 @@ const OfferComparison = () => {
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         availableYears={availableYears}
-        extraActions={
-          <Button
-            className="toolbar-btn"
-            size="large"
-            onClick={() => {
-              resetScenarioDraft();
-              setScenarioModalMode('add');
-              setIsAddScenarioOpen(true);
-            }}
-          >
-            Add Scenario
-          </Button>
-        }
         onPrimaryAction={() => setIsAddJobOpen(true)}
         primaryActionLabel="Add Current Job"
         primaryActionIcon={<PlusOutlined />}
@@ -1172,7 +1249,13 @@ const OfferComparison = () => {
             isOpen={isAddJobOpen}
             newJobName={newJobName}
             onNameChange={setNewJobName}
-            onClose={() => setIsAddJobOpen(false)}
+            linkedApplicationId={linkedJobAppId}
+            onLinkedApplicationChange={setLinkedJobAppId}
+            onClose={() => {
+              setIsAddJobOpen(false);
+              setLinkedJobAppId(null);
+              setNewJobName('Current Employer');
+            }}
             onSubmit={handleAddCurrentJob}
           />
         </Suspense>
@@ -1237,6 +1320,7 @@ const OfferComparison = () => {
             editingScenarioId={editingScenarioId}
             newScenario={newScenario}
             applications={applications}
+            onAddLoadedApplication={handleAddLoadedApplication}
             scenarioBenefitItems={scenarioBenefitItems}
             customFormTaxPreview={customFormTaxPreview}
             maritalStatus={maritalStatus}
