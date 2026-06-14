@@ -122,8 +122,12 @@ export const getApplications = (params?: {
   year?: number | 'all';
   [key: string]: unknown;
 }) => api.get('/career/applications/', { params });
-export const getApplicationOptions = (params?: { search?: string; page_size?: number }) =>
-  api.get('/career/applications/options/', { params });
+export const getApplicationOptions = (params?: {
+  search?: string;
+  page_size?: number;
+  page?: number;
+}) => api.get('/career/applications/options/', { params });
+export const getApplication = (id: number) => api.get(`/career/applications/${id}/`);
 export const createApplication = (data: Record<string, unknown>) =>
   api.post('/career/applications/', data);
 export const updateApplication = (id: number, data: Record<string, unknown>) =>
