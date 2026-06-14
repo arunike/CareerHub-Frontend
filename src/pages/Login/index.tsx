@@ -3,8 +3,8 @@ import { Alert, Button, Form, Input, Spin, Typography } from 'antd';
 import {
   ArrowRightOutlined,
   CalendarOutlined,
-  CheckCircleFilled,
   DollarOutlined,
+  FileTextOutlined,
   LineChartOutlined,
   LockOutlined,
   MailOutlined,
@@ -30,26 +30,43 @@ interface LoginLocationState {
   from?: string;
 }
 
-const features = [
+const quotes: Record<AuthMode, { text: string; author: string }> = {
+  login: {
+    text: 'Welcome back. The search gets quieter when every next step has a place.',
+    author: 'CareerHub',
+  },
+  signup: {
+    text: 'Start with one clean workspace. Let the applications, notes, and offers line up.',
+    author: 'CareerHub',
+  },
+};
+
+const visualStats = [
+  { label: 'roles', value: '18' },
+  { label: 'interviews', value: '04' },
+  { label: 'offers', value: '02' },
+];
+
+const workspaceRows = [
   {
     icon: <CalendarOutlined />,
-    label: 'Schedule tracking',
-    desc: 'Interviews, availability, weekly pulse',
+    title: 'Design systems interview',
+    meta: 'Today, 2:30 PM',
+    status: 'Prep',
   },
   {
     icon: <LineChartOutlined />,
-    label: 'Application pipeline',
-    desc: 'Status, response rates, follow-ups',
+    title: 'Senior PM application',
+    meta: 'Follow-up due Friday',
+    status: 'Active',
   },
-  { icon: <DollarOutlined />, label: 'Offer comparison', desc: 'Base, equity, PTO side by side' },
   {
-    icon: <SafetyCertificateOutlined />,
-    label: 'Career analytics',
-    desc: 'Earnings, growth, timeline',
+    icon: <FileTextOutlined />,
+    title: 'Cover letter draft',
+    meta: 'Ready for review',
+    status: 'Draft',
   },
 ];
-
-const trustPills = ['Private dashboard', 'Token secured', 'Encrypted passwords'];
 
 function extractErrorMessage(error: unknown, fallback: string) {
   if (!axios.isAxiosError(error)) {
@@ -65,6 +82,32 @@ function extractErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function TypewriterText({ text }: { text: string }) {
+  const [displayText, setDisplayText] = useState('');
+
+  useEffect(() => {
+    setDisplayText('');
+    let index = 0;
+    const timer = window.setInterval(() => {
+      index += 1;
+      setDisplayText(text.slice(0, index));
+
+      if (index >= text.length) {
+        window.clearInterval(timer);
+      }
+    }, 28);
+
+    return () => window.clearInterval(timer);
+  }, [text]);
+
+  return (
+    <span>
+      {displayText}
+      <span className="login-page__quote-cursor" aria-hidden="true" />
+    </span>
+  );
 }
 
 export default function LoginPage() {
@@ -86,16 +129,16 @@ export default function LoginPage() {
   const modeLabel = useMemo(() => {
     if (mode === 'signup') {
       return {
-        title: 'Get started',
-        subtitle: 'Create your account to get access.',
-        cta: 'Create Account',
+        title: 'Create an account',
+        subtitle: 'Enter your details below to start your private workspace.',
+        cta: 'Create account',
       };
     }
 
     return {
-      title: 'Welcome back',
-      subtitle: 'Sign in to your private workspace.',
-      cta: 'Sign In',
+      title: 'Sign in to your account',
+      subtitle: 'Enter your email below to sign in.',
+      cta: 'Sign in',
     };
   }, [mode]);
 
@@ -198,106 +241,99 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-page__shell">
-        <section className="login-page__hero">
-          <Link to="/" className="login-page__eyebrow" style={{ textDecoration: 'none' }}>
-            <SafetyCertificateOutlined />
-            CareerHub
-          </Link>
-
-          <div className="login-page__headline-wrap">
-            <Typography.Title level={1} className="login-page__title">
-              Your private
-              <br />
-              <span className="login-page__title-accent">career OS.</span>
-            </Typography.Title>
-            <Typography.Paragraph className="login-page__lead">
-              One place for interviews, applications, offers, and analytics. Private by default.
-              Built for focus.
-            </Typography.Paragraph>
-          </div>
-
-          <div className="login-page__features">
-            {features.map((f) => (
-              <div key={f.label} className="login-page__feature-item">
-                <span className="login-page__feature-icon">{f.icon}</span>
-                <div>
-                  <p className="login-page__feature-label">{f.label}</p>
-                  <p className="login-page__feature-desc">{f.desc}</p>
-                </div>
+        <aside className="login-page__visual" aria-label="CareerHub welcome panel">
+          <div className="login-page__visual-scene">
+            <div className="login-page__workspace-window">
+              <div className="login-page__window-top">
+                <span />
+                <span />
+                <span />
               </div>
-            ))}
-          </div>
-        </section>
 
-        <section className="login-page__panel">
-          <div className="login-page__panel-inner">
-            <div className="login-page__panel-top">
-              <Link to="/" className="login-page__panel-brand" style={{ textDecoration: 'none' }}>
-                <SafetyCertificateOutlined className="login-page__panel-brand-icon" />
-                <span>CareerHub</span>
-              </Link>
-              <Typography.Title level={2} className="login-page__panel-title">
-                {modeLabel.title}
-              </Typography.Title>
-              <p className="login-page__panel-subtitle">{modeLabel.subtitle}</p>
-              <div className="login-page__trust-pills">
-                {trustPills.map((pill) => (
-                  <span key={pill} className="login-page__trust-pill">
-                    <CheckCircleFilled />
-                    {pill}
-                  </span>
+              <div className="login-page__workspace-header">
+                <div>
+                  <span className="login-page__workspace-kicker">CareerHub</span>
+                  <h2>Today&apos;s search board</h2>
+                </div>
+                <span className="login-page__workspace-badge">Private</span>
+              </div>
+
+              <div className="login-page__window-grid">
+                {visualStats.map((stat) => (
+                  <div key={stat.label}>
+                    <strong>{stat.value}</strong>
+                    <span>{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="login-page__workspace-list">
+                {workspaceRows.map((item) => (
+                  <div key={item.title} className="login-page__workspace-row">
+                    <span className="login-page__workspace-icon">{item.icon}</span>
+                    <div>
+                      <p>{item.title}</p>
+                      <span>{item.meta}</span>
+                    </div>
+                    <em>{item.status}</em>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div className="login-page__panel-body">
-              <div className="login-page__mode-switch">
-                <button
-                  type="button"
-                  className={mode === 'login' ? 'is-active' : ''}
-                  onClick={() => handleModeChange('login')}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  className={mode === 'signup' ? 'is-active' : ''}
-                  onClick={() => handleModeChange('signup')}
-                  disabled={!canSignup || statusLoading}
-                >
-                  Create Account
-                </button>
+            <div className="login-page__offer-card">
+              <div>
+                <span>Offer delta</span>
+                <strong>+18.4%</strong>
               </div>
+              <DollarOutlined />
+            </div>
 
-              {mode ? (
-                <Form<AuthFormValues>
-                  form={form}
-                  layout="vertical"
-                  onFinish={handleFinish}
-                  className="login-page__form"
-                >
-                  {mode === 'signup' ? (
-                    <>
-                      <Form.Item
-                        label="Full Name"
-                        name="full_name"
-                        rules={[{ required: true, message: 'Enter your full name.' }]}
-                      >
-                        <Input prefix={<UserOutlined />} autoComplete="name" />
-                      </Form.Item>
+            <div className="login-page__document-card">
+              <FileTextOutlined />
+              <span>Negotiation notes</span>
+            </div>
+          </div>
 
-                      <Form.Item
-                        label="Email"
-                        name="email"
-                        rules={[
-                          { required: true, message: 'Enter your email.' },
-                          { type: 'email', message: 'Enter a valid email.' },
-                        ]}
-                      >
-                        <Input prefix={<MailOutlined />} autoComplete="email" />
-                      </Form.Item>
-                    </>
-                  ) : (
+          <blockquote className="login-page__quote">
+            <p>
+              <TypewriterText text={quotes[mode || 'login'].text} />
+            </p>
+            <cite>{quotes[mode || 'login'].author}</cite>
+          </blockquote>
+        </aside>
+
+        <main className="login-page__auth">
+          <div className="login-page__form-card">
+            <Link to="/" className="login-page__brand" style={{ textDecoration: 'none' }}>
+              <SafetyCertificateOutlined />
+              <span>CareerHub</span>
+            </Link>
+
+            <div className="login-page__form-heading">
+              <Typography.Title level={2} className="login-page__panel-title">
+                {modeLabel.title}
+              </Typography.Title>
+              <p className="login-page__panel-subtitle">{modeLabel.subtitle}</p>
+            </div>
+
+            {mode ? (
+              <Form<AuthFormValues>
+                form={form}
+                layout="vertical"
+                onFinish={handleFinish}
+                className="login-page__form"
+              >
+                {mode === 'signup' ? (
+                  <>
+                    <Form.Item
+                      label="Full name"
+                      name="full_name"
+                      rules={[{ required: true, message: 'Enter your full name.' }]}
+                    >
+                      <Input prefix={<UserOutlined />} autoComplete="name" />
+                    </Form.Item>
+
                     <Form.Item
                       label="Email"
                       name="email"
@@ -308,86 +344,113 @@ export default function LoginPage() {
                     >
                       <Input prefix={<MailOutlined />} autoComplete="email" />
                     </Form.Item>
-                  )}
-
+                  </>
+                ) : (
                   <Form.Item
-                    label="Password"
-                    name="password"
-                    rules={[{ required: true, message: 'Enter your password.' }]}
+                    label="Email"
+                    name="email"
+                    rules={[
+                      { required: true, message: 'Enter your email.' },
+                      { type: 'email', message: 'Enter a valid email.' },
+                    ]}
                   >
-                    <Input.Password
-                      prefix={<LockOutlined />}
-                      autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                    />
+                    <Input prefix={<MailOutlined />} autoComplete="email" />
                   </Form.Item>
+                )}
 
-                  {mode === 'signup' ? (
-                    <Form.Item
-                      label="Confirm Password"
-                      name="confirm_password"
-                      dependencies={['password']}
-                      rules={[
-                        { required: true, message: 'Confirm your password.' },
-                        ({ getFieldValue }) => ({
-                          validator(_, value) {
-                            if (!value || getFieldValue('password') === value) {
-                              return Promise.resolve();
-                            }
-                            return Promise.reject(new Error('Passwords do not match.'));
-                          },
-                        }),
-                      ]}
-                    >
-                      <Input.Password prefix={<LockOutlined />} autoComplete="new-password" />
-                    </Form.Item>
-                  ) : null}
+                <Form.Item
+                  label="Password"
+                  name="password"
+                  rules={[{ required: true, message: 'Enter your password.' }]}
+                >
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  />
+                </Form.Item>
 
-                  {errorMessage ? (
-                    <Form.Item>
-                      <Alert type="error" showIcon message={errorMessage} />
-                    </Form.Item>
-                  ) : null}
+                {mode === 'signup' ? (
+                  <Form.Item
+                    label="Confirm password"
+                    name="confirm_password"
+                    dependencies={['password']}
+                    rules={[
+                      { required: true, message: 'Confirm your password.' },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue('password') === value) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(new Error('Passwords do not match.'));
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input.Password prefix={<LockOutlined />} autoComplete="new-password" />
+                  </Form.Item>
+                ) : null}
 
-                  {successMessage ? (
-                    <Form.Item>
-                      <Alert type="success" showIcon message={successMessage} />
-                    </Form.Item>
-                  ) : null}
+                {errorMessage ? (
+                  <Form.Item>
+                    <Alert type="error" showIcon message={errorMessage} />
+                  </Form.Item>
+                ) : null}
 
-                  <div className="login-page__submit-wrap">
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      block
-                      loading={submitting}
-                      disabled={statusLoading || (mode === 'signup' && !canSignup)}
-                      className="login-page__submit"
-                    >
-                      {modeLabel.cta} <ArrowRightOutlined />
-                    </Button>
-                  </div>
-                </Form>
-              ) : (
-                <div className="login-page__empty-state">
-                  <Spin />
+                {successMessage ? (
+                  <Form.Item>
+                    <Alert type="success" showIcon message={successMessage} />
+                  </Form.Item>
+                ) : null}
+
+                <div className="login-page__submit-wrap">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    block
+                    loading={submitting}
+                    disabled={statusLoading || (mode === 'signup' && !canSignup)}
+                    className="login-page__submit"
+                  >
+                    {modeLabel.cta} <ArrowRightOutlined />
+                  </Button>
                 </div>
-              )}
+              </Form>
+            ) : (
+              <div className="login-page__empty-state">
+                <Spin />
+              </div>
+            )}
 
-              <div className="login-page__footnote">
-                {mode === 'signup'
-                  ? 'Email is your account identity. Passwords are encrypted and never stored in plain text.'
-                  : 'Your data is secured with industry-standard encryption and private by default.'}
-                <div className="login-page__legal-links">
-                  <Link to="/">Back to Home</Link>
-                  <span aria-hidden="true">·</span>
-                  <Link to="/privacy">Privacy Policy</Link>
-                  <span aria-hidden="true">·</span>
-                  <Link to="/terms">Terms of Service</Link>
-                </div>
+            <div className="login-page__mode-line">
+              {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+              <Button
+                type="link"
+                className="login-page__mode-link"
+                onClick={() => handleModeChange(mode === 'signup' ? 'login' : 'signup')}
+                disabled={statusLoading || (mode !== 'signup' && !canSignup)}
+              >
+                {mode === 'signup' ? 'Sign in' : 'Sign up'}
+              </Button>
+            </div>
+
+            <div className="login-page__divider">
+              <span>Protected workspace</span>
+            </div>
+
+            <div className="login-page__footnote">
+              {mode === 'signup'
+                ? 'Email is your account identity. Passwords are encrypted and never stored in plain text.'
+                : 'Your data stays scoped to your CareerHub account.'}
+              <div className="login-page__legal-links">
+                <Link to="/">Back to Home</Link>
+                <span aria-hidden="true">·</span>
+                <Link to="/privacy">Privacy Policy</Link>
+                <span aria-hidden="true">·</span>
+                <Link to="/terms">Terms of Service</Link>
               </div>
             </div>
           </div>
-        </section>
+        </main>
       </div>
     </div>
   );
