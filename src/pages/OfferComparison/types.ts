@@ -9,4 +9,8 @@ export type AdjustedOfferMetrics = {
   usedBonusTaxRate: number;
   usedEquityTaxRate: number;
   monthlyRent: number;
+  commuteAnnualCost?: number;
+  freeFoodAnnualValue?: number;
+  lifestyleAdjustment?: number;
+  costOfLivingIndex?: number;
 };
