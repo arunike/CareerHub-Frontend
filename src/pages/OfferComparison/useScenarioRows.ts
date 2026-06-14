@@ -319,11 +319,16 @@ export const useScenarioRows = ({
         adjustedDiff: row.deltaVsCurrent,
         afterTaxBase: row.afterTaxBase,
         afterTaxBonus: row.afterTaxBonus,
+        afterTaxSignOn: row.afterTaxSignOn,
         afterTaxEquity: row.afterTaxEquity,
         usedBaseTaxRate: row.usedBaseTaxRate,
         usedBonusTaxRate: row.usedBonusTaxRate,
         usedEquityTaxRate: row.usedEquityTaxRate,
         monthlyRent: row.monthlyRent,
+        commuteAnnualCost: row.commuteAnnualCost,
+        freeFoodAnnualValue: row.freeFoodAnnualValue,
+        lifestyleAdjustment: row.lifestyleAdjustment,
+        costOfLivingIndex: row.colIndex,
       };
     });
     return realAdjusted;

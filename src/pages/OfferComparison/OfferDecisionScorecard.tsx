@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import {
   annualizeAmount,
   type ApplicationLike as Application,
-  type DayOneGcStatus,
   type OfferLike as Offer,
   type VisaSponsorshipStatus,
 } from './calculations';
@@ -14,6 +13,13 @@ import type { MaritalStatus, SimulatedOffer } from './calculations';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
 import { usePersistedState } from '../../hooks/usePersistedState';
+import {
+  getImmigrationSignalLabel,
+  getImmigrationSignalPatch,
+  getImmigrationSignalValue,
+  immigrationSignalOptions,
+  type ImmigrationSignalValue,
+} from './immigrationSignal';
 
 type Props = {
   filteredOffers: Offer[];
@@ -49,6 +55,7 @@ export type CategoryScore = {
   weight: number;
   score: number;
   detail: string;
+  calculationLines?: string[];
   isScored: boolean;
 };
 
@@ -60,8 +67,7 @@ export type DecisionRow = {
   score: number;
   rank: number;
   categories: CategoryScore[];
-  visaLabel: string;
-  dayOneGcLabel: string;
+  immigrationLabel: string;
   workModeLabel: string;
   financialValue: number;
   hasImmigrationSignal: boolean;
@@ -139,23 +145,6 @@ const CATEGORY_LABELS: Record<CategoryKey | 'visa', string> = {
   team: 'Team',
 };
 
-const VISA_LABELS: Record<VisaSponsorshipStatus, string> = {
-  '': 'Visa not specified',
-  UNKNOWN: 'Visa not specified',
-  NOT_NEEDED: 'No sponsorship needed',
-  AVAILABLE: 'Sponsorship available',
-  TRANSFER_ONLY: 'Transfer only',
-  NOT_AVAILABLE: 'No sponsorship',
-};
-
-const DAY_ONE_GC_LABELS: Record<DayOneGcStatus, string> = {
-  '': 'Day 1 GC not specified',
-  UNKNOWN: 'Day 1 GC not specified',
-  YES: 'Day 1 GC',
-  NO: 'No Day 1 GC',
-  NOT_APPLICABLE: 'GC not applicable',
-};
-
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
 const asNumber = (value: unknown, fallback = 0) => {
@@ -171,6 +160,54 @@ const normalizeManualScore = (value: unknown) => {
 const scoreFromManual = (value: unknown) => {
   const manual = normalizeManualScore(value);
   return manual ? manual * 20 : null;
+};
+
+const scoreTimeOff = (offer: Offer | SimulatedOffer) => {
+  const isUnlimited = Boolean(offer.is_unlimited_pto);
+  const ptoDays = isUnlimited ? 25 : clamp(asNumber(offer.pto_days), 0, 60);
+  const holidayDays = clamp(asNumber(offer.holiday_days, 11), 0, 30);
+  const totalPaidDays = ptoDays + holidayDays;
+  const score = clamp((totalPaidDays / 35) * 100);
+
+  return {
+    ptoDays,
+    holidayDays,
+    totalPaidDays,
+    score,
+    label: isUnlimited
+      ? `Unlimited PTO counted as ${ptoDays} planning days + ${holidayDays} holidays`
+      : `${ptoDays} PTO days + ${holidayDays} holidays`,
+  };
+};
+
+const scoreWorkLife = (offer: Offer | SimulatedOffer, app?: Application) => {
+  const manualScore = scoreFromManual(app?.work_life_score);
+  const timeOff = scoreTimeOff(offer);
+
+  if (manualScore != null) {
+    return {
+      score: manualScore * 0.7 + timeOff.score * 0.3,
+      detail: `${app?.work_life_score}/5 manual + ${timeOff.totalPaidDays} paid days`,
+      calculationLines: [
+        `Manual WLB: ${app?.work_life_score}/5 x 20 = ${Math.round(manualScore)}`,
+        `Time off: ${timeOff.label} = ${timeOff.totalPaidDays} paid days`,
+        `Time-off score: ${timeOff.totalPaidDays} / 35 x 100 = ${Math.round(timeOff.score)}`,
+        `WLB score: ${Math.round(manualScore)} x 70% + ${Math.round(timeOff.score)} x 30% = ${Math.round(
+          manualScore * 0.7 + timeOff.score * 0.3
+        )}`,
+      ],
+    };
+  }
+
+  return {
+    score: timeOff.score,
+    detail: `${timeOff.totalPaidDays} paid days`,
+    calculationLines: [
+      `Time off: ${timeOff.label} = ${timeOff.totalPaidDays} paid days`,
+      `WLB score: ${timeOff.totalPaidDays} / 35 x 100 = ${Math.round(timeOff.score)}`,
+      'No manual WLB signal filled, so WLB uses time-off only.',
+    ],
+  };
 };
 
 const totalAnnualComp = (offer: Offer) =>
@@ -193,6 +230,69 @@ const formatCurrency = (value: number) =>
     currency: 'USD',
     maximumFractionDigits: 0,
   }).format(Math.round(value));
+
+const buildFinancialCalculationLines = ({
+  offer,
+  metrics,
+  financialValue,
+  maxAdjustedValue,
+  financialScore,
+}: {
+  offer: Offer | SimulatedOffer;
+  metrics?: Partial<AdjustedOfferMetrics>;
+  financialValue: number;
+  maxAdjustedValue: number;
+  financialScore: number;
+}) => {
+  const base = asNumber(offer.base_salary);
+  const bonus = asNumber(offer.bonus);
+  const signOn = asNumber(offer.sign_on);
+  const equity = asNumber(offer.equity);
+  const benefits = asNumber(offer.benefits_value);
+  const baseTaxRate = asNumber(metrics?.usedBaseTaxRate, 0);
+  const bonusTaxRate = asNumber(metrics?.usedBonusTaxRate, 0);
+  const equityTaxRate = asNumber(metrics?.usedEquityTaxRate, 0);
+  const afterTaxBase = asNumber(metrics?.afterTaxBase, base * (1 - baseTaxRate / 100));
+  const afterTaxBenefits = benefits * (1 - baseTaxRate / 100);
+  const afterTaxBonus = asNumber(metrics?.afterTaxBonus, bonus * (1 - bonusTaxRate / 100));
+  const afterTaxSignOn = asNumber(metrics?.afterTaxSignOn, signOn * (1 - bonusTaxRate / 100));
+  const afterTaxEquity = asNumber(metrics?.afterTaxEquity, equity * (1 - equityTaxRate / 100));
+  const afterTaxTotal =
+    afterTaxBase + afterTaxBenefits + afterTaxBonus + afterTaxSignOn + afterTaxEquity;
+  const colIndex = asNumber(metrics?.costOfLivingIndex, 100);
+  const purchasingPowerAdjusted = afterTaxTotal * (100 / Math.max(colIndex, 1));
+  const lifestyleAdjustment = asNumber(metrics?.lifestyleAdjustment, 0);
+  const monthlyRent = asNumber(metrics?.monthlyRent, 0);
+  const rentAnnual = monthlyRent * 12;
+  const commuteAnnual = asNumber(metrics?.commuteAnnualCost, 0);
+  const freeFoodAnnual = asNumber(metrics?.freeFoodAnnualValue, 0);
+
+  return [
+    `Gross inputs: base ${formatCurrency(base)}, bonus ${formatCurrency(bonus)}, sign-on ${formatCurrency(
+      signOn
+    )}, equity ${formatCurrency(equity)}, benefits ${formatCurrency(benefits)}`,
+    `Tax rates: base/benefits ${baseTaxRate}%, bonus/sign-on ${bonusTaxRate}%, equity ${equityTaxRate}%`,
+    `After tax: base ${formatCurrency(afterTaxBase)}, bonus ${formatCurrency(
+      afterTaxBonus
+    )}, sign-on ${formatCurrency(afterTaxSignOn)}, equity ${formatCurrency(
+      afterTaxEquity
+    )}, benefits ${formatCurrency(afterTaxBenefits)}`,
+    `After-tax total: ${formatCurrency(afterTaxTotal)}`,
+    `COL adjustment: ${formatCurrency(afterTaxTotal)} x 100 / ${colIndex} = ${formatCurrency(
+      purchasingPowerAdjusted
+    )}`,
+    `Lifestyle adjustment: ${formatCurrency(lifestyleAdjustment)} total; includes free food ${formatCurrency(
+      freeFoodAnnual
+    )}, commute cost ${formatCurrency(commuteAnnual)}, remote/RTO effects`,
+    `Rent subtraction: ${formatCurrency(monthlyRent)} x 12 = ${formatCurrency(rentAnnual)}`,
+    `Adjusted value: ${formatCurrency(purchasingPowerAdjusted)} + ${formatCurrency(
+      lifestyleAdjustment
+    )} - ${formatCurrency(rentAnnual)} = ${formatCurrency(financialValue)}`,
+    `Financial score: ${formatCurrency(financialValue)} / ${formatCurrency(
+      maxAdjustedValue
+    )} x 100 = ${Math.round(financialScore)}`,
+  ];
+};
 
 const scoreVisa = (app?: Application) => {
   const sponsorship =
@@ -222,7 +322,7 @@ const hasImmigrationSignal = (app?: Application) =>
     (app?.day_one_gc && app.day_one_gc !== 'UNKNOWN')
   );
 
-const scoreLocation = (app?: Application) => {
+const scoreLocationWithBreakdown = (app?: Application) => {
   const workMode = getWorkMode(app);
   const commuteAnnual = annualizeAmount(
     asNumber(app?.commute_cost_value),
@@ -237,8 +337,21 @@ const scoreLocation = (app?: Application) => {
     workMode === 'REMOTE' ? 90 : workMode === 'HYBRID' ? 76 : workMode === 'ONSITE' ? 62 : 66;
   const commutePenalty = clamp(commuteAnnual / 1000, 0, 18);
   const rtoPenalty = workMode === 'REMOTE' ? 0 : Math.max(0, rtoDays - 2) * 2;
+  const score = clamp(base - commutePenalty - rtoPenalty);
 
-  return clamp(base - commutePenalty - rtoPenalty);
+  return {
+    score,
+    calculationLines: [
+      `Work mode base: ${workMode} = ${base}`,
+      `Commute penalty: ${formatCurrency(commuteAnnual)} annual / 1000 = ${commutePenalty.toFixed(
+        1
+      )}, capped at 18`,
+      `RTO penalty: max(0, ${rtoDays} days - 2) x 2 = ${rtoPenalty.toFixed(1)}`,
+      `Location score: ${base} - ${commutePenalty.toFixed(1)} - ${rtoPenalty.toFixed(
+        1
+      )} = ${Math.round(score)}`,
+    ],
+  };
 };
 
 const buildRows = (
@@ -265,9 +378,10 @@ const buildRows = (
   const rows = filteredOffers.map((offer, index) => {
     const app = applicationsById[offer.application];
     const financialValue = financialValues[index] || totalAnnualComp(offer);
+    const financialMetrics = offer.id ? adjustedByOfferId[offer.id] : undefined;
     const workMode = getWorkMode(app);
     const shouldScoreImmigration = hasImmigrationSignal(app);
-    const workLifeScore = scoreFromManual(app?.work_life_score);
+    const workLifeScore = scoreWorkLife(offer, app);
     const growthScore = scoreFromManual(app?.growth_score);
     const brandScore = scoreFromManual(app?.brand_score);
     const teamScore = scoreFromManual(app?.team_score);
@@ -283,22 +397,28 @@ const buildRows = (
         };
 
         if (category.key === 'financial') {
+          const financialScore = Math.min(100, (financialValue / maxAdjustedValue) * 100);
           return {
             ...category,
-            score: Math.min(100, (financialValue / maxAdjustedValue) * 100),
+            score: financialScore,
             detail: `${formatCurrency(financialValue)} adjusted value`,
+            calculationLines: buildFinancialCalculationLines({
+              offer,
+              metrics: financialMetrics,
+              financialValue,
+              maxAdjustedValue,
+              financialScore,
+            }),
             isScored: true,
           };
         }
         if (category.key === 'workLife') {
           return {
             ...category,
-            score: workLifeScore ?? 0,
-            detail:
-              workLifeScore != null
-                ? `${app?.work_life_score}/5 manual`
-                : 'Skipped until Work-Life Score is set',
-            isScored: workLifeScore != null,
+            score: workLifeScore.score,
+            detail: workLifeScore.detail,
+            calculationLines: workLifeScore.calculationLines,
+            isScored: true,
           };
         }
         if (category.key === 'growth') {
@@ -313,13 +433,15 @@ const buildRows = (
           };
         }
         if (category.key === 'location') {
+          const locationScore = scoreLocationWithBreakdown(app);
           return {
             ...category,
-            score: scoreLocation(app),
+            score: locationScore.score,
             detail:
               workMode === 'REMOTE'
                 ? 'Remote — works from anywhere'
                 : app?.office_location || app?.location || 'Location unknown',
+            calculationLines: locationScore.calculationLines,
             isScored: true,
           };
         }
@@ -347,15 +469,18 @@ const buildRows = (
     );
 
     if (shouldScoreImmigration) {
+      const immigrationScore = scoreVisa(app);
+      const immigrationLabel = getImmigrationSignalLabel(app?.visa_sponsorship, app?.day_one_gc);
       categories.push({
         key: 'visa' as const,
         label: CATEGORY_LABELS.visa,
         weight: VISA_OVERLAY_WEIGHT,
-        score: scoreVisa(app),
-        detail:
-          app?.visa_sponsorship || app?.day_one_gc
-            ? [app?.visa_sponsorship, app?.day_one_gc].filter(Boolean).join(' • ')
-            : 'Sponsorship or Day 1 GC not specified',
+        score: immigrationScore,
+        detail: immigrationLabel,
+        calculationLines: [
+          `Immigration support: ${immigrationLabel}`,
+          `Immigration score: ${Math.round(immigrationScore)}`,
+        ],
         isScored: true,
       });
     }
@@ -375,8 +500,7 @@ const buildRows = (
       score: Math.round(score),
       rank: 0,
       categories,
-      visaLabel: VISA_LABELS[app?.visa_sponsorship || ''],
-      dayOneGcLabel: DAY_ONE_GC_LABELS[app?.day_one_gc || ''],
+      immigrationLabel: getImmigrationSignalLabel(app?.visa_sponsorship, app?.day_one_gc),
       workModeLabel:
         workMode === 'UNKNOWN'
           ? 'Work mode unknown'
@@ -390,6 +514,7 @@ const buildRows = (
 
   const simRows = simulatedOffers.map((offer, index) => {
     const financialValue = simFinancialValues[index];
+    const scenarioRow = scenarioRows.find((row) => String(row.offer.id) === String(offer.id));
     const baseApp = offer.application ? applicationsById[offer.application] : undefined;
     const company = baseApp
       ? baseApp.company_name
@@ -410,7 +535,7 @@ const buildRows = (
 
     const workMode = getWorkMode(app);
     const shouldScoreImmigration = hasImmigrationSignal(app);
-    const workLifeScore = scoreFromManual(app?.work_life_score);
+    const workLifeScore = scoreWorkLife(offer, app);
     const growthScore = scoreFromManual(app?.growth_score);
     const brandScore = scoreFromManual(app?.brand_score);
     const teamScore = scoreFromManual(app?.team_score);
@@ -426,22 +551,30 @@ const buildRows = (
         };
 
         if (category.key === 'financial') {
+          const financialScore = Math.min(100, (financialValue / maxAdjustedValue) * 100);
           return {
             ...category,
-            score: Math.min(100, (financialValue / maxAdjustedValue) * 100),
+            score: financialScore,
             detail: `${formatCurrency(financialValue)} adjusted value`,
+            calculationLines: buildFinancialCalculationLines({
+              offer,
+              metrics: scenarioRow
+                ? { ...scenarioRow, costOfLivingIndex: scenarioRow.colIndex }
+                : undefined,
+              financialValue,
+              maxAdjustedValue,
+              financialScore,
+            }),
             isScored: true,
           };
         }
         if (category.key === 'workLife') {
           return {
             ...category,
-            score: workLifeScore ?? 0,
-            detail:
-              workLifeScore != null
-                ? `${app?.work_life_score}/5 manual`
-                : 'Skipped until Work-Life Score is set',
-            isScored: workLifeScore != null,
+            score: workLifeScore.score,
+            detail: workLifeScore.detail,
+            calculationLines: workLifeScore.calculationLines,
+            isScored: true,
           };
         }
         if (category.key === 'growth') {
@@ -456,13 +589,15 @@ const buildRows = (
           };
         }
         if (category.key === 'location') {
+          const locationScore = scoreLocationWithBreakdown(app);
           return {
             ...category,
-            score: scoreLocation(app),
+            score: locationScore.score,
             detail:
               workMode === 'REMOTE'
                 ? 'Remote — works from anywhere'
                 : app?.office_location || app?.location || 'Location unknown',
+            calculationLines: locationScore.calculationLines,
             isScored: true,
           };
         }
@@ -490,15 +625,18 @@ const buildRows = (
     );
 
     if (shouldScoreImmigration) {
+      const immigrationScore = scoreVisa(app);
+      const immigrationLabel = getImmigrationSignalLabel(app?.visa_sponsorship, app?.day_one_gc);
       categories.push({
         key: 'visa' as const,
         label: CATEGORY_LABELS.visa,
         weight: VISA_OVERLAY_WEIGHT,
-        score: scoreVisa(app),
-        detail:
-          app?.visa_sponsorship || app?.day_one_gc
-            ? [app?.visa_sponsorship, app?.day_one_gc].filter(Boolean).join(' \u2022 ')
-            : 'Sponsorship or Day 1 GC not specified',
+        score: immigrationScore,
+        detail: immigrationLabel,
+        calculationLines: [
+          `Immigration support: ${immigrationLabel}`,
+          `Immigration score: ${Math.round(immigrationScore)}`,
+        ],
         isScored: true,
       });
     }
@@ -518,8 +656,7 @@ const buildRows = (
       score: Math.round(score),
       rank: 0,
       categories,
-      visaLabel: VISA_LABELS[app?.visa_sponsorship || ''],
-      dayOneGcLabel: DAY_ONE_GC_LABELS[app?.day_one_gc || ''],
+      immigrationLabel: getImmigrationSignalLabel(app?.visa_sponsorship, app?.day_one_gc),
       workModeLabel:
         workMode === 'UNKNOWN'
           ? 'Work mode unknown'
@@ -544,7 +681,7 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
   const rawSum = scored.reduce((s, c) => s + c.score * c.weight, 0);
 
   return (
-    <div style={{ width: 360, fontSize: 12 }}>
+    <div className="w-[min(360px,calc(100vw-32px))] text-xs">
       {/* Step 1 */}
       <div className="mb-3">
         <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">
@@ -555,14 +692,26 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
             const rawPts = (c.score * c.weight) / 100;
             return (
               <div key={c.key}>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
                   <span className="font-semibold text-slate-700">{c.label}</span>
-                  <span className="font-mono text-slate-500 text-[11px]">
+                  <span className="break-words text-right font-mono text-[11px] text-slate-500">
                     {Math.round(c.score)} × {c.weight}% ={' '}
                     <span className="font-bold text-slate-800">{rawPts.toFixed(2)} pts</span>
                   </span>
                 </div>
                 <div className="text-[10px] text-slate-400">{c.detail}</div>
+                {c.calculationLines && c.calculationLines.length > 0 && (
+                  <div className="mt-1 space-y-0.5 rounded-lg bg-slate-50 px-2 py-1.5">
+                    {c.calculationLines.map((line) => (
+                      <div
+                        key={line}
+                        className="whitespace-normal break-words text-[10px] leading-4 text-slate-500"
+                      >
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -771,14 +920,14 @@ const OfferDecisionScorecard = ({
                       }
                       trigger="click"
                       placement="bottomRight"
-                      overlayStyle={{ maxWidth: 380 }}
+                      overlayStyle={{ maxWidth: 'calc(100vw - 32px)' }}
                     >
                       <button className="group flex flex-col items-end text-right hover:opacity-80 transition-opacity cursor-pointer">
                         <p className="text-3xl font-black tracking-tight text-sky-600 group-hover:underline decoration-dotted underline-offset-4">
                           {row.score}
                         </p>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                          Total Score <span className="text-sky-300">ⓘ</span>
+                          Total Score
                         </p>
                       </button>
                     </Popover>
@@ -793,7 +942,7 @@ const OfferDecisionScorecard = ({
                     </span>
                   )}
                   {(row.hasImmigrationSignal
-                    ? [row.visaLabel, row.dayOneGcLabel, row.workModeLabel]
+                    ? [row.immigrationLabel, row.workModeLabel]
                     : [row.workModeLabel]
                   )
                     .filter(Boolean)
@@ -895,6 +1044,14 @@ const OfferDecisionScorecard = ({
                         return null;
                       }
 
+                      const immigrationSignalValue = getImmigrationSignalValue(
+                        app?.visa_sponsorship,
+                        app?.day_one_gc
+                      );
+                      const selectedImmigrationOption = immigrationSignalOptions.find(
+                        (option) => option.value === immigrationSignalValue
+                      );
+
                       return (
                         <div key={category.key} className="flex flex-col">
                           <div className="mb-1.5 flex items-center justify-between text-xs">
@@ -905,47 +1062,28 @@ const OfferDecisionScorecard = ({
                               {category.isScored ? Math.round(category.score) : '--'}
                             </span>
                           </div>
-                          <div className="flex flex-col gap-1.5">
-                            <Select
-                              value={
-                                app?.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN'
-                                  ? app.visa_sponsorship
-                                  : undefined
-                              }
-                              placeholder="Select Visa status"
-                              size="small"
-                              bordered={false}
-                              onChange={(val) =>
-                                onScoreUpdate?.(row.applicationId, { visa_sponsorship: val || '' })
-                              }
-                              options={[
-                                { value: 'NOT_NEEDED', label: 'No sponsorship needed' },
-                                { value: 'AVAILABLE', label: 'Sponsorship available' },
-                                { value: 'TRANSFER_ONLY', label: 'Transfer only' },
-                                { value: 'NOT_AVAILABLE', label: 'No sponsorship' },
-                              ]}
-                              className="w-full bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-colors [&_.ant-select-selector]:!bg-transparent text-xs"
-                            />
-                            <Select
-                              value={
-                                app?.day_one_gc && app.day_one_gc !== 'UNKNOWN'
-                                  ? app.day_one_gc
-                                  : undefined
-                              }
-                              placeholder="Select GC status"
-                              size="small"
-                              bordered={false}
-                              onChange={(val) =>
-                                onScoreUpdate?.(row.applicationId, { day_one_gc: val || '' })
-                              }
-                              options={[
-                                { value: 'YES', label: 'Day 1 GC' },
-                                { value: 'NO', label: 'No Day 1 GC' },
-                                { value: 'NOT_APPLICABLE', label: 'GC not applicable' },
-                              ]}
-                              className="w-full bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-colors [&_.ant-select-selector]:!bg-transparent text-xs"
-                            />
-                          </div>
+                          <Select
+                            value={immigrationSignalValue || undefined}
+                            placeholder="Immigration support"
+                            size="small"
+                            allowClear
+                            bordered={false}
+                            onChange={(val) =>
+                              onScoreUpdate?.(
+                                row.applicationId,
+                                getImmigrationSignalPatch((val || '') as ImmigrationSignalValue)
+                              )
+                            }
+                            options={immigrationSignalOptions.map((option) => ({
+                              value: option.value,
+                              label: option.label,
+                            }))}
+                            className="w-full rounded-lg border border-slate-100 bg-slate-50 text-xs transition-colors hover:bg-slate-100 [&_.ant-select-selector]:!bg-transparent"
+                          />
+                          <p className="mt-1.5 text-[10px] leading-4 text-slate-400">
+                            {selectedImmigrationOption?.description ||
+                              'Only score this when immigration support matters to the decision.'}
+                          </p>
                         </div>
                       );
                     }
@@ -1372,7 +1510,7 @@ const OfferDecisionScorecard = ({
                         {isOver
                           ? '— over limit!'
                           : isExact
-                            ? '— perfect ✓'
+                            ? '— balanced'
                             : isNear
                               ? `(${remaining}% left) — warning`
                               : `(${remaining}% left)`}
@@ -1389,6 +1527,21 @@ const OfferDecisionScorecard = ({
                         Reduce by {totalWeight - 100}% to stay within budget.
                       </p>
                     )}
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      General formula
+                    </span>
+                    <p className="mt-1 text-[11px] leading-5 text-slate-600">
+                      Each category creates a 0-100 score. Total score = sum(category score x
+                      weight) / active weight. Detailed field-level math lives in each offer's Total
+                      Score popover.
+                    </p>
+                    <p className="mt-2 border-t border-slate-100 pt-2 text-[10px] leading-4 text-slate-400">
+                      Includes money adjustments, location friction, PTO/holidays, manual signals,
+                      and immigration when filled.
+                    </p>
                   </div>
 
                   {/* Weight sliders */}
