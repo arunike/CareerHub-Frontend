@@ -474,6 +474,7 @@ const Settings: React.FC = () => {
       }
       originalSettingsRef.current = JSON.stringify(data);
       setSettings(data);
+      setIsLocked(Boolean(data.is_locked));
       syncAiSettings(data);
       setIsDirty(false);
     } catch (error) {
@@ -525,6 +526,28 @@ const Settings: React.FC = () => {
       console.error('Error saving settings:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleSettingsLock = async () => {
+    if (!settings) return;
+    const nextLocked = !isLocked;
+    const nextSettings = { ...settings, is_locked: nextLocked };
+    setIsLocked(nextLocked);
+    setSettings(nextSettings);
+
+    try {
+      const response = await updateUserSettings({ is_locked: nextLocked });
+      const savedSettings = { ...nextSettings, ...(response.data as Partial<UserSettings>) };
+      setSettings(savedSettings);
+      originalSettingsRef.current = JSON.stringify(savedSettings);
+      setIsDirty(false);
+      window.dispatchEvent(new CustomEvent('settings-saved', { detail: savedSettings }));
+    } catch (error) {
+      setIsLocked(!nextLocked);
+      setSettings(settings);
+      messageApi.error(nextLocked ? 'Failed to lock settings' : 'Failed to unlock settings');
+      console.error('Error updating settings lock:', error);
     }
   };
 
@@ -815,7 +838,7 @@ const Settings: React.FC = () => {
             <Button
               size="large"
               icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
-              onClick={() => setIsLocked((l) => !l)}
+              onClick={handleToggleSettingsLock}
               className="toolbar-btn"
             >
               {isLocked ? 'Locked' : 'Lock'}
