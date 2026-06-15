@@ -303,6 +303,12 @@ export const createOffer = (data: Record<string, unknown>) => api.post('/career/
 export const updateOffer = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/offers/${id}/`, data);
 export const deleteOffer = (id: number) => api.delete(`/career/offers/${id}/`);
+export const getTransitionAdvice = (data: {
+  current_pain_points: string[];
+  promotion_timeline: string;
+  include_job_hunting: boolean;
+  simulated_offers: any[];
+}) => api.post('/career/offers/transition-advisor/', data);
 
 export interface OfferDecisionSnapshot {
   id: number;
