@@ -62,9 +62,13 @@ The **Frontend** is a React-based single-page application that provides an intui
   - **Talking Points & Scripts** (amber) — ready-to-use scripts
   - **Watch Out For** (red) — risks and cautions
   - Regenerate button; auto-saves result to localStorage with "Saved" indicator + "View Full Report" link
+- **🔮 Career Transition Advisor**: Collapsible panel integrated below the scorecard to evaluate your current job:
+  - **Qualitative Input**: Predefined pain points (burnout, bad WLB, commute, low growth, toxic culture) and custom free-text situational inputs.
+  - **Strategic Outcome**: Side-by-side comparison of Option A (Stay at current job / Accept current best offer) vs. Option B (Start job hunting) to preview outcomes.
+  - **Target Criteria**: List of target company types, salary targets, WLB/remote policies, and culture criteria to look for in your next search.
 - **Adjustments Panel**: Tax/COL/rent/commute/food-perk adjustments; per-offer overrides; persisted locally
 - **Edit Offer Modal**: Shared form for real and scenario offers (bonus $/% toggle, equity total+vesting mode, benefit items)
-- **Advanced Decision Signals**: Collapsible optional inputs for visa sponsorship, Day 1 GC, growth, WLB, brand, and manager/team fit
+- **Advanced Decision Signals**: Dedicated editor for optional visa sponsorship, Day 1 GC, growth, WLB, brand, and manager/team fit inputs
 - **Add Current Job**: Quick baseline creation
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
