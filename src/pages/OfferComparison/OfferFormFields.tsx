@@ -97,6 +97,26 @@ interface OfferFormFieldsProps {
   companyPlaceholder?: string;
   rolePlaceholder?: string;
   locationPlaceholder?: string;
+
+  // New Fields
+  healthPremiumMonthly?: number;
+  onHealthPremiumMonthlyChange?: (value: number) => void;
+  hsaEmployerContribution?: number;
+  onHsaEmployerContributionChange?: (value: number) => void;
+  healthPlanType?: string;
+  onHealthPlanTypeChange?: (value: string) => void;
+  healthOopMax?: number;
+  onHealthOopMaxChange?: (value: number) => void;
+  fortyOneKMatchPercent?: number;
+  onFortyOneKMatchPercentChange?: (value: number) => void;
+  fortyOneKMaxMatch?: number;
+  onFortyOneKMaxMatchChange?: (value: number) => void;
+  relocationBonus?: number;
+  onRelocationBonusChange?: (value: number) => void;
+  flexibleHoursPolicy?: string;
+  onFlexibleHoursPolicyChange?: (value: string) => void;
+  travelFrequency?: string;
+  onTravelFrequencyChange?: (value: string) => void;
 }
 
 const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
@@ -175,9 +195,30 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   companyPlaceholder = 'e.g. Google',
   rolePlaceholder = 'e.g. Software Engineer',
   locationPlaceholder = 'e.g. San Jose, CA, United States',
+
+  // New Fields
+  healthPremiumMonthly = 0,
+  onHealthPremiumMonthlyChange,
+  hsaEmployerContribution = 0,
+  onHsaEmployerContributionChange,
+  healthPlanType = '',
+  onHealthPlanTypeChange,
+  healthOopMax = 0,
+  onHealthOopMaxChange,
+  fortyOneKMatchPercent = 0,
+  onFortyOneKMatchPercentChange,
+  fortyOneKMaxMatch = 0,
+  onFortyOneKMaxMatchChange,
+  relocationBonus = 0,
+  onRelocationBonusChange,
+  flexibleHoursPolicy = 'UNKNOWN',
+  onFlexibleHoursPolicyChange,
+  travelFrequency = 'UNKNOWN',
+  onTravelFrequencyChange,
 }) => {
   const shouldShowCompanyRole = !(hideCompanyRoleWhenLinked && linkedApplicationId);
   const showRtoDays = workMode === 'HYBRID' || workMode === 'ONSITE';
+
   const decisionSignalHandlers =
     showDecisionSignals &&
     onVisaSponsorshipChange &&
@@ -232,6 +273,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         freeFoodPerkFrequency={freeFoodPerkFrequency}
         onFreeFoodPerkValueChange={onFreeFoodPerkValueChange}
         onFreeFoodPerkFrequencyChange={onFreeFoodPerkFrequencyChange}
+        flexibleHoursPolicy={flexibleHoursPolicy}
+        onFlexibleHoursPolicyChange={onFlexibleHoursPolicyChange}
+        travelFrequency={travelFrequency}
+        onTravelFrequencyChange={onTravelFrequencyChange}
       />
 
       <LocationTaxSection
@@ -266,6 +311,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         defaultEquityMode={defaultEquityMode}
         signOn={signOn}
         onSignOnChange={onSignOnChange}
+        relocationBonus={relocationBonus}
+        onRelocationBonusChange={onRelocationBonusChange}
       />
 
       <BenefitsSection
@@ -275,6 +322,18 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onRemoveBenefitItem={onRemoveBenefitItem}
         computeBenefitsTotal={computeBenefitsTotal}
         benefitsValue={benefitsValue}
+        healthPremiumMonthly={healthPremiumMonthly}
+        onHealthPremiumMonthlyChange={onHealthPremiumMonthlyChange}
+        hsaEmployerContribution={hsaEmployerContribution}
+        onHsaEmployerContributionChange={onHsaEmployerContributionChange}
+        healthPlanType={healthPlanType}
+        onHealthPlanTypeChange={onHealthPlanTypeChange}
+        healthOopMax={healthOopMax}
+        onHealthOopMaxChange={onHealthOopMaxChange}
+        fortyOneKMatchPercent={fortyOneKMatchPercent}
+        onFortyOneKMatchPercentChange={onFortyOneKMatchPercentChange}
+        fortyOneKMaxMatch={fortyOneKMaxMatch}
+        onFortyOneKMaxMatchChange={onFortyOneKMaxMatchChange}
       />
 
       {decisionSignalHandlers && (

@@ -184,38 +184,106 @@ const scoreWorkLife = (offer: Offer | SimulatedOffer, app?: Application) => {
   const manualScore = scoreFromManual(app?.work_life_score);
   const timeOff = scoreTimeOff(offer);
 
+  const flexibleHours =
+    app?.flexible_hours_policy || (offer as any).flexible_hours_policy || 'UNKNOWN';
+  const travelFreq = app?.travel_frequency || (offer as any).travel_frequency || 'UNKNOWN';
+
+  let hoursAdjustment = 0;
+  let hoursText = 'Not specified';
+  if (flexibleHours === 'FLEXIBLE') {
+    hoursAdjustment = 10;
+    hoursText = 'Flexible Hours (Asynchronous) = +10 pts';
+  } else if (flexibleHours === 'CORE_HOURS') {
+    hoursAdjustment = 5;
+    hoursText = 'Core Hours (e.g. 10am-4pm) = +5 pts';
+  } else if (flexibleHours === 'STRICT') {
+    hoursAdjustment = -10;
+    hoursText = 'Strict / Fixed Hours = -10 pts';
+  } else {
+    hoursText = 'Not specified = 0 pts';
+  }
+
+  let travelAdjustment = 0;
+  let travelText = 'Not specified';
+  if (travelFreq === 'NONE') {
+    travelAdjustment = 5;
+    travelText = 'No Travel (0%) = +5 pts';
+  } else if (travelFreq === 'LOW') {
+    travelAdjustment = 0;
+    travelText = 'Low Travel (<10%) = 0 pts';
+  } else if (travelFreq === 'MEDIUM') {
+    travelAdjustment = -10;
+    travelText = 'Medium Travel (10-25%) = -10 pts';
+  } else if (travelFreq === 'HIGH') {
+    travelAdjustment = -20;
+    travelText = 'High Travel (>25%) = -20 pts';
+  } else {
+    travelText = 'Not specified = 0 pts';
+  }
+
+  const baseWlb = manualScore != null ? manualScore * 0.7 + timeOff.score * 0.3 : timeOff.score;
+  const finalWlb = clamp(baseWlb + hoursAdjustment + travelAdjustment, 0, 100);
+
+  const calculationLines: string[] = [];
   if (manualScore != null) {
-    return {
-      score: manualScore * 0.7 + timeOff.score * 0.3,
-      detail: `${app?.work_life_score}/5 manual + ${timeOff.totalPaidDays} paid days`,
-      calculationLines: [
-        `Manual WLB: ${app?.work_life_score}/5 x 20 = ${Math.round(manualScore)}`,
-        `Time off: ${timeOff.label} = ${timeOff.totalPaidDays} paid days`,
-        `Time-off score: ${timeOff.totalPaidDays} / 35 x 100 = ${Math.round(timeOff.score)}`,
-        `WLB score: ${Math.round(manualScore)} x 70% + ${Math.round(timeOff.score)} x 30% = ${Math.round(
-          manualScore * 0.7 + timeOff.score * 0.3
-        )}`,
-      ],
-    };
+    calculationLines.push(
+      `Manual WLB: ${app?.work_life_score}/5 x 20 = ${Math.round(manualScore)}`,
+      `Time off: ${timeOff.label} = ${timeOff.totalPaidDays} paid days`,
+      `Time-off score: ${timeOff.totalPaidDays} / 35 x 100 = ${Math.round(timeOff.score)}`,
+      `Base WLB score: ${Math.round(manualScore)} x 70% + ${Math.round(timeOff.score)} x 30% = ${Math.round(baseWlb)}`
+    );
+  } else {
+    calculationLines.push(
+      `Time off: ${timeOff.label} = ${timeOff.totalPaidDays} paid days`,
+      `Base WLB score (time-off only): ${timeOff.totalPaidDays} / 35 x 100 = ${Math.round(baseWlb)}`
+    );
+  }
+
+  calculationLines.push(
+    `Flexible Hours adjustment: ${hoursText}`,
+    `Travel Frequency adjustment: ${travelText}`,
+    `Final WLB score: ${Math.round(baseWlb)} + (${hoursAdjustment}) + (${travelAdjustment}) = ${Math.round(finalWlb)}`
+  );
+
+  if (manualScore == null) {
+    calculationLines.push('No manual WLB signal filled, so WLB uses time-off only.');
   }
 
   return {
-    score: timeOff.score,
-    detail: `${timeOff.totalPaidDays} paid days`,
-    calculationLines: [
-      `Time off: ${timeOff.label} = ${timeOff.totalPaidDays} paid days`,
-      `WLB score: ${timeOff.totalPaidDays} / 35 x 100 = ${Math.round(timeOff.score)}`,
-      'No manual WLB signal filled, so WLB uses time-off only.',
-    ],
+    score: finalWlb,
+    detail: `${app?.work_life_score != null ? `${app.work_life_score}/5 manual + ` : ''}${timeOff.totalPaidDays} paid days${hoursAdjustment !== 0 || travelAdjustment !== 0 ? ' (adjusted)' : ''}`,
+    calculationLines,
   };
 };
 
-const totalAnnualComp = (offer: Offer) =>
-  asNumber(offer.base_salary) +
-  asNumber(offer.bonus) +
-  asNumber(offer.equity) +
-  asNumber(offer.sign_on) +
-  asNumber(offer.benefits_value);
+const totalAnnualComp = (offer: Offer | SimulatedOffer) => {
+  const base = asNumber(offer.base_salary);
+  const bonus = asNumber(offer.bonus);
+  const equity = asNumber(offer.equity);
+  const signOn = asNumber(offer.sign_on);
+  const benefits = asNumber(offer.benefits_value);
+  const relocation = asNumber(offer.relocation_bonus);
+
+  const healthPremiumMonthly = asNumber(offer.health_premium_monthly);
+  const hsaEmployerContribution = asNumber(offer.hsa_employer_contribution);
+  const healthPremiumAnnual = healthPremiumMonthly * 12;
+
+  const matchPercent = asNumber(offer.forty_one_k_match_percent);
+  const maxMatch = asNumber(offer.forty_one_k_max_match);
+  const fortyOneKMatchAnnual = base * (maxMatch / 100) * (matchPercent / 100);
+
+  return (
+    base +
+    bonus +
+    equity +
+    signOn +
+    benefits +
+    relocation +
+    hsaEmployerContribution +
+    fortyOneKMatchAnnual -
+    healthPremiumAnnual
+  );
+};
 
 const getWorkMode = (app?: Application) => {
   if (app?.rto_policy === 'REMOTE') return 'REMOTE';
@@ -249,16 +317,44 @@ const buildFinancialCalculationLines = ({
   const signOn = asNumber(offer.sign_on);
   const equity = asNumber(offer.equity);
   const benefits = asNumber(offer.benefits_value);
+  const relocation = asNumber(offer.relocation_bonus);
+
+  const healthPremiumMonthly = asNumber(offer.health_premium_monthly);
+  const healthPremiumAnnual = healthPremiumMonthly * 12;
+  const hsaEmployerContribution = asNumber(offer.hsa_employer_contribution);
+
+  const matchPercent = asNumber(offer.forty_one_k_match_percent);
+  const maxMatch = asNumber(offer.forty_one_k_max_match);
+  const fortyOneKMatchAnnual = base * (maxMatch / 100) * (matchPercent / 100);
+
   const baseTaxRate = asNumber(metrics?.usedBaseTaxRate, 0);
   const bonusTaxRate = asNumber(metrics?.usedBonusTaxRate, 0);
   const equityTaxRate = asNumber(metrics?.usedEquityTaxRate, 0);
-  const afterTaxBase = asNumber(metrics?.afterTaxBase, base * (1 - baseTaxRate / 100));
+
+  const afterTaxBase = asNumber(
+    metrics?.afterTaxBase,
+    Math.max(0, base - healthPremiumAnnual) * (1 - baseTaxRate / 100)
+  );
   const afterTaxBenefits = benefits * (1 - baseTaxRate / 100);
   const afterTaxBonus = asNumber(metrics?.afterTaxBonus, bonus * (1 - bonusTaxRate / 100));
   const afterTaxSignOn = asNumber(metrics?.afterTaxSignOn, signOn * (1 - bonusTaxRate / 100));
+  const afterTaxRelocation = asNumber(
+    metrics?.afterTaxRelocation,
+    relocation * (1 - bonusTaxRate / 100)
+  );
   const afterTaxEquity = asNumber(metrics?.afterTaxEquity, equity * (1 - equityTaxRate / 100));
+  const afterTaxHsa = asNumber(metrics?.afterTaxHsa, hsaEmployerContribution);
+
   const afterTaxTotal =
-    afterTaxBase + afterTaxBenefits + afterTaxBonus + afterTaxSignOn + afterTaxEquity;
+    afterTaxBase +
+    afterTaxBenefits +
+    afterTaxBonus +
+    afterTaxSignOn +
+    afterTaxRelocation +
+    afterTaxEquity +
+    afterTaxHsa +
+    fortyOneKMatchAnnual;
+
   const colIndex = asNumber(metrics?.costOfLivingIndex, 100);
   const purchasingPowerAdjusted = afterTaxTotal * (100 / Math.max(colIndex, 1));
   const lifestyleAdjustment = asNumber(metrics?.lifestyleAdjustment, 0);
@@ -270,13 +366,21 @@ const buildFinancialCalculationLines = ({
   return [
     `Gross inputs: base ${formatCurrency(base)}, bonus ${formatCurrency(bonus)}, sign-on ${formatCurrency(
       signOn
-    )}, equity ${formatCurrency(equity)}, benefits ${formatCurrency(benefits)}`,
-    `Tax rates: base/benefits ${baseTaxRate}%, bonus/sign-on ${bonusTaxRate}%, equity ${equityTaxRate}%`,
+    )}, equity ${formatCurrency(equity)}, benefits ${formatCurrency(benefits)}, relocation ${formatCurrency(
+      relocation
+    )}`,
+    `Health Ins: premium -${formatCurrency(healthPremiumAnnual)}/yr (${formatCurrency(
+      healthPremiumMonthly
+    )}/mo pre-tax), HSA employer +${formatCurrency(hsaEmployerContribution)}/yr`,
+    `401(k) retirement match: +${formatCurrency(fortyOneKMatchAnnual)}/yr (${matchPercent}% match up to ${maxMatch}%)`,
+    `Tax rates: base/benefits ${baseTaxRate}%, W2 bonus/relocation ${bonusTaxRate}%, equity ${equityTaxRate}%`,
     `After tax: base ${formatCurrency(afterTaxBase)}, bonus ${formatCurrency(
       afterTaxBonus
-    )}, sign-on ${formatCurrency(afterTaxSignOn)}, equity ${formatCurrency(
-      afterTaxEquity
-    )}, benefits ${formatCurrency(afterTaxBenefits)}`,
+    )}, sign-on ${formatCurrency(afterTaxSignOn)}, relocation ${formatCurrency(
+      afterTaxRelocation
+    )}, equity ${formatCurrency(afterTaxEquity)}, benefits ${formatCurrency(
+      afterTaxBenefits
+    )}, HSA +${formatCurrency(afterTaxHsa)}, 401(k) +${formatCurrency(fortyOneKMatchAnnual)}`,
     `After-tax total: ${formatCurrency(afterTaxTotal)}`,
     `COL adjustment: ${formatCurrency(afterTaxTotal)} x 100 / ${colIndex} = ${formatCurrency(
       purchasingPowerAdjusted
@@ -937,26 +1041,56 @@ const OfferDecisionScorecard = ({
                 </div>
 
                 {/* Tags */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {!row.isSimulated && (row.offer as Offer).is_current && (
-                    <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
-                      Current
-                    </span>
-                  )}
-                  {(row.hasImmigrationSignal
-                    ? [row.immigrationLabel, row.workModeLabel]
-                    : [row.workModeLabel]
-                  )
-                    .filter(Boolean)
-                    .map((label) => (
-                      <span
-                        key={label}
-                        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                </div>
+                {(() => {
+                  const app = applicationsById[row.applicationId];
+                  const rawFlexible =
+                    app?.flexible_hours_policy || (row.offer as any).flexible_hours_policy;
+                  const flexibleHoursLabel =
+                    rawFlexible === 'FLEXIBLE'
+                      ? 'Flexible Hours'
+                      : rawFlexible === 'CORE_HOURS'
+                        ? 'Core Hours'
+                        : rawFlexible === 'STRICT'
+                          ? 'Strict Hours'
+                          : '';
+
+                  const rawTravel = app?.travel_frequency || (row.offer as any).travel_frequency;
+                  const travelFrequencyLabel =
+                    rawTravel === 'NONE'
+                      ? 'No Travel'
+                      : rawTravel === 'LOW'
+                        ? 'Low Travel (<10%)'
+                        : rawTravel === 'MEDIUM'
+                          ? 'Medium Travel (10-25%)'
+                          : rawTravel === 'HIGH'
+                            ? 'High Travel (>25%)'
+                            : '';
+
+                  return (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {!row.isSimulated && (row.offer as Offer).is_current && (
+                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+                          Current
+                        </span>
+                      )}
+                      {[
+                        row.hasImmigrationSignal ? row.immigrationLabel : '',
+                        row.workModeLabel,
+                        flexibleHoursLabel,
+                        travelFrequencyLabel,
+                      ]
+                        .filter(Boolean)
+                        .map((label) => (
+                          <span
+                            key={label}
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Card Body - Scores */}
@@ -1187,6 +1321,98 @@ const OfferDecisionScorecard = ({
                     </div>
                     <div className="text-[10px] text-slate-400">One-time</div>
                   </div>
+                  {Number(row.offer.relocation_bonus || 0) > 0 && (
+                    <div>
+                      <Tooltip
+                        title="One-time relocation or signing perk cash value."
+                        placement="top"
+                      >
+                        <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                          Relocation Perk <span className="text-slate-300 text-[10px]">ⓘ</span>
+                        </div>
+                      </Tooltip>
+                      <div className="text-sm font-bold text-slate-900">
+                        ${Number(row.offer.relocation_bonus).toLocaleString()}
+                      </div>
+                      <Tooltip
+                        title="Relocation is typically taxed at supplemental W2 bonus rate."
+                        placement="bottom"
+                      >
+                        <div className="text-[10px] text-slate-400 cursor-help">
+                          After tax: $
+                          {Math.round(
+                            adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
+                          ).toLocaleString()}
+                        </div>
+                      </Tooltip>
+                    </div>
+                  )}
+
+                  {/* Health Insurance & 401(k) Match Sub-section */}
+                  <div className="col-span-2 pt-2 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Tooltip
+                          title="Monthly premium and annual HSA contribution details."
+                          placement="top"
+                        >
+                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                            Health Insurance <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          </div>
+                        </Tooltip>
+                        <div className="text-sm font-bold text-slate-900">
+                          {Number(row.offer.health_premium_monthly || 0) > 0
+                            ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
+                            : 'Free Premium'}
+                        </div>
+                        {row.offer.health_plan_type && (
+                          <div className="text-[10px] text-slate-500 font-medium">
+                            Type: {row.offer.health_plan_type}
+                          </div>
+                        )}
+                        {Number(row.offer.health_oop_max || 0) > 0 && (
+                          <div className="text-[10px] text-slate-400">
+                            OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
+                          </div>
+                        )}
+                        {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
+                          <div className="text-[10px] text-emerald-600 font-semibold">
+                            HSA Match: +$
+                            {Number(row.offer.hsa_employer_contribution).toLocaleString()}/yr
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Tooltip
+                          title="401(k) Employer retirement match percentage and max contribution matched."
+                          placement="top"
+                        >
+                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                            401(k) Matching <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          </div>
+                        </Tooltip>
+                        <div className="text-sm font-bold text-slate-900">
+                          {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                          Number(row.offer.forty_one_k_max_match || 0) > 0
+                            ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
+                            : 'No 401(k) Match'}
+                        </div>
+                        {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                          Number(row.offer.forty_one_k_max_match || 0) > 0 && (
+                            <div className="text-[10px] text-emerald-600 font-semibold">
+                              Match Value: +$
+                              {Math.round(
+                                Number(row.offer.base_salary) *
+                                  (Number(row.offer.forty_one_k_max_match) / 100) *
+                                  (Number(row.offer.forty_one_k_match_percent) / 100)
+                              ).toLocaleString()}
+                              /yr
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="col-span-2 pt-2 border-t border-slate-100">
                     <div className="flex justify-between items-center">
                       <div>

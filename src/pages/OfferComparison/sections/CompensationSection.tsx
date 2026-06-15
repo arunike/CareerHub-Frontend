@@ -17,6 +17,8 @@ type CompensationSectionProps = {
   defaultEquityMode?: 'annual' | 'total';
   signOn: number;
   onSignOnChange: (value: number) => void;
+  relocationBonus?: number;
+  onRelocationBonusChange?: (value: number) => void;
 };
 
 const CompensationSection = ({
@@ -36,6 +38,8 @@ const CompensationSection = ({
   setEquityVestingPercentInternal,
   signOn,
   onSignOnChange,
+  relocationBonus,
+  onRelocationBonusChange,
 }: CompensationSectionProps) => {
   return (
     <div className="space-y-3">
@@ -57,18 +61,38 @@ const CompensationSection = ({
           onEquityVestingPercentChange?.(v);
         }}
       />
-      <div>
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-          Sign-On
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-          <input
-            type="number"
-            value={signOn}
-            onChange={(e) => onSignOnChange(Number(e.target.value) || 0)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 pl-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            Sign-On
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+              $
+            </span>
+            <input
+              type="number"
+              value={signOn}
+              onChange={(e) => onSignOnChange(Number(e.target.value) || 0)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 pl-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            Relocation / Signing Perks
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+              $
+            </span>
+            <input
+              type="number"
+              value={relocationBonus || 0}
+              onChange={(e) => onRelocationBonusChange?.(Number(e.target.value) || 0)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 pl-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -4,6 +4,9 @@ export type AdjustedOfferMetrics = {
   afterTaxBase: number;
   afterTaxBonus: number;
   afterTaxSignOn?: number;
+  afterTaxRelocation?: number;
+  afterTaxHsa?: number;
+  fortyOneKMatchValue?: number;
   afterTaxEquity: number;
   usedBaseTaxRate: number;
   usedBonusTaxRate: number;

@@ -85,7 +85,9 @@ export const useScenarioRows = ({
         Number(offer.bonus) +
         Number(offer.sign_on) +
         Number(offer.benefits_value) +
-        Number(offer.equity);
+        Number(offer.equity) +
+        Number(offer.relocation_bonus || 0) -
+        Number(offer.health_premium_monthly || 0) * 12;
       const estimatedTax = estimateTaxRatesByIncomeType(
         rowIncome,
         maritalStatus,
@@ -122,6 +124,11 @@ export const useScenarioRows = ({
         bonusTaxRate: rowTax.bonusTaxRate,
         equityTaxRate: rowTax.equityTaxRate,
         costOfLivingIndex: rowColIndex,
+        health_premium_monthly: Number(offer.health_premium_monthly || 0),
+        hsa_employer_contribution: Number(offer.hsa_employer_contribution || 0),
+        forty_one_k_match_percent: Number(offer.forty_one_k_match_percent || 0),
+        forty_one_k_max_match: Number(offer.forty_one_k_max_match || 0),
+        relocation_bonus: Number(offer.relocation_bonus || 0),
       });
       const isUnlimitedPto = !!offer.is_unlimited_pto;
 
@@ -145,7 +152,11 @@ export const useScenarioRows = ({
           Number(offer.base_salary) +
           Number(offer.bonus) +
           Number(offer.equity) +
-          Number(offer.sign_on),
+          Number(offer.sign_on) +
+          Number(offer.relocation_bonus || 0) +
+          (scenarioCalc.breakdown.fortyOneKMatchValue || 0) +
+          (scenarioCalc.breakdown.taxedHsa || 0) -
+          Number(offer.health_premium_monthly || 0) * 12,
         adjustedValue: scenarioCalc.adjustedValue - rowMonthlyRent * 12,
         lifestyleAdjustment: scenarioCalc.lifestyleAdjustment,
         deltaTotalComp: 0,
@@ -156,6 +167,9 @@ export const useScenarioRows = ({
         afterTaxBase: scenarioCalc.breakdown.taxedBase,
         afterTaxBonus: scenarioCalc.breakdown.taxedBonus,
         afterTaxSignOn: scenarioCalc.breakdown.taxedSignOn,
+        afterTaxRelocation: scenarioCalc.breakdown.taxedRelocation,
+        afterTaxHsa: scenarioCalc.breakdown.taxedHsa,
+        fortyOneKMatchValue: scenarioCalc.breakdown.fortyOneKMatchValue,
         afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
         commuteAnnualCost,
         freeFoodAnnualValue,
@@ -183,7 +197,9 @@ export const useScenarioRows = ({
         Number(offer.bonus) +
         Number(offer.sign_on) +
         Number(offer.benefits_value) +
-        Number(offer.equity);
+        Number(offer.equity) +
+        Number(offer.relocation_bonus || 0) -
+        Number(offer.health_premium_monthly || 0) * 12;
       const estimatedTax = estimateTaxRatesByIncomeType(
         rowIncome,
         maritalStatus,
@@ -218,6 +234,11 @@ export const useScenarioRows = ({
         bonusTaxRate: rowTax.bonusTaxRate,
         equityTaxRate: rowTax.equityTaxRate,
         costOfLivingIndex: rowColIndex,
+        health_premium_monthly: Number(offer.health_premium_monthly || 0),
+        hsa_employer_contribution: Number(offer.hsa_employer_contribution || 0),
+        forty_one_k_match_percent: Number(offer.forty_one_k_match_percent || 0),
+        forty_one_k_max_match: Number(offer.forty_one_k_max_match || 0),
+        relocation_bonus: Number(offer.relocation_bonus || 0),
       });
       const isUnlimitedPto = !!offer.is_unlimited_pto;
 
@@ -246,7 +267,11 @@ export const useScenarioRows = ({
           Number(offer.base_salary) +
           Number(offer.bonus) +
           Number(offer.equity) +
-          Number(offer.sign_on),
+          Number(offer.sign_on) +
+          Number(offer.relocation_bonus || 0) +
+          (scenarioCalc.breakdown.fortyOneKMatchValue || 0) +
+          (scenarioCalc.breakdown.taxedHsa || 0) -
+          Number(offer.health_premium_monthly || 0) * 12,
         adjustedValue: scenarioCalc.adjustedValue - rowMonthlyRent * 12,
         lifestyleAdjustment: scenarioCalc.lifestyleAdjustment,
         deltaTotalComp: 0,
@@ -257,6 +282,9 @@ export const useScenarioRows = ({
         afterTaxBase: scenarioCalc.breakdown.taxedBase,
         afterTaxBonus: scenarioCalc.breakdown.taxedBonus,
         afterTaxSignOn: scenarioCalc.breakdown.taxedSignOn,
+        afterTaxRelocation: scenarioCalc.breakdown.taxedRelocation,
+        afterTaxHsa: scenarioCalc.breakdown.taxedHsa,
+        fortyOneKMatchValue: scenarioCalc.breakdown.fortyOneKMatchValue,
         afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
         commuteAnnualCost,
         freeFoodAnnualValue,
@@ -320,6 +348,9 @@ export const useScenarioRows = ({
         afterTaxBase: row.afterTaxBase,
         afterTaxBonus: row.afterTaxBonus,
         afterTaxSignOn: row.afterTaxSignOn,
+        afterTaxRelocation: row.afterTaxRelocation,
+        afterTaxHsa: row.afterTaxHsa,
+        fortyOneKMatchValue: row.fortyOneKMatchValue,
         afterTaxEquity: row.afterTaxEquity,
         usedBaseTaxRate: row.usedBaseTaxRate,
         usedBonusTaxRate: row.usedBonusTaxRate,

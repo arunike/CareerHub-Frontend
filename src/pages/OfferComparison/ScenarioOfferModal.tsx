@@ -224,6 +224,34 @@ const ScenarioOfferModal = ({
               onIsUnlimitedPtoChange={(value) => setNewScenarioField('is_unlimited_pto', value)}
               holidayDays={Number(newScenario.holiday_days ?? 11)}
               onHolidayDaysChange={(value) => setNewScenarioField('holiday_days', value)}
+              healthPremiumMonthly={Number(newScenario.health_premium_monthly) || 0}
+              onHealthPremiumMonthlyChange={(value) =>
+                setNewScenarioField('health_premium_monthly', value)
+              }
+              hsaEmployerContribution={Number(newScenario.hsa_employer_contribution) || 0}
+              onHsaEmployerContributionChange={(value) =>
+                setNewScenarioField('hsa_employer_contribution', value)
+              }
+              healthPlanType={newScenario.health_plan_type || ''}
+              onHealthPlanTypeChange={(value) => setNewScenarioField('health_plan_type', value)}
+              healthOopMax={Number(newScenario.health_oop_max) || 0}
+              onHealthOopMaxChange={(value) => setNewScenarioField('health_oop_max', value)}
+              fortyOneKMatchPercent={Number(newScenario.forty_one_k_match_percent) || 0}
+              onFortyOneKMatchPercentChange={(value) =>
+                setNewScenarioField('forty_one_k_match_percent', value)
+              }
+              fortyOneKMaxMatch={Number(newScenario.forty_one_k_max_match) || 0}
+              onFortyOneKMaxMatchChange={(value) =>
+                setNewScenarioField('forty_one_k_max_match', value)
+              }
+              relocationBonus={Number(newScenario.relocation_bonus) || 0}
+              onRelocationBonusChange={(value) => setNewScenarioField('relocation_bonus', value)}
+              flexibleHoursPolicy={newScenario.flexible_hours_policy || 'UNKNOWN'}
+              onFlexibleHoursPolicyChange={(value) =>
+                setNewScenarioField('flexible_hours_policy', value)
+              }
+              travelFrequency={newScenario.travel_frequency || 'UNKNOWN'}
+              onTravelFrequencyChange={(value) => setNewScenarioField('travel_frequency', value)}
             />
           </fieldset>
         </div>

@@ -55,6 +55,15 @@ export interface SimulatedOffer {
   tax_bonus_rate?: number;
   tax_equity_rate?: number;
   monthly_rent?: number;
+  health_premium_monthly?: number;
+  hsa_employer_contribution?: number;
+  health_plan_type?: string;
+  health_oop_max?: number;
+  forty_one_k_match_percent?: number;
+  forty_one_k_max_match?: number;
+  relocation_bonus?: number;
+  flexible_hours_policy?: string;
+  travel_frequency?: string;
 }
 
 export interface OfferLike {
@@ -75,6 +84,13 @@ export interface OfferLike {
   holiday_days?: number;
   is_current: boolean;
   created_at?: string;
+  health_premium_monthly?: number;
+  hsa_employer_contribution?: number;
+  health_plan_type?: string;
+  health_oop_max?: number;
+  forty_one_k_match_percent?: number;
+  forty_one_k_max_match?: number;
+  relocation_bonus?: number;
   [key: string]: unknown;
 }
 
@@ -97,6 +113,8 @@ export interface ApplicationLike {
   monthly_rent_override?: number;
   visa_sponsorship?: VisaSponsorshipStatus;
   day_one_gc?: DayOneGcStatus;
+  flexible_hours_policy?: string;
+  travel_frequency?: string;
   growth_score?: number | null;
   work_life_score?: number | null;
   brand_score?: number | null;
@@ -316,6 +334,11 @@ export const calculateScenarioValue = ({
   bonusTaxRate,
   equityTaxRate,
   costOfLivingIndex,
+  health_premium_monthly = 0,
+  hsa_employer_contribution = 0,
+  forty_one_k_match_percent = 0,
+  forty_one_k_max_match = 0,
+  relocation_bonus = 0,
 }: {
   base_salary: number;
   bonus: number;
@@ -330,13 +353,36 @@ export const calculateScenarioValue = ({
   bonusTaxRate: number;
   equityTaxRate: number;
   costOfLivingIndex: number;
+  health_premium_monthly?: number;
+  hsa_employer_contribution?: number;
+  forty_one_k_match_percent?: number;
+  forty_one_k_max_match?: number;
+  relocation_bonus?: number;
 }) => {
-  const taxedBase = Number(base_salary) * (1 - baseTaxRate / 100);
+  const healthPremiumAnnual = (Number(health_premium_monthly) || 0) * 12;
+  const taxedBase =
+    Math.max(0, Number(base_salary) - healthPremiumAnnual) * (1 - baseTaxRate / 100);
   const taxedBenefits = Number(benefits_value) * (1 - baseTaxRate / 100);
-  const taxedBonus = (Number(bonus) + Number(sign_on)) * (1 - bonusTaxRate / 100);
+  const taxedBonus = Number(bonus) * (1 - bonusTaxRate / 100);
+  const taxedSignOn = Number(sign_on) * (1 - bonusTaxRate / 100);
+  const taxedRelocation = (Number(relocation_bonus) || 0) * (1 - bonusTaxRate / 100);
   const taxedEquity = Number(equity) * (1 - equityTaxRate / 100);
+  const taxedHsa = Number(hsa_employer_contribution) || 0;
+  const fortyOneKMatchValue =
+    Number(base_salary) *
+    ((Number(forty_one_k_max_match) || 0) / 100) *
+    ((Number(forty_one_k_match_percent) || 0) / 100);
+
   const purchasingPowerAdjusted =
-    (taxedBase + taxedBenefits + taxedBonus + taxedEquity) * (100 / costOfLivingIndex);
+    (taxedBase +
+      taxedBenefits +
+      taxedBonus +
+      taxedSignOn +
+      taxedRelocation +
+      taxedEquity +
+      taxedHsa +
+      fortyOneKMatchValue) *
+    (100 / costOfLivingIndex);
 
   const lifestyleDefault = getDefaultLifestyleByWorkMode(work_mode);
   const safeRtoDays = Number.isFinite(Number(rto_days_per_week))
@@ -358,9 +404,12 @@ export const calculateScenarioValue = ({
     breakdown: {
       taxedBase,
       taxedBenefits,
-      taxedBonus: Number(bonus) * (1 - bonusTaxRate / 100),
-      taxedSignOn: Number(sign_on) * (1 - bonusTaxRate / 100),
+      taxedBonus,
+      taxedSignOn,
+      taxedRelocation,
       taxedEquity,
+      taxedHsa,
+      fortyOneKMatchValue,
     },
   };
 };

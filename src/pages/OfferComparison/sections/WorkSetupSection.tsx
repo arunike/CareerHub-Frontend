@@ -13,6 +13,10 @@ type WorkSetupSectionProps = {
   freeFoodPerkFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   onFreeFoodPerkValueChange: (value: number) => void;
   onFreeFoodPerkFrequencyChange: (value: 'DAILY' | 'MONTHLY' | 'YEARLY') => void;
+  flexibleHoursPolicy?: string;
+  onFlexibleHoursPolicyChange?: (value: string) => void;
+  travelFrequency?: string;
+  onTravelFrequencyChange?: (value: string) => void;
 };
 
 const WorkSetupSection = ({
@@ -30,6 +34,10 @@ const WorkSetupSection = ({
   freeFoodPerkFrequency,
   onFreeFoodPerkValueChange,
   onFreeFoodPerkFrequencyChange,
+  flexibleHoursPolicy,
+  onFlexibleHoursPolicyChange,
+  travelFrequency,
+  onTravelFrequencyChange,
 }: WorkSetupSectionProps) => {
   const annualizedCommute =
     commuteCostFrequency === 'DAILY'
@@ -71,6 +79,37 @@ const WorkSetupSection = ({
           />
         </div>
       )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Flexible Hours Policy
+        </label>
+        <select
+          value={flexibleHoursPolicy || 'UNKNOWN'}
+          onChange={(e) => onFlexibleHoursPolicyChange?.(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        >
+          <option value="UNKNOWN">Not specified</option>
+          <option value="FLEXIBLE">Flexible Hours (Asynchronous)</option>
+          <option value="CORE_HOURS">Core Hours (e.g. 10am-4pm)</option>
+          <option value="STRICT">Strict / Fixed Hours</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Business Travel Frequency
+        </label>
+        <select
+          value={travelFrequency || 'UNKNOWN'}
+          onChange={(e) => onTravelFrequencyChange?.(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        >
+          <option value="UNKNOWN">Not specified</option>
+          <option value="NONE">No Travel (0%)</option>
+          <option value="LOW">{'Low Travel (<10%)'}</option>
+          <option value="MEDIUM">Medium Travel (10-25%)</option>
+          <option value="HIGH">{'High Travel (>25%)'}</option>
+        </select>
+      </div>
       {showCommuteAndPerks && (
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Commute Cost</label>
