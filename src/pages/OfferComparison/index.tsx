@@ -409,6 +409,8 @@ const OfferComparison = () => {
           work_life_score: editingApp.work_life_score ?? null,
           brand_score: editingApp.brand_score ?? null,
           team_score: editingApp.team_score ?? null,
+          flexible_hours_policy: editingApp.flexible_hours_policy || 'UNKNOWN',
+          travel_frequency: editingApp.travel_frequency || 'UNKNOWN',
         });
         updatedApplication = applicationResponse.data as Partial<Application> & {
           company_details?: { name?: string };
@@ -764,12 +766,22 @@ const OfferComparison = () => {
       if (!offer.id) return null;
       const application = applicationsById[offer.application];
       const metrics = adjustedByOfferId[offer.id];
+      const base = Number(offer.base_salary || 0);
+      const matchPercent = Number(offer.forty_one_k_match_percent || 0);
+      const maxMatch = Number(offer.forty_one_k_max_match || 0);
+      const fortyOneKMatchValue = base * (maxMatch / 100) * (matchPercent / 100);
+      const healthPremiumAnnual = Number(offer.health_premium_monthly || 0) * 12;
+
       const totalComp =
-        Number(offer.base_salary || 0) +
+        base +
         Number(offer.bonus || 0) +
         Number(offer.equity || 0) +
         Number(offer.sign_on || 0) +
-        Number(offer.benefits_value || 0);
+        Number(offer.benefits_value || 0) +
+        Number(offer.relocation_bonus || 0) +
+        Number(offer.hsa_employer_contribution || 0) +
+        fortyOneKMatchValue -
+        healthPremiumAnnual;
       const titleDate = new Date().toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -812,6 +824,13 @@ const OfferComparison = () => {
           holiday_days: offer.holiday_days || 0,
           work_mode: application?.rto_policy || '',
           office_location: application?.office_location || '',
+          health_premium_monthly: offer.health_premium_monthly,
+          hsa_employer_contribution: offer.hsa_employer_contribution,
+          health_plan_type: offer.health_plan_type,
+          health_oop_max: offer.health_oop_max,
+          forty_one_k_match_percent: offer.forty_one_k_match_percent,
+          forty_one_k_max_match: offer.forty_one_k_max_match,
+          relocation_bonus: offer.relocation_bonus,
         },
         adjustment_snapshot: {
           marital_status: maritalStatus,
@@ -831,6 +850,8 @@ const OfferComparison = () => {
           tax_bonus_rate: application?.tax_bonus_rate ?? null,
           tax_equity_rate: application?.tax_equity_rate ?? null,
           monthly_rent_override: application?.monthly_rent_override ?? null,
+          flexible_hours_policy: application?.flexible_hours_policy || '',
+          travel_frequency: application?.travel_frequency || '',
           growth_score: application?.growth_score ?? null,
           work_life_score: application?.work_life_score ?? null,
           brand_score: application?.brand_score ?? null,
@@ -912,6 +933,25 @@ const OfferComparison = () => {
           offerSnapshot.holiday_days == null
             ? targetOffer.holiday_days
             : Number(offerSnapshot.holiday_days),
+        health_premium_monthly: Number(
+          offerSnapshot.health_premium_monthly ?? targetOffer.health_premium_monthly ?? 0
+        ),
+        hsa_employer_contribution: Number(
+          offerSnapshot.hsa_employer_contribution ?? targetOffer.hsa_employer_contribution ?? 0
+        ),
+        health_plan_type: String(
+          offerSnapshot.health_plan_type ?? targetOffer.health_plan_type ?? ''
+        ),
+        health_oop_max: Number(offerSnapshot.health_oop_max ?? targetOffer.health_oop_max ?? 0),
+        forty_one_k_match_percent: Number(
+          offerSnapshot.forty_one_k_match_percent ?? targetOffer.forty_one_k_match_percent ?? 0
+        ),
+        forty_one_k_max_match: Number(
+          offerSnapshot.forty_one_k_max_match ?? targetOffer.forty_one_k_max_match ?? 0
+        ),
+        relocation_bonus: Number(
+          offerSnapshot.relocation_bonus ?? targetOffer.relocation_bonus ?? 0
+        ),
       };
 
       const applicationPatch: Record<string, unknown> = {
@@ -923,6 +963,12 @@ const OfferComparison = () => {
             : undefined,
         rto_policy: (snapshotValue(adjustmentSnapshot, 'rto_policy') ??
           snapshotValue(offerSnapshot, 'work_mode')) as Application['rto_policy'],
+        flexible_hours_policy: (snapshotValue(adjustmentSnapshot, 'flexible_hours_policy') ??
+          snapshotValue(offerSnapshot, 'flexible_hours_policy') ??
+          'UNKNOWN') as string,
+        travel_frequency: (snapshotValue(adjustmentSnapshot, 'travel_frequency') ??
+          snapshotValue(offerSnapshot, 'travel_frequency') ??
+          'UNKNOWN') as string,
         rto_days_per_week: snapshotValue(adjustmentSnapshot, 'rto_days_per_week') as
           | number
           | undefined,

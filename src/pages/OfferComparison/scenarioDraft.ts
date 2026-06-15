@@ -101,5 +101,8 @@ export const buildScenarioFromLinkedApplication = ({
       (linkedApp?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') ||
       prev.free_food_perk_frequency ||
       'YEARLY',
+    flexible_hours_policy:
+      linkedApp?.flexible_hours_policy || prev.flexible_hours_policy || 'UNKNOWN',
+    travel_frequency: linkedApp?.travel_frequency || prev.travel_frequency || 'UNKNOWN',
   };
 };

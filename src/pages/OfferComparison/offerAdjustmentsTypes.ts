@@ -50,6 +50,9 @@ export interface ScenarioRow {
   afterTaxBase: number;
   afterTaxBonus: number;
   afterTaxSignOn: number;
+  afterTaxRelocation?: number;
+  afterTaxHsa?: number;
+  fortyOneKMatchValue?: number;
   afterTaxEquity: number;
   commuteAnnualCost: number;
   freeFoodAnnualValue: number;

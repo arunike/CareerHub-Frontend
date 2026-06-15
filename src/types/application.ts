@@ -16,6 +16,8 @@ export interface CareerApplication {
   rto_days_per_week?: number;
   visa_sponsorship?: VisaSponsorshipStatus;
   day_one_gc?: DayOneGcStatus;
+  flexible_hours_policy?: string;
+  travel_frequency?: string;
   growth_score?: number | null;
   work_life_score?: number | null;
   brand_score?: number | null;

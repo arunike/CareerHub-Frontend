@@ -182,6 +182,32 @@ const EditOfferModal = ({
           onIsUnlimitedPtoChange={(value) => setEditingOfferField('is_unlimited_pto', value)}
           holidayDays={Number(editingOffer.holiday_days ?? 11)}
           onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
+          healthPremiumMonthly={Number(editingOffer.health_premium_monthly) || 0}
+          onHealthPremiumMonthlyChange={(value) =>
+            setEditingOfferField('health_premium_monthly', value)
+          }
+          hsaEmployerContribution={Number(editingOffer.hsa_employer_contribution) || 0}
+          onHsaEmployerContributionChange={(value) =>
+            setEditingOfferField('hsa_employer_contribution', value)
+          }
+          healthPlanType={editingOffer.health_plan_type || ''}
+          onHealthPlanTypeChange={(value) => setEditingOfferField('health_plan_type', value)}
+          healthOopMax={Number(editingOffer.health_oop_max) || 0}
+          onHealthOopMaxChange={(value) => setEditingOfferField('health_oop_max', value)}
+          fortyOneKMatchPercent={Number(editingOffer.forty_one_k_match_percent) || 0}
+          onFortyOneKMatchPercentChange={(value) =>
+            setEditingOfferField('forty_one_k_match_percent', value)
+          }
+          fortyOneKMaxMatch={Number(editingOffer.forty_one_k_max_match) || 0}
+          onFortyOneKMaxMatchChange={(value) =>
+            setEditingOfferField('forty_one_k_max_match', value)
+          }
+          relocationBonus={Number(editingOffer.relocation_bonus) || 0}
+          onRelocationBonusChange={(value) => setEditingOfferField('relocation_bonus', value)}
+          flexibleHoursPolicy={editingApp?.flexible_hours_policy || 'UNKNOWN'}
+          onFlexibleHoursPolicyChange={(value) => patchEditingApp({ flexible_hours_policy: value })}
+          travelFrequency={editingApp?.travel_frequency || 'UNKNOWN'}
+          onTravelFrequencyChange={(value) => patchEditingApp({ travel_frequency: value })}
           locationPlaceholder="e.g. San Jose, CA"
         />
       </fieldset>
