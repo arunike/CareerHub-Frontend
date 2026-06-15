@@ -141,6 +141,7 @@ export interface UserSettings {
     locked?: boolean;
   }>;
   hidden_nav_items?: string[];
+  is_locked?: boolean;
   ai_provider_adapter?: 'claude' | 'gemini' | 'openai' | 'openrouter' | 'custom';
   ai_provider_endpoint?: string;
   ai_provider_model?: string;
