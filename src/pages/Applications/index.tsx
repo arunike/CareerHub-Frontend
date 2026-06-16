@@ -64,6 +64,7 @@ import { getCurrentYear } from '../../utils/yearFilter';
 import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
+import { getPaletteColor, getPaletteColorFromTone } from '../../utils/colorPalette';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -857,64 +858,29 @@ const Applications = () => {
     });
   };
 
-  const APP_STAGE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-    blue: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-    sky: { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
-    violet: { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
-    purple: { bg: '#faf5ff', color: '#7e22ce', border: '#e9d5ff' },
-    indigo: { bg: '#eef2ff', color: '#4338ca', border: '#c7d2fe' },
-    amber: { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
-    orange: { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
-    red: { bg: '#fff1f2', color: '#b91c1c', border: '#fecaca' },
-    emerald: { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
-    green: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
-    teal: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-    cyan: { bg: '#ecfeff', color: '#0e7490', border: '#a5f3fc' },
-    rose: { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
-    pink: { bg: '#fdf2f8', color: '#9d174d', border: '#fbcfe8' },
-    slate: { bg: '#f8fafc', color: '#334155', border: '#e2e8f0' },
-    gray: { bg: '#f9fafb', color: '#374151', border: '#e5e7eb' },
-  };
-
   const StatusBadge = ({ status }: { status: string }) => {
     const stage = appStages.find((s) => s.key === status);
-    let c = APP_STAGE_COLORS.gray;
-    if (stage) {
-      const colorMatch = stage.tone.match(/bg-([a-z]+)-\d+/);
-      if (colorMatch && APP_STAGE_COLORS[colorMatch[1]]) {
-        c = APP_STAGE_COLORS[colorMatch[1]];
-      }
-    }
+    const c = getPaletteColorFromTone(stage?.tone);
     const label = stage ? stage.label : status;
     return (
       <span
         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
-        style={{ color: c.color, background: c.bg, borderColor: c.border }}
+        style={{ color: c.text, background: c.bg, borderColor: c.border }}
       >
         {label}
       </span>
     );
   };
 
-  const EMP_TYPE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-    blue: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
-    teal: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
-    amber: { bg: '#fffbeb', color: '#f59e0b', border: '#fde68a' },
-    purple: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
-    orange: { bg: '#fff7ed', color: '#f97316', border: '#fed7aa' },
-    green: { bg: '#f0fdf4', color: '#22c55e', border: '#bbf7d0' },
-    gray: { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb' },
-  };
-
   const EmploymentTypeBadge = ({ type }: { type?: string | null }) => {
     if (!type || type === 'full_time') return null;
     const meta = empTypes.find((t) => t.value === type);
     if (!meta) return null;
-    const c = EMP_TYPE_COLORS[meta.color] ?? EMP_TYPE_COLORS.gray;
+    const c = getPaletteColor(meta.color);
     return (
       <span
         className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
-        style={{ color: c.color, background: c.bg, borderColor: c.border }}
+        style={{ color: c.text, background: c.bg, borderColor: c.border }}
       >
         {meta.label}
       </span>

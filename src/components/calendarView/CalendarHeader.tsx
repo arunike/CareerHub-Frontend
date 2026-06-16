@@ -1,5 +1,6 @@
 import { CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
-import type { HolidayTab } from '../../types';
+import type { EventCategory, HolidayTab } from '../../types';
+import { getEventCategoryColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import SegmentedToggle from '../SegmentedToggle';
 import type { CalendarViewMode } from './types';
@@ -11,6 +12,7 @@ type Props = {
   onViewModeChange: (nextViewMode: CalendarViewMode) => void;
   onShiftRange: (direction: 'prev' | 'next') => void;
   onGoToToday: () => void;
+  categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
 };
 
@@ -20,6 +22,7 @@ const CalendarHeader = ({
   onViewModeChange,
   onShiftRange,
   onGoToToday,
+  categories = [],
   holidayTabs = [],
 }: Props) => {
   return (
@@ -58,10 +61,26 @@ const CalendarHeader = ({
         </div>
 
         <div className="flex flex-wrap gap-3 text-xs md:text-sm">
-          <div className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-            <span>Event</span>
-          </div>
+          {categories.length > 0 ? (
+            categories.map((category) => {
+              const categoryColor = getEventCategoryColor(category);
+
+              return (
+                <div key={category.id} className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: categoryColor.dot }}
+                  ></span>
+                  <span>{category.name}</span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <span>Event</span>
+            </div>
+          )}
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
             <span>My Holiday</span>

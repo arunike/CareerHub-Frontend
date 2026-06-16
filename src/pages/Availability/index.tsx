@@ -667,6 +667,7 @@ const Availability = () => {
           events={events}
           customHolidays={customHolidays}
           federalHolidays={federalHolidays}
+          categories={categories}
           holidayTabs={holidayTabs}
           onEventSelect={handleCalendarEventSelect}
         />
