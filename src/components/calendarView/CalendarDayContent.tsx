@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
 import { Tooltip } from 'antd';
-import type { MouseEvent } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 import type { Event } from '../../types';
+import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { DayData } from './types';
 import { hasDayItems } from './utils';
@@ -81,23 +82,42 @@ export const CalendarCompactDayEntries = ({ dayData, onEventSelect }: DayDataPro
       </Tooltip>
     ))}
 
-    {dayData.events.map((event) => (
-      <Tooltip
-        key={event.id}
-        title={`${event.name} (${event.start_time.substring(0, 5)})`}
-        mouseEnterDelay={0}
-      >
-        <button
-          type="button"
-          onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
-          className="block w-full rounded bg-blue-100 px-1.5 py-0.5 text-left text-blue-700 transition-colors hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+    {dayData.events.map((event) => {
+      const eventColor = getEventColor(event);
+      const titlePrefix = event.category_details?.name ? `${event.category_details.name}: ` : '';
+
+      return (
+        <Tooltip
+          key={event.id}
+          title={`${titlePrefix}${event.name} (${event.start_time.substring(0, 5)})`}
+          mouseEnterDelay={0}
         >
-          <span className="block truncate">
-            {event.start_time.substring(0, 5)} {event.name}
-          </span>
-        </button>
-      </Tooltip>
-    ))}
+          <button
+            type="button"
+            onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
+            className="block w-full rounded border px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+            style={
+              {
+                backgroundColor: eventColor.bg,
+                borderColor: eventColor.border,
+                color: eventColor.text,
+                '--tw-ring-color': eventColor.focusRing,
+              } as CSSProperties
+            }
+            onMouseEnter={(mouseEvent) => {
+              mouseEvent.currentTarget.style.backgroundColor = eventColor.hoverBg;
+            }}
+            onMouseLeave={(mouseEvent) => {
+              mouseEvent.currentTarget.style.backgroundColor = eventColor.bg;
+            }}
+          >
+            <span className="block truncate">
+              {event.start_time.substring(0, 5)} {event.name}
+            </span>
+          </button>
+        </Tooltip>
+      );
+    })}
   </div>
 );
 
@@ -140,27 +160,51 @@ export const CalendarDayAgendaEntries = ({ dayData, onEventSelect }: DayDataProp
         </div>
       ))}
 
-      {dayData.events.map((event) => (
-        <button
-          type="button"
-          key={event.id}
-          onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
-          className="block w-full rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-left text-sm text-blue-800 transition-colors hover:border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-        >
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs text-blue-700">
-              {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
-            </span>
-            <span className="font-medium">{event.name}</span>
-          </div>
-          {event.location_type === 'virtual' && event.meeting_link && (
-            <div className="mt-1 text-xs text-blue-600">Virtual meeting</div>
-          )}
-          {event.location_type !== 'virtual' && event.location && (
-            <div className="mt-1 text-xs text-blue-600">{event.location}</div>
-          )}
-        </button>
-      ))}
+      {dayData.events.map((event) => {
+        const eventColor = getEventColor(event);
+
+        return (
+          <button
+            type="button"
+            key={event.id}
+            onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
+            className="block w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+            style={
+              {
+                backgroundColor: eventColor.bg,
+                borderColor: eventColor.border,
+                color: eventColor.text,
+                '--tw-ring-color': eventColor.focusRing,
+              } as CSSProperties
+            }
+            onMouseEnter={(mouseEvent) => {
+              mouseEvent.currentTarget.style.backgroundColor = eventColor.hoverBg;
+            }}
+            onMouseLeave={(mouseEvent) => {
+              mouseEvent.currentTarget.style.backgroundColor = eventColor.bg;
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="rounded px-1.5 py-0.5 font-mono text-xs"
+                style={{ backgroundColor: eventColor.hoverBg, color: eventColor.text }}
+              >
+                {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
+              </span>
+              <span className="font-medium">{event.name}</span>
+              {event.category_details && (
+                <span className="text-xs opacity-75">{event.category_details.name}</span>
+              )}
+            </div>
+            {event.location_type === 'virtual' && event.meeting_link && (
+              <div className="mt-1 text-xs opacity-80">Virtual meeting</div>
+            )}
+            {event.location_type !== 'virtual' && event.location && (
+              <div className="mt-1 text-xs opacity-80">{event.location}</div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };

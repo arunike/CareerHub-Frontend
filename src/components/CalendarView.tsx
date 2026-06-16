@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import type { Event, Holiday, HolidayTab } from '../types';
+import type { Event, EventCategory, Holiday, HolidayTab } from '../types';
 import CalendarDetailsPanel from './calendarView/CalendarDetailsPanel';
 import CalendarHeader from './calendarView/CalendarHeader';
 import CalendarMonthView from './calendarView/CalendarMonthView';
@@ -13,6 +13,7 @@ interface CalendarViewProps {
   events: Event[];
   customHolidays: Holiday[];
   federalHolidays: Holiday[];
+  categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
   onEventSelect?: (event: Event) => void;
 }
@@ -21,6 +22,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   events,
   customHolidays,
   federalHolidays,
+  categories = [],
   holidayTabs = [],
   onEventSelect,
 }) => {
@@ -118,6 +120,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onViewModeChange={handleViewModeChange}
         onShiftRange={shiftRange}
         onGoToToday={goToToday}
+        categories={categories}
         holidayTabs={holidayTabs}
       />
 

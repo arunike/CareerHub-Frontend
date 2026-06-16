@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
 import { ClockCircleOutlined } from '@ant-design/icons';
+import type { CSSProperties } from 'react';
 import type { Event } from '../../types';
+import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import { hasDayItems } from './utils';
 import type { DayData } from './types';
@@ -54,20 +56,47 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) =
                 </div>
               );
             })}
-            {dayData.events.map((event) => (
-              <button
-                type="button"
-                key={event.id}
-                onClick={() => onEventSelect?.(event)}
-                className="flex w-full items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 p-2 text-left text-sm text-blue-700 transition-colors hover:border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              >
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span className="font-mono text-blue-600 bg-blue-100 px-1 rounded">
-                  {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
-                </span>
-                <span className="font-medium">{event.name}</span>
-              </button>
-            ))}
+            {dayData.events.map((event) => {
+              const eventColor = getEventColor(event);
+
+              return (
+                <button
+                  type="button"
+                  key={event.id}
+                  onClick={() => onEventSelect?.(event)}
+                  className="flex w-full items-center gap-2 rounded-lg border p-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  style={
+                    {
+                      backgroundColor: eventColor.bg,
+                      borderColor: eventColor.border,
+                      color: eventColor.text,
+                      '--tw-ring-color': eventColor.focusRing,
+                    } as CSSProperties
+                  }
+                  onMouseEnter={(mouseEvent) => {
+                    mouseEvent.currentTarget.style.backgroundColor = eventColor.hoverBg;
+                  }}
+                  onMouseLeave={(mouseEvent) => {
+                    mouseEvent.currentTarget.style.backgroundColor = eventColor.bg;
+                  }}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: eventColor.dot }}
+                  ></span>
+                  <span
+                    className="rounded px-1 font-mono"
+                    style={{ backgroundColor: eventColor.hoverBg, color: eventColor.text }}
+                  >
+                    {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
+                  </span>
+                  {event.category_details && (
+                    <span className="font-medium">{event.category_details.name}:</span>
+                  )}
+                  <span className="font-medium">{event.name}</span>
+                </button>
+              );
+            })}
           </>
         )}
       </div>

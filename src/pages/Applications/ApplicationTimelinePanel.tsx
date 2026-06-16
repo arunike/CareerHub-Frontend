@@ -9,6 +9,7 @@ import {
 } from '../../api';
 import type { ApplicationTimelineEntry, ApplicationTimelineStage } from '../../types';
 import type { CareerApplication } from '../../types/application';
+import { getPaletteColorFromTone } from '../../utils/colorPalette';
 
 type Props = {
   application: CareerApplication | null;
@@ -45,21 +46,6 @@ const formatStageLabel = (key: string) => {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(' ');
-};
-
-const TONE_TO_HEX: Record<string, string> = {
-  'bg-blue-500': '#3b82f6',
-  'bg-violet-500': '#8b5cf6',
-  'bg-sky-500': '#0ea5e9',
-  'bg-amber-400': '#fbbf24',
-  'bg-amber-500': '#f59e0b',
-  'bg-orange-500': '#f97316',
-  'bg-orange-600': '#ea580c',
-  'bg-red-500': '#ef4444',
-  'bg-emerald-500': '#10b981',
-  'bg-rose-500': '#f43f5e',
-  'bg-slate-400': '#94a3b8',
-  'bg-gray-300': '#d1d5db',
 };
 
 const getStageState = (draft: TimelineDraft, isCurrent: boolean) => {
@@ -323,7 +309,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                 const draft = drafts[stage.key] || emptyDraft();
                 const isCurrent = application?.status === stage.key;
                 const state = getStageState(draft, isCurrent);
-                const accent = TONE_TO_HEX[stage.tone || ''] ?? '#64748b';
+                const accent = getPaletteColorFromTone(stage.tone).dot;
                 const isDone = state === 'done' || state === 'current';
 
                 return (
@@ -372,7 +358,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
               const draft = drafts[stage.key] || emptyDraft();
               const isCurrent = application?.status === stage.key;
               const isLast = index === activeStages.length - 1;
-              const accent = TONE_TO_HEX[stage.tone || ''] ?? '#94a3b8';
+              const accent = getPaletteColorFromTone(stage.tone).dot;
               const isFocused = focusedStageKey === stage.key;
 
               return (

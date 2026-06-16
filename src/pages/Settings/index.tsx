@@ -23,6 +23,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
 import CategoryBadge from '../../components/CategoryBadge';
+import ColorSwatchPicker from '../../components/ColorSwatchPicker';
 import { SettingsSkeleton } from '../../components/SkeletonLoader';
 import EditableNumberInput from '../../components/EditableNumberInput';
 import FriendlyTimeInput from '../../components/FriendlyTimeInput';
@@ -36,11 +37,13 @@ import {
 import GoogleSheetsSettings from './GoogleSheetsSettings';
 import SecurityDashboard from './SecurityDashboard';
 import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
+import { DEFAULT_HOLIDAY_TAB_COLOR, getHolidayTabColor } from '../../utils/holidayTabColors';
 import {
-  DEFAULT_HOLIDAY_TAB_COLOR,
-  HOLIDAY_TAB_COLOR_OPTIONS,
-  getHolidayTabColor,
-} from '../../utils/holidayTabColors';
+  DEFAULT_PALETTE_COLOR,
+  getPaletteColor,
+  getPaletteColorFromTone,
+  getToneForPaletteColor,
+} from '../../utils/colorPalette';
 
 dayjs.extend(customParseFormat);
 
@@ -167,7 +170,9 @@ const Settings: React.FC = () => {
 
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#2563eb');
+  const [newCategoryColor, setNewCategoryColor] = useState(
+    getPaletteColor(DEFAULT_PALETTE_COLOR).dot
+  );
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<EventCategory | null>(null);
@@ -180,22 +185,10 @@ const Settings: React.FC = () => {
     { value: 'contract', label: 'Contract', color: 'purple' },
     { value: 'freelance', label: 'Freelance', color: 'orange' },
   ];
-  const EMP_COLOR_OPTIONS = [
-    { value: 'blue', label: 'Blue', bg: '#dbeafe', text: '#1d4ed8' },
-    { value: 'teal', label: 'Teal', bg: '#ccfbf1', text: '#0f766e' },
-    { value: 'amber', label: 'Amber', bg: '#fef3c7', text: '#b45309' },
-    { value: 'purple', label: 'Purple', bg: '#ede9fe', text: '#7c3aed' },
-    { value: 'orange', label: 'Orange', bg: '#ffedd5', text: '#c2410c' },
-    { value: 'green', label: 'Green', bg: '#dcfce7', text: '#15803d' },
-    { value: 'red', label: 'Red', bg: '#fee2e2', text: '#b91c1c' },
-    { value: 'pink', label: 'Pink', bg: '#fce7f3', text: '#be185d' },
-    { value: 'sky', label: 'Sky', bg: '#e0f2fe', text: '#0369a1' },
-    { value: 'gray', label: 'Gray', bg: '#f3f4f6', text: '#374151' },
-  ];
   const [isAddingEmpType, setIsAddingEmpType] = useState(false);
   const [editingEmpType, setEditingEmpType] = useState<EmploymentType | null>(null);
   const [newEmpLabel, setNewEmpLabel] = useState('');
-  const [newEmpColor, setNewEmpColor] = useState('blue');
+  const [newEmpColor, setNewEmpColor] = useState(DEFAULT_PALETTE_COLOR);
 
   const getEmpTypes = (): EmploymentType[] =>
     settings?.employment_types && settings.employment_types.length > 0
@@ -240,7 +233,7 @@ const Settings: React.FC = () => {
     setIsAddingEmpType(false);
     setEditingEmpType(null);
     setNewEmpLabel('');
-    setNewEmpColor('blue');
+    setNewEmpColor(DEFAULT_PALETTE_COLOR);
   };
 
   const handleEditEmpType = (t: EmploymentType) => {
@@ -266,7 +259,7 @@ const Settings: React.FC = () => {
     setIsAddingEmpType(false);
     setEditingEmpType(null);
     setNewEmpLabel('');
-    setNewEmpColor('blue');
+    setNewEmpColor(DEFAULT_PALETTE_COLOR);
   };
 
   const [isAddingHolidayTab, setIsAddingHolidayTab] = useState(false);
@@ -345,7 +338,9 @@ const Settings: React.FC = () => {
   const [editingAppStage, setEditingAppStage] = useState<ApplicationStage | null>(null);
   const [newAppStageLabel, setNewAppStageLabel] = useState('');
   const [newAppStageShortLabel, setNewAppStageShortLabel] = useState('');
-  const [newAppStageTone, setNewAppStageTone] = useState('bg-blue-500');
+  const [newAppStageTone, setNewAppStageTone] = useState(
+    getToneForPaletteColor(DEFAULT_PALETTE_COLOR)
+  );
 
   const getAppStages = (): ApplicationStage[] => settings?.application_stages || [];
 
@@ -398,7 +393,7 @@ const Settings: React.FC = () => {
     setEditingAppStage(null);
     setNewAppStageLabel('');
     setNewAppStageShortLabel('');
-    setNewAppStageTone('bg-blue-500');
+    setNewAppStageTone(getToneForPaletteColor(DEFAULT_PALETTE_COLOR));
   };
 
   const handleEditAppStage = (t: ApplicationStage) => {
@@ -425,7 +420,7 @@ const Settings: React.FC = () => {
     setEditingAppStage(null);
     setNewAppStageLabel('');
     setNewAppStageShortLabel('');
-    setNewAppStageTone('bg-blue-500');
+    setNewAppStageTone(getToneForPaletteColor(DEFAULT_PALETTE_COLOR));
   };
 
   const syncAiSettings = useCallback((nextSettings: Partial<UserSettings> | null | undefined) => {
@@ -573,7 +568,7 @@ const Settings: React.FC = () => {
       }
 
       setNewCategoryName('');
-      setNewCategoryColor('#2563eb');
+      setNewCategoryColor(getPaletteColor(DEFAULT_PALETTE_COLOR).dot);
       setNewCategoryIcon('tag');
       setIsAddingCategory(false);
       setEditingCategory(null);
@@ -597,7 +592,7 @@ const Settings: React.FC = () => {
     setIsAddingCategory(false);
     setEditingCategory(null);
     setNewCategoryName('');
-    setNewCategoryColor('#2563eb');
+    setNewCategoryColor(getPaletteColor(DEFAULT_PALETTE_COLOR).dot);
     setNewCategoryIcon('tag');
   };
 
@@ -1431,39 +1426,39 @@ const Settings: React.FC = () => {
                 onSubmit={handleSaveCategory}
                 className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2"
               >
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Health, Finance"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
-                    <input
-                      type="color"
-                      className="h-9.5 w-15 cursor-pointer rounded-lg border border-gray-300 p-1"
-                      value={newCategoryColor}
-                      onChange={(e) => setNewCategoryColor(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Icon</label>
-                    <IconPicker value={newCategoryIcon} onChange={setNewCategoryIcon} />
-                  </div>
-                  <div className="flex items-end">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Health, Finance"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Icon</label>
+                      <IconPicker value={newCategoryIcon} onChange={setNewCategoryIcon} />
+                    </div>
                     <button
                       type="submit"
                       disabled={!newCategoryName.trim()}
-                      className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
                     >
                       {editingCategory ? 'Update' : 'Add'}
                     </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                    <ColorSwatchPicker
+                      value={newCategoryColor}
+                      onChange={setNewCategoryColor}
+                      mode="hex"
+                      allowCustomHex
+                    />
                   </div>
                 </div>
               </form>
@@ -1553,54 +1548,47 @@ const Settings: React.FC = () => {
 
             {isAddingEmpType && !isEmpTypesLocked && (
               <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
-                <div className="flex gap-3 items-end">
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Label</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Co-op, Volunteer"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newEmpLabel}
-                      onChange={(e) => setNewEmpLabel(e.target.value)}
-                      autoFocus
-                    />
-                    {!editingEmpType && newEmpLabel && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        Value: <code>{toSlug(newEmpLabel)}</code>
-                      </p>
-                    )}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Label</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Co-op, Volunteer"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        value={newEmpLabel}
+                        onChange={(e) => setNewEmpLabel(e.target.value)}
+                        autoFocus
+                      />
+                      {!editingEmpType && newEmpLabel && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Value: <code>{toSlug(newEmpLabel)}</code>
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleSaveEmpType}
+                      disabled={!newEmpLabel.trim()}
+                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                    >
+                      {editingEmpType ? 'Update' : 'Add'}
+                    </button>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
-                    <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-                      {EMP_COLOR_OPTIONS.map((c) => (
-                        <button
-                          key={c.value}
-                          type="button"
-                          onClick={() => setNewEmpColor(c.value)}
-                          title={c.label}
-                          style={{ backgroundColor: c.bg, color: c.text }}
-                          className={`w-7 h-7 rounded-full text-xs font-bold border-2 transition ${newEmpColor === c.value ? 'border-gray-700 scale-110' : 'border-transparent hover:border-gray-300'}`}
-                        >
-                          {c.label[0]}
-                        </button>
-                      ))}
-                    </div>
+                    <ColorSwatchPicker
+                      value={newEmpColor}
+                      onChange={setNewEmpColor}
+                      allowCustomHex
+                    />
                   </div>
-                  <button
-                    onClick={handleSaveEmpType}
-                    disabled={!newEmpLabel.trim()}
-                    className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {editingEmpType ? 'Update' : 'Add'}
-                  </button>
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {getEmpTypes().map((t) => {
-                const colorOpt = EMP_COLOR_OPTIONS.find((c) => c.value === t.color);
+                const colorOpt = getPaletteColor(t.color);
                 return (
                   <LockableListItem
                     key={t.value}
@@ -1682,56 +1670,43 @@ const Settings: React.FC = () => {
 
             {isAddingHolidayTab && !isHolidayTabsLocked && (
               <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Tab Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Inauspicious Days, Lucky Days"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newTabName}
-                      onChange={(e) => setNewTabName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSaveHolidayTab()}
-                      autoFocus
-                    />
-                    {!editingHolidayTab && newTabName && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        ID: <code>{toTabId(newTabName)}</code>
-                      </p>
-                    )}
-                  </div>
-                  <div className="lg:w-64">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
-                    <div className="grid grid-cols-5 gap-1.5">
-                      {HOLIDAY_TAB_COLOR_OPTIONS.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setNewTabColor(option.value)}
-                          className={`h-9 rounded-lg border transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
-                            newTabColor === option.value
-                              ? 'border-gray-900 shadow-sm'
-                              : 'border-gray-200 hover:border-gray-400'
-                          }`}
-                          style={{ backgroundColor: option.bg }}
-                          title={option.label}
-                          aria-label={`${option.label} tab color`}
-                        >
-                          <span
-                            className="mx-auto block h-3 w-3 rounded-full"
-                            style={{ backgroundColor: option.dot }}
-                          />
-                        </button>
-                      ))}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Tab Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Inauspicious Days, Lucky Days"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        value={newTabName}
+                        onChange={(e) => setNewTabName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveHolidayTab()}
+                        autoFocus
+                      />
+                      {!editingHolidayTab && newTabName && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          ID: <code>{toTabId(newTabName)}</code>
+                        </p>
+                      )}
                     </div>
+                    <button
+                      onClick={handleSaveHolidayTab}
+                      disabled={!newTabName.trim()}
+                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                    >
+                      {editingHolidayTab ? 'Update' : 'Add'}
+                    </button>
                   </div>
-                  <button
-                    onClick={handleSaveHolidayTab}
-                    disabled={!newTabName.trim()}
-                    className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {editingHolidayTab ? 'Update' : 'Add'}
-                  </button>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                    <ColorSwatchPicker
+                      value={newTabColor}
+                      onChange={setNewTabColor}
+                      allowCustomHex
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1827,49 +1802,49 @@ const Settings: React.FC = () => {
 
             {isAddingAppStage && !isAppStagesLocked && (
               <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
-                <div className="flex flex-wrap gap-3 items-end">
-                  <div className="flex-1 min-w-[200px]">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
-                      Label (e.g. Online Assessment)
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newAppStageLabel}
-                      onChange={(e) => setNewAppStageLabel(e.target.value)}
-                      autoFocus
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(140px,0.55fr)_auto] lg:items-end">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Label (e.g. Online Assessment)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        value={newAppStageLabel}
+                        onChange={(e) => setNewAppStageLabel(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Short Label
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="OA"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        value={newAppStageShortLabel}
+                        onChange={(e) => setNewAppStageShortLabel(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSaveAppStage}
+                      disabled={!newAppStageLabel.trim() || !newAppStageShortLabel.trim()}
+                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                    >
+                      {editingAppStage ? 'Update' : 'Add'}
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-[150px]">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
-                      Short Label (e.g. OA)
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newAppStageShortLabel}
-                      onChange={(e) => setNewAppStageShortLabel(e.target.value)}
-                    />
-                  </div>
-                  <div className="w-full sm:w-auto">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">
-                      Color Tone (Tailwind class)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="bg-blue-500"
-                      className="w-full sm:w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+                    <ColorSwatchPicker
                       value={newAppStageTone}
-                      onChange={(e) => setNewAppStageTone(e.target.value)}
+                      onChange={setNewAppStageTone}
+                      mode="tone"
+                      allowCustomHex
                     />
                   </div>
-                  <button
-                    onClick={handleSaveAppStage}
-                    disabled={!newAppStageLabel.trim() || !newAppStageShortLabel.trim()}
-                    className="h-9.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {editingAppStage ? 'Update' : 'Add'}
-                  </button>
                 </div>
               </div>
             )}
@@ -1902,7 +1877,10 @@ const Settings: React.FC = () => {
                     onDelete={() => handleDeleteAppStage(t.key)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${t.tone}`}></div>
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: getPaletteColorFromTone(t.tone).dot }}
+                      ></div>
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-800 leading-tight">{t.label}</span>
                         <span className="text-xs text-gray-400 font-mono mt-0.5">
