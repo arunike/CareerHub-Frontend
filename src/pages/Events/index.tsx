@@ -129,7 +129,7 @@ const Events = () => {
   const [locationType, setLocationType] = useState<'in_person' | 'virtual' | 'hybrid'>('virtual');
 
   const [defaultDuration, setDefaultDuration] = useState(60);
-  const [defaultCategory, setDefaultCategory] = useState<number | undefined>(undefined);
+  const [defaultCategory, setDefaultCategory] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -149,12 +149,8 @@ const Events = () => {
       ]);
 
       if (settingsResp.data) {
-        if (settingsResp.data.default_event_duration) {
-          setDefaultDuration(parseInt(settingsResp.data.default_event_duration));
-        }
-        if (settingsResp.data.default_event_category) {
-          setDefaultCategory(settingsResp.data.default_event_category);
-        }
+        setDefaultDuration(Number(settingsResp.data.default_event_duration) || 60);
+        setDefaultCategory(settingsResp.data.default_event_category ?? null);
         if (settingsResp.data.primary_timezone) {
           setUserTimezone((current) =>
             normalizeTimeZone(current || settingsResp.data.primary_timezone)
@@ -262,7 +258,7 @@ const Events = () => {
       start_time: start,
       end_time: end,
       timezone: normalizeTimeZone(userTimezone),
-      category: defaultCategory,
+      category: defaultCategory ?? undefined,
       location_type: 'virtual',
     });
   };
