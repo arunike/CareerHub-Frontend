@@ -22,6 +22,15 @@ import IconPicker from '../../../components/IconPicker';
 const { Text } = Typography;
 const { TextArea } = Input;
 
+const QUICK_DURATIONS = [
+  { label: '15m', minutes: 15 },
+  { label: '30m', minutes: 30 },
+  { label: '45m', minutes: 45 },
+  { label: '1h', minutes: 60 },
+  { label: '2h', minutes: 120 },
+  { label: '3h', minutes: 180 },
+];
+
 type ApplicationOption = {
   id: number;
   company_details?: { name: string };
@@ -116,6 +125,29 @@ const EventEditorModal = ({
             </Form.Item>
           </Col>
         </Row>
+
+        <div className="-mt-3 mb-5">
+          <Text type="secondary" className="mb-2 block text-xs">
+            Quick duration
+          </Text>
+          <Space size={[6, 6]} wrap>
+            {QUICK_DURATIONS.map((duration) => (
+              <Button
+                key={duration.minutes}
+                type="default"
+                size="small"
+                onClick={() => {
+                  const startTime = form.getFieldValue('start_time');
+                  if (startTime) {
+                    form.setFieldValue('end_time', startTime.add(duration.minutes, 'minute'));
+                  }
+                }}
+              >
+                {duration.label}
+              </Button>
+            ))}
+          </Space>
+        </div>
 
         <Collapse
           ghost
