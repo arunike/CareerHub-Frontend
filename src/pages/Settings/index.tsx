@@ -48,6 +48,17 @@ import {
 dayjs.extend(customParseFormat);
 
 type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
+type AvailabilityTimeRange = UserSettings['work_time_ranges'][number];
+
+const WORK_DAY_OPTIONS = [
+  { val: 0, label: 'Mon' },
+  { val: 1, label: 'Tue' },
+  { val: 2, label: 'Wed' },
+  { val: 3, label: 'Thu' },
+  { val: 4, label: 'Fri' },
+  { val: 5, label: 'Sat' },
+  { val: 6, label: 'Sun' },
+];
 
 const unquoteShellValue = (value: string) => {
   const trimmed = value.trim();
@@ -765,6 +776,36 @@ const Settings: React.FC = () => {
     }
   };
 
+  const addAvailabilityRange = () => {
+    if (!settings) return;
+    const ranges = settings.work_time_ranges || [];
+    const days = settings.work_days?.length ? settings.work_days : [0, 1, 2, 3, 4];
+    setSettings((prev) =>
+      prev
+        ? {
+            ...prev,
+            work_time_ranges: [...ranges, { start: '09:00:00', end: '17:00:00', days }],
+          }
+        : null
+    );
+  };
+
+  const updateAvailabilityRange = (idx: number, patch: Partial<AvailabilityTimeRange>) => {
+    if (!settings) return;
+    const updated = [...settings.work_time_ranges];
+    updated[idx] = { ...updated[idx], ...patch };
+    setSettings((prev) => (prev ? { ...prev, work_time_ranges: updated } : null));
+  };
+
+  const toggleAvailabilityRangeDay = (range: AvailabilityTimeRange, idx: number, day: number) => {
+    if (!settings) return;
+    const selectedDays = range.days ?? settings.work_days ?? [];
+    const nextDays = selectedDays.includes(day)
+      ? selectedDays.filter((item) => item !== day)
+      : [...selectedDays, day].sort();
+    updateAvailabilityRange(idx, { days: nextDays });
+  };
+
   if (loading) {
     return <SettingsSkeleton />;
   }
@@ -893,17 +934,7 @@ const Settings: React.FC = () => {
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    const ranges = settings.work_time_ranges || [];
-                    setSettings((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            work_time_ranges: [...ranges, { start: '09:00:00', end: '17:00:00' }],
-                          }
-                        : null
-                    );
-                  }}
+                  onClick={addAvailabilityRange}
                   className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
                 >
                   <PlusOutlined /> Add Range
@@ -953,70 +984,93 @@ const Settings: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {settings.work_time_ranges.map((range, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      <div className="flex-1">
-                        {idx === 0 && (
-                          <label className="block text-xs text-gray-500 mb-1">Start</label>
-                        )}
-                        <FriendlyTimeInput
-                          className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-                          value={
-                            range.start
-                              ? dayjs(range.start, 'HH:mm:ss')
-                              : dayjs('09:00:00', 'HH:mm:ss')
-                          }
-                          onChange={(time) => {
-                            if (time) {
-                              const updated = [...settings.work_time_ranges];
-                              updated[idx] = { ...updated[idx], start: time.format('HH:mm:ss') };
+                <div className="space-y-3">
+                  {settings.work_time_ranges.map((range, idx) => {
+                    const selectedDays = range.days ?? settings.work_days ?? [];
+                    return (
+                      <div key={idx} className="rounded-lg border border-gray-200 p-3 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            {idx === 0 && (
+                              <label className="block text-xs text-gray-500 mb-1">Start</label>
+                            )}
+                            <FriendlyTimeInput
+                              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+                              value={
+                                range.start
+                                  ? dayjs(range.start, 'HH:mm:ss')
+                                  : dayjs('09:00:00', 'HH:mm:ss')
+                              }
+                              onChange={(time) => {
+                                if (time) {
+                                  updateAvailabilityRange(idx, {
+                                    start: time.format('HH:mm:ss'),
+                                  });
+                                }
+                              }}
+                              minuteStep={1}
+                              allowClear={false}
+                            />
+                          </div>
+                          <span className={`text-gray-400 ${idx === 0 ? 'mt-5' : ''}`}>–</span>
+                          <div className="flex-1">
+                            {idx === 0 && (
+                              <label className="block text-xs text-gray-500 mb-1">End</label>
+                            )}
+                            <FriendlyTimeInput
+                              className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
+                              value={
+                                range.end
+                                  ? dayjs(range.end, 'HH:mm:ss')
+                                  : dayjs('17:00:00', 'HH:mm:ss')
+                              }
+                              onChange={(time) => {
+                                if (time) {
+                                  updateAvailabilityRange(idx, {
+                                    end: time.format('HH:mm:ss'),
+                                  });
+                                }
+                              }}
+                              minuteStep={1}
+                              allowClear={false}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = settings.work_time_ranges.filter((_, i) => i !== idx);
                               setSettings((prev) =>
                                 prev ? { ...prev, work_time_ranges: updated } : null
                               );
-                            }
-                          }}
-                          minuteStep={1}
-                          allowClear={false}
-                        />
+                            }}
+                            className={`text-gray-400 hover:text-red-500 transition-colors ${idx === 0 ? 'mt-5' : ''}`}
+                            aria-label="Remove availability range"
+                          >
+                            <CloseOutlined />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {WORK_DAY_OPTIONS.map((day) => {
+                            const isSelected = selectedDays.includes(day.val);
+                            return (
+                              <button
+                                key={day.val}
+                                type="button"
+                                onClick={() => toggleAvailabilityRangeDay(range, idx, day.val)}
+                                className={`px-2.5 py-1 rounded-md text-xs font-medium transition border ${
+                                  isSelected
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                }`}
+                              >
+                                {day.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <span className={`text-gray-400 ${idx === 0 ? 'mt-5' : ''}`}>–</span>
-                      <div className="flex-1">
-                        {idx === 0 && (
-                          <label className="block text-xs text-gray-500 mb-1">End</label>
-                        )}
-                        <FriendlyTimeInput
-                          className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
-                          value={
-                            range.end ? dayjs(range.end, 'HH:mm:ss') : dayjs('17:00:00', 'HH:mm:ss')
-                          }
-                          onChange={(time) => {
-                            if (time) {
-                              const updated = [...settings.work_time_ranges];
-                              updated[idx] = { ...updated[idx], end: time.format('HH:mm:ss') };
-                              setSettings((prev) =>
-                                prev ? { ...prev, work_time_ranges: updated } : null
-                              );
-                            }
-                          }}
-                          minuteStep={1}
-                          allowClear={false}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = settings.work_time_ranges.filter((_, i) => i !== idx);
-                          setSettings((prev) =>
-                            prev ? { ...prev, work_time_ranges: updated } : null
-                          );
-                        }}
-                        className={`text-gray-400 hover:text-red-500 transition-colors ${idx === 0 ? 'mt-5' : ''}`}
-                      >
-                        <CloseOutlined />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1025,15 +1079,7 @@ const Settings: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Work Days</label>
               <div className="flex flex-wrap gap-2">
-                {[
-                  { val: 0, label: 'Mon' },
-                  { val: 1, label: 'Tue' },
-                  { val: 2, label: 'Wed' },
-                  { val: 3, label: 'Thu' },
-                  { val: 4, label: 'Fri' },
-                  { val: 5, label: 'Sat' },
-                  { val: 6, label: 'Sun' },
-                ].map((day) => {
+                {WORK_DAY_OPTIONS.map((day) => {
                   const isSelected = (settings.work_days || []).includes(day.val);
                   return (
                     <button
