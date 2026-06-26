@@ -119,7 +119,7 @@ export interface UserSettings {
   id: number;
   work_start_time: string;
   work_end_time: string;
-  work_time_ranges: { start: string; end: string }[];
+  work_time_ranges: { start: string; end: string; days?: number[] }[];
   work_days: number[];
   default_event_duration: number;
   buffer_time: number;

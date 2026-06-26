@@ -39,7 +39,6 @@ import {
   addWeeks,
   differenceInCalendarDays,
   format,
-  getDay,
   isSameMonth,
   isSameWeek,
   parseISO,
@@ -93,10 +92,7 @@ const canMergeAvailabilityDates = (previousDate: string, nextDate: string) => {
   const next = parseISO(nextDate);
   const dayGap = differenceInCalendarDays(next, previous);
 
-  if (dayGap === 1) return true;
-
-  const isWeekendOnlyGap = getDay(previous) === 5 && getDay(next) === 1 && dayGap === 3;
-  return isWeekendOnlyGap;
+  return dayGap === 1 && isSameWeek(previous, next, { weekStartsOn: 1 });
 };
 
 const Availability = () => {
@@ -611,9 +607,9 @@ const Availability = () => {
     if (start.date === end.date) {
       dateStr = `${start.readable_date}`;
     } else if (isSameMonth(sDate, eDate)) {
-      dateStr = `${format(sDate, 'MMMM dd')} - ${format(eDate, 'dd')}`;
+      dateStr = `${format(sDate, 'MMM d')} - ${format(eDate, 'd')}`;
     } else {
-      dateStr = `${format(sDate, 'MMMM dd')} - ${format(eDate, 'MMMM dd')}`;
+      dateStr = `${format(sDate, 'MMM d')} - ${format(eDate, 'MMM d')}`;
     }
 
     return {
