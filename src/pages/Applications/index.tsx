@@ -35,7 +35,7 @@ import {
 } from '@ant-design/icons';
 import { MetricCardsSkeleton, TableSkeleton } from '../../components/SkeletonLoader';
 import dayjs from 'dayjs';
-import type { UploadProps } from 'antd';
+import type { TableProps, UploadProps } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -71,11 +71,21 @@ const { Option } = Select;
 const { Dragger } = Upload;
 const APPLICATION_PAGE_SIZE = 10;
 
+type ApplicationOrdering = 'status' | '-status' | undefined;
+
+interface ApplicationSummary {
+  total: number;
+  interviews: number;
+  offers: number;
+  locked: number;
+}
+
 interface PaginatedApplicationsResponse {
   count: number;
   next: string | null;
   previous: string | null;
   results: CareerApplication[];
+  summary?: ApplicationSummary;
 }
 
 const isPaginatedApplicationsResponse = (
@@ -160,6 +170,13 @@ const Applications = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [applicationsTotal, setApplicationsTotal] = useState(0);
+  const [applicationSummary, setApplicationSummary] = useState<ApplicationSummary>({
+    total: 0,
+    interviews: 0,
+    offers: 0,
+    locked: 0,
+  });
+  const [applicationOrdering, setApplicationOrdering] = useState<ApplicationOrdering>();
   const [empTypes, setEmpTypes] = useState<EmploymentType[]>([
     { value: 'full_time', label: 'Full-time', color: 'blue' },
     { value: 'part_time', label: 'Part-time', color: 'blue' },
@@ -280,14 +297,37 @@ const Applications = () => {
         employment_type: empTypeFilter !== 'ALL' ? empTypeFilter : undefined,
         location: locationFilter !== 'ALL' ? locationFilter : undefined,
         year: selectedYear,
+        ordering: applicationOrdering,
       });
       const data = appsResp.data as CareerApplication[] | PaginatedApplicationsResponse;
       if (isPaginatedApplicationsResponse(data)) {
         setApplications(data.results);
         setApplicationsTotal(data.count);
+        setApplicationSummary(
+          data.summary || {
+            total: data.count,
+            interviews: data.results.filter(
+              (app) =>
+                app.status === 'SCREEN' ||
+                app.status === 'ONSITE' ||
+                app.status.startsWith('ROUND_')
+            ).length,
+            offers: data.results.filter((app) => app.status === 'OFFER').length,
+            locked: data.results.filter((app) => app.is_locked).length,
+          }
+        );
       } else {
         setApplications(data);
         setApplicationsTotal(data.length);
+        setApplicationSummary({
+          total: data.length,
+          interviews: data.filter(
+            (app) =>
+              app.status === 'SCREEN' || app.status === 'ONSITE' || app.status.startsWith('ROUND_')
+          ).length,
+          offers: data.filter((app) => app.status === 'OFFER').length,
+          locked: data.filter((app) => app.is_locked).length,
+        });
       }
     } catch (error) {
       messageApi.error('Failed to load applications');
@@ -296,6 +336,7 @@ const Applications = () => {
       setLoading(false);
     }
   }, [
+    applicationOrdering,
     currentPage,
     debouncedSearchText,
     empTypeFilter,
@@ -390,6 +431,10 @@ const Applications = () => {
       setApplications((prev) =>
         prev.map((a) => (a.id === app.id ? { ...a, is_locked: !app.is_locked } : a))
       );
+      setApplicationSummary((prev) => ({
+        ...prev,
+        locked: Math.max(0, prev.locked + (app.is_locked ? -1 : 1)),
+      }));
     } catch (error) {
       messageApi.error('Failed to toggle lock');
       console.error(error);
@@ -827,19 +872,21 @@ const Applications = () => {
   const paginatedData = applications;
 
   const applicationMetrics = useMemo(() => {
-    const offerCount = filteredData.filter((app) => app.status === 'OFFER').length;
-    const activeInterviewCount = filteredData.filter((app) =>
-      ['SCREEN', 'ROUND_1', 'ROUND_2', 'ROUND_3', 'ROUND_4', 'ONSITE'].includes(app.status)
-    ).length;
-    const lockedCount = filteredData.filter((app) => app.is_locked).length;
-
     return [
-      { label: 'Matching records', value: applicationsTotal.toLocaleString(), tone: 'slate' },
-      { label: 'Page interviews', value: activeInterviewCount.toLocaleString(), tone: 'blue' },
-      { label: 'Page offers', value: offerCount.toLocaleString(), tone: 'emerald' },
-      { label: 'Page locked', value: lockedCount.toLocaleString(), tone: 'amber' },
+      {
+        label: 'Matching records',
+        value: applicationSummary.total.toLocaleString(),
+        tone: 'slate',
+      },
+      {
+        label: 'Total interviews',
+        value: applicationSummary.interviews.toLocaleString(),
+        tone: 'blue',
+      },
+      { label: 'Total offers', value: applicationSummary.offers.toLocaleString(), tone: 'emerald' },
+      { label: 'Total locked', value: applicationSummary.locked.toLocaleString(), tone: 'amber' },
     ];
-  }, [applicationsTotal, filteredData]);
+  }, [applicationSummary]);
 
   const availableYears = useMemo(
     () => (typeof selectedYear === 'number' ? [selectedYear] : []),
@@ -932,6 +979,13 @@ const Applications = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => <StatusBadge status={status} />,
+      sorter: true,
+      sortOrder:
+        applicationOrdering === 'status'
+          ? ('ascend' as const)
+          : applicationOrdering === '-status'
+            ? ('descend' as const)
+            : undefined,
     },
     {
       title: 'Date Applied',
@@ -981,6 +1035,31 @@ const Applications = () => {
     Number(statusFilter !== 'ALL') +
     Number(empTypeFilter !== 'ALL') +
     Number(locationFilter !== 'ALL');
+
+  const handleTableChange: TableProps<CareerApplication>['onChange'] = (
+    _pagination,
+    _filters,
+    sorter,
+    extra
+  ) => {
+    if (extra.action !== 'sort') return;
+
+    const activeSorter = Array.isArray(sorter)
+      ? sorter.find((item) => item.columnKey === 'status')
+      : sorter;
+    const nextOrdering =
+      activeSorter?.columnKey === 'status'
+        ? activeSorter.order === 'ascend'
+          ? 'status'
+          : activeSorter.order === 'descend'
+            ? '-status'
+            : undefined
+        : undefined;
+
+    setApplicationOrdering(nextOrdering);
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  };
 
   const renderApplicationForm = (onCancel: () => void, submitLabel = 'Save') => (
     <Form form={form} layout="vertical" onFinish={handleAddEdit}>
@@ -1463,6 +1542,7 @@ const Applications = () => {
             columns={columns}
             dataSource={filteredData}
             rowKey="id"
+            onChange={handleTableChange}
             pagination={{
               current: currentPage,
               pageSize: APPLICATION_PAGE_SIZE,
