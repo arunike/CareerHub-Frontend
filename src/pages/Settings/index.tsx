@@ -60,6 +60,35 @@ const WORK_DAY_OPTIONS = [
   { val: 6, label: 'Sun' },
 ];
 
+const summarizeSelectedDays = (days: number[]) => {
+  const sortedDays = [...new Set(days)].sort((a, b) => a - b);
+  if (sortedDays.length === 0) return 'No days';
+
+  const segments: number[][] = [];
+  sortedDays.forEach((day) => {
+    const currentSegment = segments[segments.length - 1];
+    if (currentSegment && day === currentSegment[currentSegment.length - 1] + 1) {
+      currentSegment.push(day);
+    } else {
+      segments.push([day]);
+    }
+  });
+
+  return segments
+    .map((segment) => {
+      const startLabel = WORK_DAY_OPTIONS.find((day) => day.val === segment[0])?.label;
+      const endLabel = WORK_DAY_OPTIONS.find(
+        (day) => day.val === segment[segment.length - 1]
+      )?.label;
+
+      if (!startLabel) return '';
+      if (segment.length === 1 || !endLabel) return startLabel;
+      return `${startLabel}-${endLabel}`;
+    })
+    .filter(Boolean)
+    .join(', ');
+};
+
 const unquoteShellValue = (value: string) => {
   const trimmed = value.trim();
   if (
@@ -799,11 +828,39 @@ const Settings: React.FC = () => {
 
   const toggleAvailabilityRangeDay = (range: AvailabilityTimeRange, idx: number, day: number) => {
     if (!settings) return;
-    const selectedDays = range.days ?? settings.work_days ?? [];
+    const enabledDays = settings.work_days ?? [];
+    if (!enabledDays.includes(day)) return;
+
+    const selectedDays = (range.days ?? enabledDays).filter((item) => enabledDays.includes(item));
     const nextDays = selectedDays.includes(day)
       ? selectedDays.filter((item) => item !== day)
       : [...selectedDays, day].sort();
     updateAvailabilityRange(idx, { days: nextDays });
+  };
+
+  const applyWorkDaysToAvailabilityRange = (idx: number) => {
+    if (!settings) return;
+    updateAvailabilityRange(idx, { days: [...(settings.work_days || [])].sort() });
+  };
+
+  const clearAvailabilityRangeDays = (idx: number) => {
+    updateAvailabilityRange(idx, { days: [] });
+  };
+
+  const updateWorkDays = (nextDays: number[]) => {
+    setSettings((prev) => {
+      if (!prev) return null;
+      const currentDays = prev.work_days || [];
+
+      return {
+        ...prev,
+        work_days: nextDays,
+        work_time_ranges: (prev.work_time_ranges || []).map((range) => {
+          const rangeDays = (range.days ?? currentDays).filter((day) => nextDays.includes(day));
+          return { ...range, days: rangeDays };
+        }),
+      };
+    });
   };
 
   if (loading) {
@@ -926,6 +983,36 @@ const Settings: React.FC = () => {
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
             <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Availability</h3>
 
+            {/* Work Days */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Work Days</label>
+              <div className="flex flex-wrap gap-2">
+                {WORK_DAY_OPTIONS.map((day) => {
+                  const isSelected = (settings.work_days || []).includes(day.val);
+                  return (
+                    <button
+                      key={day.val}
+                      type="button"
+                      onClick={() => {
+                        const currentDays = settings.work_days || [];
+                        const newDays = isSelected
+                          ? currentDays.filter((d: number) => d !== day.val)
+                          : [...currentDays, day.val].sort();
+                        updateWorkDays(newDays);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border active:scale-[0.98] ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Work Hours */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -986,10 +1073,40 @@ const Settings: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   {settings.work_time_ranges.map((range, idx) => {
-                    const selectedDays = range.days ?? settings.work_days ?? [];
+                    const enabledDays = settings.work_days || [];
+                    const selectedDays = (range.days ?? enabledDays).filter((day) =>
+                      enabledDays.includes(day)
+                    );
                     return (
-                      <div key={idx} className="rounded-lg border border-gray-200 p-3 space-y-3">
-                        <div className="flex items-center gap-3">
+                      <div
+                        key={idx}
+                        className="rounded-lg border border-gray-200 bg-white p-4 space-y-3 transition hover:border-gray-300"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                              Range {idx + 1}
+                            </div>
+                            <div className="mt-0.5 text-sm font-medium text-gray-800">
+                              {summarizeSelectedDays(selectedDays)}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = settings.work_time_ranges.filter((_, i) => i !== idx);
+                              setSettings((prev) =>
+                                prev ? { ...prev, work_time_ranges: updated } : null
+                              );
+                            }}
+                            className="rounded-md p-2 text-gray-400 transition hover:bg-gray-50 hover:text-red-500 active:scale-[0.98]"
+                            aria-label="Remove availability range"
+                          >
+                            <CloseOutlined />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
                           <div className="flex-1">
                             {idx === 0 && (
                               <label className="block text-xs text-gray-500 mb-1">Start</label>
@@ -1012,7 +1129,11 @@ const Settings: React.FC = () => {
                               allowClear={false}
                             />
                           </div>
-                          <span className={`text-gray-400 ${idx === 0 ? 'mt-5' : ''}`}>–</span>
+                          <span
+                            className={`hidden text-gray-400 sm:block ${idx === 0 ? 'mt-5' : ''}`}
+                          >
+                            –
+                          </span>
                           <div className="flex-1">
                             {idx === 0 && (
                               <label className="block text-xs text-gray-500 mb-1">End</label>
@@ -1035,74 +1156,60 @@ const Settings: React.FC = () => {
                               allowClear={false}
                             />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = settings.work_time_ranges.filter((_, i) => i !== idx);
-                              setSettings((prev) =>
-                                prev ? { ...prev, work_time_ranges: updated } : null
-                              );
-                            }}
-                            className={`text-gray-400 hover:text-red-500 transition-colors ${idx === 0 ? 'mt-5' : ''}`}
-                            aria-label="Remove availability range"
-                          >
-                            <CloseOutlined />
-                          </button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {WORK_DAY_OPTIONS.map((day) => {
-                            const isSelected = selectedDays.includes(day.val);
-                            return (
-                              <button
-                                key={day.val}
-                                type="button"
-                                onClick={() => toggleAvailabilityRangeDay(range, idx, day.val)}
-                                className={`px-2.5 py-1 rounded-md text-xs font-medium transition border ${
-                                  isSelected
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                                }`}
-                              >
-                                {day.label}
-                              </button>
-                            );
-                          })}
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="mr-1 text-xs font-medium uppercase tracking-wide text-gray-400">
+                            Apply to
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {WORK_DAY_OPTIONS.map((day) => {
+                              const isEnabledWorkDay = enabledDays.includes(day.val);
+                              const isSelected = selectedDays.includes(day.val);
+                              return (
+                                <button
+                                  key={day.val}
+                                  type="button"
+                                  disabled={!isEnabledWorkDay}
+                                  onClick={() => toggleAvailabilityRangeDay(range, idx, day.val)}
+                                  className={`min-w-12 rounded-md border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] ${
+                                    isSelected
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      : isEnabledWorkDay
+                                        ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                        : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                                  }`}
+                                  title={
+                                    isEnabledWorkDay ? undefined : 'Enable this day in Work Days'
+                                  }
+                                >
+                                  {day.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="flex gap-2 sm:ml-auto">
+                            <button
+                              type="button"
+                              onClick={() => applyWorkDaysToAvailabilityRange(idx)}
+                              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98]"
+                            >
+                              Use work days
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => clearAvailabilityRangeDays(idx)}
+                              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-[0.98]"
+                            >
+                              Clear
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-            </div>
-
-            {/* Work Days */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Work Days</label>
-              <div className="flex flex-wrap gap-2">
-                {WORK_DAY_OPTIONS.map((day) => {
-                  const isSelected = (settings.work_days || []).includes(day.val);
-                  return (
-                    <button
-                      key={day.val}
-                      type="button"
-                      onClick={() => {
-                        const currentDays = settings.work_days || [];
-                        const newDays = isSelected
-                          ? currentDays.filter((d: number) => d !== day.val)
-                          : [...currentDays, day.val].sort();
-                        setSettings((prev) => (prev ? { ...prev, work_days: newDays } : null));
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
-                        isSelected
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {day.label}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             <div>
