@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import {
   cancelHostPublicBooking,
   createCategory,
+  createEvent,
+  createHoliday,
   deactivateShareLink,
   deactivateSpecificShareLink,
   deletePublicBooking,
@@ -35,6 +37,7 @@ import type {
   PublicBooking,
   RecurrenceRule,
 } from '../../types';
+import type { CalendarHolidayTarget } from '../../components/calendarView/types';
 import {
   addWeeks,
   differenceInCalendarDays,
@@ -47,7 +50,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
-import { Form, message, Modal } from 'antd';
+import { Checkbox, Form, Input, message, Modal } from 'antd';
 import type { ShareLink } from '../../types';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import EventEditorModal from '../Events/components/EventEditorModal';
@@ -98,6 +101,7 @@ const canMergeAvailabilityDates = (previousDate: string, nextDate: string) => {
 const Availability = () => {
   const { user } = useAuth();
   const [eventForm] = Form.useForm();
+  const [holidayForm] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
@@ -128,6 +132,7 @@ const Availability = () => {
   const [deactivatingLink, setDeactivatingLink] = useState(false);
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(true);
   const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
@@ -150,6 +155,10 @@ const Availability = () => {
   const [defaultDuration, setDefaultDuration] = useState(60);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
+  const [pendingHolidayAdd, setPendingHolidayAdd] = useState<{
+    date: Date;
+    target: CalendarHolidayTarget;
+  } | null>(null);
 
   const fetchAvailability = async () => {
     setLoading(true);
@@ -165,6 +174,7 @@ const Availability = () => {
   };
 
   const fetchCalendarData = async () => {
+    setCalendarLoading(true);
     try {
       const [eventsResp, holidaysResp, fedResp, categoriesResp] = await Promise.all([
         getEvents(),
@@ -179,6 +189,8 @@ const Availability = () => {
     } catch (error) {
       messageApi.error('Failed to fetch calendar data');
       console.error('Failed to fetch calendar data', error);
+    } finally {
+      setCalendarLoading(false);
     }
   };
 
@@ -336,9 +348,40 @@ const Availability = () => {
     });
   };
 
-  const handleEventFormFinish = async (values: EventFormValues) => {
-    if (!editingEventId) return;
+  const handleCalendarAddEvent = (date: Date) => {
+    const now = dayjs();
+    const roundedMinute = Math.ceil(now.minute() / 5) * 5;
+    const start =
+      roundedMinute === 60
+        ? now.add(1, 'hour').minute(0).second(0)
+        : now.minute(roundedMinute).second(0);
 
+    setViewingEvent(null);
+    setEditingEventId(null);
+    setRecurrenceRule(null);
+    setLocationType('virtual');
+    setIsEventFormOpen(true);
+    void ensureApplicationsLoaded();
+    eventForm.resetFields();
+    eventForm.setFieldsValue({
+      date: dayjs(date),
+      start_time: start,
+      end_time: start.add(defaultDuration, 'minute'),
+      timezone: normalizeTimeZone(timezone),
+      location_type: 'virtual',
+    });
+  };
+
+  const handleCalendarAddHoliday = (date: Date, target: CalendarHolidayTarget) => {
+    setPendingHolidayAdd({ date, target });
+    holidayForm.resetFields();
+    holidayForm.setFieldsValue({
+      description: '',
+      is_recurring: false,
+    });
+  };
+
+  const handleEventFormFinish = async (values: EventFormValues) => {
     const payload = {
       ...values,
       date: values.date.format('YYYY-MM-DD'),
@@ -350,6 +393,14 @@ const Availability = () => {
     };
 
     const saveEvent = async (force = false) => {
+      if (!editingEventId) {
+        const response = await createEvent(payload, force ? { force: true } : undefined);
+        if (recurrenceRule && response.data.id) {
+          await setRecurrence(response.data.id, recurrenceRule);
+        }
+        return;
+      }
+
       const existing = events.find((event) => event.id === editingEventId);
       if (existing?.is_virtual && existing.parent_event) {
         await updateRecurringSeries(existing.parent_event, payload);
@@ -362,7 +413,7 @@ const Availability = () => {
 
     try {
       await saveEvent();
-      messageApi.success('Event updated');
+      messageApi.success(editingEventId ? 'Event updated' : 'Event created');
       setIsEventFormOpen(false);
       await fetchCalendarData();
     } catch (error: unknown) {
@@ -373,7 +424,7 @@ const Availability = () => {
           content: 'Conflict detected. Force save?',
           onOk: async () => {
             await saveEvent(true);
-            messageApi.success('Event updated');
+            messageApi.success(editingEventId ? 'Event updated' : 'Event created');
             setIsEventFormOpen(false);
             fetchCalendarData();
           },
@@ -382,6 +433,28 @@ const Availability = () => {
       }
 
       messageApi.error('Failed to save event');
+    }
+  };
+
+  const handleHolidayFormFinish = async (values: {
+    description?: string;
+    is_recurring?: boolean;
+  }) => {
+    if (!pendingHolidayAdd) return;
+
+    try {
+      await createHoliday({
+        date: format(pendingHolidayAdd.date, 'yyyy-MM-dd'),
+        description: values.description?.trim() || pendingHolidayAdd.target.label,
+        is_recurring: !!values.is_recurring,
+        tab: pendingHolidayAdd.target.tab ?? null,
+      });
+      messageApi.success('Holiday added');
+      setPendingHolidayAdd(null);
+      await fetchCalendarData();
+    } catch (error) {
+      messageApi.error('Failed to create holiday');
+      console.error(error);
     }
   };
 
@@ -665,7 +738,10 @@ const Availability = () => {
           federalHolidays={federalHolidays}
           categories={categories}
           holidayTabs={holidayTabs}
+          loading={calendarLoading}
           onEventSelect={handleCalendarEventSelect}
+          onAddEvent={handleCalendarAddEvent}
+          onAddHoliday={handleCalendarAddHoliday}
         />
       ) : (
         <>
@@ -782,6 +858,42 @@ const Availability = () => {
         }}
         initialRule={recurrenceRule || undefined}
       />
+
+      <Modal
+        title={
+          pendingHolidayAdd
+            ? `Add ${pendingHolidayAdd.target.label} on ${format(pendingHolidayAdd.date, 'MMMM d, yyyy')}`
+            : 'Add Holiday'
+        }
+        open={!!pendingHolidayAdd}
+        onCancel={() => setPendingHolidayAdd(null)}
+        footer={null}
+        destroyOnHidden
+      >
+        <Form form={holidayForm} layout="vertical" onFinish={handleHolidayFormFinish}>
+          <Form.Item name="description" label="Holiday Name">
+            <Input placeholder={pendingHolidayAdd?.target.label || 'Custom Holiday'} />
+          </Form.Item>
+          <Form.Item name="is_recurring" valuePropName="checked">
+            <Checkbox>Recurring yearly</Checkbox>
+          </Form.Item>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingHolidayAdd(null)}
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { hasDayItems } from './utils';
 type DayDataProps = {
   dayData: DayData;
   onEventSelect?: (event: Event) => void;
+  onViewMore?: () => void;
 };
 
 type DayTooltipProps = {
@@ -50,76 +51,122 @@ const handleEventEntryClick = (
   onEventSelect(event);
 };
 
-export const CalendarCompactDayEntries = ({ dayData, onEventSelect }: DayDataProps) => (
-  <div className="flex-1 overflow-y-auto space-y-1 no-scrollbar text-xs mt-1">
-    {dayData.federalHolidays.map((holiday, index) => (
-      <Tooltip
-        key={`fed-${index}-${holiday.description}`}
-        title={`Federal Holiday: ${holiday.description}`}
-        mouseEnterDelay={0}
-      >
-        <div className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded truncate">
-          Federal: {holiday.description}
-        </div>
-      </Tooltip>
-    ))}
+const getCompactItems = (dayData: DayData) => [
+  ...dayData.federalHolidays.map((holiday, index) => ({
+    kind: 'federal' as const,
+    holiday,
+    key: `fed-${index}-${holiday.description}`,
+  })),
+  ...dayData.customHolidays.map((holiday, index) => ({
+    kind: 'custom' as const,
+    holiday,
+    key: `cust-${index}-${holiday.description}`,
+  })),
+  ...dayData.events.map((event) => ({
+    kind: 'event' as const,
+    event,
+    key: `event-${event.id}`,
+  })),
+];
 
-    {dayData.customHolidays.map((holiday, index) => (
-      <Tooltip
-        key={`cust-${index}-${holiday.description}`}
-        title={`${holiday.tab_name || 'My Holiday'}: ${holiday.description}`}
-        mouseEnterDelay={0}
-      >
-        <div
-          className="px-1.5 py-0.5 rounded truncate"
-          style={{
-            backgroundColor: getHolidayTabColor(holiday.tab_color).bg,
-            color: getHolidayTabColor(holiday.tab_color).text,
-          }}
-        >
-          ★ {holiday.description}
-        </div>
-      </Tooltip>
-    ))}
+export const CalendarCompactDayEntries = ({ dayData, onEventSelect, onViewMore }: DayDataProps) => {
+  const compactItems = getCompactItems(dayData);
+  const visibleItems = compactItems.slice(0, 3);
+  const hiddenCount = compactItems.length - visibleItems.length;
 
-    {dayData.events.map((event) => {
-      const eventColor = getEventColor(event);
-      const titlePrefix = event.category_details?.name ? `${event.category_details.name}: ` : '';
+  return (
+    <div className="flex-1 space-y-1 overflow-hidden text-xs mt-1">
+      {visibleItems.map((item) => {
+        if (item.kind === 'federal') {
+          const { holiday } = item;
 
-      return (
-        <Tooltip
-          key={event.id}
-          title={`${titlePrefix}${event.name} (${event.start_time.substring(0, 5)})`}
-          mouseEnterDelay={0}
-        >
-          <button
-            type="button"
-            onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
-            className="block w-full rounded border px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
-            style={
-              {
-                backgroundColor: eventColor.bg,
-                borderColor: eventColor.border,
-                color: eventColor.text,
-                '--tw-ring-color': eventColor.focusRing,
-              } as CSSProperties
-            }
-            onMouseEnter={(mouseEvent) => {
-              mouseEvent.currentTarget.style.backgroundColor = eventColor.hoverBg;
-            }}
-            onMouseLeave={(mouseEvent) => {
-              mouseEvent.currentTarget.style.backgroundColor = eventColor.bg;
-            }}
+          return (
+            <Tooltip
+              key={item.key}
+              title={`Federal Holiday: ${holiday.description}`}
+              mouseEnterDelay={0}
+            >
+              <div className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded truncate">
+                Federal: {holiday.description}
+              </div>
+            </Tooltip>
+          );
+        }
+
+        if (item.kind === 'custom') {
+          const { holiday } = item;
+
+          return (
+            <Tooltip
+              key={item.key}
+              title={`${holiday.tab_name || 'My Holiday'}: ${holiday.description}`}
+              mouseEnterDelay={0}
+            >
+              <div
+                className="px-1.5 py-0.5 rounded truncate"
+                style={{
+                  backgroundColor: getHolidayTabColor(holiday.tab_color).bg,
+                  color: getHolidayTabColor(holiday.tab_color).text,
+                }}
+              >
+                {holiday.description}
+              </div>
+            </Tooltip>
+          );
+        }
+
+        const { event } = item;
+        const eventColor = getEventColor(event);
+        const titlePrefix = event.category_details?.name ? `${event.category_details.name}: ` : '';
+
+        return (
+          <Tooltip
+            key={item.key}
+            title={`${titlePrefix}${event.name} (${event.start_time.substring(0, 5)})`}
+            mouseEnterDelay={0}
           >
-            <span className="block truncate">
-              {event.start_time.substring(0, 5)} {event.name}
-            </span>
-          </button>
-        </Tooltip>
-      );
-    })}
-  </div>
-);
+            <button
+              type="button"
+              onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
+              className="block w-full rounded border px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+              style={
+                {
+                  backgroundColor: eventColor.bg,
+                  borderColor: eventColor.border,
+                  color: eventColor.text,
+                  '--tw-ring-color': eventColor.focusRing,
+                } as CSSProperties
+              }
+              onMouseEnter={(mouseEvent) => {
+                mouseEvent.currentTarget.style.backgroundColor = eventColor.hoverBg;
+              }}
+              onMouseLeave={(mouseEvent) => {
+                mouseEvent.currentTarget.style.backgroundColor = eventColor.bg;
+              }}
+            >
+              <span className="block truncate">
+                {event.start_time.substring(0, 5)} {event.name}
+              </span>
+            </button>
+          </Tooltip>
+        );
+      })}
+
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={(clickEvent) => {
+            clickEvent.stopPropagation();
+            onViewMore?.();
+          }}
+          className="w-full rounded border border-gray-200 bg-white/85 px-1.5 py-0.5 text-left font-medium text-gray-500 transition-colors hover:border-blue-200 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        >
+          View {hiddenCount} more
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const CalendarDayAgendaEntries = ({ dayData, onEventSelect }: DayDataProps) => {
   if (!hasDayItems(dayData)) {

@@ -22,10 +22,18 @@ type Props = {
   today: Date;
   selectedDate: Date;
   onDateSelect: (day: Date) => void;
+  onDateDoubleClick?: (day: Date) => void;
   getDayData: GetDayData;
 };
 
-const CalendarYearView = ({ anchorDate, today, selectedDate, onDateSelect, getDayData }: Props) => {
+const CalendarYearView = ({
+  anchorDate,
+  today,
+  selectedDate,
+  onDateSelect,
+  onDateDoubleClick,
+  getDayData,
+}: Props) => {
   const startOfAnchorYear = new Date(anchorDate.getFullYear(), 0, 1);
   const months = Array.from({ length: 12 }, (_, index) => addMonths(startOfAnchorYear, index));
 
@@ -59,6 +67,7 @@ const CalendarYearView = ({ anchorDate, today, selectedDate, onDateSelect, getDa
               <button
                 type="button"
                 onClick={() => onDateSelect(cloneDay)}
+                onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
                 className={clsx(
                   'aspect-square bg-white px-1 py-1 text-center transition-colors flex flex-col items-center justify-center gap-1',
                   !isCurrentMonth && 'bg-gray-50 text-gray-300',
