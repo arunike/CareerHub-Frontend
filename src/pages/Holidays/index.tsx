@@ -37,6 +37,8 @@ import dayjs from 'dayjs';
 import {
   getHolidays,
   getFederalHolidays,
+  getEvents,
+  getCategories,
   createHoliday,
   deleteHoliday,
   updateHoliday,
@@ -45,9 +47,12 @@ import {
   getUserSettings,
   updateUserSettings,
 } from '../../api';
-import type { Holiday, UserSettings, HolidayTab } from '../../types';
+import type { Event, EventCategory, Holiday, UserSettings, HolidayTab } from '../../types';
+import type { CalendarHolidayTarget } from '../../components/calendarView/types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
+import CalendarView from '../../components/CalendarView';
+import SegmentedToggle from '../../components/SegmentedToggle';
 import { ListSkeleton } from '../../components/SkeletonLoader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
@@ -190,7 +195,10 @@ const Holidays = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [calendarHolidayForm] = Form.useForm();
 
+  const [events, setEvents] = useState<Event[]>([]);
+  const [categories, setCategories] = useState<EventCategory[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
@@ -210,6 +218,14 @@ const Holidays = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
+  const [contentView, setContentView] = usePersistedState<'list' | 'calendar'>(
+    'holidaysContentView',
+    'list',
+    {
+      serialize: (value) => value,
+      deserialize: (raw) => (raw === 'calendar' ? 'calendar' : 'list'),
+    }
+  );
 
   const [isRangeMode, setIsRangeMode] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -220,20 +236,24 @@ const Holidays = () => {
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [pendingCalendarHoliday, setPendingCalendarHoliday] = useState<{
+    date: Date;
+    target: CalendarHolidayTarget;
+  } | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [customResp, federalResp, settingsResp] = await Promise.all([
-        getHolidays(),
-        getFederalHolidays(),
-        getUserSettings(),
-      ]);
+      const [customResp, federalResp, settingsResp, eventsResp, categoriesResp] = await Promise.all(
+        [getHolidays(), getFederalHolidays(), getUserSettings(), getEvents(), getCategories()]
+      );
       setHolidays(customResp.data);
       setFederalHolidays(federalResp.data);
       setUserSettings(settingsResp.data);
+      setEvents(eventsResp.data);
+      setCategories(categoriesResp.data);
     } catch (error) {
       messageApi.error('Failed to load holidays');
       console.error(error);
@@ -392,6 +412,34 @@ const Holidays = () => {
         return;
       }
       messageApi.error('Failed to create custom federal holiday');
+    }
+  };
+
+  const handleCalendarHolidayAdd = (date: Date, target: CalendarHolidayTarget) => {
+    setPendingCalendarHoliday({ date, target });
+    calendarHolidayForm.resetFields();
+    calendarHolidayForm.setFieldsValue({
+      name: '',
+      is_recurring: false,
+    });
+  };
+
+  const handleCalendarHolidaySubmit = async (values: { name?: string; is_recurring?: boolean }) => {
+    if (!pendingCalendarHoliday) return;
+
+    try {
+      await createHoliday({
+        date: dayjs(pendingCalendarHoliday.date).format('YYYY-MM-DD'),
+        description: values.name?.trim() || pendingCalendarHoliday.target.label,
+        is_recurring: !!values.is_recurring,
+        tab: pendingCalendarHoliday.target.tab ?? undefined,
+      });
+      messageApi.success('Holiday added');
+      setPendingCalendarHoliday(null);
+      fetchData();
+    } catch (error) {
+      messageApi.error('Failed to create holiday');
+      console.error(error);
     }
   };
 
@@ -1080,21 +1128,49 @@ const Holidays = () => {
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}
+            extraActions={
+              <SegmentedToggle
+                value={contentView}
+                onChange={setContentView}
+                wrapperClassName="rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
+                buttonClassName="px-3 py-2"
+                options={[
+                  { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
+                  {
+                    value: 'calendar',
+                    label: 'Calendar',
+                    activeClassName: 'bg-blue-50 text-blue-700',
+                  },
+                ]}
+              />
+            }
             onExport={handleExportWrapper}
             exportFilename="holidays"
             onImport={() => setShowImport(true)}
           />
         </div>
 
-        <Tabs
-          activeKey={activeTab}
-          onChange={(key) => {
-            setActiveTab(key);
-            setSelectedIds([]);
-          }}
-          items={items}
-          type="card"
-        />
+        {contentView === 'list' ? (
+          <Tabs
+            activeKey={activeTab}
+            onChange={(key) => {
+              setActiveTab(key);
+              setSelectedIds([]);
+            }}
+            items={items}
+            type="card"
+          />
+        ) : (
+          <CalendarView
+            events={events}
+            customHolidays={holidays}
+            federalHolidays={federalHolidays}
+            categories={categories}
+            holidayTabs={customTabs}
+            loading={loading}
+            onAddHoliday={handleCalendarHolidayAdd}
+          />
+        )}
 
         {/* Edit Modal */}
         <Modal
@@ -1202,6 +1278,33 @@ const Holidays = () => {
             <Form.Item name="is_recurring" valuePropName="checked">
               <Checkbox>Recurring (Yearly)</Checkbox>
             </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title={
+            pendingCalendarHoliday
+              ? `Add ${pendingCalendarHoliday.target.label} on ${dayjs(pendingCalendarHoliday.date).format('MMMM D, YYYY')}`
+              : 'Add Holiday'
+          }
+          open={!!pendingCalendarHoliday}
+          onCancel={() => setPendingCalendarHoliday(null)}
+          footer={null}
+          destroyOnHidden
+        >
+          <Form form={calendarHolidayForm} layout="vertical" onFinish={handleCalendarHolidaySubmit}>
+            <Form.Item name="name" label="Holiday Name">
+              <Input placeholder={pendingCalendarHoliday?.target.label || 'Custom Holiday'} />
+            </Form.Item>
+            <Form.Item name="is_recurring" valuePropName="checked">
+              <Checkbox>Recurring (Yearly)</Checkbox>
+            </Form.Item>
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setPendingCalendarHoliday(null)}>Cancel</Button>
+              <Button type="primary" htmlType="submit">
+                Save
+              </Button>
+            </div>
           </Form>
         </Modal>
       </div>

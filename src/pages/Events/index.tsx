@@ -20,7 +20,10 @@ import utc from 'dayjs/plugin/utc';
 import timezonePlugin from 'dayjs/plugin/timezone';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
 import {
+  getEvents,
   getEventFeed,
+  getHolidays,
+  getFederalHolidays,
   deleteEvent,
   createEvent,
   updateEvent,
@@ -35,9 +38,12 @@ import {
   getUserSettings,
   exportEvents,
 } from '../../api';
+import type { Holiday, HolidayTab } from '../../types';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
+import CalendarView from '../../components/CalendarView';
+import SegmentedToggle from '../../components/SegmentedToggle';
 import EventsFilterBar from './components/EventsFilterBar';
 import EventsGrid from './components/EventsGrid';
 import EventEditorModal from './components/EventEditorModal';
@@ -76,8 +82,13 @@ const Events = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<Event[]>([]);
+  const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
+  const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
+  const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
   const [eventsTotal, setEventsTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [calendarLoading, setCalendarLoading] = useState(true);
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [applications, setApplications] = useState<
     Array<{
@@ -130,6 +141,14 @@ const Events = () => {
 
   const [defaultDuration, setDefaultDuration] = useState(60);
   const [defaultCategory, setDefaultCategory] = useState<number | null>(null);
+  const [contentView, setContentView] = usePersistedState<'list' | 'calendar'>(
+    'eventsContentView',
+    'list',
+    {
+      serialize: (value) => value,
+      deserialize: (raw) => (raw === 'calendar' ? 'calendar' : 'list'),
+    }
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -151,6 +170,7 @@ const Events = () => {
       if (settingsResp.data) {
         setDefaultDuration(Number(settingsResp.data.default_event_duration) || 60);
         setDefaultCategory(settingsResp.data.default_event_category ?? null);
+        setHolidayTabs(settingsResp.data.holiday_tabs || []);
         if (settingsResp.data.primary_timezone) {
           setUserTimezone((current) =>
             normalizeTimeZone(current || settingsResp.data.primary_timezone)
@@ -194,6 +214,27 @@ const Events = () => {
     }
   };
 
+  const fetchCalendarData = useCallback(async () => {
+    try {
+      setCalendarLoading(true);
+      const [eventsResp, holidaysResp, fedResp, settingsResp] = await Promise.all([
+        getEvents(),
+        getHolidays(),
+        getFederalHolidays(),
+        getUserSettings(),
+      ]);
+      setCalendarEvents(eventsResp.data);
+      setCustomHolidays(holidaysResp.data);
+      setFederalHolidays(fedResp.data);
+      setHolidayTabs(settingsResp.data.holiday_tabs || []);
+    } catch (error) {
+      messageApi.error('Failed to load calendar data');
+      console.error(error);
+    } finally {
+      setCalendarLoading(false);
+    }
+  }, [messageApi]);
+
   const ensureApplicationsLoaded = async () => {
     if (hasLoadedApplications) return;
 
@@ -213,6 +254,7 @@ const Events = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchCalendarData();
   }, []);
 
   useEffect(() => {
@@ -237,7 +279,7 @@ const Events = () => {
     setSelectedYear(year);
   };
 
-  const handleAdd = () => {
+  const handleAdd = (date?: Date) => {
     setEditingId(null);
     setRecurrenceRule(null);
     setLocationType('virtual');
@@ -254,7 +296,7 @@ const Events = () => {
     const end = start.add(defaultDuration, 'minute');
 
     form.setFieldsValue({
-      date: dayjs(),
+      date: date ? dayjs(date) : dayjs(),
       start_time: start,
       end_time: end,
       timezone: normalizeTimeZone(userTimezone),
@@ -298,6 +340,7 @@ const Events = () => {
       }
       messageApi.success('Event deleted');
       fetchData();
+      fetchCalendarData();
       setViewingEvent(null);
     } catch (error) {
       messageApi.error('Failed to delete event');
@@ -362,6 +405,7 @@ const Events = () => {
               messageApi.success('Series updated');
               setIsFormOpen(false);
               fetchData();
+              fetchCalendarData();
             },
           });
           return;
@@ -377,6 +421,7 @@ const Events = () => {
       }
       setIsFormOpen(false);
       fetchData();
+      fetchCalendarData();
     } catch (error: unknown) {
       const apiError = error as ApiError;
       if (apiError.response?.status === 400 && apiError.response?.data?.conflict) {
@@ -388,6 +433,7 @@ const Events = () => {
             else await createEvent(payload, { force: true });
             setIsFormOpen(false);
             fetchData();
+            fetchCalendarData();
           },
         });
       } else {
@@ -426,6 +472,7 @@ const Events = () => {
         prev.map((e) => (e.id === event.id ? { ...e, is_locked: !e.is_locked } : e))
       );
       messageApi.success(event.is_locked ? 'Event unlocked' : 'Event locked');
+      fetchCalendarData();
     } catch (error) {
       messageApi.error('Failed to toggle lock');
       console.error(error);
@@ -521,16 +568,32 @@ const Events = () => {
             onYearChange={handleYearChange}
             availableYears={availableYears}
             extraActions={
-              <Select
-                value={normalizeTimeZone(userTimezone)}
-                onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
-                style={{ width: 260 }}
-                className="toolbar-select"
-                size="large"
-                showSearch
-                optionFilterProp="label"
-                options={TIMEZONE_OPTIONS}
-              />
+              <div className="flex flex-wrap items-center gap-3">
+                <SegmentedToggle
+                  value={contentView}
+                  onChange={setContentView}
+                  wrapperClassName="rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
+                  buttonClassName="px-3 py-2"
+                  options={[
+                    { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
+                    {
+                      value: 'calendar',
+                      label: 'Calendar',
+                      activeClassName: 'bg-blue-50 text-blue-700',
+                    },
+                  ]}
+                />
+                <Select
+                  value={normalizeTimeZone(userTimezone)}
+                  onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
+                  style={{ width: 260 }}
+                  className="toolbar-select"
+                  size="large"
+                  showSearch
+                  optionFilterProp="label"
+                  options={TIMEZONE_OPTIONS}
+                />
+              </div>
             }
             onDeleteAll={() => setIsDeleteAllOpen(true)}
             deleteAllDisabled={eventsTotal === 0}
@@ -542,87 +605,107 @@ const Events = () => {
             primaryActionIcon={<PlusOutlined />}
           />
 
-          <EventsFilterBar
-            categoryFilter={categoryFilter}
-            onCategoryFilterChange={setCategoryFilter}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            sortBy={sortBy}
-            onSortByChange={setSortBy}
-            sortOrder={sortOrder}
-            onSortOrderToggle={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-            categories={categories}
-          />
-
-          <Card
-            className="enterprise-section overflow-hidden"
-            title={
-              <BulkActionHeader
-                selectedCount={selectedIds.length}
-                totalCount={events.length}
-                onSelectAll={handleSelectAll}
-                onCancelSelection={() => setSelectedIds([])}
-                title="All Events"
-                bulkActions={
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
-                      Lock
-                    </Button>
-                    <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
-                      Unlock
-                    </Button>
-                    <Tooltip
-                      title={
-                        isAnySelectedLocked ? 'Cannot delete while locked items are selected' : ''
-                      }
-                    >
-                      <Button
-                        danger
-                        onClick={handleBulkDelete}
-                        icon={<DeleteOutlined />}
-                        disabled={isAnySelectedLocked}
-                      >
-                        Delete
-                      </Button>
-                    </Tooltip>
-                  </div>
-                }
+          {contentView === 'list' ? (
+            <>
+              <EventsFilterBar
+                categoryFilter={categoryFilter}
+                onCategoryFilterChange={setCategoryFilter}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderToggle={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                categories={categories}
               />
-            }
-          >
-            <EventsGrid
-              loading={loading}
-              events={paginatedEvents}
-              userTimezone={userTimezone}
-              onToggleLock={toggleLock}
-              onView={setViewingEvent}
-              onEdit={handleEdit}
-              onDelete={handleDeleteAction}
-              formatEventTime={formatEventTime}
-              selectedIds={selectedIds}
-              onSelectChange={handleSelectChange}
-            />
 
-            {!loading && eventsTotal > pageSize && (
-              <div className="flex justify-end mt-6 pb-4 px-4">
-                <Pagination
-                  current={currentPage}
-                  pageSize={pageSize}
-                  total={eventsTotal}
-                  onChange={(page, size) => {
-                    setCurrentPage(page);
-                    if (size && size !== pageSize) {
-                      setPageSize(size);
-                      setCurrentPage(1);
+              <Card
+                className="enterprise-section overflow-hidden"
+                title={
+                  <BulkActionHeader
+                    selectedCount={selectedIds.length}
+                    totalCount={events.length}
+                    onSelectAll={handleSelectAll}
+                    onCancelSelection={() => setSelectedIds([])}
+                    title="All Events"
+                    bulkActions={
+                      <div className="flex flex-wrap gap-2">
+                        <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
+                          Lock
+                        </Button>
+                        <Button
+                          onClick={() => handleBulkToggleLock(false)}
+                          icon={<UnlockOutlined />}
+                        >
+                          Unlock
+                        </Button>
+                        <Tooltip
+                          title={
+                            isAnySelectedLocked
+                              ? 'Cannot delete while locked items are selected'
+                              : ''
+                          }
+                        >
+                          <Button
+                            danger
+                            onClick={handleBulkDelete}
+                            icon={<DeleteOutlined />}
+                            disabled={isAnySelectedLocked}
+                          >
+                            Delete
+                          </Button>
+                        </Tooltip>
+                      </div>
                     }
-                  }}
-                  showSizeChanger
-                  pageSizeOptions={['12', '24', '48', '96']}
-                  size={isMobile ? 'small' : undefined}
+                  />
+                }
+              >
+                <EventsGrid
+                  loading={loading}
+                  events={paginatedEvents}
+                  userTimezone={userTimezone}
+                  onToggleLock={toggleLock}
+                  onView={setViewingEvent}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteAction}
+                  formatEventTime={formatEventTime}
+                  selectedIds={selectedIds}
+                  onSelectChange={handleSelectChange}
                 />
-              </div>
-            )}
-          </Card>
+
+                {!loading && eventsTotal > pageSize && (
+                  <div className="flex justify-end mt-6 pb-4 px-4">
+                    <Pagination
+                      current={currentPage}
+                      pageSize={pageSize}
+                      total={eventsTotal}
+                      onChange={(page, size) => {
+                        setCurrentPage(page);
+                        if (size && size !== pageSize) {
+                          setPageSize(size);
+                          setCurrentPage(1);
+                        }
+                      }}
+                      showSizeChanger
+                      pageSizeOptions={['12', '24', '48', '96']}
+                      size={isMobile ? 'small' : undefined}
+                    />
+                  </div>
+                )}
+              </Card>
+            </>
+          ) : (
+            <CalendarView
+              events={calendarEvents}
+              customHolidays={customHolidays}
+              federalHolidays={federalHolidays}
+              categories={categories}
+              holidayTabs={holidayTabs}
+              loading={calendarLoading}
+              onEventSelect={setViewingEvent}
+              onAddEvent={handleAdd}
+            />
+          )}
         </Space>
       </div>
 

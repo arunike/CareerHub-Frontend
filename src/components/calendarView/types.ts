@@ -11,6 +11,17 @@ export type DayData = {
 
 export type GetDayData = (day: Date) => DayData;
 
+export type CalendarHolidayTarget = {
+  tab?: string | null;
+  label: string;
+};
+
+export type CalendarFilters = {
+  eventCategoryIds: Set<number | 'uncategorized'>;
+  customHolidayTabs: Set<string | 'default'>;
+  federal: boolean;
+};
+
 export const VIEW_OPTIONS: Array<{ value: CalendarViewMode; label: string }> = [
   { value: 'day', label: 'Day' },
   { value: 'threeDay', label: '3 Day' },

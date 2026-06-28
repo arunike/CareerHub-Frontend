@@ -9,6 +9,7 @@ type Props = {
   today: Date;
   selectedDate: Date;
   onDateSelect: (day: Date) => void;
+  onDateDoubleClick?: (day: Date) => void;
   onEventSelect?: (event: Event) => void;
   getDayData: GetDayData;
 };
@@ -18,6 +19,7 @@ const CalendarRangeView = ({
   today,
   selectedDate,
   onDateSelect,
+  onDateDoubleClick,
   onEventSelect,
   getDayData,
 }: Props) => {
@@ -47,6 +49,7 @@ const CalendarRangeView = ({
               <button
                 type="button"
                 onClick={() => onDateSelect(day)}
+                onDoubleClick={() => onDateDoubleClick?.(day)}
                 className={clsx(
                   'w-full border-b border-gray-100 px-4 py-3 text-left transition-colors',
                   isSelected ? 'bg-blue-50' : 'bg-gray-50/80 hover:bg-gray-50'

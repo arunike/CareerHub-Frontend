@@ -19,6 +19,8 @@ type Props = {
   today: Date;
   selectedDate: Date;
   onDateSelect: (day: Date) => void;
+  onDateDoubleClick?: (day: Date) => void;
+  onViewMore?: (day: Date) => void;
   onEventSelect?: (event: Event) => void;
   getDayData: GetDayData;
 };
@@ -28,6 +30,8 @@ const CalendarMonthView = ({
   today,
   selectedDate,
   onDateSelect,
+  onDateDoubleClick,
+  onViewMore,
   onEventSelect,
   getDayData,
 }: Props) => {
@@ -57,6 +61,7 @@ const CalendarMonthView = ({
             isSelected && 'ring-2 ring-blue-500 ring-inset z-10 rounded-lg'
           )}
           onClick={() => onDateSelect(cloneDay)}
+          onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
         >
           <div className="flex justify-between items-start">
             <span
@@ -69,7 +74,11 @@ const CalendarMonthView = ({
             </span>
           </div>
 
-          <CalendarCompactDayEntries dayData={dayData} onEventSelect={onEventSelect} />
+          <CalendarCompactDayEntries
+            dayData={dayData}
+            onEventSelect={onEventSelect}
+            onViewMore={() => onViewMore?.(cloneDay)}
+          />
         </div>
       );
       day = addDays(day, 1);
