@@ -36,7 +36,6 @@ import {
 import { MetricCardsSkeleton, TableSkeleton } from '../../components/SkeletonLoader';
 import dayjs from 'dayjs';
 import type { TableProps, UploadProps } from 'antd';
-import type { Dayjs } from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   getApplications,
@@ -64,98 +63,29 @@ import { getCurrentYear } from '../../utils/yearFilter';
 import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
-import { getPaletteColor, getPaletteColorFromTone } from '../../utils/colorPalette';
+import { EmploymentTypeBadge, StatusBadge } from './ApplicationBadges';
+import {
+  APPLICATION_PAGE_SIZE,
+  DEFAULT_APPLICATION_STAGES,
+  DEFAULT_APPLICATION_SUMMARY,
+  type ApplicationFormValues,
+  type ApplicationOrdering,
+  getRoundNumberFromStatus,
+  isPaginatedApplicationsResponse,
+  type PaginatedApplicationsResponse,
+  summarizeApplications,
+} from './applicationTypes';
+import {
+  APPLICATION_IMPORT_REVIEW_FIELDS,
+  type ApplicationImportReviewFieldKey,
+  buildEditableImportReview,
+  getCoreImportMapping,
+  getImportFieldValue as readImportFieldValue,
+} from './applicationImportReview';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
-const APPLICATION_PAGE_SIZE = 10;
-
-type ApplicationOrdering = 'status' | '-status' | undefined;
-
-interface ApplicationSummary {
-  total: number;
-  interviews: number;
-  offers: number;
-  locked: number;
-}
-
-interface PaginatedApplicationsResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: CareerApplication[];
-  summary?: ApplicationSummary;
-}
-
-const isPaginatedApplicationsResponse = (
-  data: CareerApplication[] | PaginatedApplicationsResponse
-): data is PaginatedApplicationsResponse =>
-  Boolean(data && !Array.isArray(data) && Array.isArray(data.results));
-
-const APPLICATION_IMPORT_REVIEW_FIELDS = [
-  { key: 'company_name', label: 'Company', required: true },
-  { key: 'role_title', label: 'Role', required: true },
-  { key: 'status', label: 'Status', required: false },
-  { key: 'location', label: 'Location', required: false },
-  { key: 'salary_range', label: 'Salary', required: false },
-  { key: 'job_link', label: 'Link', required: false },
-] as const;
-
-type ApplicationImportReviewFieldKey = (typeof APPLICATION_IMPORT_REVIEW_FIELDS)[number]['key'];
-const APPLICATION_IMPORT_REVIEW_FIELD_KEYS = new Set<string>(
-  APPLICATION_IMPORT_REVIEW_FIELDS.map((field) => field.key)
-);
-
-const getCoreImportMapping = (mapping: Record<string, string>) =>
-  Object.fromEntries(
-    Object.entries(mapping).filter(([fieldKey]) =>
-      APPLICATION_IMPORT_REVIEW_FIELD_KEYS.has(fieldKey)
-    )
-  );
-
-type EditableApplicationImportItem = {
-  row: number;
-  action: 'create' | 'update' | 'error';
-  detail: string;
-  company_name: string;
-  role_title: string;
-  status: string;
-  local_object_id?: number | null;
-  raw: Record<string, string>;
-};
-
-type ApplicationFormValues = {
-  company?: string;
-  role_title?: string;
-  status?: string;
-  employment_type?: string;
-  site_link?: string;
-  salary_range?: string;
-  office_location?: string;
-  visa_sponsorship?: string;
-  day_one_gc?: string;
-  growth_score?: number;
-  work_life_score?: number;
-  brand_score?: number;
-  team_score?: number;
-  current_round?: number;
-  date_applied?: Dayjs | null;
-  notes?: string;
-  linked_document_ids?: number[];
-};
-
-type ApplicationStage = {
-  key: string;
-  label: string;
-  shortLabel: string;
-  tone: string;
-};
-
-const getRoundNumberFromStatus = (status?: string) => {
-  const match = status?.match(/^ROUND_(\d+)$/);
-  return match ? Number(match[1]) : 0;
-};
 
 const Applications = () => {
   const location = useLocation();
@@ -170,12 +100,7 @@ const Applications = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [applicationsTotal, setApplicationsTotal] = useState(0);
-  const [applicationSummary, setApplicationSummary] = useState<ApplicationSummary>({
-    total: 0,
-    interviews: 0,
-    offers: 0,
-    locked: 0,
-  });
+  const [applicationSummary, setApplicationSummary] = useState(DEFAULT_APPLICATION_SUMMARY);
   const [applicationOrdering, setApplicationOrdering] = useState<ApplicationOrdering>();
   const [empTypes, setEmpTypes] = useState<EmploymentType[]>([
     { value: 'full_time', label: 'Full-time', color: 'blue' },
@@ -184,25 +109,7 @@ const Applications = () => {
     { value: 'contract', label: 'Contract', color: 'purple' },
     { value: 'freelance', label: 'Freelance', color: 'orange' },
   ]);
-  const [appStages, setAppStages] = useState<ApplicationStage[]>([
-    { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-    { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
-    { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
-    { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
-    { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
-    { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
-    { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
-    { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
-    { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
-    { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
-    { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
-    {
-      key: 'REMOVED_FROM_SHEET',
-      label: 'Removed from Sheet',
-      shortLabel: 'Removed',
-      tone: 'bg-slate-500',
-    },
-  ]);
+  const [appStages, setAppStages] = useState(DEFAULT_APPLICATION_STAGES);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -303,31 +210,11 @@ const Applications = () => {
       if (isPaginatedApplicationsResponse(data)) {
         setApplications(data.results);
         setApplicationsTotal(data.count);
-        setApplicationSummary(
-          data.summary || {
-            total: data.count,
-            interviews: data.results.filter(
-              (app) =>
-                app.status === 'SCREEN' ||
-                app.status === 'ONSITE' ||
-                app.status.startsWith('ROUND_')
-            ).length,
-            offers: data.results.filter((app) => app.status === 'OFFER').length,
-            locked: data.results.filter((app) => app.is_locked).length,
-          }
-        );
+        setApplicationSummary(data.summary || summarizeApplications(data.results, data.count));
       } else {
         setApplications(data);
         setApplicationsTotal(data.length);
-        setApplicationSummary({
-          total: data.length,
-          interviews: data.filter(
-            (app) =>
-              app.status === 'SCREEN' || app.status === 'ONSITE' || app.status.startsWith('ROUND_')
-          ).length,
-          offers: data.filter((app) => app.status === 'OFFER').length,
-          locked: data.filter((app) => app.is_locked).length,
-        });
+        setApplicationSummary(summarizeApplications(data));
       }
     } catch (error) {
       messageApi.error('Failed to load applications');
@@ -754,8 +641,7 @@ const Applications = () => {
 
   const getImportFieldValue = useCallback(
     (row: Record<string, string>, fieldKey: ApplicationImportReviewFieldKey) => {
-      const header = applicationImportMapping[fieldKey];
-      return header ? row[header] || '' : '';
+      return readImportFieldValue(row, applicationImportMapping, fieldKey);
     },
     [applicationImportMapping]
   );
@@ -777,59 +663,12 @@ const Applications = () => {
 
   const editableImportReview = useMemo(() => {
     if (!applicationImportPreview) return null;
-    const companyApplications = new Map<string, CareerApplication[]>();
-    applications.forEach((application) => {
-      const companyName = application.company_details?.name || '';
-      if (!companyName) return;
-      const current = companyApplications.get(companyName) || [];
-      current.push(application);
-      companyApplications.set(companyName, current);
+    return buildEditableImportReview({
+      rows: applicationImportRows,
+      applications,
+      mapping: applicationImportMapping,
     });
-
-    const items: EditableApplicationImportItem[] = applicationImportRows.map((row, index) => {
-      const companyName = getImportFieldValue(row, 'company_name').trim();
-      const roleTitle = getImportFieldValue(row, 'role_title').trim();
-      const statusValue = getImportFieldValue(row, 'status').trim() || 'APPLIED';
-      let action: EditableApplicationImportItem['action'] = 'error';
-      let detail = 'Company and role are required.';
-      let localObjectId: number | null = null;
-
-      if (companyName && roleTitle) {
-        const existing = (companyApplications.get(companyName) || []).find(
-          (application) => application.role_title === roleTitle
-        );
-        if (existing) {
-          action = 'update';
-          detail = 'Matches an existing application by company and role.';
-          localObjectId = existing.id;
-        } else {
-          action = 'create';
-          detail = 'New application.';
-        }
-      }
-
-      return {
-        row: index + 2,
-        action,
-        detail,
-        company_name: companyName,
-        role_title: roleTitle,
-        status: statusValue,
-        local_object_id: localObjectId,
-        raw: row,
-      };
-    });
-
-    return {
-      items,
-      summary: {
-        total_rows: applicationImportRows.length,
-        creates: items.filter((item) => item.action === 'create').length,
-        updates: items.filter((item) => item.action === 'update').length,
-        errors: items.filter((item) => item.action === 'error').length,
-      },
-    };
-  }, [applicationImportPreview, applicationImportRows, applications, getImportFieldValue]);
+  }, [applicationImportPreview, applicationImportRows, applications, applicationImportMapping]);
 
   const visibleImportReviewFields = useMemo(
     () =>
@@ -905,35 +744,6 @@ const Applications = () => {
     });
   };
 
-  const StatusBadge = ({ status }: { status: string }) => {
-    const stage = appStages.find((s) => s.key === status);
-    const c = getPaletteColorFromTone(stage?.tone);
-    const label = stage ? stage.label : status;
-    return (
-      <span
-        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
-        style={{ color: c.text, background: c.bg, borderColor: c.border }}
-      >
-        {label}
-      </span>
-    );
-  };
-
-  const EmploymentTypeBadge = ({ type }: { type?: string | null }) => {
-    if (!type || type === 'full_time') return null;
-    const meta = empTypes.find((t) => t.value === type);
-    if (!meta) return null;
-    const c = getPaletteColor(meta.color);
-    return (
-      <span
-        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
-        style={{ color: c.text, background: c.bg, borderColor: c.border }}
-      >
-        {meta.label}
-      </span>
-    );
-  };
-
   const columns = [
     {
       title: 'Company',
@@ -964,7 +774,7 @@ const Applications = () => {
         <Space direction="vertical" size={2}>
           <Space size={6} align="center">
             <Text>{text}</Text>
-            <EmploymentTypeBadge type={record.employment_type} />
+            <EmploymentTypeBadge type={record.employment_type} employmentTypes={empTypes} />
           </Space>
           {record.job_link && (
             <Link href={record.job_link} target="_blank" style={{ fontSize: 12 }}>
@@ -978,7 +788,7 @@ const Applications = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => <StatusBadge status={status} />,
+      render: (status: string) => <StatusBadge status={status} stages={appStages} />,
       sorter: true,
       sortOrder:
         applicationOrdering === 'status'
@@ -1438,7 +1248,7 @@ const Applications = () => {
                             </div>
                             <div className="mt-1 text-sm text-slate-600">{record.role_title}</div>
                           </div>
-                          <StatusBadge status={record.status} />
+                          <StatusBadge status={record.status} stages={appStages} />
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -1450,7 +1260,10 @@ const Applications = () => {
                               {record.office_location || record.location}
                             </span>
                           ) : null}
-                          <EmploymentTypeBadge type={record.employment_type} />
+                          <EmploymentTypeBadge
+                            type={record.employment_type}
+                            employmentTypes={empTypes}
+                          />
                           {record.is_locked ? (
                             <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
                               Locked
