@@ -39,28 +39,56 @@ import {
   getFederalHolidays,
   getEvents,
   getCategories,
+  createCategory,
+  createEvent,
   createHoliday,
   deleteHoliday,
+  setRecurrence,
+  updateEvent,
   updateHoliday,
+  updateRecurringSeries,
   exportHolidays,
+  getApplicationOptions,
   importData,
   getUserSettings,
   updateUserSettings,
 } from '../../api';
-import type { Event, EventCategory, Holiday, UserSettings, HolidayTab } from '../../types';
+import type {
+  Event,
+  EventCategory,
+  Holiday,
+  RecurrenceRule,
+  UserSettings,
+  HolidayTab,
+} from '../../types';
 import type { CalendarHolidayTarget } from '../../components/calendarView/types';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import CalendarView from '../../components/CalendarView';
+import RecurrenceModal from '../../components/RecurrenceModal';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import { ListSkeleton } from '../../components/SkeletonLoader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
+import { getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
+import EventEditorModal from '../Events/components/EventEditorModal';
+import EventViewModal from '../Events/components/EventViewModal';
+import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
+import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
+
+type EventFormValues = {
+  date: dayjs.Dayjs;
+  start_time: dayjs.Dayjs;
+  end_time: dayjs.Dayjs;
+  [key: string]: unknown;
+};
+
+type ApiError = { response?: { status?: number; data?: { conflict?: boolean } } };
 
 const GroupedHolidayItem = ({
   item,
@@ -195,10 +223,18 @@ const Holidays = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
-  const [calendarHolidayForm] = Form.useForm();
+  const [eventForm] = Form.useForm();
 
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<EventCategory[]>([]);
+  const [applications, setApplications] = useState<
+    Array<{
+      id: number;
+      company_details?: { name: string };
+      role_title: string;
+      [key: string]: unknown;
+    }>
+  >([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
@@ -240,6 +276,16 @@ const Holidays = () => {
     date: Date;
     target: CalendarHolidayTarget;
   } | null>(null);
+  const [editingCalendarHoliday, setEditingCalendarHoliday] = useState<Holiday | null>(null);
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
+  const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
+  const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
+  const [locationType, setLocationType] = useState<'in_person' | 'virtual' | 'hybrid'>('virtual');
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -267,6 +313,8 @@ const Holidays = () => {
   }, []);
 
   const customTabs: HolidayTab[] = userSettings?.holiday_tabs || [];
+  const defaultEventDuration = Number(userSettings?.default_event_duration) || 60;
+  const userTimezone = normalizeTimeZone(userSettings?.primary_timezone || getBrowserTimeZone());
 
   const activeTabHolidays = React.useMemo(() => {
     if (activeTab === 'custom') {
@@ -416,29 +464,179 @@ const Holidays = () => {
   };
 
   const handleCalendarHolidayAdd = (date: Date, target: CalendarHolidayTarget) => {
+    setEditingCalendarHoliday(null);
     setPendingCalendarHoliday({ date, target });
-    calendarHolidayForm.resetFields();
-    calendarHolidayForm.setFieldsValue({
-      name: '',
-      is_recurring: false,
+  };
+
+  const handleCalendarHolidaySelect = (holiday: Holiday) => {
+    setPendingCalendarHoliday(null);
+    setEditingCalendarHoliday(holiday);
+  };
+
+  const handleCalendarHolidaySubmit = async (values: CalendarHolidayFormValues) => {
+    try {
+      if (editingCalendarHoliday) {
+        await updateHoliday(editingCalendarHoliday.id, {
+          description: values.description?.trim() || editingCalendarHoliday.description,
+          is_recurring: !!values.is_recurring,
+          tab: values.tab || null,
+        });
+        messageApi.success('Holiday updated');
+      } else if (pendingCalendarHoliday) {
+        await createHoliday({
+          date: dayjs(pendingCalendarHoliday.date).format('YYYY-MM-DD'),
+          description: values.description?.trim() || pendingCalendarHoliday.target.label,
+          is_recurring: !!values.is_recurring,
+          tab: values.tab || null,
+        });
+        messageApi.success('Holiday added');
+      }
+
+      setPendingCalendarHoliday(null);
+      setEditingCalendarHoliday(null);
+      fetchData();
+    } catch (error) {
+      messageApi.error(
+        editingCalendarHoliday ? 'Failed to update holiday' : 'Failed to create holiday'
+      );
+      console.error(error);
+    }
+  };
+
+  const ensureApplicationsLoaded = async () => {
+    if (hasLoadedApplications) return;
+
+    try {
+      const response = await getApplicationOptions({ page_size: 100 });
+      setApplications(response.data);
+      setHasLoadedApplications(true);
+    } catch (error) {
+      messageApi.error('Failed to load applications');
+      console.error(error);
+    }
+  };
+
+  const handleCalendarEventSelect = (event: Event) => {
+    setViewingEvent(event);
+  };
+
+  const handleCalendarAddEvent = (date: Date) => {
+    const now = dayjs();
+    const roundedMinute = Math.ceil(now.minute() / 5) * 5;
+    const start =
+      roundedMinute === 60
+        ? now.add(1, 'hour').minute(0).second(0)
+        : now.minute(roundedMinute).second(0);
+
+    setViewingEvent(null);
+    setEditingEventId(null);
+    setRecurrenceRule(null);
+    setLocationType('virtual');
+    setIsEventFormOpen(true);
+    void ensureApplicationsLoaded();
+    eventForm.resetFields();
+    eventForm.setFieldsValue({
+      date: dayjs(date),
+      start_time: start,
+      end_time: start.add(defaultEventDuration, 'minute'),
+      timezone: userTimezone,
+      location_type: 'virtual',
     });
   };
 
-  const handleCalendarHolidaySubmit = async (values: { name?: string; is_recurring?: boolean }) => {
-    if (!pendingCalendarHoliday) return;
+  const handleEventEdit = (event: Event) => {
+    setViewingEvent(null);
+    setEditingEventId(event.id);
+    setIsEventFormOpen(true);
+    void ensureApplicationsLoaded();
+    setRecurrenceRule((event.recurrence_rule as RecurrenceRule) || null);
+    setLocationType(event.location_type || 'virtual');
+
+    eventForm.setFieldsValue({
+      name: event.name,
+      date: dayjs(event.date),
+      start_time: dayjs(event.start_time, 'HH:mm:ss'),
+      end_time: dayjs(event.end_time, 'HH:mm:ss'),
+      timezone: normalizeTimeZone(event.timezone || userTimezone),
+      category: event.category,
+      location_type: event.location_type || 'virtual',
+      location: event.location,
+      meeting_link: event.meeting_link,
+      notes: event.notes,
+      application: event.application,
+    });
+  };
+
+  const handleEventFormFinish = async (values: EventFormValues) => {
+    const payload = {
+      ...values,
+      date: values.date.format('YYYY-MM-DD'),
+      start_time: values.start_time.format('HH:mm:ss'),
+      end_time: values.end_time.format('HH:mm:ss'),
+      is_recurring: !!recurrenceRule,
+      recurrence_rule: recurrenceRule,
+      reminder_minutes: 15,
+    };
+
+    const saveEvent = async (force = false) => {
+      if (!editingEventId) {
+        const response = await createEvent(payload, force ? { force: true } : undefined);
+        if (recurrenceRule && response.data.id) {
+          await setRecurrence(response.data.id, recurrenceRule);
+        }
+        return;
+      }
+
+      const existing = events.find((event) => event.id === editingEventId);
+      if (existing?.is_virtual && existing.parent_event) {
+        await updateRecurringSeries(existing.parent_event, payload);
+        if (recurrenceRule) await setRecurrence(existing.parent_event, recurrenceRule);
+        return;
+      }
+
+      await updateEvent(editingEventId, payload, force ? { force: true } : undefined);
+    };
 
     try {
-      await createHoliday({
-        date: dayjs(pendingCalendarHoliday.date).format('YYYY-MM-DD'),
-        description: values.name?.trim() || pendingCalendarHoliday.target.label,
-        is_recurring: !!values.is_recurring,
-        tab: pendingCalendarHoliday.target.tab ?? undefined,
-      });
-      messageApi.success('Holiday added');
-      setPendingCalendarHoliday(null);
+      await saveEvent();
+      messageApi.success(editingEventId ? 'Event updated' : 'Event created');
+      setIsEventFormOpen(false);
       fetchData();
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.response?.status === 400 && apiError.response?.data?.conflict) {
+        Modal.confirm({
+          title: 'Schedule Conflict',
+          content: 'Conflict detected. Force save?',
+          onOk: async () => {
+            await saveEvent(true);
+            messageApi.success(editingEventId ? 'Event updated' : 'Event created');
+            setIsEventFormOpen(false);
+            fetchData();
+          },
+        });
+        return;
+      }
+
+      messageApi.error('Failed to save event');
+    }
+  };
+
+  const handleCreateEventCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    try {
+      await createCategory({
+        name: newCategoryName.trim(),
+        color: '#2563eb',
+        icon: newCategoryIcon,
+      });
+      setNewCategoryName('');
+      setNewCategoryIcon('tag');
+      const response = await getCategories();
+      setCategories(response.data);
     } catch (error) {
-      messageApi.error('Failed to create holiday');
+      messageApi.error('Failed to create category');
       console.error(error);
     }
   };
@@ -1167,7 +1365,11 @@ const Holidays = () => {
             federalHolidays={federalHolidays}
             categories={categories}
             holidayTabs={customTabs}
+            addActionHighlight="holidays"
             loading={loading}
+            onEventSelect={handleCalendarEventSelect}
+            onHolidaySelect={handleCalendarHolidaySelect}
+            onAddEvent={handleCalendarAddEvent}
             onAddHoliday={handleCalendarHolidayAdd}
           />
         )}
@@ -1281,32 +1483,56 @@ const Holidays = () => {
           </Form>
         </Modal>
 
-        <Modal
-          title={
-            pendingCalendarHoliday
-              ? `Add ${pendingCalendarHoliday.target.label} on ${dayjs(pendingCalendarHoliday.date).format('MMMM D, YYYY')}`
-              : 'Add Holiday'
-          }
-          open={!!pendingCalendarHoliday}
-          onCancel={() => setPendingCalendarHoliday(null)}
-          footer={null}
-          destroyOnHidden
-        >
-          <Form form={calendarHolidayForm} layout="vertical" onFinish={handleCalendarHolidaySubmit}>
-            <Form.Item name="name" label="Holiday Name">
-              <Input placeholder={pendingCalendarHoliday?.target.label || 'Custom Holiday'} />
-            </Form.Item>
-            <Form.Item name="is_recurring" valuePropName="checked">
-              <Checkbox>Recurring (Yearly)</Checkbox>
-            </Form.Item>
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setPendingCalendarHoliday(null)}>Cancel</Button>
-              <Button type="primary" htmlType="submit">
-                Save
-              </Button>
-            </div>
-          </Form>
-        </Modal>
+        <EventViewModal
+          event={viewingEvent}
+          onClose={() => setViewingEvent(null)}
+          onEdit={handleEventEdit}
+        />
+
+        <EventEditorModal
+          open={isEventFormOpen}
+          editingId={editingEventId}
+          form={eventForm}
+          onCancel={() => setIsEventFormOpen(false)}
+          onFinish={handleEventFormFinish}
+          defaultDuration={defaultEventDuration}
+          categories={categories}
+          newCategoryName={newCategoryName}
+          onNewCategoryNameChange={setNewCategoryName}
+          newCategoryIcon={newCategoryIcon}
+          onNewCategoryIconChange={setNewCategoryIcon}
+          onCreateCategory={handleCreateEventCategory}
+          locationType={locationType}
+          onLocationTypeChange={setLocationType}
+          recurrenceRule={recurrenceRule}
+          onOpenRecurrence={() => setShowRecurrenceModal(true)}
+          onClearRecurrence={() => setRecurrenceRule(null)}
+          applications={applications}
+        />
+
+        <RecurrenceModal
+          isOpen={showRecurrenceModal}
+          onClose={() => setShowRecurrenceModal(false)}
+          onSave={(rule) => {
+            setRecurrenceRule(rule);
+            setShowRecurrenceModal(false);
+          }}
+          initialRule={recurrenceRule || undefined}
+        />
+
+        <CalendarHolidayModal
+          open={!!pendingCalendarHoliday || !!editingCalendarHoliday}
+          mode={editingCalendarHoliday ? 'edit' : 'add'}
+          date={pendingCalendarHoliday?.date}
+          target={pendingCalendarHoliday?.target}
+          holiday={editingCalendarHoliday}
+          holidayTabs={customTabs}
+          onCancel={() => {
+            setPendingCalendarHoliday(null);
+            setEditingCalendarHoliday(null);
+          }}
+          onSubmit={handleCalendarHolidaySubmit}
+        />
       </div>
     </>
   );

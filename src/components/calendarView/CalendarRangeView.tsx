@@ -1,7 +1,7 @@
 import { format, isSameDay } from 'date-fns';
 import clsx from 'clsx';
 import { CalendarDayAgendaEntries } from './CalendarDayContent';
-import type { Event } from '../../types';
+import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
   onDateSelect: (day: Date) => void;
   onDateDoubleClick?: (day: Date) => void;
   onEventSelect?: (event: Event) => void;
+  onHolidaySelect?: (holiday: Holiday) => void;
   getDayData: GetDayData;
 };
 
@@ -21,6 +22,7 @@ const CalendarRangeView = ({
   onDateSelect,
   onDateDoubleClick,
   onEventSelect,
+  onHolidaySelect,
   getDayData,
 }: Props) => {
   const gridClassName =
@@ -73,7 +75,11 @@ const CalendarRangeView = ({
               </button>
 
               <div className="min-h-[320px] p-4">
-                <CalendarDayAgendaEntries dayData={dayData} onEventSelect={onEventSelect} />
+                <CalendarDayAgendaEntries
+                  dayData={dayData}
+                  onEventSelect={onEventSelect}
+                  onHolidaySelect={onHolidaySelect}
+                />
               </div>
             </div>
           );

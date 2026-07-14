@@ -26,7 +26,9 @@ import {
   getFederalHolidays,
   deleteEvent,
   createEvent,
+  createHoliday,
   updateEvent,
+  updateHoliday,
   importData,
   getCategories,
   setRecurrence,
@@ -43,6 +45,9 @@ import RecurrenceModal from '../../components/RecurrenceModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import CalendarView from '../../components/CalendarView';
+import type { CalendarHolidayTarget } from '../../components/calendarView/types';
+import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
+import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import EventsFilterBar from './components/EventsFilterBar';
 import EventsGrid from './components/EventsGrid';
@@ -127,6 +132,11 @@ const Events = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const [pendingCalendarHoliday, setPendingCalendarHoliday] = useState<{
+    date: Date;
+    target: CalendarHolidayTarget;
+  } | null>(null);
+  const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -305,6 +315,16 @@ const Events = () => {
     });
   };
 
+  const handleCalendarHolidayAdd = (date: Date, target: CalendarHolidayTarget) => {
+    setEditingHoliday(null);
+    setPendingCalendarHoliday({ date, target });
+  };
+
+  const handleHolidaySelect = (holiday: Holiday) => {
+    setPendingCalendarHoliday(null);
+    setEditingHoliday(holiday);
+  };
+
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
     setIsFormOpen(true);
@@ -453,6 +473,34 @@ const Events = () => {
       fetchData();
     } catch (error) {
       messageApi.error('Import failed');
+      console.error(error);
+    }
+  };
+
+  const handleCalendarHolidaySubmit = async (values: CalendarHolidayFormValues) => {
+    try {
+      if (editingHoliday) {
+        await updateHoliday(editingHoliday.id, {
+          description: values.description?.trim() || editingHoliday.description,
+          is_recurring: !!values.is_recurring,
+          tab: values.tab || null,
+        });
+        messageApi.success('Holiday updated');
+      } else if (pendingCalendarHoliday) {
+        await createHoliday({
+          date: dayjs(pendingCalendarHoliday.date).format('YYYY-MM-DD'),
+          description: values.description?.trim() || pendingCalendarHoliday.target.label,
+          is_recurring: !!values.is_recurring,
+          tab: values.tab || null,
+        });
+        messageApi.success('Holiday added');
+      }
+
+      setEditingHoliday(null);
+      setPendingCalendarHoliday(null);
+      fetchCalendarData();
+    } catch (error) {
+      messageApi.error(editingHoliday ? 'Failed to update holiday' : 'Failed to create holiday');
       console.error(error);
     }
   };
@@ -701,9 +749,12 @@ const Events = () => {
               federalHolidays={federalHolidays}
               categories={categories}
               holidayTabs={holidayTabs}
+              addActionHighlight="events"
               loading={calendarLoading}
               onEventSelect={setViewingEvent}
+              onHolidaySelect={handleHolidaySelect}
               onAddEvent={handleAdd}
+              onAddHoliday={handleCalendarHolidayAdd}
             />
           )}
         </Space>
@@ -755,6 +806,20 @@ const Events = () => {
         event={viewingEvent}
         onClose={() => setViewingEvent(null)}
         onEdit={handleEdit}
+      />
+
+      <CalendarHolidayModal
+        open={!!pendingCalendarHoliday || !!editingHoliday}
+        mode={editingHoliday ? 'edit' : 'add'}
+        date={pendingCalendarHoliday?.date}
+        target={pendingCalendarHoliday?.target}
+        holiday={editingHoliday}
+        holidayTabs={holidayTabs}
+        onCancel={() => {
+          setPendingCalendarHoliday(null);
+          setEditingHoliday(null);
+        }}
+        onSubmit={handleCalendarHolidaySubmit}
       />
 
       {/* Import Modal */}
