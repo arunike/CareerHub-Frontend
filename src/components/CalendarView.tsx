@@ -21,8 +21,10 @@ interface CalendarViewProps {
   federalHolidays: Holiday[];
   categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
+  addActionHighlight?: 'events' | 'holidays' | 'all';
   loading?: boolean;
   onEventSelect?: (event: Event) => void;
+  onHolidaySelect?: (holiday: Holiday) => void;
   onAddEvent?: (day: Date) => void;
   onAddHoliday?: (day: Date, target: CalendarHolidayTarget) => void;
 }
@@ -33,8 +35,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   federalHolidays,
   categories = [],
   holidayTabs = [],
+  addActionHighlight = 'all',
   loading = false,
   onEventSelect,
+  onHolidaySelect,
   onAddEvent,
   onAddHoliday,
 }) => {
@@ -228,6 +232,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const selectedDayData = getDayData(selectedDate);
   const visibleRangeDates = getVisibleRangeDates(viewMode, anchorDate);
   const canAddFromCalendar = !!onAddEvent || !!onAddHoliday;
+  const shouldHighlightEventAdd = addActionHighlight === 'events' || addActionHighlight === 'all';
+  const shouldHighlightHolidayAdd =
+    addActionHighlight === 'holidays' || addActionHighlight === 'all';
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -271,6 +278,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
               onDateDoubleClick={canAddFromCalendar ? handleDateDoubleClick : undefined}
               onViewMore={handleViewMore}
               onEventSelect={onEventSelect}
+              onHolidaySelect={onHolidaySelect}
               getDayData={getDayData}
             />
           )}
@@ -282,6 +290,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
               onDateSelect={handleDateSelect}
               onDateDoubleClick={canAddFromCalendar ? handleDateDoubleClick : undefined}
               onEventSelect={onEventSelect}
+              onHolidaySelect={onHolidaySelect}
               getDayData={getDayData}
             />
           )}
@@ -302,6 +311,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         selectedDate={selectedDate}
         dayData={selectedDayData}
         onEventSelect={onEventSelect}
+        onHolidaySelect={onHolidaySelect}
       />
 
       <Modal
@@ -313,18 +323,28 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       >
         <div className="grid gap-2">
           {onAddEvent && (
-            <Button type="primary" onClick={handleAddEvent} disabled={loading} block>
+            <Button
+              type={shouldHighlightEventAdd ? 'primary' : 'default'}
+              onClick={handleAddEvent}
+              disabled={loading}
+              block
+            >
               Add Event
             </Button>
           )}
           {onAddHoliday && (
             <>
-              <Button onClick={() => handleAddHoliday({ tab: null, label: 'My Holiday' })} block>
+              <Button
+                type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
+                onClick={() => handleAddHoliday({ tab: null, label: 'My Holiday' })}
+                block
+              >
                 Add My Holiday
               </Button>
               {holidayTabs.map((tab) => (
                 <Button
                   key={tab.id}
+                  type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
                   onClick={() => handleAddHoliday({ tab: tab.id, label: tab.name })}
                   block
                 >

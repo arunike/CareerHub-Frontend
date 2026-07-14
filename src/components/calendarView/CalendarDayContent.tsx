@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { Tooltip } from 'antd';
 import type { CSSProperties, MouseEvent } from 'react';
-import type { Event } from '../../types';
+import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { DayData } from './types';
@@ -10,6 +10,7 @@ import { hasDayItems } from './utils';
 type DayDataProps = {
   dayData: DayData;
   onEventSelect?: (event: Event) => void;
+  onHolidaySelect?: (holiday: Holiday) => void;
   onViewMore?: () => void;
 };
 
@@ -51,6 +52,16 @@ const handleEventEntryClick = (
   onEventSelect(event);
 };
 
+const handleHolidayEntryClick = (
+  holiday: Holiday,
+  onHolidaySelect: ((holiday: Holiday) => void) | undefined,
+  clickEvent: MouseEvent<HTMLElement>
+) => {
+  if (!onHolidaySelect) return;
+  clickEvent.stopPropagation();
+  onHolidaySelect(holiday);
+};
+
 const getCompactItems = (dayData: DayData) => [
   ...dayData.federalHolidays.map((holiday, index) => ({
     kind: 'federal' as const,
@@ -69,7 +80,12 @@ const getCompactItems = (dayData: DayData) => [
   })),
 ];
 
-export const CalendarCompactDayEntries = ({ dayData, onEventSelect, onViewMore }: DayDataProps) => {
+export const CalendarCompactDayEntries = ({
+  dayData,
+  onEventSelect,
+  onHolidaySelect,
+  onViewMore,
+}: DayDataProps) => {
   const compactItems = getCompactItems(dayData);
   const visibleItems = compactItems.slice(0, 3);
   const hiddenCount = compactItems.length - visibleItems.length;
@@ -95,6 +111,7 @@ export const CalendarCompactDayEntries = ({ dayData, onEventSelect, onViewMore }
 
         if (item.kind === 'custom') {
           const { holiday } = item;
+          const holidayColor = getHolidayTabColor(holiday.tab_color);
 
           return (
             <Tooltip
@@ -102,15 +119,34 @@ export const CalendarCompactDayEntries = ({ dayData, onEventSelect, onViewMore }
               title={`${holiday.tab_name || 'My Holiday'}: ${holiday.description}`}
               mouseEnterDelay={0}
             >
-              <div
-                className="px-1.5 py-0.5 rounded truncate"
-                style={{
-                  backgroundColor: getHolidayTabColor(holiday.tab_color).bg,
-                  color: getHolidayTabColor(holiday.tab_color).text,
-                }}
-              >
-                {holiday.description}
-              </div>
+              {onHolidaySelect ? (
+                <button
+                  type="button"
+                  onClick={(clickEvent) =>
+                    handleHolidayEntryClick(holiday, onHolidaySelect, clickEvent)
+                  }
+                  className="block w-full rounded px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  style={
+                    {
+                      backgroundColor: holidayColor.bg,
+                      color: holidayColor.text,
+                      '--tw-ring-color': holidayColor.border,
+                    } as CSSProperties
+                  }
+                >
+                  <span className="block truncate">{holiday.description}</span>
+                </button>
+              ) : (
+                <div
+                  className="truncate rounded px-1.5 py-0.5"
+                  style={{
+                    backgroundColor: holidayColor.bg,
+                    color: holidayColor.text,
+                  }}
+                >
+                  {holiday.description}
+                </div>
+              )}
             </Tooltip>
           );
         }
@@ -168,7 +204,11 @@ export const CalendarCompactDayEntries = ({ dayData, onEventSelect, onViewMore }
   );
 };
 
-export const CalendarDayAgendaEntries = ({ dayData, onEventSelect }: DayDataProps) => {
+export const CalendarDayAgendaEntries = ({
+  dayData,
+  onEventSelect,
+  onHolidaySelect,
+}: DayDataProps) => {
   if (!hasDayItems(dayData)) {
     return <div className="text-sm text-gray-400 italic">No events or holidays scheduled.</div>;
   }
@@ -187,25 +227,51 @@ export const CalendarDayAgendaEntries = ({ dayData, onEventSelect }: DayDataProp
         </div>
       ))}
 
-      {dayData.customHolidays.map((holiday, index) => (
-        <div
-          key={`cust-${index}-${holiday.description}`}
-          className="rounded-xl border px-3 py-2 text-sm"
-          style={{
-            borderColor: getHolidayTabColor(holiday.tab_color).border,
-            backgroundColor: getHolidayTabColor(holiday.tab_color).bg,
-            color: getHolidayTabColor(holiday.tab_color).text,
-          }}
-        >
-          <div className="text-xs font-semibold uppercase tracking-wide opacity-75">
-            {holiday.tab_name || 'My Holiday'}
+      {dayData.customHolidays.map((holiday, index) => {
+        const holidayColor = getHolidayTabColor(holiday.tab_color);
+        const content = (
+          <>
+            <div className="text-xs font-semibold uppercase tracking-wide opacity-75">
+              {holiday.tab_name || 'My Holiday'}
+            </div>
+            <div className="mt-1">
+              {holiday.description}
+              {holiday.is_recurring ? ' (Yearly)' : ''}
+            </div>
+          </>
+        );
+
+        return onHolidaySelect ? (
+          <button
+            type="button"
+            key={`cust-${index}-${holiday.description}`}
+            onClick={(clickEvent) => handleHolidayEntryClick(holiday, onHolidaySelect, clickEvent)}
+            className="block w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+            style={
+              {
+                borderColor: holidayColor.border,
+                backgroundColor: holidayColor.bg,
+                color: holidayColor.text,
+                '--tw-ring-color': holidayColor.border,
+              } as CSSProperties
+            }
+          >
+            {content}
+          </button>
+        ) : (
+          <div
+            key={`cust-${index}-${holiday.description}`}
+            className="rounded-xl border px-3 py-2 text-sm"
+            style={{
+              borderColor: holidayColor.border,
+              backgroundColor: holidayColor.bg,
+              color: holidayColor.text,
+            }}
+          >
+            {content}
           </div>
-          <div className="mt-1">
-            {holiday.description}
-            {holiday.is_recurring ? ' (Yearly)' : ''}
-          </div>
-        </div>
-      ))}
+        );
+      })}
 
       {dayData.events.map((event) => {
         const eventColor = getEventColor(event);

@@ -10,7 +10,7 @@ import {
 } from 'date-fns';
 import clsx from 'clsx';
 import { CalendarCompactDayEntries } from './CalendarDayContent';
-import type { Event } from '../../types';
+import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
 
@@ -22,6 +22,7 @@ type Props = {
   onDateDoubleClick?: (day: Date) => void;
   onViewMore?: (day: Date) => void;
   onEventSelect?: (event: Event) => void;
+  onHolidaySelect?: (holiday: Holiday) => void;
   getDayData: GetDayData;
 };
 
@@ -33,6 +34,7 @@ const CalendarMonthView = ({
   onDateDoubleClick,
   onViewMore,
   onEventSelect,
+  onHolidaySelect,
   getDayData,
 }: Props) => {
   const monthStart = startOfMonth(anchorDate);
@@ -77,6 +79,7 @@ const CalendarMonthView = ({
           <CalendarCompactDayEntries
             dayData={dayData}
             onEventSelect={onEventSelect}
+            onHolidaySelect={onHolidaySelect}
             onViewMore={() => onViewMore?.(cloneDay)}
           />
         </div>

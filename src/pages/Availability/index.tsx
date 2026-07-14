@@ -21,6 +21,7 @@ import {
   getShareLinks,
   updatePublicBooking,
   updateEvent,
+  updateHoliday,
   updateRecurringSeries,
   updateShareLink,
   updateUserSettings,
@@ -50,7 +51,9 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
-import { Checkbox, Form, Input, message, Modal } from 'antd';
+import { Form, message, Modal } from 'antd';
+import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
+import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
 import type { ShareLink } from '../../types';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import EventEditorModal from '../Events/components/EventEditorModal';
@@ -101,7 +104,6 @@ const canMergeAvailabilityDates = (previousDate: string, nextDate: string) => {
 const Availability = () => {
   const { user } = useAuth();
   const [eventForm] = Form.useForm();
-  const [holidayForm] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
@@ -159,6 +161,7 @@ const Availability = () => {
     date: Date;
     target: CalendarHolidayTarget;
   } | null>(null);
+  const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
 
   const fetchAvailability = async () => {
     setLoading(true);
@@ -373,12 +376,13 @@ const Availability = () => {
   };
 
   const handleCalendarAddHoliday = (date: Date, target: CalendarHolidayTarget) => {
+    setEditingHoliday(null);
     setPendingHolidayAdd({ date, target });
-    holidayForm.resetFields();
-    holidayForm.setFieldsValue({
-      description: '',
-      is_recurring: false,
-    });
+  };
+
+  const handleCalendarHolidaySelect = (holiday: Holiday) => {
+    setPendingHolidayAdd(null);
+    setEditingHoliday(holiday);
   };
 
   const handleEventFormFinish = async (values: EventFormValues) => {
@@ -436,24 +440,30 @@ const Availability = () => {
     }
   };
 
-  const handleHolidayFormFinish = async (values: {
-    description?: string;
-    is_recurring?: boolean;
-  }) => {
-    if (!pendingHolidayAdd) return;
-
+  const handleHolidayFormFinish = async (values: CalendarHolidayFormValues) => {
     try {
-      await createHoliday({
-        date: format(pendingHolidayAdd.date, 'yyyy-MM-dd'),
-        description: values.description?.trim() || pendingHolidayAdd.target.label,
-        is_recurring: !!values.is_recurring,
-        tab: pendingHolidayAdd.target.tab ?? null,
-      });
-      messageApi.success('Holiday added');
+      if (editingHoliday) {
+        await updateHoliday(editingHoliday.id, {
+          description: values.description?.trim() || editingHoliday.description,
+          is_recurring: !!values.is_recurring,
+          tab: values.tab || null,
+        });
+        messageApi.success('Holiday updated');
+      } else if (pendingHolidayAdd) {
+        await createHoliday({
+          date: format(pendingHolidayAdd.date, 'yyyy-MM-dd'),
+          description: values.description?.trim() || pendingHolidayAdd.target.label,
+          is_recurring: !!values.is_recurring,
+          tab: values.tab || null,
+        });
+        messageApi.success('Holiday added');
+      }
+
       setPendingHolidayAdd(null);
+      setEditingHoliday(null);
       await fetchCalendarData();
     } catch (error) {
-      messageApi.error('Failed to create holiday');
+      messageApi.error(editingHoliday ? 'Failed to update holiday' : 'Failed to create holiday');
       console.error(error);
     }
   };
@@ -738,8 +748,10 @@ const Availability = () => {
           federalHolidays={federalHolidays}
           categories={categories}
           holidayTabs={holidayTabs}
+          addActionHighlight="all"
           loading={calendarLoading}
           onEventSelect={handleCalendarEventSelect}
+          onHolidaySelect={handleCalendarHolidaySelect}
           onAddEvent={handleCalendarAddEvent}
           onAddHoliday={handleCalendarAddHoliday}
         />
@@ -859,41 +871,19 @@ const Availability = () => {
         initialRule={recurrenceRule || undefined}
       />
 
-      <Modal
-        title={
-          pendingHolidayAdd
-            ? `Add ${pendingHolidayAdd.target.label} on ${format(pendingHolidayAdd.date, 'MMMM d, yyyy')}`
-            : 'Add Holiday'
-        }
-        open={!!pendingHolidayAdd}
-        onCancel={() => setPendingHolidayAdd(null)}
-        footer={null}
-        destroyOnHidden
-      >
-        <Form form={holidayForm} layout="vertical" onFinish={handleHolidayFormFinish}>
-          <Form.Item name="description" label="Holiday Name">
-            <Input placeholder={pendingHolidayAdd?.target.label || 'Custom Holiday'} />
-          </Form.Item>
-          <Form.Item name="is_recurring" valuePropName="checked">
-            <Checkbox>Recurring yearly</Checkbox>
-          </Form.Item>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setPendingHolidayAdd(null)}
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-            >
-              Save
-            </button>
-          </div>
-        </Form>
-      </Modal>
+      <CalendarHolidayModal
+        open={!!pendingHolidayAdd || !!editingHoliday}
+        mode={editingHoliday ? 'edit' : 'add'}
+        date={pendingHolidayAdd?.date}
+        target={pendingHolidayAdd?.target}
+        holiday={editingHoliday}
+        holidayTabs={holidayTabs}
+        onCancel={() => {
+          setPendingHolidayAdd(null);
+          setEditingHoliday(null);
+        }}
+        onSubmit={handleHolidayFormFinish}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import type { CSSProperties } from 'react';
-import type { Event } from '../../types';
+import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import { hasDayItems } from './utils';
@@ -11,9 +11,10 @@ type Props = {
   selectedDate: Date;
   dayData: DayData;
   onEventSelect?: (event: Event) => void;
+  onHolidaySelect?: (holiday: Holiday) => void;
 };
 
-const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) => {
+const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidaySelect }: Props) => {
   return (
     <div className="enterprise-section mt-4 p-4">
       <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -36,8 +37,35 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) =
             ))}
             {dayData.customHolidays.map((holiday, index) => {
               const tabColor = getHolidayTabColor(holiday.tab_color);
+              const content = (
+                <>
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: tabColor.dot }}
+                  ></span>
+                  <span className="font-medium">{holiday.tab_name || 'My Holiday'}:</span>
+                  {holiday.description} {holiday.is_recurring && '(Yearly)'}
+                </>
+              );
 
-              return (
+              return onHolidaySelect ? (
+                <button
+                  type="button"
+                  key={`selected-cust-${index}-${holiday.description}`}
+                  onClick={() => onHolidaySelect?.(holiday)}
+                  className="flex w-full items-center gap-2 rounded-lg border p-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  style={
+                    {
+                      borderColor: tabColor.border,
+                      backgroundColor: tabColor.bg,
+                      color: tabColor.text,
+                      '--tw-ring-color': tabColor.border,
+                    } as CSSProperties
+                  }
+                >
+                  {content}
+                </button>
+              ) : (
                 <div
                   key={`selected-cust-${index}-${holiday.description}`}
                   className="flex items-center gap-2 rounded-lg border p-2 text-sm"
@@ -47,12 +75,7 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect }: Props) =
                     color: tabColor.text,
                   }}
                 >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: tabColor.dot }}
-                  ></span>
-                  <span className="font-medium">{holiday.tab_name || 'My Holiday'}:</span>
-                  {holiday.description} {holiday.is_recurring && '(Yearly)'}
+                  {content}
                 </div>
               );
             })}
