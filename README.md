@@ -113,10 +113,10 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### 📅 Availability & Events
 
-- **Availability** (`/`): Weekly calendar with user-defined week-long availability text generation, federal holiday integration, event badges, date navigation, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, reschedule/cancel cutoff settings, link-level booking status, host-side booking cancel, and **instant auto-prefill** of host information from the user profile.
-- **Events** (`/events`): Create/edit/delete interview events; apply the configured default event category; set end times with 15-minute to 3-hour quick-duration options; link to applications; timezone display; event type tags
+- **Availability** (`/`): Weekly calendar with user-defined week-long availability text generation, federal holiday integration, event badges, date navigation, create/edit actions for events and custom holidays, and **Multiple Public Booking Links** support. Features branded page copy, slot duration, buffer/daily-cap controls, reschedule/cancel cutoff settings, link-level booking status, host-side booking cancel, and **instant auto-prefill** of host information from the user profile.
+- **Events** (`/events`): Create/edit/delete interview events; create/edit custom holidays from the calendar; apply the configured default event category; set end times with 15-minute to 3-hour quick-duration options; link to applications; timezone display; event type tags
 - Google Sheets sync can import mapped sheet rows as Events for interview calendars
-- **Holidays** (`/holidays`): Federal + custom holiday management; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
+- **Holidays** (`/holidays`): Federal + custom holiday management; create/edit events and custom holidays from the calendar; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing holidays beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
 - **⚡ Conflict Radar**: `NotificationBell` refreshes unresolved conflicts, upcoming events, and task deadlines through the standard API flow, which keeps the UI compatible with local dev, Docker, and Vercel deployments
 
 ### 📊 Analytics (`/analytics`)
