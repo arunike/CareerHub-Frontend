@@ -39,6 +39,7 @@ import {
   computeBenefitsTotal,
   estimateColIndexFromCity,
 } from './calculations';
+import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
 
 const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
 const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
@@ -85,6 +86,8 @@ const defaultScenarioDraft = (): SimulatedOffer => ({
   equity_total_grant: 80000,
   equity_vesting_percent: 25,
   equity_vesting_schedule: [25, 25, 25, 25],
+  equity_liquidity: 'LIQUID',
+  equity_buyback_value: 0,
   sign_on: 10000,
   benefits_value: 12000,
   work_mode: 'HYBRID',
@@ -683,6 +686,8 @@ const OfferComparison = () => {
               ];
         return {
           ...offer,
+          equity_liquidity: normalizeEquityLiquidity(offer.equity_liquidity),
+          equity_buyback_value: Math.max(0, Number(offer.equity_buyback_value) || 0),
           benefit_items: benefitItems,
           benefits_value: computeBenefitsTotal(benefitItems),
           is_unlimited_pto: !!offer.is_unlimited_pto,
@@ -775,7 +780,7 @@ const OfferComparison = () => {
       const totalComp =
         base +
         Number(offer.bonus || 0) +
-        Number(offer.equity || 0) +
+        getRealizableEquity(offer) +
         Number(offer.sign_on || 0) +
         Number(offer.benefits_value || 0) +
         Number(offer.relocation_bonus || 0) +
@@ -816,6 +821,8 @@ const OfferComparison = () => {
           equity_total_grant: offer.equity_total_grant,
           equity_vesting_percent: offer.equity_vesting_percent,
           equity_vesting_schedule: offer.equity_vesting_schedule || [],
+          equity_liquidity: normalizeEquityLiquidity(offer.equity_liquidity),
+          equity_buyback_value: Number(offer.equity_buyback_value) || 0,
           sign_on: offer.sign_on,
           benefits_value: offer.benefits_value,
           benefit_items: offer.benefit_items || [],
@@ -924,6 +931,12 @@ const OfferComparison = () => {
         equity_vesting_schedule: Array.isArray(offerSnapshot.equity_vesting_schedule)
           ? offerSnapshot.equity_vesting_schedule.map(Number)
           : targetOffer.equity_vesting_schedule,
+        equity_liquidity: normalizeEquityLiquidity(
+          offerSnapshot.equity_liquidity ?? targetOffer.equity_liquidity
+        ),
+        equity_buyback_value: Number(
+          offerSnapshot.equity_buyback_value ?? targetOffer.equity_buyback_value ?? 0
+        ),
         sign_on: Number(offerSnapshot.sign_on ?? targetOffer.sign_on),
         benefits_value: Number(offerSnapshot.benefits_value ?? targetOffer.benefits_value),
         benefit_items: restoredBenefitItems,
@@ -1174,7 +1187,7 @@ const OfferComparison = () => {
       const totalComp =
         Number(offer.base_salary) +
         Number(offer.bonus) +
-        Number(offer.equity) +
+        getRealizableEquity(offer) +
         Number(offer.sign_on);
 
       return {
@@ -1182,7 +1195,7 @@ const OfferComparison = () => {
         name: appName,
         Base: Number(offer.base_salary),
         Bonus: Number(offer.bonus),
-        Equity: Number(offer.equity),
+        Equity: getRealizableEquity(offer),
         SignOn: Number(offer.sign_on),
         Benefits: Number(offer.benefits_value),
         Total: totalComp,
@@ -1197,7 +1210,7 @@ const OfferComparison = () => {
       const totalComp =
         Number(offer.base_salary) +
         Number(offer.bonus) +
-        Number(offer.equity) +
+        getRealizableEquity(offer) +
         Number(offer.sign_on);
 
       return {
@@ -1205,7 +1218,7 @@ const OfferComparison = () => {
         name: simName,
         Base: Number(offer.base_salary),
         Bonus: Number(offer.bonus),
-        Equity: Number(offer.equity),
+        Equity: getRealizableEquity(offer),
         SignOn: Number(offer.sign_on),
         Benefits: Number(offer.benefits_value),
         Total: totalComp,

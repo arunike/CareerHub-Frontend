@@ -8,6 +8,7 @@ import {
   computeBenefitsTotal,
 } from './calculations';
 import type { AdjustedOfferMetrics } from './types';
+import { normalizeEquityLiquidity } from './equityLiquidity';
 
 type Props = {
   editingOffer: Offer | null;
@@ -98,6 +99,12 @@ const EditOfferModal = ({
           onBonusChange={(value) => setEditingOfferField('bonus', value)}
           equity={Number(editingOffer.equity) || 0}
           onEquityChange={(value) => setEditingOfferField('equity', value)}
+          equityLiquidity={normalizeEquityLiquidity(editingOffer.equity_liquidity)}
+          onEquityLiquidityChange={(value) => setEditingOfferField('equity_liquidity', value)}
+          equityBuybackValue={Number(editingOffer.equity_buyback_value) || 0}
+          onEquityBuybackValueChange={(value) =>
+            setEditingOfferField('equity_buyback_value', value)
+          }
           equityTotalGrant={Number(editingOffer.equity_total_grant ?? 0)}
           onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
           equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}

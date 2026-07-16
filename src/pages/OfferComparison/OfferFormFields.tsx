@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { BenefitItem, DayOneGcStatus, VisaSponsorshipStatus } from './calculations';
+import type { EquityLiquidity } from './equityLiquidity';
 import {
   BenefitsSection,
   CompensationSection,
@@ -41,6 +42,10 @@ interface OfferFormFieldsProps {
   onBonusChange: (value: number) => void;
   equity: number;
   onEquityChange: (value: number) => void;
+  equityLiquidity: EquityLiquidity;
+  onEquityLiquidityChange: (value: EquityLiquidity) => void;
+  equityBuybackValue: number;
+  onEquityBuybackValueChange: (value: number) => void;
   equityTotalGrant?: number;
   onEquityTotalGrantChange?: (value: number) => void;
   equityVestingPercent?: number;
@@ -145,6 +150,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onBonusChange,
   equity,
   onEquityChange,
+  equityLiquidity,
+  onEquityLiquidityChange,
+  equityBuybackValue,
+  onEquityBuybackValueChange,
   equityTotalGrant,
   onEquityTotalGrantChange,
   equityVestingPercent,
@@ -301,6 +310,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         onBonusChange={onBonusChange}
         equity={equity}
         onEquityChange={onEquityChange}
+        equityLiquidity={equityLiquidity}
+        onEquityLiquidityChange={onEquityLiquidityChange}
+        equityBuybackValue={equityBuybackValue}
+        onEquityBuybackValueChange={onEquityBuybackValueChange}
         equityTotalGrant={equityTotalGrant}
         onEquityTotalGrantChange={onEquityTotalGrantChange}
         effectiveEquityVestingPercent={effectiveEquityVestingPercent}

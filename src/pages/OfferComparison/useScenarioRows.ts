@@ -15,6 +15,7 @@ import {
   getEffectiveTaxLocation,
   getPrimaryApplicationLocation,
 } from '../../utils/applicationLocation';
+import { getRealizableEquity } from './equityLiquidity';
 
 type Params = {
   filteredOffers: OfferLike[];
@@ -50,6 +51,7 @@ export const useScenarioRows = ({
     const baselineRent = Math.max(0, Number(effectiveMonthlyRent || 0));
 
     const realRows = filteredOffers.map((offer) => {
+      const realizableEquity = getRealizableEquity(offer);
       const app = applications.find((a) => a.id === offer.application);
       const homeLocation = getEffectiveTaxLocation(app) || referenceLocation;
       const rowCity = homeLocation;
@@ -85,7 +87,7 @@ export const useScenarioRows = ({
         Number(offer.bonus) +
         Number(offer.sign_on) +
         Number(offer.benefits_value) +
-        Number(offer.equity) +
+        realizableEquity +
         Number(offer.relocation_bonus || 0) -
         Number(offer.health_premium_monthly || 0) * 12;
       const estimatedTax = estimateTaxRatesByIncomeType(
@@ -115,7 +117,7 @@ export const useScenarioRows = ({
         bonus: Number(offer.bonus),
         sign_on: Number(offer.sign_on),
         benefits_value: Number(offer.benefits_value),
-        equity: Number(offer.equity),
+        equity: realizableEquity,
         work_mode: workMode,
         rto_days_per_week: rtoDays,
         freeFoodPerkAnnual: freeFoodAnnualValue,
@@ -151,7 +153,7 @@ export const useScenarioRows = ({
         total_comp:
           Number(offer.base_salary) +
           Number(offer.bonus) +
-          Number(offer.equity) +
+          realizableEquity +
           Number(offer.sign_on) +
           Number(offer.relocation_bonus || 0) +
           (scenarioCalc.breakdown.fortyOneKMatchValue || 0) +
@@ -180,6 +182,7 @@ export const useScenarioRows = ({
     });
 
     const simulatedRows = simulatedOffers.map((offer) => {
+      const realizableEquity = getRealizableEquity(offer);
       const homeLocation = getEffectiveTaxLocation(offer) || referenceLocation;
       const rowCity = homeLocation;
       const rowColIndex = estimateColIndexFromCity(
@@ -197,7 +200,7 @@ export const useScenarioRows = ({
         Number(offer.bonus) +
         Number(offer.sign_on) +
         Number(offer.benefits_value) +
-        Number(offer.equity) +
+        realizableEquity +
         Number(offer.relocation_bonus || 0) -
         Number(offer.health_premium_monthly || 0) * 12;
       const estimatedTax = estimateTaxRatesByIncomeType(
@@ -225,7 +228,7 @@ export const useScenarioRows = ({
         bonus: Number(offer.bonus),
         sign_on: Number(offer.sign_on),
         benefits_value: Number(offer.benefits_value),
-        equity: Number(offer.equity),
+        equity: realizableEquity,
         work_mode: offer.work_mode,
         rto_days_per_week: offer.rto_days_per_week,
         freeFoodPerkAnnual: freeFoodAnnualValue,
@@ -266,7 +269,7 @@ export const useScenarioRows = ({
         total_comp:
           Number(offer.base_salary) +
           Number(offer.bonus) +
-          Number(offer.equity) +
+          realizableEquity +
           Number(offer.sign_on) +
           Number(offer.relocation_bonus || 0) +
           (scenarioCalc.breakdown.fortyOneKMatchValue || 0) +

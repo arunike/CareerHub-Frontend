@@ -20,6 +20,7 @@ import {
   immigrationSignalOptions,
   type ImmigrationSignalValue,
 } from './immigrationSignal';
+import { getEquityLiquidityCopy, getRealizableEquity } from './equityLiquidity';
 
 type Props = {
   filteredOffers: Offer[];
@@ -259,7 +260,7 @@ const scoreWorkLife = (offer: Offer | SimulatedOffer, app?: Application) => {
 const totalAnnualComp = (offer: Offer | SimulatedOffer) => {
   const base = asNumber(offer.base_salary);
   const bonus = asNumber(offer.bonus);
-  const equity = asNumber(offer.equity);
+  const equity = getRealizableEquity(offer);
   const signOn = asNumber(offer.sign_on);
   const benefits = asNumber(offer.benefits_value);
   const relocation = asNumber(offer.relocation_bonus);
@@ -315,7 +316,8 @@ const buildFinancialCalculationLines = ({
   const base = asNumber(offer.base_salary);
   const bonus = asNumber(offer.bonus);
   const signOn = asNumber(offer.sign_on);
-  const equity = asNumber(offer.equity);
+  const equity = getRealizableEquity(offer);
+  const equityInfo = getEquityLiquidityCopy(offer);
   const benefits = asNumber(offer.benefits_value);
   const relocation = asNumber(offer.relocation_bonus);
 
@@ -366,7 +368,9 @@ const buildFinancialCalculationLines = ({
   return [
     `Gross inputs: base ${formatCurrency(base)}, bonus ${formatCurrency(bonus)}, sign-on ${formatCurrency(
       signOn
-    )}, equity ${formatCurrency(equity)}, benefits ${formatCurrency(benefits)}, relocation ${formatCurrency(
+    )}, granted equity ${formatCurrency(equityInfo.granted)}, counted equity ${formatCurrency(
+      equity
+    )} (${equityInfo.label}), benefits ${formatCurrency(benefits)}, relocation ${formatCurrency(
       relocation
     )}`,
     `Health Ins: premium -${formatCurrency(healthPremiumAnnual)}/yr (${formatCurrency(
@@ -934,7 +938,7 @@ const OfferDecisionScorecard = ({
   const currentTotal = currentOffer
     ? Number(currentOffer.base_salary) +
       Number(currentOffer.bonus) +
-      Number(currentOffer.equity) +
+      getRealizableEquity(currentOffer) +
       Number(currentOffer.sign_on)
     : 0;
 
@@ -1285,7 +1289,7 @@ const OfferDecisionScorecard = ({
                   </div>
                   <div>
                     <Tooltip
-                      title="Annualized value of your equity grant (RSUs or options). Calculated as total grant ÷ vesting period, before tax."
+                      title="Annualized grant value. Financial scoring counts the full value only when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable."
                       placement="top"
                     >
                       <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
@@ -1295,17 +1299,30 @@ const OfferDecisionScorecard = ({
                     <div className="text-sm font-bold text-slate-900">
                       ${Number(row.offer.equity).toLocaleString()}
                     </div>
-                    <Tooltip
-                      title="Equity is taxed as ordinary income (RSUs) or capital gains (options) upon vesting/exercise."
-                      placement="bottom"
-                    >
-                      <div className="text-[10px] text-slate-400 cursor-help">
-                        After tax: $
-                        {Math.round(
-                          adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity || 0
-                        ).toLocaleString()}
-                      </div>
-                    </Tooltip>
+                    {(() => {
+                      const liquidity = getEquityLiquidityCopy(row.offer);
+                      const simulatedMetrics = scenarioRows.find(
+                        (scenario) => String(scenario.offer.id) === String(row.offer.id)
+                      );
+                      const afterTax = row.isSimulated
+                        ? simulatedMetrics?.afterTaxEquity
+                        : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
+                      return (
+                        <Tooltip
+                          title={`${liquidity.label}. ${liquidity.detail}. Tax is applied only to the realizable amount used in this comparison.`}
+                          placement="bottom"
+                        >
+                          <div className="cursor-help text-[10px] text-slate-500">
+                            {liquidity.label} · {liquidity.detail}
+                            {liquidity.realizable > 0 && (
+                              <span className="block text-slate-400">
+                                After tax: ${Math.round(afterTax || 0).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        </Tooltip>
+                      );
+                    })()}
                   </div>
                   <div>
                     <Tooltip
@@ -1432,7 +1449,7 @@ const OfferDecisionScorecard = ({
                       {!row.isSimulated && !(row.offer as Offer).is_current && (
                         <div className="text-right">
                           <Tooltip
-                            title="Total comp difference (Base + Bonus + Equity + Sign-On) compared to your current job."
+                            title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
                             placement="top"
                           >
                             <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1 justify-end">
@@ -1443,7 +1460,7 @@ const OfferDecisionScorecard = ({
                             const total =
                               Number(row.offer.base_salary) +
                               Number(row.offer.bonus) +
-                              Number(row.offer.equity) +
+                              getRealizableEquity(row.offer) +
                               Number(row.offer.sign_on);
                             const diff = total - currentTotal;
                             const diffPercent =
@@ -1468,7 +1485,7 @@ const OfferDecisionScorecard = ({
                       {row.isSimulated && (
                         <div className="text-right">
                           <Tooltip
-                            title="Total comp difference compared to your current job (Base + Bonus + Equity + Sign-On)."
+                            title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
                             placement="top"
                           >
                             <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1 justify-end">
@@ -1479,7 +1496,7 @@ const OfferDecisionScorecard = ({
                             const total =
                               Number(row.offer.base_salary) +
                               Number(row.offer.bonus) +
-                              Number(row.offer.equity) +
+                              getRealizableEquity(row.offer) +
                               Number(row.offer.sign_on);
                             const diff = total - currentTotal;
                             const diffPercent =

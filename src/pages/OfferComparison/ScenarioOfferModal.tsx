@@ -6,6 +6,7 @@ import type { ApplicationLike, BenefitItem, MaritalStatus, SimulatedOffer } from
 import { computeBenefitsTotal } from './calculations';
 import { buildScenarioFromLinkedApplication } from './scenarioDraft';
 import { getApplication } from '../../api';
+import { normalizeEquityLiquidity } from './equityLiquidity';
 
 type Props = {
   isOpen: boolean;
@@ -178,6 +179,12 @@ const ScenarioOfferModal = ({
               onBonusChange={(value) => setNewScenarioField('bonus', value)}
               equity={Number(newScenario.equity) || 0}
               onEquityChange={(value) => setNewScenarioField('equity', value)}
+              equityLiquidity={normalizeEquityLiquidity(newScenario.equity_liquidity)}
+              onEquityLiquidityChange={(value) => setNewScenarioField('equity_liquidity', value)}
+              equityBuybackValue={Number(newScenario.equity_buyback_value) || 0}
+              onEquityBuybackValueChange={(value) =>
+                setNewScenarioField('equity_buyback_value', value)
+              }
               equityTotalGrant={Number(newScenario.equity_total_grant ?? 0)}
               onEquityTotalGrantChange={(value) => setNewScenarioField('equity_total_grant', value)}
               equityVestingPercent={Number(newScenario.equity_vesting_percent ?? 25)}

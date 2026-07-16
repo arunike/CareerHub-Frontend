@@ -72,7 +72,7 @@ const OfferComparisonChart = ({ data }: Props) => {
       <div className="mb-4">
         <h3 className="text-sm font-bold text-slate-900">First-Year Compensation</h3>
         <p className="mt-1 text-xs font-medium text-slate-500">
-          Year 1 salary, bonus, equity, sign-on, and benefits. Future-year compensation may change.
+          Year 1 salary, bonus, realizable equity, sign-on, and benefits. Paper equity is excluded.
         </p>
       </div>
       <div className="h-[280px] sm:h-[320px]">
@@ -85,7 +85,7 @@ const OfferComparisonChart = ({ data }: Props) => {
             <Legend />
             <Bar dataKey="Base" stackId="a" fill="#2563eb" />
             <Bar dataKey="Bonus" stackId="a" fill="#60a5fa" />
-            <Bar dataKey="Equity" stackId="a" fill="#ec4899" />
+            <Bar dataKey="Equity" name="Realizable equity" stackId="a" fill="#ec4899" />
             <Bar dataKey="SignOn" stackId="a" fill="#14b8a6" />
             <Bar dataKey="Benefits" stackId="a" fill="#f59e0b" />
           </BarChart>
