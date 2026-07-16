@@ -118,8 +118,6 @@ export const useScenarioRows = ({
         sign_on: Number(offer.sign_on),
         benefits_value: Number(offer.benefits_value),
         equity: realizableEquity,
-        work_mode: workMode,
-        rto_days_per_week: rtoDays,
         freeFoodPerkAnnual: freeFoodAnnualValue,
         commuteAnnualCost,
         baseTaxRate: rowTax.baseTaxRate,
@@ -160,7 +158,7 @@ export const useScenarioRows = ({
           (scenarioCalc.breakdown.taxedHsa || 0) -
           Number(offer.health_premium_monthly || 0) * 12,
         adjustedValue: scenarioCalc.adjustedValue - rowMonthlyRent * 12,
-        lifestyleAdjustment: scenarioCalc.lifestyleAdjustment,
+        cashAdjustment: scenarioCalc.cashAdjustment,
         deltaTotalComp: 0,
         deltaBaseAfterTax: 0,
         deltaBonusAfterTax: 0,
@@ -229,8 +227,6 @@ export const useScenarioRows = ({
         sign_on: Number(offer.sign_on),
         benefits_value: Number(offer.benefits_value),
         equity: realizableEquity,
-        work_mode: offer.work_mode,
-        rto_days_per_week: offer.rto_days_per_week,
         freeFoodPerkAnnual: freeFoodAnnualValue,
         commuteAnnualCost,
         baseTaxRate: rowTax.baseTaxRate,
@@ -276,7 +272,7 @@ export const useScenarioRows = ({
           (scenarioCalc.breakdown.taxedHsa || 0) -
           Number(offer.health_premium_monthly || 0) * 12,
         adjustedValue: scenarioCalc.adjustedValue - rowMonthlyRent * 12,
-        lifestyleAdjustment: scenarioCalc.lifestyleAdjustment,
+        cashAdjustment: scenarioCalc.cashAdjustment,
         deltaTotalComp: 0,
         deltaBaseAfterTax: 0,
         deltaBonusAfterTax: 0,
@@ -361,7 +357,7 @@ export const useScenarioRows = ({
         monthlyRent: row.monthlyRent,
         commuteAnnualCost: row.commuteAnnualCost,
         freeFoodAnnualValue: row.freeFoodAnnualValue,
-        lifestyleAdjustment: row.lifestyleAdjustment,
+        cashAdjustment: row.cashAdjustment,
         costOfLivingIndex: row.colIndex,
       };
     });
