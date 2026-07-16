@@ -55,6 +55,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled
 - **Decision Snapshots**: Save point-in-time offer decisions with current score, rank, total comp, adjusted value, rent/tax/commute assumptions, category breakdown, and notes; locked snapshots are preserved from deletion
 - **Compensation Simulator**: After-tax monthly take-home view with rent, commute, food budget, PTO value, and equity vesting scenarios for real offers and custom scenarios
+- **Private Equity Liquidity**: Mark equity as freely tradable, company-buyback, or currently unsellable. The scorecard, adjusted value, deltas, chart, snapshots, and simulator count only realizable equity, while the full paper grant remains visible for context
 - **⚡ Negotiation Advisor**: per-row "Negotiate" button (non-current offers) opens `NegotiationAdvisorModal`:
   - Centered offer snapshot header (Base, Bonus, Equity/yr, Sign-On, PTO)
   - **Suggested Counter-Ask** — concrete numbers (base, sign-on, equity, PTO) with rationale

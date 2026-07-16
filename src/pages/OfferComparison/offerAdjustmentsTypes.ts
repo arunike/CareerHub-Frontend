@@ -26,7 +26,13 @@ export interface RentEstimateData {
 
 export interface ScenarioRow {
   kind: 'real' | 'simulated';
-  offer: { id?: number | string; is_current?: boolean };
+  offer: {
+    id?: number | string;
+    is_current?: boolean;
+    equity?: number;
+    equity_liquidity?: string;
+    equity_buyback_value?: number;
+  };
   appName: string;
   locationLabel: string;
   homeLocationLabel: string;

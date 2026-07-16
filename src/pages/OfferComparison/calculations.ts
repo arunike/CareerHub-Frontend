@@ -39,6 +39,8 @@ export interface SimulatedOffer {
   equity_total_grant?: number;
   equity_vesting_percent?: number;
   equity_vesting_schedule?: number[];
+  equity_liquidity?: 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
+  equity_buyback_value?: number;
   sign_on: number;
   benefits_value: number;
   benefit_items?: BenefitItem[];
@@ -76,6 +78,8 @@ export interface OfferLike {
   equity_total_grant?: number;
   equity_vesting_percent?: number;
   equity_vesting_schedule?: number[];
+  equity_liquidity?: 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
+  equity_buyback_value?: number;
   sign_on: number;
   benefits_value: number;
   benefit_items?: BenefitItem[];

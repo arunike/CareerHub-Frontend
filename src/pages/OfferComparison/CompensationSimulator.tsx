@@ -9,6 +9,7 @@ import {
   LineChartOutlined,
 } from '@ant-design/icons';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
+import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
 
 type OfferWithCompFields = ScenarioRow['offer'] & {
   base_salary?: number;
@@ -18,6 +19,8 @@ type OfferWithCompFields = ScenarioRow['offer'] & {
   equity_total_grant?: number | null;
   equity_vesting_percent?: number | null;
   equity_vesting_schedule?: number[];
+  equity_liquidity?: string;
+  equity_buyback_value?: number;
 };
 
 type EquityPreset = 'downside' | 'base' | 'upside' | 'custom';
@@ -55,6 +58,12 @@ const getTotalGrant = (offer: OfferWithCompFields) => {
 
 const buildGrossVestingYears = (row: ScenarioRow, equityGrowthPct: number) => {
   const offer = row.offer as OfferWithCompFields;
+  const liquidity = normalizeEquityLiquidity(offer.equity_liquidity);
+  if (liquidity === 'ILLIQUID') return [0, 0, 0, 0];
+  if (liquidity === 'BUYBACK') {
+    const annualBuybackValue = getRealizableEquity(offer);
+    return [annualBuybackValue, annualBuybackValue, annualBuybackValue, annualBuybackValue];
+  }
   const totalGrant = getTotalGrant(offer);
   const vestPct = clamp(Number(offer.equity_vesting_percent || 25), 1, 100);
   const explicitSchedule = Array.isArray(offer.equity_vesting_schedule)
@@ -167,8 +176,8 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             Monthly take-home and vesting scenarios
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Uses the same tax, rent, commute, food perk, PTO, and equity assumptions as the
-            comparison rows.
+            Uses the same tax, rent, commute, food perk, PTO, and realizable-equity assumptions as
+            the comparison rows.
           </p>
         </div>
 

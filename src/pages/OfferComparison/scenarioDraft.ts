@@ -5,6 +5,7 @@ import {
   estimateTaxRatesByIncomeType,
 } from './calculations';
 import { getEffectiveTaxLocation, getOfficeLocation } from '../../utils/applicationLocation';
+import { getRealizableEquity } from './equityLiquidity';
 
 type BuildLinkedScenarioParams = {
   prev: SimulatedOffer;
@@ -53,7 +54,7 @@ export const buildScenarioFromLinkedApplication = ({
     Number(prev.bonus) +
     Number(prev.sign_on) +
     Number(computeBenefitsTotal(scenarioBenefitItems)) +
-    Number(prev.equity);
+    getRealizableEquity(prev);
 
   const estimatedTax = estimateTaxRatesByIncomeType(
     nextIncome,
