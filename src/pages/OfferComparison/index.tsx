@@ -98,6 +98,8 @@ const defaultScenarioDraft = (): SimulatedOffer => ({
   free_food_perk_frequency: 'YEARLY',
   pto_days: 15,
   is_unlimited_pto: false,
+  sick_leave_days: 0,
+  sick_leave_included_in_unlimited_pto: true,
   holiday_days: 11,
   tax_base_rate: 32,
   tax_bonus_rate: 40,
@@ -615,6 +617,8 @@ const OfferComparison = () => {
           benefit_items: [],
           pto_days: 15,
           is_unlimited_pto: false,
+          sick_leave_days: 0,
+          sick_leave_included_in_unlimited_pto: true,
           holiday_days: 11,
         });
         newOffer = offerResp.data;
@@ -691,6 +695,9 @@ const OfferComparison = () => {
           benefit_items: benefitItems,
           benefits_value: computeBenefitsTotal(benefitItems),
           is_unlimited_pto: !!offer.is_unlimited_pto,
+          sick_leave_days: Math.max(0, Number(offer.sick_leave_days) || 0),
+          sick_leave_included_in_unlimited_pto:
+            offer.sick_leave_included_in_unlimited_pto !== false,
         };
       }),
     []
@@ -828,6 +835,9 @@ const OfferComparison = () => {
           benefit_items: offer.benefit_items || [],
           pto_days: offer.pto_days,
           is_unlimited_pto: offer.is_unlimited_pto || false,
+          sick_leave_days: Number(offer.sick_leave_days) || 0,
+          sick_leave_included_in_unlimited_pto:
+            offer.sick_leave_included_in_unlimited_pto !== false,
           holiday_days: offer.holiday_days || 0,
           work_mode: application?.rto_policy || '',
           office_location: application?.office_location || '',
@@ -942,6 +952,11 @@ const OfferComparison = () => {
         benefit_items: restoredBenefitItems,
         pto_days: Number(offerSnapshot.pto_days ?? targetOffer.pto_days),
         is_unlimited_pto: Boolean(offerSnapshot.is_unlimited_pto ?? targetOffer.is_unlimited_pto),
+        sick_leave_days: Number(offerSnapshot.sick_leave_days ?? targetOffer.sick_leave_days ?? 0),
+        sick_leave_included_in_unlimited_pto:
+          (offerSnapshot.sick_leave_included_in_unlimited_pto ??
+            targetOffer.sick_leave_included_in_unlimited_pto ??
+            true) !== false,
         holiday_days:
           offerSnapshot.holiday_days == null
             ? targetOffer.holiday_days

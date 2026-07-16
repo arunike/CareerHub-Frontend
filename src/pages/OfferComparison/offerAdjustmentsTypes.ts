@@ -42,6 +42,8 @@ export interface ScenarioRow {
   rto_days_per_week: number;
   pto_days: number;
   is_unlimited_pto: boolean;
+  sick_leave_days: number;
+  sick_leave_included_in_unlimited_pto: boolean;
   holiday_days: number;
   pto_holiday_days: number | null;
   total_comp: number;

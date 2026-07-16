@@ -109,6 +109,9 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           sign_on: Number(offer.sign_on),
           pto_days: offer.pto_days ?? 0,
           is_unlimited_pto: !!offer.is_unlimited_pto,
+          sick_leave_days: offer.sick_leave_days ?? 0,
+          sick_leave_included_in_unlimited_pto:
+            offer.sick_leave_included_in_unlimited_pto !== false,
         },
         data
       );
@@ -157,6 +160,13 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
           { label: 'Equity/yr', value: fmt(Number(offer.equity)) },
           { label: 'Sign-On', value: fmt(Number(offer.sign_on)) },
           { label: 'PTO', value: formatPtoLabel(offer.pto_days, !!offer.is_unlimited_pto) },
+          {
+            label: 'Sick',
+            value:
+              offer.is_unlimited_pto && offer.sick_leave_included_in_unlimited_pto !== false
+                ? 'Included'
+                : `${offer.sick_leave_days ?? 0} days`,
+          },
         ].map(({ label, value }) => (
           <div key={label} className="flex flex-col items-center min-w-[72px]">
             <Text type="secondary" className="text-xs uppercase tracking-wider">

@@ -187,6 +187,14 @@ const EditOfferModal = ({
           onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}
           isUnlimitedPto={!!editingOffer.is_unlimited_pto}
           onIsUnlimitedPtoChange={(value) => setEditingOfferField('is_unlimited_pto', value)}
+          sickLeaveDays={Number(editingOffer.sick_leave_days) || 0}
+          onSickLeaveDaysChange={(value) => setEditingOfferField('sick_leave_days', value)}
+          sickLeaveIncludedInUnlimitedPto={
+            editingOffer.sick_leave_included_in_unlimited_pto !== false
+          }
+          onSickLeaveIncludedInUnlimitedPtoChange={(value) =>
+            setEditingOfferField('sick_leave_included_in_unlimited_pto', value)
+          }
           holidayDays={Number(editingOffer.holiday_days ?? 11)}
           onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
           healthPremiumMonthly={Number(editingOffer.health_premium_monthly) || 0}

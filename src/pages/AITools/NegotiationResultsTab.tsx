@@ -200,6 +200,7 @@ const NegotiationResultsTab: React.FC = () => {
         'Equity',
         'Sign-On',
         'PTO Days',
+        'Sick Leave Days',
         'Leverage Points',
         'Talking Points',
         'Caution Points',
@@ -214,6 +215,10 @@ const NegotiationResultsTab: React.FC = () => {
         r.offerSnapshot.equity,
         r.offerSnapshot.sign_on,
         r.offerSnapshot.is_unlimited_pto ? 'Unlimited' : r.offerSnapshot.pto_days,
+        r.offerSnapshot.is_unlimited_pto &&
+        r.offerSnapshot.sick_leave_included_in_unlimited_pto !== false
+          ? 'Included'
+          : (r.offerSnapshot.sick_leave_days ?? 0),
         escape(r.advice.leverage_points.join('; ')),
         escape(r.advice.talking_points.join('; ')),
         escape(r.advice.caution_points.join('; ')),
@@ -377,6 +382,16 @@ const NegotiationResultsTab: React.FC = () => {
                           : snap.pto_days
                             ? formatPtoLabel(snap.pto_days, false, true)
                             : null,
+                      },
+                      {
+                        label: 'Sick',
+                        value:
+                          snap.is_unlimited_pto &&
+                          snap.sick_leave_included_in_unlimited_pto !== false
+                            ? 'Included'
+                            : snap.sick_leave_days != null
+                              ? `${snap.sick_leave_days} days`
+                              : null,
                       },
                     ]
                       .filter((x) => x.value)
