@@ -46,7 +46,7 @@ export interface ScenarioRow {
   pto_holiday_days: number | null;
   total_comp: number;
   adjustedValue: number;
-  lifestyleAdjustment: number;
+  cashAdjustment: number;
   deltaVsCurrent: number;
   deltaTotalComp: number;
   deltaBaseAfterTax: number;

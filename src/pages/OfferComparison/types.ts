@@ -14,6 +14,6 @@ export type AdjustedOfferMetrics = {
   monthlyRent: number;
   commuteAnnualCost?: number;
   freeFoodAnnualValue?: number;
-  lifestyleAdjustment?: number;
+  cashAdjustment?: number;
   costOfLivingIndex?: number;
 };

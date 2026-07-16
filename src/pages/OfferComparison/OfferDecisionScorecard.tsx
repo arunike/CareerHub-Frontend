@@ -359,7 +359,7 @@ const buildFinancialCalculationLines = ({
 
   const colIndex = asNumber(metrics?.costOfLivingIndex, 100);
   const purchasingPowerAdjusted = afterTaxTotal * (100 / Math.max(colIndex, 1));
-  const lifestyleAdjustment = asNumber(metrics?.lifestyleAdjustment, 0);
+  const cashAdjustment = asNumber(metrics?.cashAdjustment, 0);
   const monthlyRent = asNumber(metrics?.monthlyRent, 0);
   const rentAnnual = monthlyRent * 12;
   const commuteAnnual = asNumber(metrics?.commuteAnnualCost, 0);
@@ -389,12 +389,12 @@ const buildFinancialCalculationLines = ({
     `COL adjustment: ${formatCurrency(afterTaxTotal)} x 100 / ${colIndex} = ${formatCurrency(
       purchasingPowerAdjusted
     )}`,
-    `Lifestyle adjustment: ${formatCurrency(lifestyleAdjustment)} total; includes free food ${formatCurrency(
+    `Cash adjustments: ${formatCurrency(cashAdjustment)} total; free food ${formatCurrency(
       freeFoodAnnual
-    )}, commute cost ${formatCurrency(commuteAnnual)}, remote/RTO effects`,
+    )} - commute cost ${formatCurrency(commuteAnnual)}. Remote/RTO preferences are scored in Location and WLB, not Financial`,
     `Rent subtraction: ${formatCurrency(monthlyRent)} x 12 = ${formatCurrency(rentAnnual)}`,
     `Adjusted value: ${formatCurrency(purchasingPowerAdjusted)} + ${formatCurrency(
-      lifestyleAdjustment
+      cashAdjustment
     )} - ${formatCurrency(rentAnnual)} = ${formatCurrency(financialValue)}`,
     `Financial score: ${formatCurrency(financialValue)} / ${formatCurrency(
       maxAdjustedValue

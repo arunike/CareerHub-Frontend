@@ -308,12 +308,6 @@ export const DEFAULT_STATE_NAME_TO_ABBR: Record<string, string> = {
   'District of Columbia': 'DC',
 };
 
-export const getDefaultLifestyleByWorkMode = (workMode: SimulatedOffer['work_mode']) => {
-  if (workMode === 'REMOTE') return { remoteBonus: 8000, rtoPenalty: 0 };
-  if (workMode === 'HYBRID') return { remoteBonus: 3000, rtoPenalty: 3600 };
-  return { remoteBonus: 0, rtoPenalty: 6000 };
-};
-
 export const annualizeAmount = (
   amount: number,
   frequency: 'DAILY' | 'MONTHLY' | 'YEARLY' = 'YEARLY'
@@ -324,14 +318,17 @@ export const annualizeAmount = (
   return safe;
 };
 
+export const calculateDirectCashAdjustment = (
+  freeFoodPerkAnnual: number,
+  commuteAnnualCost: number
+) => (Number(freeFoodPerkAnnual) || 0) - (Number(commuteAnnualCost) || 0);
+
 export const calculateScenarioValue = ({
   base_salary,
   bonus,
   sign_on,
   benefits_value,
   equity,
-  work_mode,
-  rto_days_per_week,
   freeFoodPerkAnnual,
   commuteAnnualCost,
   baseTaxRate,
@@ -349,8 +346,6 @@ export const calculateScenarioValue = ({
   sign_on: number;
   benefits_value: number;
   equity: number;
-  work_mode: SimulatedOffer['work_mode'];
-  rto_days_per_week: number;
   freeFoodPerkAnnual: number;
   commuteAnnualCost: number;
   baseTaxRate: number;
@@ -388,23 +383,11 @@ export const calculateScenarioValue = ({
       fortyOneKMatchValue) *
     (100 / costOfLivingIndex);
 
-  const lifestyleDefault = getDefaultLifestyleByWorkMode(work_mode);
-  const safeRtoDays = Number.isFinite(Number(rto_days_per_week))
-    ? Math.max(0, Math.min(5, Number(rto_days_per_week)))
-    : work_mode === 'REMOTE'
-      ? 0
-      : work_mode === 'ONSITE'
-        ? 5
-        : 3;
-  const rtoPenalty = safeRtoDays * 1200 || lifestyleDefault.rtoPenalty;
-  const remoteBonus = lifestyleDefault.remoteBonus;
-  const freeFoodBonus = Number(freeFoodPerkAnnual) || 0;
-  const commutePenalty = Number(commuteAnnualCost) || 0;
-  const lifestyleAdjustment = remoteBonus + freeFoodBonus - rtoPenalty - commutePenalty;
+  const cashAdjustment = calculateDirectCashAdjustment(freeFoodPerkAnnual, commuteAnnualCost);
 
   return {
-    adjustedValue: purchasingPowerAdjusted + lifestyleAdjustment,
-    lifestyleAdjustment,
+    adjustedValue: purchasingPowerAdjusted + cashAdjustment,
+    cashAdjustment,
     breakdown: {
       taxedBase,
       taxedBenefits,
