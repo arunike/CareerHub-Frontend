@@ -229,6 +229,14 @@ const ScenarioOfferModal = ({
               onPtoDaysChange={(value) => setNewScenarioField('pto_days', value)}
               isUnlimitedPto={!!newScenario.is_unlimited_pto}
               onIsUnlimitedPtoChange={(value) => setNewScenarioField('is_unlimited_pto', value)}
+              sickLeaveDays={Number(newScenario.sick_leave_days) || 0}
+              onSickLeaveDaysChange={(value) => setNewScenarioField('sick_leave_days', value)}
+              sickLeaveIncludedInUnlimitedPto={
+                newScenario.sick_leave_included_in_unlimited_pto !== false
+              }
+              onSickLeaveIncludedInUnlimitedPtoChange={(value) =>
+                setNewScenarioField('sick_leave_included_in_unlimited_pto', value)
+              }
               holidayDays={Number(newScenario.holiday_days ?? 11)}
               onHolidayDaysChange={(value) => setNewScenarioField('holiday_days', value)}
               healthPremiumMonthly={Number(newScenario.health_premium_monthly) || 0}

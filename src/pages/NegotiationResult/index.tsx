@@ -172,6 +172,15 @@ const NegotiationResultPage: React.FC = () => {
                       ? formatPtoLabel(snap.pto_days)
                       : null,
                 },
+                {
+                  label: 'Sick Leave',
+                  value:
+                    snap.is_unlimited_pto && snap.sick_leave_included_in_unlimited_pto !== false
+                      ? 'Included'
+                      : snap.sick_leave_days != null
+                        ? `${snap.sick_leave_days} days`
+                        : null,
+                },
               ]
                 .filter((x) => x.value)
                 .map(({ label, value }) => (

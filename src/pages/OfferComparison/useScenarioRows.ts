@@ -16,6 +16,7 @@ import {
   getPrimaryApplicationLocation,
 } from '../../utils/applicationLocation';
 import { getRealizableEquity } from './equityLiquidity';
+import { getCountedSickLeaveDays } from '../../utils/offerTimeOff';
 
 type Params = {
   filteredOffers: OfferLike[];
@@ -52,6 +53,11 @@ export const useScenarioRows = ({
 
     const realRows = filteredOffers.map((offer) => {
       const realizableEquity = getRealizableEquity(offer);
+      const countedSickLeaveDays = getCountedSickLeaveDays({
+        sickLeaveDays: offer.sick_leave_days,
+        isUnlimitedPto: !!offer.is_unlimited_pto,
+        sickLeaveIncludedInUnlimitedPto: offer.sick_leave_included_in_unlimited_pto !== false,
+      });
       const app = applications.find((a) => a.id === offer.application);
       const homeLocation = getEffectiveTaxLocation(app) || referenceLocation;
       const rowCity = homeLocation;
@@ -144,10 +150,12 @@ export const useScenarioRows = ({
         rto_days_per_week: rtoDays,
         pto_days: Number(offer.pto_days || 0),
         is_unlimited_pto: isUnlimitedPto,
+        sick_leave_days: Number(offer.sick_leave_days || 0),
+        sick_leave_included_in_unlimited_pto: offer.sick_leave_included_in_unlimited_pto !== false,
         holiday_days: Number(offer.holiday_days ?? 11),
         pto_holiday_days: isUnlimitedPto
           ? null
-          : Number(offer.pto_days || 0) + Number(offer.holiday_days ?? 11),
+          : Number(offer.pto_days || 0) + countedSickLeaveDays + Number(offer.holiday_days ?? 11),
         total_comp:
           Number(offer.base_salary) +
           Number(offer.bonus) +
@@ -181,6 +189,11 @@ export const useScenarioRows = ({
 
     const simulatedRows = simulatedOffers.map((offer) => {
       const realizableEquity = getRealizableEquity(offer);
+      const countedSickLeaveDays = getCountedSickLeaveDays({
+        sickLeaveDays: offer.sick_leave_days,
+        isUnlimitedPto: !!offer.is_unlimited_pto,
+        sickLeaveIncludedInUnlimitedPto: offer.sick_leave_included_in_unlimited_pto !== false,
+      });
       const homeLocation = getEffectiveTaxLocation(offer) || referenceLocation;
       const rowCity = homeLocation;
       const rowColIndex = estimateColIndexFromCity(
@@ -258,10 +271,12 @@ export const useScenarioRows = ({
         rto_days_per_week: offer.rto_days_per_week,
         pto_days: Number(offer.pto_days || 0),
         is_unlimited_pto: isUnlimitedPto,
+        sick_leave_days: Number(offer.sick_leave_days || 0),
+        sick_leave_included_in_unlimited_pto: offer.sick_leave_included_in_unlimited_pto !== false,
         holiday_days: Number(offer.holiday_days ?? 11),
         pto_holiday_days: isUnlimitedPto
           ? null
-          : Number(offer.pto_days || 0) + Number(offer.holiday_days ?? 11),
+          : Number(offer.pto_days || 0) + countedSickLeaveDays + Number(offer.holiday_days ?? 11),
         total_comp:
           Number(offer.base_salary) +
           Number(offer.bonus) +

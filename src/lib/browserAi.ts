@@ -675,8 +675,15 @@ const formatApplicationLocation = (
 
 const formatTimeOff = (offer: Offer) => {
   const holidayDays = offer.holiday_days ?? 11;
-  if (offer.is_unlimited_pto) return `Unlimited PTO | Holidays: ${holidayDays} days`;
-  return `PTO: ${offer.pto_days} days | Holidays: ${holidayDays} days`;
+  const sickLeaveDays = offer.sick_leave_days ?? 0;
+  if (offer.is_unlimited_pto) {
+    const sickLeave =
+      offer.sick_leave_included_in_unlimited_pto !== false
+        ? 'Sick leave: included'
+        : `Sick leave: ${sickLeaveDays} days`;
+    return `Unlimited PTO | ${sickLeave} | Holidays: ${holidayDays} days`;
+  }
+  return `PTO: ${offer.pto_days} days | Sick leave: ${sickLeaveDays} days | Holidays: ${holidayDays} days`;
 };
 
 export const generateCoverLetterWithBrowserAI = async ({

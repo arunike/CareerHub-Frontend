@@ -14,6 +14,8 @@ export interface StoredNegotiationResult {
     sign_on: number;
     pto_days: number;
     is_unlimited_pto?: boolean;
+    sick_leave_days?: number;
+    sick_leave_included_in_unlimited_pto?: boolean;
   };
   advice: NegotiationAdvice;
   title?: string;

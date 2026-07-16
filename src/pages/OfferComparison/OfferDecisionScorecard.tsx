@@ -11,7 +11,7 @@ import clsx from 'clsx';
 import type { AdjustedOfferMetrics } from './types';
 import type { MaritalStatus, SimulatedOffer } from './calculations';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
-import { formatPtoLabel } from '../../utils/offerTimeOff';
+import { formatPtoLabel, getCountedSickLeaveDays } from '../../utils/offerTimeOff';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import {
   getImmigrationSignalLabel,
@@ -165,19 +165,32 @@ const scoreFromManual = (value: unknown) => {
 
 const scoreTimeOff = (offer: Offer | SimulatedOffer) => {
   const isUnlimited = Boolean(offer.is_unlimited_pto);
+  const sickLeaveIncluded = isUnlimited && offer.sick_leave_included_in_unlimited_pto !== false;
   const ptoDays = isUnlimited ? 25 : clamp(asNumber(offer.pto_days), 0, 60);
+  const sickLeaveDays = clamp(
+    getCountedSickLeaveDays({
+      sickLeaveDays: offer.sick_leave_days,
+      isUnlimitedPto: isUnlimited,
+      sickLeaveIncludedInUnlimitedPto: offer.sick_leave_included_in_unlimited_pto !== false,
+    }),
+    0,
+    60
+  );
   const holidayDays = clamp(asNumber(offer.holiday_days, 11), 0, 30);
-  const totalPaidDays = ptoDays + holidayDays;
+  const totalPaidDays = ptoDays + sickLeaveDays + holidayDays;
   const score = clamp((totalPaidDays / 35) * 100);
 
   return {
     ptoDays,
+    sickLeaveDays,
     holidayDays,
     totalPaidDays,
     score,
     label: isUnlimited
-      ? `Unlimited PTO counted as ${ptoDays} planning days + ${holidayDays} holidays`
-      : `${ptoDays} PTO days + ${holidayDays} holidays`,
+      ? sickLeaveIncluded
+        ? `Unlimited PTO counted as ${ptoDays} planning days with sick leave included + ${holidayDays} holidays`
+        : `Unlimited PTO counted as ${ptoDays} planning days + ${sickLeaveDays} separate sick days + ${holidayDays} holidays`
+      : `${ptoDays} PTO days + ${sickLeaveDays} sick days + ${holidayDays} holidays`,
   };
 };
 
@@ -1434,7 +1447,7 @@ const OfferDecisionScorecard = ({
                     <div className="flex justify-between items-center">
                       <div>
                         <Tooltip
-                          title="PTO days are paid time off (vacation + personal). Holidays are federally observed days off. Unlimited PTO policies vary by company culture."
+                          title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
                           placement="top"
                         >
                           <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
@@ -1443,6 +1456,10 @@ const OfferDecisionScorecard = ({
                         </Tooltip>
                         <div className="text-sm font-medium text-slate-900">
                           {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)} PTO,{' '}
+                          {row.offer.is_unlimited_pto &&
+                          row.offer.sick_leave_included_in_unlimited_pto !== false
+                            ? 'Sick Leave Included, '
+                            : `${row.offer.sick_leave_days ?? 0} Sick Leave, `}
                           {row.offer.holiday_days ?? 11} Holidays
                         </div>
                       </div>
