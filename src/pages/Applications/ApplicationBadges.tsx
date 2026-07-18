@@ -1,15 +1,20 @@
 import type { EmploymentType } from '../../types';
-import { getPaletteColor, getPaletteColorFromTone } from '../../utils/colorPalette';
+import {
+  getPaletteColor,
+  getPaletteColorFromTone,
+  getReadableTextColor,
+} from '../../utils/colorPalette';
 import type { ApplicationStage } from './applicationTypes';
 
 export const StatusBadge = ({ status, stages }: { status: string; stages: ApplicationStage[] }) => {
   const stage = stages.find((s) => s.key === status);
   const c = getPaletteColorFromTone(stage?.tone);
   const label = stage ? stage.label : status;
+  const textColor = getReadableTextColor(c.dot);
   return (
     <span
       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
-      style={{ color: c.text, background: c.bg, borderColor: c.border }}
+      style={{ color: textColor, background: c.dot, borderColor: c.dot }}
     >
       {label}
     </span>

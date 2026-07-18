@@ -172,6 +172,8 @@ export const updateApplicationTimelineEntry = (
   id: number,
   data: Partial<ApplicationTimelineEntry>
 ) => api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
+export const deleteApplicationTimelineEntry = (id: number) =>
+  api.delete(`/career/application-timeline/${id}/`);
 export const getApplicationTimelineAnalytics = () =>
   api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
 
