@@ -44,44 +44,48 @@ const CalendarHeader = ({
         : 'border-gray-200 bg-gray-50 text-gray-400 hover:text-gray-500'
     } ${loading ? 'cursor-not-allowed opacity-60' : ''}`;
 
+  const rangeButtonClassName =
+    'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
+
   return (
     <div className="mb-4 flex flex-col gap-4 sm:mb-6 xl:flex-row xl:items-start xl:justify-between">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <h2 className="mr-auto flex min-w-0 items-center gap-2 text-lg font-bold text-gray-800 sm:text-xl">
-            <CalendarOutlined className="text-xl text-blue-600" />
+          <h2 className="mr-auto flex min-w-0 items-center gap-2 text-lg font-semibold text-slate-800 sm:text-xl">
+            <CalendarOutlined className="text-lg text-slate-500" />
             {headerLabel}
           </h2>
 
-          <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-1 py-1 shadow-sm">
+          <div className="flex items-center gap-1.5" role="group" aria-label="Calendar navigation">
             <button
               type="button"
               onClick={() => onShiftRange('prev')}
               disabled={loading}
               aria-label="Previous calendar period"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className={rangeButtonClassName}
             >
-              <LeftOutlined className="text-base text-gray-600" />
+              <LeftOutlined className="text-sm" />
             </button>
+
+            <button
+              type="button"
+              onClick={onGoToToday}
+              disabled={loading}
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
+            >
+              Today
+            </button>
+
             <button
               type="button"
               onClick={() => onShiftRange('next')}
               disabled={loading}
               aria-label="Next calendar period"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className={rangeButtonClassName}
             >
-              <RightOutlined className="text-base text-gray-600" />
+              <RightOutlined className="text-sm" />
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={onGoToToday}
-            disabled={loading}
-            className="min-h-11 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Today
-          </button>
         </div>
 
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
