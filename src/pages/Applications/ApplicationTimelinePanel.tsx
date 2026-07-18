@@ -17,6 +17,7 @@ import {
 import type { ApplicationTimelineEntry, ApplicationTimelineStage } from '../../types';
 import type { CareerApplication } from '../../types/application';
 import { getPaletteColorFromTone, getReadableTextColor } from '../../utils/colorPalette';
+import { compareTimelineStages } from './applicationTimelineUtils';
 
 type Props = {
   application: CareerApplication | null;
@@ -26,6 +27,7 @@ type Props = {
 type TimelineDraft = {
   id?: number;
   title: string;
+  stage_order?: number;
   event_date?: string | null;
   notes: string;
 };
@@ -87,6 +89,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
         next[entry.stage] = {
           id: entry.id,
           title: entry.display_title || configuredTitle || formatStageLabel(entry.stage),
+          stage_order: entry.stage_order,
           event_date: entry.event_date || null,
           notes: entry.notes || '',
         };
@@ -152,12 +155,27 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
 
   const activeStages = useMemo(
     () =>
-      allDisplayStages.filter(
-        (stage) =>
-          addedStageKeys.includes(stage.key) ||
-          hasContent(drafts[stage.key]) ||
-          application?.status === stage.key
-      ),
+      allDisplayStages
+        .filter(
+          (stage) =>
+            addedStageKeys.includes(stage.key) ||
+            hasContent(drafts[stage.key]) ||
+            application?.status === stage.key
+        )
+        .sort((left, right) =>
+          compareTimelineStages(
+            {
+              key: left.key,
+              stageOrder: drafts[left.key]?.stage_order,
+              eventDate: drafts[left.key]?.event_date,
+            },
+            {
+              key: right.key,
+              stageOrder: drafts[right.key]?.stage_order,
+              eventDate: drafts[right.key]?.event_date,
+            }
+          )
+        ),
     [addedStageKeys, allDisplayStages, application?.status, drafts]
   );
 
