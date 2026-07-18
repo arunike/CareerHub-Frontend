@@ -16,6 +16,7 @@ import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { GetDayData } from './types';
 import { MINI_WEEKDAY_LABELS } from './types';
+import useCalendarDoubleTap from './useCalendarDoubleTap';
 
 type Props = {
   anchorDate: Date;
@@ -34,6 +35,7 @@ const CalendarYearView = ({
   onDateDoubleClick,
   getDayData,
 }: Props) => {
+  const handlePointerUp = useCalendarDoubleTap(onDateDoubleClick);
   const startOfAnchorYear = new Date(anchorDate.getFullYear(), 0, 1);
   const months = Array.from({ length: 12 }, (_, index) => addMonths(startOfAnchorYear, index));
 
@@ -68,8 +70,9 @@ const CalendarYearView = ({
                 type="button"
                 onClick={() => onDateSelect(cloneDay)}
                 onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
+                onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, cloneDay)}
                 className={clsx(
-                  'aspect-square bg-white px-1 py-1 text-center transition-colors flex flex-col items-center justify-center gap-1',
+                  'aspect-square touch-manipulation bg-white px-1 py-1 text-center transition-colors flex flex-col items-center justify-center gap-1',
                   !isCurrentMonth && 'bg-gray-50 text-gray-300',
                   isTodayDate && 'bg-blue-50',
                   isSelected && 'ring-2 ring-blue-500 ring-inset z-10'
