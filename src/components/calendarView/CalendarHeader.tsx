@@ -88,7 +88,7 @@ const CalendarHeader = ({
           </div>
         </div>
 
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           {categories.map((category) => {
             const categoryColor = getEventCategoryColor(category);
             const active = filters.eventCategoryIds.has(category.id);
@@ -185,7 +185,7 @@ const CalendarHeader = ({
         </div>
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+      <div className="scrollbar-none -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         <SegmentedToggle
           value={viewMode}
           onChange={onViewModeChange}

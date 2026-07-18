@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { CalendarDayAgendaEntries } from './CalendarDayContent';
 import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
+import useCalendarDoubleTap from './useCalendarDoubleTap';
 
 type Props = {
   dates: Date[];
@@ -25,6 +26,7 @@ const CalendarRangeView = ({
   onHolidaySelect,
   getDayData,
 }: Props) => {
+  const handlePointerUp = useCalendarDoubleTap(onDateDoubleClick);
   const gridClassName =
     dates.length === 1
       ? 'grid-cols-1'
@@ -33,7 +35,7 @@ const CalendarRangeView = ({
         : 'grid-flow-col auto-cols-[minmax(280px,85vw)] md:min-w-[1400px] md:grid-flow-row md:auto-cols-auto md:grid-cols-7';
 
   return (
-    <div className="-mx-4 snap-x snap-mandatory overflow-x-auto px-4 pb-2 md:mx-0 md:snap-none md:px-0 md:pb-0">
+    <div className="scrollbar-none -mx-4 snap-x snap-mandatory overflow-x-auto px-4 pb-2 md:mx-0 md:snap-none md:px-0 md:pb-0">
       <div className={clsx('grid gap-4', gridClassName)}>
         {dates.map((day) => {
           const dayData = getDayData(day);
@@ -52,8 +54,9 @@ const CalendarRangeView = ({
                 type="button"
                 onClick={() => onDateSelect(day)}
                 onDoubleClick={() => onDateDoubleClick?.(day)}
+                onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, day)}
                 className={clsx(
-                  'w-full border-b border-gray-100 px-4 py-3 text-left transition-colors',
+                  'w-full touch-manipulation border-b border-gray-100 px-4 py-3 text-left transition-colors',
                   isSelected ? 'bg-blue-50' : 'bg-gray-50/80 hover:bg-gray-50'
                 )}
               >

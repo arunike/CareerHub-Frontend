@@ -13,6 +13,7 @@ import { CalendarCompactDayEntries, CalendarMobileDaySummary } from './CalendarD
 import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
+import useCalendarDoubleTap from './useCalendarDoubleTap';
 
 type Props = {
   anchorDate: Date;
@@ -37,6 +38,7 @@ const CalendarMonthView = ({
   onHolidaySelect,
   getDayData,
 }: Props) => {
+  const handlePointerUp = useCalendarDoubleTap(onDateDoubleClick);
   const monthStart = startOfMonth(anchorDate);
   const monthEnd = endOfMonth(monthStart);
   const gridStart = startOfWeek(monthStart);
@@ -57,13 +59,14 @@ const CalendarMonthView = ({
         <div
           key={cloneDay.toString()}
           className={clsx(
-            'relative flex h-18 cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
+            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
             !isCurrentMonth && 'bg-gray-50/50 text-gray-400',
             isTodayDate && 'bg-blue-50/30',
             isSelected && 'ring-2 ring-blue-500 ring-inset z-10 rounded-lg'
           )}
           onClick={() => onDateSelect(cloneDay)}
           onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
+          onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, cloneDay)}
         >
           <div className="flex justify-between items-start">
             <button
