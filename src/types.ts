@@ -337,6 +337,7 @@ export interface ApplicationTimelineEntry {
   stage: ApplicationTimelineStage;
   stage_label: string;
   stage_order: number;
+  display_title: string;
   event_date?: string | null;
   notes: string;
   documents: number[];

@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, DatePicker, Input, Select, Spin, Tag, Tooltip, message } from 'antd';
-import { CalendarOutlined, CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, DatePicker, Input, Popconfirm, Select, Spin, Tag, Tooltip, message } from 'antd';
+import {
+  CalendarOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
   createApplicationTimelineEntry,
+  deleteApplicationTimelineEntry,
   getApplicationTimeline,
   updateApplicationTimelineEntry,
 } from '../../api';
 import type { ApplicationTimelineEntry, ApplicationTimelineStage } from '../../types';
 import type { CareerApplication } from '../../types/application';
-import { getPaletteColorFromTone } from '../../utils/colorPalette';
+import { getPaletteColorFromTone, getReadableTextColor } from '../../utils/colorPalette';
 
 type Props = {
   application: CareerApplication | null;
@@ -18,6 +25,7 @@ type Props = {
 
 type TimelineDraft = {
   id?: number;
+  title: string;
   event_date?: string | null;
   notes: string;
 };
@@ -30,6 +38,7 @@ type DisplayStage = {
 };
 
 const emptyDraft = (): TimelineDraft => ({
+  title: '',
   event_date: null,
   notes: '',
 });
@@ -58,6 +67,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingStageKey, setDeletingStageKey] = useState<string>();
   const [drafts, setDrafts] = useState<Record<string, TimelineDraft>>({});
   const [addedStageKeys, setAddedStageKeys] = useState<string[]>([]);
   const [isAddingStage, setIsAddingStage] = useState(false);
@@ -68,13 +78,15 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
   const buildInitialDrafts = useCallback(
     (entries: ApplicationTimelineEntry[]) => {
       const next = appStages.reduce<Record<string, TimelineDraft>>(
-        (acc, stage) => ({ ...acc, [stage.key]: emptyDraft() }),
+        (acc, stage) => ({ ...acc, [stage.key]: { ...emptyDraft(), title: stage.label } }),
         {}
       );
       for (const entry of entries) {
         if (!next[entry.stage]) next[entry.stage] = emptyDraft();
+        const configuredTitle = appStages.find((stage) => stage.key === entry.stage)?.label;
         next[entry.stage] = {
           id: entry.id,
+          title: entry.display_title || configuredTitle || formatStageLabel(entry.stage),
           event_date: entry.event_date || null,
           notes: entry.notes || '',
         };
@@ -171,7 +183,10 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       return;
     }
     setAddedStageKeys((prev) => (prev.includes(stage.key) ? prev : [...prev, stage.key]));
-    setDrafts((prev) => ({ ...prev, [stage.key]: prev[stage.key] || emptyDraft() }));
+    setDrafts((prev) => ({
+      ...prev,
+      [stage.key]: prev[stage.key] || { ...emptyDraft(), title: stage.label },
+    }));
     setSelectedStageKey(undefined);
     setIsAddingStage(false);
   };
@@ -192,6 +207,30 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
     });
   };
 
+  const handleDeleteStage = async (stageKey: string) => {
+    const draft = drafts[stageKey];
+    if (!draft?.id) {
+      handleRemoveAddedStage(stageKey);
+      return;
+    }
+
+    setDeletingStageKey(stageKey);
+    try {
+      await deleteApplicationTimelineEntry(draft.id);
+      messageApi.success(
+        application?.status === stageKey
+          ? 'Timeline details removed. The stage remains because it is the current application status.'
+          : 'Timeline entry removed'
+      );
+      await loadTimeline();
+    } catch (error) {
+      messageApi.error('Failed to remove timeline entry');
+      console.error(error);
+    } finally {
+      setDeletingStageKey(undefined);
+    }
+  };
+
   const handleSave = async () => {
     if (!application) return;
     setSaving(true);
@@ -199,14 +238,16 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       await Promise.all(
         allDisplayStages.map((stage) => {
           const draft = drafts[stage.key] || emptyDraft();
+          const title = draft.title.trim();
           const payload = {
             application: application.id,
             stage: stage.key as ApplicationTimelineStage,
+            display_title: title === stage.label ? '' : title,
             event_date: draft.event_date || null,
             notes: draft.notes,
           };
           if (draft.id) return updateApplicationTimelineEntry(draft.id, payload);
-          if (hasContent(draft) || addedStageKeys.includes(stage.key)) {
+          if (hasContent(draft) || title !== stage.label || addedStageKeys.includes(stage.key)) {
             return createApplicationTimelineEntry(payload);
           }
           return Promise.resolve();
@@ -310,23 +351,26 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                 const isCurrent = application?.status === stage.key;
                 const state = getStageState(draft, isCurrent);
                 const accent = getPaletteColorFromTone(stage.tone).dot;
+                const accentText = getReadableTextColor(accent);
                 const isDone = state === 'done' || state === 'current';
+                const displayTitle = draft.title || stage.label;
+                const hasCustomTitle = displayTitle !== stage.label;
 
                 return (
                   <div key={stage.key} className="flex items-center gap-2">
-                    <Tooltip title={stage.label}>
+                    <Tooltip title={displayTitle}>
                       <button
                         type="button"
                         className="flex min-w-[82px] flex-col items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                         onClick={() => scrollToStage(stage.key)}
-                        aria-label={`Jump to ${stage.label} timeline stage`}
+                        aria-label={`Jump to ${displayTitle} timeline stage`}
                       >
                         <div
                           className="flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold"
                           style={{
                             background: isDone ? accent : 'white',
                             borderColor: isDone ? accent : '#e2e8f0',
-                            color: isDone ? 'white' : '#94a3b8',
+                            color: isDone ? accentText : '#94a3b8',
                           }}
                         >
                           {isDone ? <CheckOutlined /> : index + 1}
@@ -336,7 +380,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                             isCurrent ? 'text-slate-950' : 'text-slate-500'
                           }`}
                         >
-                          {stage.shortLabel || stage.label}
+                          {hasCustomTitle ? displayTitle : stage.shortLabel || stage.label}
                         </div>
                       </button>
                     </Tooltip>
@@ -394,13 +438,16 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                     } ${isLast ? 'mb-0' : 'mb-2'}`}
                   >
                     <div className="flex items-center justify-between gap-4 px-4 pt-3.5">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-[11px] font-bold uppercase tracking-[0.1em]"
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <Input
+                          value={draft.title}
+                          onChange={(event) => patchDraft(stage.key, { title: event.target.value })}
+                          aria-label={`Title for ${stage.label} timeline stage`}
+                          maxLength={120}
+                          variant="borderless"
+                          className="!min-w-0 !px-0 !text-[11px] !font-bold !uppercase !tracking-[0.1em]"
                           style={{ color: isCurrent ? accent : '#475569' }}
-                        >
-                          {stage.label}
-                        </span>
+                        />
                         {isCurrent && (
                           <Tag
                             className="!m-0 !rounded-full !border-0 !px-2 !py-0 !text-[10px] !font-semibold !leading-5"
@@ -428,6 +475,28 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                           className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600"
                           format="MMM D, YYYY"
                         />
+                        {draft.id && (
+                          <Popconfirm
+                            title="Remove timeline entry?"
+                            description="This removes its title, date, and notes. Your application status and Google Sheets status stay unchanged."
+                            okText="Remove entry"
+                            cancelText="Cancel"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() => handleDeleteStage(stage.key)}
+                          >
+                            <Tooltip title="Remove timeline entry">
+                              <Button
+                                type="text"
+                                size="small"
+                                danger
+                                aria-label={`Remove ${draft.title || stage.label} timeline entry`}
+                                icon={<DeleteOutlined />}
+                                loading={deletingStageKey === stage.key}
+                                className="!h-7 !w-7 !rounded-lg !text-slate-300 hover:!text-rose-500"
+                              />
+                            </Tooltip>
+                          </Popconfirm>
+                        )}
                         {addedStageKeys.includes(stage.key) && !draft.id && !hasContent(draft) && (
                           <Button
                             type="text"
@@ -446,7 +515,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                       <Input.TextArea
                         value={draft.notes}
                         onChange={(e) => patchDraft(stage.key, { notes: e.target.value })}
-                        placeholder={`Notes for ${stage.label.toLowerCase()}…`}
+                        placeholder={`Notes for ${(draft.title || stage.label).toLowerCase()}…`}
                         autoSize={{ minRows: 1, maxRows: 5 }}
                         variant="borderless"
                         className="!px-1 !text-sm !text-slate-600 placeholder:!text-slate-300"

@@ -147,6 +147,34 @@ const rgb = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const relativeLuminance = (hex: string) => {
+  const { r, g, b } = hexToRgb(hex);
+  const channels = [r, g, b].map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  });
+
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+};
+
+export const getContrastRatio = (foreground: string, background: string) => {
+  const foregroundLuminance = relativeLuminance(normalizeHexColor(foreground));
+  const backgroundLuminance = relativeLuminance(normalizeHexColor(background));
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+export const getReadableTextColor = (background: string) => {
+  const normalizedBackground = normalizeHexColor(background);
+  const darkText = '#000000';
+  const lightText = '#ffffff';
+  return getContrastRatio(darkText, normalizedBackground) >=
+    getContrastRatio(lightText, normalizedBackground)
+    ? darkText
+    : lightText;
+};
+
 export const isHexColor = (color?: string | null) =>
   Boolean(color?.trim().match(/^#[0-9a-f]{3}([0-9a-f]{3})?$/i));
 

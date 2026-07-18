@@ -36,15 +36,15 @@ The **Frontend** is a React-based single-page application that provides an intui
 ### 🏢 Application Tracker (`/applications`)
 
 - Create, edit, delete applications with modal forms
-- Status badges color-coded by stage (Applied, OA, Screen, Onsite, Offer, Rejected, Accepted, Ghosted)
+- Status badges use the shared default palette for Applied, rounds 1–4, Final Round, Onsite, Offer, Rejected, Ghosted, and Removed while preserving each user's saved stage configuration; foreground text automatically switches between dark text and white for accessible contrast
 - Filter by status and search by company/role
 - Year filter with persisted state
 - Bulk select → bulk lock / unlock / delete
 - In-context application detail drawer consolidates overview, timeline, linked events, documents, AI outputs, notes, and task-linking readiness from the table
 - Prep workspace tab combines JD fit, best resume evidence, linked documents, saved cover letters, notes, and timeline for one application
-- Company timeline modal for Applied → OA → phone → onsite → offer/reject stages with per-stage notes and document attachments
+- Application detail timeline for the default Applied → numbered rounds → Final Round → onsite → offer/reject flow with editable per-application stage titles, dates, and notes plus confirmed removal; manual changes remain protected from later Google Sheets sync repair
 - Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
-- Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, with private sheets supported through Google OAuth
+- Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, automatically generating distinct blue-to-purple tags for additional numbered rounds while private sheets remain supported through Google OAuth
 - Lock/unlock individual applications
 - **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
 
@@ -282,7 +282,7 @@ frontend/
 │   │   │   ├── index.tsx            # Application tracker page
 │   │   │   ├── ApplicationDetailDrawer.tsx # In-context detail drawer for timeline/events/docs/AI/notes
 │   │   │   ├── ApplicationPrepWorkspace.tsx # Prep tab for JD fit, docs, cover letters, notes, and timeline
-│   │   │   ├── ApplicationTimelineModal.tsx # Per-company stage timeline with notes/docs
+│   │   │   ├── ApplicationTimelinePanel.tsx # Editable per-application timeline with sync-safe title/date/note overrides
 │   │   │   └── CoverLetterModal.tsx # AI cover letter generator (auto-saves)
 │   │   ├── CoverLetters/
 │   │   │   └── index.tsx            # Cover letters management page
