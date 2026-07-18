@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Typography } from 'antd';
+import { Typography } from 'antd';
 import {
-  ArrowLeftOutlined,
   CheckCircleOutlined,
   WarningOutlined,
   BulbOutlined,
   DollarOutlined,
   ThunderboltOutlined,
-  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { getNegotiationResultById } from '../../utils/negotiationStorage';
 import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
 import { getNegotiationArtifactByClientId } from '../../utils/aiArtifactStorage';
-import BulkActionHeader from '../../components/BulkActionHeader';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
 import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
+import ArtifactPageToolbar from '../../components/ArtifactPageToolbar';
+import { PageState, PanelSkeleton } from '../../components/PageState';
 
 const { Text } = Typography;
 
@@ -33,7 +32,7 @@ interface SectionProps {
 
 const Section = ({ icon, label, color, bg, border, items }: SectionProps) => (
   <div
-    className="rounded-2xl border p-6 flex flex-col gap-4 shadow-sm"
+    className="flex flex-col gap-4 rounded-2xl border p-4 shadow-sm sm:p-6"
     style={{ background: bg, borderColor: border }}
   >
     <div className="flex items-center gap-2">
@@ -65,29 +64,39 @@ const NegotiationResultPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [result, setResult] = useState<StoredNegotiationResult | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     getNegotiationArtifactByClientId(id)
       .then((backendResult) => {
         setResult(backendResult || getNegotiationResultById(id));
       })
-      .catch(() => setResult(getNegotiationResultById(id)));
+      .catch(() => setResult(getNegotiationResultById(id)))
+      .finally(() => setLoading(false));
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto min-h-screen max-w-6xl px-4 py-12 sm:px-6">
+        <PanelSkeleton rows={6} />
+      </div>
+    );
+  }
 
   if (!result) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-400">
-        <ThunderboltOutlined style={{ fontSize: 48 }} />
-        <p className="text-lg text-gray-500">Result not found.</p>
-        <Button
-          type="primary"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/ai-tools?tab=negotiation-results')}
-          style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}
-        >
-          View All Results
-        </Button>
+      <div className="min-h-screen bg-slate-50 px-4 py-16 sm:px-6">
+        <PageState
+          title="Negotiation result not found"
+          description="This result may have been deleted or is no longer available in this account."
+          icon={<ThunderboltOutlined />}
+          actionLabel="View all negotiation results"
+          onAction={() => navigate('/ai-tools?tab=negotiation-results')}
+        />
       </div>
     );
   }
@@ -105,41 +114,17 @@ const NegotiationResultPage: React.FC = () => {
 
   return (
     <>
-      {/* Top bar */}
-      <div className="no-print sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm px-6 py-3">
-        <BulkActionHeader
-          selectedCount={0}
-          totalCount={0}
-          title={
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/ai-tools?tab=negotiation-results')}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 text-sm font-medium transition-all"
-              >
-                <ArrowLeftOutlined /> All Results
-              </button>
-              <span className="text-gray-200 select-none">|</span>
-              <div className="flex items-center gap-2">
-                <ThunderboltOutlined style={{ color: '#0ea5e9', fontSize: 15 }} />
-                <span className="text-sm font-semibold text-gray-700">Negotiation Advisor</span>
-              </div>
-            </div>
-          }
-          defaultActions={
-            <Button
-              icon={<UnorderedListOutlined />}
-              onClick={() => navigate('/ai-tools?tab=negotiation-results')}
-              className="rounded-lg"
-            >
-              All Results
-            </Button>
-          }
-        />
-      </div>
+      <ArtifactPageToolbar
+        backLabel="All Results"
+        contextLabel="Negotiation Advisor"
+        contextIcon={<ThunderboltOutlined />}
+        onBack={() => navigate('/ai-tools?tab=negotiation-results')}
+        maxWidthClassName="max-w-4xl"
+      />
 
       {/* Page */}
-      <div className="min-h-screen bg-slate-50/50 py-12 px-4 shadow-inner">
-        <div className="max-w-4xl mx-auto flex flex-col gap-8">
+      <div className="min-h-screen bg-slate-50/50 px-4 py-6 shadow-inner sm:py-12">
+        <div className="mx-auto flex max-w-4xl flex-col gap-5 sm:gap-8">
           {/* Header */}
           <ArtifactHeaderCard
             typeLabel="AI Negotiation Advisory Report"
@@ -151,14 +136,14 @@ const NegotiationResultPage: React.FC = () => {
           />
 
           {/* Offer snapshot */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center">
                 <DollarOutlined className="text-gray-500 text-sm" />
               </div>
               <span className="font-semibold text-gray-800 text-sm">Offer Snapshot</span>
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
               {[
                 { label: 'Base Salary', value: fmt(snap.base_salary) },
                 { label: 'Bonus', value: fmt(snap.bonus) },
@@ -186,12 +171,12 @@ const NegotiationResultPage: React.FC = () => {
                 .map(({ label, value }) => (
                   <div
                     key={label}
-                    className="flex flex-col items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 min-w-[90px]"
+                    className="flex min-w-0 flex-col items-center rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 sm:min-w-[90px] sm:px-4"
                   >
                     <Text type="secondary" className="text-[10px] uppercase tracking-wider mb-1">
                       {label}
                     </Text>
-                    <Text strong className="text-base">
+                    <Text strong className="break-words text-center text-base">
                       {value}
                     </Text>
                   </div>
@@ -201,14 +186,14 @@ const NegotiationResultPage: React.FC = () => {
 
           {/* Suggested Counter-Ask */}
           {ask && (
-            <div className="bg-white rounded-2xl shadow-sm border border-sky-100 p-6">
+            <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
                   <DollarOutlined className="text-sky-600 text-sm" />
                 </div>
                 <span className="font-semibold text-sky-700 text-sm">Suggested Counter-Ask</span>
               </div>
-              <div className="flex flex-wrap gap-4 mb-3">
+              <div className="mb-3 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
                 {[
                   { label: 'Base', value: fmt(ask.base_salary) },
                   { label: 'Sign-On', value: fmt(ask.sign_on) },
@@ -219,12 +204,16 @@ const NegotiationResultPage: React.FC = () => {
                   .map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex flex-col items-center bg-sky-50 border border-sky-100 rounded-xl px-4 py-3 min-w-[90px]"
+                      className="flex min-w-0 flex-col items-center rounded-xl border border-sky-100 bg-sky-50 px-3 py-3 sm:min-w-[90px] sm:px-4"
                     >
                       <Text type="secondary" className="text-[10px] uppercase tracking-wider mb-1">
                         {label}
                       </Text>
-                      <Text strong style={{ color: '#0ea5e9' }} className="text-base">
+                      <Text
+                        strong
+                        style={{ color: '#0ea5e9' }}
+                        className="break-words text-center text-base"
+                      >
                         {value}
                       </Text>
                     </div>

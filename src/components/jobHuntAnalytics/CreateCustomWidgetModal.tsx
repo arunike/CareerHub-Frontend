@@ -19,7 +19,8 @@ import {
   PlusOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import { Button, Input, Modal, Segmented, Select, Tag, Typography, Spin } from 'antd';
+import { Button, Input, Segmented, Select, Tag, Typography, Spin } from 'antd';
+import Modal from '../MobileModal';
 import {
   ResponsiveContainer,
   PieChart,
@@ -418,29 +419,34 @@ const CreateCustomWidgetModal = ({
       bodyStyle={{ padding: 0 }}
       destroyOnClose
     >
-      <div className="flex flex-col lg:flex-row min-h-[600px]">
+      <div className="flex min-h-0 flex-col lg:min-h-[600px] lg:flex-row">
         {/* Left Side: Configuration Panel */}
-        <div className="flex-[3] p-6 max-h-[650px] overflow-y-auto space-y-6">
+        <div className="flex-[3] space-y-6 p-4 sm:p-6 lg:max-h-[650px] lg:overflow-y-auto">
           {/* Segmented Creator Tab selector */}
           <div className="flex justify-center">
             <Segmented
               options={[
                 {
                   label: (
-                    <span className="px-4 py-1 text-sm font-semibold">🎨 Visual Customizer</span>
+                    <span className="px-1 py-1 text-xs font-semibold sm:px-4 sm:text-sm">
+                      Visual Customizer
+                    </span>
                   ),
                   value: 'visual',
                 },
                 {
                   label: (
-                    <span className="px-4 py-1 text-sm font-semibold">🤖 AI Prompt Builder</span>
+                    <span className="px-1 py-1 text-xs font-semibold sm:px-4 sm:text-sm">
+                      AI Prompt Builder
+                    </span>
                   ),
                   value: 'ai',
                 },
               ]}
               value={queryType}
               onChange={(val) => setQueryType(val as 'visual' | 'ai')}
-              className="bg-slate-100 p-1 rounded-xl"
+              block
+              className="w-full rounded-xl bg-slate-100 p-1 sm:w-auto"
             />
           </div>
 
@@ -469,13 +475,14 @@ const CreateCustomWidgetModal = ({
                     key={theme.name}
                     type="button"
                     onClick={() => setNewWidgetColor(theme.name)}
-                    className={`w-8 h-8 rounded-full border border-slate-200 transition-all ${
+                    className={`h-11 w-11 rounded-full border border-slate-200 transition-all sm:h-8 sm:w-8 ${
                       newWidgetColor === theme.name
                         ? 'ring-2 ring-offset-2 ring-blue-500 scale-110'
                         : 'hover:scale-105'
                     }`}
                     style={{ backgroundColor: theme.hex }}
                     title={theme.name}
+                    aria-label={`Use ${theme.name} theme`}
                   />
                 ))}
               </div>
@@ -889,7 +896,7 @@ const CreateCustomWidgetModal = ({
         </div>
 
         {/* Right Side: Live Preview Panel */}
-        <div className="flex-[2] bg-slate-50 border-l border-slate-100 p-6 flex flex-col justify-between max-h-[650px]">
+        <div className="flex max-h-none flex-[2] flex-col justify-between border-t border-slate-100 bg-slate-50 p-4 sm:p-6 lg:max-h-[650px] lg:border-l lg:border-t-0">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -899,7 +906,7 @@ const CreateCustomWidgetModal = ({
             </div>
 
             {/* Live widget renderer */}
-            <div className="w-full flex items-center justify-center min-h-[250px] p-4 bg-slate-200/50 rounded-2xl border border-slate-200/80 shadow-inner">
+            <div className="flex min-h-[200px] w-full items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-200/50 p-3 shadow-inner sm:min-h-[250px] sm:p-4">
               {loadingData ? (
                 <div className="text-center space-y-2">
                   <Spin size="default" />
@@ -940,7 +947,12 @@ const CreateCustomWidgetModal = ({
                       </div>
                       <div className="h-44 w-full flex items-center justify-center">
                         {currentPreviewData.data && currentPreviewData.data.length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%">
+                          <ResponsiveContainer
+                            width="100%"
+                            height="100%"
+                            minWidth={0}
+                            minHeight={1}
+                          >
                             {currentPreviewData.chartType === 'pie' ||
                             (currentWidgetType === 'chart' && visualConfig.chartType === 'pie') ? (
                               <PieChart>

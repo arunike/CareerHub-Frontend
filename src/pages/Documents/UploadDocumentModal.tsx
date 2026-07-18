@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Upload, message } from 'antd';
+import { Form, Input, Select, Upload, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { createDocument, getApplicationOptions } from '../../api';

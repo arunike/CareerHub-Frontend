@@ -5,7 +5,8 @@ import {
   PieChartOutlined,
   RiseOutlined,
 } from '@ant-design/icons';
-import { Button, Input, Modal, Tag, Typography } from 'antd';
+import { Button, Input, Tag, Typography } from 'antd';
+import Modal from '../MobileModal';
 
 const { Text } = Typography;
 

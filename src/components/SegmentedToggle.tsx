@@ -26,6 +26,7 @@ const SegmentedToggle = <T extends string>({
 }: Props<T>) => {
   return (
     <div
+      role="group"
       className={clsx(
         'flex rounded-[10px] border border-slate-200/80 bg-slate-100/80 p-0.5',
         wrapperClassName
@@ -36,9 +37,11 @@ const SegmentedToggle = <T extends string>({
         return (
           <button
             key={option.value}
+            type="button"
             onClick={() => onChange(option.value)}
+            aria-pressed={isActive}
             className={clsx(
-              'flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-all',
+              'flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-all md:min-h-0',
               buttonClassName,
               isActive
                 ? option.activeClassName ||

@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Spin } from 'antd';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -9,8 +8,12 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Spin size="large" />
+      <div
+        className="flex min-h-screen items-center justify-center bg-slate-50"
+        role="status"
+        aria-label="Loading CareerHub"
+      >
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
       </div>
     );
   }

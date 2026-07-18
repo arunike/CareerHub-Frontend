@@ -1,15 +1,5 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import {
-  getCurrentUser,
-  isAuthenticationError,
-  login as loginRequest,
-  logout as logoutRequest,
-  signup as signupRequest,
-  updateProfile as updateProfileRequest,
-  type AuthResponse,
-  type AuthenticatedUser,
-} from '../api/auth';
+import type { AuthResponse, AuthenticatedUser } from '../api/auth';
 import {
   AUTH_TOKENS_UPDATED_EVENT,
   clearAuthTokens,
@@ -34,6 +24,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const loadAuthApi = () => import('../api/auth');
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
@@ -51,17 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      let authApi: Awaited<ReturnType<typeof loadAuthApi>> | undefined;
+
       try {
-        const response = await getCurrentUser();
+        authApi = await loadAuthApi();
+        const response = await authApi.getCurrentUser();
         if (!cancelled) {
           setUser(response.data.user ?? null);
         }
       } catch (error) {
-        if (!cancelled && isAuthenticationError(error)) {
+        const isAuthenticationError = authApi?.isAuthenticationError(error) ?? false;
+        if (!cancelled && isAuthenticationError) {
           clearAuthTokens();
           setUser(null);
         }
-        if (!cancelled && !isAuthenticationError(error)) {
+        if (!cancelled && !isAuthenticationError) {
           console.error('Unable to restore auth state.', error);
         }
       } finally {
@@ -90,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login(email: string, password: string) {
+    const { login: loginRequest } = await loadAuthApi();
     const response = await loginRequest(email, password);
     if (response.data.access && response.data.refresh) {
       storeAuthTokens({
@@ -106,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string;
     confirm_password: string;
   }) {
+    const { signup: signupRequest } = await loadAuthApi();
     const response = await signupRequest(payload);
     if (
       response.data.user &&
@@ -127,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function logout() {
     const refreshToken = getStoredRefreshToken();
     try {
+      const { logout: logoutRequest } = await loadAuthApi();
       await logoutRequest(refreshToken || undefined);
     } finally {
       clearAuthTokens();
@@ -135,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updateProfile(data: { first_name?: string; last_name?: string }) {
+    const { updateProfile: updateProfileRequest } = await loadAuthApi();
     const response = await updateProfileRequest(data);
     if (response.data.user) {
       setUser(response.data.user);

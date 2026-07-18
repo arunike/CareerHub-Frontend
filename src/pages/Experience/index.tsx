@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Typography,
@@ -10,9 +10,9 @@ import {
   Card,
   Row,
   Col,
-  Modal,
   Upload,
 } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -55,6 +55,7 @@ import type { Experience, EmploymentType } from '../../types';
 import ExperienceModal from './ExperienceModal';
 import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import { PageState } from '../../components/PageState';
 import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
 import TeamHistoryModal from './TeamHistoryModal';
 import SchedulePhasesModal from './SchedulePhasesModal';
@@ -84,6 +85,7 @@ const { Dragger } = Upload;
 const ExperiencePage: React.FC = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
   const [jdModalOpen, setJdModalOpen] = useState(false);
@@ -126,6 +128,7 @@ const ExperiencePage: React.FC = () => {
   const fetchExperiences = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const res = await getExperiences();
 
       const sorted = res.data.sort((a, b) => {
@@ -136,6 +139,7 @@ const ExperiencePage: React.FC = () => {
       });
       setExperiences(sorted);
     } catch (err: any) {
+      setLoadError(true);
       message.error('Failed to load experiences');
     } finally {
       setLoading(false);
@@ -330,9 +334,13 @@ const ExperiencePage: React.FC = () => {
   const getLinkedOffer = (exp: Experience): Offer | undefined =>
     exp.offer ? allOffers.find((o) => o.id === exp.offer) : undefined;
 
-  const getCompensationSnapshot = (exp: Experience) => {
-    return getExperienceCompensationSnapshot(exp, getLinkedOffer(exp));
-  };
+  const getCompensationSnapshot = useCallback(
+    (exp: Experience) => {
+      const linkedOffer = exp.offer ? allOffers.find((offer) => offer.id === exp.offer) : undefined;
+      return getExperienceCompensationSnapshot(exp, linkedOffer);
+    },
+    [allOffers]
+  );
 
   const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
     if (!raiseHistoryExp) return;
@@ -490,21 +498,21 @@ const ExperiencePage: React.FC = () => {
 
   const formatDuration = (exp: Experience) => {
     const start = parseExperienceDate(exp.start_date);
-    let end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
+    const end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
 
     const startStr = start ? start.format('MMM D, YYYY') : 'Unknown';
     const endStr = exp.is_current ? 'Present' : end ? end.format('MMM D, YYYY') : 'Unknown';
 
     let durationStr = '';
     if (start && end) {
-      let years = end.diff(start, 'year');
-      let dateAfterYears = start.add(years, 'year');
+      const years = end.diff(start, 'year');
+      const dateAfterYears = start.add(years, 'year');
 
-      let months = end.diff(dateAfterYears, 'month');
-      let dateAfterMonths = dateAfterYears.add(months, 'month');
+      const months = end.diff(dateAfterYears, 'month');
+      const dateAfterMonths = dateAfterYears.add(months, 'month');
 
-      let days = end.diff(dateAfterMonths, 'day');
-      let totalDays = end.diff(start, 'day');
+      const days = end.diff(dateAfterMonths, 'day');
+      const totalDays = end.diff(start, 'day');
 
       const parts = [];
       if (years > 0) parts.push(`${years} yr${years !== 1 ? 's' : ''}`);
@@ -750,7 +758,7 @@ const ExperiencePage: React.FC = () => {
       equity: trackedComp.reduce((sum, comp) => sum + comp.equity, 0),
       total: trackedComp.reduce((sum, comp) => sum + comp.total, 0),
     };
-  }, [experiences, allOffers]);
+  }, [experiences, getCompensationSnapshot]);
 
   const internshipCompSnapshots = useMemo(() => {
     return experiences
@@ -764,7 +772,7 @@ const ExperiencePage: React.FC = () => {
           { kind: 'hourly' }
         > => comp !== null && comp.kind === 'hourly'
       );
-  }, [experiences, allOffers]);
+  }, [experiences, getCompensationSnapshot]);
 
   const internshipCompSummary = useMemo(() => {
     const internshipRoles = experiences.filter((exp) => exp.employment_type === 'internship');
@@ -825,8 +833,8 @@ const ExperiencePage: React.FC = () => {
     <div style={{ padding: 0, width: '100%' }} className="animate-in fade-in duration-500">
       <div style={{ marginBottom: 24 }}>
         <PageActionToolbar
-          title={<span className="whitespace-nowrap">Career Journey</span>}
-          subtitle="Your professional timeline, skills, and historic achievements."
+          title={<span className="whitespace-nowrap">Career History</span>}
+          subtitle="Roles, skills, compensation, and achievements over time."
           extraActions={
             <Button
               size="large"
@@ -848,6 +856,7 @@ const ExperiencePage: React.FC = () => {
           onPrimaryAction={openAddModal}
           primaryActionLabel="Add Experience"
           primaryActionIcon={<PlusOutlined />}
+          showExtraActionsOnMobile
         />
       </div>
 
@@ -974,7 +983,7 @@ const ExperiencePage: React.FC = () => {
                             type="button"
                             onClick={() => setOverallCompBreakdownOpen(true)}
                             title="View overall pay structure breakdown"
-                            className="shrink-0 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full hover:bg-emerald-100 transition-colors"
+                            className="min-h-10 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-0 sm:px-2"
                           >
                             Breakdown
                           </button>
@@ -1020,7 +1029,7 @@ const ExperiencePage: React.FC = () => {
                             type="button"
                             onClick={() => setOverallInternshipBreakdownOpen(true)}
                             title="View internship earnings breakdown"
-                            className="shrink-0 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors"
+                            className="min-h-10 shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 sm:min-h-0 sm:px-2"
                           >
                             Breakdown
                           </button>
@@ -1083,29 +1092,25 @@ const ExperiencePage: React.FC = () => {
           <MetricCardsSkeleton count={4} />
           <ListSkeleton count={3} />
         </div>
+      ) : loadError && experiences.length === 0 ? (
+        <PageState
+          tone="error"
+          title="Career history could not be loaded"
+          description="Your saved experience was not changed. Check your connection and try again."
+          actionLabel="Retry loading career history"
+          onAction={() => void fetchExperiences()}
+          icon={<InboxOutlined />}
+        />
       ) : experiences.length === 0 ? (
-        <div className="bg-white p-16 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center shadow-sm">
-          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-5 shadow-inner">
-            <PlusOutlined className="text-blue-500 text-3xl" />
-          </div>
-          <Title level={4} className="!mb-2 text-gray-800">
-            No experiences added yet
-          </Title>
-          <Text className="text-gray-500 mb-8 max-w-sm text-base">
-            Click "Add Experience" to start building your professional history or quick-import from
-            your resume.
-          </Text>
-          <Button
-            onClick={openAddModal}
-            type="primary"
-            size="large"
-            className="rounded-xl px-8 h-12 bg-blue-600 hover:!bg-blue-500 border-transparent text-white shadow-md shadow-blue-500/20"
-          >
-            Get Started
-          </Button>
-        </div>
+        <PageState
+          title="No career history yet"
+          description="Add a role or import your resume to keep positions, skills, compensation, and achievements together."
+          actionLabel="Add experience"
+          onAction={openAddModal}
+          icon={<InboxOutlined />}
+        />
       ) : (
-        <div className="relative pl-6 md:pl-8">
+        <div className="relative pl-0 md:pl-8">
           <div className="space-y-10 relative z-10">
             {filteredExperiences.length === 0 && selectedSkill && (
               <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
@@ -1146,7 +1151,7 @@ const ExperiencePage: React.FC = () => {
                 const internshipComp = comp?.kind === 'hourly' ? comp : null;
                 const salaryComp = comp?.kind === 'salary' ? comp : null;
                 return (
-                  <div className="p-7">
+                  <div className="p-4 sm:p-6 lg:p-7">
                     <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-5">
                       <div className="min-w-0 flex-1">
                         <div className="flex md:hidden items-center gap-3 mb-3">
@@ -1293,7 +1298,7 @@ const ExperiencePage: React.FC = () => {
                             ) : null;
                           })()}
                       </div>
-                      <div className="flex items-center flex-wrap gap-2 shrink-0 w-full lg:w-auto justify-start lg:justify-end">
+                      <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-auto lg:justify-end">
                         <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 flex flex-wrap items-center gap-2 opacity-100">
                           <Tooltip title="Evaluate promotion readiness for this role">
                             <Button
@@ -1377,9 +1382,9 @@ const ExperiencePage: React.FC = () => {
               const renderMultiRoles = () => {
                 const tenure = getGroupTenure(group);
                 return (
-                  <div className="p-7">
+                  <div className="p-4 sm:p-6 lg:p-7">
                     {/* Company header — LinkedIn style */}
-                    <div className="flex items-start justify-between mb-6">
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-center gap-3">
                         <div className="flex md:hidden shrink-0">
                           {logoSrc ? (
@@ -1412,18 +1417,20 @@ const ExperiencePage: React.FC = () => {
                         </div>
                       </div>
                       {/* Group-level actions: pin + delete */}
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="experience-card-actions flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
                         {primary.is_pinned ? (
                           <Tooltip title="Click to unpin">
                             <button
+                              type="button"
                               onClick={() => handleTogglePin(primary)}
                               className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full cursor-pointer hover:bg-amber-100 transition-colors"
+                              aria-label={`Unpin ${primary.company} roles`}
                             >
                               <PushpinFilled style={{ fontSize: 10 }} /> Pinned
                             </button>
                           </Tooltip>
                         ) : (
-                          <div className="opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <div className="opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
                             <Tooltip title="Pin to top">
                               <Button
                                 type="text"
@@ -1431,11 +1438,12 @@ const ExperiencePage: React.FC = () => {
                                 icon={<PushpinOutlined />}
                                 onClick={() => handleTogglePin(primary)}
                                 className="text-gray-400 hover:text-amber-500"
+                                aria-label="Pin company roles to top"
                               />
                             </Tooltip>
                           </div>
                         )}
-                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1">
+                        <div className="flex items-center gap-1 opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
                           <Tooltip
                             title={
                               group.some((e) => !e.is_locked)
@@ -1454,6 +1462,11 @@ const ExperiencePage: React.FC = () => {
                                 )
                               }
                               onClick={() => handleToggleGroupLock(group)}
+                              aria-label={
+                                group.some((e) => !e.is_locked)
+                                  ? 'Lock all company roles'
+                                  : 'Unlock all company roles'
+                              }
                               className={
                                 group.some((e) => !e.is_locked)
                                   ? 'text-gray-400 hover:text-gray-600'
@@ -1469,7 +1482,13 @@ const ExperiencePage: React.FC = () => {
                               okText="Delete"
                               okButtonProps={{ danger: true }}
                             >
-                              <Button type="text" danger size="small" icon={<DeleteOutlined />} />
+                              <Button
+                                type="text"
+                                danger
+                                size="small"
+                                icon={<DeleteOutlined />}
+                                aria-label={`Delete unlocked roles at ${primary.company}`}
+                              />
                             </Popconfirm>
                           </Tooltip>
                         </div>
@@ -1477,7 +1496,10 @@ const ExperiencePage: React.FC = () => {
                     </div>
 
                     {/* Roles — left-border timeline with dots */}
-                    <div className="relative pl-6" style={{ borderLeft: '2px solid #e5e7eb' }}>
+                    <div
+                      className="relative pl-5 sm:pl-6"
+                      style={{ borderLeft: '2px solid #e5e7eb' }}
+                    >
                       {group.map((exp, roleIdx) => {
                         const skills = exp.skills || [];
                         const comp = getCompensationSnapshot(exp);
@@ -1619,7 +1641,7 @@ const ExperiencePage: React.FC = () => {
                                     ) : null;
                                   })()}
                               </div>
-                              <div className="flex items-center flex-wrap gap-2 shrink-0 w-full lg:w-auto justify-start lg:justify-end lg:ml-2 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 opacity-100">
+                              <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 opacity-100 transition-all duration-200 lg:ml-2 lg:w-auto lg:justify-end lg:opacity-0 lg:group-hover:opacity-100">
                                 <Tooltip title="Evaluate promotion readiness for this role">
                                   <Button
                                     size="small"
@@ -1729,7 +1751,7 @@ const ExperiencePage: React.FC = () => {
                     <div className="relative z-10">{groupAvatar}</div>
                   </div>
                   <div
-                    className={`flex-grow min-w-0 bg-white/80 backdrop-blur-sm rounded-3xl border shadow-sm transition-all duration-300 relative overflow-hidden ${
+                    className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
                       primary.is_pinned
                         ? 'border-amber-200 ring-1 ring-amber-100 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
                         : 'border-gray-100 hover:border-blue-100 hover:shadow-md'

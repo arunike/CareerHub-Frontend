@@ -84,32 +84,6 @@ function extractErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-function TypewriterText({ text }: { text: string }) {
-  const [displayText, setDisplayText] = useState('');
-
-  useEffect(() => {
-    setDisplayText('');
-    let index = 0;
-    const timer = window.setInterval(() => {
-      index += 1;
-      setDisplayText(text.slice(0, index));
-
-      if (index >= text.length) {
-        window.clearInterval(timer);
-      }
-    }, 28);
-
-    return () => window.clearInterval(timer);
-  }, [text]);
-
-  return (
-    <span>
-      {displayText}
-      <span className="login-page__quote-cursor" aria-hidden="true" />
-    </span>
-  );
-}
-
 export default function LoginPage() {
   const [form] = Form.useForm<AuthFormValues>();
   const navigate = useNavigate();
@@ -296,9 +270,7 @@ export default function LoginPage() {
           </div>
 
           <blockquote className="login-page__quote">
-            <p>
-              <TypewriterText text={quotes[mode || 'login'].text} />
-            </p>
+            <p>{quotes[mode || 'login'].text}</p>
             <cite>{quotes[mode || 'login'].author}</cite>
           </blockquote>
         </aside>

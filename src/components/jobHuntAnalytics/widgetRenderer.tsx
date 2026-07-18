@@ -33,28 +33,28 @@ export type JobHuntStats = {
   timelineAnalyticsError?: boolean;
 };
 
-const getStageGradient = (key: string) => {
+const getStageColor = (key: string) => {
   switch (key) {
     case 'APPLIED':
-      return 'bg-gradient-to-r from-blue-400 to-blue-500';
+      return 'bg-blue-500';
     case 'OA':
-      return 'bg-gradient-to-r from-indigo-400 to-indigo-500';
+      return 'bg-indigo-500';
     case 'SCREEN':
-      return 'bg-gradient-to-r from-sky-400 to-sky-500';
+      return 'bg-sky-500';
     case 'ROUND_1':
-      return 'bg-gradient-to-r from-amber-400 to-amber-500';
+      return 'bg-amber-500';
     case 'ROUND_2':
-      return 'bg-gradient-to-r from-amber-500 to-orange-400';
+      return 'bg-orange-400';
     case 'ROUND_3':
-      return 'bg-gradient-to-r from-orange-400 to-orange-500';
+      return 'bg-orange-500';
     case 'ROUND_4':
-      return 'bg-gradient-to-r from-orange-500 to-red-500';
+      return 'bg-red-500';
     case 'ONSITE':
-      return 'bg-gradient-to-r from-rose-500 to-red-500';
+      return 'bg-rose-500';
     case 'OFFER':
-      return 'bg-gradient-to-r from-emerald-400 to-emerald-500';
+      return 'bg-emerald-500';
     default:
-      return 'bg-gradient-to-r from-slate-400 to-slate-500';
+      return 'bg-slate-500';
   }
 };
 
@@ -493,7 +493,7 @@ export const renderJobHuntWidget = (
                           <div className="relative flex items-center h-4">
                             <div className="w-full h-2 rounded-full bg-gray-100">
                               <div
-                                className={`h-full rounded-full ${getStageGradient(stage.key)} transition-all duration-300`}
+                                className={`h-full rounded-full ${getStageColor(stage.key)} transition-all duration-300`}
                                 style={{
                                   width: `${Math.max(stage.conversion_rate * 100, stage.reached_count > 0 ? 5 : 0)}%`,
                                 }}

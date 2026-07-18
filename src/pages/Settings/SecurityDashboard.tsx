@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CloudServerOutlined,
   GoogleOutlined,
@@ -11,6 +11,7 @@ import { Button, message } from 'antd';
 import dayjs from 'dayjs';
 import { getSecurityDashboard } from '../../api';
 import type { SecurityDashboardResponse } from '../../api/auth';
+import { PageState, PanelSkeleton } from '../../components/PageState';
 
 type CheckStatus = 'ok' | 'warn' | 'bad';
 
@@ -43,7 +44,7 @@ const SecurityDashboard: React.FC = () => {
   const [data, setData] = useState<SecurityDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getSecurityDashboard();
@@ -54,11 +55,11 @@ const SecurityDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
     fetchDashboard();
-  }, []);
+  }, [fetchDashboard]);
 
   const checks = useMemo<CheckItem[]>(() => {
     if (!data) return [];
@@ -164,17 +165,25 @@ const SecurityDashboard: React.FC = () => {
 
   if (loading && !data) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
-        Loading security dashboard...
-      </div>
+      <>
+        {contextHolder}
+        <PanelSkeleton rows={5} />
+      </>
     );
   }
 
   if (!data) {
     return (
-      <div className="rounded-xl border border-red-100 bg-red-50 p-6 text-sm text-red-700">
-        Security dashboard could not be loaded.
-      </div>
+      <>
+        {contextHolder}
+        <PageState
+          tone="error"
+          title="Security status unavailable"
+          description="We couldn't load the latest security checks. Your settings were not changed."
+          actionLabel="Try again"
+          onAction={fetchDashboard}
+        />
+      </>
     );
   }
 

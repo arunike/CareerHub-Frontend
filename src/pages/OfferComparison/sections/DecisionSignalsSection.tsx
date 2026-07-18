@@ -94,7 +94,7 @@ const DecisionSignalsSection = ({
             <button
               type="button"
               onClick={() => setIsEditorOpen(true)}
-              className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-3 text-xs font-semibold text-sky-700 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 active:translate-y-px"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-3 text-xs font-semibold text-sky-700 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 active:translate-y-px sm:h-9"
             >
               <SlidersOutlined />
               Edit
@@ -119,12 +119,12 @@ const DecisionSignalsSection = ({
         onClose={() => setIsEditorOpen(false)}
         maxWidthClass="max-w-3xl"
         bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50"
-        zIndex={1100}
+        zIndex={1200}
         footer={
           <button
             type="button"
             onClick={() => setIsEditorOpen(false)}
-            className="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 active:translate-y-px"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 active:translate-y-px"
           >
             Done
           </button>

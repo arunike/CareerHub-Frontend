@@ -11,7 +11,8 @@ import {
   StopOutlined,
   UnlockOutlined,
 } from '@ant-design/icons';
-import { Checkbox, Button, Modal, Tooltip, Form, Input, InputNumber, Select } from 'antd';
+import { Checkbox, Button, Tooltip, Form, Input, InputNumber, Select } from 'antd';
+import Modal from '../../../components/MobileModal';
 import type { PublicBooking, ShareLink } from '../../../types';
 import BulkActionHeader from '../../../components/BulkActionHeader';
 
@@ -331,12 +332,13 @@ const PublicBookingManager = ({
                             </p>
                           )}
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex shrink-0 gap-2">
                           <button
                             type="button"
                             onClick={() => onCopyLink(link)}
-                            className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                            className="h-11 w-11 rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-blue-200 hover:text-blue-600 sm:h-9 sm:w-9 sm:rounded-lg"
                             title="Copy booking link"
+                            aria-label="Copy booking link"
                           >
                             <CopyOutlined />
                           </button>
@@ -344,8 +346,9 @@ const PublicBookingManager = ({
                             <button
                               type="button"
                               onClick={() => onDeactivateLink(link.id)}
-                              className="h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-red-600 hover:border-red-200 transition-colors"
+                              className="h-11 w-11 rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-red-200 hover:text-red-600 sm:h-9 sm:w-9 sm:rounded-lg"
                               title="Deactivate link"
+                              aria-label="Deactivate booking link"
                             >
                               <StopOutlined />
                             </button>

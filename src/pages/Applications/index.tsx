@@ -57,6 +57,8 @@ import type { CareerApplication } from '../../types/application';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
+import ModalShell from '../../components/ModalShell';
+import { PageState } from '../../components/PageState';
 import CoverLetterModal from './CoverLetterModal';
 import ApplicationDetailDrawer from './ApplicationDetailDrawer';
 import { getCurrentYear } from '../../utils/yearFilter';
@@ -99,6 +101,7 @@ const Applications = () => {
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [applicationsTotal, setApplicationsTotal] = useState(0);
   const [applicationSummary, setApplicationSummary] = useState(DEFAULT_APPLICATION_SUMMARY);
   const [applicationOrdering, setApplicationOrdering] = useState<ApplicationOrdering>();
@@ -196,6 +199,7 @@ const Applications = () => {
   const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const appsResp = await getApplications({
         page: currentPage,
         page_size: APPLICATION_PAGE_SIZE,
@@ -217,6 +221,7 @@ const Applications = () => {
         setApplicationSummary(summarizeApplications(data));
       }
     } catch (error) {
+      setLoadError(true);
       messageApi.error('Failed to load applications');
       console.error(error);
     } finally {
@@ -817,6 +822,7 @@ const Applications = () => {
               size="small"
               icon={<InboxOutlined style={{ color: '#334155' }} />}
               onClick={() => openDetailDrawer(record)}
+              aria-label={`View ${record.company_details?.name || 'application'} details`}
             />
           </Tooltip>
           <Tooltip title="Generate Cover Letter">
@@ -825,6 +831,7 @@ const Applications = () => {
               size="small"
               icon={<ThunderboltOutlined style={{ color: '#0ea5e9' }} />}
               onClick={() => setCoverLetterApp(record)}
+              aria-label={`Generate cover letter for ${record.company_details?.name || 'application'}`}
             />
           </Tooltip>
           <RowActions
@@ -845,6 +852,50 @@ const Applications = () => {
     Number(statusFilter !== 'ALL') +
     Number(empTypeFilter !== 'ALL') +
     Number(locationFilter !== 'ALL');
+
+  const hasActiveSearchFilters = activeFilterCount > 0;
+  const isYearFiltered = selectedYear !== 'all';
+  const clearApplicationFilters = () => {
+    setSearchText('');
+    setDebouncedSearchText('');
+    setStatusFilter('ALL');
+    setEmpTypeFilter('ALL');
+    setLocationFilter('ALL');
+    setCurrentPage(1);
+  };
+
+  const emptyStateTitle = hasActiveSearchFilters
+    ? 'No matching applications'
+    : isYearFiltered
+      ? `No applications in ${selectedYear}`
+      : 'No applications yet';
+  const emptyStateDescription = hasActiveSearchFilters
+    ? 'No saved applications match the current search and filters.'
+    : isYearFiltered
+      ? 'Choose another year, show all years, or add an application for this year.'
+      : 'Add an application to track its status, interviews, documents, and next steps.';
+  const emptyStateActionLabel = hasActiveSearchFilters
+    ? 'Clear filters'
+    : isYearFiltered
+      ? 'Show all years'
+      : 'Add application';
+  const emptyStateAction = hasActiveSearchFilters
+    ? clearApplicationFilters
+    : isYearFiltered
+      ? () => handleYearChange('all')
+      : openAddModal;
+
+  const applicationEmptyState = (
+    <PageState
+      title={emptyStateTitle}
+      description={emptyStateDescription}
+      actionLabel={emptyStateActionLabel}
+      onAction={emptyStateAction}
+      icon={<InboxOutlined />}
+    />
+  );
+
+  const applicationLoadFailed = loadError && applications.length === 0;
 
   const handleTableChange: TableProps<CareerApplication>['onChange'] = (
     _pagination,
@@ -871,7 +922,11 @@ const Applications = () => {
     setSelectedRowKeys([]);
   };
 
-  const renderApplicationForm = (onCancel: () => void, submitLabel = 'Save') => (
+  const renderApplicationForm = (
+    onCancel: () => void,
+    submitLabel = 'Save',
+    showActions = true
+  ) => (
     <Form form={form} layout="vertical" onFinish={handleAddEdit}>
       <Row gutter={16}>
         <Col xs={24} sm={12}>
@@ -955,14 +1010,16 @@ const Applications = () => {
           </Form.Item>
         </Col>
       </Row>
-      <div style={{ textAlign: 'right', marginTop: 16 }}>
-        <Space>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button type="primary" htmlType="submit">
+      {showActions ? (
+        <div className="mt-4 flex justify-end gap-3">
+          <Button size="large" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button size="large" type="primary" htmlType="submit">
             {submitLabel}
           </Button>
-        </Space>
-      </div>
+        </div>
+      ) : null}
     </Form>
   );
 
@@ -1031,7 +1088,7 @@ const Applications = () => {
         </div>
       )}
 
-      {loading ? (
+      {applicationLoadFailed ? null : loading ? (
         <MetricCardsSkeleton count={4} />
       ) : (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -1063,140 +1120,158 @@ const Applications = () => {
       )}
 
       {/* Filter bar */}
-      {isMobile ? (
-        <div className="mb-4 space-y-3">
-          <div className="enterprise-filter-bar p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Filters</div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {activeFilterCount > 0
-                    ? `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active`
-                    : 'Search, status, and type'}
+      {!applicationLoadFailed &&
+        (isMobile ? (
+          <div className="mb-4 space-y-3">
+            <div className="enterprise-filter-bar p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Filters</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {activeFilterCount > 0
+                      ? `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active`
+                      : 'Search, status, and type'}
+                  </div>
                 </div>
+                <Button
+                  size="large"
+                  className="toolbar-native-btn"
+                  icon={mobileFiltersOpen ? <UpOutlined /> : <DownOutlined />}
+                  onClick={() => setMobileFiltersOpen((current) => !current)}
+                >
+                  {mobileFiltersOpen ? 'Hide' : 'Show'}
+                </Button>
               </div>
-              <Button
-                size="large"
-                className="toolbar-native-btn"
-                icon={mobileFiltersOpen ? <UpOutlined /> : <DownOutlined />}
-                onClick={() => setMobileFiltersOpen((current) => !current)}
-              >
-                {mobileFiltersOpen ? 'Hide' : 'Show'}
-              </Button>
-            </div>
 
-            {mobileFiltersOpen ? (
-              <div className="mt-4 grid grid-cols-1 gap-3">
-                <Input
-                  size="large"
-                  placeholder="Search company or role"
-                  prefix={<SearchOutlined className="text-gray-400" />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  allowClear
-                />
-                <Select
-                  size="large"
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                  suffixIcon={<FilterOutlined />}
-                >
-                  <Option value="ALL">All Statuses</Option>
-                  {appStages.map((stage) => (
-                    <Option key={stage.key} value={stage.key}>
-                      {stage.label}
-                    </Option>
-                  ))}
-                </Select>
-                <Select
-                  size="large"
-                  value={empTypeFilter}
-                  onChange={setEmpTypeFilter}
-                  suffixIcon={<FilterOutlined />}
-                >
-                  <Option value="ALL">All Types</Option>
-                  {empTypes.map((t) => (
-                    <Option key={t.value} value={t.value}>
-                      {t.label}
-                    </Option>
-                  ))}
-                </Select>
-                <Input
-                  size="large"
-                  placeholder="Location"
-                  value={locationFilter === 'ALL' ? '' : locationFilter}
-                  onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
-                  prefix={<GlobalOutlined className="text-gray-400" />}
-                  allowClear
-                />
-                <Text type="secondary" className="text-sm">
-                  {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
-                </Text>
-              </div>
-            ) : null}
+              {mobileFiltersOpen ? (
+                <div className="mt-4 grid grid-cols-1 gap-3">
+                  <Input
+                    size="large"
+                    aria-label="Search applications by company or role"
+                    placeholder="Search company or role"
+                    prefix={<SearchOutlined className="text-gray-400" />}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    allowClear
+                  />
+                  <Select
+                    size="large"
+                    aria-label="Filter applications by status"
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    suffixIcon={<FilterOutlined />}
+                  >
+                    <Option value="ALL">All Statuses</Option>
+                    {appStages.map((stage) => (
+                      <Option key={stage.key} value={stage.key}>
+                        {stage.label}
+                      </Option>
+                    ))}
+                  </Select>
+                  <Select
+                    size="large"
+                    aria-label="Filter applications by employment type"
+                    value={empTypeFilter}
+                    onChange={setEmpTypeFilter}
+                    suffixIcon={<FilterOutlined />}
+                  >
+                    <Option value="ALL">All Types</Option>
+                    {empTypes.map((t) => (
+                      <Option key={t.value} value={t.value}>
+                        {t.label}
+                      </Option>
+                    ))}
+                  </Select>
+                  <Input
+                    size="large"
+                    aria-label="Filter applications by location"
+                    placeholder="Location"
+                    value={locationFilter === 'ALL' ? '' : locationFilter}
+                    onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
+                    prefix={<GlobalOutlined className="text-gray-400" />}
+                    allowClear
+                  />
+                  <Text type="secondary" className="text-sm">
+                    {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
+                  </Text>
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="enterprise-filter-bar mb-4 flex flex-wrap gap-3 p-3">
-          <Input
-            size="large"
-            placeholder="Search company or role"
-            prefix={<SearchOutlined className="text-gray-400" />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ maxWidth: 340 }}
-            allowClear
-          />
-          <Select
-            size="large"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            style={{ width: 200 }}
-            suffixIcon={<FilterOutlined />}
-          >
-            <Option value="ALL">All Statuses</Option>
-            {appStages.map((stage) => (
-              <Option key={stage.key} value={stage.key}>
-                {stage.label}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            size="large"
-            value={empTypeFilter}
-            onChange={setEmpTypeFilter}
-            style={{ width: 180 }}
-            suffixIcon={<FilterOutlined />}
-          >
-            <Option value="ALL">All Types</Option>
-            {empTypes.map((t) => (
-              <Option key={t.value} value={t.value}>
-                {t.label}
-              </Option>
-            ))}
-          </Select>
-          <Input
-            size="large"
-            placeholder="Location"
-            value={locationFilter === 'ALL' ? '' : locationFilter}
-            style={{ width: 200 }}
-            onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
-            prefix={<GlobalOutlined className="text-gray-400" />}
-            allowClear
-          />
-          {(searchText ||
-            statusFilter !== 'ALL' ||
-            empTypeFilter !== 'ALL' ||
-            locationFilter !== 'ALL') && (
-            <Text type="secondary" className="self-center text-sm">
-              {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
-            </Text>
-          )}
-        </div>
-      )}
+        ) : (
+          <div className="enterprise-filter-bar mb-4 flex flex-wrap gap-3 p-3">
+            <Input
+              size="large"
+              aria-label="Search applications by company or role"
+              placeholder="Search company or role"
+              prefix={<SearchOutlined className="text-gray-400" />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ maxWidth: 340 }}
+              allowClear
+            />
+            <Select
+              size="large"
+              aria-label="Filter applications by status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              style={{ width: 200 }}
+              suffixIcon={<FilterOutlined />}
+            >
+              <Option value="ALL">All Statuses</Option>
+              {appStages.map((stage) => (
+                <Option key={stage.key} value={stage.key}>
+                  {stage.label}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              size="large"
+              aria-label="Filter applications by employment type"
+              value={empTypeFilter}
+              onChange={setEmpTypeFilter}
+              style={{ width: 180 }}
+              suffixIcon={<FilterOutlined />}
+            >
+              <Option value="ALL">All Types</Option>
+              {empTypes.map((t) => (
+                <Option key={t.value} value={t.value}>
+                  {t.label}
+                </Option>
+              ))}
+            </Select>
+            <Input
+              size="large"
+              aria-label="Filter applications by location"
+              placeholder="Location"
+              value={locationFilter === 'ALL' ? '' : locationFilter}
+              style={{ width: 200 }}
+              onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
+              prefix={<GlobalOutlined className="text-gray-400" />}
+              allowClear
+            />
+            {(searchText ||
+              statusFilter !== 'ALL' ||
+              empTypeFilter !== 'ALL' ||
+              locationFilter !== 'ALL') && (
+              <Text type="secondary" className="self-center text-sm">
+                {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
+              </Text>
+            )}
+          </div>
+        ))}
 
       {/* Data list */}
-      {isMobile ? (
+      {applicationLoadFailed ? (
+        <PageState
+          tone="error"
+          title="Applications could not be loaded"
+          description="Your saved applications were not changed. Check your connection and try again."
+          actionLabel="Retry loading applications"
+          onAction={() => void fetchApplications()}
+          icon={<InboxOutlined />}
+        />
+      ) : isMobile ? (
         <div className="space-y-3">
           {loading ? (
             Array.from({ length: 3 }).map((_, idx) => (
@@ -1213,15 +1288,7 @@ const Applications = () => {
               </div>
             ))
           ) : filteredData.length === 0 ? (
-            <div className="rounded-[18px] border border-dashed border-slate-300/90 bg-white/70 px-4 py-10 text-center shadow-sm backdrop-blur">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm">
-                <InboxOutlined />
-              </div>
-              <div className="text-sm font-semibold text-slate-900">No applications found</div>
-              <div className="mx-auto mt-1 max-w-xs text-xs leading-5 text-slate-500">
-                Adjust your filters or add a new application.
-              </div>
-            </div>
+            applicationEmptyState
           ) : (
             <>
               {paginatedData.map((record) => {
@@ -1344,6 +1411,8 @@ const Applications = () => {
         </div>
       ) : loading ? (
         <TableSkeleton />
+      ) : filteredData.length === 0 ? (
+        applicationEmptyState
       ) : (
         <div className="enterprise-table-shell">
           <Table
@@ -1369,15 +1438,36 @@ const Applications = () => {
       )}
 
       {/* Add Modal */}
-      <Modal
+      <ModalShell
+        isOpen={isAddModalOpen}
         title="Add Application"
-        open={isAddModalOpen}
-        onCancel={() => setIsAddModalOpen(false)}
-        footer={null}
-        width={700}
+        onClose={() => setIsAddModalOpen(false)}
+        maxWidthClass="max-w-[700px]"
+        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+        footer={
+          <>
+            <Button
+              size="large"
+              onClick={() => setIsAddModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="large"
+              type="primary"
+              onClick={() => form.submit()}
+              className="w-full sm:w-auto"
+            >
+              Add application
+            </Button>
+          </>
+        }
       >
-        {isAddModalOpen ? renderApplicationForm(() => setIsAddModalOpen(false)) : null}
-      </Modal>
+        {isAddModalOpen
+          ? renderApplicationForm(() => setIsAddModalOpen(false), 'Save', false)
+          : null}
+      </ModalShell>
 
       {/* Cover Letter Modal */}
       {coverLetterApp && (
@@ -1409,33 +1499,38 @@ const Applications = () => {
         }}
       />
 
-      <Modal
+      <ModalShell
+        isOpen={isJobImportModalOpen}
         title="Import from Job URL"
-        open={isJobImportModalOpen}
-        onCancel={closeJobImportModal}
-        width={760}
-        footer={[
-          <Button key="cancel" onClick={closeJobImportModal}>
-            Cancel
-          </Button>,
-          <Button
-            key="extract"
-            icon={<GlobalOutlined />}
-            loading={jobImportLoading}
-            onClick={handleExtractJobPosting}
-          >
-            Extract
-          </Button>,
-          <Button
-            key="create"
-            type="primary"
-            disabled={!jobImportPreview}
-            loading={jobImportSaving}
-            onClick={handleCreateFromJobImport}
-          >
-            Create Application
-          </Button>,
-        ]}
+        onClose={closeJobImportModal}
+        maxWidthClass="max-w-[760px]"
+        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+        footer={
+          <>
+            <Button size="large" onClick={closeJobImportModal} className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            <Button
+              size="large"
+              icon={<GlobalOutlined />}
+              loading={jobImportLoading}
+              onClick={handleExtractJobPosting}
+              className="w-full sm:w-auto"
+            >
+              Extract
+            </Button>
+            <Button
+              size="large"
+              type="primary"
+              disabled={!jobImportPreview}
+              loading={jobImportSaving}
+              onClick={handleCreateFromJobImport}
+              className="w-full sm:w-auto"
+            >
+              Create application
+            </Button>
+          </>
+        }
       >
         <div className="space-y-4">
           <div className="rounded-2xl border border-sky-100 bg-sky-50/50 px-4 py-3">
@@ -1530,31 +1625,33 @@ const Applications = () => {
             </Form>
           )}
         </div>
-      </Modal>
+      </ModalShell>
 
       {/* Import Modal */}
-      <Modal
+      <ModalShell
+        isOpen={isImportModalOpen}
         title="Import Applications"
-        open={isImportModalOpen}
-        onCancel={closeImportModal}
-        width={1100}
+        onClose={closeImportModal}
+        maxWidthClass="max-w-[1100px]"
+        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
         footer={
-          applicationImportPreview
-            ? [
-                <Button key="cancel" onClick={closeImportModal}>
-                  Cancel
-                </Button>,
-                <Button
-                  key="apply"
-                  type="primary"
-                  disabled={(editableImportReview?.summary.errors || 0) > 0}
-                  loading={applicationImportApplying}
-                  onClick={applyApplicationImport}
-                >
-                  Confirm Import
-                </Button>,
-              ]
-            : null
+          applicationImportPreview ? (
+            <>
+              <Button size="large" onClick={closeImportModal} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+              <Button
+                size="large"
+                type="primary"
+                disabled={(editableImportReview?.summary.errors || 0) > 0}
+                loading={applicationImportApplying}
+                onClick={applyApplicationImport}
+                className="w-full sm:w-auto"
+              >
+                Confirm import
+              </Button>
+            </>
+          ) : null
         }
       >
         {applicationImportPreviewing ? (
@@ -1747,7 +1844,7 @@ const Applications = () => {
             </div>
           </div>
         )}
-      </Modal>
+      </ModalShell>
     </div>
   );
 };

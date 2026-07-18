@@ -21,22 +21,26 @@ export default function PublicHeader({
   actionHref = '/login',
 }: PublicHeaderProps) {
   return (
-    <nav className="fixed left-1/2 top-6 z-50 flex w-[calc(100%-2.5rem)] max-w-5xl -translate-x-1/2 flex-col items-center justify-between gap-4 rounded-[2rem] border border-slate-200/70 bg-white/75 px-4 py-3 text-sm shadow-[0_24px_70px_-48px_rgba(15,23,42,0.75)] backdrop-blur-xl sm:flex-row sm:gap-0">
+    <nav
+      aria-label="Public navigation"
+      className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-50 flex w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-[0_18px_48px_-36px_rgba(15,23,42,0.6)] sm:px-4"
+    >
       <Link
         to={brandHref}
-        className="inline-flex items-center gap-3 text-lg font-bold text-slate-900 transition hover:text-blue-600"
+        aria-label="CareerHub home"
+        className="inline-flex min-h-11 items-center gap-3 rounded-xl px-1 text-lg font-bold text-slate-900 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
-        <img src={logo} alt="" className="h-8 w-8 rounded-xl shadow-sm ring-1 ring-slate-200" />
-        <span className="tracking-tight">CareerHub</span>
+        <img src={logo} alt="" className="h-8 w-8 rounded-lg ring-1 ring-slate-200" />
+        <span className="hidden tracking-tight sm:inline">CareerHub</span>
       </Link>
-      <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end">
+      <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-4">
         {navItems.length > 0 && (
           <div className="flex items-center gap-1 rounded-full border border-slate-200/50 bg-slate-50/50 p-1">
             {navItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`rounded-full px-4 py-1.5 font-medium transition ${
+                className={`inline-flex min-h-11 items-center rounded-xl px-3 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:px-4 ${
                   item.active
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-900/10'
                     : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
@@ -49,7 +53,7 @@ export default function PublicHeader({
         )}
         <Link
           to={actionHref}
-          className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-blue-600 bg-blue-600 px-5 font-bold text-white shadow-md shadow-blue-900/15 transition hover:scale-[1.03] hover:border-blue-500 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-900/20"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-4 font-semibold text-white transition-colors hover:border-blue-700 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:px-5"
         >
           {actionLabel}
         </Link>

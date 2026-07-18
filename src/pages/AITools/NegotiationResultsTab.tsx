@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, Tooltip, Input, Typography, Checkbox, message } from 'antd';
+import { Button, Tooltip, Input, Typography, Checkbox, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   ThunderboltOutlined,
   DeleteOutlined,
@@ -323,17 +324,20 @@ const NegotiationResultsTab: React.FC = () => {
           const snap = result.offerSnapshot;
 
           return (
-            <div
+            <article
               key={result.id}
-              className={`group enterprise-card overflow-hidden cursor-pointer ${
+              className={`group enterprise-card overflow-hidden ${
                 isSelected ? 'border-sky-300 shadow-md ring-1 ring-sky-200' : ''
               }`}
-              onClick={() => toggleSelect(result.id)}
             >
-              <div className="p-5 flex items-start gap-4">
+              <div className="flex items-start gap-3 p-4 sm:gap-4 sm:p-5">
                 {/* Checkbox */}
-                <div onClick={(e) => e.stopPropagation()} className="pt-1 shrink-0">
-                  <Checkbox checked={isSelected} onChange={() => toggleSelect(result.id)} />
+                <div className="flex min-h-11 min-w-8 shrink-0 items-start justify-center pt-2">
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={() => toggleSelect(result.id)}
+                    aria-label={`Select ${displayTitle}`}
+                  />
                 </div>
 
                 {/* Icon */}
@@ -343,19 +347,24 @@ const NegotiationResultsTab: React.FC = () => {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Text strong className="truncate text-base">
-                        {displayTitle}
-                      </Text>
+                  <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        type="button"
+                        onClick={() => navigate(`/negotiation-result/${result.id}`)}
+                        className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 hover:text-blue-600"
+                      >
+                        <span className="line-clamp-2">{displayTitle}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
                           setEditingResult({ id: result.id, title: displayTitle });
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-sky-600 transition-all shrink-0"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100"
+                        aria-label={`Rename ${displayTitle}`}
                       >
-                        <EditOutlined className="text-xs" />
+                        <EditOutlined />
                       </button>
                       {result.isLocked && (
                         <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 text-[10px] font-bold uppercase tracking-wider shrink-0">
@@ -363,7 +372,7 @@ const NegotiationResultsTab: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <Text type="secondary" className="text-xs shrink-0">
+                    <Text type="secondary" className="shrink-0 text-xs">
                       {date}
                     </Text>
                   </div>
@@ -416,17 +425,15 @@ const NegotiationResultsTab: React.FC = () => {
 
               {/* Footer */}
               <div
-                className={`border-t px-5 py-3 flex items-center justify-between gap-2 transition-colors ${
+                className={`flex flex-col gap-2 border-t px-4 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3 ${
                   isSelected ? 'bg-sky-50/40 border-sky-100' : 'bg-gray-50/60 border-gray-50'
                 }`}
-                onClick={(e) => e.stopPropagation()}
               >
                 <Button
-                  size="small"
-                  type="link"
+                  size="middle"
                   icon={<ArrowRightOutlined />}
                   onClick={() => navigate(`/negotiation-result/${result.id}`)}
-                  style={{ padding: 0, color: '#0ea5e9' }}
+                  className="min-h-10 sm:min-h-0"
                 >
                   View Full Report
                 </Button>
@@ -441,7 +448,7 @@ const NegotiationResultsTab: React.FC = () => {
                   deleteDescription="This will permanently remove the result from your history."
                 />
               </div>
-            </div>
+            </article>
           );
         })}
       </div>

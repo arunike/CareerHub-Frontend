@@ -76,7 +76,7 @@ const OfferComparisonChart = ({ data }: Props) => {
         </p>
       </div>
       <div className="h-[280px] sm:h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
           <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="name" />

@@ -80,6 +80,42 @@ const getCompactItems = (dayData: DayData) => [
   })),
 ];
 
+export const CalendarMobileDaySummary = ({ dayData }: Pick<DayDataProps, 'dayData'>) => {
+  const compactItems = getCompactItems(dayData);
+
+  if (compactItems.length === 0) return null;
+
+  return (
+    <div
+      className="mt-auto flex items-center justify-center gap-1 pb-1 sm:hidden"
+      aria-label={`${compactItems.length} calendar ${compactItems.length === 1 ? 'item' : 'items'}`}
+    >
+      {compactItems.slice(0, 3).map((item) => {
+        const color =
+          item.kind === 'event'
+            ? getEventColor(item.event).dot
+            : item.kind === 'custom'
+              ? getHolidayTabColor(item.holiday.tab_color).dot
+              : '#9ca3af';
+
+        return (
+          <span
+            key={item.key}
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: color }}
+            aria-hidden="true"
+          />
+        );
+      })}
+      {compactItems.length > 3 && (
+        <span className="ml-0.5 text-[10px] font-semibold text-slate-500">
+          +{compactItems.length - 3}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export const CalendarCompactDayEntries = ({
   dayData,
   onEventSelect,

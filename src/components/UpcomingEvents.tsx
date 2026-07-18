@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getEvents } from '../api';
 import { format, parseISO, isAfter, isToday, isTomorrow, compareAsc } from 'date-fns';
 import { ClockCircleOutlined } from '@ant-design/icons';
@@ -11,11 +11,7 @@ const UpcomingEvents: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const resp = await getEvents();
       const allEvents = resp.data;
@@ -40,7 +36,11 @@ const UpcomingEvents: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
+
+  useEffect(() => {
+    void fetchEvents();
+  }, [fetchEvents]);
 
   if (loading) return null; // Or skeleton
 

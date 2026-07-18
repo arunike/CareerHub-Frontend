@@ -1,17 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  Card,
-  Form,
-  Grid,
-  Input,
-  Modal,
-  Pagination,
-  Select,
-  Table,
-  Tag,
-  message,
-} from 'antd';
+import { Button, Card, Form, Grid, Input, Pagination, Select, Table, Tag, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
   FilePdfOutlined,
@@ -35,6 +24,7 @@ import UploadDocumentModal from './UploadDocumentModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getCurrentYear } from '../../utils/yearFilter';
 import RowActions from '../../components/RowActions';
+import { PageState } from '../../components/PageState';
 import { usePersistedState } from '../../hooks/usePersistedState';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
@@ -55,6 +45,7 @@ const Documents: React.FC = () => {
   const [documentsTotal, setDocumentsTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [uploadingVersion, setUploadingVersion] = useState(false);
@@ -82,6 +73,7 @@ const Documents: React.FC = () => {
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const response = await getDocuments({
         page: currentPage,
         page_size: DOCUMENT_PAGE_SIZE,
@@ -96,6 +88,7 @@ const Documents: React.FC = () => {
         setDocumentsTotal(data.length);
       }
     } catch (error) {
+      setLoadError(true);
       message.error('Failed to load documents');
       console.error(error);
     } finally {
@@ -154,6 +147,22 @@ const Documents: React.FC = () => {
     [selectedYear]
   );
   const filteredDocuments = documents;
+  const documentLoadFailed = loadError && documents.length === 0;
+  const documentEmptyState = (
+    <PageState
+      title={selectedYear === 'all' ? 'No documents yet' : `No documents in ${selectedYear}`}
+      description={
+        selectedYear === 'all'
+          ? 'Upload a resume, cover letter, offer, or portfolio file to keep it with the rest of your career records.'
+          : 'Choose another year, show all years, or upload a document for this year.'
+      }
+      actionLabel={selectedYear === 'all' ? 'Add document' : 'Show all years'}
+      onAction={
+        selectedYear === 'all' ? () => setIsUploadModalVisible(true) : () => handleYearChange('all')
+      }
+      icon={<FileOutlined />}
+    />
+  );
 
   const handleDelete = async (id: number) => {
     try {
@@ -398,7 +407,16 @@ const Documents: React.FC = () => {
         primaryActionIcon={<PlusOutlined />}
       />
 
-      {isMobile ? (
+      {documentLoadFailed ? (
+        <PageState
+          tone="error"
+          title="Documents could not be loaded"
+          description="Your saved documents were not changed. Check your connection and try again."
+          actionLabel="Retry loading documents"
+          onAction={() => void fetchDocuments()}
+          icon={<FileOutlined />}
+        />
+      ) : isMobile ? (
         <div className="space-y-3">
           {loading ? (
             <Card className="enterprise-card">
@@ -412,13 +430,7 @@ const Documents: React.FC = () => {
               </div>
             </Card>
           ) : filteredDocuments.length === 0 ? (
-            <div className="enterprise-empty px-4 py-12 text-center">
-              <FileOutlined className="text-3xl text-slate-300" />
-              <div className="mt-3 text-sm font-semibold text-slate-900">No documents found</div>
-              <div className="mt-1 text-xs text-slate-500">
-                Upload a resume, cover letter, or portfolio file to build your vault.
-              </div>
-            </div>
+            documentEmptyState
           ) : (
             <>
               {filteredDocuments.map((record) => (
@@ -461,25 +473,19 @@ const Documents: React.FC = () => {
                       <Button size="large" onClick={() => openVersionsModal(record)}>
                         History
                       </Button>
-                      <Button
-                        size="large"
-                        disabled={Boolean(record.is_locked)}
-                        onClick={() => openEditModal(record)}
-                      >
-                        Edit
-                      </Button>
-                      <Button size="large" onClick={() => handleToggleLock(record)}>
-                        {record.is_locked ? 'Unlock' : 'Lock'}
-                      </Button>
-                      <Button
-                        danger
-                        size="large"
-                        className="col-span-2"
-                        disabled={Boolean(record.is_locked)}
-                        onClick={() => handleDelete(record.id)}
-                      >
-                        Delete
-                      </Button>
+                    </div>
+                    <div className="flex justify-end border-t border-slate-100 pt-2">
+                      <RowActions
+                        size="middle"
+                        isLocked={record.is_locked}
+                        onToggleLock={() => handleToggleLock(record)}
+                        onEdit={() => openEditModal(record)}
+                        disableEdit={Boolean(record.is_locked)}
+                        onDelete={() => handleDelete(record.id)}
+                        disableDelete={Boolean(record.is_locked)}
+                        deleteTitle="Delete document?"
+                        deleteDescription="This document will be permanently removed."
+                      />
                     </div>
                   </div>
                 </Card>
@@ -498,6 +504,8 @@ const Documents: React.FC = () => {
             </>
           )}
         </div>
+      ) : filteredDocuments.length === 0 && !loading ? (
+        documentEmptyState
       ) : (
         <Card className="enterprise-table-shell">
           <Table
@@ -610,46 +618,82 @@ const Documents: React.FC = () => {
             </div>
           </div>
 
-          <Table
-            loading={versionsLoading}
-            dataSource={versionList}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            columns={[
-              {
-                title: 'Version',
-                key: 'version_number',
-                width: 110,
-                render: (_: unknown, row: Document) => (
-                  <Tag color={row.is_current ? 'success' : 'default'}>
-                    v{row.version_number || 1}
-                    {row.is_current ? ' (current)' : ''}
-                  </Tag>
-                ),
-              },
-              {
-                title: 'File',
-                key: 'file',
-                render: (_: unknown, row: Document) => (
+          {isMobile ? (
+            <div className="space-y-2" aria-busy={versionsLoading}>
+              {versionsLoading ? (
+                <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
+                  Loading version history…
+                </div>
+              ) : versionList.length === 0 ? (
+                <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
+                  No versions available.
+                </div>
+              ) : (
+                versionList.map((row) => (
                   <button
+                    key={row.id}
                     type="button"
                     onClick={() => openDocument(row)}
-                    className="text-blue-600 hover:underline"
+                    className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left"
                   >
-                    {row.file_name || row.title}
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-slate-900">
+                        {row.file_name || row.title}
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        Uploaded {new Date(row.created_at).toLocaleDateString()}
+                      </span>
+                    </span>
+                    <Tag color={row.is_current ? 'success' : 'default'} className="shrink-0">
+                      v{row.version_number || 1}
+                      {row.is_current ? ' · Current' : ''}
+                    </Tag>
                   </button>
-                ),
-              },
-              {
-                title: 'Uploaded',
-                dataIndex: 'created_at',
-                key: 'created_at',
-                width: 140,
-                render: (value: string) => new Date(value).toLocaleDateString(),
-              },
-            ]}
-          />
+                ))
+              )}
+            </div>
+          ) : (
+            <Table
+              loading={versionsLoading}
+              dataSource={versionList}
+              rowKey="id"
+              pagination={false}
+              size="small"
+              columns={[
+                {
+                  title: 'Version',
+                  key: 'version_number',
+                  width: 110,
+                  render: (_: unknown, row: Document) => (
+                    <Tag color={row.is_current ? 'success' : 'default'}>
+                      v{row.version_number || 1}
+                      {row.is_current ? ' (current)' : ''}
+                    </Tag>
+                  ),
+                },
+                {
+                  title: 'File',
+                  key: 'file',
+                  render: (_: unknown, row: Document) => (
+                    <button
+                      type="button"
+                      onClick={() => openDocument(row)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {row.file_name || row.title}
+                    </button>
+                  ),
+                },
+                {
+                  title: 'Uploaded',
+                  dataIndex: 'created_at',
+                  key: 'created_at',
+                  width: 140,
+                  render: (value: string) => new Date(value).toLocaleDateString(),
+                },
+              ]}
+            />
+          )}
         </div>
       </Modal>
     </div>

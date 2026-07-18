@@ -1,15 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  Button,
-  DatePicker,
-  Input,
-  Switch,
-  Popconfirm,
-  Tooltip,
-  InputNumber,
-  message,
-} from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, DatePicker, Input, Switch, Popconfirm, Tooltip, InputNumber, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
   EditOutlined,
@@ -363,13 +354,16 @@ const SchedulePhasesModal: React.FC<Props> = ({
   expOvertimeRate,
   expOvertimeMultiplier,
 }) => {
-  const phaseDefaults: PhaseImportDefaults = {
-    hourlyRate: expHourlyRate,
-    hoursPerDay: expHoursPerDay,
-    workingDaysPerWeek: expWorkingDaysPerWeek,
-    overtimeRate: expOvertimeRate,
-    overtimeMultiplier: expOvertimeMultiplier,
-  };
+  const phaseDefaults = useMemo<PhaseImportDefaults>(
+    () => ({
+      hourlyRate: expHourlyRate,
+      hoursPerDay: expHoursPerDay,
+      workingDaysPerWeek: expWorkingDaysPerWeek,
+      overtimeRate: expOvertimeRate,
+      overtimeMultiplier: expOvertimeMultiplier,
+    }),
+    [expHourlyRate, expHoursPerDay, expOvertimeMultiplier, expOvertimeRate, expWorkingDaysPerWeek]
+  );
   const [local, setLocal] = useState<SchedulePhase[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<SchedulePhase, 'id'>>(emptyPhase(phaseDefaults));
@@ -385,15 +379,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
       setShowQuickImport(false);
       setQuickImportText('');
     }
-  }, [
-    open,
-    phases,
-    expHourlyRate,
-    expHoursPerDay,
-    expWorkingDaysPerWeek,
-    expOvertimeRate,
-    expOvertimeMultiplier,
-  ]);
+  }, [open, phases, phaseDefaults]);
 
   const startAdd = () => {
     setEditingId('__new__');
@@ -715,7 +701,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
                   : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-base font-semibold text-gray-900">{phase.name}</span>
@@ -761,8 +747,8 @@ const SchedulePhasesModal: React.FC<Props> = ({
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                <div className="row-actions flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
+                  <div className="flex items-center gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                     <Tooltip title="Edit">
                       <Button
                         type="text"

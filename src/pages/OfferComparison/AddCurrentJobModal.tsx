@@ -99,18 +99,35 @@ const AddCurrentJobModal = ({
       title="Add Current Job"
       onClose={onClose}
       maxWidthClass="max-w-md"
-      bodyClassName=""
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="add-current-job-form"
+            className="min-h-11 rounded-xl border border-transparent bg-blue-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          >
+            Add Job
+          </button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit}>
-        <div className="p-6 space-y-4">
+      <form id="add-current-job-form" onSubmit={onSubmit}>
+        <div className="space-y-5 p-4 sm:p-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Link Existing Application (Optional)
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Link an existing application <span className="text-slate-400">(optional)</span>
             </label>
             <Select
               showSearch
               value={linkedApplicationId ?? undefined}
-              placeholder="Search existing applications..."
+              placeholder="Search applications"
               defaultActiveFirstOption={false}
               showArrow
               filterOption={false}
@@ -124,7 +141,7 @@ const AddCurrentJobModal = ({
               options={options}
             />
             {linkedApplicationId && selectedOpt && (
-              <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-2.5 mt-2">
+              <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
                 {selectedOpt.hasOffer ? (
                   <span>
                     <strong>Note:</strong> This application already has an associated offer. Saving
@@ -142,32 +159,17 @@ const AddCurrentJobModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Company name</label>
             <input
               type="text"
               required
               value={newJobName}
               onChange={(e) => onNameChange(e.target.value)}
               placeholder="e.g. Current Employer"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              className="min-h-11 w-full rounded-xl border border-slate-300 px-4 text-base outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:text-sm"
               disabled={!!linkedApplicationId}
             />
           </div>
-        </div>
-        <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Add Job
-          </button>
         </div>
       </form>
     </ModalShell>

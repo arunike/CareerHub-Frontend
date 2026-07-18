@@ -42,14 +42,14 @@ const BenefitsSection = ({
   onFortyOneKMaxMatchChange,
 }: BenefitsSectionProps) => {
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 p-3">
+    <div className="space-y-5">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-semibold text-gray-700">Benefit Items</label>
           <button
             type="button"
             onClick={onAddBenefitItem}
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:rounded-lg"
           >
             + Add Custom Item
           </button>
@@ -101,7 +101,7 @@ const BenefitsSection = ({
           {Math.round(computeBenefitsTotal(benefitItems)).toLocaleString()}
         </p>
         <p className="text-xs text-gray-500">
-          Benefits Value (Auto): ${Math.round(benefitsValue || 0).toLocaleString()}
+          Total benefits used in comparison: ${Math.round(benefitsValue || 0).toLocaleString()}
         </p>
       </div>
 

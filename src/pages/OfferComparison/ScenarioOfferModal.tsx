@@ -73,14 +73,31 @@ const ScenarioOfferModal = ({
   return (
     <ModalShell
       isOpen={isOpen}
-      title={
-        scenarioModalMode === 'view'
-          ? 'View Custom Offer'
-          : editingScenarioId
-            ? 'Edit Custom Offer'
-            : 'Add Custom Offer'
+      titleNode={
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-base font-semibold text-slate-950 sm:text-lg">
+              {scenarioModalMode === 'view'
+                ? 'Scenario details'
+                : editingScenarioId
+                  ? 'Edit scenario'
+                  : 'Add scenario'}
+            </span>
+            <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
+              What-if
+            </span>
+          </div>
+          <p className="mt-0.5 truncate text-xs font-normal text-slate-500">
+            Test assumptions without changing a saved offer
+          </p>
+        </div>
       }
       onClose={onClose}
+      maxWidthClass="max-w-6xl"
+      bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50"
+      headerClassName="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4"
+      titleClassName="min-w-0 flex-1 pr-4"
+      footerClassName="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:px-6 sm:py-3"
       footer={
         <OfferFormModalFooter
           mode={scenarioModalMode === 'view' ? 'view' : editingScenarioId ? 'edit' : 'add'}
@@ -90,8 +107,8 @@ const ScenarioOfferModal = ({
         />
       }
     >
-      <form id="scenario-offer-form" onSubmit={onSubmit} className="flex flex-col min-h-0">
-        <div className="flex-1 min-h-0 overflow-y-auto">
+      <form id="scenario-offer-form" onSubmit={onSubmit} className="min-h-0">
+        <div className="min-h-0">
           <fieldset disabled={scenarioModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
             <OfferFormFields
               key={`${editingScenarioId ?? 'new'}-${newScenario.application ?? 'custom'}`}

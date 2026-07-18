@@ -1,4 +1,5 @@
-import { Button, Col, Modal, Row, Space, Typography } from 'antd';
+import { Button, Col, Row, Space, Typography } from 'antd';
+import Modal from '../../../components/MobileModal';
 import dayjs from 'dayjs';
 import type { Event } from '../../../types';
 

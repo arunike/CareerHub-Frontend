@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Typography,
   Space,
-  Modal,
   Form,
   Input,
   Select,
@@ -13,6 +12,7 @@ import {
   Grid,
   Pagination,
 } from 'antd';
+import Modal from '../../components/MobileModal';
 import { PlusOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -43,6 +43,7 @@ import {
 import type { Holiday, HolidayTab } from '../../types';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import { PageState } from '../../components/PageState';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import CalendarView from '../../components/CalendarView';
 import type { CalendarHolidayTarget } from '../../components/calendarView/types';
@@ -93,7 +94,9 @@ const Events = () => {
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
   const [eventsTotal, setEventsTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarLoadError, setCalendarLoadError] = useState(false);
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [applications, setApplications] = useState<
     Array<{
@@ -163,6 +166,7 @@ const Events = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const [eventsResp, settingsResp] = await Promise.all([
         getEventFeed({
           page: currentPage,
@@ -197,6 +201,7 @@ const Events = () => {
         setEventsTotal(data.length);
       }
     } catch (error) {
+      setLoadError(true);
       messageApi.error('Failed to load events');
       console.error(error);
     } finally {
@@ -214,7 +219,7 @@ const Events = () => {
     sortOrder,
   ]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await getCategories();
       setCategories(res.data);
@@ -222,11 +227,12 @@ const Events = () => {
       messageApi.error('Failed to load categories');
       console.error(error);
     }
-  };
+  }, [messageApi]);
 
   const fetchCalendarData = useCallback(async () => {
     try {
       setCalendarLoading(true);
+      setCalendarLoadError(false);
       const [eventsResp, holidaysResp, fedResp, settingsResp] = await Promise.all([
         getEvents(),
         getHolidays(),
@@ -238,6 +244,7 @@ const Events = () => {
       setFederalHolidays(fedResp.data);
       setHolidayTabs(settingsResp.data.holiday_tabs || []);
     } catch (error) {
+      setCalendarLoadError(true);
       messageApi.error('Failed to load calendar data');
       console.error(error);
     } finally {
@@ -265,7 +272,7 @@ const Events = () => {
   useEffect(() => {
     fetchCategories();
     fetchCalendarData();
-  }, []);
+  }, [fetchCalendarData, fetchCategories]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -288,6 +295,47 @@ const Events = () => {
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
   };
+
+  const hasEventFilters = categoryFilter !== 'ALL' || Boolean(dateRange?.[0] || dateRange?.[1]);
+  const clearEventFilters = () => {
+    setCategoryFilter('ALL');
+    setDateRange(null);
+    setCurrentPage(1);
+  };
+  const eventEmptyState = (
+    <PageState
+      title={
+        hasEventFilters
+          ? 'No matching events'
+          : selectedYear === 'all'
+            ? 'No events yet'
+            : `No events in ${selectedYear}`
+      }
+      description={
+        hasEventFilters
+          ? 'No saved events match the current category and date filters.'
+          : selectedYear === 'all'
+            ? 'Add an interview, deadline, follow-up, or personal event to keep it on your calendar.'
+            : 'Choose another year, show all years, or add an event for this year.'
+      }
+      actionLabel={
+        hasEventFilters ? 'Clear filters' : selectedYear === 'all' ? 'Add event' : 'Show all years'
+      }
+      onAction={
+        hasEventFilters
+          ? clearEventFilters
+          : selectedYear === 'all'
+            ? () => handleAdd()
+            : () => handleYearChange('all')
+      }
+    />
+  );
+  const listLoadFailed = loadError && events.length === 0;
+  const calendarLoadFailed =
+    calendarLoadError &&
+    calendarEvents.length === 0 &&
+    customHolidays.length === 0 &&
+    federalHolidays.length === 0;
 
   const handleAdd = (date?: Date) => {
     setEditingId(null);
@@ -612,11 +660,12 @@ const Events = () => {
           <PageActionToolbar
             title="Events"
             subtitle={`${eventsTotal.toLocaleString()} events`}
+            showExtraActionsOnMobile
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}
             extraActions={
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
                 <SegmentedToggle
                   value={contentView}
                   onChange={setContentView}
@@ -635,7 +684,7 @@ const Events = () => {
                   value={normalizeTimeZone(userTimezone)}
                   onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
                   style={{ width: 260 }}
-                  className="toolbar-select"
+                  className="toolbar-select max-w-full"
                   size="large"
                   showSearch
                   optionFilterProp="label"
@@ -653,7 +702,15 @@ const Events = () => {
             primaryActionIcon={<PlusOutlined />}
           />
 
-          {contentView === 'list' ? (
+          {contentView === 'list' && listLoadFailed ? (
+            <PageState
+              tone="error"
+              title="Events could not be loaded"
+              description="Your saved events were not changed. Check your connection and try again."
+              actionLabel="Retry loading events"
+              onAction={() => void fetchData()}
+            />
+          ) : contentView === 'list' ? (
             <>
               <EventsFilterBar
                 categoryFilter={categoryFilter}
@@ -667,81 +724,96 @@ const Events = () => {
                 categories={categories}
               />
 
-              <Card
-                className="enterprise-section overflow-hidden"
-                title={
-                  <BulkActionHeader
-                    selectedCount={selectedIds.length}
-                    totalCount={events.length}
-                    onSelectAll={handleSelectAll}
-                    onCancelSelection={() => setSelectedIds([])}
-                    title="All Events"
-                    bulkActions={
-                      <div className="flex flex-wrap gap-2">
-                        <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
-                          Lock
-                        </Button>
-                        <Button
-                          onClick={() => handleBulkToggleLock(false)}
-                          icon={<UnlockOutlined />}
-                        >
-                          Unlock
-                        </Button>
-                        <Tooltip
-                          title={
-                            isAnySelectedLocked
-                              ? 'Cannot delete while locked items are selected'
-                              : ''
-                          }
-                        >
+              {!loading && paginatedEvents.length === 0 ? (
+                eventEmptyState
+              ) : (
+                <Card
+                  className="enterprise-section overflow-hidden"
+                  title={
+                    <BulkActionHeader
+                      selectedCount={selectedIds.length}
+                      totalCount={events.length}
+                      onSelectAll={handleSelectAll}
+                      onCancelSelection={() => setSelectedIds([])}
+                      title="All Events"
+                      bulkActions={
+                        <div className="flex flex-wrap gap-2">
                           <Button
-                            danger
-                            onClick={handleBulkDelete}
-                            icon={<DeleteOutlined />}
-                            disabled={isAnySelectedLocked}
+                            onClick={() => handleBulkToggleLock(true)}
+                            icon={<LockOutlined />}
                           >
-                            Delete
+                            Lock
                           </Button>
-                        </Tooltip>
-                      </div>
-                    }
-                  />
-                }
-              >
-                <EventsGrid
-                  loading={loading}
-                  events={paginatedEvents}
-                  userTimezone={userTimezone}
-                  onToggleLock={toggleLock}
-                  onView={setViewingEvent}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteAction}
-                  formatEventTime={formatEventTime}
-                  selectedIds={selectedIds}
-                  onSelectChange={handleSelectChange}
-                />
-
-                {!loading && eventsTotal > pageSize && (
-                  <div className="flex justify-end mt-6 pb-4 px-4">
-                    <Pagination
-                      current={currentPage}
-                      pageSize={pageSize}
-                      total={eventsTotal}
-                      onChange={(page, size) => {
-                        setCurrentPage(page);
-                        if (size && size !== pageSize) {
-                          setPageSize(size);
-                          setCurrentPage(1);
-                        }
-                      }}
-                      showSizeChanger
-                      pageSizeOptions={['12', '24', '48', '96']}
-                      size={isMobile ? 'small' : undefined}
+                          <Button
+                            onClick={() => handleBulkToggleLock(false)}
+                            icon={<UnlockOutlined />}
+                          >
+                            Unlock
+                          </Button>
+                          <Tooltip
+                            title={
+                              isAnySelectedLocked
+                                ? 'Cannot delete while locked items are selected'
+                                : ''
+                            }
+                          >
+                            <Button
+                              danger
+                              onClick={handleBulkDelete}
+                              icon={<DeleteOutlined />}
+                              disabled={isAnySelectedLocked}
+                            >
+                              Delete
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      }
                     />
-                  </div>
-                )}
-              </Card>
+                  }
+                >
+                  <EventsGrid
+                    loading={loading}
+                    events={paginatedEvents}
+                    userTimezone={userTimezone}
+                    onToggleLock={toggleLock}
+                    onView={setViewingEvent}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteAction}
+                    formatEventTime={formatEventTime}
+                    selectedIds={selectedIds}
+                    onSelectChange={handleSelectChange}
+                  />
+
+                  {!loading && eventsTotal > pageSize && (
+                    <div className="flex justify-end mt-6 pb-4 px-4">
+                      <Pagination
+                        current={currentPage}
+                        pageSize={pageSize}
+                        total={eventsTotal}
+                        onChange={(page, size) => {
+                          setCurrentPage(page);
+                          if (size && size !== pageSize) {
+                            setPageSize(size);
+                            setCurrentPage(1);
+                          }
+                        }}
+                        showSizeChanger
+                        pageSizeOptions={['12', '24', '48', '96']}
+                        size={isMobile ? 'small' : undefined}
+                      />
+                    </div>
+                  )}
+                </Card>
+              )}
             </>
+          ) : calendarLoadFailed ? (
+            <PageState
+              tone="error"
+              title="Calendar could not be loaded"
+              description="Your events and holidays were not changed. Check your connection and try again."
+              actionLabel="Retry loading calendar"
+              onAction={() => void fetchCalendarData()}
+            />
           ) : (
             <CalendarView
               events={calendarEvents}

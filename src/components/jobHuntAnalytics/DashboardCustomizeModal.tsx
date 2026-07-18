@@ -4,7 +4,8 @@ import {
   SettingOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import { Button, Modal, Switch, Typography, Popconfirm } from 'antd';
+import { Button, Switch, Typography, Popconfirm } from 'antd';
+import Modal from '../MobileModal';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { WidgetDefinition } from './types';
 

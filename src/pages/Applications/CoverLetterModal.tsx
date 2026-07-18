@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Modal, Button, Input, Typography, Space, message, Tag } from 'antd';
+import { Button, Input, Typography, Space, message, Tag } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   CopyOutlined,
   ThunderboltOutlined,

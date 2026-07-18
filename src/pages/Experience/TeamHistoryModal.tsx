@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, DatePicker, Input, Switch, Popconfirm, Tooltip } from 'antd';
+import { Button, DatePicker, Input, Switch, Popconfirm, Tooltip } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
   EditOutlined,
@@ -269,7 +270,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                   : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
             }`}
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className="text-base font-semibold text-gray-900">{entry.name}</span>
@@ -304,7 +305,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="row-actions flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
                 {entry.is_locked ? (
                   <Tooltip title="Unlock entry">
                     <Button
@@ -316,7 +317,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                     />
                   </Tooltip>
                 ) : (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="flex items-center gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                     <Tooltip title="Lock entry">
                       <Button
                         type="text"

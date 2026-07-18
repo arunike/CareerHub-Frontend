@@ -17,12 +17,12 @@ import {
   Collapse,
   Dropdown,
   InputNumber,
-  Modal,
   Segmented,
   Tag,
   message,
   Tabs,
 } from 'antd';
+import Modal from '../../components/MobileModal';
 import dayjs from 'dayjs';
 import {
   applyGoogleSheetImportReview,

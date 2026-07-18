@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Button, Input, Modal, Progress, Spin, Tag, Typography, message } from 'antd';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Input, Progress, Spin, Tag, Typography, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   BulbOutlined,
   CheckCircleOutlined,
@@ -400,28 +401,31 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
   const [clarificationAnswers, setClarificationAnswers] = useState<Record<string, string>>({});
   const pollingRunRef = useRef(0);
 
-  const loadHistory = async (shouldAutoSelectLatest = false) => {
-    if (!experience?.id) return;
-    try {
-      const allReviews = await loadPromotionReviewsFromArtifacts();
-      const filtered = allReviews.filter((r) => r.sourceExperienceId === experience.id);
-      filtered.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
-      setHistoryReviews(filtered);
+  const loadHistory = useCallback(
+    async (shouldAutoSelectLatest = false) => {
+      if (!experience?.id) return;
+      try {
+        const allReviews = await loadPromotionReviewsFromArtifacts();
+        const filtered = allReviews.filter((r) => r.sourceExperienceId === experience.id);
+        filtered.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
+        setHistoryReviews(filtered);
 
-      if (shouldAutoSelectLatest && filtered.length > 0) {
-        const latest = filtered[0];
-        setResult(latest.review);
-        setContext({
-          ...(latest.inputContext || {}),
-          currentLevel: buildDefaultPromotionContext(experience).currentLevel,
-        });
-        setActiveReviewId(latest.id);
-        setIsEditing(false);
+        if (shouldAutoSelectLatest && filtered.length > 0) {
+          const latest = filtered[0];
+          setResult(latest.review);
+          setContext({
+            ...(latest.inputContext || {}),
+            currentLevel: buildDefaultPromotionContext(experience).currentLevel,
+          });
+          setActiveReviewId(latest.id);
+          setIsEditing(false);
+        }
+      } catch (err) {
+        console.error('Failed to load review history', err);
       }
-    } catch (err) {
-      console.error('Failed to load review history', err);
-    }
-  };
+    },
+    [experience]
+  );
 
   useEffect(() => {
     if (open && experience) {
@@ -440,7 +444,7 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
     } else if (!open) {
       pollingRunRef.current += 1;
     }
-  }, [open, experience]);
+  }, [experience, loadHistory, open]);
 
   useEffect(() => {
     if (!generating) {

@@ -9,7 +9,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 import clsx from 'clsx';
-import { CalendarCompactDayEntries } from './CalendarDayContent';
+import { CalendarCompactDayEntries, CalendarMobileDaySummary } from './CalendarDayContent';
 import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
@@ -57,7 +57,7 @@ const CalendarMonthView = ({
         <div
           key={cloneDay.toString()}
           className={clsx(
-            'relative h-28 md:h-32 border border-gray-100 p-2 transition-all hover:bg-gray-50 flex flex-col gap-1 cursor-pointer',
+            'relative flex h-18 cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
             !isCurrentMonth && 'bg-gray-50/50 text-gray-400',
             isTodayDate && 'bg-blue-50/30',
             isSelected && 'ring-2 ring-blue-500 ring-inset z-10 rounded-lg'
@@ -66,22 +66,31 @@ const CalendarMonthView = ({
           onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
         >
           <div className="flex justify-between items-start">
-            <span
+            <button
+              type="button"
+              aria-label={format(cloneDay, 'MMMM d, yyyy')}
+              onClick={(clickEvent) => {
+                clickEvent.stopPropagation();
+                onDateSelect(cloneDay);
+              }}
               className={clsx(
-                'text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full',
+                'flex h-11 w-11 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-slate-100 sm:h-7 sm:w-7 sm:text-sm',
                 isTodayDate ? 'bg-blue-600 text-white' : 'text-gray-700'
               )}
             >
               {format(cloneDay, 'd')}
-            </span>
+            </button>
           </div>
 
-          <CalendarCompactDayEntries
-            dayData={dayData}
-            onEventSelect={onEventSelect}
-            onHolidaySelect={onHolidaySelect}
-            onViewMore={() => onViewMore?.(cloneDay)}
-          />
+          <CalendarMobileDaySummary dayData={dayData} />
+          <div className="hidden min-h-0 flex-1 sm:flex">
+            <CalendarCompactDayEntries
+              dayData={dayData}
+              onEventSelect={onEventSelect}
+              onHolidaySelect={onHolidaySelect}
+              onViewMore={() => onViewMore?.(cloneDay)}
+            />
+          </div>
         </div>
       );
       day = addDays(day, 1);

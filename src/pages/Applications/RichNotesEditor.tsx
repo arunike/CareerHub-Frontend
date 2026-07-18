@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
-import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
+import { CheckOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { updateApplication } from '../../api';
 import './RichNotesEditor.css';
 
@@ -25,7 +25,7 @@ const ToolbarButton = ({ active, onClick, title, children }: ToolbarButtonProps)
       e.preventDefault();
       onClick();
     }}
-    className={`flex h-7 w-7 items-center justify-center rounded-md text-sm transition-colors ${
+    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-sm transition-colors sm:h-8 sm:w-8 ${
       active ? 'bg-sky-100 text-sky-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
     }`}
   >
@@ -42,8 +42,9 @@ type Props = {
 };
 
 const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const persistNotes = useCallback(
     async (html: string) => {
@@ -52,9 +53,10 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
         await updateApplication(applicationId, { notes: html });
         setSaveState('saved');
         onSaved?.(html);
-        setTimeout(() => setSaveState('idle'), 2000);
+        if (saveResetTimerRef.current) clearTimeout(saveResetTimerRef.current);
+        saveResetTimerRef.current = setTimeout(() => setSaveState('idle'), 2000);
       } catch {
-        setSaveState('idle');
+        setSaveState('error');
       }
     },
     [applicationId, onSaved]
@@ -78,6 +80,7 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
     content: initialNotes || '',
     onUpdate: ({ editor: ed }) => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      setSaveState('idle');
       saveTimerRef.current = setTimeout(() => {
         void persistNotes(ed.getHTML());
       }, 1200);
@@ -99,6 +102,14 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
     }
   }, [applicationId, initialNotes]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (saveResetTimerRef.current) clearTimeout(saveResetTimerRef.current);
+    },
+    []
+  );
+
   if (!editor) return null;
 
   const charCount = editor.storage.characterCount?.characters?.() ?? 0;
@@ -107,7 +118,7 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
   return (
     <div className="flex flex-col gap-0">
       {/* Section header */}
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             Notes
@@ -125,6 +136,18 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
           {saveState === 'saved' && (
             <span className="flex items-center gap-1 text-emerald-500">
               <CheckOutlined className="text-[11px]" /> Saved
+            </span>
+          )}
+          {saveState === 'error' && (
+            <span className="flex items-center gap-1.5 text-rose-600" role="alert">
+              <WarningOutlined className="text-[11px]" /> Not saved
+              <button
+                type="button"
+                onClick={() => void persistNotes(editor.getHTML())}
+                className="min-h-11 rounded-lg px-2 font-semibold text-rose-700 underline decoration-rose-300 underline-offset-2 hover:bg-rose-50 sm:min-h-8"
+              >
+                Retry
+              </button>
             </span>
           )}
         </div>

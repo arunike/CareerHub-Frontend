@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal } from 'antd';
+import Modal from './MobileModal';
 import clsx from 'clsx';
 
 import type { RecurrenceRule } from '../types';

@@ -15,13 +15,12 @@ import {
   Popconfirm,
   Row,
   Col,
-  Empty,
   Select,
   Switch,
-  Modal,
   Collapse,
   Tooltip,
 } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   DeleteOutlined,
   CalendarOutlined,
@@ -77,6 +76,7 @@ import EventEditorModal from '../Events/components/EventEditorModal';
 import EventViewModal from '../Events/components/EventViewModal';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
+import { PageState } from '../../components/PageState';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -139,7 +139,7 @@ const GroupedHolidayItem = ({
           </div>
         }
         title={
-          <Space>
+          <Space wrap>
             <Text strong>
               {dayjs(startDate).format('YYYY-MM-DD')} to {dayjs(endDate).format('YYYY-MM-DD')}
             </Text>
@@ -178,7 +178,7 @@ const GroupedHolidayItem = ({
                         className="group hover:bg-gray-50 transition-colors rounded-lg mb-1 relative"
                         style={{ padding: '8px 12px' }}
                         actions={[
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                          <div className="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                             <RowActions
                               key={`actions-${subItem.id}`}
                               size="small"
@@ -194,14 +194,14 @@ const GroupedHolidayItem = ({
                         {/* Tree Branch Connector */}
                         <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
 
-                        <Space size="middle" className="pl-2">
+                        <Space size="middle" className="min-w-0 pl-2">
                           <Checkbox
                             checked={selectedIds.includes(subItem.id)}
                             onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
                           />
                           <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-300" />
-                            <Text className="text-gray-600 font-medium">
+                            <Text className="break-words text-gray-600 font-medium">
                               {dayjs(subItem.date).format('dddd, MMMM D, YYYY')}
                             </Text>
                           </div>
@@ -239,6 +239,7 @@ const Holidays = () => {
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const [activeTab, setActiveTab] = useState('custom');
 
@@ -289,9 +290,10 @@ const Holidays = () => {
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const [customResp, federalResp, settingsResp, eventsResp, categoriesResp] = await Promise.all(
         [getHolidays(), getFederalHolidays(), getUserSettings(), getEvents(), getCategories()]
       );
@@ -301,18 +303,22 @@ const Holidays = () => {
       setEvents(eventsResp.data);
       setCategories(categoriesResp.data);
     } catch (error) {
+      setLoadError(true);
       messageApi.error('Failed to load holidays');
       console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const customTabs: HolidayTab[] = userSettings?.holiday_tabs || [];
+  const customTabs = React.useMemo<HolidayTab[]>(
+    () => userSettings?.holiday_tabs || [],
+    [userSettings?.holiday_tabs]
+  );
   const defaultEventDuration = Number(userSettings?.default_event_duration) || 60;
   const userTimezone = normalizeTimeZone(userSettings?.primary_timezone || getBrowserTimeZone());
 
@@ -381,6 +387,12 @@ const Holidays = () => {
   );
 
   const availableYears = getAvailableYears(holidays, 'date');
+  const hasLoadedData =
+    holidays.length > 0 ||
+    federalHolidays.length > 0 ||
+    events.length > 0 ||
+    categories.length > 0 ||
+    userSettings !== null;
 
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
@@ -950,11 +962,17 @@ const Holidays = () => {
             </Col>
             <Col span={24} md={8}>
               <Form.Item label=" " colon={false} style={{ marginBottom: 0 }}>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <Form.Item name="is_recurring" valuePropName="checked" noStyle>
                     <Checkbox>Recurring (Yearly)</Checkbox>
                   </Form.Item>
-                  <Button type="primary" htmlType="submit" icon={<PlusOutlined />} size="large">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    icon={<PlusOutlined />}
+                    size="large"
+                    className="w-full sm:w-auto"
+                  >
                     Add
                   </Button>
                 </div>
@@ -1097,7 +1115,7 @@ const Holidays = () => {
                       </div>
                     }
                     title={
-                      <Space>
+                      <Space wrap>
                         <Text strong>{dayjs(item.date).format('YYYY-MM-DD')}</Text>
                         {item.is_recurring && (
                           <Tag color="blue" icon={<SyncOutlined />}>
@@ -1114,9 +1132,17 @@ const Holidays = () => {
             }}
             locale={{
               emptyText: (
-                <Empty
-                  description="No custom holidays found"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                <PageState
+                  title={
+                    selectedYear === 'all' ? 'No holidays yet' : `No holidays in ${selectedYear}`
+                  }
+                  description={
+                    selectedYear === 'all'
+                      ? 'Add a personal holiday or time-off range using the form above.'
+                      : 'Add one above or show all years to review older entries.'
+                  }
+                  actionLabel={selectedYear === 'all' ? undefined : 'Show all years'}
+                  onAction={selectedYear === 'all' ? undefined : () => setSelectedYear('all')}
                 />
               ),
             }}
@@ -1321,8 +1347,9 @@ const Holidays = () => {
       <div className="w-full">
         <div className="mb-6">
           <PageActionToolbar
-            title="Holiday Manager"
-            subtitle="Plan your time off and track federal holidays."
+            title="Holidays"
+            subtitle="Manage personal time off and automatic federal holidays."
+            showExtraActionsOnMobile
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}
@@ -1348,8 +1375,17 @@ const Holidays = () => {
           />
         </div>
 
-        {contentView === 'list' ? (
+        {loadError && !hasLoadedData ? (
+          <PageState
+            tone="error"
+            title="Holidays unavailable"
+            description="We couldn't load your holidays and calendar data. Your saved settings have not been changed."
+            actionLabel="Try again"
+            onAction={fetchData}
+          />
+        ) : contentView === 'list' ? (
           <Tabs
+            className="holiday-manager-tabs"
             activeKey={activeTab}
             onChange={(key) => {
               setActiveTab(key);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getEvents,
   getUnresolvedConflicts,
@@ -66,33 +66,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
   });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const refreshOnTaskUpdate = () => {
-      if (isOpen) {
-        fetchData();
-      }
-    };
-    window.addEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
-    return () => window.removeEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [isOpen]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -133,7 +107,33 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi, snoozed]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const refreshOnTaskUpdate = () => {
+      if (isOpen) {
+        fetchData();
+      }
+    };
+    window.addEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
+    return () => window.removeEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
+  }, [fetchData, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [fetchData, isOpen]);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -204,8 +204,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative rounded-xl p-2 text-slate-500 outline-none transition-colors hover:bg-blue-50 hover:text-blue-600 focus:ring-2 focus:ring-blue-100"
+        className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 outline-none transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        aria-label="Open notifications"
+        aria-expanded={isOpen}
       >
         <BellOutlined className="text-xl" />
         {totalNotifications > 0 && (
@@ -220,7 +223,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       {isOpen && (
         <div
           className={`
-            absolute w-80 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)] z-50 animate-in fade-in zoom-in-95 duration-100
+            absolute z-50 w-[calc(100vw-1rem)] max-w-80 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)] animate-in fade-in zoom-in-95 duration-100
             ${
               placement === 'bottom-right'
                 ? 'top-full right-0 mt-2 origin-top-right'
@@ -274,8 +277,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         </div>
                         <div className="mt-2 flex justify-end">
                           <button
+                            type="button"
                             onClick={(e) => handleResolve(conflict.id, e)}
-                            className="text-[10px] bg-white border border-red-200 text-red-600 px-2 py-1 rounded hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1 shadow-sm"
+                            className="flex min-h-11 items-center gap-1 rounded border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 shadow-sm transition-colors hover:bg-red-600 hover:text-white"
                           >
                             <CheckOutlined className="text-xs" />
                             Resolve
@@ -316,21 +320,23 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <Link
                             to={`/tasks?taskId=${deadline.taskId}&mode=view`}
-                            className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+                            className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-600 hover:text-blue-700"
                             onClick={() => setIsOpen(false)}
                           >
                             Open
                           </Link>
                           <div className="flex items-center gap-2">
                             <button
+                              type="button"
                               onClick={(e) => markTaskDone(deadline.taskId, deadline.id, e)}
-                              className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
+                              className="min-h-11 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
                             >
                               Done
                             </button>
                             <button
+                              type="button"
                               onClick={(e) => snoozeDeadline(deadline.id, e)}
-                              className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                              className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100"
                             >
                               Snooze 1d
                             </button>
@@ -453,5 +459,5 @@ const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): Dea
   return items
     .sort((a, b) => a.rank - b.rank || compareAsc(a.dueDate, b.dueDate))
     .slice(0, 10)
-    .map(({ rank, ...rest }) => rest);
+    .map(({ rank: _rank, ...rest }) => rest);
 };

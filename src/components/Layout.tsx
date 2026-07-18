@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider, Tooltip } from 'antd';
 import {
@@ -20,7 +20,6 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import IdentityAvatar from './IdentityAvatar';
-import NotificationBell from './NotificationBell';
 import logo from '../assets/logo.png';
 import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
@@ -29,6 +28,11 @@ import { useAuth } from '../context/AuthContext';
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'careerhub.sidebar.collapsed';
+const NotificationBell = lazy(() => import('./NotificationBell'));
+
+const NotificationBellFallback = () => (
+  <div className="h-11 w-11 rounded-xl bg-slate-100" aria-hidden="true" />
+);
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const screens = useBreakpoint();
@@ -45,6 +49,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const isDesktopSidebarCollapsed = Boolean(screens.lg && desktopCollapsed);
+  const shouldLoadNotifications = Boolean(screens.lg || !collapsed);
+
+  const notificationBell = shouldLoadNotifications ? (
+    <Suspense fallback={<NotificationBellFallback />}>
+      <NotificationBell placement="top-left" />
+    </Suspense>
+  ) : (
+    <NotificationBellFallback />
+  );
 
   useEffect(() => {
     getUserSettings()
@@ -260,7 +273,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             type="text"
             icon={<CloseOutlined />}
             onClick={() => setCollapsed(true)}
-            className="text-gray-400 hover:text-gray-600"
+            aria-label="Close navigation"
+            className="!h-11 !w-11 !text-gray-500 hover:!text-gray-700"
           />
         )}
       </div>
@@ -301,7 +315,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="border-t border-slate-200/70 p-4">
         {isDesktopSidebarCollapsed ? (
           <div className="flex flex-col items-center gap-3">
-            <NotificationBell placement="top-left" />
+            {notificationBell}
             <Tooltip title={displayName || user?.full_name || 'Profile'} placement="right">
               <button
                 type="button"
@@ -340,13 +354,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <>
             <div className="mb-2 flex items-center justify-between px-2">
               <span className="enterprise-data-label">Notifications</span>
-              <NotificationBell placement="top-left" />
+              {notificationBell}
             </div>
-            <div
-              onClick={() => navigate('/profile')}
-              className="group mb-4 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 px-3 py-3 shadow-sm transition-all duration-300 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-900/5"
-            >
-              <div className="mb-3 flex items-center gap-3">
+            <div className="mb-4 rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm">
+              <button
+                type="button"
+                onClick={() => navigate('/profile')}
+                className="group mb-3 flex min-h-11 w-full items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              >
                 <IdentityAvatar
                   imageUrl={profilePic}
                   name={displayName || user?.full_name}
@@ -361,7 +376,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     {displayName || 'CareerHub User'}
                   </p>
                 </div>
-              </div>
+              </button>
               <Button
                 type="text"
                 icon={<LogoutOutlined />}
@@ -376,7 +391,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     setIsLoggingOut(false);
                   }
                 }}
-                className="w-full !flex !items-center !justify-center !h-9 !rounded-lg !bg-white !border !border-slate-200/80 !text-slate-500 hover:!text-rose-500 hover:!border-rose-100 hover:!bg-rose-50/30 !text-xs font-bold transition-all"
+                className="w-full !flex !h-11 !items-center !justify-center !rounded-xl !border !border-slate-200/80 !bg-white !text-xs !font-bold !text-slate-500 transition-all hover:!border-rose-100 hover:!bg-rose-50/30 hover:!text-rose-500"
               >
                 Sign Out
               </Button>
@@ -391,7 +406,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <AntLayout style={{ minHeight: '100vh', flexDirection: 'row' }}>
+    <AntLayout style={{ minHeight: '100dvh', flexDirection: 'row' }}>
+      <a
+        href="#careerhub-main-content"
+        className="fixed left-4 top-4 z-[var(--careerhub-z-skip-link)] -translate-y-24 rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+      >
+        Skip to main content
+      </a>
       {/* Unified Sider */}
       <Sider
         width={260}
@@ -401,7 +422,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         trigger={null}
         collapsedWidth={screens.lg ? 76 : 0}
         style={{
-          height: '100vh',
+          height: '100dvh',
           position: screens.lg ? 'sticky' : 'fixed',
           top: 0,
           left: 0,
@@ -421,8 +442,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      <AntLayout className="min-h-screen bg-transparent transition-all duration-300">
-        <Content style={{ margin: 0, overflow: 'initial', position: 'relative' }}>
+      <AntLayout className="min-h-[100dvh] bg-transparent transition-all duration-300">
+        <Content
+          id="careerhub-main-content"
+          tabIndex={-1}
+          style={{ margin: 0, overflow: 'initial', position: 'relative' }}
+        >
           <div
             className={`enterprise-page mx-auto w-full max-w-[1560px] p-4 md:p-6 lg:p-7 xl:p-8 ${!screens.lg ? 'pb-[8.5rem]' : ''}`}
           >
@@ -432,7 +457,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </AntLayout>
 
       {!screens.lg ? (
-        <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 bg-white/90 shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl">
+        <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 bg-white shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)]">
           <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-2 pt-2">
             {mobilePrimaryNavItems.map((item) => {
               const isActive = matchesNavKey(item.key);

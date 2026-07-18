@@ -28,7 +28,10 @@ import { SettingsSkeleton } from '../../components/SkeletonLoader';
 import EditableNumberInput from '../../components/EditableNumberInput';
 import FriendlyTimeInput from '../../components/FriendlyTimeInput';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import { PageState } from '../../components/PageState';
 import LockableListItem from '../../components/LockableListItem';
+import ConfirmModal from '../../components/ConfirmModal';
+import MobileSectionPicker from '../../components/MobileSectionPicker';
 import {
   buildAIProviderSettingsPatch,
   getAIProviderSettingsFromUserSettings,
@@ -44,6 +47,7 @@ import {
   getPaletteColorFromTone,
   getToneForPaletteColor,
 } from '../../utils/colorPalette';
+import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 
 dayjs.extend(customParseFormat);
 
@@ -59,6 +63,17 @@ const WORK_DAY_OPTIONS = [
   { val: 5, label: 'Sat' },
   { val: 6, label: 'Sun' },
 ];
+
+const SETTINGS_TABS = [
+  { key: 'general', label: 'General' },
+  { key: 'ai', label: 'AI Provider' },
+  { key: 'integrations', label: 'Integrations' },
+  { key: 'security', label: 'Security' },
+  { key: 'organize', label: 'Organize' },
+  { key: 'navigation', label: 'Navigation' },
+] as const;
+
+type SettingsTab = (typeof SETTINGS_TABS)[number]['key'];
 
 const summarizeSelectedDays = (days: number[]) => {
   const sortedDays = [...new Set(days)].sort((a, b) => a - b);
@@ -187,13 +202,10 @@ const Settings: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    'general' | 'ai' | 'integrations' | 'security' | 'organize' | 'navigation'
-  >('general');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
   const [isHolidayTabsLocked, setIsHolidayTabsLocked] = useState(false);
@@ -493,19 +505,7 @@ const Settings: React.FC = () => {
       }
 
       if (!data.application_stages || data.application_stages.length === 0) {
-        data.application_stages = [
-          { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-          { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
-          { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
-          { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
-          { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
-          { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
-          { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
-          { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
-          { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
-          { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
-          { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
-        ];
+        data.application_stages = DEFAULT_APPLICATION_STAGES.map((stage) => ({ ...stage }));
       }
       originalSettingsRef.current = JSON.stringify(data);
       setSettings(data);
@@ -536,13 +536,6 @@ const Settings: React.FC = () => {
   }, [fetchCategories, fetchSettings]);
 
   useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
-  useEffect(() => {
     if (!settings || !originalSettingsRef.current) return;
     setIsDirty(JSON.stringify(settings) !== originalSettingsRef.current);
   }, [settings]);
@@ -554,7 +547,7 @@ const Settings: React.FC = () => {
       await updateUserSettings(settings);
       originalSettingsRef.current = JSON.stringify(settings);
       setIsDirty(false);
-      setSuccessMessage('Settings saved!');
+      messageApi.success('Settings saved');
       window.dispatchEvent(new CustomEvent('settings-saved', { detail: settings }));
     } catch (error) {
       messageApi.error('Failed to save settings');
@@ -758,7 +751,7 @@ const Settings: React.FC = () => {
         updated_at: nextSettings.updated_at,
       });
       syncAiSettings(nextSettings);
-      setSuccessMessage(
+      messageApi.success(
         nextSettings.ai_provider_api_key_configured
           ? 'AI provider saved with an encrypted server-side key.'
           : 'AI provider preset saved. Add an API key to enable AI features.'
@@ -784,7 +777,7 @@ const Settings: React.FC = () => {
         updated_at: nextSettings.updated_at,
       });
       syncAiSettings(nextSettings);
-      setSuccessMessage('Stored AI key cleared from the server.');
+      messageApi.success('Stored AI key cleared from the server.');
     } catch (error) {
       messageApi.error('Failed to clear AI key');
       console.error('Error clearing AI key:', error);
@@ -868,60 +861,38 @@ const Settings: React.FC = () => {
   }
 
   if (!settings) {
-    return <div className="text-center py-8 text-red-600">Failed to load settings</div>;
+    return (
+      <>
+        {contextHolder}
+        <PageState
+          tone="error"
+          title="Settings could not be loaded"
+          description="No settings were changed. Check your connection and try loading them again."
+          actionLabel="Retry loading settings"
+          onAction={() => {
+            setLoading(true);
+            void fetchSettings();
+          }}
+          className="mt-12"
+        />
+      </>
+    );
   }
 
-  return (
-    <div className="space-y-6 max-w-3xl mx-auto relative">
-      {contextHolder}
-      {/* Toast Notification */}
-      {successMessage && (
-        <div className="fixed top-4 right-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-right-5 fade-in z-50">
-          <div className="bg-green-100 p-1 rounded-full">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 13l4 4L19 7"
-              ></path>
-            </svg>
-          </div>
-          <span className="font-medium">{successMessage}</span>
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="ml-2 text-green-500 hover:text-green-700"
-          >
-            <CloseOutlined className="text-xs" />
-          </button>
-        </div>
-      )}
+  const categoryPendingDeletion = categories.find((category) => category.id === deletingCategoryId);
 
-      {/* Delete Confirmation Modal */}
-      {deletingCategoryId !== null && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl scale-100 opacity-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Category?</h3>
-            <p className="text-gray-500 mb-6">
-              Are you sure you want to delete this category? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeletingCategoryId(null)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteCategory}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  return (
+    <div className="relative mx-auto max-w-3xl space-y-6">
+      {contextHolder}
+      <ConfirmModal
+        isOpen={deletingCategoryId !== null}
+        title="Delete category?"
+        message={`Delete ${categoryPendingDeletion?.name ? `“${categoryPendingDeletion.name}”` : 'this category'}? This action cannot be undone.`}
+        confirmText="Delete category"
+        type="danger"
+        onConfirm={() => void confirmDeleteCategory()}
+        onCancel={() => setDeletingCategoryId(null)}
+      />
 
       <PageActionToolbar
         title="Settings"
@@ -952,36 +923,54 @@ const Settings: React.FC = () => {
         }
       />
 
-      {/* Tab Bar */}
-      <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-xl">
-        {(
-          [
-            { key: 'general', label: 'General' },
-            { key: 'ai', label: 'AI Provider' },
-            { key: 'integrations', label: 'Integrations' },
-            { key: 'security', label: 'Security' },
-            { key: 'organize', label: 'Organize' },
-            { key: 'navigation', label: 'Navigation' },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-              activeTab === tab.key
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <MobileSectionPicker
+        id="settings-section"
+        label="Settings section"
+        value={activeTab}
+        options={SETTINGS_TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
+        onChange={setActiveTab}
+        className="md:hidden"
+      />
+
+      {/* Desktop tab bar */}
+      <div className="hidden md:block">
+        <div
+          className="grid grid-cols-6 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1"
+          role="tablist"
+          aria-label="Settings sections"
+        >
+          {SETTINGS_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              id={`settings-tab-${tab.key}`}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              aria-controls={`settings-panel-${tab.key}`}
+              onClick={() => setActiveTab(tab.key)}
+              className={`min-h-11 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-600 hover:bg-white/60 hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className={`space-y-6 ${isLocked ? 'pointer-events-none select-none opacity-60' : ''}`}>
+      <div
+        id={`settings-panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`settings-tab-${activeTab}`}
+        className={`space-y-6 ${isLocked ? 'pointer-events-none select-none opacity-60' : ''}`}
+      >
         {activeTab === 'general' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Availability</h3>
+          <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="border-b border-slate-200 pb-3 text-lg font-semibold text-slate-950">
+              Availability
+            </h2>
 
             {/* Work Days */}
             <div>
@@ -1000,11 +989,12 @@ const Settings: React.FC = () => {
                           : [...currentDays, day.val].sort();
                         updateWorkDays(newDays);
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition border active:scale-[0.98] ${
+                      className={`min-h-11 min-w-11 rounded-lg border px-3 text-sm font-medium transition-colors ${
                         isSelected
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50'
                       }`}
+                      aria-pressed={isSelected}
                     >
                       {day.label}
                     </button>
@@ -1015,21 +1005,21 @@ const Settings: React.FC = () => {
 
             {/* Work Hours */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between gap-3">
                 <label className="block text-sm font-medium text-gray-700">
                   Available Time Ranges
                 </label>
                 <button
                   type="button"
                   onClick={addAvailabilityRange}
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-50"
                 >
                   <PlusOutlined /> Add Range
                 </button>
               </div>
 
               {(settings.work_time_ranges?.length ?? 0) === 0 ? (
-                <div className="flex items-center gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="flex-1">
                     <label className="block text-xs text-gray-500 mb-1">Start</label>
                     <FriendlyTimeInput
@@ -1049,7 +1039,6 @@ const Settings: React.FC = () => {
                       allowClear={false}
                     />
                   </div>
-                  <span className="text-gray-400 mt-5">–</span>
                   <div className="flex-1">
                     <label className="block text-xs text-gray-500 mb-1">End</label>
                     <FriendlyTimeInput
@@ -1099,7 +1088,7 @@ const Settings: React.FC = () => {
                                 prev ? { ...prev, work_time_ranges: updated } : null
                               );
                             }}
-                            className="rounded-md p-2 text-gray-400 transition hover:bg-gray-50 hover:text-red-500 active:scale-[0.98]"
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-2 text-gray-400 transition hover:bg-gray-50 hover:text-red-500 active:scale-[0.98] sm:min-h-9 sm:min-w-9 sm:rounded-lg"
                             aria-label="Remove availability range"
                           >
                             <CloseOutlined />
@@ -1172,7 +1161,7 @@ const Settings: React.FC = () => {
                                   type="button"
                                   disabled={!isEnabledWorkDay}
                                   onClick={() => toggleAvailabilityRangeDay(range, idx, day.val)}
-                                  className={`min-w-12 rounded-md border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] ${
+                                  className={`min-h-11 min-w-12 rounded-xl border px-2.5 py-1 text-xs font-medium transition active:scale-[0.98] sm:min-h-8 sm:rounded-md ${
                                     isSelected
                                       ? 'bg-blue-50 text-blue-700 border-blue-200'
                                       : isEnabledWorkDay
@@ -1192,14 +1181,14 @@ const Settings: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => applyWorkDaysToAvailabilityRange(idx)}
-                              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98]"
+                              className="min-h-11 rounded-xl border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-50 active:scale-[0.98] sm:min-h-8 sm:rounded-md"
                             >
                               Use work days
                             </button>
                             <button
                               type="button"
                               onClick={() => clearAvailabilityRangeDays(idx)}
-                              className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-[0.98]"
+                              className="min-h-11 rounded-xl border border-gray-200 px-3 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-[0.98] sm:min-h-8 sm:rounded-md"
                             >
                               Clear
                             </button>
@@ -1293,9 +1282,9 @@ const Settings: React.FC = () => {
               </select>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2 pt-4">
+            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 pt-4">
               Job Hunt Settings
-            </h3>
+            </h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1320,7 +1309,7 @@ const Settings: React.FC = () => {
 
         {activeTab === 'ai' && (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">AI Provider</h3>
+            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">AI Provider</h2>
 
             <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-sky-50 p-5 space-y-4">
               <div className="flex items-start gap-3">
@@ -1329,9 +1318,9 @@ const Settings: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-gray-900">
                       Encrypted Server-side BYOK
-                    </h4>
+                    </h3>
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-sky-200 text-sky-700">
                       Multi-provider
                     </span>
@@ -1508,12 +1497,12 @@ const Settings: React.FC = () => {
                   Claude uses Messages, Gemini uses generateContent, and OpenAI/OpenRouter/Custom
                   use chat completions.
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="grid shrink-0 grid-cols-1 gap-2 sm:flex">
                   <button
                     type="button"
                     onClick={handleClearAiSettings}
                     disabled={!aiSettings.apiKeyConfigured}
-                    className="px-3.5 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="min-h-11 rounded-xl border border-gray-300 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     Clear Stored Key
                   </button>
@@ -1521,7 +1510,7 @@ const Settings: React.FC = () => {
                     type="button"
                     onClick={handleSaveAiSettings}
                     disabled={!aiSettingsDirty}
-                    className="px-3.5 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="min-h-11 rounded-xl bg-sky-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Save Provider
                   </button>
@@ -1537,14 +1526,16 @@ const Settings: React.FC = () => {
 
         {/* Category Manager */}
         {activeTab === 'organize' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Manage Categories</h3>
-              <div className="flex items-center gap-2">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Manage Categories</h2>
+              <div className="flex items-center justify-end gap-2">
                 <button
+                  type="button"
                   onClick={() => setIsCategoriesLocked((l) => !l)}
-                  className={`p-1.5 rounded-lg transition ${isCategoriesLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isCategoriesLocked ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
                   title={isCategoriesLocked ? 'Unlock section' : 'Lock section'}
+                  aria-pressed={isCategoriesLocked}
                 >
                   {isCategoriesLocked ? (
                     <LockOutlined className="text-base" />
@@ -1561,7 +1552,7 @@ const Settings: React.FC = () => {
                         setIsAddingCategory(true);
                       }
                     }}
-                    className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+                    className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
                   >
                     {isAddingCategory ? (
                       <CloseOutlined className="text-base" />
@@ -1599,7 +1590,7 @@ const Settings: React.FC = () => {
                     <button
                       type="submit"
                       disabled={!newCategoryName.trim()}
-                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                      className="min-h-11 w-full rounded-xl bg-blue-600 px-4 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
                     >
                       {editingCategory ? 'Update' : 'Add'}
                     </button>
@@ -1657,19 +1648,21 @@ const Settings: React.FC = () => {
 
         {/* Employment Types Manager */}
         {activeTab === 'organize' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Employment Types</h3>
+                <h2 className="text-lg font-semibold text-gray-900">Employment Types</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Used in Experience & Applications — saved with Settings
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <button
+                  type="button"
                   onClick={() => setIsEmpTypesLocked((l) => !l)}
-                  className={`p-1.5 rounded-lg transition ${isEmpTypesLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isEmpTypesLocked ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
                   title={isEmpTypesLocked ? 'Unlock section' : 'Lock section'}
+                  aria-pressed={isEmpTypesLocked}
                 >
                   {isEmpTypesLocked ? (
                     <LockOutlined className="text-base" />
@@ -1686,7 +1679,7 @@ const Settings: React.FC = () => {
                         setIsAddingEmpType(true);
                       }
                     }}
-                    className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+                    className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
                   >
                     {isAddingEmpType ? (
                       <CloseOutlined className="text-base" />
@@ -1722,7 +1715,7 @@ const Settings: React.FC = () => {
                     <button
                       onClick={handleSaveEmpType}
                       disabled={!newEmpLabel.trim()}
-                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                      className="min-h-11 w-full rounded-xl bg-blue-600 px-4 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
                     >
                       {editingEmpType ? 'Update' : 'Add'}
                     </button>
@@ -1779,19 +1772,21 @@ const Settings: React.FC = () => {
 
         {/* Holiday Tabs Manager */}
         {activeTab === 'organize' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Holiday Manager Tabs</h3>
+                <h2 className="text-lg font-semibold text-gray-900">Holiday Manager Tabs</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Custom tabs in Holiday Manager — saved with Settings
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <button
+                  type="button"
                   onClick={() => setIsHolidayTabsLocked((l) => !l)}
-                  className={`p-1.5 rounded-lg transition ${isHolidayTabsLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isHolidayTabsLocked ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
                   title={isHolidayTabsLocked ? 'Unlock section' : 'Lock section'}
+                  aria-pressed={isHolidayTabsLocked}
                 >
                   {isHolidayTabsLocked ? (
                     <LockOutlined className="text-base" />
@@ -1808,7 +1803,7 @@ const Settings: React.FC = () => {
                         setIsAddingHolidayTab(true);
                       }
                     }}
-                    className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+                    className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
                   >
                     {isAddingHolidayTab ? (
                       <CloseOutlined className="text-base" />
@@ -1847,7 +1842,7 @@ const Settings: React.FC = () => {
                     <button
                       onClick={handleSaveHolidayTab}
                       disabled={!newTabName.trim()}
-                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                      className="min-h-11 w-full rounded-xl bg-blue-600 px-4 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
                     >
                       {editingHolidayTab ? 'Update' : 'Add'}
                     </button>
@@ -1911,19 +1906,21 @@ const Settings: React.FC = () => {
 
         {/* Application Timeline Stages Manager */}
         {activeTab === 'organize' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-6">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Application Timeline Stages</h3>
+                <h2 className="text-lg font-semibold text-gray-900">Application Timeline Stages</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Custom stages for your job applications pipeline
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <button
+                  type="button"
                   onClick={() => setIsAppStagesLocked((l) => !l)}
-                  className={`p-1.5 rounded-lg transition ${isAppStagesLocked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isAppStagesLocked ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
                   title={isAppStagesLocked ? 'Unlock section' : 'Lock section'}
+                  aria-pressed={isAppStagesLocked}
                 >
                   {isAppStagesLocked ? (
                     <LockOutlined className="text-base" />
@@ -1940,7 +1937,7 @@ const Settings: React.FC = () => {
                         setIsAddingAppStage(true);
                       }
                     }}
-                    className="text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1"
+                    className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
                   >
                     {isAddingAppStage ? (
                       <CloseOutlined className="text-base" />
@@ -1984,7 +1981,7 @@ const Settings: React.FC = () => {
                     <button
                       onClick={handleSaveAppStage}
                       disabled={!newAppStageLabel.trim() || !newAppStageShortLabel.trim()}
-                      className="h-9.5 w-full px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed lg:w-auto"
+                      className="min-h-11 w-full rounded-xl bg-blue-600 px-4 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
                     >
                       {editingAppStage ? 'Update' : 'Add'}
                     </button>
@@ -2052,7 +2049,7 @@ const Settings: React.FC = () => {
         {activeTab === 'navigation' && (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="border-b pb-4 mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Navigation Visibility</h3>
+              <h2 className="text-lg font-semibold text-gray-900">Navigation Visibility</h2>
               <p className="text-xs text-gray-400 mt-0.5">
                 Toggle which pages appear in the sidebar
               </p>

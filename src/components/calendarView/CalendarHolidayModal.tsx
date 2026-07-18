@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { format } from 'date-fns';
-import { Button, Checkbox, Form, Input, Modal, Select } from 'antd';
+import { Button, Checkbox, Form, Input, Select } from 'antd';
+import ModalShell from '../ModalShell';
 import type { Holiday, HolidayTab } from '../../types';
 import type { CalendarHolidayTarget } from './types';
 
@@ -49,13 +50,38 @@ const CalendarHolidayModal = ({
       : `Add ${target?.label || 'Holiday'}${date ? ` on ${format(date, 'MMMM d, yyyy')}` : ''}`;
 
   return (
-    <Modal title={title} open={open} onCancel={onCancel} footer={null} destroyOnHidden>
+    <ModalShell
+      isOpen={open}
+      title={title}
+      onClose={onCancel}
+      maxWidthClass="max-w-lg"
+      bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+      footer={
+        <>
+          <Button size="large" onClick={onCancel} className="w-full sm:w-auto">
+            Cancel
+          </Button>
+          <Button
+            size="large"
+            type="primary"
+            onClick={() => form.submit()}
+            className="w-full sm:w-auto"
+          >
+            Save holiday
+          </Button>
+        </>
+      }
+    >
       <Form form={form} layout="vertical" onFinish={onSubmit}>
         <Form.Item name="description" label="Holiday Name">
-          <Input placeholder={target?.label || holiday?.description || 'Custom Holiday'} />
+          <Input
+            size="large"
+            placeholder={target?.label || holiday?.description || 'Custom Holiday'}
+          />
         </Form.Item>
         <Form.Item name="tab" label="Holiday Tab">
           <Select
+            size="large"
             options={[
               { label: 'My Holiday', value: '' },
               ...holidayTabs.map((tab) => ({ label: tab.name, value: tab.id })),
@@ -63,16 +89,10 @@ const CalendarHolidayModal = ({
           />
         </Form.Item>
         <Form.Item name="is_recurring" valuePropName="checked">
-          <Checkbox>Recurring yearly</Checkbox>
+          <Checkbox className="min-h-11">Recurring yearly</Checkbox>
         </Form.Item>
-        <div className="flex justify-end gap-2">
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button type="primary" htmlType="submit">
-            Save
-          </Button>
-        </div>
       </Form>
-    </Modal>
+    </ModalShell>
   );
 };
 

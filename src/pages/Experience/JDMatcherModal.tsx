@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, Input, Button, Space, Alert, Progress } from 'antd';
+import { Input, Button, Space, Alert, Progress } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   RobotOutlined,
   ExpandOutlined,

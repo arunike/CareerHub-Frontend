@@ -120,7 +120,7 @@ const AvailabilityItem = ({
   };
 
   return (
-    <div className="group relative bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
+    <div className="group relative rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-md sm:p-5">
       {contextHolder}
       <div className="flex items-start md:items-center justify-between gap-4">
         <div className="flex-1">
@@ -129,9 +129,9 @@ const AvailabilityItem = ({
           </div>
 
           {isEditing ? (
-            <div className="flex gap-2 mt-1">
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
               <input
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
+                className="min-h-11 flex-1 rounded border border-gray-300 px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 autoFocus
@@ -139,13 +139,13 @@ const AvailabilityItem = ({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                className="min-h-11 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 Save
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-medium hover:bg-gray-200"
+                className="min-h-11 rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
               >
                 Cancel
               </button>
@@ -161,8 +161,9 @@ const AvailabilityItem = ({
                     setEditText(item.availability);
                     setIsEditing(true);
                   }}
-                  className="opacity-0 group-hover/text:opacity-100 text-gray-400 hover:text-blue-600 transition-opacity p-1"
-                  title="Override AvailabilityType"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-gray-400 opacity-100 transition-opacity hover:bg-gray-100 hover:text-blue-600 md:min-h-0 md:min-w-0 md:p-1 md:opacity-0 md:group-hover/text:opacity-100 md:group-focus-within/text:opacity-100"
+                  title="Edit availability"
+                  aria-label={`Edit availability for ${item.displayDate}`}
                 >
                   <EditOutlined className="text-xs" />
                 </button>
@@ -174,12 +175,13 @@ const AvailabilityItem = ({
         <button
           onClick={() => onCopy(item.fullText, itemId)}
           className={clsx(
-            'p-2 rounded-lg transition-colors',
+            'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 transition-colors',
             copiedIndex === itemId
               ? 'bg-green-50 text-green-600'
-              : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100 opacity-0'
+              : 'bg-gray-50 text-gray-400 opacity-100 hover:bg-gray-100 hover:text-gray-600 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100'
           )}
           title="Copy line"
+          aria-label={`Copy availability for ${item.displayDate}`}
         >
           {copiedIndex === itemId ? (
             <CheckCircleOutlined className="text-xl" />
