@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Grid, Popconfirm, Typography } from 'antd';
 import {
   DeleteOutlined,
@@ -30,7 +30,9 @@ interface PageActionToolbarProps {
   onPrimaryAction?: () => void;
   primaryActionLabel?: string;
   primaryActionIcon?: React.ReactNode;
+  primaryActionLoading?: boolean;
   singleRowDesktop?: boolean;
+  showExtraActionsOnMobile?: boolean;
 }
 
 const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
@@ -53,7 +55,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   onPrimaryAction,
   primaryActionLabel = 'Add',
   primaryActionIcon = <PlusOutlined />,
+  primaryActionLoading = false,
   singleRowDesktop = false,
+  showExtraActionsOnMobile = false,
 }) => {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -125,16 +129,18 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
       type="primary"
       icon={primaryActionIcon}
       onClick={onPrimaryAction}
+      loading={primaryActionLoading}
     >
       {primaryActionLabel}
     </Button>
   ) : null;
 
-  const mobileSecondaryActionCount = useMemo(
-    () =>
-      [yearFilterNode, extraActions, deleteAllNode, exportNode, importNode].filter(Boolean).length,
-    [deleteAllNode, exportNode, extraActions, importNode, yearFilterNode]
-  );
+  const mobileHiddenActionCount = [
+    showExtraActionsOnMobile ? null : extraActions,
+    deleteAllNode,
+    exportNode,
+    importNode,
+  ].filter(Boolean).length;
 
   if (isMobile) {
     return (
@@ -142,7 +148,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         <div className="space-y-4">
           <div className="min-w-0">
             <Typography.Title
-              level={2}
+              level={1}
               className="text-balance"
               style={{
                 margin: 0,
@@ -173,7 +179,11 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
 
             {yearFilterNode ? <div className="w-full">{yearFilterNode}</div> : null}
 
-            {mobileSecondaryActionCount > (yearFilterNode ? 1 : 0) ? (
+            {showExtraActionsOnMobile && extraActions ? (
+              <div className="w-full">{extraActions}</div>
+            ) : null}
+
+            {mobileHiddenActionCount > 0 ? (
               <Button
                 size="large"
                 className="toolbar-native-btn"
@@ -187,7 +197,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
             {mobileActionsOpen ? (
               <div className="enterprise-filter-bar p-3">
                 <div className="grid grid-cols-1 gap-3">
-                  {extraActions ? <div className="w-full">{extraActions}</div> : null}
+                  {!showExtraActionsOnMobile && extraActions ? (
+                    <div className="w-full">{extraActions}</div>
+                  ) : null}
                   {deleteAllNode ? <div className="w-full">{deleteAllNode}</div> : null}
                   {exportNode ? <div className="w-full">{exportNode}</div> : null}
                   {importNode ? <div className="w-full">{importNode}</div> : null}
@@ -206,7 +218,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         <div className="flex items-center gap-4">
           <div className="min-w-0">
             <Typography.Title
-              level={2}
+              level={1}
               className="text-balance"
               style={{
                 margin: 0,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Select, DatePicker, Input, Tag, Tooltip, Popconfirm } from 'antd';
+import { Button, Select, DatePicker, Input, Tag, Tooltip, Popconfirm } from 'antd';
+import Modal from '../../components/MobileModal';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TrophyOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { RaiseEntry } from '../../types';
@@ -73,8 +74,8 @@ const ModeBtn = ({
   <button
     type="button"
     onClick={onClick}
-    className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
-      active ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-400 hover:text-gray-600'
+    className={`min-h-11 rounded-lg px-2.5 text-xs transition-colors sm:min-h-8 ${
+      active ? 'bg-blue-100 text-blue-800 font-semibold' : 'text-gray-600 hover:bg-gray-100'
     }`}
   >
     {children}

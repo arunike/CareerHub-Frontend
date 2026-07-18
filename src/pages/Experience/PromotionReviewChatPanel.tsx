@@ -132,7 +132,7 @@ const renderAssistantContent = (content: string) => {
       blocks.push(
         <blockquote
           key={`quote-${index}`}
-          className="my-3 border-l-2 border-blue-500 bg-blue-50/60 px-3 py-2 text-sm font-medium leading-6 text-slate-800"
+          className="my-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-sm font-medium leading-6 text-blue-950"
         >
           {quotes.map((quote, quoteIndex) => (
             <p key={`${quote}-${quoteIndex}`} className="m-0">

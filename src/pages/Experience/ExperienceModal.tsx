@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Form,
   Input,
-  Modal,
   DatePicker,
   Switch,
   Tabs,
@@ -14,6 +13,7 @@ import {
   AutoComplete,
   Tooltip,
 } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   CameraOutlined,
   DeleteOutlined,
@@ -485,11 +485,13 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
               {/* Remove button */}
               {currentLogoSrc && (
                 <button
+                  type="button"
                   onClick={handleRemoveLogo}
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
+                  className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600 sm:-right-1 sm:-top-1 sm:h-6 sm:w-6 sm:rounded-full"
                   title="Remove logo"
+                  aria-label="Remove company logo"
                 >
-                  <DeleteOutlined style={{ fontSize: 10 }} />
+                  <DeleteOutlined style={{ fontSize: 12 }} />
                 </button>
               )}
             </div>

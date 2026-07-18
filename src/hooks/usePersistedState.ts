@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Options<T> = {
   serialize?: (value: T) => string;
@@ -10,13 +10,18 @@ export const usePersistedState = <T>(
   initialValue: T | (() => T),
   options?: Options<T>
 ) => {
-  const serialize = options?.serialize ?? ((value: T) => JSON.stringify(value));
-  const deserialize = options?.deserialize ?? ((raw: string) => JSON.parse(raw) as T);
+  const serializeRef = useRef(options?.serialize);
+
+  useEffect(() => {
+    serializeRef.current = options?.serialize;
+  }, [options?.serialize]);
 
   const [state, setState] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(key);
-      if (raw != null) return deserialize(raw);
+      if (raw != null) {
+        return options?.deserialize ? options.deserialize(raw) : (JSON.parse(raw) as T);
+      }
     } catch (error) {
       console.error(`Failed to read persisted state for key "${key}"`, error);
     }
@@ -25,11 +30,12 @@ export const usePersistedState = <T>(
 
   useEffect(() => {
     try {
-      localStorage.setItem(key, serialize(state));
+      const serialized = serializeRef.current ? serializeRef.current(state) : JSON.stringify(state);
+      localStorage.setItem(key, serialized);
     } catch (error) {
       console.error(`Failed to persist state for key "${key}"`, error);
     }
-  }, [key, state, serialize]);
+  }, [key, state]);
 
   return [state, setState] as const;
 };

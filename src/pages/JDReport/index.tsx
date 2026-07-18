@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Progress } from 'antd';
 import {
-  ArrowLeftOutlined,
   CheckCircleOutlined,
   WarningOutlined,
   BulbOutlined,
@@ -11,13 +10,13 @@ import {
   ProfileOutlined,
   RobotOutlined,
   TagsOutlined,
-  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { getReportById } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
 import { getReportArtifactByClientId } from '../../utils/aiArtifactStorage';
-import BulkActionHeader from '../../components/BulkActionHeader';
 import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
+import ArtifactPageToolbar from '../../components/ArtifactPageToolbar';
+import { PageState, PanelSkeleton } from '../../components/PageState';
 
 const getScoreMeta = (score: number) => {
   if (score >= 90)
@@ -78,29 +77,39 @@ const JDReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [report, setReport] = useState<StoredReport | null>(() => (id ? getReportById(id) : null));
+  const [loading, setLoading] = useState(() => !report);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     getReportArtifactByClientId(id)
       .then((backendReport) => {
         setReport(backendReport || getReportById(id));
       })
-      .catch(() => setReport(getReportById(id)));
+      .catch(() => setReport(getReportById(id)))
+      .finally(() => setLoading(false));
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto min-h-screen max-w-6xl px-4 py-12 sm:px-6">
+        <PanelSkeleton rows={6} />
+      </div>
+    );
+  }
 
   if (!report) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-400">
-        <RobotOutlined style={{ fontSize: 48 }} />
-        <p className="text-lg text-gray-500">Report not found.</p>
-        <Button
-          type="primary"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/jd-reports')}
-          style={{ background: '#0284c7', borderColor: '#0284c7' }}
-        >
-          View All Reports
-        </Button>
+      <div className="min-h-screen bg-slate-50 px-4 py-16 sm:px-6">
+        <PageState
+          title="Job match report not found"
+          description="This report may have been deleted or is no longer available in this account."
+          icon={<RobotOutlined />}
+          actionLabel="View all reports"
+          onAction={() => navigate('/jd-reports')}
+        />
       </div>
     );
   }
@@ -127,52 +136,28 @@ const JDReportPage: React.FC = () => {
         }
       `}</style>
 
-      {/* Top Bar */}
-      <div className="no-print sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm px-6 py-3">
-        <BulkActionHeader
-          selectedCount={0}
-          totalCount={0}
-          title={
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/jd-reports')}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 text-sm font-medium transition-all"
-              >
-                <ArrowLeftOutlined /> All Reports
-              </button>
-              <span className="text-gray-200 select-none">|</span>
-              <div className="flex items-center gap-2">
-                <RobotOutlined style={{ color: '#0ea5e9', fontSize: 15 }} />
-                <span className="text-sm font-semibold text-gray-700">AI Resume Evaluator</span>
-              </div>
-            </div>
-          }
-          defaultActions={
-            <>
-              <Button
-                icon={<UnorderedListOutlined />}
-                onClick={() => navigate('/jd-reports')}
-                className="rounded-lg"
-              >
-                Reports
-              </Button>
-              <Button
-                type="primary"
-                icon={<DownloadOutlined />}
-                onClick={() => window.print()}
-                className="rounded-lg"
-                style={{ background: '#0284c7', borderColor: '#0284c7' }}
-              >
-                Download PDF
-              </Button>
-            </>
-          }
-        />
-      </div>
+      <ArtifactPageToolbar
+        backLabel="All Reports"
+        contextLabel="AI Resume Evaluator"
+        contextIcon={<RobotOutlined />}
+        onBack={() => navigate('/jd-reports')}
+        maxWidthClassName="max-w-4xl"
+        actions={
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={() => window.print()}
+            className="rounded-lg"
+            style={{ background: '#0284c7', borderColor: '#0284c7' }}
+          >
+            Print / Save PDF
+          </Button>
+        }
+      />
 
       {/* Page */}
-      <div className="min-h-screen bg-slate-50/50 py-12 px-4 shadow-inner">
-        <div className="max-w-4xl mx-auto flex flex-col gap-8">
+      <div className="min-h-screen bg-slate-50/50 px-4 py-6 shadow-inner sm:py-12">
+        <div className="mx-auto flex max-w-4xl flex-col gap-5 sm:gap-8">
           {/* Header */}
           <ArtifactHeaderCard
             typeLabel="AI Resume Evaluation Report"
@@ -189,7 +174,7 @@ const JDReportPage: React.FC = () => {
 
           {/* Score Hero */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-8 py-10 flex flex-col sm:flex-row items-start gap-10">
+            <div className="flex flex-col items-center gap-6 px-5 py-6 sm:flex-row sm:items-start sm:gap-10 sm:px-8 sm:py-10">
               <div className="shrink-0 flex flex-col items-center gap-4">
                 <Progress
                   type="circle"
@@ -331,7 +316,7 @@ const JDReportPage: React.FC = () => {
           {(resumeGaps.length > 0 || keywordSuggestions.length > 0) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {resumeGaps.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+                <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center">
                       <WarningOutlined className="text-orange-600 text-sm" />
@@ -366,7 +351,7 @@ const JDReportPage: React.FC = () => {
               )}
 
               {keywordSuggestions.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+                <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
                       <TagsOutlined className="text-sky-600 text-sm" />
@@ -409,7 +394,7 @@ const JDReportPage: React.FC = () => {
           )}
 
           {tailoredBullets.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
+            <div className="flex flex-col gap-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
                   <EditOutlined className="text-blue-600 text-sm" />
@@ -475,7 +460,7 @@ const JDReportPage: React.FC = () => {
           )}
 
           {bestExperiences.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-5">
+            <div className="flex flex-col gap-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
                   <ProfileOutlined className="text-slate-600 text-sm" />
@@ -518,7 +503,7 @@ const JDReportPage: React.FC = () => {
           )}
 
           {report.overall_risk_assessment && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
                   <WarningOutlined className="text-blue-600 text-sm" />
@@ -545,7 +530,7 @@ const JDReportPage: React.FC = () => {
 
           {/* Recommendations */}
           {report.recommendations?.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
                   <BulbOutlined className="text-amber-600 text-sm" />

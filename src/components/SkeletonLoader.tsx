@@ -274,7 +274,7 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
 
 export const CalendarSkeleton: React.FC = () => {
   return (
-    <div className="enterprise-section p-5 space-y-5 animate-in fade-in duration-300 bg-white/50">
+    <div className="enterprise-section space-y-4 bg-white/50 p-4 animate-in fade-in duration-300 sm:space-y-5 sm:p-5">
       {/* Calendar Header */}
       <div className="flex items-center justify-between gap-4">
         <SkeletonBlock width="140px" height="1.75rem" />
@@ -285,7 +285,7 @@ export const CalendarSkeleton: React.FC = () => {
       </div>
 
       {/* Weekdays Row */}
-      <div className="grid grid-cols-7 gap-2 border-b border-slate-100 pb-2">
+      <div className="grid grid-cols-7 gap-1 border-b border-slate-100 pb-2 sm:gap-2">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
           <div key={day} className="text-center">
             <SkeletonBlock width="40%" height="0.75rem" className="mx-auto opacity-70" />
@@ -294,29 +294,37 @@ export const CalendarSkeleton: React.FC = () => {
       </div>
 
       {/* Grid Cells */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {Array.from({ length: 35 }).map((_, idx) => {
           const hasEvent1 = idx % 7 === 1 || idx % 7 === 4;
           const hasEvent2 = idx % 7 === 4;
           return (
             <div
               key={idx}
-              className="border border-slate-100 rounded-xl p-2 min-h-[95px] flex flex-col justify-between bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+              className="flex min-h-18 flex-col justify-between rounded-lg border border-slate-100 bg-white p-1 shadow-[0_1px_2px_rgba(0,0,0,0.02)] sm:min-h-[95px] sm:rounded-xl sm:p-2"
             >
               <div className="flex justify-between items-center">
                 <SkeletonBlock width="20px" height="0.85rem" className="opacity-60" />
               </div>
-              <div className="space-y-1.5 mt-2 flex-grow flex flex-col justify-end">
+              <div className="mt-2 flex flex-grow flex-col justify-end space-y-1.5">
                 {hasEvent1 && (
-                  <div className="h-5 rounded-md bg-blue-50/80 border border-blue-100/50 flex items-center px-1.5 gap-1.5">
+                  <div className="flex h-2 items-center justify-center sm:h-5 sm:justify-start sm:gap-1.5 sm:rounded-md sm:border sm:border-blue-100/50 sm:bg-blue-50/80 sm:px-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                    <SkeletonBlock width="60%" height="0.45rem" className="opacity-80" />
+                    <SkeletonBlock
+                      width="60%"
+                      height="0.45rem"
+                      className="hidden opacity-80 sm:block"
+                    />
                   </div>
                 )}
                 {hasEvent2 && (
-                  <div className="h-5 rounded-md bg-amber-50/80 border border-amber-100/50 flex items-center px-1.5 gap-1.5">
+                  <div className="flex h-2 items-center justify-center sm:h-5 sm:justify-start sm:gap-1.5 sm:rounded-md sm:border sm:border-amber-100/50 sm:bg-amber-50/80 sm:px-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                    <SkeletonBlock width="50%" height="0.45rem" className="opacity-80" />
+                    <SkeletonBlock
+                      width="50%"
+                      height="0.45rem"
+                      className="hidden opacity-80 sm:block"
+                    />
                   </div>
                 )}
               </div>

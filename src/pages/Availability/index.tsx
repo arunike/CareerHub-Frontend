@@ -51,6 +51,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import { PageState, PanelSkeleton } from '../../components/PageState';
 import { Form, message, Modal } from 'antd';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
@@ -108,7 +109,8 @@ const Availability = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const viewTab = searchParams.get('view') === 'calendar' ? 'calendar' : 'text';
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState(false);
   const [data, setData] = useState<AvailabilityType[]>([]);
   const [timezone, setTimezone] = useState(() => getBrowserTimeZone());
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -135,6 +137,7 @@ const Availability = () => {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
+  const [calendarLoadError, setCalendarLoadError] = useState(false);
   const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
@@ -162,13 +165,17 @@ const Availability = () => {
     target: CalendarHolidayTarget;
   } | null>(null);
   const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
+  const [bookingDataLoading, setBookingDataLoading] = useState(true);
+  const [bookingDataError, setBookingDataError] = useState(false);
 
   const fetchAvailability = async () => {
     setLoading(true);
+    setAvailabilityError(false);
     try {
       const resp = await getAvailability(startDate, timezone, availabilityWeeks);
       setData(resp.data);
     } catch (error) {
+      setAvailabilityError(true);
       messageApi.error('Failed to fetch availability');
       console.error(error);
     } finally {
@@ -178,6 +185,7 @@ const Availability = () => {
 
   const fetchCalendarData = async () => {
     setCalendarLoading(true);
+    setCalendarLoadError(false);
     try {
       const [eventsResp, holidaysResp, fedResp, categoriesResp] = await Promise.all([
         getEvents(),
@@ -190,6 +198,7 @@ const Availability = () => {
       setFederalHolidays(fedResp.data);
       setCategories(categoriesResp.data);
     } catch (error) {
+      setCalendarLoadError(true);
       messageApi.error('Failed to fetch calendar data');
       console.error('Failed to fetch calendar data', error);
     } finally {
@@ -211,6 +220,8 @@ const Availability = () => {
   };
 
   const fetchShareLink = async () => {
+    setBookingDataLoading(true);
+    setBookingDataError(false);
     try {
       const [currentResp, linksResp, bookingsResp, settingsResp] = await Promise.all([
         getCurrentShareLink(),
@@ -253,11 +264,23 @@ const Availability = () => {
       }
 
       if (nextAvailabilityWeeks !== availabilityWeeks) {
-        const availabilityResp = await getAvailability(startDate, timezone, nextAvailabilityWeeks);
-        setData(availabilityResp.data);
+        try {
+          const availabilityResp = await getAvailability(
+            startDate,
+            timezone,
+            nextAvailabilityWeeks
+          );
+          setData(availabilityResp.data);
+        } catch (error) {
+          setAvailabilityError(true);
+          console.error('Failed to refresh saved availability range', error);
+        }
       }
     } catch (error) {
+      setBookingDataError(true);
       console.error('Failed to fetch share link', error);
+    } finally {
+      setBookingDataLoading(false);
     }
   };
 
@@ -278,7 +301,7 @@ const Availability = () => {
       if (!hostDisplayName) setHostDisplayName(user.full_name || '');
       if (!hostEmail) setHostEmail(user.email || '');
     }
-  }, [user]);
+  }, [hostDisplayName, hostEmail, user]);
 
   useEffect(() => {
     fetchAvailability();
@@ -725,12 +748,20 @@ const Availability = () => {
     }))
     .filter((group) => group.items.length > 0);
 
+  const hasCalendarData =
+    events.length > 0 ||
+    customHolidays.length > 0 ||
+    federalHolidays.length > 0 ||
+    categories.length > 0;
+  const hasBookingData = shareLink !== null || shareLinks.length > 0 || publicBookings.length > 0;
+
   return (
     <div className="space-y-6">
       {contextHolder}
       <PageActionToolbar
-        title="Dashboard"
-        subtitle="Manage your availability and public booking links"
+        title="Availability"
+        subtitle="Generate shareable times and manage public booking links."
+        showExtraActionsOnMobile
         extraActions={
           <AvailabilityViewToggle
             viewTab={viewTab}
@@ -742,19 +773,29 @@ const Availability = () => {
       />
 
       {viewTab === 'calendar' ? (
-        <CalendarView
-          events={events}
-          customHolidays={customHolidays}
-          federalHolidays={federalHolidays}
-          categories={categories}
-          holidayTabs={holidayTabs}
-          addActionHighlight="all"
-          loading={calendarLoading}
-          onEventSelect={handleCalendarEventSelect}
-          onHolidaySelect={handleCalendarHolidaySelect}
-          onAddEvent={handleCalendarAddEvent}
-          onAddHoliday={handleCalendarAddHoliday}
-        />
+        calendarLoadError && !hasCalendarData ? (
+          <PageState
+            tone="error"
+            title="Calendar unavailable"
+            description="We couldn't load your events and holidays. Your saved data has not been changed."
+            actionLabel="Try again"
+            onAction={fetchCalendarData}
+          />
+        ) : (
+          <CalendarView
+            events={events}
+            customHolidays={customHolidays}
+            federalHolidays={federalHolidays}
+            categories={categories}
+            holidayTabs={holidayTabs}
+            addActionHighlight="all"
+            loading={calendarLoading}
+            onEventSelect={handleCalendarEventSelect}
+            onHolidaySelect={handleCalendarHolidaySelect}
+            onAddEvent={handleCalendarAddEvent}
+            onAddHoliday={handleCalendarAddHoliday}
+          />
+        )
       ) : (
         <>
           <AvailabilityGeneratorCard
@@ -768,69 +809,95 @@ const Availability = () => {
             onGenerate={fetchAvailability}
           />
 
-          <AvailabilityBookingCard
-            shareLink={shareLink}
-            shareTitle={shareTitle}
-            onShareTitleChange={setShareTitle}
-            hostDisplayName={hostDisplayName}
-            onHostDisplayNameChange={setHostDisplayName}
-            hostEmail={hostEmail}
-            onHostEmailChange={setHostEmail}
-            publicNote={publicNote}
-            onPublicNoteChange={setPublicNote}
-            shareDuration={shareDuration}
-            onShareDurationChange={setShareDuration}
-            bookingBlockMinutes={bookingBlockMinutes}
-            onBookingBlockMinutesChange={setBookingBlockMinutes}
-            bufferMinutes={bufferMinutes}
-            onBufferMinutesChange={setBufferMinutes}
-            maxBookingsPerDay={maxBookingsPerDay}
-            onMaxBookingsPerDayChange={setMaxBookingsPerDay}
-            allowRescheduleCancel={allowRescheduleCancel}
-            onAllowRescheduleCancelChange={setAllowRescheduleCancel}
-            rescheduleCancelDeadlineHours={rescheduleCancelDeadlineHours}
-            onRescheduleCancelDeadlineHoursChange={setRescheduleCancelDeadlineHours}
-            intakeQuestions={intakeQuestions}
-            onIntakeQuestionsChange={setIntakeQuestions}
-            generatingLink={generatingLink}
-            onGenerateShareLink={handleGenerateShareLink}
-            onCopyShareLink={handleCopyShareLink}
-            deactivatingLink={deactivatingLink}
-            onDeactivateShareLink={handleDeactivateShareLink}
-            getShareLinkUrl={getShareLinkUrl}
-            onReset={() => setShareLink(null)}
-          />
+          {bookingDataLoading && !hasBookingData ? (
+            <PanelSkeleton rows={3} />
+          ) : bookingDataError && !hasBookingData ? (
+            <PageState
+              tone="error"
+              title="Booking links unavailable"
+              description="We couldn't load your public links and bookings. Your saved booking settings have not been changed."
+              actionLabel="Try again"
+              onAction={fetchShareLink}
+            />
+          ) : (
+            <>
+              <AvailabilityBookingCard
+                shareLink={shareLink}
+                shareTitle={shareTitle}
+                onShareTitleChange={setShareTitle}
+                hostDisplayName={hostDisplayName}
+                onHostDisplayNameChange={setHostDisplayName}
+                hostEmail={hostEmail}
+                onHostEmailChange={setHostEmail}
+                publicNote={publicNote}
+                onPublicNoteChange={setPublicNote}
+                shareDuration={shareDuration}
+                onShareDurationChange={setShareDuration}
+                bookingBlockMinutes={bookingBlockMinutes}
+                onBookingBlockMinutesChange={setBookingBlockMinutes}
+                bufferMinutes={bufferMinutes}
+                onBufferMinutesChange={setBufferMinutes}
+                maxBookingsPerDay={maxBookingsPerDay}
+                onMaxBookingsPerDayChange={setMaxBookingsPerDay}
+                allowRescheduleCancel={allowRescheduleCancel}
+                onAllowRescheduleCancelChange={setAllowRescheduleCancel}
+                rescheduleCancelDeadlineHours={rescheduleCancelDeadlineHours}
+                onRescheduleCancelDeadlineHoursChange={setRescheduleCancelDeadlineHours}
+                intakeQuestions={intakeQuestions}
+                onIntakeQuestionsChange={setIntakeQuestions}
+                generatingLink={generatingLink}
+                onGenerateShareLink={handleGenerateShareLink}
+                onCopyShareLink={handleCopyShareLink}
+                deactivatingLink={deactivatingLink}
+                onDeactivateShareLink={handleDeactivateShareLink}
+                getShareLinkUrl={getShareLinkUrl}
+                onReset={() => setShareLink(null)}
+              />
 
-          <PublicBookingManager
-            links={shareLinks}
-            bookings={publicBookings}
-            onCopyLink={handleCopySpecificShareLink}
-            onDeactivateLink={handleDeactivateSpecificShareLink}
-            onDeactivateLinks={handleBulkDeactivateLinks}
-            onDeleteLinks={handleBulkDeleteLinks}
-            onDeleteBookings={handleBulkDeleteBookings}
-            onToggleLockLinks={handleBulkToggleLockLinks}
-            onToggleLockBookings={handleBulkToggleLockBookings}
-            onBulkUpdateLinks={handleBulkUpdateLinks}
-            onCancelBooking={handleCancelHostBooking}
-          />
+              <PublicBookingManager
+                links={shareLinks}
+                bookings={publicBookings}
+                onCopyLink={handleCopySpecificShareLink}
+                onDeactivateLink={handleDeactivateSpecificShareLink}
+                onDeactivateLinks={handleBulkDeactivateLinks}
+                onDeleteLinks={handleBulkDeleteLinks}
+                onDeleteBookings={handleBulkDeleteBookings}
+                onToggleLockLinks={handleBulkToggleLockLinks}
+                onToggleLockBookings={handleBulkToggleLockBookings}
+                onBulkUpdateLinks={handleBulkUpdateLinks}
+                onCancelBooking={handleCancelHostBooking}
+              />
+            </>
+          )}
 
-          <AvailabilityTextControls
-            hasData={data.length > 0}
-            textMode={textMode}
-            onTextModeChange={setTextMode}
-            copiedIndex={copiedIndex}
-            onCopyAll={() => copyToClipboard(generateFullCopyText(), 'ALL')}
-          />
+          {availabilityError && data.length === 0 ? (
+            <PageState
+              tone="error"
+              title="Availability unavailable"
+              description="We couldn't generate your availability. Check your connection and try again."
+              actionLabel="Try again"
+              onAction={fetchAvailability}
+            />
+          ) : (
+            <>
+              <AvailabilityTextControls
+                hasData={data.length > 0}
+                textMode={textMode}
+                onTextModeChange={setTextMode}
+                copiedIndex={copiedIndex}
+                onCopyAll={() => copyToClipboard(generateFullCopyText(), 'ALL')}
+              />
 
-          <AvailabilityGroups
-            groupedData={renderedGroups}
-            loading={loading}
-            hasData={data.length > 0}
-            copiedIndex={copiedIndex}
-            onCopy={copyToClipboard}
-            onUpdate={fetchAvailability}
-          />
+              <AvailabilityGroups
+                groupedData={renderedGroups}
+                loading={loading}
+                hasData={data.length > 0}
+                copiedIndex={copiedIndex}
+                onCopy={copyToClipboard}
+                onUpdate={fetchAvailability}
+              />
+            </>
+          )}
         </>
       )}
 

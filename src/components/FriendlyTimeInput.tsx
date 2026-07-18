@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import dayjs, { type Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { useMobileSheetDrag } from '../hooks/useMobileSheetDrag';
 
 dayjs.extend(customParseFormat);
 
@@ -125,6 +126,10 @@ const FriendlyTimeInput = ({
   const [sheetValue, setSheetValue] = useState<Dayjs>(() =>
     roundTime(value ?? dayjs(), minuteStep)
   );
+  const mobileSheet = useMobileSheetDrag({
+    isOpen: sheetOpen,
+    onClose: () => setSheetOpen(false),
+  });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const desktopPickerRef = useRef<HTMLDivElement>(null);
   const minuteOptions = useMemo(() => buildMinuteOptions(minuteStep), [minuteStep]);
@@ -339,8 +344,42 @@ const FriendlyTimeInput = ({
             className="absolute inset-0 bg-black/35"
             onClick={() => setSheetOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-white shadow-[0_-18px_50px_rgba(15,23,42,0.18)]">
-            <div className="mx-auto mt-2 h-1 w-11 rounded-full bg-gray-300" />
+          <div
+            className={clsx(
+              'absolute bottom-0 left-0 right-0 flex max-h-[92dvh] flex-col overflow-hidden bg-white shadow-[0_-18px_50px_rgba(15,23,42,0.18)]',
+              mobileSheet.isExpanded
+                ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] rounded-none'
+                : 'rounded-t-2xl'
+            )}
+            style={mobileSheet.sheetStyle}
+          >
+            <button
+              type="button"
+              className={clsx(
+                'group flex min-h-11 w-full shrink-0 touch-none items-center justify-center px-4',
+                mobileSheet.isDragging ? 'cursor-grabbing' : 'cursor-grab'
+              )}
+              style={{
+                paddingTop: mobileSheet.isExpanded
+                  ? 'max(env(safe-area-inset-top), 0.25rem)'
+                  : undefined,
+              }}
+              aria-label={
+                mobileSheet.isExpanded
+                  ? 'Restore time picker to compact size'
+                  : 'Expand time picker to full screen'
+              }
+              aria-pressed={mobileSheet.isExpanded}
+              {...mobileSheet.handleProps}
+            >
+              <span
+                className={clsx(
+                  'h-1 w-11 rounded-full transition-colors',
+                  mobileSheet.isDragging ? 'bg-blue-400' : 'bg-gray-300 group-active:bg-blue-400'
+                )}
+                aria-hidden="true"
+              />
+            </button>
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
               <button
                 type="button"
@@ -365,8 +404,18 @@ const FriendlyTimeInput = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-[1fr_1fr_0.8fr] gap-2 px-4 py-4">
-              <div className={clsx(columnClass, 'max-h-64')}>
+            <div
+              className={clsx(
+                'grid grid-cols-[1fr_1fr_0.8fr] gap-2 px-4 py-4',
+                mobileSheet.isExpanded && 'min-h-0 flex-1'
+              )}
+            >
+              <div
+                className={clsx(
+                  columnClass,
+                  mobileSheet.isExpanded ? 'h-full max-h-none' : 'max-h-64'
+                )}
+              >
                 {Array.from({ length: 12 }, (_, index) => index + 1).map((hour) => {
                   const active = sheetParts.hour === hour;
                   return (
@@ -386,7 +435,12 @@ const FriendlyTimeInput = ({
                 })}
               </div>
 
-              <div className={clsx(columnClass, 'max-h-64')}>
+              <div
+                className={clsx(
+                  columnClass,
+                  mobileSheet.isExpanded ? 'h-full max-h-none' : 'max-h-64'
+                )}
+              >
                 {minuteOptions.map((minute) => {
                   const active = sheetParts.minute === minute;
                   return (
@@ -406,7 +460,7 @@ const FriendlyTimeInput = ({
                 })}
               </div>
 
-              <div className={columnClass}>
+              <div className={clsx(columnClass, mobileSheet.isExpanded && 'h-full')}>
                 {(['AM', 'PM'] as const).map((period) => {
                   const active = sheetParts.period === period;
                   return (

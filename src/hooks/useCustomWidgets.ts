@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
 import { loadAnalyticsSourceData, runAnalyticsWidgetQuery } from '../lib/browserAi';
 import { runVisualWidgetQuery } from '../lib/visualWidgetQuery';
@@ -39,10 +39,12 @@ export const useCustomWidgets = (
     }
     return [];
   });
+  const initialWidgetsRef = useRef(customWidgets);
 
   useEffect(() => {
     const refreshWidgets = async () => {
-      if (customWidgets.length === 0) return;
+      const widgetsToRefresh = initialWidgetsRef.current;
+      if (widgetsToRefresh.length === 0) return;
 
       let sourceData;
       try {
@@ -55,7 +57,7 @@ export const useCustomWidgets = (
 
       let hasUpdates = false;
       const updatedWidgets = await Promise.all(
-        customWidgets.map(async (widget) => {
+        widgetsToRefresh.map(async (widget) => {
           try {
             let data;
             if (widget.queryType === 'visual' && widget.visualConfig) {
@@ -84,7 +86,7 @@ export const useCustomWidgets = (
     };
 
     refreshWidgets();
-  }, []);
+  }, [context, messageApi, storageKey]);
 
   const addCustomWidget = (widget: CustomWidget) => {
     const updated = [...customWidgets, widget];

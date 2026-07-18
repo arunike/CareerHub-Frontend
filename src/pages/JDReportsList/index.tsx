@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, Checkbox, Tooltip, Input } from 'antd';
+import { Button, Checkbox, Tooltip, Input } from 'antd';
+import Modal from '../../components/MobileModal';
 import { DeleteOutlined, FileTextOutlined, LockOutlined, EditOutlined } from '@ant-design/icons';
 import {
   getAllReports,
@@ -19,6 +20,8 @@ import {
 } from '../../utils/aiArtifactStorage';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
+import { PanelSkeleton } from '../../components/PageState';
+import IntelligenceSectionPicker from '../../components/IntelligenceSectionPicker';
 
 const getScoreMeta = (score: number) => {
   if (score >= 90)
@@ -45,14 +48,11 @@ const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   const meta = getScoreMeta(score);
   return (
     <div
-      className="flex flex-col items-center justify-center rounded-2xl font-black"
+      className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl font-black sm:h-16 sm:w-16"
       style={{
-        width: 64,
-        height: 64,
         background: meta.bg,
         border: `2px solid ${meta.border}`,
         color: meta.color,
-        flexShrink: 0,
       }}
     >
       <span className="text-xl leading-none">{score}</span>
@@ -233,6 +233,9 @@ const JDReportsListPage: React.FC = () => {
 
   return (
     <div style={{ padding: 0, width: '100%' }}>
+      <div className="mb-4">
+        <IntelligenceSectionPicker value="jd-reports" />
+      </div>
       <div style={{ marginBottom: 24 }}>
         <PageActionToolbar
           title="Analysis Reports"
@@ -260,9 +263,11 @@ const JDReportsListPage: React.FC = () => {
             </div>
           )}
 
+          {!hasLoadedReports ? <PanelSkeleton rows={4} /> : null}
+
           {/* Empty state */}
           {hasLoadedReports && reports.length === 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-24 gap-6">
+            <div className="enterprise-empty flex flex-col items-center justify-center gap-6 px-4 py-16 sm:py-24">
               <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center">
                 <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
               </div>
@@ -298,25 +303,27 @@ const JDReportsListPage: React.FC = () => {
                 });
 
                 return (
-                  <div
+                  <article
                     key={report.id}
-                    className={`group bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${
+                    className={`group overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
                       isSelected
                         ? 'border-sky-300 shadow-md ring-1 ring-sky-200'
-                        : 'border-gray-100 shadow-sm hover:shadow-md'
+                        : 'border-slate-200 shadow-sm'
                     }`}
-                    onClick={() => toggleSelect(report.id)}
-                    style={{ cursor: 'pointer' }}
                   >
-                    <div className="p-6 flex items-start gap-5">
-                      <div onClick={(e) => e.stopPropagation()} className="pt-1">
-                        <Checkbox checked={isSelected} onChange={() => toggleSelect(report.id)} />
+                    <div className="flex items-start gap-3 p-4 sm:gap-5 sm:p-6">
+                      <div className="flex min-h-11 min-w-8 shrink-0 items-start justify-center pt-2">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={() => toggleSelect(report.id)}
+                          aria-label={`Select ${report.title || report.jdSnippet || 'untitled report'}`}
+                        />
                       </div>
                       <ScoreBadge score={report.score} />
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2">
+                        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span
                               className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
                               style={{
@@ -343,19 +350,26 @@ const JDReportsListPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 group/title mb-4">
-                          <h3 className="text-gray-900 font-bold m-0 text-base flex-1 truncate">
-                            {report.title || report.jdSnippet || 'Untitled Match'}
-                          </h3>
+                        <div className="group/title mb-4 flex items-center gap-2">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            type="button"
+                            onClick={() => navigate(`/jd-report/${report.id}`)}
+                            className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 hover:text-blue-600"
+                          >
+                            <span className="line-clamp-2">
+                              {report.title || report.jdSnippet || 'Untitled Match'}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
                               setEditingReport({
                                 id: report.id,
                                 title: report.title || report.jdSnippet || '',
                               });
                             }}
-                            className="opacity-0 group-hover/title:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-sky-600 transition-all"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/title:opacity-100"
+                            aria-label="Rename report"
                           >
                             <EditOutlined className="text-sm" />
                           </button>
@@ -381,11 +395,11 @@ const JDReportsListPage: React.FC = () => {
 
                     {/* Card Footer */}
                     <div
-                      className={`border-t px-6 py-3.5 flex items-center justify-between transition-colors duration-300 ${
+                      className={`flex flex-col gap-2 border-t px-4 py-2 transition-colors duration-300 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-3.5 ${
                         isSelected ? 'bg-sky-50/40 border-sky-100' : 'bg-gray-50/60 border-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-gray-400">
+                      <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold text-gray-500 sm:flex sm:items-center sm:gap-4 sm:text-xs sm:font-bold sm:uppercase sm:tracking-widest sm:text-gray-400">
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{' '}
                           {report.matched_skills?.length ?? 0} strengths
@@ -399,7 +413,7 @@ const JDReportsListPage: React.FC = () => {
                           {report.tailored_bullets?.length ?? 0} rewrites
                         </span>
                       </div>
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end">
                         <RowActions
                           isLocked={report.isLocked}
                           onToggleLock={() => handleToggleLock(report.id)}
@@ -411,7 +425,7 @@ const JDReportsListPage: React.FC = () => {
                         />
                       </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>

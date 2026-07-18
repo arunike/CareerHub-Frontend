@@ -125,9 +125,16 @@ const IdentitySection = ({
       {shouldShowCompanyRole && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Company{' '}
+              <span className="text-red-500" aria-hidden="true">
+                *
+              </span>
+            </label>
             <input
               type="text"
+              required
+              aria-required="true"
               value={companyName}
               onChange={(e) => onCompanyNameChange(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -135,9 +142,16 @@ const IdentitySection = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role{' '}
+              <span className="text-red-500" aria-hidden="true">
+                *
+              </span>
+            </label>
             <input
               type="text"
+              required
+              aria-required="true"
               value={roleTitle}
               onChange={(e) => onRoleTitleChange(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"

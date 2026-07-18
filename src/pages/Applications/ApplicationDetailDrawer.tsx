@@ -1,9 +1,10 @@
-import { type ReactNode, useMemo } from 'react';
+import { lazy, Suspense, type ReactNode, useMemo } from 'react';
 import {
   Button,
   Descriptions,
   Drawer,
   Empty,
+  Grid,
   List,
   Space,
   Tabs,
@@ -22,8 +23,27 @@ import type { Document } from '../../types';
 import type { CareerApplication } from '../../types/application';
 import ApplicationPrepWorkspace from './ApplicationPrepWorkspace';
 import ApplicationTimelinePanel from './ApplicationTimelinePanel';
-import RichNotesEditor from './RichNotesEditor';
 import { formatDateOnly } from '../../utils/dateOnly';
+
+const RichNotesEditor = lazy(() => import('./RichNotesEditor'));
+
+const RichNotesFallback = () => (
+  <div className="space-y-3 py-4" aria-busy="true" aria-label="Loading notes editor">
+    <div className="shimmer-bg h-3 w-24 rounded-full" />
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="flex gap-2 border-b border-slate-100 px-3 py-2">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="shimmer-bg h-8 w-8 rounded-md" />
+        ))}
+      </div>
+      <div className="space-y-3 px-4 py-5">
+        <div className="shimmer-bg h-3 w-full rounded-full" />
+        <div className="shimmer-bg h-3 w-5/6 rounded-full" />
+        <div className="shimmer-bg h-3 w-2/3 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
 
 type Props = {
   application: CareerApplication | null;
@@ -69,6 +89,8 @@ const ApplicationDetailDrawer = ({
   onGenerateCoverLetter,
   onNotesUpdate,
 }: Props) => {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const linkedDocuments = useMemo(
     () => documents.filter((document) => document.application === application?.id),
     [application?.id, documents]
@@ -106,24 +128,36 @@ const ApplicationDetailDrawer = ({
       }
       open={open}
       onClose={onClose}
-      width={720}
+      width={isMobile ? '100%' : 720}
       zIndex={1300}
-      styles={{ body: { padding: 0 } }}
+      styles={{
+        body: { padding: 0 },
+        header: { padding: isMobile ? '16px' : '20px 24px' },
+      }}
       extra={
         application ? (
-          <Space>
+          <Space size={8}>
             {mode === 'edit' ? (
-              <Button onClick={onCancelEdit}>Overview</Button>
+              <Button onClick={onCancelEdit} aria-label="Return to application overview">
+                <span className="hidden sm:inline">Overview</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
             ) : (
               <>
                 <Button
                   icon={<ThunderboltOutlined />}
                   onClick={() => onGenerateCoverLetter(application)}
+                  aria-label="Generate cover letter"
                 >
-                  Letter
+                  <span className="hidden sm:inline">Letter</span>
                 </Button>
-                <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(application)}>
-                  Edit
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => onEdit(application)}
+                  aria-label="Edit application"
+                >
+                  <span className="hidden sm:inline">Edit</span>
                 </Button>
               </>
             )}
@@ -132,11 +166,12 @@ const ApplicationDetailDrawer = ({
       }
     >
       {!application ? null : mode === 'edit' ? (
-        <div className="px-6 py-5">{editContent}</div>
+        <div className="px-4 py-5 sm:px-6">{editContent}</div>
       ) : (
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6 sm:pb-6">
           <Tabs
             defaultActiveKey="prep"
+            tabBarGutter={20}
             items={[
               {
                 key: 'prep',
@@ -249,12 +284,14 @@ const ApplicationDetailDrawer = ({
                 key: 'notes',
                 label: 'Notes',
                 children: (
-                  <RichNotesEditor
-                    key={application.id}
-                    applicationId={application.id}
-                    initialNotes={application.notes || ''}
-                    onSaved={(notes) => onNotesUpdate?.(application.id, notes)}
-                  />
+                  <Suspense fallback={<RichNotesFallback />}>
+                    <RichNotesEditor
+                      key={application.id}
+                      applicationId={application.id}
+                      initialNotes={application.notes || ''}
+                      onSaved={(notes) => onNotesUpdate?.(application.id, notes)}
+                    />
+                  </Suspense>
                 ),
               },
             ]}

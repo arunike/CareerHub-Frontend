@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import ConfirmModal from '../../components/ConfirmModal';
 import ModalShell from '../../components/ModalShell';
 import OfferFormFields from './OfferFormFields';
 import OfferFormModalFooter from './components/OfferFormModalFooter';
@@ -43,6 +45,18 @@ const EditOfferModal = ({
   onClose,
   onSave,
 }: Props) => {
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const draftSnapshot = JSON.stringify({
+    offer: editingOffer,
+    application: editingApp,
+    benefitItems: editingBenefitItems,
+  });
+  const [initialDraftSnapshot] = useState(draftSnapshot);
+  const hasChanges = offerModalMode === 'edit' && draftSnapshot !== initialDraftSnapshot;
+  const hasRequiredFields = Boolean(
+    editingApp?.company_name?.trim() && editingApp?.role_title?.trim()
+  );
+
   if (!editingOffer) return null;
 
   const adjusted = editingOffer.id ? adjustedByOfferId[editingOffer.id] : undefined;
@@ -50,183 +64,236 @@ const EditOfferModal = ({
   const bonusTaxRate = Number(editingApp?.tax_bonus_rate ?? adjusted?.usedBonusTaxRate ?? 40);
   const equityTaxRate = Number(editingApp?.tax_equity_rate ?? adjusted?.usedEquityTaxRate ?? 42);
   const monthlyRent = Number(editingApp?.monthly_rent_override ?? adjusted?.monthlyRent ?? 0);
+  const requestClose = () => {
+    if (hasChanges) {
+      setIsDiscardConfirmOpen(true);
+      return;
+    }
+    onClose();
+  };
 
   return (
-    <ModalShell
-      isOpen
-      title={offerModalMode === 'view' ? 'View Offer Details' : 'Edit Offer Details'}
-      onClose={onClose}
-      footer={
-        <OfferFormModalFooter
-          mode={offerModalMode}
-          onClose={onClose}
-          onSave={onSave}
-          saveLabel="Save Offer"
-        />
-      }
-    >
-      <fieldset disabled={offerModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
-        <OfferFormFields
-          key={editingOffer.id ?? 'unsaved-offer'}
-          companyName={editingApp?.company_name || ''}
-          onCompanyNameChange={(value) => patchEditingApp({ company_name: value })}
-          roleTitle={editingApp?.role_title || ''}
-          onRoleTitleChange={(value) => patchEditingApp({ role_title: value })}
-          location={editingApp?.location || ''}
-          onLocationChange={(value) => patchEditingApp({ location: value })}
-          officeLocation={editingApp?.office_location || ''}
-          onOfficeLocationChange={(value) => patchEditingApp({ office_location: value })}
-          locationOptions={allUsCityOptions}
-          taxRatePreview={{
-            baseTaxRate,
-            bonusTaxRate,
-            equityTaxRate,
-            note: 'Per-offer manual',
-          }}
-          editableTaxRates={{ baseTaxRate, bonusTaxRate, equityTaxRate }}
-          onEditableTaxRatesChange={(next) =>
-            patchEditingApp({
-              tax_base_rate: next.baseTaxRate,
-              tax_bonus_rate: next.bonusTaxRate,
-              tax_equity_rate: next.equityTaxRate,
-            })
-          }
-          editableMonthlyRent={monthlyRent}
-          onEditableMonthlyRentChange={(value) => patchEditingApp({ monthly_rent_override: value })}
-          baseSalary={Number(editingOffer.base_salary) || 0}
-          onBaseSalaryChange={(value) => setEditingOfferField('base_salary', value)}
-          bonus={Number(editingOffer.bonus) || 0}
-          onBonusChange={(value) => setEditingOfferField('bonus', value)}
-          equity={Number(editingOffer.equity) || 0}
-          onEquityChange={(value) => setEditingOfferField('equity', value)}
-          equityLiquidity={normalizeEquityLiquidity(editingOffer.equity_liquidity)}
-          onEquityLiquidityChange={(value) => setEditingOfferField('equity_liquidity', value)}
-          equityBuybackValue={Number(editingOffer.equity_buyback_value) || 0}
-          onEquityBuybackValueChange={(value) =>
-            setEditingOfferField('equity_buyback_value', value)
-          }
-          equityTotalGrant={Number(editingOffer.equity_total_grant ?? 0)}
-          onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
-          equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}
-          onEquityVestingPercentChange={(value) =>
-            setEditingOfferField('equity_vesting_percent', value)
-          }
-          equityVestingSchedule={
-            Array.isArray(editingOffer.equity_vesting_schedule)
-              ? (editingOffer.equity_vesting_schedule as number[])
-              : undefined
-          }
-          onEquityVestingScheduleChange={(value) =>
-            setEditingOfferField('equity_vesting_schedule', value)
-          }
-          defaultEquityMode={Number(editingOffer.equity_total_grant ?? 0) > 0 ? 'total' : 'annual'}
-          signOn={Number(editingOffer.sign_on) || 0}
-          onSignOnChange={(value) => setEditingOfferField('sign_on', value)}
-          benefitsValue={Number(editingOffer.benefits_value) || 0}
-          benefitItems={editingBenefitItems}
-          onAddBenefitItem={addEditingBenefitItem}
-          onUpdateBenefitItem={updateEditingBenefitItem}
-          onRemoveBenefitItem={removeEditingBenefitItem}
-          computeBenefitsTotal={computeBenefitsTotal}
-          workMode={
-            editingApp?.rto_policy === 'REMOTE'
-              ? 'REMOTE'
-              : editingApp?.rto_policy === 'ONSITE'
-                ? 'ONSITE'
-                : 'HYBRID'
-          }
-          onWorkModeChange={(value) =>
-            patchEditingApp((prev) => ({
-              rto_policy: value,
-              rto_days_per_week:
-                value === 'REMOTE' ? 0 : value === 'ONSITE' ? 5 : (prev.rto_days_per_week ?? 3),
-            }))
-          }
-          rtoDaysPerWeek={Number(editingApp?.rto_days_per_week) || 0}
-          onRtoDaysPerWeekChange={(value) => patchEditingApp({ rto_days_per_week: value })}
-          commuteCostValue={Number(editingApp?.commute_cost_value) || 0}
-          commuteCostFrequency={
-            (editingApp?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
-          }
-          onCommuteCostValueChange={(value) => patchEditingApp({ commute_cost_value: value })}
-          onCommuteCostFrequencyChange={(value) =>
-            patchEditingApp({ commute_cost_frequency: value })
-          }
-          freeFoodPerkValue={Number(editingApp?.free_food_perk_value) || 0}
-          freeFoodPerkFrequency={
-            (editingApp?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
-          }
-          onFreeFoodPerkValueChange={(value) => patchEditingApp({ free_food_perk_value: value })}
-          onFreeFoodPerkFrequencyChange={(value) =>
-            patchEditingApp({ free_food_perk_frequency: value })
-          }
-          showCommuteAndPerks
-          showDecisionSignals
-          visaSponsorship={
-            editingApp?.visa_sponsorship && editingApp.visa_sponsorship !== 'UNKNOWN'
-              ? editingApp.visa_sponsorship
-              : ''
-          }
-          onVisaSponsorshipChange={(value) => patchEditingApp({ visa_sponsorship: value })}
-          dayOneGc={
-            editingApp?.day_one_gc && editingApp.day_one_gc !== 'UNKNOWN'
-              ? editingApp.day_one_gc
-              : ''
-          }
-          onDayOneGcChange={(value) => patchEditingApp({ day_one_gc: value })}
-          growthScore={editingApp?.growth_score ?? null}
-          onGrowthScoreChange={(value) => patchEditingApp({ growth_score: value })}
-          workLifeScore={editingApp?.work_life_score ?? null}
-          onWorkLifeScoreChange={(value) => patchEditingApp({ work_life_score: value })}
-          brandScore={editingApp?.brand_score ?? null}
-          onBrandScoreChange={(value) => patchEditingApp({ brand_score: value })}
-          teamScore={editingApp?.team_score ?? null}
-          onTeamScoreChange={(value) => patchEditingApp({ team_score: value })}
-          enableCompModeToggles
-          ptoDays={Number(editingOffer.pto_days) || 0}
-          onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}
-          isUnlimitedPto={!!editingOffer.is_unlimited_pto}
-          onIsUnlimitedPtoChange={(value) => setEditingOfferField('is_unlimited_pto', value)}
-          sickLeaveDays={Number(editingOffer.sick_leave_days) || 0}
-          onSickLeaveDaysChange={(value) => setEditingOfferField('sick_leave_days', value)}
-          sickLeaveIncludedInUnlimitedPto={
-            editingOffer.sick_leave_included_in_unlimited_pto !== false
-          }
-          onSickLeaveIncludedInUnlimitedPtoChange={(value) =>
-            setEditingOfferField('sick_leave_included_in_unlimited_pto', value)
-          }
-          holidayDays={Number(editingOffer.holiday_days ?? 11)}
-          onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
-          healthPremiumMonthly={Number(editingOffer.health_premium_monthly) || 0}
-          onHealthPremiumMonthlyChange={(value) =>
-            setEditingOfferField('health_premium_monthly', value)
-          }
-          hsaEmployerContribution={Number(editingOffer.hsa_employer_contribution) || 0}
-          onHsaEmployerContributionChange={(value) =>
-            setEditingOfferField('hsa_employer_contribution', value)
-          }
-          healthPlanType={editingOffer.health_plan_type || ''}
-          onHealthPlanTypeChange={(value) => setEditingOfferField('health_plan_type', value)}
-          healthOopMax={Number(editingOffer.health_oop_max) || 0}
-          onHealthOopMaxChange={(value) => setEditingOfferField('health_oop_max', value)}
-          fortyOneKMatchPercent={Number(editingOffer.forty_one_k_match_percent) || 0}
-          onFortyOneKMatchPercentChange={(value) =>
-            setEditingOfferField('forty_one_k_match_percent', value)
-          }
-          fortyOneKMaxMatch={Number(editingOffer.forty_one_k_max_match) || 0}
-          onFortyOneKMaxMatchChange={(value) =>
-            setEditingOfferField('forty_one_k_max_match', value)
-          }
-          relocationBonus={Number(editingOffer.relocation_bonus) || 0}
-          onRelocationBonusChange={(value) => setEditingOfferField('relocation_bonus', value)}
-          flexibleHoursPolicy={editingApp?.flexible_hours_policy || 'UNKNOWN'}
-          onFlexibleHoursPolicyChange={(value) => patchEditingApp({ flexible_hours_policy: value })}
-          travelFrequency={editingApp?.travel_frequency || 'UNKNOWN'}
-          onTravelFrequencyChange={(value) => patchEditingApp({ travel_frequency: value })}
-          locationPlaceholder="e.g. San Jose, CA"
-        />
-      </fieldset>
-    </ModalShell>
+    <>
+      <ModalShell
+        isOpen
+        titleNode={
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-base font-semibold text-slate-950 sm:text-lg">
+                {offerModalMode === 'view' ? 'Offer details' : 'Edit offer'}
+              </span>
+              <span className="hidden rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600 sm:inline-flex">
+                {offerModalMode === 'view'
+                  ? 'Read only'
+                  : hasChanges
+                    ? 'Unsaved changes'
+                    : 'Editing'}
+              </span>
+            </div>
+            <p className="mt-0.5 truncate text-xs font-normal text-slate-500">
+              {[editingApp?.company_name, editingApp?.role_title].filter(Boolean).join(' · ') ||
+                'Offer record'}
+            </p>
+          </div>
+        }
+        onClose={requestClose}
+        maxWidthClass="max-w-6xl"
+        bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50"
+        headerClassName="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4"
+        titleClassName="min-w-0 flex-1 pr-4"
+        footerClassName="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:px-6 sm:py-3"
+        footer={
+          <OfferFormModalFooter
+            mode={offerModalMode}
+            onClose={requestClose}
+            onSave={onSave}
+            saveLabel="Save Offer"
+            saveDisabled={!hasRequiredFields}
+          />
+        }
+      >
+        <fieldset disabled={offerModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
+          <OfferFormFields
+            key={editingOffer.id ?? 'unsaved-offer'}
+            companyName={editingApp?.company_name || ''}
+            onCompanyNameChange={(value) => patchEditingApp({ company_name: value })}
+            roleTitle={editingApp?.role_title || ''}
+            onRoleTitleChange={(value) => patchEditingApp({ role_title: value })}
+            location={editingApp?.location || ''}
+            onLocationChange={(value) => patchEditingApp({ location: value })}
+            officeLocation={editingApp?.office_location || ''}
+            onOfficeLocationChange={(value) => patchEditingApp({ office_location: value })}
+            locationOptions={allUsCityOptions}
+            taxRatePreview={{
+              baseTaxRate,
+              bonusTaxRate,
+              equityTaxRate,
+              note: 'Per-offer manual',
+            }}
+            editableTaxRates={{ baseTaxRate, bonusTaxRate, equityTaxRate }}
+            onEditableTaxRatesChange={(next) =>
+              patchEditingApp({
+                tax_base_rate: next.baseTaxRate,
+                tax_bonus_rate: next.bonusTaxRate,
+                tax_equity_rate: next.equityTaxRate,
+              })
+            }
+            editableMonthlyRent={monthlyRent}
+            onEditableMonthlyRentChange={(value) =>
+              patchEditingApp({ monthly_rent_override: value })
+            }
+            baseSalary={Number(editingOffer.base_salary) || 0}
+            onBaseSalaryChange={(value) => setEditingOfferField('base_salary', value)}
+            bonus={Number(editingOffer.bonus) || 0}
+            onBonusChange={(value) => setEditingOfferField('bonus', value)}
+            equity={Number(editingOffer.equity) || 0}
+            onEquityChange={(value) => setEditingOfferField('equity', value)}
+            equityLiquidity={normalizeEquityLiquidity(editingOffer.equity_liquidity)}
+            onEquityLiquidityChange={(value) => setEditingOfferField('equity_liquidity', value)}
+            equityBuybackValue={Number(editingOffer.equity_buyback_value) || 0}
+            onEquityBuybackValueChange={(value) =>
+              setEditingOfferField('equity_buyback_value', value)
+            }
+            equityTotalGrant={Number(editingOffer.equity_total_grant ?? 0)}
+            onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
+            equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}
+            onEquityVestingPercentChange={(value) =>
+              setEditingOfferField('equity_vesting_percent', value)
+            }
+            equityVestingSchedule={
+              Array.isArray(editingOffer.equity_vesting_schedule)
+                ? (editingOffer.equity_vesting_schedule as number[])
+                : undefined
+            }
+            onEquityVestingScheduleChange={(value) =>
+              setEditingOfferField('equity_vesting_schedule', value)
+            }
+            defaultEquityMode={
+              Number(editingOffer.equity_total_grant ?? 0) > 0 ? 'total' : 'annual'
+            }
+            signOn={Number(editingOffer.sign_on) || 0}
+            onSignOnChange={(value) => setEditingOfferField('sign_on', value)}
+            benefitsValue={Number(editingOffer.benefits_value) || 0}
+            benefitItems={editingBenefitItems}
+            onAddBenefitItem={addEditingBenefitItem}
+            onUpdateBenefitItem={updateEditingBenefitItem}
+            onRemoveBenefitItem={removeEditingBenefitItem}
+            computeBenefitsTotal={computeBenefitsTotal}
+            workMode={
+              editingApp?.rto_policy === 'REMOTE'
+                ? 'REMOTE'
+                : editingApp?.rto_policy === 'ONSITE'
+                  ? 'ONSITE'
+                  : 'HYBRID'
+            }
+            onWorkModeChange={(value) =>
+              patchEditingApp((prev) => ({
+                rto_policy: value,
+                rto_days_per_week:
+                  value === 'REMOTE' ? 0 : value === 'ONSITE' ? 5 : (prev.rto_days_per_week ?? 3),
+              }))
+            }
+            rtoDaysPerWeek={Number(editingApp?.rto_days_per_week) || 0}
+            onRtoDaysPerWeekChange={(value) => patchEditingApp({ rto_days_per_week: value })}
+            commuteCostValue={Number(editingApp?.commute_cost_value) || 0}
+            commuteCostFrequency={
+              (editingApp?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
+            }
+            onCommuteCostValueChange={(value) => patchEditingApp({ commute_cost_value: value })}
+            onCommuteCostFrequencyChange={(value) =>
+              patchEditingApp({ commute_cost_frequency: value })
+            }
+            freeFoodPerkValue={Number(editingApp?.free_food_perk_value) || 0}
+            freeFoodPerkFrequency={
+              (editingApp?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
+            }
+            onFreeFoodPerkValueChange={(value) => patchEditingApp({ free_food_perk_value: value })}
+            onFreeFoodPerkFrequencyChange={(value) =>
+              patchEditingApp({ free_food_perk_frequency: value })
+            }
+            showCommuteAndPerks
+            showDecisionSignals
+            visaSponsorship={
+              editingApp?.visa_sponsorship && editingApp.visa_sponsorship !== 'UNKNOWN'
+                ? editingApp.visa_sponsorship
+                : ''
+            }
+            onVisaSponsorshipChange={(value) => patchEditingApp({ visa_sponsorship: value })}
+            dayOneGc={
+              editingApp?.day_one_gc && editingApp.day_one_gc !== 'UNKNOWN'
+                ? editingApp.day_one_gc
+                : ''
+            }
+            onDayOneGcChange={(value) => patchEditingApp({ day_one_gc: value })}
+            growthScore={editingApp?.growth_score ?? null}
+            onGrowthScoreChange={(value) => patchEditingApp({ growth_score: value })}
+            workLifeScore={editingApp?.work_life_score ?? null}
+            onWorkLifeScoreChange={(value) => patchEditingApp({ work_life_score: value })}
+            brandScore={editingApp?.brand_score ?? null}
+            onBrandScoreChange={(value) => patchEditingApp({ brand_score: value })}
+            teamScore={editingApp?.team_score ?? null}
+            onTeamScoreChange={(value) => patchEditingApp({ team_score: value })}
+            enableCompModeToggles
+            ptoDays={Number(editingOffer.pto_days) || 0}
+            onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}
+            isUnlimitedPto={!!editingOffer.is_unlimited_pto}
+            onIsUnlimitedPtoChange={(value) => setEditingOfferField('is_unlimited_pto', value)}
+            sickLeaveDays={Number(editingOffer.sick_leave_days) || 0}
+            onSickLeaveDaysChange={(value) => setEditingOfferField('sick_leave_days', value)}
+            sickLeaveIncludedInUnlimitedPto={
+              editingOffer.sick_leave_included_in_unlimited_pto !== false
+            }
+            onSickLeaveIncludedInUnlimitedPtoChange={(value) =>
+              setEditingOfferField('sick_leave_included_in_unlimited_pto', value)
+            }
+            holidayDays={Number(editingOffer.holiday_days ?? 11)}
+            onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
+            healthPremiumMonthly={Number(editingOffer.health_premium_monthly) || 0}
+            onHealthPremiumMonthlyChange={(value) =>
+              setEditingOfferField('health_premium_monthly', value)
+            }
+            hsaEmployerContribution={Number(editingOffer.hsa_employer_contribution) || 0}
+            onHsaEmployerContributionChange={(value) =>
+              setEditingOfferField('hsa_employer_contribution', value)
+            }
+            healthPlanType={editingOffer.health_plan_type || ''}
+            onHealthPlanTypeChange={(value) => setEditingOfferField('health_plan_type', value)}
+            healthOopMax={Number(editingOffer.health_oop_max) || 0}
+            onHealthOopMaxChange={(value) => setEditingOfferField('health_oop_max', value)}
+            fortyOneKMatchPercent={Number(editingOffer.forty_one_k_match_percent) || 0}
+            onFortyOneKMatchPercentChange={(value) =>
+              setEditingOfferField('forty_one_k_match_percent', value)
+            }
+            fortyOneKMaxMatch={Number(editingOffer.forty_one_k_max_match) || 0}
+            onFortyOneKMaxMatchChange={(value) =>
+              setEditingOfferField('forty_one_k_max_match', value)
+            }
+            relocationBonus={Number(editingOffer.relocation_bonus) || 0}
+            onRelocationBonusChange={(value) => setEditingOfferField('relocation_bonus', value)}
+            flexibleHoursPolicy={editingApp?.flexible_hours_policy || 'UNKNOWN'}
+            onFlexibleHoursPolicyChange={(value) =>
+              patchEditingApp({ flexible_hours_policy: value })
+            }
+            travelFrequency={editingApp?.travel_frequency || 'UNKNOWN'}
+            onTravelFrequencyChange={(value) => patchEditingApp({ travel_frequency: value })}
+            locationPlaceholder="e.g. San Jose, CA"
+          />
+        </fieldset>
+      </ModalShell>
+      <ConfirmModal
+        isOpen={isDiscardConfirmOpen}
+        title="Discard unsaved changes?"
+        message="Your edits to this offer have not been saved."
+        confirmText="Discard changes"
+        cancelText="Keep editing"
+        type="danger"
+        onCancel={() => setIsDiscardConfirmOpen(false)}
+        onConfirm={() => {
+          setIsDiscardConfirmOpen(false);
+          onClose();
+        }}
+      />
+    </>
   );
 };
 

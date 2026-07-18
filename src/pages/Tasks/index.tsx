@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Card,
@@ -7,13 +7,12 @@ import {
   Form,
   Grid,
   Input,
-  Modal,
   Select,
   Tag,
   Tooltip,
   message,
 } from 'antd';
-import { BellOutlined, CheckCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { BellOutlined, CheckCircleOutlined, InboxOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Task, WeeklyReview } from '../../types';
@@ -27,6 +26,8 @@ import {
 } from '../../api';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import RowActions from '../../components/RowActions';
+import ModalShell from '../../components/ModalShell';
+import { PageState } from '../../components/PageState';
 import { parseSmartReminder } from '../../utils/smartReminder';
 
 type TaskStatus = Task['status'];
@@ -55,6 +56,7 @@ const Tasks: React.FC = () => {
   const [form] = Form.useForm();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -63,6 +65,7 @@ const Tasks: React.FC = () => {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [weeklyReview, setWeeklyReview] = useState<WeeklyReview | null>(null);
   const [weeklyReviewLoading, setWeeklyReviewLoading] = useState(true);
+  const [weeklyReviewError, setWeeklyReviewError] = useState(false);
   const [smartReminderText, setSmartReminderText] = useState('');
   const [smartReminderSaving, setSmartReminderSaving] = useState(false);
 
@@ -71,47 +74,56 @@ const Tasks: React.FC = () => {
     [smartReminderText]
   );
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const response = await getTasks();
       setTasks(response.data);
     } catch (error) {
+      setLoadError(true);
       messageApi.error('Failed to load action items');
       console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   const notifyTasksUpdated = () => {
     window.dispatchEvent(new Event(TASKS_UPDATED_EVENT));
   };
 
-  const fetchWeeklyReview = async ({ silent = false }: { silent?: boolean } = {}) => {
-    try {
-      if (!silent) setWeeklyReviewLoading(true);
-      const response = await getWeeklyReview();
-      setWeeklyReview(response.data);
-    } catch (error) {
-      messageApi.error('Failed to load weekly review');
-      console.error(error);
-    } finally {
-      if (!silent) setWeeklyReviewLoading(false);
-    }
-  };
+  const fetchWeeklyReview = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      try {
+        if (!silent) {
+          setWeeklyReviewLoading(true);
+          setWeeklyReviewError(false);
+        }
+        const response = await getWeeklyReview();
+        setWeeklyReview(response.data);
+      } catch (error) {
+        if (!silent) setWeeklyReviewError(true);
+        messageApi.error('Failed to load weekly review');
+        console.error(error);
+      } finally {
+        if (!silent) setWeeklyReviewLoading(false);
+      }
+    },
+    [messageApi]
+  );
 
   useEffect(() => {
-    fetchTasks();
-    fetchWeeklyReview();
-  }, []);
+    void fetchTasks();
+    void fetchWeeklyReview();
+  }, [fetchTasks, fetchWeeklyReview]);
 
   useEffect(() => {
     const handleTasksUpdated = () => {
-      fetchWeeklyReview({ silent: true });
+      void fetchWeeklyReview({ silent: true });
     };
     const handleWindowFocus = () => {
-      fetchWeeklyReview({ silent: true });
+      void fetchWeeklyReview({ silent: true });
     };
 
     window.addEventListener(TASKS_UPDATED_EVENT, handleTasksUpdated);
@@ -120,27 +132,7 @@ const Tasks: React.FC = () => {
       window.removeEventListener(TASKS_UPDATED_EVENT, handleTasksUpdated);
       window.removeEventListener('focus', handleWindowFocus);
     };
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const taskIdParam = params.get('taskId');
-    const modeParam = params.get('mode');
-    if (!taskIdParam) return;
-
-    const taskId = Number(taskIdParam);
-    if (!Number.isFinite(taskId)) return;
-    const task = tasks.find((item) => item.id === taskId);
-    if (!task) return;
-
-    if (modeParam === 'edit') {
-      openEditModal(task);
-    } else {
-      openViewModal(task);
-    }
-
-    navigate('/tasks', { replace: true });
-  }, [location.search, tasks]);
+  }, [fetchWeeklyReview]);
 
   const groupedTasks = useMemo(() => {
     const result: Record<TaskStatus, Task[]> = {
@@ -183,30 +175,63 @@ const Tasks: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const openEditModal = (task: Task) => {
-    setModalMode('edit');
-    setEditingTask(task);
-    form.setFieldsValue({
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      due_date: task.due_date ? dayjs(task.due_date) : null,
-    });
-    setIsModalOpen(true);
-  };
+  const openEditModal = useCallback(
+    (task: Task) => {
+      setModalMode('edit');
+      setEditingTask(task);
+      form.setFieldsValue({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        due_date: task.due_date ? dayjs(task.due_date) : null,
+      });
+      setIsModalOpen(true);
+    },
+    [form]
+  );
 
-  const openViewModal = (task: Task) => {
-    setModalMode('view');
-    setEditingTask(task);
-    form.setFieldsValue({
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      due_date: task.due_date ? dayjs(task.due_date) : null,
-    });
-    setIsModalOpen(true);
+  const openViewModal = useCallback(
+    (task: Task) => {
+      setModalMode('view');
+      setEditingTask(task);
+      form.setFieldsValue({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        due_date: task.due_date ? dayjs(task.due_date) : null,
+      });
+      setIsModalOpen(true);
+    },
+    [form]
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const taskIdParam = params.get('taskId');
+    const modeParam = params.get('mode');
+    if (!taskIdParam) return;
+
+    const taskId = Number(taskIdParam);
+    if (!Number.isFinite(taskId)) return;
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
+
+    if (modeParam === 'edit') {
+      openEditModal(task);
+    } else {
+      openViewModal(task);
+    }
+
+    navigate('/tasks', { replace: true });
+  }, [location.search, navigate, openEditModal, openViewModal, tasks]);
+
+  const closeTaskModal = () => {
+    setIsModalOpen(false);
+    setEditingTask(null);
+    setModalMode('create');
+    form.resetFields();
   };
 
   const handleSave = async () => {
@@ -231,9 +256,7 @@ const Tasks: React.FC = () => {
         messageApi.success('Action item added');
       }
 
-      setIsModalOpen(false);
-      setEditingTask(null);
-      form.resetFields();
+      closeTaskModal();
       fetchTasks();
       notifyTasksUpdated();
     } catch (error: unknown) {
@@ -334,6 +357,9 @@ const Tasks: React.FC = () => {
     });
   }, [tasks]);
 
+  const tasksLoadFailed = loadError && tasks.length === 0;
+  const weeklyReviewLoadFailed = weeklyReviewError && !weeklyReview;
+
   return (
     <div className="space-y-6 w-full">
       {contextHolder}
@@ -342,24 +368,28 @@ const Tasks: React.FC = () => {
         title="Action Items"
         subtitle="Track your to-do list in Kanban or checklist view."
         extraActions={
-          <div className="toolbar-toggle-group">
+          <div className="toolbar-toggle-group" role="group" aria-label="Action item view">
             <button
+              type="button"
               onClick={() => setViewMode('kanban')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
                 viewMode === 'kanban'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
+              aria-pressed={viewMode === 'kanban'}
             >
               Kanban
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('checklist')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+              className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
                 viewMode === 'checklist'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
+              aria-pressed={viewMode === 'checklist'}
             >
               Checklist
             </button>
@@ -411,7 +441,7 @@ const Tasks: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSmartReminderText(example)}
-                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-500 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600"
+                    className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                   >
                     {example}
                   </button>
@@ -427,7 +457,7 @@ const Tasks: React.FC = () => {
             loading={smartReminderSaving}
             disabled={!smartReminderText.trim()}
             onClick={() => handleCreateSmartReminder()}
-            className="lg:self-start"
+            className="w-full lg:w-auto lg:self-start"
           >
             Set Reminder
           </Button>
@@ -436,7 +466,17 @@ const Tasks: React.FC = () => {
 
       <div>
         <Card title="Weekly Review" loading={weeklyReviewLoading} className="enterprise-section">
-          {weeklyReview ? (
+          {weeklyReviewLoadFailed ? (
+            <PageState
+              tone="error"
+              title="Weekly review could not be loaded"
+              description="Your action items were not changed. Check your connection and try again."
+              actionLabel="Retry weekly review"
+              onAction={() => void fetchWeeklyReview()}
+              icon={<InboxOutlined />}
+              className="my-1"
+            />
+          ) : weeklyReview ? (
             <div className="space-y-3">
               <div className="text-sm text-gray-600">
                 {dayjs(weeklyReview.start_date).format('MMM D')} -{' '}
@@ -492,12 +532,29 @@ const Tasks: React.FC = () => {
         </Card>
       </div>
 
-      {viewMode === 'kanban' ? (
-        <div className={`grid grid-cols-1 gap-4 ${isMobile ? '' : 'md:grid-cols-3'}`}>
+      {tasksLoadFailed ? (
+        <PageState
+          tone="error"
+          title="Action items could not be loaded"
+          description="Your saved action items were not changed. Check your connection and try again."
+          actionLabel="Retry loading action items"
+          onAction={() => void fetchTasks()}
+          icon={<InboxOutlined />}
+        />
+      ) : !loading && tasks.length === 0 ? (
+        <PageState
+          title="No action items yet"
+          description="Add the next concrete step for an application, interview, offer, or career goal."
+          actionLabel="Add action item"
+          onAction={openCreateModal}
+          icon={<CheckCircleOutlined />}
+        />
+      ) : viewMode === 'kanban' ? (
+        <div className="-mx-4 grid snap-x snap-mandatory grid-flow-col auto-cols-[minmax(280px,85vw)] gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid-flow-row md:grid-cols-3 md:px-0">
           {STATUS_META.map((column) => (
             <Card
               key={column.key}
-              className="enterprise-section"
+              className="enterprise-section snap-start"
               title={
                 <div className="flex items-center justify-between">
                   <span>{column.label}</span>
@@ -519,7 +576,7 @@ const Tasks: React.FC = () => {
                       className="enterprise-card overflow-hidden"
                       size="small"
                       hoverable
-                      draggable
+                      draggable={!isMobile}
                       onDragStart={() => setDraggingId(task.id)}
                       onDragEnd={() => setDraggingId(null)}
                       title={
@@ -566,13 +623,15 @@ const Tasks: React.FC = () => {
               {checklistTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="enterprise-card-list-item flex items-center justify-between px-3 py-2"
+                  className="enterprise-card-list-item flex min-h-14 items-center justify-between gap-3 px-3 py-2"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <input
                       type="checkbox"
                       checked={task.status === 'DONE'}
                       onChange={(e) => handleChecklistToggle(task, e.target.checked)}
+                      className="h-5 w-5 shrink-0 accent-blue-600"
+                      aria-label={`Mark ${task.title} as ${task.status === 'DONE' ? 'not done' : 'done'}`}
                     />
                     <div className="min-w-0">
                       <div
@@ -580,7 +639,7 @@ const Tasks: React.FC = () => {
                       >
                         {task.title}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                         <Tag color={PRIORITY_COLOR[task.priority]}>{task.priority}</Tag>
                         {task.due_date ? (
                           <span>Due {dayjs(task.due_date).format('YYYY-MM-DD')}</span>
@@ -603,7 +662,8 @@ const Tasks: React.FC = () => {
         </Card>
       )}
 
-      <Modal
+      <ModalShell
+        isOpen={isModalOpen}
         title={
           modalMode === 'view'
             ? 'View Action Item'
@@ -611,32 +671,30 @@ const Tasks: React.FC = () => {
               ? 'Edit Action Item'
               : 'Add Action Item'
         }
-        open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setEditingTask(null);
-          setModalMode('create');
-          form.resetFields();
-        }}
-        onOk={modalMode === 'view' ? undefined : handleSave}
-        confirmLoading={saving}
-        okText={editingTask ? 'Save' : 'Add'}
+        onClose={closeTaskModal}
+        maxWidthClass="max-w-lg"
+        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
         footer={
-          modalMode === 'view'
-            ? [
-                <Button
-                  key="close"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEditingTask(null);
-                    setModalMode('create');
-                    form.resetFields();
-                  }}
-                >
-                  Close
-                </Button>,
-              ]
-            : undefined
+          modalMode === 'view' ? (
+            <Button size="large" onClick={closeTaskModal} className="w-full sm:w-auto">
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button size="large" onClick={closeTaskModal} className="w-full sm:w-auto">
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                loading={saving}
+                onClick={() => void handleSave()}
+                className="w-full sm:w-auto"
+              >
+                {editingTask ? 'Save action item' : 'Add action item'}
+              </Button>
+            </>
+          )
         }
       >
         <Form form={form} layout="vertical">
@@ -645,7 +703,11 @@ const Tasks: React.FC = () => {
             label="Title"
             rules={[{ required: true, message: 'Please enter a title' }]}
           >
-            <Input placeholder="e.g. Follow up with recruiter" disabled={modalMode === 'view'} />
+            <Input
+              size="large"
+              placeholder="e.g. Follow up with recruiter"
+              disabled={modalMode === 'view'}
+            />
           </Form.Item>
           <Form.Item name="description" label="Description">
             <Input.TextArea
@@ -654,9 +716,10 @@ const Tasks: React.FC = () => {
               disabled={modalMode === 'view'}
             />
           </Form.Item>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Form.Item name="status" label="Status" rules={[{ required: true }]}>
               <Select
+                size="large"
                 disabled={modalMode === 'view'}
                 options={STATUS_META.map((status) => ({
                   label: status.label,
@@ -666,6 +729,7 @@ const Tasks: React.FC = () => {
             </Form.Item>
             <Form.Item name="priority" label="Priority" rules={[{ required: true }]}>
               <Select
+                size="large"
                 disabled={modalMode === 'view'}
                 options={[
                   { label: 'Low', value: 'LOW' },
@@ -676,10 +740,10 @@ const Tasks: React.FC = () => {
             </Form.Item>
           </div>
           <Form.Item name="due_date" label="Due Date">
-            <DatePicker style={{ width: '100%' }} disabled={modalMode === 'view'} />
+            <DatePicker size="large" style={{ width: '100%' }} disabled={modalMode === 'view'} />
           </Form.Item>
         </Form>
-      </Modal>
+      </ModalShell>
     </div>
   );
 };

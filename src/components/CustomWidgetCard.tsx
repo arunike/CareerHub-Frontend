@@ -112,8 +112,8 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
           <IconComponent className={`w-5 h-5 ${colors.text}`} />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
         </div>
-        <div className="h-75 w-full">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className={`h-75 w-full ${chartType === 'pie' ? 'careerhub-responsive-pie' : ''}`}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
             {chartType === 'pie' ? (
               <PieChart>
                 <Pie

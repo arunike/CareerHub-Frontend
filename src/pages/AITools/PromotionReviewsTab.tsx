@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Checkbox, Input, Modal, Popconfirm, Space, Tag, Typography, message } from 'antd';
+import { Button, Checkbox, Input, Popconfirm, Space, Tag, Typography, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -20,8 +21,9 @@ import {
   type StoredPromotionReview,
 } from '../../utils/aiArtifactStorage';
 import { parseInlineMarkdown } from '../../utils/simpleMarkdown';
+import { PageState, PanelSkeleton } from '../../components/PageState';
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
 
 const verdictColor = (label?: string) => {
   const normalized = (label || '').toLowerCase();
@@ -34,10 +36,10 @@ const verdictColor = (label?: string) => {
 const ratingToneClass = (label?: string) => {
   const normalized = (label || '').toLowerCase();
   if (normalized.includes('strong') || normalized.includes('ready')) {
-    return 'border-l-emerald-500';
+    return 'border-emerald-200 bg-emerald-50/30';
   }
-  if (normalized.includes('building')) return 'border-l-amber-500';
-  return 'border-l-slate-300';
+  if (normalized.includes('building')) return 'border-amber-200 bg-amber-50/30';
+  return 'border-slate-200';
 };
 
 const PromotionReviewsTab: React.FC = () => {
@@ -46,12 +48,19 @@ const PromotionReviewsTab: React.FC = () => {
   const [reviews, setReviews] = useState<StoredPromotionReview[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingReview, setEditingReview] = useState<{ id: string; title: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const refresh = useCallback(async () => {
+    setLoadError(false);
     try {
       setReviews(await loadPromotionReviewsFromArtifacts());
     } catch {
+      setLoadError(true);
       messageApi.error('Failed to load promotion reviews');
+    } finally {
+      setLoading(false);
     }
   }, [messageApi]);
 
@@ -64,21 +73,53 @@ const PromotionReviewsTab: React.FC = () => {
     [reviews, selectedIds]
   );
   const handleDelete = async (id: string) => {
-    await deleteArtifactByClientId('PROMOTION_REVIEW', id);
-    setSelectedIds((prev) => prev.filter((item) => item !== id));
-    await refresh();
+    if (saving) return;
+    setSaving(true);
+    try {
+      await deleteArtifactByClientId('PROMOTION_REVIEW', id);
+      setSelectedIds((prev) => prev.filter((item) => item !== id));
+      await refresh();
+      messageApi.success('Promotion review deleted');
+    } catch {
+      messageApi.error('Could not delete this promotion review');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleToggleLock = async (review: StoredPromotionReview) => {
-    await setArtifactLock('PROMOTION_REVIEW', review.id, !review.isLocked);
-    await refresh();
+    if (saving) return;
+    setSaving(true);
+    try {
+      await setArtifactLock('PROMOTION_REVIEW', review.id, !review.isLocked);
+      await refresh();
+      messageApi.success(review.isLocked ? 'Promotion review unlocked' : 'Promotion review locked');
+    } catch {
+      messageApi.error('Could not update the promotion review lock');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleRename = async () => {
-    if (!editingReview) return;
-    await updateArtifactTitle('PROMOTION_REVIEW', editingReview.id, editingReview.title);
-    setEditingReview(null);
-    await refresh();
+    if (!editingReview || saving) return;
+    const nextTitle = editingReview.title.trim();
+    if (!nextTitle) {
+      messageApi.error('Enter a title before saving');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateArtifactTitle('PROMOTION_REVIEW', editingReview.id, nextTitle);
+      setEditingReview(null);
+      await refresh();
+      messageApi.success('Promotion review renamed');
+    } catch {
+      messageApi.error('Could not rename this promotion review');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleBulkDelete = () => {
@@ -90,29 +131,58 @@ const PromotionReviewsTab: React.FC = () => {
       okText: 'Delete',
       okType: 'danger',
       onOk: async () => {
-        await Promise.all(
-          deletableIds.map((id) => deleteArtifactByClientId('PROMOTION_REVIEW', id))
-        );
-        setSelectedIds([]);
-        await refresh();
+        if (saving) return;
+        setSaving(true);
+        try {
+          await Promise.all(
+            deletableIds.map((id) => deleteArtifactByClientId('PROMOTION_REVIEW', id))
+          );
+          setSelectedIds([]);
+          await refresh();
+          messageApi.success(
+            `${deletableIds.length} promotion review${deletableIds.length === 1 ? '' : 's'} deleted`
+          );
+        } catch {
+          messageApi.error('Could not delete all selected promotion reviews');
+        } finally {
+          setSaving(false);
+        }
       },
     });
   };
 
   const handleBulkToggleLock = async (lock: boolean) => {
-    await Promise.all(
-      selectedReviews
-        .filter((review) => Boolean(review.isLocked) !== lock)
-        .map((review) => setArtifactLock('PROMOTION_REVIEW', review.id, lock))
-    );
-    setSelectedIds([]);
-    await refresh();
+    if (saving) return;
+    setSaving(true);
+    try {
+      await Promise.all(
+        selectedReviews
+          .filter((review) => Boolean(review.isLocked) !== lock)
+          .map((review) => setArtifactLock('PROMOTION_REVIEW', review.id, lock))
+      );
+      setSelectedIds([]);
+      await refresh();
+      messageApi.success(`Selected promotion reviews ${lock ? 'locked' : 'unlocked'}`);
+    } catch {
+      messageApi.error(`Could not ${lock ? 'lock' : 'unlock'} all selected promotion reviews`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDeleteAll = async () => {
-    await deleteAllArtifactsByType('PROMOTION_REVIEW');
-    setSelectedIds([]);
-    await refresh();
+    if (saving) return;
+    setSaving(true);
+    try {
+      await deleteAllArtifactsByType('PROMOTION_REVIEW');
+      setSelectedIds([]);
+      await refresh();
+      messageApi.success('Unlocked promotion reviews deleted');
+    } catch {
+      messageApi.error('Could not delete promotion reviews');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleExport = async (): Promise<{ data: Blob; headers: Record<string, string> }> => {
@@ -121,7 +191,7 @@ const PromotionReviewsTab: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       {contextHolder}
       <PageActionToolbar
         title="Promotion Reviews"
@@ -129,6 +199,7 @@ const PromotionReviewsTab: React.FC = () => {
         exportFilename="promotion_reviews"
         onExport={handleExport}
         onDeleteAll={handleDeleteAll}
+        deleteAllDisabled={saving}
         deleteAllConfirmTitle="Delete all promotion reviews?"
         deleteAllConfirmDescription="Locked promotion reviews will be preserved."
       />
@@ -151,14 +222,22 @@ const PromotionReviewsTab: React.FC = () => {
                 okType="danger"
                 onConfirm={handleBulkDelete}
               >
-                <Button danger icon={<DeleteOutlined />}>
+                <Button danger icon={<DeleteOutlined />} disabled={saving}>
                   Delete
                 </Button>
               </Popconfirm>
-              <Button icon={<LockOutlined />} onClick={() => handleBulkToggleLock(true)}>
+              <Button
+                icon={<LockOutlined />}
+                disabled={saving}
+                onClick={() => handleBulkToggleLock(true)}
+              >
                 Lock
               </Button>
-              <Button icon={<UnlockOutlined />} onClick={() => handleBulkToggleLock(false)}>
+              <Button
+                icon={<UnlockOutlined />}
+                disabled={saving}
+                onClick={() => handleBulkToggleLock(false)}
+              >
                 Unlock
               </Button>
             </Space>
@@ -166,14 +245,27 @@ const PromotionReviewsTab: React.FC = () => {
         />
       )}
 
-      {reviews.length === 0 ? (
-        <div className="mt-10 rounded-lg border border-dashed border-gray-200 bg-white p-10 text-center">
-          <RiseOutlined className="text-3xl text-blue-500 mb-3" />
-          <Title level={3} className="!mt-0">
-            No promotion reviews yet
-          </Title>
-          <Text type="secondary">Generate one from an Experience entry to save it here.</Text>
-        </div>
+      {loading && reviews.length === 0 ? (
+        <PanelSkeleton rows={4} />
+      ) : loadError && reviews.length === 0 ? (
+        <PageState
+          tone="error"
+          title="Promotion reviews unavailable"
+          description="We couldn't load your saved reviews. No review data was changed."
+          actionLabel="Try again"
+          onAction={() => {
+            setLoading(true);
+            void refresh();
+          }}
+        />
+      ) : reviews.length === 0 ? (
+        <PageState
+          title="No promotion reviews yet"
+          description="Generate a promotion review from a Career History entry to save it here."
+          actionLabel="Go to Career History"
+          onAction={() => navigate('/experience')}
+          icon={<RiseOutlined />}
+        />
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4">
           {reviews.map((item) => {
@@ -181,17 +273,18 @@ const PromotionReviewsTab: React.FC = () => {
             const prediction = item.review?.promotion_prediction;
             const dashboard = item.review?.readiness_dashboard;
             return (
-              <div
+              <article
                 key={item.id}
-                className={`rounded-2xl border border-slate-200 border-l-4 bg-white p-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-shadow hover:shadow-[0_24px_70px_-48px_rgba(15,23,42,0.8)] ${ratingToneClass(
+                className={`rounded-2xl border bg-white p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-colors sm:p-5 ${ratingToneClass(
                   verdict?.label
                 )}`}
               >
-                <div className="flex items-start justify-between gap-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     <Checkbox
                       className="mt-1"
                       checked={selectedIds.includes(item.id)}
+                      aria-label={`Select ${item.title}`}
                       onChange={() =>
                         setSelectedIds((prev) =>
                           prev.includes(item.id)
@@ -242,9 +335,10 @@ const PromotionReviewsTab: React.FC = () => {
                       )}
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         <Button
-                          size="small"
+                          size="middle"
                           type="primary"
                           onClick={() => navigate(`/promotion-review/${item.id}`)}
+                          className="min-h-10"
                         >
                           View Review
                         </Button>
@@ -260,17 +354,19 @@ const PromotionReviewsTab: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <RowActions
-                    isLocked={item.isLocked}
-                    onToggleLock={() => handleToggleLock(item)}
-                    onEdit={() => setEditingReview({ id: item.id, title: item.title })}
-                    onDelete={() => handleDelete(item.id)}
-                    deleteTitle="Delete promotion review?"
-                    deleteDescription="This removes the saved AI review."
-                    disableDelete={item.isLocked}
-                  />
+                  <div className="flex justify-end border-t border-slate-100 pt-2 sm:border-0 sm:pt-0">
+                    <RowActions
+                      isLocked={item.isLocked}
+                      onToggleLock={() => handleToggleLock(item)}
+                      onEdit={() => setEditingReview({ id: item.id, title: item.title })}
+                      onDelete={() => handleDelete(item.id)}
+                      deleteTitle="Delete promotion review?"
+                      deleteDescription="This removes the saved AI review."
+                      disableDelete={item.isLocked}
+                    />
+                  </div>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
@@ -281,7 +377,8 @@ const PromotionReviewsTab: React.FC = () => {
         open={!!editingReview}
         onCancel={() => setEditingReview(null)}
         onOk={handleRename}
-        okText="Save"
+        okText="Save title"
+        okButtonProps={{ loading: saving, disabled: !editingReview?.title.trim() }}
       >
         <Input
           value={editingReview?.title || ''}

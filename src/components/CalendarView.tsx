@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
+import Modal from './MobileModal';
 import type { Event, EventCategory, Holiday, HolidayTab } from '../types';
 import CalendarDetailsPanel from './calendarView/CalendarDetailsPanel';
 import CalendarHeader from './calendarView/CalendarHeader';

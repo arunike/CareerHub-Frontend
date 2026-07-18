@@ -921,6 +921,19 @@ const OfferDecisionScorecard = ({
   );
 
   const [isWeightsExpanded, setIsWeightsExpanded] = useState(false);
+  const [expandedDetailIds, setExpandedDetailIds] = useState<Set<string>>(() => new Set());
+
+  const toggleOfferDetails = (rowId: string) => {
+    setExpandedDetailIds((current) => {
+      const next = new Set(current);
+      if (next.has(rowId)) {
+        next.delete(rowId);
+      } else {
+        next.add(rowId);
+      }
+      return next;
+    });
+  };
 
   const anyImmigrationSignal = useMemo(() => {
     return Object.values(applicationsById).some((app) => hasImmigrationSignal(app));
@@ -958,7 +971,7 @@ const OfferDecisionScorecard = ({
   const leader = rows[0];
 
   return (
-    <section className="mb-12 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-100 bg-white px-4 py-5 sm:px-8 sm:py-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -1045,7 +1058,11 @@ const OfferDecisionScorecard = ({
                       placement="bottomRight"
                       overlayStyle={{ maxWidth: 'calc(100vw - 32px)' }}
                     >
-                      <button className="group flex flex-col items-end text-right hover:opacity-80 transition-opacity cursor-pointer">
+                      <button
+                        type="button"
+                        className="group flex min-h-11 cursor-pointer flex-col items-end justify-center text-right transition-opacity hover:opacity-80"
+                        aria-label={`View score breakdown for ${row.company}`}
+                      >
                         <p className="text-3xl font-black tracking-tight text-sky-600 group-hover:underline decoration-dotted underline-offset-4">
                           {row.score}
                         </p>
@@ -1246,298 +1263,371 @@ const OfferDecisionScorecard = ({
                 </div>
               </div>
 
+              {/* Decision Evidence */}
+              <div className="grid grid-cols-1 border-t border-slate-100 bg-slate-50/40 sm:grid-cols-3">
+                <div className="border-b border-slate-100 px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    Adjusted value
+                  </p>
+                  <p className="mt-1 text-base font-bold text-emerald-700">
+                    {formatCurrency(row.financialValue)}
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-4 text-slate-500">
+                    After tax, COL, rent, and lifestyle
+                  </p>
+                </div>
+                <div className="border-b border-slate-100 px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    Realizable equity
+                  </p>
+                  <p className="mt-1 text-base font-bold text-slate-900">
+                    {formatCurrency(getRealizableEquity(row.offer))}
+                    <span className="ml-1 text-[10px] font-medium text-slate-400">/ yr</span>
+                  </p>
+                  <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">
+                    {getEquityLiquidityCopy(row.offer).label}
+                  </p>
+                </div>
+                <div className="px-4 py-3 sm:px-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    Time off
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">
+                    {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)}
+                  </p>
+                  <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">
+                    {row.offer.is_unlimited_pto &&
+                    row.offer.sick_leave_included_in_unlimited_pto !== false
+                      ? 'Sick leave included'
+                      : `${row.offer.sick_leave_days ?? 0} sick days`}
+                    {' · '}
+                    {row.offer.holiday_days ?? 11} holidays
+                  </p>
+                </div>
+              </div>
+
               {/* Compensation Breakdown */}
-              <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 sm:px-6 sm:py-5">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">
-                  Compensation & Benefits
-                </h4>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                  <div>
-                    <Tooltip
-                      title="Your fixed annual salary before tax. The main guaranteed component of your compensation."
-                      placement="top"
-                    >
-                      <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                        Base Salary <span className="text-slate-300 text-[10px]">ⓘ</span>
-                      </div>
-                    </Tooltip>
-                    <div className="text-sm font-bold text-slate-900">
-                      ${Number(row.offer.base_salary).toLocaleString()}
-                    </div>
-                    <Tooltip
-                      title="Estimated take-home base salary after applying your estimated tax rate."
-                      placement="bottom"
-                    >
-                      <div className="text-[10px] text-slate-400 cursor-help">
-                        After tax: $
-                        {Math.round(
-                          adjustedByOfferId[Number(row.offer.id)]?.afterTaxBase || 0
-                        ).toLocaleString()}
-                      </div>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      title="Annual performance bonus (typically % of base). Varies year to year — treated as target/expected amount."
-                      placement="top"
-                    >
-                      <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                        Bonus <span className="text-slate-300 text-[10px]">ⓘ</span>
-                      </div>
-                    </Tooltip>
-                    <div className="text-sm font-bold text-slate-900">
-                      ${Number(row.offer.bonus).toLocaleString()}
-                    </div>
-                    <Tooltip
-                      title="Estimated after-tax bonus. Bonuses are typically taxed at a higher supplemental rate."
-                      placement="bottom"
-                    >
-                      <div className="text-[10px] text-slate-400 cursor-help">
-                        After tax: $
-                        {Math.round(
-                          adjustedByOfferId[Number(row.offer.id)]?.afterTaxBonus || 0
-                        ).toLocaleString()}
-                      </div>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      title="Annualized grant value. Financial scoring counts the full value only when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable."
-                      placement="top"
-                    >
-                      <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                        Equity / Yr <span className="text-slate-300 text-[10px]">ⓘ</span>
-                      </div>
-                    </Tooltip>
-                    <div className="text-sm font-bold text-slate-900">
-                      ${Number(row.offer.equity).toLocaleString()}
-                    </div>
-                    {(() => {
-                      const liquidity = getEquityLiquidityCopy(row.offer);
-                      const simulatedMetrics = scenarioRows.find(
-                        (scenario) => String(scenario.offer.id) === String(row.offer.id)
-                      );
-                      const afterTax = row.isSimulated
-                        ? simulatedMetrics?.afterTaxEquity
-                        : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
-                      return (
+              <div className="border-t border-slate-100 bg-white">
+                <button
+                  type="button"
+                  onClick={() => toggleOfferDetails(row.id)}
+                  aria-expanded={expandedDetailIds.has(row.id)}
+                  className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
+                >
+                  <span>
+                    <span className="block text-xs font-semibold text-slate-800">
+                      Compensation & benefits details
+                    </span>
+                    <span className="mt-0.5 block text-[10px] text-slate-500">
+                      Cash, taxes, health insurance, retirement, and full time-off breakdown
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-sky-700">
+                    {expandedDetailIds.has(row.id) ? 'Hide' : 'View'}
+                    {expandedDetailIds.has(row.id) ? (
+                      <DownOutlined className="text-[10px]" />
+                    ) : (
+                      <RightOutlined className="text-[10px]" />
+                    )}
+                  </span>
+                </button>
+
+                {expandedDetailIds.has(row.id) && (
+                  <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 sm:px-6 sm:py-5">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      <div>
                         <Tooltip
-                          title={`${liquidity.label}. ${liquidity.detail}. Tax is applied only to the realizable amount used in this comparison.`}
+                          title="Your fixed annual salary before tax. The main guaranteed component of your compensation."
+                          placement="top"
+                        >
+                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                            Base Salary <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          </div>
+                        </Tooltip>
+                        <div className="text-sm font-bold text-slate-900">
+                          ${Number(row.offer.base_salary).toLocaleString()}
+                        </div>
+                        <Tooltip
+                          title="Estimated take-home base salary after applying your estimated tax rate."
                           placement="bottom"
                         >
-                          <div className="cursor-help text-[10px] text-slate-500">
-                            {liquidity.label} · {liquidity.detail}
-                            {liquidity.realizable > 0 && (
-                              <span className="block text-slate-400">
-                                After tax: ${Math.round(afterTax || 0).toLocaleString()}
-                              </span>
+                          <div className="text-[10px] text-slate-400 cursor-help">
+                            After tax: $
+                            {Math.round(
+                              adjustedByOfferId[Number(row.offer.id)]?.afterTaxBase || 0
+                            ).toLocaleString()}
+                          </div>
+                        </Tooltip>
+                      </div>
+                      <div>
+                        <Tooltip
+                          title="Annual performance bonus (typically % of base). Varies year to year — treated as target/expected amount."
+                          placement="top"
+                        >
+                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                            Bonus <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          </div>
+                        </Tooltip>
+                        <div className="text-sm font-bold text-slate-900">
+                          ${Number(row.offer.bonus).toLocaleString()}
+                        </div>
+                        <Tooltip
+                          title="Estimated after-tax bonus. Bonuses are typically taxed at a higher supplemental rate."
+                          placement="bottom"
+                        >
+                          <div className="text-[10px] text-slate-400 cursor-help">
+                            After tax: $
+                            {Math.round(
+                              adjustedByOfferId[Number(row.offer.id)]?.afterTaxBonus || 0
+                            ).toLocaleString()}
+                          </div>
+                        </Tooltip>
+                      </div>
+                      <div>
+                        <Tooltip
+                          title="Annualized grant value. Financial scoring counts the full value only when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable."
+                          placement="top"
+                        >
+                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                            Equity / Yr <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          </div>
+                        </Tooltip>
+                        <div className="text-sm font-bold text-slate-900">
+                          ${Number(row.offer.equity).toLocaleString()}
+                        </div>
+                        {(() => {
+                          const liquidity = getEquityLiquidityCopy(row.offer);
+                          const simulatedMetrics = scenarioRows.find(
+                            (scenario) => String(scenario.offer.id) === String(row.offer.id)
+                          );
+                          const afterTax = row.isSimulated
+                            ? simulatedMetrics?.afterTaxEquity
+                            : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
+                          return (
+                            <Tooltip
+                              title={`${liquidity.label}. ${liquidity.detail}. Tax is applied only to the realizable amount used in this comparison.`}
+                              placement="bottom"
+                            >
+                              <div className="cursor-help text-[10px] text-slate-500">
+                                {liquidity.label} · {liquidity.detail}
+                                {liquidity.realizable > 0 && (
+                                  <span className="block text-slate-400">
+                                    After tax: ${Math.round(afterTax || 0).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            </Tooltip>
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        <Tooltip
+                          title="One-time signing bonus paid when you join. Often subject to a clawback period (typically 1–2 years)."
+                          placement="top"
+                        >
+                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                            Sign-On <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          </div>
+                        </Tooltip>
+                        <div className="text-sm font-bold text-slate-900">
+                          ${Number(row.offer.sign_on).toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-slate-400">One-time</div>
+                      </div>
+                      {Number(row.offer.relocation_bonus || 0) > 0 && (
+                        <div>
+                          <Tooltip
+                            title="One-time relocation or signing perk cash value."
+                            placement="top"
+                          >
+                            <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                              Relocation Perk <span className="text-slate-300 text-[10px]">ⓘ</span>
+                            </div>
+                          </Tooltip>
+                          <div className="text-sm font-bold text-slate-900">
+                            ${Number(row.offer.relocation_bonus).toLocaleString()}
+                          </div>
+                          <Tooltip
+                            title="Relocation is typically taxed at supplemental W2 bonus rate."
+                            placement="bottom"
+                          >
+                            <div className="text-[10px] text-slate-400 cursor-help">
+                              After tax: $
+                              {Math.round(
+                                adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
+                              ).toLocaleString()}
+                            </div>
+                          </Tooltip>
+                        </div>
+                      )}
+
+                      {/* Health Insurance & 401(k) Match Sub-section */}
+                      <div className="col-span-2 pt-2 border-t border-slate-100">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Tooltip
+                              title="Monthly premium and annual HSA contribution details."
+                              placement="top"
+                            >
+                              <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                                Health Insurance{' '}
+                                <span className="text-slate-300 text-[10px]">ⓘ</span>
+                              </div>
+                            </Tooltip>
+                            <div className="text-sm font-bold text-slate-900">
+                              {Number(row.offer.health_premium_monthly || 0) > 0
+                                ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
+                                : 'Free Premium'}
+                            </div>
+                            {row.offer.health_plan_type && (
+                              <div className="text-[10px] text-slate-500 font-medium">
+                                Type: {row.offer.health_plan_type}
+                              </div>
+                            )}
+                            {Number(row.offer.health_oop_max || 0) > 0 && (
+                              <div className="text-[10px] text-slate-400">
+                                OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
+                              </div>
+                            )}
+                            {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
+                              <div className="text-[10px] text-emerald-600 font-semibold">
+                                HSA Match: +$
+                                {Number(row.offer.hsa_employer_contribution).toLocaleString()}/yr
+                              </div>
                             )}
                           </div>
-                        </Tooltip>
-                      );
-                    })()}
-                  </div>
-                  <div>
-                    <Tooltip
-                      title="One-time signing bonus paid when you join. Often subject to a clawback period (typically 1–2 years)."
-                      placement="top"
-                    >
-                      <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                        Sign-On <span className="text-slate-300 text-[10px]">ⓘ</span>
-                      </div>
-                    </Tooltip>
-                    <div className="text-sm font-bold text-slate-900">
-                      ${Number(row.offer.sign_on).toLocaleString()}
-                    </div>
-                    <div className="text-[10px] text-slate-400">One-time</div>
-                  </div>
-                  {Number(row.offer.relocation_bonus || 0) > 0 && (
-                    <div>
-                      <Tooltip
-                        title="One-time relocation or signing perk cash value."
-                        placement="top"
-                      >
-                        <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                          Relocation Perk <span className="text-slate-300 text-[10px]">ⓘ</span>
+                          <div>
+                            <Tooltip
+                              title="401(k) Employer retirement match percentage and max contribution matched."
+                              placement="top"
+                            >
+                              <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                                401(k) Matching{' '}
+                                <span className="text-slate-300 text-[10px]">ⓘ</span>
+                              </div>
+                            </Tooltip>
+                            <div className="text-sm font-bold text-slate-900">
+                              {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                              Number(row.offer.forty_one_k_max_match || 0) > 0
+                                ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
+                                : 'No 401(k) Match'}
+                            </div>
+                            {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                              Number(row.offer.forty_one_k_max_match || 0) > 0 && (
+                                <div className="text-[10px] text-emerald-600 font-semibold">
+                                  Match Value: +$
+                                  {Math.round(
+                                    Number(row.offer.base_salary) *
+                                      (Number(row.offer.forty_one_k_max_match) / 100) *
+                                      (Number(row.offer.forty_one_k_match_percent) / 100)
+                                  ).toLocaleString()}
+                                  /yr
+                                </div>
+                              )}
+                          </div>
                         </div>
-                      </Tooltip>
-                      <div className="text-sm font-bold text-slate-900">
-                        ${Number(row.offer.relocation_bonus).toLocaleString()}
                       </div>
-                      <Tooltip
-                        title="Relocation is typically taxed at supplemental W2 bonus rate."
-                        placement="bottom"
-                      >
-                        <div className="text-[10px] text-slate-400 cursor-help">
-                          After tax: $
-                          {Math.round(
-                            adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
-                          ).toLocaleString()}
-                        </div>
-                      </Tooltip>
-                    </div>
-                  )}
 
-                  {/* Health Insurance & 401(k) Match Sub-section */}
-                  <div className="col-span-2 pt-2 border-t border-slate-100">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Tooltip
-                          title="Monthly premium and annual HSA contribution details."
-                          placement="top"
-                        >
-                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                            Health Insurance <span className="text-slate-300 text-[10px]">ⓘ</span>
+                      <div className="col-span-2 pt-2 border-t border-slate-100">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <Tooltip
+                              title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
+                              placement="top"
+                            >
+                              <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
+                                Time Off <span className="text-slate-300 text-[10px]">ⓘ</span>
+                              </div>
+                            </Tooltip>
+                            <div className="text-sm font-medium text-slate-900">
+                              {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)}{' '}
+                              PTO,{' '}
+                              {row.offer.is_unlimited_pto &&
+                              row.offer.sick_leave_included_in_unlimited_pto !== false
+                                ? 'Sick Leave Included, '
+                                : `${row.offer.sick_leave_days ?? 0} Sick Leave, `}
+                              {row.offer.holiday_days ?? 11} Holidays
+                            </div>
                           </div>
-                        </Tooltip>
-                        <div className="text-sm font-bold text-slate-900">
-                          {Number(row.offer.health_premium_monthly || 0) > 0
-                            ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
-                            : 'Free Premium'}
-                        </div>
-                        {row.offer.health_plan_type && (
-                          <div className="text-[10px] text-slate-500 font-medium">
-                            Type: {row.offer.health_plan_type}
-                          </div>
-                        )}
-                        {Number(row.offer.health_oop_max || 0) > 0 && (
-                          <div className="text-[10px] text-slate-400">
-                            OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
-                          </div>
-                        )}
-                        {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
-                          <div className="text-[10px] text-emerald-600 font-semibold">
-                            HSA Match: +$
-                            {Number(row.offer.hsa_employer_contribution).toLocaleString()}/yr
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <Tooltip
-                          title="401(k) Employer retirement match percentage and max contribution matched."
-                          placement="top"
-                        >
-                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                            401(k) Matching <span className="text-slate-300 text-[10px]">ⓘ</span>
-                          </div>
-                        </Tooltip>
-                        <div className="text-sm font-bold text-slate-900">
-                          {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
-                          Number(row.offer.forty_one_k_max_match || 0) > 0
-                            ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
-                            : 'No 401(k) Match'}
-                        </div>
-                        {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
-                          Number(row.offer.forty_one_k_max_match || 0) > 0 && (
-                            <div className="text-[10px] text-emerald-600 font-semibold">
-                              Match Value: +$
-                              {Math.round(
-                                Number(row.offer.base_salary) *
-                                  (Number(row.offer.forty_one_k_max_match) / 100) *
-                                  (Number(row.offer.forty_one_k_match_percent) / 100)
-                              ).toLocaleString()}
-                              /yr
+                          {!row.isSimulated && !(row.offer as Offer).is_current && (
+                            <div className="text-right">
+                              <Tooltip
+                                title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
+                                placement="top"
+                              >
+                                <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1 justify-end">
+                                  Diff vs Current{' '}
+                                  <span className="text-slate-300 text-[10px]">ⓘ</span>
+                                </div>
+                              </Tooltip>
+                              {(() => {
+                                const total =
+                                  Number(row.offer.base_salary) +
+                                  Number(row.offer.bonus) +
+                                  getRealizableEquity(row.offer) +
+                                  Number(row.offer.sign_on);
+                                const diff = total - currentTotal;
+                                const diffPercent =
+                                  currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
+                                return (
+                                  <div
+                                    className={clsx(
+                                      'text-sm font-bold',
+                                      diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                                    )}
+                                  >
+                                    {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
+                                    <span className="text-[10px] font-medium ml-1">
+                                      ({diff > 0 ? '+' : ''}
+                                      {diffPercent}%)
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
+                          {row.isSimulated && (
+                            <div className="text-right">
+                              <Tooltip
+                                title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
+                                placement="top"
+                              >
+                                <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1 justify-end">
+                                  Diff vs Current{' '}
+                                  <span className="text-slate-300 text-[10px]">ⓘ</span>
+                                </div>
+                              </Tooltip>
+                              {(() => {
+                                const total =
+                                  Number(row.offer.base_salary) +
+                                  Number(row.offer.bonus) +
+                                  getRealizableEquity(row.offer) +
+                                  Number(row.offer.sign_on);
+                                const diff = total - currentTotal;
+                                const diffPercent =
+                                  currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
+                                return (
+                                  <div
+                                    className={clsx(
+                                      'text-sm font-bold',
+                                      diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                                    )}
+                                  >
+                                    {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
+                                    <span className="text-[10px] font-medium ml-1">
+                                      ({diff > 0 ? '+' : ''}
+                                      {diffPercent}%)
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  <div className="col-span-2 pt-2 border-t border-slate-100">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <Tooltip
-                          title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
-                          placement="top"
-                        >
-                          <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1">
-                            Time Off <span className="text-slate-300 text-[10px]">ⓘ</span>
-                          </div>
-                        </Tooltip>
-                        <div className="text-sm font-medium text-slate-900">
-                          {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)} PTO,{' '}
-                          {row.offer.is_unlimited_pto &&
-                          row.offer.sick_leave_included_in_unlimited_pto !== false
-                            ? 'Sick Leave Included, '
-                            : `${row.offer.sick_leave_days ?? 0} Sick Leave, `}
-                          {row.offer.holiday_days ?? 11} Holidays
-                        </div>
-                      </div>
-                      {!row.isSimulated && !(row.offer as Offer).is_current && (
-                        <div className="text-right">
-                          <Tooltip
-                            title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
-                            placement="top"
-                          >
-                            <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1 justify-end">
-                              Diff vs Current <span className="text-slate-300 text-[10px]">ⓘ</span>
-                            </div>
-                          </Tooltip>
-                          {(() => {
-                            const total =
-                              Number(row.offer.base_salary) +
-                              Number(row.offer.bonus) +
-                              getRealizableEquity(row.offer) +
-                              Number(row.offer.sign_on);
-                            const diff = total - currentTotal;
-                            const diffPercent =
-                              currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
-                            return (
-                              <div
-                                className={clsx(
-                                  'text-sm font-bold',
-                                  diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
-                                )}
-                              >
-                                {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
-                                <span className="text-[10px] font-medium ml-1">
-                                  ({diff > 0 ? '+' : ''}
-                                  {diffPercent}%)
-                                </span>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                      {row.isSimulated && (
-                        <div className="text-right">
-                          <Tooltip
-                            title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
-                            placement="top"
-                          >
-                            <div className="text-xs font-medium text-slate-500 cursor-help inline-flex items-center gap-1 justify-end">
-                              Diff vs Current <span className="text-slate-300 text-[10px]">ⓘ</span>
-                            </div>
-                          </Tooltip>
-                          {(() => {
-                            const total =
-                              Number(row.offer.base_salary) +
-                              Number(row.offer.bonus) +
-                              getRealizableEquity(row.offer) +
-                              Number(row.offer.sign_on);
-                            const diff = total - currentTotal;
-                            const diffPercent =
-                              currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
-                            return (
-                              <div
-                                className={clsx(
-                                  'text-sm font-bold',
-                                  diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
-                                )}
-                              >
-                                {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
-                                <span className="text-[10px] font-medium ml-1">
-                                  ({diff > 0 ? '+' : ''}
-                                  {diffPercent}%)
-                                </span>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Action Bar */}
@@ -1546,8 +1636,9 @@ const OfferDecisionScorecard = ({
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="grid grid-cols-2 gap-2 sm:flex">
                       <button
+                        type="button"
                         onClick={() => onEditScenario(String(row.offer.id))}
-                        className="px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
+                        className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
                       >
                         Edit
                       </button>
@@ -1560,7 +1651,10 @@ const OfferDecisionScorecard = ({
                         cancelText="Cancel"
                         okButtonProps={{ danger: true }}
                       >
-                        <button className="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+                        <button
+                          type="button"
+                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 sm:min-h-9 sm:rounded-lg"
+                        >
                           Delete
                         </button>
                       </Popconfirm>
@@ -1570,15 +1664,17 @@ const OfferDecisionScorecard = ({
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                       <button
+                        type="button"
                         onClick={() => onEditClick(row.offer as Offer)}
-                        className="px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
+                        className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
                       >
                         Edit
                       </button>
                       <button
+                        type="button"
                         onClick={() => onToggleCurrent(row.offer as Offer)}
                         className={clsx(
-                          'px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors',
+                          'min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-9 sm:rounded-lg',
                           (row.offer as Offer).is_current
                             ? 'text-slate-400 hover:bg-slate-50'
                             : 'text-slate-600 hover:bg-slate-50'
@@ -1587,8 +1683,9 @@ const OfferDecisionScorecard = ({
                         {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
                       </button>
                       <button
+                        type="button"
                         onClick={() => onSnapshotsClick(row.offer as Offer)}
-                        className="px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                        className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-50 sm:min-h-9 sm:rounded-lg"
                       >
                         Snapshots
                       </button>
@@ -1598,22 +1695,25 @@ const OfferDecisionScorecard = ({
                         content={
                           <div className="flex w-44 flex-col py-1">
                             <button
+                              type="button"
                               onClick={() => onSaveSnapshotClick(row.offer as Offer, row)}
-                              className="rounded-md px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                              className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
                             >
                               Save Snapshot
                             </button>
                             {(row.offer as Offer).is_current ? (
                               <button
+                                type="button"
                                 onClick={() => onRaiseHistoryClick(row.offer as Offer)}
-                                className="rounded-md px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                                className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
                               >
                                 Raise History
                               </button>
                             ) : (
                               <button
+                                type="button"
                                 onClick={() => onNegotiateClick(row.offer as Offer)}
-                                className="rounded-md px-3 py-2 text-left text-xs font-semibold text-purple-700 hover:bg-purple-50"
+                                className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 hover:bg-purple-50"
                               >
                                 Negotiate
                               </button>
@@ -1633,7 +1733,10 @@ const OfferDecisionScorecard = ({
                                 okButtonProps={{ danger: true }}
                                 onConfirm={() => onDeleteClick(row.offer as Offer)}
                               >
-                                <button className="rounded-md px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50">
+                                <button
+                                  type="button"
+                                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                                >
                                   Delete
                                 </button>
                               </Popconfirm>
@@ -1641,7 +1744,10 @@ const OfferDecisionScorecard = ({
                           </div>
                         }
                       >
-                        <button className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 rounded-lg transition-colors">
+                        <button
+                          type="button"
+                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50 sm:min-h-9 sm:rounded-lg"
+                        >
                           More
                         </button>
                       </Popover>
@@ -1693,14 +1799,16 @@ const OfferDecisionScorecard = ({
               </div>
               <div className="flex flex-col gap-2 pt-2">
                 <button
+                  type="button"
                   onClick={onAddScenario}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
                 >
                   <PlusOutlined /> Add Custom Scenario
                 </button>
                 <button
+                  type="button"
                   onClick={saveAdjustments}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-50"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-50"
                 >
                   Save Settings
                 </button>
@@ -1711,11 +1819,20 @@ const OfferDecisionScorecard = ({
           {/* Score Weights */}
           <div className="rounded-3xl border border-slate-200 bg-slate-50/50 p-6 shadow-sm">
             <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={isWeightsExpanded}
               className={clsx(
-                'flex items-center justify-between cursor-pointer select-none',
+                'flex min-h-11 cursor-pointer select-none items-center justify-between rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2',
                 isWeightsExpanded ? 'mb-6' : 'mb-0'
               )}
               onClick={() => setIsWeightsExpanded(!isWeightsExpanded)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setIsWeightsExpanded(!isWeightsExpanded);
+                }
+              }}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600">

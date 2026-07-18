@@ -86,9 +86,9 @@ export const renderAvailabilityWidget = (
             <PieChartOutlined className="w-5 h-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">Events by Category</h3>
           </div>
-          <div className="h-75 w-full">
+          <div className="careerhub-responsive-pie h-75 w-full">
             {stats.byCategory.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
                 <PieChart>
                   <Pie
                     data={stats.byCategory}
@@ -126,7 +126,7 @@ export const renderAvailabilityWidget = (
             <h3 className="text-lg font-semibold text-gray-900">Daily Activity (Last 7 Days)</h3>
           </div>
           <div className="h-75 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
               <BarChart data={stats.dailyActivity}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" />

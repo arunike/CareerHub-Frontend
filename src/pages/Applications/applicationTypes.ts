@@ -1,5 +1,11 @@
 import type { Dayjs } from 'dayjs';
 import type { CareerApplication } from '../../types/application';
+import {
+  DEFAULT_APPLICATION_STAGES,
+  type ApplicationStage,
+} from '../../constants/applicationStages';
+
+export { DEFAULT_APPLICATION_STAGES, type ApplicationStage };
 
 export const APPLICATION_PAGE_SIZE = 10;
 
@@ -45,39 +51,12 @@ export type ApplicationFormValues = {
   linked_document_ids?: number[];
 };
 
-export type ApplicationStage = {
-  key: string;
-  label: string;
-  shortLabel: string;
-  tone: string;
-};
-
 export const DEFAULT_APPLICATION_SUMMARY: ApplicationSummary = {
   total: 0,
   interviews: 0,
   offers: 0,
   locked: 0,
 };
-
-export const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
-  { key: 'APPLIED', label: 'Applied', shortLabel: 'Apply', tone: 'bg-blue-500' },
-  { key: 'OA', label: 'Online Assessment', shortLabel: 'OA', tone: 'bg-blue-500' },
-  { key: 'SCREEN', label: 'Phone Screen', shortLabel: 'Phone', tone: 'bg-sky-500' },
-  { key: 'ROUND_1', label: '1st Round', shortLabel: 'R1', tone: 'bg-amber-400' },
-  { key: 'ROUND_2', label: '2nd Round', shortLabel: 'R2', tone: 'bg-amber-500' },
-  { key: 'ROUND_3', label: '3rd Round', shortLabel: 'R3', tone: 'bg-orange-500' },
-  { key: 'ROUND_4', label: '4th Round', shortLabel: 'R4', tone: 'bg-orange-600' },
-  { key: 'ONSITE', label: 'Onsite Interview', shortLabel: 'Onsite', tone: 'bg-red-500' },
-  { key: 'OFFER', label: 'Offer', shortLabel: 'Offer', tone: 'bg-emerald-500' },
-  { key: 'REJECTED', label: 'Rejected', shortLabel: 'Reject', tone: 'bg-rose-500' },
-  { key: 'GHOSTED', label: 'Ghosted', shortLabel: 'Ghost', tone: 'bg-slate-400' },
-  {
-    key: 'REMOVED_FROM_SHEET',
-    label: 'Removed from Sheet',
-    shortLabel: 'Removed',
-    tone: 'bg-slate-500',
-  },
-];
 
 export const getRoundNumberFromStatus = (status?: string) => {
   const match = status?.match(/^ROUND_(\d+)$/);
@@ -90,7 +69,11 @@ export const summarizeApplications = (
 ): ApplicationSummary => ({
   total,
   interviews: applications.filter(
-    (app) => app.status === 'SCREEN' || app.status === 'ONSITE' || app.status.startsWith('ROUND_')
+    (app) =>
+      app.status === 'SCREEN' ||
+      app.status === 'FINAL_ROUND' ||
+      app.status === 'ONSITE' ||
+      app.status.startsWith('ROUND_')
   ).length,
   offers: applications.filter((app) => app.status === 'OFFER').length,
   locked: applications.filter((app) => app.is_locked).length,

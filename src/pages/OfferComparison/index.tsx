@@ -14,7 +14,13 @@ import {
   type OfferDecisionSnapshot,
   type OfferDecisionSnapshotPayload,
 } from '../../api';
-import { PlusOutlined, RobotOutlined, CompassOutlined, LoadingOutlined } from '@ant-design/icons';
+import {
+  BarChartOutlined,
+  PlusOutlined,
+  RobotOutlined,
+  CompassOutlined,
+  LoadingOutlined,
+} from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { todayDateOnlyLocal } from '../../utils/dateOnly';
@@ -138,7 +144,8 @@ const OfferComparison = () => {
   const [isAddScenarioOpen, setIsAddScenarioOpen] = useState(false);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
   const [scenarioModalMode, setScenarioModalMode] = useState<'add' | 'view' | 'edit'>('add');
-  const [isAdvisorExpanded, setIsAdvisorExpanded] = useState(true);
+  const [isChartExpanded, setIsChartExpanded] = useState(false);
+  const [isAdvisorExpanded, setIsAdvisorExpanded] = useState(false);
   const [selectedPainPoints, setSelectedPainPoints] = useState<string[]>([]);
   const [customPainPoints, setCustomPainPoints] = useState('');
   const [promotionTimeline, setPromotionTimeline] = useState<string>('unknown');
@@ -313,8 +320,13 @@ const OfferComparison = () => {
   const currentJobName = useMemo(() => {
     const current = offers.find((o) => o.is_current);
     if (!current) return null;
-    return getApplicationName(current.application);
-  }, [offers, applications, getApplicationName]);
+    const app = applications.find((candidate) => candidate.id === current.application);
+    if (!app) return `App #${current.application}`;
+    if (app.company_name && app.role_title) {
+      return `${app.company_name} - ${app.role_title}`;
+    }
+    return app.company_name || app.role_title || `App #${current.application}`;
+  }, [applications, offers]);
 
   const openOfferModal = (offer: Offer, mode: 'view' | 'edit') => {
     setOfferModalMode(mode);
@@ -1307,10 +1319,6 @@ const OfferComparison = () => {
         singleRowDesktop
       />
 
-      <Suspense fallback={<LazySectionFallback />}>
-        <OfferComparisonChart data={chartData} />
-      </Suspense>
-
       <OfferDecisionScorecard
         extraHeaderNode={
           <Select
@@ -1412,19 +1420,55 @@ const OfferComparison = () => {
         onDeleteClick={handleDeleteOffer}
       />
 
-      {/* Career Transition Advisor */}
-      <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
         <button
-          onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
-          className="w-full px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left"
+          type="button"
+          onClick={() => setIsChartExpanded((current) => !current)}
+          aria-expanded={isChartExpanded}
+          className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
         >
-          <div className="flex items-center gap-3">
-            <span className="p-2 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-lg text-lg flex items-center justify-center">
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+              <BarChartOutlined />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-slate-950">
+                First-year compensation breakdown
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                Compare salary, benefits, bonus, realizable equity, and sign-on by offer.
+              </span>
+            </span>
+          </span>
+          <span className="shrink-0 text-xs font-semibold text-blue-700">
+            {isChartExpanded ? 'Hide chart' : 'View chart'}
+          </span>
+        </button>
+
+        {isChartExpanded && (
+          <div className="border-t border-slate-200 p-3 sm:p-5">
+            <Suspense fallback={<LazySectionFallback />}>
+              <OfferComparisonChart data={chartData} />
+            </Suspense>
+          </div>
+        )}
+      </section>
+
+      {/* Career Transition Advisor */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
+        <button
+          type="button"
+          onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
+          aria-expanded={isAdvisorExpanded}
+          className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600">
               <CompassOutlined />
             </span>
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Career Transition Advisor</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-slate-950">Career Transition Advisor</h2>
+              <p className="mt-0.5 text-xs leading-5 text-slate-500">
                 AI evaluation comparing your current role{' '}
                 {currentJobName ? (
                   <span className="font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 inline-block">
@@ -1439,7 +1483,7 @@ const OfferComparison = () => {
               </p>
             </div>
           </div>
-          <span className="text-slate-400 text-xs font-semibold">
+          <span className="shrink-0 text-xs font-semibold text-blue-700">
             {isAdvisorExpanded ? 'Collapse' : 'Expand'}
           </span>
         </button>
@@ -1551,7 +1595,7 @@ const OfferComparison = () => {
                     type="button"
                     onClick={handleGetTransitionAdvice}
                     disabled={isAdvisorLoading || !currentJobName}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg text-sm shadow-md shadow-indigo-900/10 hover:bg-indigo-500 hover:shadow-indigo-900/15 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-500 sm:w-auto"
                   >
                     {isAdvisorLoading ? (
                       <>

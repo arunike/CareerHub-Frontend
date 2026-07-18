@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
+import CompensationSimulatorMobile from './CompensationSimulatorMobile';
 
 type OfferWithCompFields = ScenarioRow['offer'] & {
   base_salary?: number;
@@ -95,6 +96,7 @@ const buildVestingYears = (row: ScenarioRow, equityGrowthPct: number) => {
 };
 
 const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [equityPreset, setEquityPreset] = useState<EquityPreset>('base');
   const [customEquityGrowthPct, setCustomEquityGrowthPct] = useState(10);
   const [rentOverride, setRentOverride] = useState<number | null>(null);
@@ -165,8 +167,38 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
   }
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-5 border-b border-slate-100 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
+      <button
+        type="button"
+        onClick={() => setIsExpanded((current) => !current)}
+        aria-expanded={isExpanded}
+        className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700">
+            <DollarOutlined />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-slate-950">
+              Compensation simulator
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+              Stress-test monthly take-home, living costs, and four-year equity vesting.
+            </span>
+          </span>
+        </span>
+        <span className="shrink-0 text-xs font-semibold text-blue-700">
+          {isExpanded ? 'Close simulator' : 'Open simulator'}
+        </span>
+      </button>
+
+      <div
+        className={
+          isExpanded
+            ? 'flex flex-col gap-4 border-t border-b border-slate-200 px-6 py-5 xl:flex-row xl:items-end xl:justify-between'
+            : 'hidden'
+        }
+      >
         <div>
           <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-1">
             <DollarOutlined />
@@ -181,7 +213,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="min-w-0">
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
               Equity market
@@ -189,7 +221,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             <Select
               value={equityPreset}
               onChange={setEquityPreset}
-              className="w-full min-w-36"
+              className="w-full"
               options={[
                 { value: 'downside', label: 'Downside -20%' },
                 { value: 'base', label: 'Base 0%' },
@@ -253,7 +285,11 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
         </div>
       </div>
 
-      <div className="grid grid-cols-2 border-b border-slate-100 md:grid-cols-4">
+      <div
+        className={
+          isExpanded ? 'grid grid-cols-2 border-b border-slate-100 md:grid-cols-4' : 'hidden'
+        }
+      >
         {[
           {
             icon: <BankOutlined />,
@@ -298,7 +334,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
         ))}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className={isExpanded ? 'hidden overflow-x-auto md:block' : 'hidden'}>
         <table className="min-w-[1040px] w-full text-sm">
           <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -459,7 +495,13 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
         </table>
       </div>
 
-      <div className="border-t border-slate-100 px-6 py-5">
+      {isExpanded ? (
+        <CompensationSimulatorMobile rows={rows} equityGrowthPct={equityGrowthPct} />
+      ) : null}
+
+      <div
+        className={isExpanded ? 'hidden border-t border-slate-100 px-6 py-5 md:block' : 'hidden'}
+      >
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-950">After-tax equity vesting</h3>

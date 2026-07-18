@@ -34,7 +34,7 @@ const AvailabilityGeneratorCard = ({
               type="date"
               value={startDate}
               onChange={(e) => onStartDateChange(e.target.value)}
-              className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="min-h-11 pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
         </div>
@@ -46,7 +46,7 @@ const AvailabilityGeneratorCard = ({
             <select
               value={timezone}
               onChange={(e) => onTimezoneChange(e.target.value)}
-              className="pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
+              className="min-h-11 pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
             >
               {TIMEZONE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -65,7 +65,7 @@ const AvailabilityGeneratorCard = ({
             value={availabilityWeeks}
             fallbackValue={2}
             onCommit={onAvailabilityWeeksChange}
-            className="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+            className="min-h-11 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
           />
         </div>
 
@@ -73,7 +73,7 @@ const AvailabilityGeneratorCard = ({
           <button
             onClick={onGenerate}
             disabled={loading}
-            className="h-[42px] w-full rounded-lg border border-blue-600 bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_10px_18px_-16px_rgba(49,88,183,0.74)] transition-colors hover:border-blue-700 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
+            className="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_10px_18px_-16px_rgba(49,88,183,0.74)] transition-colors hover:border-blue-700 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
           >
             {loading ? 'Calculating...' : 'Generate Availability'}
           </button>

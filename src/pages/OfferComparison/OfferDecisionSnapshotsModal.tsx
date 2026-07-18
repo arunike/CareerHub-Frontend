@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Checkbox, Empty, Modal, Popconfirm, Tag, Tooltip, message } from 'antd';
+import { Button, Checkbox, Empty, Popconfirm, Tag, Tooltip, message } from 'antd';
 import { DeleteOutlined, LockOutlined, RollbackOutlined, UnlockOutlined } from '@ant-design/icons';
 import {
   deleteOfferDecisionSnapshot,
@@ -8,6 +8,8 @@ import {
   type OfferDecisionSnapshot,
 } from '../../api';
 import BulkActionHeader from '../../components/BulkActionHeader';
+import ModalShell from '../../components/ModalShell';
+import { PanelSkeleton } from '../../components/PageState';
 import type { OfferLike } from './calculations';
 
 type Props = {
@@ -134,10 +136,18 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
   };
 
   return (
-    <Modal open={open} title="Decision Snapshots" onCancel={onClose} footer={null} width={860}>
+    <ModalShell
+      isOpen={open}
+      title="Decision Snapshots"
+      onClose={onClose}
+      maxWidthClass="max-w-[860px]"
+      bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+    >
       {contextHolder}
       <div className="min-h-[320px]">
-        {snapshots.length === 0 && !loading ? (
+        {loading && snapshots.length === 0 ? (
+          <PanelSkeleton rows={5} />
+        ) : snapshots.length === 0 ? (
           <div className="flex min-h-[320px] w-full items-center justify-center">
             <Empty description="No decision snapshots yet" />
           </div>
@@ -178,20 +188,18 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
               />
             </div>
             {snapshots.map((snapshot) => (
-              <div
-                key={snapshot.id}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
+              <div key={snapshot.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
                     <Checkbox
                       className="mt-1"
                       checked={selectedSnapshotIds.includes(snapshot.id)}
                       onChange={(event) => toggleSelected(snapshot.id, event.target.checked)}
+                      aria-label={`Select ${snapshot.title || 'untitled snapshot'}`}
                     />
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="m-0 text-sm font-bold text-slate-900">
+                        <h3 className="m-0 text-sm font-semibold text-slate-900">
                           {snapshot.title || 'Untitled snapshot'}
                         </h3>
                         {snapshot.is_locked && <Tag color="gold">Locked</Tag>}
@@ -201,7 +209,7 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-1">
                     <Popconfirm
                       title="Restore this snapshot?"
                       description="This will update the offer card to match this saved decision."
@@ -209,17 +217,20 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                       onConfirm={() => handleRestore(snapshot)}
                     >
                       <Button
-                        size="small"
+                        size="middle"
                         icon={<RollbackOutlined />}
                         loading={restoringId === snapshot.id}
+                        className="min-h-10"
                       >
                         Restore
                       </Button>
                     </Popconfirm>
                     <Button
-                      size="small"
+                      size="middle"
                       icon={snapshot.is_locked ? <UnlockOutlined /> : <LockOutlined />}
                       onClick={() => handleToggleLock(snapshot)}
+                      className="min-h-10"
+                      aria-label={snapshot.is_locked ? 'Unlock snapshot' : 'Lock snapshot'}
                     />
                     <Popconfirm
                       title="Delete this snapshot?"
@@ -229,10 +240,12 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                       onConfirm={() => handleDelete(snapshot)}
                     >
                       <Button
-                        size="small"
+                        size="middle"
                         danger
                         icon={<DeleteOutlined />}
                         disabled={snapshot.is_locked}
+                        className="min-h-10"
+                        aria-label="Delete snapshot"
                       />
                     </Popconfirm>
                   </div>
@@ -267,7 +280,7 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
           </div>
         )}
       </div>
-    </Modal>
+    </ModalShell>
   );
 };
 

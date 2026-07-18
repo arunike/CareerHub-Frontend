@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, Modal } from 'antd';
+import { Button, Input } from 'antd';
+import Modal from '../../components/MobileModal';
 import { DollarCircleOutlined } from '@ant-design/icons';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import {
@@ -629,7 +630,7 @@ const HourlyBreakdown = ({
                     <button
                       type="button"
                       onClick={() => setActiveField('total_earnings_override')}
-                      className="text-[10px] font-semibold text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest bg-white border border-gray-200 hover:border-blue-200 hover:bg-blue-50 px-2.5 py-1 rounded-md shadow-sm"
+                      className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 text-xs font-semibold text-gray-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 sm:min-h-9"
                     >
                       Override
                     </button>

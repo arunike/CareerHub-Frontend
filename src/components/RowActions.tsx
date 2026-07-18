@@ -63,13 +63,20 @@ const RowActions: React.FC<RowActionsProps> = ({
             size={size}
             icon={isLocked ? <UnlockOutlined /> : <LockOutlined />}
             onClick={stopAndRun(onToggleLock)}
+            aria-label={lockTitle ?? (isLocked ? 'Unlock' : 'Lock')}
           />
         </Tooltip>
       ) : null}
 
       {onView ? (
         <Tooltip title={viewTitle}>
-          <Button type="text" size={size} icon={<EyeOutlined />} onClick={stopAndRun(onView)} />
+          <Button
+            type="text"
+            size={size}
+            icon={<EyeOutlined />}
+            onClick={stopAndRun(onView)}
+            aria-label={viewTitle}
+          />
         </Tooltip>
       ) : null}
 
@@ -81,6 +88,7 @@ const RowActions: React.FC<RowActionsProps> = ({
             icon={<EditOutlined />}
             onClick={stopAndRun(onEdit)}
             disabled={disableEdit}
+            aria-label={editTitle}
           />
         </Tooltip>
       ) : null}
@@ -92,6 +100,7 @@ const RowActions: React.FC<RowActionsProps> = ({
             size={size}
             icon={isPinned ? <PushpinFilled className="text-amber-500" /> : <PushpinOutlined />}
             onClick={stopAndRun(onTogglePin)}
+            aria-label={isPinned ? 'Unpin' : 'Pin to top'}
           />
         </Tooltip>
       ) : null}
@@ -106,6 +115,7 @@ const RowActions: React.FC<RowActionsProps> = ({
                 icon={<DeleteOutlined />}
                 disabled={disableDelete}
                 onClick={confirmDelete ? (e) => e.stopPropagation() : stopAndRun(onDelete)}
+                aria-label={deleteTitle}
               />
             );
             const withConfirm =

@@ -23,9 +23,12 @@ import {
   FileProtectOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { Button, message, Modal, Tooltip } from 'antd';
+import { Button, message, Tooltip } from 'antd';
+import Modal from '../../components/MobileModal';
 import IdentityAvatar from '../../components/IdentityAvatar';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import { PageState } from '../../components/PageState';
+import { SettingsSkeleton } from '../../components/SkeletonLoader';
 import { useAuth } from '../../context/AuthContext';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -365,14 +368,25 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  if (loading)
+  if (loading) return <SettingsSkeleton />;
+  if (!settings) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600" />
-      </div>
+      <>
+        {contextHolder}
+        <PageState
+          tone="error"
+          title="Profile could not be loaded"
+          description="Your saved profile was not changed. Check your connection and try loading it again."
+          actionLabel="Retry loading profile"
+          onAction={() => {
+            setLoading(true);
+            void fetchSettings();
+          }}
+          className="mt-12"
+        />
+      </>
     );
-  if (!settings)
-    return <div className="text-center py-12 text-red-600">Failed to load profile</div>;
+  }
 
   const profileName =
     firstName || lastName
@@ -412,27 +426,20 @@ const ProfilePage: React.FC = () => {
 
       <PageActionToolbar
         title="Profile Settings"
-        extraActions={
-          <Button
-            type="primary"
-            size="large"
-            icon={<SaveOutlined />}
-            loading={saving}
-            onClick={handleSaveGeneral}
-            className="rounded-xl h-12 px-8 bg-sky-600 hover:bg-sky-700 border-none shadow-lg shadow-sky-200 font-semibold"
-          >
-            Save All Changes
-          </Button>
-        }
+        subtitle="Manage your identity, security, and private account data."
+        onPrimaryAction={handleSaveGeneral}
+        primaryActionLabel="Save Changes"
+        primaryActionIcon={<SaveOutlined />}
+        primaryActionLoading={saving}
       />
 
-      <div className="grid grid-cols-12 gap-8 mt-6">
+      <div className="mt-6 grid grid-cols-12 gap-4 sm:gap-8">
         {/* Sidebar-style Profile Preview */}
         <aside className="col-span-12 lg:col-span-4 lg:sticky lg:top-8 lg:self-start">
           <div className="relative overflow-hidden rounded-[18px] border border-slate-200 bg-white">
             <div className="absolute inset-x-0 top-0 h-px bg-slate-900/20" />
 
-            <div className="relative p-6">
+            <div className="relative p-4 sm:p-6">
               <div className="mb-6 flex items-center justify-between gap-4">
                 <p className="text-[11px] font-bold uppercase text-slate-400">Identity</p>
                 <span className="text-[11px] font-bold uppercase text-slate-500">Signed in</span>
@@ -449,7 +456,10 @@ const ProfilePage: React.FC = () => {
                       size="lg"
                       className="h-full w-full border-0 p-0"
                     />
-                    <label className="absolute inset-1 flex cursor-pointer items-center justify-center rounded-2xl bg-slate-950/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <label
+                      className="absolute bottom-1 right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl bg-slate-950/70 opacity-100 transition-opacity duration-200 sm:inset-1 sm:h-auto sm:w-auto sm:rounded-2xl sm:opacity-0 sm:group-hover:opacity-100"
+                      aria-label="Upload profile photo"
+                    >
                       <CameraOutlined className="text-xl text-white" />
                       <input
                         type="file"
@@ -505,7 +515,8 @@ const ProfilePage: React.FC = () => {
                             setSaving(false);
                           }
                         }}
-                        className="absolute -top-1 -right-1 bg-white p-1.5 rounded-full border border-slate-200 text-slate-400 hover:text-rose-500 transition-all hover:scale-110"
+                        className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:text-rose-500 sm:-right-1 sm:-top-1 sm:h-8 sm:w-8"
+                        aria-label="Remove profile photo"
                       >
                         <CloseOutlined className="text-[10px]" />
                       </button>
@@ -549,17 +560,17 @@ const ProfilePage: React.FC = () => {
         </aside>
 
         {/* Form Area */}
-        <div className="col-span-12 lg:col-span-8 space-y-8">
+        <div className="profile-settings-content col-span-12 space-y-4 sm:space-y-8 lg:col-span-8">
           {/* General Section */}
           <section className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
+            <div className="flex items-center gap-3 border-b border-slate-50 px-4 py-4 sm:px-8 sm:py-6">
               <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
                 <IdcardOutlined />
               </div>
               <h3 className="text-base font-bold text-slate-800">Basic Information</h3>
             </div>
 
-            <div className="p-8 space-y-8">
+            <div className="space-y-6 p-4 sm:space-y-8 sm:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 ml-1">First Name</label>
@@ -607,7 +618,7 @@ const ProfilePage: React.FC = () => {
 
           {/* Security Section */}
           <section className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
+            <div className="flex items-center gap-3 border-b border-slate-50 px-4 py-4 sm:px-8 sm:py-6">
               <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
                 <LockOutlined />
               </div>
@@ -620,7 +631,7 @@ const ProfilePage: React.FC = () => {
               </Tooltip>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="space-y-6 p-4 sm:p-8">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 ml-1">Current Password</label>
                 <div className="relative group">
@@ -678,7 +689,7 @@ const ProfilePage: React.FC = () => {
           </section>
 
           <section className="bg-white rounded-[24px] border border-slate-200/60 shadow-sm overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
+            <div className="flex items-center gap-3 border-b border-slate-50 px-4 py-4 sm:px-8 sm:py-6">
               <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
                 <FileProtectOutlined />
               </div>
@@ -690,7 +701,7 @@ const ProfilePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="space-y-6 p-4 sm:p-8">
               {deletionScheduledFor && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
                   <div className="flex items-start gap-3">
@@ -719,7 +730,7 @@ const ProfilePage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                     <Button
                       loading={exporting}
                       icon={<DownloadOutlined />}
@@ -806,7 +817,7 @@ const ProfilePage: React.FC = () => {
               </div>
 
               <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5">
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
                   <DeleteOutlined className="text-lg text-rose-600 mt-0.5" />
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-black text-rose-950">Delete account</h4>
@@ -823,6 +834,7 @@ const ProfilePage: React.FC = () => {
                       setDeleteConfirm('');
                       setDeleteModalOpen(true);
                     }}
+                    className="w-full sm:w-auto"
                   >
                     Delete account
                   </Button>

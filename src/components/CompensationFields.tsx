@@ -161,7 +161,7 @@ const CompensationFields: React.FC<Props> = ({
   };
 
   const inputCls =
-    'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition';
+    'min-h-11 w-full rounded-lg border border-gray-200 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition sm:text-sm';
   const vestingEditor = (
     <div className="w-[320px] max-w-[calc(100vw-48px)]">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -175,7 +175,7 @@ const CompensationFields: React.FC<Props> = ({
           <button
             type="button"
             onClick={resetVestingToFull}
-            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+            className="min-h-11 rounded-lg px-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700"
           >
             Reset 100%
           </button>
@@ -205,7 +205,7 @@ const CompensationFields: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => setIsVestingOpen(false)}
-          className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+          className="min-h-11 rounded-lg px-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-700"
         >
           Done
         </button>
@@ -214,7 +214,7 @@ const CompensationFields: React.FC<Props> = ({
   );
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-3">
       {/* Base Salary */}
       <div>
         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
@@ -243,7 +243,7 @@ const CompensationFields: React.FC<Props> = ({
           <button
             type="button"
             onClick={handleBonusToggle}
-            className="text-[10px] text-blue-500 hover:text-blue-700 font-medium"
+            className="min-h-11 rounded-lg px-2 text-[11px] font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 sm:min-h-0 sm:px-0 sm:text-[10px]"
           >
             {bonusMode === '$' ? '% of base' : '$ amount'}
           </button>
@@ -304,9 +304,11 @@ const CompensationFields: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleEquityToggle('annual')}
-              className={
-                equityMode === 'annual' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
-              }
+              className={`min-h-11 min-w-11 rounded-lg px-2 sm:min-h-0 sm:min-w-0 sm:px-0 ${
+                equityMode === 'annual'
+                  ? 'bg-blue-50 text-blue-600 sm:bg-transparent'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:hover:bg-transparent'
+              }`}
             >
               /yr
             </button>
@@ -314,9 +316,11 @@ const CompensationFields: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleEquityToggle('total')}
-              className={
-                equityMode === 'total' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
-              }
+              className={`min-h-11 min-w-11 rounded-lg px-2 sm:min-h-0 sm:min-w-0 sm:px-0 ${
+                equityMode === 'total'
+                  ? 'bg-blue-50 text-blue-600 sm:bg-transparent'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:hover:bg-transparent'
+              }`}
             >
               total
             </button>
@@ -356,7 +360,7 @@ const CompensationFields: React.FC<Props> = ({
               >
                 <button
                   type="button"
-                  className="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-700"
+                  className="min-h-11 shrink-0 rounded-lg px-2 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                 >
                   Configure
                 </button>

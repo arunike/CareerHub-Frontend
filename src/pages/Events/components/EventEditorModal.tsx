@@ -5,12 +5,12 @@ import {
   DatePicker,
   Form,
   Input,
-  Modal,
   Row,
   Select,
   Space,
   Typography,
 } from 'antd';
+import Modal from '../../../components/MobileModal';
 import { EnvironmentOutlined, PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
 import type { EventCategory, RecurrenceRule } from '../../../types';

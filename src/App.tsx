@@ -1,10 +1,9 @@
-import { lazy, Suspense } from 'react';
-import { ConfigProvider } from 'antd';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Layout from './components/Layout';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
+import { PageState } from './components/PageState';
 import {
   PageHeaderSkeleton,
   MetricCardsSkeleton,
@@ -39,6 +38,55 @@ const NegotiationResultPage = lazy(() => import('./pages/NegotiationResult'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const LegalPage = lazy(() => import('./pages/Legal'));
 const PromotionReviewPage = lazy(() => import('./pages/Experience/PromotionReviewPage'));
+const Layout = lazy(() => import('./components/Layout'));
+const CareerHubThemeProvider = lazy(() => import('./components/CareerHubThemeProvider'));
+
+const getRouteTitle = (pathname: string, isAuthenticated: boolean) => {
+  if (pathname === '/') return isAuthenticated ? 'Availability | CareerHub' : 'CareerHub';
+  if (pathname === '/login') return 'Sign in | CareerHub';
+  if (pathname === '/privacy') return 'Privacy | CareerHub';
+  if (pathname === '/terms') return 'Terms | CareerHub';
+  if (pathname === '/events') return 'Events | CareerHub';
+  if (pathname === '/holidays') return 'Holidays | CareerHub';
+  if (pathname === '/analytics') return 'Analytics | CareerHub';
+  if (pathname === '/settings') return 'Settings | CareerHub';
+  if (pathname === '/applications') return 'Applications | CareerHub';
+  if (pathname === '/offers') return 'Offers | CareerHub';
+  if (pathname === '/documents') return 'Documents | CareerHub';
+  if (pathname === '/tasks') return 'Tasks | CareerHub';
+  if (pathname === '/experience') return 'Experience | CareerHub';
+  if (pathname === '/jd-reports') return 'Job match reports | CareerHub';
+  if (pathname === '/cover-letters' || pathname === '/ai-tools') {
+    return 'Intelligence | CareerHub';
+  }
+  if (pathname === '/profile') return 'Profile | CareerHub';
+  if (pathname.startsWith('/promotion-review/')) return 'Promotion review | CareerHub';
+  if (pathname.startsWith('/jd-report/')) return 'Job match report | CareerHub';
+  if (pathname.startsWith('/negotiation-result/')) return 'Negotiation result | CareerHub';
+  if (pathname === '/book' || pathname.startsWith('/book/')) return 'Book a time | CareerHub';
+  return 'Page not found | CareerHub';
+};
+
+const NotFoundPage = ({ standalone = false }: { standalone?: boolean }) => {
+  const navigate = useNavigate();
+  const content = (
+    <PageState
+      title="Page not found"
+      description="This link may be outdated, or the page may have moved. Your saved CareerHub data is unchanged."
+      actionLabel={standalone ? 'Go to home' : 'Go to dashboard'}
+      onAction={() => navigate('/', { replace: true })}
+      icon={<span className="text-sm font-bold">404</span>}
+    />
+  );
+
+  if (!standalone) return content;
+
+  return (
+    <main className="flex min-h-screen w-full min-w-0 items-center overflow-x-hidden bg-slate-50 px-4 py-12 sm:px-6">
+      {content}
+    </main>
+  );
+};
 
 const RouteFallback = () => {
   const path = window.location.pathname;
@@ -238,33 +286,49 @@ const RouteFallback = () => {
   );
 };
 
+const ThemedSurface = ({ children }: { children: ReactNode }) => (
+  <Suspense fallback={<RouteFallback />}>
+    <CareerHubThemeProvider>{children}</CareerHubThemeProvider>
+  </Suspense>
+);
+
 function AppRoutes() {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
-  const isPublicBooking = location.pathname.startsWith('/book/');
+  const isPublicBooking = location.pathname === '/book' || location.pathname.startsWith('/book/');
   const isStandalone = isPublicBooking;
   const isLoginPage = location.pathname === '/login';
   const isLegalPage = location.pathname === '/privacy' || location.pathname === '/terms';
   const isHomePage = location.pathname === '/';
 
+  useEffect(() => {
+    if (isLoading) return;
+    document.title = getRouteTitle(location.pathname, isAuthenticated);
+  }, [isAuthenticated, isLoading, location.pathname]);
+
   if (isStandalone) {
     return (
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/book/:uuid" element={<PublicBookingPage />} />
-          <Route path="/book/:uuid/:bookingUuid/:action" element={<PublicBookingPage />} />
-        </Routes>
-      </Suspense>
+      <ThemedSurface>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/book/:uuid" element={<PublicBookingPage />} />
+            <Route path="/book/:uuid/:bookingUuid/:action" element={<PublicBookingPage />} />
+            <Route path="*" element={<NotFoundPage standalone />} />
+          </Routes>
+        </Suspense>
+      </ThemedSurface>
     );
   }
 
   if (isLoginPage) {
     return (
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </Suspense>
+      <ThemedSurface>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </Suspense>
+      </ThemedSurface>
     );
   }
 
@@ -291,135 +355,43 @@ function AppRoutes() {
 
   return (
     <ProtectedRoute>
-      <Layout>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Availability />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/holidays" element={<Holidays />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/applications" element={<Applications />} />
-            <Route path="/offers" element={<OfferComparison />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/experience" element={<ExperiencePage />} />
-            <Route path="/jd-reports" element={<JDReportsListPage />} />
-            <Route path="/cover-letters" element={<AIToolsPage />} />
-            <Route path="/ai-tools" element={<AIToolsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/promotion-review/:id" element={<PromotionReviewPage />} />
-            <Route path="/jd-report/:id" element={<JDReportPage />} />
-            <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
-          </Routes>
-        </Suspense>
-      </Layout>
+      <ThemedSurface>
+        <Layout>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<Availability />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/holidays" element={<Holidays />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/applications" element={<Applications />} />
+              <Route path="/offers" element={<OfferComparison />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/experience" element={<ExperiencePage />} />
+              <Route path="/jd-reports" element={<JDReportsListPage />} />
+              <Route path="/cover-letters" element={<AIToolsPage />} />
+              <Route path="/ai-tools" element={<AIToolsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/promotion-review/:id" element={<PromotionReviewPage />} />
+              <Route path="/jd-report/:id" element={<JDReportPage />} />
+              <Route path="/negotiation-result/:id" element={<NegotiationResultPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </Layout>
+      </ThemedSurface>
     </ProtectedRoute>
   );
 }
 
 function App() {
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: '#2563eb',
-          colorPrimaryHover: '#1d4ed8',
-          colorPrimaryActive: '#1e40af',
-          colorLink: '#2563eb',
-          colorLinkHover: '#1d4ed8',
-          borderRadius: 9,
-          borderRadiusLG: 12,
-          borderRadiusSM: 5,
-          fontSize: 14,
-          fontSizeLG: 15,
-          fontFamily: `'Aptos', 'Geist', 'Satoshi', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`,
-          colorBgContainer: '#ffffff',
-          colorBgLayout: '#f8fafc',
-          colorBorder: '#e2e8f0',
-          colorBorderSecondary: '#f1f5f9',
-          colorTextBase: '#111827',
-          colorTextSecondary: '#475569',
-          colorTextTertiary: '#8a98a8',
-          boxShadow: '0 1px 2px 0 rgba(15, 23, 42, 0.05)',
-          boxShadowSecondary:
-            '0 18px 45px -30px rgba(15, 23, 42, 0.45), 0 4px 14px -12px rgba(15, 23, 42, 0.35)',
-          controlHeight: 38,
-          controlHeightLG: 44,
-          controlHeightSM: 30,
-          lineHeight: 1.6,
-        },
-        components: {
-          Button: {
-            fontWeight: 650,
-            primaryShadow: 'none',
-            defaultShadow: 'none',
-            dangerShadow: 'none',
-          },
-          Table: {
-            headerBg: '#f8fafc',
-            headerColor: '#475569',
-            headerSplitColor: 'transparent',
-            borderColor: '#f1f5f9',
-            rowHoverBg: '#fafbff',
-            cellPaddingBlock: 14,
-            cellPaddingInline: 18,
-            headerBorderRadius: 0,
-            fontSize: 14,
-          },
-          Card: {
-            paddingLG: 22,
-            boxShadowTertiary: 'none',
-          },
-          Input: {
-            activeShadow: '0 0 0 3px rgba(49,88,183,0.14)',
-            paddingInline: 14,
-          },
-          Select: {
-            optionSelectedBg: '#eff6ff',
-            optionActiveBg: '#f8fafc',
-          },
-          Menu: {
-            activeBarBorderWidth: 0,
-            itemSelectedBg: '#eff6ff',
-            itemSelectedColor: '#2563eb',
-            itemHoverBg: '#f8fafc',
-            subMenuItemBg: '#fafafa',
-            groupTitleColor: '#475569',
-            groupTitleFontSize: 11,
-          },
-          Modal: {
-            titleFontSize: 16,
-            titleLineHeight: 1.5,
-          },
-          Tag: {
-            borderRadiusSM: 20,
-          },
-          Tabs: {
-            inkBarColor: '#2563eb',
-            itemSelectedColor: '#2563eb',
-            itemHoverColor: '#1d4ed8',
-            titleFontSizeLG: 14,
-          },
-          Progress: {
-            defaultColor: '#2563eb',
-          },
-          Badge: {
-            colorPrimary: '#2563eb',
-          },
-          Tooltip: {
-            borderRadius: 8,
-            fontSize: 13,
-          },
-        },
-      }}
-    >
-      <Router>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </Router>
-    </ConfigProvider>
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
   );
 }
 

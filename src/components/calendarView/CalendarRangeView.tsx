@@ -29,11 +29,11 @@ const CalendarRangeView = ({
     dates.length === 1
       ? 'grid-cols-1'
       : dates.length === 3
-        ? 'grid-cols-3 min-w-[900px]'
-        : 'grid-cols-7 min-w-[1400px]';
+        ? 'grid-flow-col auto-cols-[minmax(280px,85vw)] md:min-w-[900px] md:grid-flow-row md:auto-cols-auto md:grid-cols-3'
+        : 'grid-flow-col auto-cols-[minmax(280px,85vw)] md:min-w-[1400px] md:grid-flow-row md:auto-cols-auto md:grid-cols-7';
 
   return (
-    <div className="overflow-x-auto">
+    <div className="-mx-4 snap-x snap-mandatory overflow-x-auto px-4 pb-2 md:mx-0 md:snap-none md:px-0 md:pb-0">
       <div className={clsx('grid gap-4', gridClassName)}>
         {dates.map((day) => {
           const dayData = getDayData(day);
@@ -44,7 +44,7 @@ const CalendarRangeView = ({
             <div
               key={day.toString()}
               className={clsx(
-                'enterprise-section overflow-hidden transition-all',
+                'enterprise-section snap-start overflow-hidden transition-all',
                 isSelected && 'ring-2 ring-blue-500 ring-inset'
               )}
             >

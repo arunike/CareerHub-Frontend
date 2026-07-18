@@ -15,6 +15,7 @@ import type { CareerApplication } from '../../types/application';
 import { message } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import PageActionToolbar from '../../components/PageActionToolbar';
+import { PageState } from '../../components/PageState';
 import { parseDateOnlyLocal } from '../../utils/dateOnly';
 
 import { MetricCardsSkeleton, SkeletonBlock } from '../../components/SkeletonLoader';
@@ -45,7 +46,9 @@ const Analytics: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [activeTab, setActiveTab] = useState<'availability' | 'career'>('availability');
   const [loading, setLoading] = useState(true);
+  const [availabilityError, setAvailabilityError] = useState(false);
   const [careerLoading, setCareerLoading] = useState(false);
+  const [careerError, setCareerError] = useState(false);
   const [hasLoadedCareer, setHasLoadedCareer] = useState(false);
 
   const [applications, setApplications] = useState<CareerApplication[]>([]);
@@ -70,11 +73,13 @@ const Analytics: React.FC = () => {
   const fetchAvailabilityAnalytics = useCallback(async () => {
     try {
       setLoading(true);
+      setAvailabilityError(false);
       const eventsResp = await getEvents();
       const eventsData = eventsResp.data;
 
       processAvailabilityData(eventsData);
     } catch (error) {
+      setAvailabilityError(true);
       messageApi.error('Error fetching analytics');
       console.error('Error fetching analytics:', error);
     } finally {
@@ -86,12 +91,14 @@ const Analytics: React.FC = () => {
     if (hasLoadedCareer || careerLoading) return;
     try {
       setCareerLoading(true);
+      setCareerError(false);
       const appsResp = await getApplications();
       const appsData = appsResp.data;
       setApplications(appsData);
       processCareerData(appsData);
       setHasLoadedCareer(true);
     } catch (error) {
+      setCareerError(true);
       messageApi.error('Error fetching job hunt analytics');
       console.error('Error fetching job hunt analytics:', error);
     } finally {
@@ -243,10 +250,11 @@ const Analytics: React.FC = () => {
       <div className="space-y-6 w-full animate-in fade-in duration-300">
         {contextHolder}
         <PageActionToolbar
-          title="Analytics Dashboard"
-          subtitle="Track availability patterns and job hunt performance."
+          title="Analytics"
+          subtitle="Review availability patterns and job search progress."
           extraActions={<div className="w-[180px] h-[38px] shimmer-bg rounded-lg" />}
           singleRowDesktop
+          showExtraActionsOnMobile
         />
         <SectionFallback />
       </div>
@@ -257,8 +265,8 @@ const Analytics: React.FC = () => {
     <div className="space-y-6 w-full">
       {contextHolder}
       <PageActionToolbar
-        title="Analytics Dashboard"
-        subtitle="Track availability patterns and job hunt performance."
+        title="Analytics"
+        subtitle="Review availability patterns and job search progress."
         extraActions={
           <SegmentedToggle
             value={activeTab}
@@ -272,24 +280,41 @@ const Analytics: React.FC = () => {
               },
               {
                 value: 'career',
-                label: 'Job Hunt',
+                label: 'Job Search',
                 activeClassName: 'bg-white text-blue-600 shadow-sm',
               },
             ]}
           />
         }
         singleRowDesktop
+        showExtraActionsOnMobile
       />
 
-      {activeTab === 'availability' && (
+      {activeTab === 'availability' && availabilityError ? (
+        <PageState
+          tone="error"
+          title="Availability analytics could not be loaded"
+          description="Your events were not changed. Check your connection and try loading the analysis again."
+          actionLabel="Retry availability analytics"
+          onAction={() => void fetchAvailabilityAnalytics()}
+        />
+      ) : activeTab === 'availability' ? (
         <Suspense fallback={<SectionFallback />}>
           <AvailabilityAnalytics stats={availabilityStats} />
         </Suspense>
-      )}
+      ) : null}
 
       {activeTab === 'career' && (
         <div className="space-y-6 animate-in fade-in duration-500">
-          {careerLoading ? (
+          {careerError ? (
+            <PageState
+              tone="error"
+              title="Job search analytics could not be loaded"
+              description="Your applications were not changed. Check your connection and try loading the analysis again."
+              actionLabel="Retry job search analytics"
+              onAction={() => void fetchCareerAnalytics()}
+            />
+          ) : careerLoading ? (
             <SectionFallback />
           ) : (
             <>

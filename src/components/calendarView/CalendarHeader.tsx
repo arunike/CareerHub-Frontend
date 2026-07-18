@@ -38,17 +38,17 @@ const CalendarHeader = ({
   onToggleFederal,
 }: Props) => {
   const filterButtonClassName = (active: boolean) =>
-    `inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors md:text-sm ${
+    `inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1 md:text-sm ${
       active
         ? 'border-gray-200 bg-white text-gray-700 shadow-sm hover:border-blue-200'
         : 'border-gray-200 bg-gray-50 text-gray-400 hover:text-gray-500'
     } ${loading ? 'cursor-not-allowed opacity-60' : ''}`;
 
   return (
-    <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+    <div className="mb-4 flex flex-col gap-4 sm:mb-6 xl:flex-row xl:items-start xl:justify-between">
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <h2 className="mr-auto flex min-w-0 items-center gap-2 text-lg font-bold text-gray-800 sm:text-xl">
             <CalendarOutlined className="text-xl text-blue-600" />
             {headerLabel}
           </h2>
@@ -58,7 +58,8 @@ const CalendarHeader = ({
               type="button"
               onClick={() => onShiftRange('prev')}
               disabled={loading}
-              className="rounded-full p-2 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Previous calendar period"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <LeftOutlined className="text-base text-gray-600" />
             </button>
@@ -66,7 +67,8 @@ const CalendarHeader = ({
               type="button"
               onClick={() => onShiftRange('next')}
               disabled={loading}
-              className="rounded-full p-2 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Next calendar period"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RightOutlined className="text-base text-gray-600" />
             </button>
@@ -76,13 +78,13 @@ const CalendarHeader = ({
             type="button"
             onClick={onGoToToday}
             disabled={loading}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Today
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           {categories.map((category) => {
             const categoryColor = getEventCategoryColor(category);
             const active = filters.eventCategoryIds.has(category.id);
@@ -179,7 +181,7 @@ const CalendarHeader = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-1">
+      <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         <SegmentedToggle
           value={viewMode}
           onChange={onViewModeChange}
