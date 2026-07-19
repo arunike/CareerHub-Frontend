@@ -68,6 +68,7 @@ import { getMediaUrl } from '../../lib/runtimeConfig';
 import { refineExperienceSkillsWithBrowserAI } from '../../lib/browserAi';
 import { isLLMConfigurationError } from '../../lib/llmClient';
 import { EmploymentBadge } from './ExperienceBadges';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   BADGE_CLASSES,
   DEFAULT_EMP_TYPES,
@@ -83,6 +84,8 @@ const { Title, Text } = Typography;
 const { Dragger } = Upload;
 
 const ExperiencePage: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -380,10 +383,23 @@ const ExperiencePage: React.FC = () => {
     }
   };
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditingExp(null);
     setModalOpen(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const action = params.get('action');
+    if (action === 'create') {
+      openAddModal();
+    } else if (action === 'import') {
+      setIsImportModalOpen(true);
+    } else {
+      return;
+    }
+    navigate('/experience', { replace: true });
+  }, [location.search, navigate, openAddModal]);
 
   const openEditModal = (exp: Experience) => {
     setEditingExp(exp);

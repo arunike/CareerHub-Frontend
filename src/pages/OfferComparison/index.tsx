@@ -46,6 +46,7 @@ import {
   estimateColIndexFromCity,
 } from './calculations';
 import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
 const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
@@ -114,6 +115,8 @@ const defaultScenarioDraft = (): SimulatedOffer => ({
 });
 
 const OfferComparison = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -153,6 +156,21 @@ const OfferComparison = () => {
   const [isAdvisorLoading, setIsAdvisorLoading] = useState(false);
   const [advisorResult, setAdvisorResult] = useState<any | null>(null);
   const [advisorError, setAdvisorError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const action = params.get('action');
+    if (action === 'current-job') {
+      setIsAddJobOpen(true);
+    } else if (action === 'scenario') {
+      setScenarioModalMode('add');
+      setEditingScenarioId(null);
+      setIsAddScenarioOpen(true);
+    } else {
+      return;
+    }
+    navigate('/offers', { replace: true });
+  }, [location.search, navigate]);
 
   const handleGetTransitionAdvice = async () => {
     try {

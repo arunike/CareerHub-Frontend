@@ -217,6 +217,35 @@ textarea::placeholder {
   font-weight: 700;
 }
 
+/* Mobile quick actions layer */
+.careerhub-quick-actions-drawer .ant-drawer-mask {
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.careerhub-quick-actions-drawer .ant-drawer-content {
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -24px 64px -36px rgba(15, 23, 42, 0.7);
+}
+
+.careerhub-quick-actions-drawer .ant-drawer-content-wrapper {
+  max-height: min(520px, calc(100dvh - 64px));
+}
+
+.mobile-bottom-nav button {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .careerhub-quick-actions-drawer *,
+  .mobile-bottom-nav button {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 /* Table refinements */
 .ant-table-thead > tr > th {
   font-weight: 750 !important;

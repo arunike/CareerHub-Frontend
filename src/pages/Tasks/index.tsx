@@ -209,6 +209,15 @@ const Tasks: React.FC = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'create') {
+      setModalMode('create');
+      setEditingTask(null);
+      form.resetFields();
+      form.setFieldsValue({ status: 'TODO', priority: 'MEDIUM' });
+      setIsModalOpen(true);
+      navigate('/tasks', { replace: true });
+      return;
+    }
     const taskIdParam = params.get('taskId');
     const modeParam = params.get('mode');
     if (!taskIdParam) return;
@@ -225,7 +234,7 @@ const Tasks: React.FC = () => {
     }
 
     navigate('/tasks', { replace: true });
-  }, [location.search, navigate, openEditModal, openViewModal, tasks]);
+  }, [form, location.search, navigate, openEditModal, openViewModal, tasks]);
 
   const closeTaskModal = () => {
     setIsModalOpen(false);
