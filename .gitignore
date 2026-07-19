@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Agent Generated Files
+docs/
+PRODUCT.md
+.impeccable/
