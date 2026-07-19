@@ -26,6 +26,7 @@ import { getCurrentYear } from '../../utils/yearFilter';
 import RowActions from '../../components/RowActions';
 import { PageState } from '../../components/PageState';
 import { usePersistedState } from '../../hooks/usePersistedState';
+import { useLocation, useNavigate } from 'react-router-dom';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
@@ -39,6 +40,8 @@ const isPaginatedDocumentsResponse = (
 ): data is PaginatedDocumentsResponse => !Array.isArray(data) && Array.isArray(data.results);
 
 const Documents: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -99,6 +102,13 @@ const Documents: React.FC = () => {
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') !== 'upload') return;
+    setIsUploadModalVisible(true);
+    navigate('/documents', { replace: true });
+  }, [location.search, navigate]);
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(documentsTotal / DOCUMENT_PAGE_SIZE));

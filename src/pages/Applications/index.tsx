@@ -455,7 +455,7 @@ const Applications = () => {
     }
   };
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditingId(null);
     setDetailApp(null);
     setDetailDrawerMode('view');
@@ -470,7 +470,20 @@ const Applications = () => {
       linked_document_ids: [],
     });
     setIsAddModalOpen(true);
-  };
+  }, [form]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const action = params.get('action');
+    if (action === 'create') {
+      openAddModal();
+    } else if (action === 'job-import') {
+      setIsJobImportModalOpen(true);
+    } else {
+      return;
+    }
+    navigate('/applications', { replace: true });
+  }, [location.search, navigate, openAddModal]);
 
   const closeJobImportModal = () => {
     setIsJobImportModalOpen(false);

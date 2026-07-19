@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider, Tooltip } from 'antd';
 import {
@@ -18,13 +18,21 @@ import {
   TrophyOutlined,
   RobotOutlined,
   LogoutOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import IdentityAvatar from './IdentityAvatar';
 import logo from '../assets/logo.png';
 import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
 import { useAuth } from '../context/AuthContext';
-import { getMobileToolbarItems, matchesMobileNavigationItem } from '../constants/mobileNavigation';
+import {
+  getMobileNavigationItemForLocation,
+  getMobileToolbarItems,
+  getRecentMobileNavigationKeys,
+  matchesMobileNavigationItem,
+  recordMobileNavigationUse,
+} from '../constants/mobileNavigation';
+import MobileQuickActions from './MobileQuickActions';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -45,11 +53,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
   const [mobileToolbarKeys, setMobileToolbarKeys] = useState<string[]>([]);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+  const [quickActionsSourceKey, setQuickActionsSourceKey] = useState<string>();
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressedLongPressClick = useRef<string | null>(null);
   const isDesktopSidebarCollapsed = Boolean(screens.lg && desktopCollapsed);
   const shouldLoadNotifications = Boolean(screens.lg || !collapsed);
 
@@ -99,6 +111,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       setCollapsed(true);
     }
   }, [screens.lg]);
+
+  useEffect(() => {
+    const currentItem = getMobileNavigationItemForLocation(location.pathname, location.search);
+    if (currentItem) recordMobileNavigationUse(currentItem.key);
+  }, [location.pathname, location.search]);
 
   const menuItems = [
     {
@@ -232,11 +249,55 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     location.pathname === '/cover-letters' || activeKey === '/ai-tools'
       ? '/ai-tools?tab=cover-letters'
       : activeKey;
-  const mobilePrimaryNavItems = getMobileToolbarItems(mobileToolbarKeys);
+  const mobilePrimaryNavItems = getMobileToolbarItems(mobileToolbarKeys, {
+    pathname: location.pathname,
+    recentKeys: getRecentMobileNavigationKeys(),
+  });
   const matchesNavKey = (key: string) =>
     matchesMobileNavigationItem(location.pathname, location.search, key);
   const isMoreActive =
     !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
+
+  const openQuickActions = (sourceKey?: string) => {
+    setCollapsed(true);
+    setQuickActionsSourceKey(sourceKey);
+    setQuickActionsOpen(true);
+  };
+
+  const navigateFromQuickActions = (destination: string) => {
+    const [pathname, search = ''] = destination.split('?');
+    const destinationItem = getMobileNavigationItemForLocation(
+      pathname,
+      search ? `?${search}` : ''
+    );
+    if (destinationItem) recordMobileNavigationUse(destinationItem.key);
+    setQuickActionsOpen(false);
+    setQuickActionsSourceKey(undefined);
+    navigate(destination);
+  };
+
+  const startLongPress = (pressKey: string, sourceKey?: string) => {
+    suppressedLongPressClick.current = null;
+    if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+    longPressTimer.current = window.setTimeout(() => {
+      suppressedLongPressClick.current = pressKey;
+      window.navigator.vibrate?.(10);
+      openQuickActions(sourceKey);
+    }, 450);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const consumeSuppressedLongPressClick = (pressKey: string) => {
+    if (suppressedLongPressClick.current !== pressKey) return false;
+    suppressedLongPressClick.current = null;
+    return true;
+  };
 
   const SidebarContent = (
     <div className="enterprise-shell flex h-full flex-col">
@@ -281,6 +342,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto py-3">
+        {!screens.lg && (
+          <div className="px-3 pb-2">
+            <button
+              type="button"
+              onClick={() => openQuickActions()}
+              className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 text-left text-sm font-bold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              <ThunderboltOutlined />
+              <span>Quick actions</span>
+            </button>
+          </div>
+        )}
         <ConfigProvider
           theme={{
             components: {
@@ -470,32 +543,64 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               const Icon = item.icon;
               return (
                 <button
-                  key={item.key}
+                  key={item.slotKey}
                   type="button"
-                  onClick={() => navigate(item.key)}
+                  onPointerDown={() => startLongPress(item.slotKey, item.key)}
+                  onPointerUp={cancelLongPress}
+                  onPointerCancel={cancelLongPress}
+                  onPointerLeave={cancelLongPress}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    cancelLongPress();
+                    openQuickActions(item.key);
+                  }}
+                  onClick={() => {
+                    if (consumeSuppressedLongPressClick(item.slotKey)) return;
+                    recordMobileNavigationUse(item.key);
+                    navigate(item.key);
+                  }}
                   className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
                     isActive
                       ? 'bg-blue-50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
+                  aria-description={`Press and hold for ${item.label} actions`}
                 >
                   <span className="text-lg">
                     <Icon />
                   </span>
-                  <span className="max-w-full truncate">{item.shortLabel}</span>
+                  <span className="flex max-w-full items-center gap-1 truncate">
+                    {item.isSmart && (
+                      <ThunderboltOutlined className="text-[9px]" aria-hidden="true" />
+                    )}
+                    <span className="truncate">{item.shortLabel}</span>
+                  </span>
                 </button>
               );
             })}
             <button
               type="button"
-              onClick={() => setCollapsed(false)}
+              onPointerDown={() => startLongPress('__more__')}
+              onPointerUp={cancelLongPress}
+              onPointerCancel={cancelLongPress}
+              onPointerLeave={cancelLongPress}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                cancelLongPress();
+                openQuickActions();
+              }}
+              onClick={() => {
+                if (consumeSuppressedLongPressClick('__more__')) return;
+                setCollapsed(false);
+              }}
               className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
                 isMoreActive || !collapsed
                   ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
               }`}
               aria-label="Open more navigation"
+              aria-description="Press and hold for quick actions"
             >
               <span className="text-lg">
                 <AppstoreOutlined />
@@ -505,6 +610,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
       ) : null}
+      {!screens.lg && (
+        <MobileQuickActions
+          open={quickActionsOpen}
+          sourceKey={quickActionsSourceKey}
+          onClose={() => {
+            setQuickActionsOpen(false);
+            setQuickActionsSourceKey(undefined);
+          }}
+          onNavigate={navigateFromQuickActions}
+        />
+      )}
     </AntLayout>
   );
 };

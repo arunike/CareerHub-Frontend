@@ -57,6 +57,7 @@ import EventViewModal from './components/EventViewModal';
 import { getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -82,6 +83,8 @@ const isPaginatedEventsResponse = (
 ): data is PaginatedEventsResponse => !Array.isArray(data) && Array.isArray(data.results);
 
 const Events = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const [form] = Form.useForm();
@@ -252,7 +255,7 @@ const Events = () => {
     }
   }, [messageApi]);
 
-  const ensureApplicationsLoaded = async () => {
+  const ensureApplicationsLoaded = useCallback(async () => {
     if (hasLoadedApplications) return;
 
     try {
@@ -263,7 +266,7 @@ const Events = () => {
       messageApi.error('Failed to load applications');
       console.error(error);
     }
-  };
+  }, [hasLoadedApplications, messageApi]);
 
   useEffect(() => {
     fetchData();
@@ -337,31 +340,41 @@ const Events = () => {
     customHolidays.length === 0 &&
     federalHolidays.length === 0;
 
-  const handleAdd = (date?: Date) => {
-    setEditingId(null);
-    setRecurrenceRule(null);
-    setLocationType('virtual');
-    setIsFormOpen(true);
-    void ensureApplicationsLoaded();
-    form.resetFields();
+  const handleAdd = useCallback(
+    (date?: Date) => {
+      setEditingId(null);
+      setRecurrenceRule(null);
+      setLocationType('virtual');
+      setIsFormOpen(true);
+      void ensureApplicationsLoaded();
+      form.resetFields();
 
-    const now = dayjs();
-    const roundedMinute = Math.ceil(now.minute() / 5) * 5;
-    const start =
-      roundedMinute === 60
-        ? now.add(1, 'hour').minute(0).second(0)
-        : now.minute(roundedMinute).second(0);
-    const end = start.add(defaultDuration, 'minute');
+      const now = dayjs();
+      const roundedMinute = Math.ceil(now.minute() / 5) * 5;
+      const start =
+        roundedMinute === 60
+          ? now.add(1, 'hour').minute(0).second(0)
+          : now.minute(roundedMinute).second(0);
+      const end = start.add(defaultDuration, 'minute');
 
-    form.setFieldsValue({
-      date: date ? dayjs(date) : dayjs(),
-      start_time: start,
-      end_time: end,
-      timezone: normalizeTimeZone(userTimezone),
-      category: defaultCategory ?? undefined,
-      location_type: 'virtual',
-    });
-  };
+      form.setFieldsValue({
+        date: date ? dayjs(date) : dayjs(),
+        start_time: start,
+        end_time: end,
+        timezone: normalizeTimeZone(userTimezone),
+        category: defaultCategory ?? undefined,
+        location_type: 'virtual',
+      });
+    },
+    [defaultCategory, defaultDuration, ensureApplicationsLoaded, form, userTimezone]
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') !== 'create') return;
+    handleAdd();
+    navigate('/events', { replace: true });
+  }, [handleAdd, location.search, navigate]);
 
   const handleCalendarHolidayAdd = (date: Date, target: CalendarHolidayTarget) => {
     setEditingHoliday(null);

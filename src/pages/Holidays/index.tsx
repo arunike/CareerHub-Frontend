@@ -77,6 +77,7 @@ import EventViewModal from '../Events/components/EventViewModal';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
 import { PageState } from '../../components/PageState';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -220,6 +221,8 @@ const GroupedHolidayItem = ({
 };
 
 const Holidays = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -289,6 +292,19 @@ const Holidays = () => {
   const [locationType, setLocationType] = useState<'in_person' | 'virtual' | 'hybrid'>('virtual');
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') !== 'create') return;
+    setActiveTab('custom');
+    setContentView('list');
+    navigate('/holidays', { replace: true });
+    window.setTimeout(() => {
+      const createForm = document.getElementById('holiday-create-form');
+      createForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      createForm?.querySelector<HTMLInputElement>('.ant-picker input')?.focus();
+    }, 120);
+  }, [location.search, navigate, setContentView]);
 
   const fetchData = React.useCallback(async () => {
     try {
@@ -914,7 +930,7 @@ const Holidays = () => {
   const renderHolidayListTab = (_tabKey: string, tabLabel: string) => (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       {/* Add Form */}
-      <Card title="Add New Holiday">
+      <Card id="holiday-create-form" title="Add New Holiday">
         <Form
           form={form}
           layout="vertical"
