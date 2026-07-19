@@ -24,6 +24,7 @@ import logo from '../assets/logo.png';
 import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
 import { useAuth } from '../context/AuthContext';
+import { getMobileToolbarItems, matchesMobileNavigationItem } from '../constants/mobileNavigation';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -43,6 +44,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
+  const [mobileToolbarKeys, setMobileToolbarKeys] = useState<string[]>([]);
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const location = useLocation();
@@ -63,6 +65,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     getUserSettings()
       .then((res) => {
         setHiddenNavItems(res.data.hidden_nav_items || []);
+        setMobileToolbarKeys(res.data.mobile_toolbar_items || []);
         setProfilePic(res.data.profile_picture);
         setDisplayName(res.data.display_name || user?.full_name || '');
       })
@@ -74,6 +77,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       const detail = (e as CustomEvent).detail;
       if (detail) {
         if (detail.hidden_nav_items !== undefined) setHiddenNavItems(detail.hidden_nav_items);
+        if (detail.mobile_toolbar_items !== undefined) {
+          setMobileToolbarKeys(detail.mobile_toolbar_items);
+        }
         if (detail.profile_picture !== undefined) setProfilePic(detail.profile_picture);
         if (detail.display_name !== undefined) setDisplayName(detail.display_name);
       }
@@ -226,14 +232,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     location.pathname === '/cover-letters' || activeKey === '/ai-tools'
       ? '/ai-tools?tab=cover-letters'
       : activeKey;
-  const mobilePrimaryNavItems = [
-    { key: '/', label: 'Home', icon: <DashboardOutlined /> },
-    { key: '/applications', label: 'Apps', icon: <SolutionOutlined /> },
-    { key: '/offers', label: 'Offers', icon: <DollarOutlined /> },
-    { key: '/analytics', label: 'Insights', icon: <LineChartOutlined /> },
-  ];
+  const mobilePrimaryNavItems = getMobileToolbarItems(mobileToolbarKeys);
   const matchesNavKey = (key: string) =>
-    key === '/' ? location.pathname === '/' : location.pathname.startsWith(key);
+    matchesMobileNavigationItem(location.pathname, location.search, key);
   const isMoreActive =
     !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
 
@@ -458,9 +459,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {!screens.lg ? (
         <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 bg-white shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)]">
-          <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-2 pt-2">
+          <div
+            className="mx-auto grid max-w-3xl gap-1 px-2 pt-2"
+            style={{
+              gridTemplateColumns: `repeat(${mobilePrimaryNavItems.length + 1}, minmax(0, 1fr))`,
+            }}
+          >
             {mobilePrimaryNavItems.map((item) => {
               const isActive = matchesNavKey(item.key);
+              const Icon = item.icon;
               return (
                 <button
                   key={item.key}
@@ -473,8 +480,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <span className="text-lg">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="text-lg">
+                    <Icon />
+                  </span>
+                  <span className="max-w-full truncate">{item.shortLabel}</span>
                 </button>
               );
             })}

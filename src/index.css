@@ -147,6 +147,76 @@ textarea::placeholder {
   border-color: rgba(37, 99, 235, 0.42) !important;
 }
 
+/* Mobile section navigation needs a full-size trigger and touch-friendly menu rows. */
+.careerhub-mobile-section-picker.ant-select {
+  min-height: 52px;
+}
+
+.careerhub-mobile-section-picker.ant-select .ant-select-selector {
+  min-height: 52px !important;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.careerhub-mobile-section-picker.ant-select .ant-select-selection-wrap {
+  min-height: 50px;
+}
+
+.careerhub-mobile-section-picker.ant-select .ant-select-selection-item {
+  display: flex;
+  align-items: center;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.careerhub-mobile-section-picker.ant-select .ant-select-arrow {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.careerhub-mobile-section-picker.ant-select-focused .ant-select-selector {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16) !important;
+}
+
+.careerhub-mobile-section-picker-popup.ant-select-dropdown {
+  padding: 6px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px -24px rgba(15, 23, 42, 0.42);
+}
+
+.careerhub-mobile-section-picker-popup .ant-select-item {
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.careerhub-mobile-section-picker-popup .ant-select-item-option-content {
+  display: flex;
+  align-items: center;
+}
+
+.careerhub-mobile-section-picker-popup
+  .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: #f1f5f9;
+}
+
+.careerhub-mobile-section-picker-popup
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
 /* Table refinements */
 .ant-table-thead > tr > th {
   font-weight: 750 !important;
