@@ -32,7 +32,7 @@ import {
   matchesMobileNavigationItem,
   recordMobileNavigationUse,
 } from '../constants/mobileNavigation';
-import MobileQuickActions from './MobileQuickActions';
+import MobileQuickActions, { hasMobileQuickActionsForSource } from './MobileQuickActions';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -541,19 +541,26 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             {mobilePrimaryNavItems.map((item) => {
               const isActive = matchesNavKey(item.key);
               const Icon = item.icon;
+              const hasQuickActions = hasMobileQuickActionsForSource(item.key);
               return (
                 <button
                   key={item.slotKey}
                   type="button"
-                  onPointerDown={() => startLongPress(item.slotKey, item.key)}
+                  onPointerDown={
+                    hasQuickActions ? () => startLongPress(item.slotKey, item.key) : undefined
+                  }
                   onPointerUp={cancelLongPress}
                   onPointerCancel={cancelLongPress}
                   onPointerLeave={cancelLongPress}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    cancelLongPress();
-                    openQuickActions(item.key);
-                  }}
+                  onContextMenu={
+                    hasQuickActions
+                      ? (event) => {
+                          event.preventDefault();
+                          cancelLongPress();
+                          openQuickActions(item.key);
+                        }
+                      : undefined
+                  }
                   onClick={() => {
                     if (consumeSuppressedLongPressClick(item.slotKey)) return;
                     recordMobileNavigationUse(item.key);
@@ -565,7 +572,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
-                  aria-description={`Press and hold for ${item.label} actions`}
+                  aria-description={
+                    hasQuickActions ? `Press and hold for ${item.label} actions` : undefined
+                  }
                 >
                   <span className="text-lg">
                     <Icon />
