@@ -16,7 +16,6 @@ import {
   DatePicker,
   Tooltip,
   Grid,
-  Checkbox,
   Pagination,
 } from 'antd';
 import {
@@ -61,6 +60,7 @@ import ModalShell from '../../components/ModalShell';
 import { PageState } from '../../components/PageState';
 import CoverLetterModal from './CoverLetterModal';
 import ApplicationDetailDrawer from './ApplicationDetailDrawer';
+import MobileApplicationCard from './MobileApplicationCard';
 import { getCurrentYear } from '../../utils/yearFilter';
 import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -148,6 +148,7 @@ const Applications = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [empTypeFilter, setEmpTypeFilter] = useState('ALL');
   const [locationFilter, setLocationFilter] = useState('ALL');
+  const [isLockedFilter, setIsLockedFilter] = useState<boolean | undefined>(undefined);
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'applicationsSelectedYear',
     getCurrentYear(),
@@ -186,7 +187,14 @@ const Applications = () => {
   useEffect(() => {
     setCurrentPage(1);
     setSelectedRowKeys([]);
-  }, [debouncedSearchText, statusFilter, empTypeFilter, locationFilter, selectedYear]);
+  }, [
+    debouncedSearchText,
+    statusFilter,
+    empTypeFilter,
+    locationFilter,
+    isLockedFilter,
+    selectedYear,
+  ]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -207,6 +215,7 @@ const Applications = () => {
         status: statusFilter !== 'ALL' ? statusFilter : undefined,
         employment_type: empTypeFilter !== 'ALL' ? empTypeFilter : undefined,
         location: locationFilter !== 'ALL' ? locationFilter : undefined,
+        is_locked: isLockedFilter !== undefined ? String(isLockedFilter) : undefined,
         year: selectedYear,
         ordering: applicationOrdering,
       });
@@ -232,6 +241,7 @@ const Applications = () => {
     currentPage,
     debouncedSearchText,
     empTypeFilter,
+    isLockedFilter,
     locationFilter,
     messageApi,
     selectedYear,
@@ -303,6 +313,18 @@ const Applications = () => {
       messageApi.error('Failed to delete application');
       console.error(error);
     }
+  };
+
+  const requestDeleteApplication = (application: CareerApplication) => {
+    const companyName = application.company_details?.name || 'this application';
+    Modal.confirm({
+      title: 'Delete application?',
+      content: `Delete ${application.role_title} at ${companyName}? This cannot be undone.`,
+      okText: 'Delete application',
+      okType: 'danger',
+      cancelText: 'Keep application',
+      onOk: () => handleDelete(application.id),
+    });
   };
 
   const handleDeleteAll = async () => {
@@ -733,17 +755,45 @@ const Applications = () => {
       {
         label: 'Matching records',
         value: applicationSummary.total.toLocaleString(),
-        tone: 'slate',
+        tone: 'slate' as const,
+        isActive: statusFilter === 'ALL' && isLockedFilter === undefined,
+        onClick: () => {
+          setStatusFilter('ALL');
+          setIsLockedFilter(undefined);
+        },
       },
       {
         label: 'Total interviews',
         value: applicationSummary.interviews.toLocaleString(),
-        tone: 'blue',
+        tone: 'blue' as const,
+        isActive: statusFilter === 'INTERVIEWS',
+        onClick: () => {
+          setStatusFilter('INTERVIEWS');
+          setIsLockedFilter(undefined);
+        },
       },
-      { label: 'Total offers', value: applicationSummary.offers.toLocaleString(), tone: 'emerald' },
-      { label: 'Total locked', value: applicationSummary.locked.toLocaleString(), tone: 'amber' },
+      {
+        label: 'Total offers',
+        value: applicationSummary.offers.toLocaleString(),
+        tone: 'emerald' as const,
+        isActive: statusFilter === 'OFFER',
+        onClick: () => {
+          setStatusFilter('OFFER');
+          setIsLockedFilter(undefined);
+        },
+      },
+      {
+        label: 'Total locked',
+        value: applicationSummary.locked.toLocaleString(),
+        tone: 'amber' as const,
+        isActive: isLockedFilter === true,
+        onClick: () => {
+          setStatusFilter('ALL');
+          setIsLockedFilter(true);
+        },
+      },
     ];
-  }, [applicationSummary]);
+  }, [applicationSummary, statusFilter, isLockedFilter]);
 
   const availableYears = useMemo(
     () => (typeof selectedYear === 'number' ? [selectedYear] : []),
@@ -864,7 +914,8 @@ const Applications = () => {
     Number(Boolean(searchText)) +
     Number(statusFilter !== 'ALL') +
     Number(empTypeFilter !== 'ALL') +
-    Number(locationFilter !== 'ALL');
+    Number(locationFilter !== 'ALL') +
+    Number(isLockedFilter !== undefined);
 
   const hasActiveSearchFilters = activeFilterCount > 0;
   const isYearFiltered = selectedYear !== 'all';
@@ -874,6 +925,7 @@ const Applications = () => {
     setStatusFilter('ALL');
     setEmpTypeFilter('ALL');
     setLocationFilter('ALL');
+    setIsLockedFilter(undefined);
     setCurrentPage(1);
   };
 
@@ -1106,10 +1158,22 @@ const Applications = () => {
       ) : (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {applicationMetrics.map((metric) => (
-            <section
+            <button
+              type="button"
               key={metric.label}
-              className="enterprise-card px-4 py-3.5 md:px-5 md:py-4"
+              onClick={metric.onClick}
               aria-label={metric.label}
+              className={`enterprise-card text-left transition-all duration-200 ease-in-out px-4 py-3.5 md:px-5 md:py-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 active:scale-[0.98] ${
+                metric.isActive
+                  ? metric.tone === 'blue'
+                    ? 'border-blue-400 bg-blue-50/40 shadow-inner'
+                    : metric.tone === 'emerald'
+                      ? 'border-emerald-400 bg-emerald-50/40 shadow-inner'
+                      : metric.tone === 'amber'
+                        ? 'border-amber-400 bg-amber-50/40 shadow-inner'
+                        : 'border-slate-400 bg-slate-100/70 shadow-inner'
+                  : 'hover:bg-slate-50/80 hover:border-slate-300 hover:shadow-md'
+              }`}
             >
               <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
                 {metric.label}
@@ -1127,7 +1191,7 @@ const Applications = () => {
               >
                 {metric.value}
               </div>
-            </section>
+            </button>
           ))}
         </div>
       )}
@@ -1171,10 +1235,14 @@ const Applications = () => {
                     size="large"
                     aria-label="Filter applications by status"
                     value={statusFilter}
-                    onChange={setStatusFilter}
+                    onChange={(value) => {
+                      setStatusFilter(value);
+                      setIsLockedFilter(undefined);
+                    }}
                     suffixIcon={<FilterOutlined />}
                   >
                     <Option value="ALL">All Statuses</Option>
+                    <Option value="INTERVIEWS">All Interviews</Option>
                     {appStages.map((stage) => (
                       <Option key={stage.key} value={stage.key}>
                         {stage.label}
@@ -1204,9 +1272,22 @@ const Applications = () => {
                     prefix={<GlobalOutlined className="text-gray-400" />}
                     allowClear
                   />
-                  <Text type="secondary" className="text-sm">
-                    {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
-                  </Text>
+                  <div className="flex items-center justify-between gap-3 pt-2">
+                    <Text type="secondary" className="text-sm">
+                      {applicationsTotal.toLocaleString()} result
+                      {applicationsTotal !== 1 ? 's' : ''}
+                    </Text>
+                    {hasActiveSearchFilters && (
+                      <Button
+                        size="small"
+                        type="link"
+                        onClick={clearApplicationFilters}
+                        className="flex items-center gap-1.5 !text-slate-500 hover:!text-sky-600 !p-0"
+                      >
+                        Clear filters
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -1227,11 +1308,15 @@ const Applications = () => {
               size="large"
               aria-label="Filter applications by status"
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(value) => {
+                setStatusFilter(value);
+                setIsLockedFilter(undefined);
+              }}
               style={{ width: 200 }}
               suffixIcon={<FilterOutlined />}
             >
               <Option value="ALL">All Statuses</Option>
+              <Option value="INTERVIEWS">All Interviews</Option>
               {appStages.map((stage) => (
                 <Option key={stage.key} value={stage.key}>
                   {stage.label}
@@ -1266,10 +1351,21 @@ const Applications = () => {
             {(searchText ||
               statusFilter !== 'ALL' ||
               empTypeFilter !== 'ALL' ||
-              locationFilter !== 'ALL') && (
-              <Text type="secondary" className="self-center text-sm">
-                {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
-              </Text>
+              locationFilter !== 'ALL' ||
+              isLockedFilter !== undefined) && (
+              <div className="flex items-center gap-3 self-center">
+                <Text type="secondary" className="text-sm">
+                  {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
+                </Text>
+                <Button
+                  size="small"
+                  type="link"
+                  onClick={clearApplicationFilters}
+                  className="flex items-center gap-1.5 !text-slate-500 hover:!text-sky-600 !p-0"
+                >
+                  Clear filters
+                </Button>
+              </div>
             )}
           </div>
         ))}
@@ -1307,104 +1403,19 @@ const Applications = () => {
               {paginatedData.map((record) => {
                 const isSelected = selectedRowKeys.includes(record.id);
                 return (
-                  <article
+                  <MobileApplicationCard
                     key={record.id}
-                    className={`enterprise-card p-4 ${
-                      isSelected ? 'border-blue-200 ring-2 ring-blue-100' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={(event) =>
-                          toggleSelectedApplication(record.id, event.target.checked)
-                        }
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-base font-semibold text-slate-900">
-                              {record.company_details?.name || 'Unknown company'}
-                            </div>
-                            <div className="mt-1 text-sm text-slate-600">{record.role_title}</div>
-                          </div>
-                          <StatusBadge status={record.status} stages={appStages} />
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                            Applied {formatDateOnly(record.date_applied, 'Unknown')}
-                          </span>
-                          {record.office_location || record.location ? (
-                            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                              {record.office_location || record.location}
-                            </span>
-                          ) : null}
-                          <EmploymentTypeBadge
-                            type={record.employment_type}
-                            employmentTypes={empTypes}
-                          />
-                          {record.is_locked ? (
-                            <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-                              Locked
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-2">
-                          <Button
-                            size="large"
-                            icon={<ThunderboltOutlined />}
-                            onClick={() => setCoverLetterApp(record)}
-                          >
-                            Letter
-                          </Button>
-                          <Button
-                            size="large"
-                            icon={<InboxOutlined />}
-                            onClick={() => openDetailDrawer(record)}
-                          >
-                            Details
-                          </Button>
-                          <Button size="large" onClick={() => openEditDrawer(record)}>
-                            Edit
-                          </Button>
-                          <Button
-                            size="large"
-                            icon={record.is_locked ? <UnlockOutlined /> : <LockOutlined />}
-                            onClick={() => toggleLock(record)}
-                          >
-                            {record.is_locked ? 'Unlock' : 'Lock'}
-                          </Button>
-                        </div>
-
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          {record.job_link ? (
-                            <Button
-                              size="large"
-                              icon={<GlobalOutlined />}
-                              onClick={() =>
-                                window.open(record.job_link || '', '_blank', 'noopener,noreferrer')
-                              }
-                            >
-                              Open Link
-                            </Button>
-                          ) : (
-                            <div />
-                          )}
-                          <Button
-                            danger
-                            size="large"
-                            icon={<DeleteOutlined />}
-                            disabled={record.is_locked}
-                            onClick={() => handleDelete(record.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
+                    application={record}
+                    applicationStages={appStages}
+                    employmentTypes={empTypes}
+                    selected={isSelected}
+                    onSelectionChange={(selected) => toggleSelectedApplication(record.id, selected)}
+                    onViewDetails={() => openDetailDrawer(record)}
+                    onGenerateLetter={() => setCoverLetterApp(record)}
+                    onEdit={() => openEditDrawer(record)}
+                    onToggleLock={() => toggleLock(record)}
+                    onDelete={() => requestDeleteApplication(record)}
+                  />
                 );
               })}
               {applicationsTotal > APPLICATION_PAGE_SIZE && (

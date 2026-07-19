@@ -15,9 +15,11 @@ export const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
 }) => {
   return (
     <div
+      aria-hidden="true"
       className={`shimmer-bg ${circle ? 'rounded-full' : 'rounded-lg'} ${className}`}
       style={{
         width,
+        maxWidth: '100%',
         height,
       }}
     />
@@ -175,9 +177,9 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
           className="enterprise-card p-5 flex flex-col justify-between gap-5 bg-white border border-slate-100"
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
               <SkeletonBlock width="44px" height="44px" circle className="shrink-0 opacity-90" />
-              <div className="space-y-2 flex-1">
+              <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <SkeletonBlock width="240px" height="1.1rem" className="font-semibold" />
                   <div className="h-5 rounded-full bg-blue-50/50 border border-blue-100/30 px-2 flex items-center">

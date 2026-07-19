@@ -124,7 +124,7 @@ const MobileToolbarSettings = ({ value, onChange }: MobileToolbarSettingsProps) 
           <h2 className="text-lg font-semibold text-gray-900">Mobile Toolbar</h2>
           <p className="mt-1 text-sm leading-5 text-slate-600">
             Drag up to four shortcuts into priority order. More always stays at the end. On mobile,
-            press and hold any shortcut for its actions.
+            press and hold a supported shortcut for actions from that page only.
           </p>
         </div>
         <Button

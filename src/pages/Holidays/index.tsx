@@ -78,6 +78,7 @@ import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayM
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
 import { PageState } from '../../components/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
+import SelectionCheckbox from '../../components/SelectionCheckbox';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -130,7 +131,8 @@ const GroupedHolidayItem = ({
       <List.Item.Meta
         avatar={
           <div className="flex items-center gap-3">
-            <Checkbox
+            <SelectionCheckbox
+              selectionLabel={`${item.description || 'holiday range'} from ${dayjs(startDate).format('MMMM D, YYYY')} to ${dayjs(endDate).format('MMMM D, YYYY')}`}
               checked={allSelected}
               indeterminate={someSelected}
               onChange={() => onSelectGroup(item.items, !allSelected)}
@@ -196,7 +198,8 @@ const GroupedHolidayItem = ({
                         <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
 
                         <Space size="middle" className="min-w-0 pl-2">
-                          <Checkbox
+                          <SelectionCheckbox
+                            selectionLabel={`holiday on ${dayjs(subItem.date).format('MMMM D, YYYY')}`}
                             checked={selectedIds.includes(subItem.id)}
                             onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
                           />
@@ -1035,6 +1038,7 @@ const Holidays = () => {
             defaultActions={
               <>
                 <Select
+                  aria-label="Sort holidays by"
                   value={sortBy}
                   onChange={setSortBy}
                   options={[
@@ -1044,6 +1048,7 @@ const Holidays = () => {
                   style={{ width: 120 }}
                 />
                 <Button
+                  aria-label={`Sort holidays ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
                   icon={
                     sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />
                   }
@@ -1120,7 +1125,8 @@ const Holidays = () => {
                   <List.Item.Meta
                     avatar={
                       <div className="flex items-center gap-3">
-                        <Checkbox
+                        <SelectionCheckbox
+                          selectionLabel={`${item.description || 'holiday'} on ${dayjs(item.date).format('MMMM D, YYYY')}`}
                           checked={selectedIds.includes(item.id)}
                           onChange={(e) => handleSelectChange(item.id, e.target.checked)}
                           style={{ marginTop: 8 }}

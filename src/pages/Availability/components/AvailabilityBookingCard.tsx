@@ -1,6 +1,9 @@
 import { LinkOutlined, SettingOutlined, StopOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { BookingIntakeQuestion, ShareLink } from '../../../types';
+
+const bookingFieldLabelClass =
+  'mb-1 ml-1 text-xs font-semibold uppercase tracking-wide text-gray-500';
 
 type Props = {
   shareLink: ShareLink | null;
@@ -68,6 +71,7 @@ const AvailabilityBookingCard = ({
   onReset,
 }: Props) => {
   const [showConfig, setShowConfig] = useState(false);
+  const bookingFormId = useId();
 
   const updateQuestion = (index: number, updates: Partial<BookingIntakeQuestion>) => {
     onIntakeQuestionsChange(
@@ -82,8 +86,8 @@ const AvailabilityBookingCard = ({
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <LinkOutlined className="text-gray-500" />
-            <label className="block text-sm font-medium text-gray-700">Public Booking Link</label>
+            <LinkOutlined aria-hidden="true" className="text-gray-500" />
+            <h2 className="text-sm font-semibold text-gray-800">Public Booking Link</h2>
           </div>
           <p className="text-xs text-gray-500 mb-2">
             People can only see and book your available slots. Event and holiday details stay
@@ -94,8 +98,9 @@ const AvailabilityBookingCard = ({
               <div className="flex items-center gap-2 mb-2">
                 <input
                   readOnly
+                  aria-label="Public booking link"
                   value={getShareLinkUrl()}
-                  className="w-full rounded-lg border-gray-300 border px-3 py-2 text-sm bg-gray-50"
+                  className="min-h-11 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">
@@ -123,24 +128,29 @@ const AvailabilityBookingCard = ({
             <>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                 <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                  <label htmlFor={`${bookingFormId}-title`} className={bookingFieldLabelClass}>
                     Page Title
                   </label>
                   <input
+                    id={`${bookingFormId}-title`}
                     value={shareTitle}
                     onChange={(e) => onShareTitleChange(e.target.value)}
-                    className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                    className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                     placeholder="e.g. Book a recruiter screen"
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                  <label
+                    htmlFor={`${bookingFormId}-display-name`}
+                    className={bookingFieldLabelClass}
+                  >
                     Display Name <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id={`${bookingFormId}-display-name`}
                     value={hostDisplayName}
                     onChange={(e) => onHostDisplayNameChange(e.target.value)}
-                    className={`rounded-lg border px-3 py-2 text-sm bg-white ${
+                    className={`min-h-11 rounded-lg border bg-white px-3 py-2 text-sm ${
                       !hostDisplayName.trim() && generatingLink
                         ? 'border-red-500'
                         : 'border-gray-300'
@@ -150,14 +160,15 @@ const AvailabilityBookingCard = ({
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                  <label htmlFor={`${bookingFormId}-host-email`} className={bookingFieldLabelClass}>
                     Host Email <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id={`${bookingFormId}-host-email`}
                     type="email"
                     value={hostEmail}
                     onChange={(e) => onHostEmailChange(e.target.value)}
-                    className={`rounded-lg border px-3 py-2 text-sm bg-white ${
+                    className={`min-h-11 rounded-lg border bg-white px-3 py-2 text-sm ${
                       !hostEmail.trim() && generatingLink ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="e.g. john@example.com"
@@ -165,28 +176,39 @@ const AvailabilityBookingCard = ({
                   />
                 </div>
                 <div className="flex flex-col md:col-span-2 lg:col-span-3">
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                  <label
+                    htmlFor={`${bookingFormId}-public-note`}
+                    className={bookingFieldLabelClass}
+                  >
                     Recruiter-facing Note
                   </label>
                   <textarea
+                    id={`${bookingFormId}-public-note`}
                     value={publicNote}
                     onChange={(e) => onPublicNoteChange(e.target.value)}
-                    className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white min-h-20"
+                    className="min-h-20 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                     placeholder="e.g. Please include role, company, and interview format."
                   />
                 </div>
               </div>
 
               {showConfig && (
-                <div className="mt-4 grid grid-cols-1 gap-3 border-t border-gray-50 pt-4 animate-in fade-in slide-in-from-top-1 duration-200 sm:grid-cols-2 md:grid-cols-4">
+                <div
+                  id={`${bookingFormId}-config-panel`}
+                  className="animate-in mt-4 grid grid-cols-1 gap-3 border-t border-gray-50 pt-4 duration-200 fade-in slide-in-from-top-1 sm:grid-cols-2 md:grid-cols-4"
+                >
                   <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                    <label
+                      htmlFor={`${bookingFormId}-expires-in`}
+                      className={bookingFieldLabelClass}
+                    >
                       Expires In
                     </label>
                     <select
+                      id={`${bookingFormId}-expires-in`}
                       value={shareDuration}
                       onChange={(e) => onShareDurationChange(Number(e.target.value))}
-                      className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                      className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                     >
                       <option value={7}>7 days</option>
                       <option value={14}>14 days</option>
@@ -194,13 +216,14 @@ const AvailabilityBookingCard = ({
                     </select>
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                    <label htmlFor={`${bookingFormId}-duration`} className={bookingFieldLabelClass}>
                       Duration
                     </label>
                     <select
+                      id={`${bookingFormId}-duration`}
                       value={bookingBlockMinutes}
                       onChange={(e) => onBookingBlockMinutesChange(Number(e.target.value))}
-                      className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                      className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                     >
                       <option value={15}>15 min</option>
                       <option value={20}>20 min</option>
@@ -212,13 +235,14 @@ const AvailabilityBookingCard = ({
                     </select>
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                    <label htmlFor={`${bookingFormId}-buffer`} className={bookingFieldLabelClass}>
                       Buffer
                     </label>
                     <select
+                      id={`${bookingFormId}-buffer`}
                       value={bufferMinutes}
                       onChange={(e) => onBufferMinutesChange(Number(e.target.value))}
-                      className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                      className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                     >
                       <option value={0}>No buffer</option>
                       <option value={5}>5 min</option>
@@ -231,13 +255,17 @@ const AvailabilityBookingCard = ({
                     </select>
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                    <label
+                      htmlFor={`${bookingFormId}-daily-limit`}
+                      className={bookingFieldLabelClass}
+                    >
                       Daily Limit
                     </label>
                     <select
+                      id={`${bookingFormId}-daily-limit`}
                       value={maxBookingsPerDay}
                       onChange={(e) => onMaxBookingsPerDayChange(Number(e.target.value))}
-                      className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                      className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                     >
                       <option value={0}>No limit</option>
                       <option value={1}>Max 1/day</option>
@@ -249,16 +277,20 @@ const AvailabilityBookingCard = ({
                     </select>
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 ml-1">
+                    <label
+                      htmlFor={`${bookingFormId}-change-cutoff`}
+                      className={bookingFieldLabelClass}
+                    >
                       Change Cutoff
                     </label>
                     <select
+                      id={`${bookingFormId}-change-cutoff`}
                       value={rescheduleCancelDeadlineHours}
                       onChange={(e) =>
                         onRescheduleCancelDeadlineHoursChange(Number(e.target.value))
                       }
                       disabled={!allowRescheduleCancel}
-                      className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                      className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
                     >
                       <option value={0}>No cutoff</option>
                       <option value={2}>2 hours before</option>
@@ -268,7 +300,7 @@ const AvailabilityBookingCard = ({
                       <option value={48}>48 hours before</option>
                     </select>
                   </div>
-                  <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 md:col-span-2">
+                  <label className="flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 md:col-span-2">
                     <input
                       type="checkbox"
                       checked={allowRescheduleCancel}
@@ -278,9 +310,7 @@ const AvailabilityBookingCard = ({
                   </label>
                   <div className="md:col-span-4">
                     <div className="mb-2 flex items-center justify-between">
-                      <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider ml-1">
-                        Intake Questions
-                      </label>
+                      <div className={bookingFieldLabelClass}>Intake Questions</div>
                       <button
                         type="button"
                         onClick={() =>
@@ -289,7 +319,7 @@ const AvailabilityBookingCard = ({
                             { id: `q_${Date.now()}`, label: '', required: false },
                           ])
                         }
-                        className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                        className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 hover:bg-gray-50"
                       >
                         Add question
                       </button>
@@ -304,15 +334,16 @@ const AvailabilityBookingCard = ({
                         intakeQuestions.map((question, index) => (
                           <div
                             key={question.id}
-                            className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2"
+                            className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]"
                           >
                             <input
+                              aria-label={`Question ${index + 1}`}
                               value={question.label}
                               onChange={(e) => updateQuestion(index, { label: e.target.value })}
-                              className="rounded-lg border-gray-300 border px-3 py-2 text-sm bg-white"
+                              className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
                               placeholder="e.g. Which company is this for?"
                             />
-                            <label className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-600">
+                            <label className="flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600">
                               <input
                                 type="checkbox"
                                 checked={!!question.required}
@@ -324,12 +355,13 @@ const AvailabilityBookingCard = ({
                             </label>
                             <button
                               type="button"
+                              aria-label={`Remove question ${index + 1}`}
                               onClick={() =>
                                 onIntakeQuestionsChange(
                                   intakeQuestions.filter((_, idx) => idx !== index)
                                 )
                               }
-                              className="rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-500 hover:text-red-600"
+                              className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-500 hover:text-red-600"
                             >
                               Remove
                             </button>
@@ -348,7 +380,10 @@ const AvailabilityBookingCard = ({
           {!shareLink ? (
             <>
               <button
+                type="button"
                 onClick={() => setShowConfig(!showConfig)}
+                aria-expanded={showConfig}
+                aria-controls={`${bookingFormId}-config-panel`}
                 className={`min-h-11 px-4 py-2 border text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
                   showConfig
                     ? 'bg-gray-100 border-gray-300 text-gray-700'
@@ -356,6 +391,7 @@ const AvailabilityBookingCard = ({
                 }`}
               >
                 <SettingOutlined
+                  aria-hidden="true"
                   className={
                     showConfig
                       ? 'rotate-90 transition-transform duration-300'
@@ -365,6 +401,7 @@ const AvailabilityBookingCard = ({
                 {showConfig ? 'Hide Config' : 'Config'}
               </button>
               <button
+                type="button"
                 onClick={onGenerateShareLink}
                 disabled={generatingLink}
                 className="min-h-11 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-70 shadow-sm transition-all active:scale-[0.98]"
@@ -375,18 +412,21 @@ const AvailabilityBookingCard = ({
           ) : (
             <>
               <button
+                type="button"
                 onClick={onCopyShareLink}
                 className="min-h-11 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm"
               >
                 Copy Link
               </button>
               <button
+                type="button"
                 onClick={onReset}
                 className="min-h-11 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
               >
                 Create Another
               </button>
               <button
+                type="button"
                 onClick={onDeactivateShareLink}
                 disabled={deactivatingLink}
                 className="min-h-11 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-70 flex items-center justify-center gap-2"

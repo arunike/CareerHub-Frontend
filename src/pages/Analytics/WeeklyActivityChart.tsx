@@ -1,5 +1,6 @@
 import { RiseOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ANALYTICS_CHART_INITIAL_DIMENSION } from '../../constants/chartDimensions';
 
 type WeeklyActivityPoint = {
   date: string;
@@ -34,7 +35,13 @@ const WeeklyActivityChart = ({ data }: Props) => {
         <h3 className="text-lg font-semibold text-gray-900">Weekly Activity (Last 12 Weeks)</h3>
       </div>
       <div className="h-[280px] w-full sm:h-75">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={0}
+          minHeight={1}
+          initialDimension={ANALYTICS_CHART_INITIAL_DIMENSION}
+        >
           <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="activityBarGradient" x1="0" y1="0" x2="0" y2="1">

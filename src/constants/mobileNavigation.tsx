@@ -18,13 +18,13 @@ export const MOBILE_NAVIGATION_RECENT_STORAGE_KEY = 'careerhub.mobileNav.recent.
 export const MOBILE_NAVIGATION_ITEMS = [
   { key: '/', label: 'Availability', shortLabel: 'Home', icon: DashboardOutlined },
   { key: '/events', label: 'Events', shortLabel: 'Events', icon: CalendarOutlined },
-  { key: '/holidays', label: 'Holidays', shortLabel: 'Holidays', icon: ScheduleOutlined },
+  { key: '/holidays', label: 'Holidays', shortLabel: 'Days', icon: ScheduleOutlined },
   { key: '/applications', label: 'Applications', shortLabel: 'Apps', icon: SolutionOutlined },
   { key: '/offers', label: 'Offers', shortLabel: 'Offers', icon: DollarOutlined },
   { key: '/documents', label: 'Documents', shortLabel: 'Docs', icon: FileTextOutlined },
   { key: '/tasks', label: 'Action Items', shortLabel: 'Tasks', icon: CheckSquareOutlined },
-  { key: '/experience', label: 'Experience', shortLabel: 'Experience', icon: TrophyOutlined },
-  { key: '/jd-reports', label: 'JD Reports', shortLabel: 'JD Reports', icon: RobotOutlined },
+  { key: '/experience', label: 'Experience', shortLabel: 'Career', icon: TrophyOutlined },
+  { key: '/jd-reports', label: 'JD Reports', shortLabel: 'Reports', icon: RobotOutlined },
   {
     key: '/ai-tools?tab=cover-letters',
     label: 'Cover Letters',
@@ -34,7 +34,7 @@ export const MOBILE_NAVIGATION_ITEMS = [
   {
     key: '/ai-tools?tab=negotiation-results',
     label: 'Negotiation Results',
-    shortLabel: 'Negotiation',
+    shortLabel: 'Advice',
     icon: RobotOutlined,
   },
   {
@@ -43,12 +43,13 @@ export const MOBILE_NAVIGATION_ITEMS = [
     shortLabel: 'Reviews',
     icon: RobotOutlined,
   },
-  { key: '/analytics', label: 'Analytics', shortLabel: 'Insights', icon: LineChartOutlined },
+  { key: '/analytics', label: 'Analytics', shortLabel: 'Stats', icon: LineChartOutlined },
 ] as const;
 
 export const DEFAULT_MOBILE_TOOLBAR_KEYS = ['/', '/applications', '/offers', '/analytics'] as const;
 
 export type MobileNavigationItem = (typeof MOBILE_NAVIGATION_ITEMS)[number];
+export type MobileNavigationKey = MobileNavigationItem['key'];
 
 export type MobileToolbarSlot = {
   key: string;

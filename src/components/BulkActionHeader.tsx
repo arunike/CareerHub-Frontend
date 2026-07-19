@@ -1,5 +1,6 @@
 import React from 'react';
-import { Space, Typography, Checkbox, Button } from 'antd';
+import { Space, Typography, Button } from 'antd';
+import SelectionCheckbox from './SelectionCheckbox';
 
 const { Title } = Typography;
 
@@ -30,7 +31,8 @@ const BulkActionHeader: React.FC<BulkActionHeaderProps> = ({
     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
       <div className="flex items-center gap-3">
         {onSelectAll && (
-          <Checkbox
+          <SelectionCheckbox
+            selectionLabel={`all ${totalCount} items`}
             checked={allSelected}
             indeterminate={someSelected}
             onChange={(e) => onSelectAll(e.target.checked)}

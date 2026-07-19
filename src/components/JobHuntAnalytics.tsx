@@ -130,7 +130,7 @@ const SortableItem = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={className}>
+    <div ref={setNodeRef} style={style} className={`min-w-0 ${className || ''}`}>
       <div className="relative group h-full">
         <div
           {...attributes}

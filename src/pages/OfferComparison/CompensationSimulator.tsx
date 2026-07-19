@@ -1,16 +1,16 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { InputNumber, Select, Tooltip } from 'antd';
+import { InputNumber, Select } from 'antd';
 import {
   BankOutlined,
   CarOutlined,
   CoffeeOutlined,
   DollarOutlined,
-  InfoCircleOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
 import CompensationSimulatorMobile from './CompensationSimulatorMobile';
+import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
 
 type OfferWithCompFields = ScenarioRow['offer'] & {
   base_salary?: number;
@@ -36,10 +36,12 @@ const formatCurrency = (value: number, options?: Intl.NumberFormatOptions) =>
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const Explain = ({ title }: { title: ReactNode }) => (
-  <Tooltip title={title} placement="top">
-    <InfoCircleOutlined className="ml-1 inline-flex cursor-help text-[11px] text-slate-400" />
-  </Tooltip>
+const Explain = ({ label, title }: { label: string; title: ReactNode }) => (
+  <HelpTooltipTrigger
+    title={title}
+    ariaLabel={`Explain ${label}`}
+    className="ml-1 text-slate-400"
+  />
 );
 
 const getEquityGrowth = (preset: EquityPreset, customGrowthPct: number) => {
@@ -295,39 +297,32 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             icon: <BankOutlined />,
             label: 'Best leftover/mo',
             value: formatCurrency(strongestMonthly),
+            help: 'Highest monthly leftover among visible offers. Formula: take-home/mo minus rent, commute, and net food cost.',
           },
           {
             icon: <LineChartOutlined />,
             label: 'Equity scenario',
             value: `${equityGrowthPct > 0 ? '+' : ''}${equityGrowthPct}%`,
+            help: 'Applies this stock growth or decline assumption to each future vesting year before equity tax.',
           },
           {
             icon: <CarOutlined />,
             label: 'Commute mode',
             value: commuteOverride == null ? 'Saved per offer' : formatCurrency(commuteOverride),
+            help: "Uses each offer's saved commute cost unless you enter a monthly override above.",
           },
           {
             icon: <CoffeeOutlined />,
             label: 'Food budget',
             value: formatCurrency(monthlyFoodBudget),
+            help: 'Monthly food budget before subtracting any saved company food perk.',
           },
         ].map((item) => (
           <div key={item.label} className="px-5 py-4 border-r border-slate-100 last:border-r-0">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
               <span className="text-slate-400">{item.icon}</span>
               {item.label}
-              {item.label === 'Best leftover/mo' && (
-                <Explain title="Highest monthly leftover among visible offers. Formula: take-home/mo minus rent, commute, and net food cost." />
-              )}
-              {item.label === 'Equity scenario' && (
-                <Explain title="Applies this stock growth or decline assumption to each future vesting year before equity tax." />
-              )}
-              {item.label === 'Commute mode' && (
-                <Explain title="Uses each offer's saved commute cost unless you enter a monthly override above." />
-              )}
-              {item.label === 'Food budget' && (
-                <Explain title="Monthly food budget before subtracting any saved company food perk." />
-              )}
+              <Explain label={item.label} title={item.help} />
             </div>
             <div className="mt-1 text-lg font-bold text-slate-950">{item.value}</div>
           </div>
@@ -341,31 +336,52 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
               <th className="text-left font-bold px-5 py-3">Offer</th>
               <th className="text-right font-bold px-4 py-3">
                 Take-home/mo
-                <Explain title="Main value is after tax: base cash + bonus + first-year equity vesting, divided by 12. The small line shows the pre-tax monthly equivalent and tax rates." />
+                <Explain
+                  label="monthly take-home"
+                  title="Main value is after tax: base cash + bonus + first-year equity vesting, divided by 12. The small line shows the pre-tax monthly equivalent and tax rates."
+                />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Year-1/mo
-                <Explain title="Take-home/mo plus sign-on spread across the first 12 months. Small line compares after-tax and pre-tax sign-on." />
+                <Explain
+                  label="first-year monthly value"
+                  title="Take-home/mo plus sign-on spread across the first 12 months. Small line compares after-tax and pre-tax sign-on."
+                />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Rent
-                <Explain title="Saved monthly rent estimate or your rent override. Saved estimates scale from the reference rent by local cost-of-living index." />
+                <Explain
+                  label="monthly rent"
+                  title="Saved monthly rent estimate or your rent override. Saved estimates scale from the reference rent by local cost-of-living index."
+                />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Commute
-                <Explain title="Saved commute cost annualized from daily/monthly/yearly, then divided by 12, or your monthly override." />
+                <Explain
+                  label="monthly commute cost"
+                  title="Saved commute cost annualized from daily/monthly/yearly, then divided by 12, or your monthly override."
+                />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Food
-                <Explain title="Monthly food budget minus the monthly value of any saved company food perk. Never drops below $0." />
+                <Explain
+                  label="monthly food cost"
+                  title="Monthly food budget minus the monthly value of any saved company food perk. Never drops below $0."
+                />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 PTO value
-                <Explain title="Estimated pre-tax PTO value: (base salary + bonus) divided by 260 workdays, multiplied by PTO days. Unlimited PTO is shown as Unlimited." />
+                <Explain
+                  label="PTO value"
+                  title="Estimated pre-tax PTO value: (base salary + bonus) divided by 260 workdays, multiplied by PTO days. Unlimited PTO is shown as Unlimited."
+                />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Leftover/mo
-                <Explain title="Take-home/mo minus monthly rent, commute, and net food cost. This is cash-flow leftover before other personal expenses." />
+                <Explain
+                  label="monthly leftover"
+                  title="Take-home/mo minus monthly rent, commute, and net food cost. This is cash-flow leftover before other personal expenses."
+                />
               </th>
             </tr>
           </thead>
@@ -384,77 +400,33 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                   <div className="mt-1 text-xs text-slate-500">{item.row.homeLocationLabel}</div>
                 </td>
                 <td className="px-4 py-4 text-right font-semibold text-slate-900">
-                  <Tooltip
-                    title={
-                      <div>
-                        <div>Before-tax cash/mo: {formatCurrency(item.preTaxCashMonthly)}</div>
-                        <div>After-tax cash/mo: {formatCurrency(item.afterTaxCashMonthly)}</div>
-                        <div>Before-tax equity/mo: {formatCurrency(item.grossEquityMonthly)}</div>
-                        <div>After-tax equity/mo: {formatCurrency(item.equityMonthly)}</div>
-                        <div>
-                          Tax rates: base {item.row.usedBaseTaxRate}%, bonus{' '}
-                          {item.row.usedBonusTaxRate}%, equity {item.row.usedEquityTaxRate}%
-                        </div>
-                      </div>
-                    }
-                  >
-                    <div className="cursor-help">
-                      <div>{formatCurrency(item.monthlyTakeHome)}</div>
-                      <div className="mt-0.5 text-[10px] font-medium text-slate-400">
-                        Before tax{' '}
-                        {formatCurrency(item.preTaxCashMonthly + item.grossEquityMonthly)}
-                      </div>
-                      <div className="text-[10px] font-medium text-slate-400">
-                        Tax {item.row.usedBaseTaxRate}% / {item.row.usedBonusTaxRate}% /{' '}
-                        {item.row.usedEquityTaxRate}%
-                      </div>
-                    </div>
-                  </Tooltip>
+                  <div>{formatCurrency(item.monthlyTakeHome)}</div>
+                  <div className="mt-0.5 text-[10px] font-medium text-slate-400">
+                    Before tax {formatCurrency(item.preTaxCashMonthly + item.grossEquityMonthly)}
+                  </div>
+                  <div className="text-[10px] font-medium text-slate-400">
+                    Tax {item.row.usedBaseTaxRate}% / {item.row.usedBonusTaxRate}% /{' '}
+                    {item.row.usedEquityTaxRate}%
+                  </div>
                 </td>
                 <td className="px-4 py-4 text-right">
-                  <Tooltip
-                    title={`Take-home/mo + sign-on/mo. Sign-on before tax: ${formatCurrency(item.preTaxSignOnMonthly)}; after tax: ${formatCurrency(item.afterTaxSignOnMonthly)}.`}
-                  >
-                    <div className="cursor-help">
-                      <div className="font-semibold text-slate-900">
-                        {formatCurrency(item.yearOneMonthly)}
-                      </div>
-                      {item.preTaxSignOnMonthly > 0 && (
-                        <div className="mt-0.5 text-[10px] font-medium text-slate-400">
-                          Sign-on before tax {formatCurrency(item.preTaxSignOnMonthly)}
-                        </div>
-                      )}
+                  <div className="font-semibold text-slate-900">
+                    {formatCurrency(item.yearOneMonthly)}
+                  </div>
+                  {item.preTaxSignOnMonthly > 0 && (
+                    <div className="mt-0.5 text-[10px] font-medium text-slate-400">
+                      Sign-on before tax {formatCurrency(item.preTaxSignOnMonthly)}
                     </div>
-                  </Tooltip>
+                  )}
                 </td>
                 <td className="px-4 py-4 text-right text-slate-700">
-                  <Tooltip
-                    title={
-                      rentOverride == null
-                        ? 'Using saved/estimated monthly rent for this offer location.'
-                        : 'Using your rent override.'
-                    }
-                  >
-                    <span className="cursor-help">{formatCurrency(item.monthlyRent)}</span>
-                  </Tooltip>
+                  {formatCurrency(item.monthlyRent)}
                 </td>
                 <td className="px-4 py-4 text-right text-slate-700">
-                  <Tooltip
-                    title={
-                      commuteOverride == null
-                        ? 'Using saved commute cost converted to a monthly amount.'
-                        : 'Using your commute override.'
-                    }
-                  >
-                    <span className="cursor-help">{formatCurrency(item.monthlyCommute)}</span>
-                  </Tooltip>
+                  {formatCurrency(item.monthlyCommute)}
                 </td>
                 <td className="px-4 py-4 text-right text-slate-700">
-                  <Tooltip
-                    title={`Food budget ${formatCurrency(monthlyFoodBudget)} - food perk ${formatCurrency(item.monthlyFoodPerk)}.`}
-                  >
-                    <div className="cursor-help">{formatCurrency(item.monthlyFoodNet)}</div>
-                  </Tooltip>
+                  <div>{formatCurrency(item.monthlyFoodNet)}</div>
                   {item.monthlyFoodPerk > 0 && (
                     <div className="text-[10px] text-emerald-600">
                       {formatCurrency(item.monthlyFoodPerk)} perk
@@ -462,32 +434,18 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                   )}
                 </td>
                 <td className="px-4 py-4 text-right text-slate-700">
-                  <Tooltip
-                    title={
-                      item.ptoValue == null
-                        ? 'Unlimited PTO is not converted into dollars.'
-                        : 'Calculated as daily base+bonus value multiplied by PTO days.'
-                    }
-                  >
-                    <span className="cursor-help">
-                      {item.ptoValue == null ? 'Unlimited' : formatCurrency(item.ptoValue)}
-                    </span>
-                  </Tooltip>
+                  {item.ptoValue == null ? 'Unlimited' : formatCurrency(item.ptoValue)}
                 </td>
                 <td className="px-4 py-4 text-right">
-                  <Tooltip
-                    title={`Take-home/mo ${formatCurrency(item.monthlyTakeHome)} - costs ${formatCurrency(item.monthlyFixedCosts)}.`}
+                  <span
+                    className={
+                      item.leftoverMonthly >= 0
+                        ? 'font-bold text-emerald-700'
+                        : 'font-bold text-rose-700'
+                    }
                   >
-                    <span
-                      className={
-                        item.leftoverMonthly >= 0
-                          ? 'font-bold text-emerald-700'
-                          : 'font-bold text-rose-700'
-                      }
-                    >
-                      {formatCurrency(item.leftoverMonthly)}
-                    </span>
-                  </Tooltip>
+                    {formatCurrency(item.leftoverMonthly)}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -520,19 +478,32 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
               <tr>
                 <th className="text-left font-bold py-2 pr-4">Offer</th>
                 <th className="text-right font-bold py-2 px-4">
-                  Year 1<Explain title="Year 1 vesting value after applying equity tax." />
+                  Year 1
+                  <Explain
+                    label="Year 1 equity vesting"
+                    title="Year 1 vesting value after applying equity tax."
+                  />
                 </th>
                 <th className="text-right font-bold py-2 px-4">
                   Year 2
-                  <Explain title="Year 2 vesting value after market scenario growth/decline and equity tax." />
+                  <Explain
+                    label="Year 2 equity vesting"
+                    title="Year 2 vesting value after market scenario growth or decline and equity tax."
+                  />
                 </th>
                 <th className="text-right font-bold py-2 px-4">
                   Year 3
-                  <Explain title="Year 3 vesting value after market scenario growth/decline and equity tax." />
+                  <Explain
+                    label="Year 3 equity vesting"
+                    title="Year 3 vesting value after market scenario growth or decline and equity tax."
+                  />
                 </th>
                 <th className="text-right font-bold py-2 pl-4">
                   Year 4
-                  <Explain title="Year 4 vesting value after market scenario growth/decline and equity tax." />
+                  <Explain
+                    label="Year 4 equity vesting"
+                    title="Year 4 vesting value after market scenario growth or decline and equity tax."
+                  />
                 </th>
               </tr>
             </thead>
@@ -542,29 +513,13 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                   <td className="py-3 pr-4 font-semibold text-slate-900">{item.row.appName}</td>
                   {item.vestingYears.map((value, index) => (
                     <td key={index} className="py-3 px-4 text-right text-slate-700">
-                      <Tooltip
-                        title={
-                          <div>
-                            <div>
-                              Before tax: {formatCurrency(item.grossVestingYears[index] || 0)}
-                            </div>
-                            <div>Equity tax rate: {item.row.usedEquityTaxRate}%</div>
-                            <div>
-                              Market scenario: {equityGrowthPct > 0 ? '+' : ''}
-                              {equityGrowthPct}%
-                            </div>
-                          </div>
-                        }
-                      >
-                        <div className="cursor-help">
-                          <div>{value > 0 ? formatCurrency(value) : '-'}</div>
-                          {value > 0 && (
-                            <div className="mt-0.5 text-[10px] text-slate-400">
-                              Before tax {formatCurrency(item.grossVestingYears[index] || 0)}
-                            </div>
-                          )}
+                      <div>{value > 0 ? formatCurrency(value) : '-'}</div>
+                      {value > 0 && (
+                        <div className="mt-0.5 text-[10px] text-slate-400">
+                          Gross {formatCurrency(item.grossVestingYears[index] || 0)} · Tax{' '}
+                          {item.row.usedEquityTaxRate}%
                         </div>
-                      </Tooltip>
+                      )}
                     </td>
                   ))}
                 </tr>

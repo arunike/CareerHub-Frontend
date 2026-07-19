@@ -2,21 +2,25 @@ import { useEffect, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 
 type Props = {
+  id?: string;
   value: number;
   onCommit: (value: number) => void;
   min?: number;
   step?: number;
   fallbackValue: number;
+  ariaDescribedBy?: string;
   className?: string;
   placeholder?: string;
 };
 
 const EditableNumberInput = ({
+  id,
   value,
   onCommit,
   min,
   step,
   fallbackValue,
+  ariaDescribedBy,
   className,
   placeholder,
 }: Props) => {
@@ -42,6 +46,7 @@ const EditableNumberInput = ({
 
   return (
     <input
+      id={id}
       type="number"
       min={min}
       step={step}
@@ -49,6 +54,7 @@ const EditableNumberInput = ({
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
+      aria-describedby={ariaDescribedBy}
       className={className}
       placeholder={placeholder}
     />

@@ -147,7 +147,7 @@ const OfferComparison = () => {
   const [isAddScenarioOpen, setIsAddScenarioOpen] = useState(false);
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
   const [scenarioModalMode, setScenarioModalMode] = useState<'add' | 'view' | 'edit'>('add');
-  const [isChartExpanded, setIsChartExpanded] = useState(false);
+  const [isChartExpanded, setIsChartExpanded] = useState(true);
   const [isAdvisorExpanded, setIsAdvisorExpanded] = useState(false);
   const [selectedPainPoints, setSelectedPainPoints] = useState<string[]>([]);
   const [customPainPoints, setCustomPainPoints] = useState('');
@@ -1337,6 +1337,40 @@ const OfferComparison = () => {
         singleRowDesktop
       />
 
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
+        <button
+          type="button"
+          onClick={() => setIsChartExpanded((current) => !current)}
+          aria-expanded={isChartExpanded}
+          className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+              <BarChartOutlined />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-slate-950">
+                First-year compensation breakdown
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                Compare salary, benefits, bonus, realizable equity, and sign-on by offer.
+              </span>
+            </span>
+          </span>
+          <span className="shrink-0 text-xs font-semibold text-blue-700">
+            {isChartExpanded ? 'Hide chart' : 'View chart'}
+          </span>
+        </button>
+
+        {isChartExpanded && (
+          <div className="border-t border-slate-200 p-3 sm:p-5">
+            <Suspense fallback={<LazySectionFallback />}>
+              <OfferComparisonChart data={chartData} />
+            </Suspense>
+          </div>
+        )}
+      </section>
+
       <OfferDecisionScorecard
         extraHeaderNode={
           <Select
@@ -1437,40 +1471,6 @@ const OfferComparison = () => {
         }}
         onDeleteClick={handleDeleteOffer}
       />
-
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
-        <button
-          type="button"
-          onClick={() => setIsChartExpanded((current) => !current)}
-          aria-expanded={isChartExpanded}
-          className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
-        >
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
-              <BarChartOutlined />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-slate-950">
-                First-year compensation breakdown
-              </span>
-              <span className="mt-0.5 block text-xs leading-5 text-slate-500">
-                Compare salary, benefits, bonus, realizable equity, and sign-on by offer.
-              </span>
-            </span>
-          </span>
-          <span className="shrink-0 text-xs font-semibold text-blue-700">
-            {isChartExpanded ? 'Hide chart' : 'View chart'}
-          </span>
-        </button>
-
-        {isChartExpanded && (
-          <div className="border-t border-slate-200 p-3 sm:p-5">
-            <Suspense fallback={<LazySectionFallback />}>
-              <OfferComparisonChart data={chartData} />
-            </Suspense>
-          </div>
-        )}
-      </section>
 
       {/* Career Transition Advisor */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">

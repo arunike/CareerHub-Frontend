@@ -35,7 +35,7 @@ const AvailabilityGroups = ({
       <EmptyState
         icon={CalendarOutlined}
         title="No availability generated"
-        description="Select a Start Date and Timezone, then click 'Generate AvailabilityType' to see your schedule."
+        description="Choose a start date and timezone, then generate your availability to see the schedule."
       />
     );
   }

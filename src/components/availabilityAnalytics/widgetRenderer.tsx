@@ -21,6 +21,7 @@ import {
 import CustomWidgetCard from '../CustomWidgetCard';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import { COLORS } from './constants';
+import { ANALYTICS_CHART_INITIAL_DIMENSION } from '../../constants/chartDimensions';
 
 export interface AvailabilityStats {
   totalEvents: number;
@@ -88,7 +89,13 @@ export const renderAvailabilityWidget = (
           </div>
           <div className="careerhub-responsive-pie h-75 w-full">
             {stats.byCategory.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                minWidth={0}
+                minHeight={1}
+                initialDimension={ANALYTICS_CHART_INITIAL_DIMENSION}
+              >
                 <PieChart>
                   <Pie
                     data={stats.byCategory}
@@ -126,7 +133,13 @@ export const renderAvailabilityWidget = (
             <h3 className="text-lg font-semibold text-gray-900">Daily Activity (Last 7 Days)</h3>
           </div>
           <div className="h-75 w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={1}
+              initialDimension={ANALYTICS_CHART_INITIAL_DIMENSION}
+            >
               <BarChart data={stats.dailyActivity}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" />

@@ -416,7 +416,7 @@ const Tasks: React.FC = () => {
               <BellOutlined />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-slate-900">Smart reminders</div>
+              <h2 className="text-sm font-semibold text-slate-900">Smart reminders</h2>
               <div className="text-xs text-slate-500">Type a reminder in natural language.</div>
             </div>
           </div>
@@ -428,19 +428,30 @@ const Tasks: React.FC = () => {
               onChange={(event) => setSmartReminderText(event.target.value)}
               onPressEnter={() => handleCreateSmartReminder()}
               placeholder="e.g. Follow up after 7 days"
+              aria-label="Reminder description"
+              aria-describedby="smart-reminder-help"
               disabled={smartReminderSaving}
+              className="min-h-11 text-base sm:text-sm"
             />
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <div
+              id="smart-reminder-help"
+              className="mt-2 min-h-5 text-xs text-slate-500"
+              aria-live="polite"
+            >
               {smartReminderDraft ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
                   <CheckCircleOutlined />
                   {smartReminderDraft.dueDate.format('MMM D, YYYY')} · {smartReminderDraft.priority}
                 </span>
               ) : (
-                <span className="text-slate-400">
-                  Understands tomorrow, after 7 days, in 3 days, next Friday.
-                </span>
+                <span>Understands tomorrow, after 7 days, in 3 days, next Friday.</span>
               )}
+            </div>
+            <div
+              className="scrollbar-none -mx-1 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+              role="group"
+              aria-label="Reminder examples"
+            >
               {[
                 'Follow up after 7 days',
                 'Prepare for interview tomorrow',
@@ -450,7 +461,7 @@ const Tasks: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSmartReminderText(example)}
-                    className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                    className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                   >
                     {example}
                   </button>
@@ -491,20 +502,20 @@ const Tasks: React.FC = () => {
                 {dayjs(weeklyReview.start_date).format('MMM D')} -{' '}
                 {dayjs(weeklyReview.end_date).format('MMM D, YYYY')}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="enterprise-kpi px-3 py-2">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="enterprise-kpi min-w-0 px-2 py-2 sm:px-3">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">
                     Applications Sent
                   </div>
                   <div className="text-2xl font-semibold">{weeklyReview.applications_sent}</div>
                 </div>
-                <div className="enterprise-kpi px-3 py-2">
+                <div className="enterprise-kpi min-w-0 px-2 py-2 sm:px-3">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">
                     Interviews Done
                   </div>
                   <div className="text-2xl font-semibold">{weeklyReview.interviews_done}</div>
                 </div>
-                <div className="enterprise-kpi px-3 py-2">
+                <div className="enterprise-kpi min-w-0 px-2 py-2 sm:px-3">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">Next Actions</div>
                   <div className="text-2xl font-semibold">{weeklyReview.next_actions_count}</div>
                 </div>

@@ -100,7 +100,7 @@ const renderPercentageList = (
       return (
         <div
           key={item.name}
-          className="group/metric relative grid grid-cols-[96px_1fr_44px] items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-slate-50"
+          className="group/metric relative grid grid-cols-[minmax(0,88px)_minmax(28px,1fr)_56px] items-center gap-2 rounded-lg px-1 py-1.5 transition-colors hover:bg-slate-50 md:grid-cols-[96px_1fr_44px] md:gap-3"
         >
           <span className="truncate text-sm font-medium text-gray-700" title={item.name}>
             {item.name}
@@ -110,7 +110,7 @@ const renderPercentageList = (
               className={`h-full rounded-full ${percentageColor(index)} transition-all duration-300`}
               style={{ width: `${Math.max(percent, item.count > 0 ? 4 : 0)}%` }}
             />
-            <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-95 whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-center text-xs text-white opacity-0 shadow-xl transition-all duration-150 group-hover/metric:scale-100 group-hover/metric:opacity-100">
+            <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 scale-95 whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-center text-xs text-white opacity-0 shadow-xl transition-all duration-150 group-hover/metric:scale-100 group-hover/metric:opacity-100 md:block">
               <span className="block font-bold text-slate-100">{item.name}</span>
               <span className="mt-0.5 block text-[11px] text-slate-300">
                 {item.count} application{item.count === 1 ? '' : 's'} ({roundedPercent}%)
@@ -118,7 +118,12 @@ const renderPercentageList = (
               <span className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-800 bg-slate-900" />
             </div>
           </div>
-          <span className="text-right text-xs font-semibold text-blue-600">{roundedPercent}%</span>
+          <span className="flex flex-col items-end text-right text-xs font-semibold text-blue-600">
+            <span>{roundedPercent}%</span>
+            <span className="mt-0.5 whitespace-nowrap font-medium text-slate-500 md:hidden">
+              {item.count} apps
+            </span>
+          </span>
         </div>
       );
     })}
@@ -277,7 +282,7 @@ export const renderJobHuntWidget = (
               <div className="mb-4 flex items-center gap-2">
                 <NodeIndexOutlined className="text-gray-500" />
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <TooltipLabel title="Distribution of applications by their current status. Hover each bar for the exact count.">
+                  <TooltipLabel title="Distribution of applications by current status, including the exact count and share.">
                     Current Stage Mix
                   </TooltipLabel>
                 </p>
@@ -288,7 +293,7 @@ export const renderJobHuntWidget = (
               <div className="mb-4 flex items-center gap-2">
                 <EnvironmentOutlined className="text-gray-500" />
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <TooltipLabel title="Most common application locations, grouped by city or Remote. Hover each bar for the exact count.">
+                  <TooltipLabel title="Most common application locations, grouped by city or Remote, with exact counts and shares.">
                     Top Locations
                   </TooltipLabel>
                 </p>
@@ -299,7 +304,7 @@ export const renderJobHuntWidget = (
               <div className="mb-4 flex items-center gap-2">
                 <ClockCircleOutlined className="text-gray-500" />
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <TooltipLabel title="How long ago applications were submitted, using Date Applied when available and Created At as fallback.">
+                  <TooltipLabel title="Application age using Date Applied when available and Created At as fallback, with exact counts and shares.">
                     Application Age
                   </TooltipLabel>
                 </p>
@@ -474,10 +479,10 @@ export const renderJobHuntWidget = (
                   </div>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-                  <div>
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                  <div className="min-w-0">
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="Share of total applications that reached each stage. Hover a bar for the exact count.">
+                      <TooltipLabel title="Share of total applications that reached each stage, with the exact count alongside each bar.">
                         Stage Conversion
                       </TooltipLabel>
                     </p>
@@ -485,7 +490,7 @@ export const renderJobHuntWidget = (
                       {topStages.map((stage) => (
                         <div
                           key={stage.key}
-                          className="grid grid-cols-[92px_1fr_48px] items-center gap-3 group/row relative py-1.5 hover:bg-slate-50/80 -mx-2 px-2 rounded-lg transition-all duration-150"
+                          className="group/row relative -mx-2 grid grid-cols-[minmax(0,84px)_minmax(28px,1fr)_56px] items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-150 hover:bg-slate-50/80 md:grid-cols-[92px_1fr_48px] md:gap-3"
                         >
                           <span className="truncate text-sm font-medium text-gray-700">
                             {stage.label}
@@ -499,7 +504,7 @@ export const renderJobHuntWidget = (
                                 }}
                               />
                             </div>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-slate-900/95 backdrop-blur-sm border border-slate-800 text-white rounded-lg shadow-xl whitespace-nowrap pointer-events-none opacity-0 group-hover/row:opacity-100 transition-all duration-150 z-20 flex flex-col items-center scale-95 group-hover/row:scale-100 origin-bottom">
+                            <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden origin-bottom -translate-x-1/2 scale-95 flex-col items-center whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-white opacity-0 shadow-xl backdrop-blur-sm transition-all duration-150 group-hover/row:scale-100 group-hover/row:opacity-100 md:flex">
                               <span className="text-xs font-bold text-slate-100">
                                 {stage.label}
                               </span>
@@ -511,9 +516,12 @@ export const renderJobHuntWidget = (
                               <div className="w-2 h-2 bg-slate-900 border-r border-b border-slate-800 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 z-10" />
                             </div>
                           </div>
-                          <div className="flex justify-end">
-                            <span className="text-right text-xs font-semibold text-gray-600 group-hover/row:text-sky-600 transition-colors duration-150">
+                          <div className="flex flex-col items-end justify-end text-right">
+                            <span className="text-xs font-semibold text-gray-600 transition-colors duration-150 group-hover/row:text-sky-600">
                               {Math.round(stage.conversion_rate * 100)}%
+                            </span>
+                            <span className="mt-0.5 whitespace-nowrap text-xs font-medium text-slate-500 md:hidden">
+                              {stage.reached_count} apps
                             </span>
                           </div>
                         </div>
@@ -521,7 +529,7 @@ export const renderJobHuntWidget = (
                     </div>
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                       <TooltipLabel title="Active applications that have stayed in the same stage longer than your ghosting threshold.">
                         Watch List

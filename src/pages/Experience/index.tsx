@@ -82,6 +82,7 @@ import {
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
+const GROUP_ICON_ACTION_CLASS = '!h-11 !w-11 !min-w-11 lg:!h-8 lg:!w-8 lg:!min-w-8';
 
 const ExperiencePage: React.FC = () => {
   const location = useLocation();
@@ -999,7 +1000,8 @@ const ExperiencePage: React.FC = () => {
                             type="button"
                             onClick={() => setOverallCompBreakdownOpen(true)}
                             title="View overall pay structure breakdown"
-                            className="min-h-10 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-0 sm:px-2"
+                            aria-label="View full-time earnings breakdown"
+                            className="min-h-11 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2"
                           >
                             Breakdown
                           </button>
@@ -1045,7 +1047,8 @@ const ExperiencePage: React.FC = () => {
                             type="button"
                             onClick={() => setOverallInternshipBreakdownOpen(true)}
                             title="View internship earnings breakdown"
-                            className="min-h-10 shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 sm:min-h-0 sm:px-2"
+                            aria-label="View internship earnings breakdown"
+                            className="min-h-11 shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
                           >
                             Breakdown
                           </button>
@@ -1202,8 +1205,10 @@ const ExperiencePage: React.FC = () => {
                           {exp.is_pinned && (
                             <Tooltip title="Click to unpin">
                               <button
+                                type="button"
                                 onClick={() => handleTogglePin(exp)}
-                                className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full cursor-pointer hover:bg-amber-100 transition-colors"
+                                aria-label={`Unpin ${exp.title} at ${exp.company}`}
+                                className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
                               >
                                 <PushpinFilled style={{ fontSize: 10 }} /> Pinned
                               </button>
@@ -1245,7 +1250,8 @@ const ExperiencePage: React.FC = () => {
                               type="button"
                               onClick={() => setCompBreakdownExp(exp)}
                               title="View internship earnings breakdown"
-                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
+                              aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
+                              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
                             >
                               <DollarOutlined style={{ fontSize: 11 }} />
                               <span>
@@ -1274,7 +1280,8 @@ const ExperiencePage: React.FC = () => {
                                       type="button"
                                       onClick={() => setCompBreakdownExp(exp)}
                                       title="View pay structure breakdown"
-                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
+                                      aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
+                                      className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
                                     >
                                       <DollarOutlined style={{ fontSize: 11 }} />
                                       <span>
@@ -1439,7 +1446,7 @@ const ExperiencePage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleTogglePin(primary)}
-                              className="flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full cursor-pointer hover:bg-amber-100 transition-colors"
+                              className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
                               aria-label={`Unpin ${primary.company} roles`}
                             >
                               <PushpinFilled style={{ fontSize: 10 }} /> Pinned
@@ -1453,7 +1460,7 @@ const ExperiencePage: React.FC = () => {
                                 size="small"
                                 icon={<PushpinOutlined />}
                                 onClick={() => handleTogglePin(primary)}
-                                className="text-gray-400 hover:text-amber-500"
+                                className={`${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-amber-500`}
                                 aria-label="Pin company roles to top"
                               />
                             </Tooltip>
@@ -1485,8 +1492,8 @@ const ExperiencePage: React.FC = () => {
                               }
                               className={
                                 group.some((e) => !e.is_locked)
-                                  ? 'text-gray-400 hover:text-gray-600'
-                                  : 'text-amber-500 hover:text-amber-600'
+                                  ? `${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-gray-600`
+                                  : `${GROUP_ICON_ACTION_CLASS} text-amber-500 hover:text-amber-600`
                               }
                             />
                           </Tooltip>
@@ -1504,6 +1511,7 @@ const ExperiencePage: React.FC = () => {
                                 size="small"
                                 icon={<DeleteOutlined />}
                                 aria-label={`Delete unlocked roles at ${primary.company}`}
+                                className={GROUP_ICON_ACTION_CLASS}
                               />
                             </Popconfirm>
                           </Tooltip>
@@ -1586,7 +1594,8 @@ const ExperiencePage: React.FC = () => {
                                       type="button"
                                       onClick={() => setCompBreakdownExp(exp)}
                                       title="View internship earnings breakdown"
-                                      className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
+                                      aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
+                                      className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
                                     >
                                       <DollarOutlined style={{ fontSize: 11 }} />
                                       <span>
@@ -1615,7 +1624,8 @@ const ExperiencePage: React.FC = () => {
                                               type="button"
                                               onClick={() => setCompBreakdownExp(exp)}
                                               title="View pay structure breakdown"
-                                              className="flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md hover:bg-emerald-100 transition-colors shrink-0 whitespace-nowrap text-xs"
+                                              aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
+                                              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
                                             >
                                               <DollarOutlined style={{ fontSize: 11 }} />
                                               <span>

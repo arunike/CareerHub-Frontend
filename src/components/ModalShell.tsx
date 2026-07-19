@@ -37,7 +37,7 @@ const ModalShell = ({
   wrapperClassName = '',
   headerClassName = 'flex items-center justify-between border-b border-slate-200/80 bg-slate-50/80 px-4 py-4 sm:px-6',
   titleClassName = 'font-semibold tracking-[-0.01em] text-base sm:text-lg text-slate-950',
-  closeButtonClassName = 'inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600',
+  closeButtonClassName = 'inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 sm:h-10 sm:w-10',
   footerClassName = 'flex flex-col-reverse justify-end gap-3 border-t border-slate-200/80 bg-slate-50/80 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:flex-row sm:px-6 sm:py-4',
   zIndex = 1100,
   footer,

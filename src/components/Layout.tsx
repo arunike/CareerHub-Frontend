@@ -253,14 +253,24 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     pathname: location.pathname,
     recentKeys: getRecentMobileNavigationKeys(),
   });
+  const currentMobileNavigationItem = getMobileNavigationItemForLocation(
+    location.pathname,
+    location.search
+  );
+  const currentQuickActionSourceKey =
+    currentMobileNavigationItem && hasMobileQuickActionsForSource(currentMobileNavigationItem.key)
+      ? currentMobileNavigationItem.key
+      : undefined;
   const matchesNavKey = (key: string) =>
     matchesMobileNavigationItem(location.pathname, location.search, key);
   const isMoreActive =
     !screens.lg && !mobilePrimaryNavItems.some((item) => matchesNavKey(item.key));
 
   const openQuickActions = (sourceKey?: string) => {
+    const resolvedSourceKey = sourceKey || currentQuickActionSourceKey;
+    if (!resolvedSourceKey || !hasMobileQuickActionsForSource(resolvedSourceKey)) return;
     setCollapsed(true);
-    setQuickActionsSourceKey(sourceKey);
+    setQuickActionsSourceKey(resolvedSourceKey);
     setQuickActionsOpen(true);
   };
 
@@ -342,7 +352,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto py-3">
-        {!screens.lg && (
+        {!screens.lg && currentQuickActionSourceKey && (
           <div className="px-3 pb-2">
             <button
               type="button"
@@ -350,7 +360,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 text-left text-sm font-bold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               <ThunderboltOutlined />
-              <span>Quick actions</span>
+              <span>{currentMobileNavigationItem?.label} actions</span>
             </button>
           </div>
         )}
@@ -571,6 +581,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                       ? 'bg-blue-50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                   }`}
+                  aria-label={item.label}
                   aria-current={isActive ? 'page' : undefined}
                   aria-description={
                     hasQuickActions ? `Press and hold for ${item.label} actions` : undefined
@@ -590,15 +601,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             })}
             <button
               type="button"
-              onPointerDown={() => startLongPress('__more__')}
+              onPointerDown={
+                currentQuickActionSourceKey ? () => startLongPress('__more__') : undefined
+              }
               onPointerUp={cancelLongPress}
               onPointerCancel={cancelLongPress}
               onPointerLeave={cancelLongPress}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                cancelLongPress();
-                openQuickActions();
-              }}
+              onContextMenu={
+                currentQuickActionSourceKey
+                  ? (event) => {
+                      event.preventDefault();
+                      cancelLongPress();
+                      openQuickActions();
+                    }
+                  : undefined
+              }
               onClick={() => {
                 if (consumeSuppressedLongPressClick('__more__')) return;
                 setCollapsed(false);
@@ -609,7 +626,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
               }`}
               aria-label="Open more navigation"
-              aria-description="Press and hold for quick actions"
+              aria-description={
+                currentQuickActionSourceKey
+                  ? `Press and hold for ${currentMobileNavigationItem?.label} actions`
+                  : undefined
+              }
             >
               <span className="text-lg">
                 <AppstoreOutlined />
