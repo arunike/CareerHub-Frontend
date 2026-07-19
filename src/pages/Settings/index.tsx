@@ -39,6 +39,7 @@ import {
 } from '../../lib/llmSettings';
 import GoogleSheetsSettings from './GoogleSheetsSettings';
 import SecurityDashboard from './SecurityDashboard';
+import MobileToolbarSettings from './MobileToolbarSettings';
 import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
 import { DEFAULT_HOLIDAY_TAB_COLOR, getHolidayTabColor } from '../../utils/holidayTabColors';
 import {
@@ -2045,6 +2046,17 @@ const Settings: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'navigation' && (
+          <MobileToolbarSettings
+            value={settings.mobile_toolbar_items}
+            onChange={(mobileToolbarItems) =>
+              setSettings((prev) =>
+                prev ? { ...prev, mobile_toolbar_items: mobileToolbarItems } : prev
+              )
+            }
+          />
+        )}
+
         {/* Navigation Visibility */}
         {activeTab === 'navigation' && (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -2078,7 +2090,10 @@ const Settings: React.FC = () => {
                       children: [
                         { key: '/jd-reports', label: 'JD Reports' },
                         { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
-                        { key: '/ai-tools?tab=negotiation-results', label: 'Negotiation Results' },
+                        {
+                          key: '/ai-tools?tab=negotiation-results',
+                          label: 'Negotiation Results',
+                        },
                         { key: '/ai-tools?tab=promotion-reviews', label: 'Promotion Reviews' },
                       ],
                     },
