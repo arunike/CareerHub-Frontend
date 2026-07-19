@@ -4,7 +4,6 @@ import {
   DollarOutlined,
   FileAddOutlined,
   ImportOutlined,
-  RobotOutlined,
   ScheduleOutlined,
   SolutionOutlined,
   ThunderboltOutlined,
@@ -84,13 +83,6 @@ const ACTIONS = {
     destination: '/experience?action=import',
     icon: ImportOutlined,
   },
-  jdReports: {
-    key: 'jd-reports',
-    label: 'View JD reports',
-    description: 'Review saved job matches',
-    destination: '/jd-reports',
-    icon: RobotOutlined,
-  },
 } as const;
 
 type QuickAction = (typeof ACTIONS)[keyof typeof ACTIONS];
@@ -103,20 +95,17 @@ const GLOBAL_ACTIONS: QuickAction[] = [
 ];
 
 const ACTIONS_BY_SOURCE: Record<string, QuickAction[]> = {
-  '/': [ACTIONS.event, ACTIONS.holiday, ACTIONS.task],
-  '/applications': [ACTIONS.application, ACTIONS.jobImport, ACTIONS.task],
-  '/events': [ACTIONS.event, ACTIONS.holiday, ACTIONS.task],
-  '/holidays': [ACTIONS.holiday, ACTIONS.event],
-  '/offers': [ACTIONS.currentJob, ACTIONS.scenario, ACTIONS.application],
-  '/documents': [ACTIONS.document, ACTIONS.application],
-  '/tasks': [ACTIONS.task, ACTIONS.application],
-  '/experience': [ACTIONS.experience, ACTIONS.experienceImport, ACTIONS.jdReports],
-  '/jd-reports': [ACTIONS.jdReports, ACTIONS.experience],
-  '/ai-tools?tab=cover-letters': [ACTIONS.application, ACTIONS.document],
-  '/ai-tools?tab=negotiation-results': [ACTIONS.currentJob, ACTIONS.scenario],
-  '/ai-tools?tab=promotion-reviews': [ACTIONS.experience, ACTIONS.jdReports],
-  '/analytics': [ACTIONS.application, ACTIONS.task, ACTIONS.event],
+  '/applications': [ACTIONS.application, ACTIONS.jobImport],
+  '/events': [ACTIONS.event],
+  '/holidays': [ACTIONS.holiday],
+  '/offers': [ACTIONS.currentJob, ACTIONS.scenario],
+  '/documents': [ACTIONS.document],
+  '/tasks': [ACTIONS.task],
+  '/experience': [ACTIONS.experience, ACTIONS.experienceImport],
 };
+
+export const hasMobileQuickActionsForSource = (sourceKey: string) =>
+  Boolean(ACTIONS_BY_SOURCE[sourceKey]?.length);
 
 interface MobileQuickActionsProps {
   open: boolean;
@@ -127,8 +116,9 @@ interface MobileQuickActionsProps {
 
 const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuickActionsProps) => {
   const sourceItem = MOBILE_NAVIGATION_ITEMS.find((item) => item.key === sourceKey);
-  const actions = sourceKey ? ACTIONS_BY_SOURCE[sourceKey] || GLOBAL_ACTIONS : GLOBAL_ACTIONS;
+  const actions = sourceKey ? ACTIONS_BY_SOURCE[sourceKey] || [] : GLOBAL_ACTIONS;
   const HeaderIcon = sourceItem?.icon || ThunderboltOutlined;
+  const isPageScoped = Boolean(sourceKey);
 
   return (
     <Drawer
@@ -152,13 +142,13 @@ const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuic
             </h2>
             <p className="text-sm text-slate-600">
               {sourceItem
-                ? `Start a common ${sourceItem.label.toLowerCase()} task.`
+                ? 'Actions available on this page.'
                 : 'Start a common task without hunting through menus.'}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className={isPageScoped ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
           {actions.map((action) => {
             const Icon = action.icon;
             return (
@@ -166,14 +156,22 @@ const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuic
                 key={action.key}
                 type="button"
                 onClick={() => onNavigate(action.destination)}
-                className="group min-h-[96px] rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
+                className={`group rounded-2xl border border-slate-200 bg-white text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98] ${
+                  isPageScoped ? 'flex min-h-[76px] items-center gap-3 p-3' : 'min-h-[96px] p-3'
+                }`}
               >
-                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-base text-slate-700 transition-colors group-hover:bg-white group-hover:text-blue-600">
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base text-slate-700 transition-colors group-hover:bg-white group-hover:text-blue-600 ${
+                    isPageScoped ? '' : 'mb-3'
+                  }`}
+                >
                   <Icon />
                 </span>
-                <span className="block text-sm font-bold text-slate-900">{action.label}</span>
-                <span className="mt-0.5 block text-xs leading-4 text-slate-600">
-                  {action.description}
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-slate-900">{action.label}</span>
+                  <span className="mt-0.5 block text-xs leading-4 text-slate-600">
+                    {action.description}
+                  </span>
                 </span>
               </button>
             );
