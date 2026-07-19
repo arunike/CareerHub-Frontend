@@ -138,6 +138,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### ⚙️ Settings (`/settings`)
 
 - **Availability & Job Hunt Settings**: work hours, work days, availability range, default event duration, buffer time, primary timezone, ghosting threshold, default event category
+- **Mobile Toolbar**: drag and preview up to four account-synced mobile navigation slots; an optional Smart Slot chooses an unpinned destination from current context and browser-local recent use, More stays fixed, and long-pressing any shortcut opens module-specific actions for applications, events, holidays, offers, documents, tasks, experience, and related intelligence pages
 - **AI Provider**: configure Claude, Gemini, OpenAI, OpenRouter, or Custom providers for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; paste a chat-completions curl command to fill endpoint/model/key; the key is stored encrypted on the backend and never re-shown after save
 - **Integrations**: connect/disconnect Google OAuth for private read-only Sheets access, pick from available Google spreadsheets and worksheet tabs, create Google Sheets syncs, select Applications or Events, auto-map sheet columns, configure the daily sync time/timezone, adjust/add/remove mapped fields when needed, preview rows, review detected application imports, compare possible duplicates side by side, resolve duplicates, inspect last-run change history, and run syncs immediately
 - **Security Dashboard**: review deployment posture, auth throttles, Google Sheets sync health, OAuth scope readiness, and Vercel edge/WAF setup status from one Settings tab
@@ -263,7 +264,8 @@ npm run lint
 frontend/
 ├── src/
 │   ├── components/                  # Shared reusable components
-│   │   ├── Layout.tsx               # Sidebar navigation + mobile toggle
+│   │   ├── Layout.tsx               # Sidebar navigation + customizable mobile toolbar
+│   │   ├── MobileQuickActions.tsx   # Mobile quick-create bottom sheet
 │   │   ├── PageActionToolbar.tsx    # Page header with title, year filter, export, import, primary action
 │   │   ├── BulkActionHeader.tsx     # Selection count + bulk actions bar
 │   │   ├── RowActions.tsx           # Per-row lock / view / edit / delete buttons
@@ -336,6 +338,10 @@ frontend/
 │   │   ├── llmClient.ts             # Authenticated AI relay client
 │   │   ├── runtimeConfig.ts         # API/media origin helpers for local + deployed environments
 │   │   └── browserAi.ts             # Prompt builders for cover letters, JD match, negotiation, analytics
+│   │
+│   ├── constants/
+│   │   ├── mobileNavigation.tsx     # Shared mobile shortcut, Smart Slot, recency, and route-matching logic
+│   │   └── ...
 │   │
 │   ├── utils/
 │   │   ├── aiArtifactStorage.ts     # Backend AI artifact sync + localStorage migration
