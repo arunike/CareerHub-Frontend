@@ -68,7 +68,7 @@ const CalendarMonthView = ({
           onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
           onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, cloneDay)}
         >
-          <div className="flex justify-between items-start">
+          <div className="-mx-1 -mt-1 flex items-start justify-between sm:m-0">
             <button
               type="button"
               aria-label={format(cloneDay, 'MMMM d, yyyy')}
@@ -77,7 +77,7 @@ const CalendarMonthView = ({
                 onDateSelect(cloneDay);
               }}
               className={clsx(
-                'flex h-11 w-11 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-slate-100 sm:h-7 sm:w-7 sm:text-sm',
+                'flex h-11 w-full min-w-11 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-slate-100 sm:h-7 sm:w-7 sm:min-w-0 sm:text-sm',
                 isTodayDate ? 'bg-blue-600 text-white' : 'text-gray-700'
               )}
             >

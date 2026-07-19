@@ -1014,18 +1014,30 @@ const GoogleSheetsSettings: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sync Name</label>
+            <label
+              htmlFor="google-sheet-sync-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Sync Name
+            </label>
             <input
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              id="google-sheet-sync-name"
+              className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.name}
               onChange={(event) => updateDraft({ name: event.target.value })}
               placeholder="Applications pipeline"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Functionality</label>
+            <label
+              htmlFor="google-sheet-sync-functionality"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Functionality
+            </label>
             <select
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              id="google-sheet-sync-functionality"
+              className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.target_type}
               onChange={(event) => changeTarget(event.target.value as GoogleSheetSyncTarget)}
             >
@@ -1038,11 +1050,15 @@ const GoogleSheetsSettings: React.FC = () => {
         <div className="space-y-3">
           {googleStatus?.connected && googleStatus.can_list_spreadsheets && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="google-sheet-sync-source"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Choose from Google Sheets
               </label>
               <select
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                id="google-sheet-sync-source"
+                className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 value={
                   spreadsheets.some((sheet) => sheet.url === draft.sheet_url) ? draft.sheet_url : ''
                 }
@@ -1061,14 +1077,21 @@ const GoogleSheetsSettings: React.FC = () => {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="google-sheet-sync-url"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Google Sheet Link
             </label>
             <div className="relative">
-              <LinkOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <LinkOutlined
+                aria-hidden="true"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
               <input
+                id="google-sheet-sync-url"
                 type="url"
-                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="min-h-11 w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 outline-none focus:ring-2 focus:ring-blue-500"
                 value={draft.sheet_url}
                 onChange={(event) => updateDraft({ sheet_url: event.target.value })}
                 placeholder="https://docs.google.com/spreadsheets/d/..."
@@ -1079,11 +1102,17 @@ const GoogleSheetsSettings: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Worksheet Tab</label>
+            <label
+              htmlFor="google-sheet-sync-worksheet"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Worksheet Tab
+            </label>
             {worksheetTabs.length > 0 ? (
               <>
                 <select
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  id="google-sheet-sync-worksheet"
+                  className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                   value={draft.worksheet_name || worksheetTabs[0]?.title || ''}
                   onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
                   disabled={worksheetTabsLoading}
@@ -1102,7 +1131,8 @@ const GoogleSheetsSettings: React.FC = () => {
               </>
             ) : (
               <input
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                id="google-sheet-sync-worksheet"
+                className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 value={draft.worksheet_name}
                 onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
                 placeholder={worksheetTabsLoading ? 'Loading tabs...' : 'Sheet1'}
@@ -1110,10 +1140,16 @@ const GoogleSheetsSettings: React.FC = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Header Row</label>
+            <label
+              htmlFor="google-sheet-sync-header-row"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Header Row
+            </label>
             <EditableNumberInput
+              id="google-sheet-sync-header-row"
               min={1}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.header_row}
               fallbackValue={1}
               onCommit={(value) => updateDraft({ header_row: value })}
@@ -1123,8 +1159,15 @@ const GoogleSheetsSettings: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Daily Sync Time</label>
+            <label
+              id="google-sheet-sync-time-label"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Daily Sync Time
+            </label>
             <FriendlyTimeInput
+              ariaLabelledBy="google-sheet-sync-time-label"
+              ariaDescribedBy="google-sheet-sync-time-help"
               className="w-full text-base py-1.5 rounded-lg border-gray-300 hover:border-blue-500 focus:border-blue-500"
               value={syncTimeValue(draft.sync_time)}
               onChange={(time) => {
@@ -1133,15 +1176,21 @@ const GoogleSheetsSettings: React.FC = () => {
               minuteStep={1}
               allowClear={false}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p id="google-sheet-sync-time-help" className="text-xs text-gray-500 mt-1">
               Vercel wakes this job once daily; this time controls which syncs are due during that
               run.
             </p>
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sync Timezone</label>
+            <label
+              htmlFor="google-sheet-sync-timezone"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Sync Timezone
+            </label>
             <select
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              id="google-sheet-sync-timezone"
+              className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.sync_timezone}
               onChange={(event) => updateDraft({ sync_timezone: event.target.value })}
             >
@@ -1164,30 +1213,48 @@ const GoogleSheetsSettings: React.FC = () => {
                   it after the recovery window.
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-[180px_140px] gap-3">
-                <select
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={draft.missing_row_strategy}
-                  onChange={(event) =>
-                    updateDraft({
-                      missing_row_strategy: event.target.value as Draft['missing_row_strategy'],
-                    })
-                  }
-                >
-                  <option value="ARCHIVE_THEN_DELETE">Archive then delete</option>
-                  <option value="IGNORE">Ignore removals</option>
-                </select>
-                <InputNumber
-                  min={1}
-                  max={365}
-                  className="w-full"
-                  addonAfter="days"
-                  disabled={draft.missing_row_strategy === 'IGNORE'}
-                  value={draft.missing_row_delete_after_days}
-                  onChange={(value) =>
-                    updateDraft({ missing_row_delete_after_days: Number(value) || 30 })
-                  }
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_140px]">
+                <div>
+                  <label
+                    htmlFor="google-sheet-sync-removal-strategy"
+                    className="mb-1 block text-xs font-medium text-gray-600"
+                  >
+                    When removed
+                  </label>
+                  <select
+                    id="google-sheet-sync-removal-strategy"
+                    className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={draft.missing_row_strategy}
+                    onChange={(event) =>
+                      updateDraft({
+                        missing_row_strategy: event.target.value as Draft['missing_row_strategy'],
+                      })
+                    }
+                  >
+                    <option value="ARCHIVE_THEN_DELETE">Archive then delete</option>
+                    <option value="IGNORE">Ignore removals</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="google-sheet-sync-removal-days"
+                    className="mb-1 block text-xs font-medium text-gray-600"
+                  >
+                    Delete after
+                  </label>
+                  <InputNumber
+                    id="google-sheet-sync-removal-days"
+                    min={1}
+                    max={365}
+                    className="min-h-11 w-full [&_.ant-input-number-input]:h-11"
+                    addonAfter="days"
+                    disabled={draft.missing_row_strategy === 'IGNORE'}
+                    value={draft.missing_row_delete_after_days}
+                    onChange={(value) =>
+                      updateDraft({ missing_row_delete_after_days: Number(value) || 30 })
+                    }
+                  />
+                </div>
               </div>
             </div>
             {!draft.column_mapping.external_id && draft.target_type === 'APPLICATIONS' && (
@@ -1214,6 +1281,7 @@ const GoogleSheetsSettings: React.FC = () => {
 
         <Tabs
           defaultActiveKey="mapping"
+          moreIcon={<MoreOutlined aria-label="More integration tabs" />}
           items={[
             {
               key: 'mapping',
@@ -1227,6 +1295,7 @@ const GoogleSheetsSettings: React.FC = () => {
                     </div>
                     <Button
                       size="small"
+                      className="min-h-11"
                       icon={<ThunderboltOutlined />}
                       disabled={!preview?.headers.length}
                       onClick={() => {
@@ -1291,7 +1360,8 @@ const GoogleSheetsSettings: React.FC = () => {
                               <div className="text-xs text-gray-500">Google Sheet column</div>
                             </div>
                             <select
-                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              aria-label={`Import destination for ${sheetHeader}`}
+                              className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                               value={selectedField}
                               onChange={(event) =>
                                 updateSheetColumnMapping(sheetHeader, event.target.value)
@@ -1311,6 +1381,8 @@ const GoogleSheetsSettings: React.FC = () => {
                             <Button
                               size="small"
                               danger
+                              aria-label={`Remove mapping for ${sheetHeader}`}
+                              className="min-h-11 min-w-11"
                               icon={<DeleteOutlined />}
                               disabled={
                                 !selectedField ||
@@ -1333,12 +1405,16 @@ const GoogleSheetsSettings: React.FC = () => {
                           key={field.key}
                           className="grid grid-cols-1 sm:grid-cols-[160px_1fr_auto] gap-2 px-4 py-3 items-center"
                         >
-                          <label className="text-sm text-gray-700">
+                          <label
+                            htmlFor={`google-sheet-mapping-${field.key}`}
+                            className="text-sm text-gray-700"
+                          >
                             {field.label}
                             {field.required && <span className="text-red-500 ml-1">*</span>}
                           </label>
                           <select
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            id={`google-sheet-mapping-${field.key}`}
+                            className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                             value={draft.column_mapping[field.key] || ''}
                             onChange={(event) => updateMapping(field.key, event.target.value)}
                           >
@@ -1364,6 +1440,8 @@ const GoogleSheetsSettings: React.FC = () => {
                           <Button
                             size="small"
                             danger
+                            aria-label={`Remove ${field.label} mapping`}
+                            className="min-h-11 min-w-11"
                             icon={<DeleteOutlined />}
                             disabled={field.required}
                             onClick={() => removeMappingField(field.key)}
@@ -1375,7 +1453,8 @@ const GoogleSheetsSettings: React.FC = () => {
                   {unmappedFields.length > 0 && (
                     <div className="bg-white px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
                       <select
-                        className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        aria-label="Field to add"
+                        className="min-h-11 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                         value={fieldToAdd}
                         onChange={(event) => setFieldToAdd(event.target.value)}
                       >
@@ -1422,6 +1501,7 @@ const GoogleSheetsSettings: React.FC = () => {
                       >
                         <label className="text-sm font-medium text-gray-700">{field.label}</label>
                         <Segmented
+                          aria-label={`${field.label} overwrite strategy`}
                           options={[
                             { label: 'Always Overwrite', value: 'always' },
                             { label: 'Only if Empty', value: 'if_empty' },
@@ -1544,6 +1624,7 @@ const GoogleSheetsSettings: React.FC = () => {
                         <Button
                           size="small"
                           type="primary"
+                          className="min-h-11"
                           icon={<SyncOutlined />}
                           loading={busyId === config.id}
                           onClick={() => syncConfig(config)}
@@ -1553,6 +1634,7 @@ const GoogleSheetsSettings: React.FC = () => {
                         {config.target_type === 'APPLICATIONS' && (
                           <Button
                             size="small"
+                            className="min-h-11"
                             icon={<TableOutlined />}
                             loading={busyId === config.id}
                             onClick={() => openImportReview(config)}
@@ -1562,6 +1644,7 @@ const GoogleSheetsSettings: React.FC = () => {
                         )}
                         <Button
                           size="small"
+                          className="min-h-11"
                           icon={<HistoryOutlined />}
                           disabled={history.length === 0}
                           onClick={() => openHistory(config)}
@@ -1594,6 +1677,7 @@ const GoogleSheetsSettings: React.FC = () => {
                         >
                           <Button
                             size="small"
+                            className="min-h-11"
                             icon={<MoreOutlined />}
                             loading={busyId === config.id}
                           >

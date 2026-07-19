@@ -6,6 +6,7 @@ interface YearFilterProps {
   selectedYear: number | 'all';
   onYearChange: (year: number | 'all') => void;
   availableYears: number[];
+  ariaLabel?: string;
   currentYear?: number;
   className?: string;
   size?: 'large' | 'middle' | 'small';
@@ -16,6 +17,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
   selectedYear,
   onYearChange,
   availableYears,
+  ariaLabel = 'Filter by year',
   currentYear = new Date().getFullYear(),
   className,
   size = 'middle',
@@ -42,6 +44,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
 
   return (
     <Select
+      aria-label={ariaLabel}
       value={selectedYear}
       onChange={onYearChange}
       options={options}

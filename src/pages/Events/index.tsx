@@ -694,6 +694,7 @@ const Events = () => {
                   ]}
                 />
                 <Select
+                  aria-label="Display timezone"
                   value={normalizeTimeZone(userTimezone)}
                   onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
                   style={{ width: 260 }}

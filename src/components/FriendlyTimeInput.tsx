@@ -8,6 +8,9 @@ dayjs.extend(customParseFormat);
 
 type FriendlyTimeInputProps = {
   id?: string;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
   value?: Dayjs | null;
   onChange?: (value: Dayjs | null) => void;
   minuteStep?: number;
@@ -112,6 +115,9 @@ const createTimeFromParts = (
 
 const FriendlyTimeInput = ({
   id,
+  ariaLabel,
+  ariaLabelledBy,
+  ariaDescribedBy,
   value = null,
   onChange,
   minuteStep = 5,
@@ -211,7 +217,7 @@ const FriendlyTimeInput = ({
   };
 
   const inputClasses = clsx(
-    'h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 outline-none transition',
+    'min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 outline-none transition',
     'hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100',
     'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400',
     className
@@ -222,6 +228,9 @@ const FriendlyTimeInput = ({
       <input
         id={id}
         type="button"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         value={formatDisplay(value) || placeholder}
         disabled={disabled}
         onClick={openSheet}
@@ -235,6 +244,9 @@ const FriendlyTimeInput = ({
       <input
         id={id}
         type="text"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         inputMode="numeric"
         autoComplete="off"
         value={draft}

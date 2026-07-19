@@ -29,6 +29,7 @@ import {
   Bar,
 } from 'recharts';
 import type { CustomWidget } from '../hooks/useCustomWidgets';
+import { ANALYTICS_CHART_INITIAL_DIMENSION } from '../constants/chartDimensions';
 
 interface CustomWidgetCardProps {
   widget: CustomWidget;
@@ -113,7 +114,13 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
         </div>
         <div className={`h-75 w-full ${chartType === 'pie' ? 'careerhub-responsive-pie' : ''}`}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            minHeight={1}
+            initialDimension={ANALYTICS_CHART_INITIAL_DIMENSION}
+          >
             {chartType === 'pie' ? (
               <PieChart>
                 <Pie

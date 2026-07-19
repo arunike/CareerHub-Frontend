@@ -231,7 +231,13 @@ const SalaryBreakdown = ({
 
           <div className="mt-5 h-64">
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={240}>
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                minWidth={240}
+                minHeight={240}
+                initialDimension={{ width: 240, height: 256 }}
+              >
                 <PieChart>
                   <Pie
                     data={chartData}
@@ -724,7 +730,13 @@ const HourlyBreakdown = ({
               ];
               return (
                 <div className="mt-5 h-52">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={208}>
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                    minWidth={240}
+                    minHeight={208}
+                    initialDimension={{ width: 240, height: 208 }}
+                  >
                     <PieChart>
                       <Pie
                         data={chartData}

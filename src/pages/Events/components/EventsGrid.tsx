@@ -22,11 +22,11 @@ import {
   VideoCameraOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { Checkbox } from 'antd';
 import type { Event } from '../../../types';
 import CategoryBadge from '../../../components/CategoryBadge';
 import RowActions from '../../../components/RowActions';
 import { GridSkeleton } from '../../../components/SkeletonLoader';
+import SelectionCheckbox from '../../../components/SelectionCheckbox';
 
 const { Text } = Typography;
 
@@ -113,7 +113,8 @@ const EventsGrid = ({
             bodyStyle={{ flex: 1 }}
             title={
               <div className="flex min-w-0 items-center gap-3">
-                <Checkbox
+                <SelectionCheckbox
+                  selectionLabel={event.name}
                   checked={selectedIds.includes(event.id)}
                   onChange={(e) => onSelectChange(event.id, e.target.checked)}
                 />

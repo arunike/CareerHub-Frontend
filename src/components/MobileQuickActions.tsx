@@ -6,11 +6,10 @@ import {
   ImportOutlined,
   ScheduleOutlined,
   SolutionOutlined,
-  ThunderboltOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
 import { Drawer } from 'antd';
-import { MOBILE_NAVIGATION_ITEMS } from '../constants/mobileNavigation';
+import { MOBILE_NAVIGATION_ITEMS, type MobileNavigationKey } from '../constants/mobileNavigation';
 
 const ACTIONS = {
   application: {
@@ -87,25 +86,52 @@ const ACTIONS = {
 
 type QuickAction = (typeof ACTIONS)[keyof typeof ACTIONS];
 
-const GLOBAL_ACTIONS: QuickAction[] = [
-  ACTIONS.application,
-  ACTIONS.event,
-  ACTIONS.task,
-  ACTIONS.document,
-];
-
-const ACTIONS_BY_SOURCE: Record<string, QuickAction[]> = {
-  '/applications': [ACTIONS.application, ACTIONS.jobImport],
-  '/events': [ACTIONS.event],
-  '/holidays': [ACTIONS.holiday],
-  '/offers': [ACTIONS.currentJob, ACTIONS.scenario],
-  '/documents': [ACTIONS.document],
-  '/tasks': [ACTIONS.task],
-  '/experience': [ACTIONS.experience, ACTIONS.experienceImport],
+type QuickActionGroup = {
+  description: string;
+  actions: readonly QuickAction[];
 };
 
+const ACTION_GROUPS_BY_SOURCE = {
+  '/applications': {
+    description: 'Track opportunities or import a job posting.',
+    actions: [ACTIONS.application, ACTIONS.jobImport],
+  },
+  '/events': {
+    description: 'Schedule an interview or follow-up.',
+    actions: [ACTIONS.event],
+  },
+  '/holidays': {
+    description: 'Add a personal holiday or blocked date.',
+    actions: [ACTIONS.holiday],
+  },
+  '/offers': {
+    description: 'Set up a baseline or comparison scenario.',
+    actions: [ACTIONS.currentJob, ACTIONS.scenario],
+  },
+  '/documents': {
+    description: 'Add a resume or another supporting file.',
+    actions: [ACTIONS.document],
+  },
+  '/tasks': {
+    description: 'Capture a next step or reminder.',
+    actions: [ACTIONS.task],
+  },
+  '/experience': {
+    description: 'Add or import your work history.',
+    actions: [ACTIONS.experience, ACTIONS.experienceImport],
+  },
+} as const satisfies Partial<Record<MobileNavigationKey, QuickActionGroup>>;
+
+type QuickActionSourceKey = keyof typeof ACTION_GROUPS_BY_SOURCE;
+
+const isQuickActionSourceKey = (sourceKey: string): sourceKey is QuickActionSourceKey =>
+  Object.prototype.hasOwnProperty.call(ACTION_GROUPS_BY_SOURCE, sourceKey);
+
+const getQuickActionGroup = (sourceKey?: string) =>
+  sourceKey && isQuickActionSourceKey(sourceKey) ? ACTION_GROUPS_BY_SOURCE[sourceKey] : undefined;
+
 export const hasMobileQuickActionsForSource = (sourceKey: string) =>
-  Boolean(ACTIONS_BY_SOURCE[sourceKey]?.length);
+  Boolean(getQuickActionGroup(sourceKey)?.actions.length);
 
 interface MobileQuickActionsProps {
   open: boolean;
@@ -116,9 +142,10 @@ interface MobileQuickActionsProps {
 
 const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuickActionsProps) => {
   const sourceItem = MOBILE_NAVIGATION_ITEMS.find((item) => item.key === sourceKey);
-  const actions = sourceKey ? ACTIONS_BY_SOURCE[sourceKey] || [] : GLOBAL_ACTIONS;
-  const HeaderIcon = sourceItem?.icon || ThunderboltOutlined;
-  const isPageScoped = Boolean(sourceKey);
+  const actionGroup = getQuickActionGroup(sourceKey);
+  const HeaderIcon = sourceItem?.icon;
+
+  if (!sourceItem || !HeaderIcon || !actionGroup) return null;
 
   return (
     <Drawer
@@ -137,34 +164,22 @@ const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuic
             <HeaderIcon />
           </span>
           <div>
-            <h2 className="text-base font-bold text-slate-900">
-              {sourceItem ? `${sourceItem.label} actions` : 'Quick actions'}
-            </h2>
-            <p className="text-sm text-slate-600">
-              {sourceItem
-                ? 'Actions available on this page.'
-                : 'Start a common task without hunting through menus.'}
-            </p>
+            <h2 className="text-base font-bold text-slate-900">{sourceItem.label} actions</h2>
+            <p className="text-sm text-slate-600">{actionGroup.description}</p>
           </div>
         </div>
 
-        <div className={isPageScoped ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
-          {actions.map((action) => {
+        <div className="flex flex-col gap-2">
+          {actionGroup.actions.map((action) => {
             const Icon = action.icon;
             return (
               <button
                 key={action.key}
                 type="button"
                 onClick={() => onNavigate(action.destination)}
-                className={`group rounded-2xl border border-slate-200 bg-white text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98] ${
-                  isPageScoped ? 'flex min-h-[76px] items-center gap-3 p-3' : 'min-h-[96px] p-3'
-                }`}
+                className="group flex min-h-[76px] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
               >
-                <span
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base text-slate-700 transition-colors group-hover:bg-white group-hover:text-blue-600 ${
-                    isPageScoped ? '' : 'mb-3'
-                  }`}
-                >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base text-slate-700 transition-colors group-hover:bg-white group-hover:text-blue-600">
                   <Icon />
                 </span>
                 <span className="min-w-0">

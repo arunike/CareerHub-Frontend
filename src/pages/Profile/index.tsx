@@ -457,7 +457,7 @@ const ProfilePage: React.FC = () => {
                       className="h-full w-full border-0 p-0"
                     />
                     <label
-                      className="absolute bottom-1 right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl bg-slate-950/70 opacity-100 transition-opacity duration-200 sm:inset-1 sm:h-auto sm:w-auto sm:rounded-2xl sm:opacity-0 sm:group-hover:opacity-100"
+                      className="absolute bottom-1 right-1 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-slate-950/70 opacity-100 transition-opacity duration-200 lg:inset-1 lg:h-auto lg:w-auto lg:rounded-2xl lg:opacity-0 lg:group-hover:opacity-100"
                       aria-label="Upload profile photo"
                     >
                       <CameraOutlined className="text-xl text-white" />
@@ -515,7 +515,7 @@ const ProfilePage: React.FC = () => {
                             setSaving(false);
                           }
                         }}
-                        className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:text-rose-500 sm:-right-1 sm:-top-1 sm:h-8 sm:w-8"
+                        className="absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:text-rose-500 lg:-right-1 lg:-top-1 lg:h-8 lg:w-8"
                         aria-label="Remove profile photo"
                       >
                         <CloseOutlined className="text-[10px]" />

@@ -11,10 +11,11 @@ import {
   StopOutlined,
   UnlockOutlined,
 } from '@ant-design/icons';
-import { Checkbox, Button, Tooltip, Form, Input, InputNumber, Select } from 'antd';
+import { Button, Tooltip, Form, Input, InputNumber, Select } from 'antd';
 import Modal from '../../../components/MobileModal';
 import type { PublicBooking, ShareLink } from '../../../types';
 import BulkActionHeader from '../../../components/BulkActionHeader';
+import SelectionCheckbox from '../../../components/SelectionCheckbox';
 
 type Props = {
   links: ShareLink[];
@@ -269,7 +270,8 @@ const PublicBookingManager = ({
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <Checkbox
+                    <SelectionCheckbox
+                      selectionLabel={link.title || 'untitled public link'}
                       checked={selectedLinkIds.includes(link.id)}
                       onChange={(e) => handleSelectLink(link.id, e.target.checked)}
                       className="mt-1"
@@ -431,7 +433,8 @@ const PublicBookingManager = ({
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Checkbox
+                  <SelectionCheckbox
+                    selectionLabel={`${booking.name}'s booking on ${booking.date}`}
                     checked={selectedBookingIds.includes(booking.id)}
                     onChange={(e) => handleSelectBooking(booking.id, e.target.checked)}
                     className="mt-1"

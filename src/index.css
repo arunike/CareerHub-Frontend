@@ -49,8 +49,13 @@ body {
 
 input::placeholder,
 textarea::placeholder {
-  color: #64748b;
+  color: var(--careerhub-placeholder);
   opacity: 1;
+}
+
+.ant-select:not(.ant-select-disabled)
+  :where(.ant-select-placeholder, .ant-select-selection-placeholder) {
+  color: var(--careerhub-placeholder) !important;
 }
 
 :root {
@@ -61,6 +66,7 @@ textarea::placeholder {
   --careerhub-accent-soft: #eff6ff;
   --careerhub-ink: #111827;
   --careerhub-muted: #667085;
+  --careerhub-placeholder: #64748b;
   --careerhub-surface: #ffffff;
   --careerhub-surface-subtle: #f8fafc;
   --careerhub-panel: #ffffff;

@@ -3,7 +3,7 @@ import {
   Form,
   Input,
   DatePicker,
-  Switch,
+  Checkbox,
   Tabs,
   Button,
   message,
@@ -487,7 +487,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 <button
                   type="button"
                   onClick={handleRemoveLogo}
-                  className="absolute -right-2 -top-2 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600 sm:-right-1 sm:-top-1 sm:h-6 sm:w-6 sm:rounded-full"
+                  className="absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-xl bg-red-500 text-white shadow-sm transition-colors hover:bg-red-600 lg:-right-1 lg:-top-1 lg:h-6 lg:w-6 lg:rounded-full"
                   title="Remove logo"
                   aria-label="Remove company logo"
                 >
@@ -501,7 +501,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                   size="small"
                   icon={<CameraOutlined />}
                   type="link"
-                  className="p-0 text-gray-500 hover:text-blue-500"
+                  className="!min-h-11 !px-3 text-gray-500 hover:text-blue-500 lg:!min-h-0 lg:!px-0"
                 >
                   {currentLogoSrc ? 'Change logo' : 'Upload logo'}
                 </Button>
@@ -571,9 +571,13 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
 
           <div className="flex items-center gap-4 mb-4">
             <Form.Item name="is_current" valuePropName="checked" className="mb-0">
-              <Switch onChange={setIsCurrent} />
+              <Checkbox
+                className="min-h-11 items-center lg:min-h-0"
+                onChange={(event) => setIsCurrent(event.target.checked)}
+              >
+                I currently work here
+              </Checkbox>
             </Form.Item>
-            <span className="text-gray-600">I currently work here</span>
           </div>
 
           <Form.Item

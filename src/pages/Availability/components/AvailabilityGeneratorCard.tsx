@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import EditableNumberInput from '../../../components/EditableNumberInput';
 import { TIMEZONE_OPTIONS } from '../../../lib/timezones';
@@ -23,14 +24,24 @@ const AvailabilityGeneratorCard = ({
   loading,
   onGenerate,
 }: Props) => {
+  const startDateId = useId();
+  const timezoneId = useId();
+  const rangeId = useId();
+
   return (
     <div className="enterprise-section p-6">
       <div className="flex flex-col md:flex-row md:items-end gap-4">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <label htmlFor={startDateId} className="block text-sm font-medium text-gray-700 mb-1">
+            Start Date
+          </label>
           <div className="relative">
-            <CalendarOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+            <CalendarOutlined
+              aria-hidden="true"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"
+            />
             <input
+              id={startDateId}
               type="date"
               value={startDate}
               onChange={(e) => onStartDateChange(e.target.value)}
@@ -40,10 +51,16 @@ const AvailabilityGeneratorCard = ({
         </div>
 
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+          <label htmlFor={timezoneId} className="block text-sm font-medium text-gray-700 mb-1">
+            Timezone
+          </label>
           <div className="relative">
-            <ClockCircleOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400" />
+            <ClockCircleOutlined
+              aria-hidden="true"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"
+            />
             <select
+              id={timezoneId}
               value={timezone}
               onChange={(e) => onTimezoneChange(e.target.value)}
               className="min-h-11 pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
@@ -58,8 +75,11 @@ const AvailabilityGeneratorCard = ({
         </div>
 
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Range (weeks)</label>
+          <label htmlFor={rangeId} className="block text-sm font-medium text-gray-700 mb-1">
+            Range (weeks)
+          </label>
           <EditableNumberInput
+            id={rangeId}
             min={1}
             step={1}
             value={availabilityWeeks}
