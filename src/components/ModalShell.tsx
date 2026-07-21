@@ -1,13 +1,14 @@
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 import { createPortal } from 'react-dom';
+import { Drawer as AntDrawer } from 'antd';
 import {
   useEffect,
   useId,
   useRef,
+  useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
-import { useMobileSheetDrag } from '../hooks/useMobileSheetDrag';
 
 type Props = {
   isOpen: boolean;
@@ -24,6 +25,7 @@ type Props = {
   zIndex?: number;
   footer?: ReactNode;
   showMobileHandle?: boolean;
+  mobileExpandable?: boolean;
   children: ReactNode;
 };
 
@@ -41,15 +43,46 @@ const ModalShell = ({
   footerClassName = 'flex flex-col-reverse justify-end gap-3 border-t border-slate-200/80 bg-slate-50/80 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:flex-row sm:px-6 sm:py-4',
   zIndex = 1100,
   footer,
-  showMobileHandle = true,
+  mobileExpandable = true,
   children,
 }: Props) => {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const mobileSheet = useMobileSheetDrag({ isOpen, onClose });
+  const [isMobile, setIsMobile] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isContentShort, setIsContentShort] = useState(true);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isOpen || typeof window === 'undefined') return undefined;
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Measure content height on open or children change
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+
+    const timer = setTimeout(() => {
+      if (bodyRef.current) {
+        const height = bodyRef.current.scrollHeight;
+        setIsContentShort(height < 350);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, isMobile, children]);
+
+  // Reset expansion state when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsExpanded(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || isMobile || typeof window === 'undefined') return undefined;
 
     const previouslyFocused =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -70,7 +103,7 @@ const ModalShell = ({
       document.body.style.overflow = previousBodyOverflow;
       previouslyFocused?.focus();
     };
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   const handleDialogKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
@@ -88,14 +121,8 @@ const ModalShell = ({
       dialog.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
       )
-    ).filter((element) => element.offsetParent !== null);
-
-    if (focusable.length === 0) {
-      event.preventDefault();
-      dialog.focus();
-      return;
-    }
-
+    );
+    if (focusable.length === 0) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (event.shiftKey && document.activeElement === first) {
@@ -107,7 +134,54 @@ const ModalShell = ({
     }
   };
 
-  if (!isOpen || typeof document === 'undefined') return null;
+  if (!isOpen) return null;
+
+  if (isMobile) {
+    const drawerTitle = (
+      <div className="careerhub-mobile-drawer-title-wrapper">
+        <div className="careerhub-mobile-drawer-handle-bar">
+          <span />
+        </div>
+        <div className="careerhub-mobile-drawer-header-row">
+          <div className="careerhub-mobile-drawer-title-text">{titleNode ?? title}</div>
+          {mobileExpandable && !isContentShort && (
+            <div className="careerhub-mobile-drawer-actions">
+              <button
+                type="button"
+                className="careerhub-mobile-drawer-action-btn"
+                onClick={() => setIsExpanded((curr) => !curr)}
+                aria-label={isExpanded ? 'Exit fullscreen' : 'Expand to fullscreen'}
+              >
+                {isExpanded ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+
+    return (
+      <AntDrawer
+        open={isOpen}
+        onClose={onClose}
+        title={drawerTitle}
+        footer={footer}
+        destroyOnClose
+        placement="bottom"
+        height={isExpanded ? '100dvh' : undefined}
+        zIndex={zIndex}
+        maskClosable={false}
+        rootClassName={`careerhub-mobile-drawer ${
+          isExpanded ? 'careerhub-mobile-drawer-expanded' : ''
+        } ${isContentShort ? 'careerhub-mobile-drawer-short' : ''}`}
+        className={wrapperClassName}
+      >
+        <div className={bodyClassName} ref={bodyRef}>
+          {children}
+        </div>
+      </AntDrawer>
+    );
+  }
 
   return createPortal(
     <div
@@ -120,12 +194,7 @@ const ModalShell = ({
     >
       <div
         ref={dialogRef}
-        className={`careerhub-modal-shell mt-auto flex w-full min-h-0 flex-col overflow-hidden border-slate-200/80 bg-white shadow-[0_28px_80px_-44px_rgba(15,23,42,0.72)] ${
-          mobileSheet.isExpanded
-            ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] rounded-none border-0'
-            : 'max-h-[92dvh] rounded-t-[24px] border'
-        } sm:static sm:inset-auto sm:mt-0 sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:border ${maxWidthClass} ${wrapperClassName}`.trim()}
-        style={mobileSheet.sheetStyle}
+        className={`careerhub-modal-shell mt-auto flex w-full min-h-0 flex-col overflow-hidden border-slate-200/80 bg-white shadow-[0_28px_80px_-44px_rgba(15,23,42,0.72)] max-h-[92dvh] rounded-t-[24px] border sm:static sm:inset-auto sm:mt-0 sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:border ${maxWidthClass} ${wrapperClassName}`.trim()}
         onClick={(event) => event.stopPropagation()}
         onKeyDown={handleDialogKeyDown}
         role="dialog"
@@ -133,33 +202,6 @@ const ModalShell = ({
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        {showMobileHandle ? (
-          <button
-            type="button"
-            className={`group flex min-h-11 w-full shrink-0 touch-none items-center justify-center px-4 sm:hidden ${
-              mobileSheet.isDragging ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
-            style={{
-              paddingTop: mobileSheet.isExpanded
-                ? 'max(env(safe-area-inset-top), 0.25rem)'
-                : undefined,
-            }}
-            aria-label={
-              mobileSheet.isExpanded
-                ? 'Restore modal to compact size'
-                : 'Expand modal to full screen'
-            }
-            aria-pressed={mobileSheet.isExpanded}
-            {...mobileSheet.handleProps}
-          >
-            <span
-              className={`h-1.5 w-12 rounded-full transition-colors ${
-                mobileSheet.isDragging ? 'bg-blue-400' : 'bg-slate-300 group-active:bg-blue-400'
-              }`}
-              aria-hidden="true"
-            />
-          </button>
-        ) : null}
         <div className={headerClassName}>
           <h3 id={titleId} className={titleClassName}>
             {titleNode ?? title}
