@@ -102,7 +102,11 @@ export const useMobileSheetDrag = ({ isOpen, onClose }: UseMobileSheetDragOption
       resetDrag();
 
       if (!didDrag) return;
-      suppressClickRef.current = true;
+
+      const maxDragDistance = Math.max(Math.abs(minimumOffset), Math.abs(maximumOffset));
+      if (maxDragDistance >= 15) {
+        suppressClickRef.current = true;
+      }
 
       if (!isExpanded && minimumOffset <= -EXPAND_THRESHOLD) {
         setIsExpanded(true);
@@ -118,7 +122,11 @@ export const useMobileSheetDrag = ({ isOpen, onClose }: UseMobileSheetDragOption
   const handlePointerCancel = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
       if (activePointerIdRef.current !== event.pointerId) return;
-      suppressClickRef.current = didDragRef.current;
+      const maxDragDistance = Math.max(
+        Math.abs(minimumOffsetRef.current),
+        Math.abs(maximumOffsetRef.current)
+      );
+      suppressClickRef.current = didDragRef.current && maxDragDistance >= 15;
       const shouldExpand = !isExpanded && minimumOffsetRef.current <= -EXPAND_THRESHOLD;
       resetDrag();
       if (shouldExpand) setIsExpanded(true);

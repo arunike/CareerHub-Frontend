@@ -1,47 +1,103 @@
-import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
-import { Grid, Modal as AntModal, type ModalProps } from 'antd';
-import { useMobileSheetDrag } from '../hooks/useMobileSheetDrag';
+import { useEffect, useState, useRef, type MouseEvent as ReactMouseEvent } from 'react';
+import { Modal as AntModal, Drawer as AntDrawer, type ModalProps } from 'antd';
+import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 
-const MobileModalBase = ({ modalRender, wrapClassName, ...props }: ModalProps) => {
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+interface MobileModalProps extends ModalProps {
+  mobileExpandable?: boolean;
+}
+
+const MobileModalBase = ({
+  modalRender,
+  wrapClassName,
+  mobileExpandable = true,
+  ...props
+}: MobileModalProps) => {
   const isOpen = Boolean(props.open);
-  const requestClose = () => props.onCancel?.({} as ReactMouseEvent<HTMLButtonElement, MouseEvent>);
-  const mobileSheet = useMobileSheetDrag({ isOpen, onClose: requestClose });
+  const [isMobile, setIsMobile] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isContentShort, setIsContentShort] = useState(true);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
-  const renderModal = (node: ReactNode) => {
-    const renderedNode = modalRender ? modalRender(node) : node;
-    if (!isMobile) return renderedNode;
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-    return (
-      <div
-        className={`careerhub-mobile-modal-frame ${
-          mobileSheet.isExpanded ? 'careerhub-mobile-modal-expanded' : ''
-        }`}
-        style={mobileSheet.sheetStyle}
-      >
-        <button
-          type="button"
-          className={`careerhub-mobile-modal-handle ${mobileSheet.isDragging ? 'is-dragging' : ''}`}
-          aria-label={
-            mobileSheet.isExpanded ? 'Restore modal to compact size' : 'Expand modal to full screen'
-          }
-          aria-pressed={mobileSheet.isExpanded}
-          {...mobileSheet.handleProps}
-        >
-          <span aria-hidden="true" />
-        </button>
-        {renderedNode}
-      </div>
-    );
+  // Measure content height on open or children change
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+
+    const timer = setTimeout(() => {
+      if (bodyRef.current) {
+        const height = bodyRef.current.scrollHeight;
+        setIsContentShort(height < 350);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, isMobile, props.children]);
+
+  // Reset expansion state when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsExpanded(false);
+    }
+  }, [isOpen]);
+
+  if (!isMobile) {
+    return <AntModal {...props} wrapClassName={wrapClassName} modalRender={modalRender} />;
+  }
+
+  // Mobile viewport: Render a premium native bottom Drawer
+  const handleClose = () => {
+    props.onCancel?.({} as ReactMouseEvent<HTMLButtonElement, MouseEvent>);
   };
 
+  const drawerTitle = (
+    <div className="careerhub-mobile-drawer-title-wrapper">
+      <div className="careerhub-mobile-drawer-handle-bar">
+        <span />
+      </div>
+      <div className="careerhub-mobile-drawer-header-row">
+        <div className="careerhub-mobile-drawer-title-text">{props.title as React.ReactNode}</div>
+        {mobileExpandable && !isContentShort && (
+          <div className="careerhub-mobile-drawer-actions">
+            <button
+              type="button"
+              className="careerhub-mobile-drawer-action-btn"
+              onClick={() => setIsExpanded((curr) => !curr)}
+              aria-label={isExpanded ? 'Exit fullscreen' : 'Expand to fullscreen'}
+            >
+              {isExpanded ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <AntModal
-      {...props}
-      wrapClassName={`careerhub-mobile-modal-wrap ${wrapClassName || ''}`.trim()}
-      modalRender={renderModal}
-    />
+    <AntDrawer
+      open={isOpen}
+      onClose={handleClose}
+      title={drawerTitle}
+      footer={props.footer as React.ReactNode}
+      destroyOnClose={props.destroyOnClose}
+      placement="bottom"
+      height={isExpanded ? '100dvh' : undefined}
+      rootClassName={`careerhub-mobile-drawer ${
+        isExpanded ? 'careerhub-mobile-drawer-expanded' : ''
+      } ${isContentShort ? 'careerhub-mobile-drawer-short' : ''}`.trim()}
+      className={props.className}
+      closable={props.closable ?? true}
+      keyboard={props.keyboard}
+      mask={props.mask ?? true}
+      maskClosable={props.maskClosable ?? false}
+    >
+      <div ref={bodyRef}>{props.children}</div>
+    </AntDrawer>
   );
 };
 

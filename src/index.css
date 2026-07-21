@@ -380,11 +380,19 @@ textarea::placeholder {
 
   .careerhub-mobile-modal-frame > .ant-modal .ant-modal-content {
     max-height: calc(92dvh - 44px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     border: 0;
     border-radius: 0;
     box-shadow: none !important;
+  }
+
+  .careerhub-mobile-modal-frame > .ant-modal .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .careerhub-mobile-modal-frame .ant-modal-close,
@@ -496,6 +504,9 @@ textarea::placeholder {
   .careerhub-mobile-modal-expanded > .ant-modal .ant-modal-content {
     height: 100%;
     max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     border-radius: 0;
   }
 }
@@ -1152,5 +1163,146 @@ textarea::placeholder {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Premium native bottom drawer styling overrides */
+@media (max-width: 767px) {
+  .careerhub-mobile-drawer .ant-drawer-content {
+    border-top-left-radius: 24px !important;
+    border-top-right-radius: 24px !important;
+    background: #ffffff !important;
+    box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .careerhub-mobile-drawer .ant-drawer-header {
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 22px 20px 14px !important;
+    position: relative !important;
+  }
+
+  .careerhub-mobile-drawer-title-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .careerhub-mobile-drawer-handle-bar {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    position: absolute;
+    top: 8px;
+    left: 0;
+    margin-bottom: 8px;
+  }
+
+  .careerhub-mobile-drawer-handle-bar > span {
+    width: 48px;
+    height: 5px;
+    border-radius: 999px;
+    background: #cbd5e1;
+  }
+
+  .careerhub-mobile-drawer-title-text {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.4;
+  }
+
+  .careerhub-mobile-drawer .ant-drawer-close {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px;
+    color: #64748b !important;
+    margin-inline-end: 0 !important;
+  }
+
+  .careerhub-mobile-drawer .ant-drawer-body {
+    padding: 20px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .careerhub-mobile-drawer .ant-drawer-footer {
+    border-top: 1px solid #f1f5f9 !important;
+    padding: 14px 20px calc(env(safe-area-inset-bottom) + 16px) !important;
+    background: #f8fafc !important;
+  }
+
+  /* Custom height and border transitions for mobile drawer expansion */
+  .careerhub-mobile-drawer .ant-drawer-content {
+    transition:
+      border-radius 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      height 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .careerhub-mobile-drawer-expanded .ant-drawer-content {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+  }
+
+  .careerhub-mobile-drawer-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-right: 48px; /* Leave space for the default close button on the right */
+  }
+
+  .careerhub-mobile-drawer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: absolute;
+    right: 60px; /* Positioned just to the left of the close button */
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .careerhub-mobile-drawer-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .careerhub-mobile-drawer-action-btn:active {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  /* Tall (default) mobile drawer height styles */
+  .careerhub-mobile-drawer:not(.careerhub-mobile-drawer-expanded):not(
+      .careerhub-mobile-drawer-short
+    )
+    .ant-drawer-content-wrapper {
+    height: 85dvh !important;
+    max-height: 85dvh !important;
+  }
+
+  /* Short mobile drawer height auto overrides */
+  .careerhub-mobile-drawer-short .ant-drawer-content-wrapper,
+  .careerhub-mobile-drawer-short .ant-drawer-content,
+  .careerhub-mobile-drawer-short .ant-drawer-wrapper-body,
+  .careerhub-mobile-drawer-short .ant-drawer-body {
+    height: auto !important;
+    flex: none !important;
+  }
+
+  /* Expanded full-screen mobile drawer height styles */
+  .careerhub-mobile-drawer-expanded .ant-drawer-content-wrapper {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
   }
 }
