@@ -290,6 +290,19 @@ const Tasks: React.FC = () => {
     }
   };
 
+  const handleDuplicateTask = (task: Task) => {
+    setEditingTask(null);
+    setModalMode('edit');
+    form.setFieldsValue({
+      title: `${task.title} (Copy)`,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      due_date: task.due_date ? dayjs(task.due_date) : null,
+    });
+    setIsModalOpen(true);
+  };
+
   const handleChecklistToggle = async (task: Task, checked: boolean) => {
     try {
       await updateTask(task.id, { status: checked ? 'DONE' : 'TODO' });
@@ -609,6 +622,7 @@ const Tasks: React.FC = () => {
                           size="small"
                           onView={() => openViewModal(task)}
                           onEdit={() => openEditModal(task)}
+                          onDuplicate={() => handleDuplicateTask(task)}
                           onDelete={() => handleDelete(task)}
                           deleteTitle="Delete action item?"
                         />
@@ -672,6 +686,7 @@ const Tasks: React.FC = () => {
                     size="small"
                     onView={() => openViewModal(task)}
                     onEdit={() => openEditModal(task)}
+                    onDuplicate={() => handleDuplicateTask(task)}
                     onDelete={() => handleDelete(task)}
                     deleteTitle="Delete action item?"
                   />
@@ -760,7 +775,12 @@ const Tasks: React.FC = () => {
             </Form.Item>
           </div>
           <Form.Item name="due_date" label="Due Date">
-            <DatePicker size="large" style={{ width: '100%' }} disabled={modalMode === 'view'} />
+            <DatePicker
+              inputReadOnly
+              size="large"
+              style={{ width: '100%' }}
+              disabled={modalMode === 'view'}
+            />
           </Form.Item>
         </Form>
       </ModalShell>

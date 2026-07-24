@@ -315,6 +315,15 @@ const Applications = () => {
     }
   };
 
+  const handleDuplicateApplication = (app: CareerApplication) => {
+    populateApplicationForm(app);
+    setEditingId(null);
+    form.setFieldValue('role_title', `${app.role_title} (Copy)`);
+    setDetailApp(null);
+    setDetailDrawerMode('view');
+    setIsAddModalOpen(true);
+  };
+
   const requestDeleteApplication = (application: CareerApplication) => {
     const companyName = application.company_details?.name || 'this application';
     Modal.confirm({
@@ -902,6 +911,7 @@ const Applications = () => {
             isLocked={record.is_locked}
             onToggleLock={() => toggleLock(record)}
             onEdit={() => openEditDrawer(record)}
+            onDuplicate={record.is_locked ? undefined : () => handleDuplicateApplication(record)}
             onDelete={() => handleDelete(record.id)}
             disableDelete={record.is_locked}
           />
@@ -1028,7 +1038,7 @@ const Applications = () => {
         </Col>
         <Col xs={24} sm={12}>
           <Form.Item name="date_applied" label="Date Applied">
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker inputReadOnly style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>
@@ -1413,6 +1423,9 @@ const Applications = () => {
                     onViewDetails={() => openDetailDrawer(record)}
                     onGenerateLetter={() => setCoverLetterApp(record)}
                     onEdit={() => openEditDrawer(record)}
+                    onDuplicate={
+                      record.is_locked ? undefined : () => handleDuplicateApplication(record)
+                    }
                     onToggleLock={() => toggleLock(record)}
                     onDelete={() => requestDeleteApplication(record)}
                   />
@@ -1469,7 +1482,7 @@ const Applications = () => {
         maxWidthClass="max-w-[700px]"
         bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
         footer={
-          <>
+          <div className="flex flex-col gap-3 w-full sm:flex-row sm:justify-end">
             <Button
               size="large"
               onClick={() => setIsAddModalOpen(false)}
@@ -1485,7 +1498,7 @@ const Applications = () => {
             >
               Add application
             </Button>
-          </>
+          </div>
         }
       >
         {isAddModalOpen
@@ -1516,6 +1529,7 @@ const Applications = () => {
         onClose={closeDetailDrawer}
         onCancelEdit={cancelDrawerEdit}
         onEdit={openEditDrawer}
+        onDuplicate={handleDuplicateApplication}
         onGenerateCoverLetter={setCoverLetterApp}
         onNotesUpdate={(id, notes) => {
           setApplications((prev) => prev.map((app) => (app.id === id ? { ...app, notes } : app)));

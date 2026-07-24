@@ -7,7 +7,11 @@ import {
   createHoliday,
   deactivateShareLink,
   deactivateSpecificShareLink,
+  deleteEvent,
+  deleteHoliday,
   deletePublicBooking,
+  deleteRecurringInstance,
+  deleteRecurringSeries,
   deleteShareLink,
   generateShareLink,
   getAvailability,
@@ -55,6 +59,7 @@ import { PageState, PanelSkeleton } from '../../components/PageState';
 import { Form, message, Modal } from 'antd';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
+import type { EventDeleteScope } from '../../components/calendarView/confirmCalendarDeletion';
 import type { ShareLink } from '../../types';
 import RecurrenceModal from '../../components/RecurrenceModal';
 import EventEditorModal from '../Events/components/EventEditorModal';
@@ -374,6 +379,28 @@ const Availability = () => {
     });
   };
 
+  const handleCalendarEventDelete = async (event: Event, scope: EventDeleteScope) => {
+    try {
+      if (event.is_virtual && event.parent_event) {
+        if (scope === 'instance') {
+          await deleteRecurringInstance(event.parent_event, event.date);
+        } else {
+          await deleteRecurringSeries(event.parent_event);
+        }
+      } else {
+        await deleteEvent(event.id);
+      }
+      messageApi.success('Event deleted');
+      setViewingEvent(null);
+      await fetchCalendarData();
+      return true;
+    } catch (error) {
+      messageApi.error(getErrorMessage(error, 'Failed to delete event'));
+      console.error(error);
+      return false;
+    }
+  };
+
   const handleCalendarAddEvent = (date: Date) => {
     const now = dayjs();
     const roundedMinute = Math.ceil(now.minute() / 5) * 5;
@@ -406,6 +433,21 @@ const Availability = () => {
   const handleCalendarHolidaySelect = (holiday: Holiday) => {
     setPendingHolidayAdd(null);
     setEditingHoliday(holiday);
+  };
+
+  const handleCalendarHolidayDelete = async (holiday: Holiday) => {
+    if (holiday.is_locked || !holiday.id) return false;
+    try {
+      await deleteHoliday(holiday.id);
+      messageApi.success('Holiday deleted');
+      setEditingHoliday(null);
+      await fetchCalendarData();
+      return true;
+    } catch (error) {
+      messageApi.error(getErrorMessage(error, 'Failed to delete holiday'));
+      console.error(error);
+      return false;
+    }
   };
 
   const handleEventFormFinish = async (values: EventFormValues) => {
@@ -903,6 +945,7 @@ const Availability = () => {
         event={viewingEvent}
         onClose={() => setViewingEvent(null)}
         onEdit={handleEventEdit}
+        onDelete={handleCalendarEventDelete}
       />
 
       <EventEditorModal
@@ -948,6 +991,7 @@ const Availability = () => {
           setEditingHoliday(null);
         }}
         onSubmit={handleHolidayFormFinish}
+        onDelete={handleCalendarHolidayDelete}
       />
     </div>
   );

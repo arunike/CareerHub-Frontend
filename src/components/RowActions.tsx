@@ -8,6 +8,7 @@ import {
   UnlockOutlined,
   PushpinOutlined,
   PushpinFilled,
+  CopyOutlined,
 } from '@ant-design/icons';
 
 interface RowActionsProps {
@@ -17,12 +18,15 @@ interface RowActionsProps {
   onTogglePin?: () => void;
   onView?: () => void;
   onEdit?: () => void;
+  onDuplicate?: () => void;
   onDelete?: () => void;
   disableEdit?: boolean;
+  disableDuplicate?: boolean;
   disableDelete?: boolean;
   lockTitle?: string;
   viewTitle?: string;
   editTitle?: string;
+  duplicateTitle?: string;
   deleteTitle?: string;
   deleteDescription?: string;
   deleteButtonTooltip?: string;
@@ -37,12 +41,15 @@ const RowActions: React.FC<RowActionsProps> = ({
   onTogglePin,
   onView,
   onEdit,
+  onDuplicate,
   onDelete,
   disableEdit = false,
+  disableDuplicate = false,
   disableDelete = false,
   lockTitle,
   viewTitle = 'View',
   editTitle = 'Edit',
+  duplicateTitle = 'Duplicate',
   deleteTitle = 'Delete?',
   deleteDescription,
   deleteButtonTooltip,
@@ -89,6 +96,19 @@ const RowActions: React.FC<RowActionsProps> = ({
             onClick={stopAndRun(onEdit)}
             disabled={disableEdit}
             aria-label={editTitle}
+          />
+        </Tooltip>
+      ) : null}
+
+      {onDuplicate ? (
+        <Tooltip title={duplicateTitle}>
+          <Button
+            type="text"
+            size={size}
+            icon={<CopyOutlined />}
+            onClick={stopAndRun(onDuplicate)}
+            disabled={disableDuplicate}
+            aria-label={duplicateTitle}
           />
         </Tooltip>
       ) : null}

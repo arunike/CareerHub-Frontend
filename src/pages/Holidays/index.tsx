@@ -41,7 +41,10 @@ import {
   createCategory,
   createEvent,
   createHoliday,
+  deleteEvent,
   deleteHoliday,
+  deleteRecurringInstance,
+  deleteRecurringSeries,
   setRecurrence,
   updateEvent,
   updateHoliday,
@@ -76,6 +79,7 @@ import EventEditorModal from '../Events/components/EventEditorModal';
 import EventViewModal from '../Events/components/EventViewModal';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
+import type { EventDeleteScope } from '../../components/calendarView/confirmCalendarDeletion';
 import { PageState } from '../../components/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SelectionCheckbox from '../../components/SelectionCheckbox';
@@ -99,6 +103,7 @@ const GroupedHolidayItem = ({
   toggleLock,
   handleDelete,
   handleEditItem,
+  handleDuplicateHoliday,
   selectedIds,
   onSelectChange,
   onSelectGroup,
@@ -112,113 +117,114 @@ const GroupedHolidayItem = ({
 
   return (
     <List.Item
-      actions={
-        !isExpanded
-          ? [
-              <RowActions
-                key={`actions-group-${item.id}`}
-                size="middle"
-                isLocked={item.is_locked}
-                onToggleLock={() => handleToggleLockGroup(item)}
-                onDelete={() => handleDeleteGroup(item)}
-                onEdit={() => handleEditItem(item)}
-                disableDelete={item.is_locked}
-              />,
-            ]
-          : []
-      }
+      key={`group-item-${item.id}`}
+      className="enterprise-card-list-item px-3 py-3 sm:px-4 sm:py-4"
     >
-      <List.Item.Meta
-        avatar={
-          <div className="flex items-center gap-3">
-            <SelectionCheckbox
-              selectionLabel={`${item.description || 'holiday range'} from ${dayjs(startDate).format('MMMM D, YYYY')} to ${dayjs(endDate).format('MMMM D, YYYY')}`}
-              checked={allSelected}
-              indeterminate={someSelected}
-              onChange={() => onSelectGroup(item.items, !allSelected)}
-              style={{ marginTop: 8 }}
-            />
-            <CalendarOutlined style={{ fontSize: 20, color: '#2563eb', marginTop: 8 }} />
-          </div>
-        }
-        title={
-          <Space wrap>
-            <Text strong>
-              {dayjs(startDate).format('YYYY-MM-DD')} to {dayjs(endDate).format('YYYY-MM-DD')}
-            </Text>
-            {item.is_recurring && (
-              <Tag color="blue" icon={<SyncOutlined />}>
-                Yearly
-              </Tag>
-            )}
-            {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
-          </Space>
-        }
-        description={
-          <div className="mt-2 w-full" style={{ marginLeft: -8 }}>
-            <Collapse
-              ghost
-              size="small"
-              className="bg-transparent"
-              style={{ padding: 0 }}
-              onChange={(keys) => setIsExpanded(keys.length > 0)}
-            >
-              <Collapse.Panel
-                header={
-                  <Text type="secondary" className="hover:text-blue-500 transition-colors">
-                    {item.description || 'View Individual Days'}
-                  </Text>
-                }
-                key="1"
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between min-w-0">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <SelectionCheckbox
+            selectionLabel={`${item.description || 'holiday range'} from ${dayjs(startDate).format('MMMM D, YYYY')} to ${dayjs(endDate).format('MMMM D, YYYY')}`}
+            checked={allSelected}
+            indeterminate={someSelected}
+            onChange={() => onSelectGroup(item.items, !allSelected)}
+            style={{ marginTop: 2 }}
+          />
+          <CalendarOutlined
+            style={{ fontSize: 20, color: '#2563eb', marginTop: 2 }}
+            className="shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold text-slate-900 whitespace-nowrap text-sm sm:text-base">
+                {dayjs(startDate).format('YYYY-MM-DD')} to {dayjs(endDate).format('YYYY-MM-DD')}
+              </span>
+              {item.is_recurring && (
+                <Tag color="blue" icon={<SyncOutlined />} className="m-0">
+                  Yearly
+                </Tag>
+              )}
+              {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+            </div>
+            <div className="mt-2 w-full">
+              <Collapse
+                ghost
+                size="small"
+                className="bg-transparent"
+                style={{ padding: 0 }}
+                onChange={(keys) => setIsExpanded(keys.length > 0)}
               >
-                <div className="pl-4 border-l-2 border-dashed border-gray-200 ml-1 mt-2">
-                  <List
-                    size="small"
-                    split={false}
-                    dataSource={item.items}
-                    renderItem={(subItem: any) => (
-                      <List.Item
-                        className="group hover:bg-gray-50 transition-colors rounded-lg mb-1 relative"
-                        style={{ padding: '8px 12px' }}
-                        actions={[
-                          <div className="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                <Collapse.Panel
+                  header={
+                    <Text type="secondary" className="hover:text-blue-500 transition-colors">
+                      {item.description || 'View Individual Days'}
+                    </Text>
+                  }
+                  key="1"
+                >
+                  <div className="pl-4 border-l-2 border-dashed border-gray-200 ml-1 mt-2">
+                    <List
+                      size="small"
+                      split={false}
+                      dataSource={item.items}
+                      renderItem={(subItem: any) => (
+                        <List.Item
+                          className="group hover:bg-gray-50 transition-colors rounded-lg mb-1 relative flex flex-wrap items-center justify-between gap-2"
+                          style={{ padding: '8px 12px' }}
+                        >
+                          {/* Tree Branch Connector */}
+                          <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
+
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <SelectionCheckbox
+                              selectionLabel={`holiday on ${dayjs(subItem.date).format('MMMM D, YYYY')}`}
+                              checked={selectedIds.includes(subItem.id)}
+                              onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
+                            />
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
+                              <span className="whitespace-nowrap text-gray-600 font-medium text-xs sm:text-sm">
+                                {dayjs(subItem.date).format('dddd, MMMM D, YYYY')}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 shrink-0">
                             <RowActions
                               key={`actions-${subItem.id}`}
                               size="small"
                               isLocked={subItem.is_locked}
                               onToggleLock={() => toggleLock(subItem)}
-                              onDelete={() => handleDelete(subItem.id)}
                               onEdit={() => handleEditItem(subItem)}
+                              onDuplicate={() => handleDuplicateHoliday(subItem)}
+                              onDelete={() => handleDelete(subItem.id)}
                               disableDelete={subItem.is_locked}
                             />
-                          </div>,
-                        ]}
-                      >
-                        {/* Tree Branch Connector */}
-                        <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
-
-                        <Space size="middle" className="min-w-0 pl-2">
-                          <SelectionCheckbox
-                            selectionLabel={`holiday on ${dayjs(subItem.date).format('MMMM D, YYYY')}`}
-                            checked={selectedIds.includes(subItem.id)}
-                            onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
-                          />
-                          <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-300" />
-                            <Text className="break-words text-gray-600 font-medium">
-                              {dayjs(subItem.date).format('dddd, MMMM D, YYYY')}
-                            </Text>
                           </div>
-                        </Space>
-                      </List.Item>
-                    )}
-                  />
-                </div>
-              </Collapse.Panel>
-            </Collapse>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                </Collapse.Panel>
+              </Collapse>
+            </div>
           </div>
-        }
-      />
+        </div>
+
+        {!isExpanded && (
+          <div className="flex items-center justify-end shrink-0 pt-1 sm:pt-0">
+            <RowActions
+              key={`actions-group-${item.id}`}
+              size="middle"
+              isLocked={item.is_locked}
+              onToggleLock={() => handleToggleLockGroup(item)}
+              onEdit={() => handleEditItem(item)}
+              onDuplicate={() => handleDuplicateHoliday(item)}
+              onDelete={() => handleDeleteGroup(item)}
+              disableDelete={item.is_locked}
+            />
+          </div>
+        )}
+      </div>
     </List.Item>
   );
 };
@@ -598,6 +604,28 @@ const Holidays = () => {
     });
   };
 
+  const handleCalendarEventDelete = async (event: Event, scope: EventDeleteScope) => {
+    try {
+      if (event.is_virtual && event.parent_event) {
+        if (scope === 'instance') {
+          await deleteRecurringInstance(event.parent_event, event.date);
+        } else {
+          await deleteRecurringSeries(event.parent_event);
+        }
+      } else {
+        await deleteEvent(event.id);
+      }
+      messageApi.success('Event deleted');
+      setViewingEvent(null);
+      await fetchData();
+      return true;
+    } catch (error) {
+      messageApi.error('Failed to delete event');
+      console.error(error);
+      return false;
+    }
+  };
+
   const handleEventFormFinish = async (values: EventFormValues) => {
     const payload = {
       ...values,
@@ -677,10 +705,33 @@ const Holidays = () => {
       await deleteHoliday(id);
       messageApi.success('Holiday deleted');
       fetchData();
+      return true;
     } catch (error) {
       messageApi.error('Failed to delete holiday');
       console.error(error);
+      return false;
     }
+  };
+
+  const handleCalendarHolidayDelete = async (holiday: Holiday) => {
+    if (holiday.is_locked || !holiday.id) return false;
+    const deleted = await handleDelete(holiday.id);
+    if (deleted) setEditingCalendarHoliday(null);
+    return deleted;
+  };
+
+  const handleDuplicateHoliday = (item: any) => {
+    const sampleItem = item.isGroup ? item.items[0] : item;
+    setEditingCalendarHoliday(null);
+    setPendingCalendarHoliday({
+      date: sampleItem.date ? new Date(sampleItem.date) : new Date(),
+      target: { tab: sampleItem.tab || null, label: sampleItem.tab_name || 'My Holiday' },
+    });
+    setEditingCalendarHoliday({
+      ...sampleItem,
+      id: 0,
+      description: sampleItem.description ? `${sampleItem.description} (Copy)` : 'Holiday (Copy)',
+    });
   };
 
   const handleEditClick = (item: any) => {
@@ -970,7 +1021,7 @@ const Holidays = () => {
                   label="Date"
                   rules={[{ required: true, message: 'Select date' }]}
                 >
-                  <DatePicker style={{ width: '100%' }} />
+                  <DatePicker inputReadOnly style={{ width: '100%' }} />
                 </Form.Item>
               )}
             </Col>
@@ -1101,6 +1152,7 @@ const Holidays = () => {
                     toggleLock={toggleLock}
                     handleDelete={handleDelete}
                     handleEditItem={handleEditClick}
+                    handleDuplicateHoliday={handleDuplicateHoliday}
                     selectedIds={selectedIds}
                     onSelectChange={handleSelectChange}
                     onSelectGroup={handleSelectGroup}
@@ -1110,45 +1162,52 @@ const Holidays = () => {
 
               return (
                 <List.Item
-                  actions={[
-                    <RowActions
-                      key={`actions-${item.id}`}
-                      size="middle"
-                      isLocked={item.is_locked}
-                      onToggleLock={() => toggleLock(item)}
-                      onDelete={() => handleDelete(item.id)}
-                      onEdit={() => handleEditClick(item)}
-                      disableDelete={item.is_locked}
-                    />,
-                  ]}
+                  key={`item-${item.id}`}
+                  className="enterprise-card-list-item px-3 py-3 sm:px-4 sm:py-4"
                 >
-                  <List.Item.Meta
-                    avatar={
-                      <div className="flex items-center gap-3">
-                        <SelectionCheckbox
-                          selectionLabel={`${item.description || 'holiday'} on ${dayjs(item.date).format('MMMM D, YYYY')}`}
-                          checked={selectedIds.includes(item.id)}
-                          onChange={(e) => handleSelectChange(item.id, e.target.checked)}
-                          style={{ marginTop: 8 }}
-                        />
-                        <CalendarOutlined
-                          style={{ fontSize: 20, color: '#2563eb', marginTop: 8 }}
-                        />
+                  <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between min-w-0">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <SelectionCheckbox
+                        selectionLabel={`${item.description || 'holiday'} on ${dayjs(item.date).format('MMMM D, YYYY')}`}
+                        checked={selectedIds.includes(item.id)}
+                        onChange={(e) => handleSelectChange(item.id, e.target.checked)}
+                        style={{ marginTop: 2 }}
+                      />
+                      <CalendarOutlined
+                        style={{ fontSize: 20, color: '#2563eb', marginTop: 2 }}
+                        className="shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-slate-900 whitespace-nowrap text-sm sm:text-base">
+                            {dayjs(item.date).format('YYYY-MM-DD')}
+                          </span>
+                          {item.is_recurring && (
+                            <Tag color="blue" icon={<SyncOutlined />} className="m-0">
+                              Yearly
+                            </Tag>
+                          )}
+                          {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600 break-words">
+                          {item.description || 'No description'}
+                        </div>
                       </div>
-                    }
-                    title={
-                      <Space wrap>
-                        <Text strong>{dayjs(item.date).format('YYYY-MM-DD')}</Text>
-                        {item.is_recurring && (
-                          <Tag color="blue" icon={<SyncOutlined />}>
-                            Yearly
-                          </Tag>
-                        )}
-                        {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
-                      </Space>
-                    }
-                    description={item.description || 'No description'}
-                  />
+                    </div>
+
+                    <div className="flex items-center justify-end shrink-0 pt-1 sm:pt-0">
+                      <RowActions
+                        key={`actions-${item.id}`}
+                        size="middle"
+                        isLocked={item.is_locked}
+                        onToggleLock={() => toggleLock(item)}
+                        onEdit={() => handleEditClick(item)}
+                        onDuplicate={() => handleDuplicateHoliday(item)}
+                        onDelete={() => handleDelete(item.id)}
+                        disableDelete={item.is_locked}
+                      />
+                    </div>
+                  </div>
                 </List.Item>
               );
             }}
@@ -1526,7 +1585,7 @@ const Holidays = () => {
               label="Date"
               rules={[{ required: true, message: 'Please select a date' }]}
             >
-              <DatePicker className="w-full" />
+              <DatePicker inputReadOnly className="w-full" />
             </Form.Item>
             <Form.Item
               name="description"
@@ -1545,6 +1604,7 @@ const Holidays = () => {
           event={viewingEvent}
           onClose={() => setViewingEvent(null)}
           onEdit={handleEventEdit}
+          onDelete={handleCalendarEventDelete}
         />
 
         <EventEditorModal
@@ -1580,7 +1640,7 @@ const Holidays = () => {
 
         <CalendarHolidayModal
           open={!!pendingCalendarHoliday || !!editingCalendarHoliday}
-          mode={editingCalendarHoliday ? 'edit' : 'add'}
+          mode={editingCalendarHoliday && editingCalendarHoliday.id ? 'edit' : 'add'}
           date={pendingCalendarHoliday?.date}
           target={pendingCalendarHoliday?.target}
           holiday={editingCalendarHoliday}
@@ -1590,6 +1650,7 @@ const Holidays = () => {
             setEditingCalendarHoliday(null);
           }}
           onSubmit={handleCalendarHolidaySubmit}
+          onDelete={handleCalendarHolidayDelete}
         />
       </div>
     </>

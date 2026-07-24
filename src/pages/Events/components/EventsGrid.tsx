@@ -20,6 +20,7 @@ import {
   MoreOutlined,
   UnlockOutlined,
   VideoCameraOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Event } from '../../../types';
@@ -37,6 +38,7 @@ type EventsGridProps = {
   onToggleLock: (event: Event) => void;
   onView: (event: Event) => void;
   onEdit: (event: Event) => void;
+  onDuplicate?: (event: Event) => void;
   onDelete: (event: Event) => void;
   formatEventTime: (event: Event, userTimezone: string) => string | null;
   selectedIds: number[];
@@ -50,6 +52,7 @@ const EventsGrid = ({
   onToggleLock,
   onView,
   onEdit,
+  onDuplicate,
   onDelete,
   formatEventTime,
   selectedIds,
@@ -86,6 +89,15 @@ const EventsGrid = ({
             icon: <EditOutlined />,
             label: 'Edit',
           },
+          ...(onDuplicate
+            ? [
+                {
+                  key: 'duplicate',
+                  icon: <CopyOutlined />,
+                  label: 'Duplicate',
+                },
+              ]
+            : []),
           {
             key: 'delete',
             icon: <DeleteOutlined />,
@@ -99,6 +111,7 @@ const EventsGrid = ({
     if (actionKey === 'lock') onToggleLock(event);
     if (actionKey === 'view') onView(event);
     if (actionKey === 'edit' && !event.is_locked) onEdit(event);
+    if (actionKey === 'duplicate' && !event.is_locked) onDuplicate?.(event);
     if (actionKey === 'delete' && !event.is_locked) onDelete(event);
   };
 
@@ -133,6 +146,9 @@ const EventsGrid = ({
                     onToggleLock={() => onToggleLock(event)}
                     onView={() => onView(event)}
                     onEdit={event.is_locked ? undefined : () => onEdit(event)}
+                    onDuplicate={
+                      event.is_locked || !onDuplicate ? undefined : () => onDuplicate(event)
+                    }
                     onDelete={event.is_locked ? undefined : () => onDelete(event)}
                     confirmDelete={false}
                     size="small"

@@ -95,7 +95,7 @@ const EventEditorModal = ({
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item name="date" label="Date" rules={[{ required: true }]}>
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker inputReadOnly style={{ width: '100%' }} />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>

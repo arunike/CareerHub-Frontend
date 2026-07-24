@@ -254,6 +254,10 @@ const OfferComparison = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
+  const [statusFilter, setStatusFilter] = usePersistedState<'active' | 'all' | 'rejected'>(
+    'offerComparisonStatusFilter',
+    'active'
+  );
   const [visibleOfferIds, setVisibleOfferIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
@@ -353,6 +357,7 @@ const OfferComparison = () => {
       app
         ? {
             ...app,
+            rto_policy: app.rto_policy && app.rto_policy !== 'UNKNOWN' ? app.rto_policy : 'HYBRID',
             rto_days_per_week:
               typeof app.rto_days_per_week === 'number'
                 ? app.rto_days_per_week
@@ -422,7 +427,10 @@ const OfferComparison = () => {
           role_title: editingApp.role_title,
           location: editingApp.location,
           office_location: editingApp.office_location || '',
-          rto_policy: editingApp.rto_policy,
+          rto_policy:
+            editingApp.rto_policy && editingApp.rto_policy !== 'UNKNOWN'
+              ? editingApp.rto_policy
+              : 'HYBRID',
           rto_days_per_week: editingApp.rto_days_per_week ?? 0,
           commute_cost_value: editingApp.commute_cost_value ?? 0,
           commute_cost_frequency: editingApp.commute_cost_frequency ?? 'MONTHLY',
@@ -543,6 +551,46 @@ const OfferComparison = () => {
       );
     } catch (error) {
       messageApi.error('Failed to update status');
+      console.error(error);
+    }
+  };
+  const isOfferRejected = useCallback((offer: Partial<Offer>, app?: Application) => {
+    return (
+      offer.final_decision_status === 'REJECTED' ||
+      offer.final_decision_status === 'DECLINED' ||
+      app?.status === 'OFFER_REJECTED' ||
+      app?.status === 'REJECTED'
+    );
+  }, []);
+
+  const handleToggleRejected = async (offer: Offer) => {
+    if (typeof offer.id !== 'number') return;
+    try {
+      const linkedApp = applicationsById[offer.application];
+      const currentlyRejected = isOfferRejected(offer, linkedApp);
+      const nextStatus = currentlyRejected ? 'PENDING' : 'REJECTED';
+      const updatedOffer: Offer = {
+        ...offer,
+        final_decision_status: nextStatus,
+        is_current: currentlyRejected ? offer.is_current : false,
+      };
+
+      await updateOffer(offer.id, updatedOffer);
+      setOffers((prev) => prev.map((o) => (o.id === offer.id ? updatedOffer : o)));
+
+      if (linkedApp && typeof linkedApp.id === 'number') {
+        const appNextStatus = nextStatus === 'REJECTED' ? 'OFFER_REJECTED' : 'OFFER';
+        await updateApplication(linkedApp.id, { status: appNextStatus });
+        setApplications((prev) =>
+          prev.map((app) => (app.id === linkedApp.id ? { ...app, status: appNextStatus } : app))
+        );
+      }
+
+      messageApi.success(
+        nextStatus === 'REJECTED' ? 'Offer marked as rejected' : 'Offer unmarked as rejected'
+      );
+    } catch (error) {
+      messageApi.error('Failed to update offer status');
       console.error(error);
     }
   };
@@ -696,7 +744,6 @@ const OfferComparison = () => {
     }
   };
 
-  const filteredOffers = filterByYear(offers, selectedYear, 'created_at');
   const availableYears = getAvailableYears(offers, 'created_at');
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
@@ -760,6 +807,21 @@ const OfferComparison = () => {
       }, {}),
     [applications]
   );
+
+  const filteredByYear = filterByYear(offers, selectedYear, 'created_at');
+  const rejectedOffersCount = useMemo(
+    () => offers.filter((o) => isOfferRejected(o, applicationsById[o.application])).length,
+    [offers, applicationsById, isOfferRejected]
+  );
+  const filteredOffers = useMemo(() => {
+    return filteredByYear.filter((offer) => {
+      const app = applicationsById[offer.application];
+      const rejected = isOfferRejected(offer, app);
+      if (statusFilter === 'active') return !rejected;
+      if (statusFilter === 'rejected') return rejected;
+      return true;
+    });
+  }, [filteredByYear, applicationsById, statusFilter, isOfferRejected]);
 
   const referenceLocation = useMemo(() => {
     const current = filteredOffers.find((offer) => offer.is_current) || filteredOffers[0];
@@ -1461,8 +1523,12 @@ const OfferComparison = () => {
           }
         }}
         offers={offers}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        rejectedOffersCount={rejectedOffersCount}
         onEditClick={handleEditClick}
         onToggleCurrent={toggleCurrent}
+        onToggleRejected={handleToggleRejected}
         onNegotiateClick={setNegotiatingOffer}
         onRaiseHistoryClick={setRaiseHistoryOffer}
         onSaveSnapshotClick={handleSaveDecisionSnapshot}

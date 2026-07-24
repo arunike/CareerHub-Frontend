@@ -160,12 +160,16 @@ const ModalShell = ({
       </div>
     );
 
+    const mobileFooter = footer ? (
+      <div className="flex flex-col gap-3 w-full sm:flex-row sm:justify-end sm:gap-3">{footer}</div>
+    ) : null;
+
     return (
       <AntDrawer
         open={isOpen}
         onClose={onClose}
         title={drawerTitle}
-        footer={footer}
+        footer={mobileFooter}
         destroyOnClose
         placement="bottom"
         height={isExpanded ? '100dvh' : undefined}

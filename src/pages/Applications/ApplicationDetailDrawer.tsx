@@ -13,6 +13,7 @@ import {
   message,
 } from 'antd';
 import {
+  CopyOutlined,
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -55,6 +56,7 @@ type Props = {
   onClose: () => void;
   onCancelEdit?: () => void;
   onEdit: (application: CareerApplication) => void;
+  onDuplicate?: (application: CareerApplication) => void;
   onGenerateCoverLetter: (application: CareerApplication) => void;
   onNotesUpdate?: (id: number, notes: string) => void;
 };
@@ -86,6 +88,7 @@ const ApplicationDetailDrawer = ({
   onClose,
   onCancelEdit,
   onEdit,
+  onDuplicate,
   onGenerateCoverLetter,
   onNotesUpdate,
 }: Props) => {
@@ -151,6 +154,15 @@ const ApplicationDetailDrawer = ({
                 >
                   <span className="hidden sm:inline">Letter</span>
                 </Button>
+                {onDuplicate && !application.is_locked && (
+                  <Button
+                    icon={<CopyOutlined />}
+                    onClick={() => onDuplicate(application)}
+                    aria-label="Duplicate application"
+                  >
+                    <span className="hidden sm:inline">Duplicate</span>
+                  </Button>
+                )}
                 <Button
                   type="primary"
                   icon={<EditOutlined />}

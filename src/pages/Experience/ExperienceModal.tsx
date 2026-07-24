@@ -601,9 +601,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             ]}
           >
             {isCurrent ? (
-              <DatePicker className="w-full" placeholder="Start Date" />
+              <DatePicker inputReadOnly className="w-full" placeholder="Start Date" />
             ) : (
-              <RangePicker className="w-full" />
+              <RangePicker inputReadOnly className="w-full" />
             )}
           </Form.Item>
 

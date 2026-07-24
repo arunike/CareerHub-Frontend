@@ -246,6 +246,15 @@ const ExperiencePage: React.FC = () => {
     }
   };
 
+  const handleDuplicateExperience = (exp: Experience) => {
+    setEditingExp({
+      ...exp,
+      id: undefined,
+      title: `${exp.title} (Copy)`,
+    });
+    setModalOpen(true);
+  };
+
   const handleDeleteAll = async () => {
     try {
       await deleteAllExperiences();
@@ -1372,6 +1381,9 @@ const ExperiencePage: React.FC = () => {
                             isPinned={exp.is_pinned}
                             onTogglePin={() => handleTogglePin(exp)}
                             onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                            onDuplicate={
+                              exp.is_locked ? undefined : () => handleDuplicateExperience(exp)
+                            }
                             onDelete={
                               exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)
                             }
@@ -1723,6 +1735,11 @@ const ExperiencePage: React.FC = () => {
                                     isLocked={exp.is_locked}
                                     onToggleLock={() => handleToggleLock(exp)}
                                     onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                                    onDuplicate={
+                                      exp.is_locked
+                                        ? undefined
+                                        : () => handleDuplicateExperience(exp)
+                                    }
                                     onDelete={
                                       exp.is_locked
                                         ? undefined

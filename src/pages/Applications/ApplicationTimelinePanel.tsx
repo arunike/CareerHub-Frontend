@@ -489,6 +489,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
                           placeholder="Add date"
                           size="small"
                           variant="borderless"
+                          inputReadOnly
                           suffixIcon={<CalendarOutlined />}
                           className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600"
                           format="MMM D, YYYY"

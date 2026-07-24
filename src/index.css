@@ -935,8 +935,13 @@ textarea::placeholder {
   }
 
   .ant-popover,
-  .ant-dropdown {
+  .ant-dropdown,
+  .ant-picker-dropdown {
     max-width: calc(100vw - 24px);
+  }
+  .ant-picker-dropdown .ant-picker-panel-container {
+    max-width: 100% !important;
+    overflow-x: auto !important;
   }
 }
 
@@ -1230,6 +1235,9 @@ textarea::placeholder {
     border-top: 1px solid #f1f5f9 !important;
     padding: 14px 20px calc(env(safe-area-inset-bottom) + 16px) !important;
     background: #f8fafc !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
   }
 
   /* Custom height and border transitions for mobile drawer expansion */
