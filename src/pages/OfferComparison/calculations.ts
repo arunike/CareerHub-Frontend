@@ -127,6 +127,7 @@ export interface ApplicationLike {
   work_life_score?: number | null;
   brand_score?: number | null;
   team_score?: number | null;
+  status?: string;
 }
 
 export const DEFAULT_MARITAL_STATUS_OPTIONS: MaritalStatusOption[] = [

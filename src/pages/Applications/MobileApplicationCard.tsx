@@ -9,6 +9,7 @@ import {
   MoreOutlined,
   ThunderboltOutlined,
   UnlockOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import type { EmploymentType } from '../../types';
 import type { CareerApplication } from '../../types/application';
@@ -26,6 +27,7 @@ type Props = {
   onViewDetails: () => void;
   onGenerateLetter: () => void;
   onEdit: () => void;
+  onDuplicate?: () => void;
   onToggleLock: () => void;
   onDelete: () => void;
 };
@@ -39,6 +41,7 @@ const MobileApplicationCard = ({
   onViewDetails,
   onGenerateLetter,
   onEdit,
+  onDuplicate,
   onToggleLock,
   onDelete,
 }: Props) => {
@@ -58,6 +61,15 @@ const MobileApplicationCard = ({
       label: 'Edit application',
       icon: <EditOutlined />,
     },
+    ...(onDuplicate
+      ? [
+          {
+            key: 'duplicate',
+            label: 'Duplicate application',
+            icon: <CopyOutlined />,
+          },
+        ]
+      : []),
     {
       key: 'toggle-lock',
       label: application.is_locked ? 'Unlock application' : 'Lock application',
@@ -79,6 +91,8 @@ const MobileApplicationCard = ({
       window.open(application.job_link || '', '_blank', 'noopener,noreferrer');
     } else if (key === 'edit') {
       onEdit();
+    } else if (key === 'duplicate') {
+      onDuplicate?.();
     } else if (key === 'toggle-lock') {
       onToggleLock();
     } else if (key === 'delete' && !application.is_locked) {

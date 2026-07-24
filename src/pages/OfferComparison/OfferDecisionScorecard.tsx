@@ -5,8 +5,8 @@ import {
   type OfferLike as Offer,
   type VisaSponsorshipStatus,
 } from './calculations';
-import { Select, Popconfirm, Tooltip, InputNumber, Popover } from 'antd';
-import { PlusOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';
+import { Select, Popconfirm, Tooltip, InputNumber, Popover, Segmented } from 'antd';
+import { PlusOutlined, DownOutlined, RightOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import type { AdjustedOfferMetrics } from './types';
 import type { MaritalStatus, SimulatedOffer } from './calculations';
@@ -32,6 +32,10 @@ type Props = {
   onScoreUpdate?: (appId: number, patch: Partial<Application>) => Promise<void>;
   onEditClick: (offer: Offer) => void;
   onToggleCurrent: (offer: Offer) => void;
+  onToggleRejected?: (offer: Offer) => void;
+  statusFilter?: 'active' | 'all' | 'rejected';
+  setStatusFilter?: (filter: 'active' | 'all' | 'rejected') => void;
+  rejectedOffersCount?: number;
   onNegotiateClick: (offer: Offer) => void;
   onRaiseHistoryClick: (offer: Offer) => void;
   onSaveSnapshotClick: (offer: Offer, row: DecisionRow) => void;
@@ -301,11 +305,26 @@ const totalAnnualComp = (offer: Offer | SimulatedOffer) => {
   );
 };
 
-const getWorkMode = (app?: Application) => {
-  if (app?.rto_policy === 'REMOTE') return 'REMOTE';
-  if (app?.rto_policy === 'ONSITE') return 'ONSITE';
-  if (app?.rto_policy === 'HYBRID') return 'HYBRID';
-  return 'UNKNOWN';
+const getWorkMode = (app?: Application, offer?: Offer | SimulatedOffer) => {
+  const policy =
+    app?.rto_policy ||
+    (app as any)?.work_mode ||
+    (offer as any)?.work_mode ||
+    (offer as any)?.rto_policy;
+
+  if (policy && policy !== 'UNKNOWN') {
+    const norm = String(policy).toUpperCase().trim();
+    if (norm === 'REMOTE') return 'REMOTE';
+    if (norm === 'ONSITE' || norm === 'IN_PERSON' || norm === 'OFFICE') return 'ONSITE';
+    if (norm === 'HYBRID') return 'HYBRID';
+  }
+
+  const rtoDays = app?.rto_days_per_week ?? (offer as any)?.rto_days_per_week;
+  if (rtoDays === 0) return 'REMOTE';
+  if (rtoDays === 5) return 'ONSITE';
+  if (typeof rtoDays === 'number' && rtoDays > 0) return 'HYBRID';
+
+  return 'HYBRID';
 };
 
 const formatCurrency = (value: number) =>
@@ -315,17 +334,22 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(value));
 
+const FINANCIAL_BENCHMARK_BASE = 100000;
+
+const computeIndependentFinancialScore = (financialValue: number) => {
+  if (financialValue <= 0) return 0;
+  return Math.min(100, Math.max(0, (financialValue / FINANCIAL_BENCHMARK_BASE) * 100));
+};
+
 const buildFinancialCalculationLines = ({
   offer,
   metrics,
   financialValue,
-  maxAdjustedValue,
   financialScore,
 }: {
   offer: Offer | SimulatedOffer;
   metrics?: Partial<AdjustedOfferMetrics>;
   financialValue: number;
-  maxAdjustedValue: number;
   financialScore: number;
 }) => {
   const base = asNumber(offer.base_salary);
@@ -411,9 +435,9 @@ const buildFinancialCalculationLines = ({
     `Adjusted value: ${formatCurrency(purchasingPowerAdjusted)} + ${formatCurrency(
       cashAdjustment
     )} - ${formatCurrency(rentAnnual)} = ${formatCurrency(financialValue)}`,
-    `Financial score: ${formatCurrency(financialValue)} / ${formatCurrency(
-      maxAdjustedValue
-    )} x 100 = ${Math.round(financialScore)}`,
+    `Financial score: ${formatCurrency(financialValue)} / $100,000 baseline x 100 = ${Math.round(
+      financialScore
+    )} (independent absolute score)`,
   ];
 };
 
@@ -496,13 +520,11 @@ const buildRows = (
     return sr ? sr.adjustedValue : 0;
   });
 
-  const maxAdjustedValue = Math.max(...financialValues, ...simFinancialValues, 1);
-
   const rows = filteredOffers.map((offer, index) => {
     const app = applicationsById[offer.application];
     const financialValue = financialValues[index] || totalAnnualComp(offer);
     const financialMetrics = offer.id ? adjustedByOfferId[offer.id] : undefined;
-    const workMode = getWorkMode(app);
+    const workMode = getWorkMode(app, offer);
     const shouldScoreImmigration = hasImmigrationSignal(app);
     const workLifeScore = scoreWorkLife(offer, app);
     const growthScore = scoreFromManual(app?.growth_score);
@@ -520,7 +542,7 @@ const buildRows = (
         };
 
         if (category.key === 'financial') {
-          const financialScore = Math.min(100, (financialValue / maxAdjustedValue) * 100);
+          const financialScore = computeIndependentFinancialScore(financialValue);
           return {
             ...category,
             score: financialScore,
@@ -529,7 +551,6 @@ const buildRows = (
               offer,
               metrics: financialMetrics,
               financialValue,
-              maxAdjustedValue,
               financialScore,
             }),
             isScored: true,
@@ -624,10 +645,7 @@ const buildRows = (
       rank: 0,
       categories,
       immigrationLabel: getImmigrationSignalLabel(app?.visa_sponsorship, app?.day_one_gc),
-      workModeLabel:
-        workMode === 'UNKNOWN'
-          ? 'Work mode unknown'
-          : workMode[0] + workMode.slice(1).toLowerCase(),
+      workModeLabel: workMode[0] + workMode.slice(1).toLowerCase(),
       financialValue,
       hasImmigrationSignal: shouldScoreImmigration,
       offer,
@@ -656,7 +674,7 @@ const buildRows = (
       location: offer.location,
     } as unknown as Application;
 
-    const workMode = getWorkMode(app);
+    const workMode = getWorkMode(app, offer);
     const shouldScoreImmigration = hasImmigrationSignal(app);
     const workLifeScore = scoreWorkLife(offer, app);
     const growthScore = scoreFromManual(app?.growth_score);
@@ -674,7 +692,7 @@ const buildRows = (
         };
 
         if (category.key === 'financial') {
-          const financialScore = Math.min(100, (financialValue / maxAdjustedValue) * 100);
+          const financialScore = computeIndependentFinancialScore(financialValue);
           return {
             ...category,
             score: financialScore,
@@ -685,7 +703,6 @@ const buildRows = (
                 ? { ...scenarioRow, costOfLivingIndex: scenarioRow.colIndex }
                 : undefined,
               financialValue,
-              maxAdjustedValue,
               financialScore,
             }),
             isScored: true,
@@ -780,10 +797,7 @@ const buildRows = (
       rank: 0,
       categories,
       immigrationLabel: getImmigrationSignalLabel(app?.visa_sponsorship, app?.day_one_gc),
-      workModeLabel:
-        workMode === 'UNKNOWN'
-          ? 'Work mode unknown'
-          : workMode[0] + workMode.slice(1).toLowerCase(),
+      workModeLabel: workMode[0] + workMode.slice(1).toLowerCase(),
       financialValue,
       hasImmigrationSignal: shouldScoreImmigration,
       offer,
@@ -899,6 +913,10 @@ const OfferDecisionScorecard = ({
   onScoreUpdate,
   onEditClick,
   onToggleCurrent,
+  onToggleRejected,
+  statusFilter,
+  setStatusFilter,
+  rejectedOffersCount,
   onNegotiateClick,
   onRaiseHistoryClick,
   onSaveSnapshotClick,
@@ -1006,6 +1024,18 @@ const OfferDecisionScorecard = ({
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             {extraHeaderNode}
+            {setStatusFilter && (
+              <Segmented
+                size="middle"
+                options={[
+                  { label: 'Active Offers', value: 'active' },
+                  { label: `All (${offers.length})`, value: 'all' },
+                  { label: `Rejected (${rejectedOffersCount || 0})`, value: 'rejected' },
+                ]}
+                value={statusFilter || 'active'}
+                onChange={(val) => setStatusFilter(val as 'active' | 'all' | 'rejected')}
+              />
+            )}
             <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -1031,713 +1061,768 @@ const OfferDecisionScorecard = ({
 
       <div className="grid items-start gap-6 p-4 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="grid gap-6 xl:grid-cols-2">
-          {rows.map((row) => (
-            <article
-              key={row.id}
-              className="relative flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:border-sky-300 hover:shadow-md"
-            >
-              {/* Card Header */}
-              <div className="border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-6 sm:py-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[11px] font-bold text-white shadow-sm">
-                        {row.rank}
-                      </span>
-                      <h3 className="text-lg font-bold text-slate-900">{row.company}</h3>
-                    </div>
-                    <p className="text-sm font-medium text-slate-500">{row.role}</p>
-                  </div>
-                  <div className="flex flex-col items-end text-right">
-                    <Popover
-                      content={<ScoreBreakdownContent row={row} />}
-                      title={
-                        <span className="text-sm font-bold text-slate-800">
-                          How {row.company}'s score is calculated
-                        </span>
-                      }
-                      trigger="click"
-                      placement="bottomRight"
-                      overlayStyle={{ maxWidth: 'calc(100vw - 32px)' }}
-                    >
-                      <button
-                        type="button"
-                        className="group flex min-h-11 cursor-pointer flex-col items-end justify-center text-right transition-opacity hover:opacity-80"
-                        aria-label={`View score breakdown for ${row.company}`}
-                      >
-                        <p className="text-3xl font-black tracking-tight text-sky-600 group-hover:underline decoration-dotted underline-offset-4">
-                          {row.score}
-                        </p>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                          Total Score
-                        </p>
-                      </button>
-                    </Popover>
-                  </div>
-                </div>
+          {rows.map((row) => {
+            const app = applicationsById[row.applicationId];
+            const isRowRejected =
+              !row.isSimulated &&
+              ((row.offer as Offer).final_decision_status === 'REJECTED' ||
+                (row.offer as Offer).final_decision_status === 'DECLINED' ||
+                app?.status === 'OFFER_REJECTED' ||
+                app?.status === 'REJECTED');
 
-                {/* Tags */}
-                {(() => {
-                  const app = applicationsById[row.applicationId];
-                  const rawFlexible =
-                    app?.flexible_hours_policy || (row.offer as any).flexible_hours_policy;
-                  const flexibleHoursLabel =
-                    rawFlexible === 'FLEXIBLE'
-                      ? 'Flexible Hours'
-                      : rawFlexible === 'CORE_HOURS'
-                        ? 'Core Hours'
-                        : rawFlexible === 'STRICT'
-                          ? 'Strict Hours'
-                          : '';
-
-                  const rawTravel = app?.travel_frequency || (row.offer as any).travel_frequency;
-                  const travelFrequencyLabel =
-                    rawTravel === 'NONE'
-                      ? 'No Travel'
-                      : rawTravel === 'LOW'
-                        ? 'Low Travel (<10%)'
-                        : rawTravel === 'MEDIUM'
-                          ? 'Medium Travel (10-25%)'
-                          : rawTravel === 'HIGH'
-                            ? 'High Travel (>25%)'
-                            : '';
-
-                  return (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {!row.isSimulated && (row.offer as Offer).is_current && (
-                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
-                          Current
-                        </span>
-                      )}
-                      {[
-                        row.hasImmigrationSignal ? row.immigrationLabel : '',
-                        row.workModeLabel,
-                        flexibleHoursLabel,
-                        travelFrequencyLabel,
-                      ]
-                        .filter(Boolean)
-                        .map((label) => (
-                          <span
-                            key={label}
-                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Card Body - Scores */}
-              <div className="p-4 sm:p-6">
-                {/* Compensation Breakdown */}
-                <div className="mb-6 rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => toggleOfferDetails(row.id)}
-                    aria-expanded={!collapsedDetailIds.has(row.id)}
-                    className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
-                  >
-                    <span>
-                      <span className="block text-xs font-semibold text-slate-800">
-                        Compensation & benefits details
-                      </span>
-                      <span className="mt-0.5 block text-[10px] text-slate-500">
-                        Cash, taxes, health insurance, retirement, and full time-off breakdown
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-sky-700">
-                      {!collapsedDetailIds.has(row.id) ? 'Hide' : 'View'}
-                      {!collapsedDetailIds.has(row.id) ? (
-                        <DownOutlined className="text-[10px]" />
-                      ) : (
-                        <RightOutlined className="text-[10px]" />
-                      )}
-                    </span>
-                  </button>
-
-                  {!collapsedDetailIds.has(row.id) && (
-                    <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 sm:px-6 sm:py-5">
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div>
-                          <HelpTooltipTrigger
-                            title="Your fixed annual salary before tax, the main guaranteed component of compensation. The after-tax amount applies your estimated tax rate."
-                            ariaLabel="Explain base salary"
-                            density="comfortable"
-                            className="text-xs font-medium text-slate-500"
-                          >
-                            Base Salary
-                          </HelpTooltipTrigger>
-                          <div className="text-sm font-bold text-slate-900">
-                            ${Number(row.offer.base_salary).toLocaleString()}
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            After tax: $
-                            {Math.round(
-                              adjustedByOfferId[Number(row.offer.id)]?.afterTaxBase || 0
-                            ).toLocaleString()}
-                          </div>
-                        </div>
-                        <div>
-                          <HelpTooltipTrigger
-                            title="Annual performance bonus, typically a percentage of base and treated as a target amount. The after-tax estimate uses the supplemental bonus rate."
-                            ariaLabel="Explain annual bonus"
-                            density="comfortable"
-                            className="text-xs font-medium text-slate-500"
-                          >
-                            Bonus
-                          </HelpTooltipTrigger>
-                          <div className="text-sm font-bold text-slate-900">
-                            ${Number(row.offer.bonus).toLocaleString()}
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            After tax: $
-                            {Math.round(
-                              adjustedByOfferId[Number(row.offer.id)]?.afterTaxBonus || 0
-                            ).toLocaleString()}
-                          </div>
-                        </div>
-                        <div>
-                          <HelpTooltipTrigger
-                            title="Annualized grant value. Financial scoring counts the full value when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable. Tax applies only to the realizable amount."
-                            ariaLabel="Explain annual equity"
-                            density="comfortable"
-                            className="text-xs font-medium text-slate-500"
-                          >
-                            Equity / Yr
-                          </HelpTooltipTrigger>
-                          <div className="text-sm font-bold text-slate-900">
-                            ${Number(row.offer.equity).toLocaleString()}
-                          </div>
-                          {(() => {
-                            const liquidity = getEquityLiquidityCopy(row.offer);
-                            const simulatedMetrics = scenarioRows.find(
-                              (scenario) => String(scenario.offer.id) === String(row.offer.id)
-                            );
-                            const afterTax = row.isSimulated
-                              ? simulatedMetrics?.afterTaxEquity
-                              : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
-                            return (
-                              <div className="text-[10px] text-slate-500">
-                                {liquidity.label} · {liquidity.detail}
-                                {liquidity.realizable > 0 && (
-                                  <span className="block text-slate-400">
-                                    After tax: ${Math.round(afterTax || 0).toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <div>
-                          <HelpTooltipTrigger
-                            title="One-time signing bonus paid when you join. Often subject to a clawback period (typically 1–2 years)."
-                            ariaLabel="Explain sign-on bonus"
-                            density="comfortable"
-                            className="text-xs font-medium text-slate-500"
-                          >
-                            Sign-On
-                          </HelpTooltipTrigger>
-                          <div className="text-sm font-bold text-slate-900">
-                            ${Number(row.offer.sign_on).toLocaleString()}
-                          </div>
-                          <div className="text-[10px] text-slate-400">One-time</div>
-                        </div>
-                        {Number(row.offer.relocation_bonus || 0) > 0 && (
-                          <div>
-                            <HelpTooltipTrigger
-                              title="One-time relocation or signing perk cash value. The after-tax estimate uses the supplemental W2 bonus rate."
-                              ariaLabel="Explain relocation perk"
-                              density="comfortable"
-                              className="text-xs font-medium text-slate-500"
-                            >
-                              Relocation Perk
-                            </HelpTooltipTrigger>
-                            <div className="text-sm font-bold text-slate-900">
-                              ${Number(row.offer.relocation_bonus).toLocaleString()}
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              After tax: $
-                              {Math.round(
-                                adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
-                              ).toLocaleString()}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Health Insurance & 401(k) Match Sub-section */}
-                        <div className="col-span-2 pt-2 border-t border-slate-100">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <HelpTooltipTrigger
-                                title="Monthly premium and annual HSA contribution details."
-                                ariaLabel="Explain health insurance"
-                                density="comfortable"
-                                className="text-xs font-medium text-slate-500"
-                              >
-                                Health Insurance
-                              </HelpTooltipTrigger>
-                              <div className="text-sm font-bold text-slate-900">
-                                {Number(row.offer.health_premium_monthly || 0) > 0
-                                  ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
-                                  : 'Free Premium'}
-                              </div>
-                              {row.offer.health_plan_type && (
-                                <div className="text-[10px] text-slate-500 font-medium">
-                                  Type: {row.offer.health_plan_type}
-                                </div>
-                              )}
-                              {Number(row.offer.health_oop_max || 0) > 0 && (
-                                <div className="text-[10px] text-slate-400">
-                                  OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
-                                </div>
-                              )}
-                              {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
-                                <div className="text-[10px] text-emerald-600 font-semibold">
-                                  HSA Match: +$
-                                  {Number(row.offer.hsa_employer_contribution).toLocaleString()}/yr
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <HelpTooltipTrigger
-                                title="401(k) Employer retirement match percentage and max contribution matched."
-                                ariaLabel="Explain 401(k) matching"
-                                density="comfortable"
-                                className="text-xs font-medium text-slate-500"
-                              >
-                                401(k) Matching
-                              </HelpTooltipTrigger>
-                              <div className="text-sm font-bold text-slate-900">
-                                {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
-                                Number(row.offer.forty_one_k_max_match || 0) > 0
-                                  ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
-                                  : 'No 401(k) Match'}
-                              </div>
-                              {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
-                                Number(row.offer.forty_one_k_max_match || 0) > 0 && (
-                                  <div className="text-[10px] text-emerald-600 font-semibold">
-                                    Match Value: +$
-                                    {Math.round(
-                                      Number(row.offer.base_salary) *
-                                        (Number(row.offer.forty_one_k_max_match) / 100) *
-                                        (Number(row.offer.forty_one_k_match_percent) / 100)
-                                    ).toLocaleString()}
-                                    /yr
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="col-span-2 pt-2 border-t border-slate-100">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <HelpTooltipTrigger
-                                title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
-                                ariaLabel="Explain time off"
-                                density="comfortable"
-                                className="text-xs font-medium text-slate-500"
-                              >
-                                Time Off
-                              </HelpTooltipTrigger>
-                              <div className="text-sm font-medium text-slate-900">
-                                {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)}{' '}
-                                PTO,{' '}
-                                {row.offer.is_unlimited_pto &&
-                                row.offer.sick_leave_included_in_unlimited_pto !== false
-                                  ? 'Sick Leave Included, '
-                                  : `${row.offer.sick_leave_days ?? 0} Sick Leave, `}
-                                {row.offer.holiday_days ?? 11} Holidays
-                              </div>
-                            </div>
-                            {!row.isSimulated && !(row.offer as Offer).is_current && (
-                              <div className="text-right">
-                                <HelpTooltipTrigger
-                                  title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
-                                  ariaLabel="Explain difference from current job"
-                                  density="comfortable"
-                                  className="justify-end text-xs font-medium text-slate-500"
-                                >
-                                  Diff vs Current
-                                </HelpTooltipTrigger>
-                                {(() => {
-                                  const total =
-                                    Number(row.offer.base_salary) +
-                                    Number(row.offer.bonus) +
-                                    getRealizableEquity(row.offer) +
-                                    Number(row.offer.sign_on);
-                                  const diff = total - currentTotal;
-                                  const diffPercent =
-                                    currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
-                                  return (
-                                    <div
-                                      className={clsx(
-                                        'text-sm font-bold',
-                                        diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
-                                      )}
-                                    >
-                                      {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
-                                      <span className="text-[10px] font-medium ml-1">
-                                        ({diff > 0 ? '+' : ''}
-                                        {diffPercent}%)
-                                      </span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            )}
-                            {row.isSimulated && (
-                              <div className="text-right">
-                                <HelpTooltipTrigger
-                                  title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
-                                  ariaLabel="Explain difference from current job"
-                                  density="comfortable"
-                                  className="justify-end text-xs font-medium text-slate-500"
-                                >
-                                  Diff vs Current
-                                </HelpTooltipTrigger>
-                                {(() => {
-                                  const total =
-                                    Number(row.offer.base_salary) +
-                                    Number(row.offer.bonus) +
-                                    getRealizableEquity(row.offer) +
-                                    Number(row.offer.sign_on);
-                                  const diff = total - currentTotal;
-                                  const diffPercent =
-                                    currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
-                                  return (
-                                    <div
-                                      className={clsx(
-                                        'text-sm font-bold',
-                                        diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
-                                      )}
-                                    >
-                                      {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
-                                      <span className="text-[10px] font-medium ml-1">
-                                        ({diff > 0 ? '+' : ''}
-                                        {diffPercent}%)
-                                      </span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            return (
+              <article
+                key={row.id}
+                className={clsx(
+                  'relative flex flex-col overflow-hidden rounded-3xl border shadow-sm transition-all hover:shadow-md',
+                  isRowRejected
+                    ? 'border-rose-300 bg-rose-50/20 hover:border-rose-400'
+                    : 'border-slate-200 bg-white hover:border-sky-300'
+                )}
+              >
+                {/* Card Header */}
+                <div
+                  className={clsx(
+                    'border-b px-4 py-4 sm:px-6 sm:py-5',
+                    isRowRejected
+                      ? 'border-rose-100 bg-rose-50/40'
+                      : 'border-slate-100 bg-slate-50/50'
                   )}
-                </div>
-
-                <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-                  {row.categories.map((category) => {
-                    const app = applicationsById[row.applicationId];
-
-                    if (category.key === 'financial' || category.key === 'location') {
-                      const tooltips: Record<string, string> = {
-                        financial:
-                          'Weighted score based on adjusted total comp (after tax, cost of living, commute, rent). Higher adjusted value = higher score.',
-                        location:
-                          'Score based on city cost-of-living index vs. your reference city. A higher-cost location reduces this score.',
-                      };
-                      return (
-                        <div key={category.key} className="flex flex-col">
-                          <div className="mb-2 flex items-center justify-between text-xs">
-                            <HelpTooltipTrigger
-                              title={tooltips[category.key]}
-                              ariaLabel={`Explain ${category.label} score`}
-                              className="font-semibold text-slate-700"
-                            >
-                              {category.label}
-                            </HelpTooltipTrigger>
-                            <span className="font-bold text-slate-900">
-                              {Math.round(category.score)}
-                            </span>
-                          </div>
-
-                          {/* Compact Progress Bar */}
-                          <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                                category.key === 'financial' ? 'bg-emerald-500' : 'bg-sky-500'
-                              }`}
-                              style={{ width: `${Math.round(category.score)}%` }}
-                            />
-                          </div>
-                          <p className="mt-2 text-[10px] font-medium text-slate-500 line-clamp-1">
-                            {category.detail}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    if (['workLife', 'growth', 'brand', 'team'].includes(category.key)) {
-                      const dbKey =
-                        category.key === 'workLife' ? 'work_life_score' : `${category.key}_score`;
-                      const rawValue = app ? app[dbKey as keyof Application] : null;
-                      const rateValue = normalizeManualScore(rawValue) || 0;
-                      const tooltips: Record<string, string> = {
-                        workLife:
-                          'Your subjective rating of work-life balance — hours, flexibility, on-call expectations, and culture. Rate 1–5 stars.',
-                        growth:
-                          'How strong is the growth opportunity? Consider mentorship, promo velocity, scope, and learning. Rate 1–5 stars.',
-                        brand:
-                          'Company prestige and brand value for your resume. Consider FAANG/tier, public recognition, and industry reputation. Rate 1–5 stars.',
-                        team: 'Your impression of the team, manager, and culture fit from interviews. Rate 1–5 stars.',
-                      };
-
-                      return (
-                        <div key={category.key} className="flex flex-col">
-                          <div className="mb-1.5 flex items-center justify-between text-xs">
-                            <HelpTooltipTrigger
-                              title={tooltips[category.key]}
-                              ariaLabel={`Explain ${category.label} score`}
-                              className="font-semibold text-slate-700"
-                            >
-                              {category.label}
-                            </HelpTooltipTrigger>
-                            <span
-                              className={`font-bold ${category.isScored ? 'text-slate-900' : 'text-slate-400'}`}
-                            >
-                              {category.isScored ? Math.round(category.score) : '--'}
-                            </span>
-                          </div>
-                          <AccessibleStarRating
-                            label={`${category.label} rating for ${row.company}`}
-                            value={rateValue}
-                            onChange={(val) => onScoreUpdate?.(row.applicationId, { [dbKey]: val })}
-                            disabled={row.isSimulated}
-                          />
-                        </div>
-                      );
-                    }
-
-                    if (category.key === 'visa') {
-                      if (!category.isScored) {
-                        return null;
-                      }
-
-                      const immigrationSignalValue = getImmigrationSignalValue(
-                        app?.visa_sponsorship,
-                        app?.day_one_gc
-                      );
-                      const selectedImmigrationOption = immigrationSignalOptions.find(
-                        (option) => option.value === immigrationSignalValue
-                      );
-
-                      return (
-                        <div key={category.key} className="flex flex-col">
-                          <div className="mb-1.5 flex items-center justify-between text-xs">
-                            <span className="font-semibold text-slate-700">{category.label}</span>
-                            <span
-                              className={`font-bold ${category.isScored ? 'text-slate-900' : 'text-slate-400'}`}
-                            >
-                              {category.isScored ? Math.round(category.score) : '--'}
-                            </span>
-                          </div>
-                          <Select
-                            value={immigrationSignalValue || undefined}
-                            placeholder="Immigration support"
-                            size="small"
-                            allowClear
-                            bordered={false}
-                            onChange={(val) =>
-                              onScoreUpdate?.(
-                                row.applicationId,
-                                getImmigrationSignalPatch((val || '') as ImmigrationSignalValue)
-                              )
-                            }
-                            options={immigrationSignalOptions.map((option) => ({
-                              value: option.value,
-                              label: option.label,
-                            }))}
-                            className="w-full rounded-lg border border-slate-100 bg-slate-50 text-xs transition-colors hover:bg-slate-100 [&_.ant-select-selector]:!bg-transparent"
-                          />
-                          <p className="mt-1.5 text-[10px] leading-4 text-slate-400">
-                            {selectedImmigrationOption?.description ||
-                              'Only score this when immigration support matters to the decision.'}
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    return null;
-                  })}
-                </div>
-              </div>
-
-              {/* Decision Evidence */}
-              <div className="grid grid-cols-1 border-t border-slate-100 bg-slate-50/40 sm:grid-cols-3">
-                <div className="border-b border-slate-100 px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Adjusted value
-                  </p>
-                  <p className="mt-1 text-base font-bold text-emerald-700">
-                    {formatCurrency(row.financialValue)}
-                  </p>
-                  <p className="mt-0.5 text-[10px] leading-4 text-slate-500">
-                    After tax, COL, rent, and lifestyle
-                  </p>
-                </div>
-                <div className="border-b border-slate-100 px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Realizable equity
-                  </p>
-                  <p className="mt-1 text-base font-bold text-slate-900">
-                    {formatCurrency(getRealizableEquity(row.offer))}
-                    <span className="ml-1 text-[10px] font-medium text-slate-400">/ yr</span>
-                  </p>
-                  <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">
-                    {getEquityLiquidityCopy(row.offer).label}
-                  </p>
-                </div>
-                <div className="px-4 py-3 sm:px-5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Time off
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">
-                    {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)}
-                  </p>
-                  <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">
-                    {row.offer.is_unlimited_pto &&
-                    row.offer.sick_leave_included_in_unlimited_pto !== false
-                      ? 'Sick leave included'
-                      : `${row.offer.sick_leave_days ?? 0} sick days`}
-                    {' · '}
-                    {row.offer.holiday_days ?? 11} holidays
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Bar */}
-              <div className="mt-auto border-t border-slate-100 bg-white px-4 py-3">
-                {row.isSimulated ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="grid grid-cols-2 gap-2 sm:flex">
-                      <button
-                        type="button"
-                        onClick={() => onEditScenario(String(row.offer.id))}
-                        className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
-                      >
-                        Edit
-                      </button>
-                    </div>
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <Popconfirm
-                        title="Delete custom scenario?"
-                        onConfirm={() => onDeleteScenario(String(row.offer.id))}
-                        okText="Delete"
-                        cancelText="Cancel"
-                        okButtonProps={{ danger: true }}
-                      >
-                        <button
-                          type="button"
-                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 sm:min-h-9 sm:rounded-lg"
+                      <div className="flex items-center gap-3 mb-2">
+                        <span
+                          className={clsx(
+                            'flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm',
+                            isRowRejected ? 'bg-rose-500' : 'bg-sky-600'
+                          )}
                         >
-                          Delete
-                        </button>
-                      </Popconfirm>
+                          {row.rank}
+                        </span>
+                        <h3 className="text-lg font-bold text-slate-900">{row.company}</h3>
+                      </div>
+                      <p className="text-sm font-medium text-slate-500">{row.role}</p>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => onEditClick(row.offer as Offer)}
-                        className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onToggleCurrent(row.offer as Offer)}
-                        className={clsx(
-                          'min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-9 sm:rounded-lg',
-                          (row.offer as Offer).is_current
-                            ? 'text-slate-400 hover:bg-slate-50'
-                            : 'text-slate-600 hover:bg-slate-50'
-                        )}
-                      >
-                        {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onSnapshotsClick(row.offer as Offer)}
-                        className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-50 sm:min-h-9 sm:rounded-lg"
-                      >
-                        Snapshots
-                      </button>
+                    <div className="flex flex-col items-end text-right">
                       <Popover
-                        trigger="click"
-                        placement="topRight"
-                        content={
-                          <div className="flex w-44 flex-col py-1">
-                            <button
-                              type="button"
-                              onClick={() => onSaveSnapshotClick(row.offer as Offer, row)}
-                              className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                            >
-                              Save Snapshot
-                            </button>
-                            {(row.offer as Offer).is_current ? (
-                              <button
-                                type="button"
-                                onClick={() => onRaiseHistoryClick(row.offer as Offer)}
-                                className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
-                              >
-                                Raise History
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => onNegotiateClick(row.offer as Offer)}
-                                className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 hover:bg-purple-50"
-                              >
-                                Negotiate
-                              </button>
-                            )}
-                            {applicationsById[row.applicationId]?.is_locked ? (
-                              <Tooltip title="Unlock this application in Job Applications first.">
-                                <span className="rounded-md px-3 py-2 text-xs font-semibold text-slate-300 cursor-not-allowed">
-                                  Delete
-                                </span>
-                              </Tooltip>
-                            ) : (
-                              <Popconfirm
-                                title="Delete linked application?"
-                                description="This will delete the application and remove this offer from comparison."
-                                okText="Delete"
-                                cancelText="Cancel"
-                                okButtonProps={{ danger: true }}
-                                onConfirm={() => onDeleteClick(row.offer as Offer)}
-                              >
-                                <button
-                                  type="button"
-                                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50"
-                                >
-                                  Delete
-                                </button>
-                              </Popconfirm>
-                            )}
-                          </div>
+                        content={<ScoreBreakdownContent row={row} />}
+                        title={
+                          <span className="text-sm font-bold text-slate-800">
+                            How {row.company}'s score is calculated
+                          </span>
                         }
+                        trigger="click"
+                        placement="bottomRight"
+                        overlayStyle={{ maxWidth: 'calc(100vw - 32px)' }}
                       >
                         <button
                           type="button"
-                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50 sm:min-h-9 sm:rounded-lg"
+                          className="group flex min-h-11 cursor-pointer flex-col items-end justify-center text-right transition-opacity hover:opacity-80"
+                          aria-label={`View score breakdown for ${row.company}`}
                         >
-                          More
+                          <p
+                            className={clsx(
+                              'text-3xl font-black tracking-tight group-hover:underline decoration-dotted underline-offset-4',
+                              isRowRejected ? 'text-rose-600' : 'text-sky-600'
+                            )}
+                          >
+                            {row.score}
+                          </p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                            Total Score
+                          </p>
                         </button>
                       </Popover>
                     </div>
                   </div>
-                )}
-              </div>
-            </article>
-          ))}
+
+                  {/* Tags */}
+                  {(() => {
+                    const rawFlexible =
+                      app?.flexible_hours_policy || (row.offer as any).flexible_hours_policy;
+                    const flexibleHoursLabel =
+                      rawFlexible === 'FLEXIBLE'
+                        ? 'Flexible Hours'
+                        : rawFlexible === 'CORE_HOURS'
+                          ? 'Core Hours'
+                          : rawFlexible === 'STRICT'
+                            ? 'Strict Hours'
+                            : '';
+
+                    const rawTravel = app?.travel_frequency || (row.offer as any).travel_frequency;
+                    const travelFrequencyLabel =
+                      rawTravel === 'NONE'
+                        ? 'No Travel'
+                        : rawTravel === 'LOW'
+                          ? 'Low Travel (<10%)'
+                          : rawTravel === 'MEDIUM'
+                            ? 'Medium Travel (10-25%)'
+                            : rawTravel === 'HIGH'
+                              ? 'High Travel (>25%)'
+                              : '';
+
+                    return (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {isRowRejected && (
+                          <span className="rounded-lg border border-rose-200 bg-rose-100/80 px-2.5 py-1 text-[11px] font-semibold text-rose-700 shadow-sm flex items-center gap-1">
+                            <CloseCircleOutlined /> Rejected
+                          </span>
+                        )}
+                        {!row.isSimulated && (row.offer as Offer).is_current && (
+                          <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
+                            Current
+                          </span>
+                        )}
+                        {[
+                          row.hasImmigrationSignal ? row.immigrationLabel : '',
+                          row.workModeLabel,
+                          flexibleHoursLabel,
+                          travelFrequencyLabel,
+                        ]
+                          .filter(Boolean)
+                          .map((label) => (
+                            <span
+                              key={label}
+                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Card Body - Scores */}
+                <div className="p-4 sm:p-6">
+                  {/* Compensation Breakdown */}
+                  <div className="mb-6 rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => toggleOfferDetails(row.id)}
+                      aria-expanded={!collapsedDetailIds.has(row.id)}
+                      className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
+                    >
+                      <span>
+                        <span className="block text-xs font-semibold text-slate-800">
+                          Compensation & benefits details
+                        </span>
+                        <span className="mt-0.5 block text-[10px] text-slate-500">
+                          Cash, taxes, health insurance, retirement, and full time-off breakdown
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-sky-700">
+                        {!collapsedDetailIds.has(row.id) ? 'Hide' : 'View'}
+                        {!collapsedDetailIds.has(row.id) ? (
+                          <DownOutlined className="text-[10px]" />
+                        ) : (
+                          <RightOutlined className="text-[10px]" />
+                        )}
+                      </span>
+                    </button>
+
+                    {!collapsedDetailIds.has(row.id) && (
+                      <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 sm:px-6 sm:py-5">
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                          <div>
+                            <HelpTooltipTrigger
+                              title="Your fixed annual salary before tax, the main guaranteed component of compensation. The after-tax amount applies your estimated tax rate."
+                              ariaLabel="Explain base salary"
+                              density="comfortable"
+                              className="text-xs font-medium text-slate-500"
+                            >
+                              Base Salary
+                            </HelpTooltipTrigger>
+                            <div className="text-sm font-bold text-slate-900">
+                              ${Number(row.offer.base_salary).toLocaleString()}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              After tax: $
+                              {Math.round(
+                                adjustedByOfferId[Number(row.offer.id)]?.afterTaxBase || 0
+                              ).toLocaleString()}
+                            </div>
+                          </div>
+                          <div>
+                            <HelpTooltipTrigger
+                              title="Annual performance bonus, typically a percentage of base and treated as a target amount. The after-tax estimate uses the supplemental bonus rate."
+                              ariaLabel="Explain annual bonus"
+                              density="comfortable"
+                              className="text-xs font-medium text-slate-500"
+                            >
+                              Bonus
+                            </HelpTooltipTrigger>
+                            <div className="text-sm font-bold text-slate-900">
+                              ${Number(row.offer.bonus).toLocaleString()}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              After tax: $
+                              {Math.round(
+                                adjustedByOfferId[Number(row.offer.id)]?.afterTaxBonus || 0
+                              ).toLocaleString()}
+                            </div>
+                          </div>
+                          <div>
+                            <HelpTooltipTrigger
+                              title="Annualized grant value. Financial scoring counts the full value when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable. Tax applies only to the realizable amount."
+                              ariaLabel="Explain annual equity"
+                              density="comfortable"
+                              className="text-xs font-medium text-slate-500"
+                            >
+                              Equity / Yr
+                            </HelpTooltipTrigger>
+                            <div className="text-sm font-bold text-slate-900">
+                              ${Number(row.offer.equity).toLocaleString()}
+                            </div>
+                            {(() => {
+                              const liquidity = getEquityLiquidityCopy(row.offer);
+                              const simulatedMetrics = scenarioRows.find(
+                                (scenario) => String(scenario.offer.id) === String(row.offer.id)
+                              );
+                              const afterTax = row.isSimulated
+                                ? simulatedMetrics?.afterTaxEquity
+                                : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
+                              return (
+                                <div className="text-[10px] text-slate-500">
+                                  {liquidity.label} · {liquidity.detail}
+                                  {liquidity.realizable > 0 && (
+                                    <span className="block text-slate-400">
+                                      After tax: ${Math.round(afterTax || 0).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <div>
+                            <HelpTooltipTrigger
+                              title="One-time signing bonus paid when you join. Often subject to a clawback period (typically 1–2 years)."
+                              ariaLabel="Explain sign-on bonus"
+                              density="comfortable"
+                              className="text-xs font-medium text-slate-500"
+                            >
+                              Sign-On
+                            </HelpTooltipTrigger>
+                            <div className="text-sm font-bold text-slate-900">
+                              ${Number(row.offer.sign_on).toLocaleString()}
+                            </div>
+                            <div className="text-[10px] text-slate-400">One-time</div>
+                          </div>
+                          {Number(row.offer.relocation_bonus || 0) > 0 && (
+                            <div>
+                              <HelpTooltipTrigger
+                                title="One-time relocation or signing perk cash value. The after-tax estimate uses the supplemental W2 bonus rate."
+                                ariaLabel="Explain relocation perk"
+                                density="comfortable"
+                                className="text-xs font-medium text-slate-500"
+                              >
+                                Relocation Perk
+                              </HelpTooltipTrigger>
+                              <div className="text-sm font-bold text-slate-900">
+                                ${Number(row.offer.relocation_bonus).toLocaleString()}
+                              </div>
+                              <div className="text-[10px] text-slate-400">
+                                After tax: $
+                                {Math.round(
+                                  adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
+                                ).toLocaleString()}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Health Insurance & 401(k) Match Sub-section */}
+                          <div className="col-span-2 pt-2 border-t border-slate-100">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <HelpTooltipTrigger
+                                  title="Monthly premium and annual HSA contribution details."
+                                  ariaLabel="Explain health insurance"
+                                  density="comfortable"
+                                  className="text-xs font-medium text-slate-500"
+                                >
+                                  Health Insurance
+                                </HelpTooltipTrigger>
+                                <div className="text-sm font-bold text-slate-900">
+                                  {Number(row.offer.health_premium_monthly || 0) > 0
+                                    ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
+                                    : 'Free Premium'}
+                                </div>
+                                {row.offer.health_plan_type && (
+                                  <div className="text-[10px] text-slate-500 font-medium">
+                                    Type: {row.offer.health_plan_type}
+                                  </div>
+                                )}
+                                {Number(row.offer.health_oop_max || 0) > 0 && (
+                                  <div className="text-[10px] text-slate-400">
+                                    OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
+                                  </div>
+                                )}
+                                {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
+                                  <div className="text-[10px] text-emerald-600 font-semibold">
+                                    HSA Match: +$
+                                    {Number(row.offer.hsa_employer_contribution).toLocaleString()}
+                                    /yr
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <HelpTooltipTrigger
+                                  title="401(k) Employer retirement match percentage and max contribution matched."
+                                  ariaLabel="Explain 401(k) matching"
+                                  density="comfortable"
+                                  className="text-xs font-medium text-slate-500"
+                                >
+                                  401(k) Matching
+                                </HelpTooltipTrigger>
+                                <div className="text-sm font-bold text-slate-900">
+                                  {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                                  Number(row.offer.forty_one_k_max_match || 0) > 0
+                                    ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
+                                    : 'No 401(k) Match'}
+                                </div>
+                                {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                                  Number(row.offer.forty_one_k_max_match || 0) > 0 && (
+                                    <div className="text-[10px] text-emerald-600 font-semibold">
+                                      Match Value: +$
+                                      {Math.round(
+                                        Number(row.offer.base_salary) *
+                                          (Number(row.offer.forty_one_k_max_match) / 100) *
+                                          (Number(row.offer.forty_one_k_match_percent) / 100)
+                                      ).toLocaleString()}
+                                      /yr
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="col-span-2 pt-2 border-t border-slate-100">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <HelpTooltipTrigger
+                                  title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
+                                  ariaLabel="Explain time off"
+                                  density="comfortable"
+                                  className="text-xs font-medium text-slate-500"
+                                >
+                                  Time Off
+                                </HelpTooltipTrigger>
+                                <div className="text-sm font-medium text-slate-900">
+                                  {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)}{' '}
+                                  PTO,{' '}
+                                  {row.offer.is_unlimited_pto &&
+                                  row.offer.sick_leave_included_in_unlimited_pto !== false
+                                    ? 'Sick Leave Included, '
+                                    : `${row.offer.sick_leave_days ?? 0} Sick Leave, `}
+                                  {row.offer.holiday_days ?? 11} Holidays
+                                </div>
+                              </div>
+                              {!row.isSimulated && !(row.offer as Offer).is_current && (
+                                <div className="text-right">
+                                  <HelpTooltipTrigger
+                                    title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
+                                    ariaLabel="Explain difference from current job"
+                                    density="comfortable"
+                                    className="justify-end text-xs font-medium text-slate-500"
+                                  >
+                                    Diff vs Current
+                                  </HelpTooltipTrigger>
+                                  {(() => {
+                                    const total =
+                                      Number(row.offer.base_salary) +
+                                      Number(row.offer.bonus) +
+                                      getRealizableEquity(row.offer) +
+                                      Number(row.offer.sign_on);
+                                    const diff = total - currentTotal;
+                                    const diffPercent =
+                                      currentTotal > 0
+                                        ? ((diff / currentTotal) * 100).toFixed(1)
+                                        : 0;
+                                    return (
+                                      <div
+                                        className={clsx(
+                                          'text-sm font-bold',
+                                          diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                                        )}
+                                      >
+                                        {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
+                                        <span className="text-[10px] font-medium ml-1">
+                                          ({diff > 0 ? '+' : ''}
+                                          {diffPercent}%)
+                                        </span>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              )}
+                              {row.isSimulated && (
+                                <div className="text-right">
+                                  <HelpTooltipTrigger
+                                    title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
+                                    ariaLabel="Explain difference from current job"
+                                    density="comfortable"
+                                    className="justify-end text-xs font-medium text-slate-500"
+                                  >
+                                    Diff vs Current
+                                  </HelpTooltipTrigger>
+                                  {(() => {
+                                    const total =
+                                      Number(row.offer.base_salary) +
+                                      Number(row.offer.bonus) +
+                                      getRealizableEquity(row.offer) +
+                                      Number(row.offer.sign_on);
+                                    const diff = total - currentTotal;
+                                    const diffPercent =
+                                      currentTotal > 0
+                                        ? ((diff / currentTotal) * 100).toFixed(1)
+                                        : 0;
+                                    return (
+                                      <div
+                                        className={clsx(
+                                          'text-sm font-bold',
+                                          diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                                        )}
+                                      >
+                                        {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
+                                        <span className="text-[10px] font-medium ml-1">
+                                          ({diff > 0 ? '+' : ''}
+                                          {diffPercent}%)
+                                        </span>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+                    {row.categories.map((category) => {
+                      const app = applicationsById[row.applicationId];
+
+                      if (category.key === 'financial' || category.key === 'location') {
+                        const tooltips: Record<string, string> = {
+                          financial:
+                            'Weighted score based on adjusted total comp (after tax, cost of living, commute, rent). Higher adjusted value = higher score.',
+                          location:
+                            'Score based on city cost-of-living index vs. your reference city. A higher-cost location reduces this score.',
+                        };
+                        return (
+                          <div key={category.key} className="flex flex-col">
+                            <div className="mb-2 flex items-center justify-between text-xs">
+                              <HelpTooltipTrigger
+                                title={tooltips[category.key]}
+                                ariaLabel={`Explain ${category.label} score`}
+                                className="font-semibold text-slate-700"
+                              >
+                                {category.label}
+                              </HelpTooltipTrigger>
+                              <span className="font-bold text-slate-900">
+                                {Math.round(category.score)}
+                              </span>
+                            </div>
+
+                            {/* Compact Progress Bar */}
+                            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                                  category.key === 'financial' ? 'bg-emerald-500' : 'bg-sky-500'
+                                }`}
+                                style={{ width: `${Math.round(category.score)}%` }}
+                              />
+                            </div>
+                            <p className="mt-2 text-[10px] font-medium text-slate-500 line-clamp-1">
+                              {category.detail}
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      if (['workLife', 'growth', 'brand', 'team'].includes(category.key)) {
+                        const dbKey =
+                          category.key === 'workLife' ? 'work_life_score' : `${category.key}_score`;
+                        const rawValue = app ? app[dbKey as keyof Application] : null;
+                        const rateValue = normalizeManualScore(rawValue) || 0;
+                        const tooltips: Record<string, string> = {
+                          workLife:
+                            'Your subjective rating of work-life balance — hours, flexibility, on-call expectations, and culture. Rate 1–5 stars.',
+                          growth:
+                            'How strong is the growth opportunity? Consider mentorship, promo velocity, scope, and learning. Rate 1–5 stars.',
+                          brand:
+                            'Company prestige and brand value for your resume. Consider FAANG/tier, public recognition, and industry reputation. Rate 1–5 stars.',
+                          team: 'Your impression of the team, manager, and culture fit from interviews. Rate 1–5 stars.',
+                        };
+
+                        return (
+                          <div key={category.key} className="flex flex-col">
+                            <div className="mb-1.5 flex items-center justify-between text-xs">
+                              <HelpTooltipTrigger
+                                title={tooltips[category.key]}
+                                ariaLabel={`Explain ${category.label} score`}
+                                className="font-semibold text-slate-700"
+                              >
+                                {category.label}
+                              </HelpTooltipTrigger>
+                              <span
+                                className={`font-bold ${category.isScored ? 'text-slate-900' : 'text-slate-400'}`}
+                              >
+                                {category.isScored ? Math.round(category.score) : '--'}
+                              </span>
+                            </div>
+                            <AccessibleStarRating
+                              label={`${category.label} rating for ${row.company}`}
+                              value={rateValue}
+                              onChange={(val) =>
+                                onScoreUpdate?.(row.applicationId, { [dbKey]: val })
+                              }
+                              disabled={row.isSimulated}
+                            />
+                          </div>
+                        );
+                      }
+
+                      if (category.key === 'visa') {
+                        if (!category.isScored) {
+                          return null;
+                        }
+
+                        const immigrationSignalValue = getImmigrationSignalValue(
+                          app?.visa_sponsorship,
+                          app?.day_one_gc
+                        );
+                        const selectedImmigrationOption = immigrationSignalOptions.find(
+                          (option) => option.value === immigrationSignalValue
+                        );
+
+                        return (
+                          <div key={category.key} className="flex flex-col">
+                            <div className="mb-1.5 flex items-center justify-between text-xs">
+                              <span className="font-semibold text-slate-700">{category.label}</span>
+                              <span
+                                className={`font-bold ${category.isScored ? 'text-slate-900' : 'text-slate-400'}`}
+                              >
+                                {category.isScored ? Math.round(category.score) : '--'}
+                              </span>
+                            </div>
+                            <Select
+                              value={immigrationSignalValue || undefined}
+                              placeholder="Immigration support"
+                              size="small"
+                              allowClear
+                              bordered={false}
+                              onChange={(val) =>
+                                onScoreUpdate?.(
+                                  row.applicationId,
+                                  getImmigrationSignalPatch((val || '') as ImmigrationSignalValue)
+                                )
+                              }
+                              options={immigrationSignalOptions.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                              }))}
+                              className="w-full rounded-lg border border-slate-100 bg-slate-50 text-xs transition-colors hover:bg-slate-100 [&_.ant-select-selector]:!bg-transparent"
+                            />
+                            <p className="mt-1.5 text-[10px] leading-4 text-slate-400">
+                              {selectedImmigrationOption?.description ||
+                                'Only score this when immigration support matters to the decision.'}
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      return null;
+                    })}
+                  </div>
+                </div>
+
+                {/* Decision Evidence */}
+                <div className="grid grid-cols-1 border-t border-slate-100 bg-slate-50/40 sm:grid-cols-3">
+                  <div className="border-b border-slate-100 px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Adjusted value
+                    </p>
+                    <p className="mt-1 text-base font-bold text-emerald-700">
+                      {formatCurrency(row.financialValue)}
+                    </p>
+                    <p className="mt-0.5 text-[10px] leading-4 text-slate-500">
+                      After tax, COL, rent, and lifestyle
+                    </p>
+                  </div>
+                  <div className="border-b border-slate-100 px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Realizable equity
+                    </p>
+                    <p className="mt-1 text-base font-bold text-slate-900">
+                      {formatCurrency(getRealizableEquity(row.offer))}
+                      <span className="ml-1 text-[10px] font-medium text-slate-400">/ yr</span>
+                    </p>
+                    <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">
+                      {getEquityLiquidityCopy(row.offer).label}
+                    </p>
+                  </div>
+                  <div className="px-4 py-3 sm:px-5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Time off
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-900">
+                      {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)}
+                    </p>
+                    <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">
+                      {row.offer.is_unlimited_pto &&
+                      row.offer.sick_leave_included_in_unlimited_pto !== false
+                        ? 'Sick leave included'
+                        : `${row.offer.sick_leave_days ?? 0} sick days`}
+                      {' · '}
+                      {row.offer.holiday_days ?? 11} holidays
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Bar */}
+                <div className="mt-auto border-t border-slate-100 bg-white px-4 py-3">
+                  {row.isSimulated ? (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="grid grid-cols-2 gap-2 sm:flex">
+                        <button
+                          type="button"
+                          onClick={() => onEditScenario(String(row.offer.id))}
+                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                      <div>
+                        <Popconfirm
+                          title="Delete custom scenario?"
+                          onConfirm={() => onDeleteScenario(String(row.offer.id))}
+                          okText="Delete"
+                          cancelText="Cancel"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <button
+                            type="button"
+                            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 sm:min-h-9 sm:rounded-lg"
+                          >
+                            Delete
+                          </button>
+                        </Popconfirm>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => onEditClick(row.offer as Offer)}
+                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onToggleCurrent(row.offer as Offer)}
+                          className={clsx(
+                            'min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-9 sm:rounded-lg',
+                            (row.offer as Offer).is_current
+                              ? 'text-slate-400 hover:bg-slate-50'
+                              : 'text-slate-600 hover:bg-slate-50'
+                          )}
+                        >
+                          {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onSnapshotsClick(row.offer as Offer)}
+                          className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-50 sm:min-h-9 sm:rounded-lg"
+                        >
+                          Snapshots
+                        </button>
+                        <Popover
+                          trigger="click"
+                          placement="topRight"
+                          content={
+                            <div className="flex w-44 flex-col py-1">
+                              <button
+                                type="button"
+                                onClick={() => onSaveSnapshotClick(row.offer as Offer, row)}
+                                className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                              >
+                                Save Snapshot
+                              </button>
+                              {(row.offer as Offer).is_current ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onRaiseHistoryClick(row.offer as Offer)}
+                                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                                >
+                                  Raise History
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => onNegotiateClick(row.offer as Offer)}
+                                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 hover:bg-purple-50"
+                                >
+                                  Negotiate
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => onToggleRejected?.(row.offer as Offer)}
+                                className={clsx(
+                                  'min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold',
+                                  isRowRejected
+                                    ? 'text-emerald-700 hover:bg-emerald-50'
+                                    : 'text-rose-700 hover:bg-rose-50'
+                                )}
+                              >
+                                {isRowRejected ? 'Restore Offer' : 'Mark as Rejected'}
+                              </button>
+                              {applicationsById[row.applicationId]?.is_locked ? (
+                                <Tooltip title="Unlock this application in Job Applications first.">
+                                  <span className="rounded-md px-3 py-2 text-xs font-semibold text-slate-300 cursor-not-allowed">
+                                    Delete
+                                  </span>
+                                </Tooltip>
+                              ) : (
+                                <Popconfirm
+                                  title="Delete linked application?"
+                                  description="This will delete the application and remove this offer from comparison."
+                                  okText="Delete"
+                                  cancelText="Cancel"
+                                  okButtonProps={{ danger: true }}
+                                  onConfirm={() => onDeleteClick(row.offer as Offer)}
+                                >
+                                  <button
+                                    type="button"
+                                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                                  >
+                                    Delete
+                                  </button>
+                                </Popconfirm>
+                              )}
+                            </div>
+                          }
+                        >
+                          <button
+                            type="button"
+                            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-50 sm:min-h-9 sm:rounded-lg"
+                          >
+                            More
+                          </button>
+                        </Popover>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
 
         <aside className="flex h-fit flex-col gap-6 lg:sticky lg:top-6">

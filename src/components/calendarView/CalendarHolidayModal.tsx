@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Button, Checkbox, Form, Input, Select } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import ModalShell from '../ModalShell';
 import type { Holiday, HolidayTab } from '../../types';
 import type { CalendarHolidayTarget } from './types';
+import { confirmHolidayDeletion } from './confirmCalendarDeletion';
 
 export type CalendarHolidayFormValues = {
   description?: string;
@@ -20,6 +22,7 @@ type CalendarHolidayModalProps = {
   holidayTabs?: HolidayTab[];
   onCancel: () => void;
   onSubmit: (values: CalendarHolidayFormValues) => void;
+  onDelete?: (holiday: Holiday) => boolean | void | Promise<boolean | void>;
 };
 
 const CalendarHolidayModal = ({
@@ -31,6 +34,7 @@ const CalendarHolidayModal = ({
   holidayTabs = [],
   onCancel,
   onSubmit,
+  onDelete,
 }: CalendarHolidayModalProps) => {
   const [form] = Form.useForm<CalendarHolidayFormValues>();
 
@@ -38,11 +42,11 @@ const CalendarHolidayModal = ({
     if (!open) return;
 
     form.setFieldsValue({
-      description: mode === 'edit' ? holiday?.description : '',
-      is_recurring: mode === 'edit' ? !!holiday?.is_recurring : false,
-      tab: mode === 'edit' ? holiday?.tab || '' : target?.tab || '',
+      description: holiday?.description || '',
+      is_recurring: !!holiday?.is_recurring,
+      tab: holiday?.tab || target?.tab || '',
     });
-  }, [form, holiday, mode, open, target]);
+  }, [form, holiday, open, target]);
 
   const title =
     mode === 'edit'
@@ -58,6 +62,19 @@ const CalendarHolidayModal = ({
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
       footer={
         <>
+          {mode === 'edit' && holiday?.id && onDelete ? (
+            <Button
+              danger
+              size="large"
+              icon={<DeleteOutlined />}
+              disabled={holiday.is_locked}
+              title={holiday.is_locked ? 'Unlock this holiday to delete it' : undefined}
+              onClick={() => confirmHolidayDeletion(holiday, onDelete)}
+              className="w-full sm:mr-auto sm:w-auto"
+            >
+              Delete holiday
+            </Button>
+          ) : null}
           <Button size="large" onClick={onCancel} className="w-full sm:w-auto">
             Cancel
           </Button>

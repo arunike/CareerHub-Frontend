@@ -25,6 +25,7 @@ import {
   getHolidays,
   getFederalHolidays,
   deleteEvent,
+  deleteHoliday,
   createEvent,
   createHoliday,
   updateEvent,
@@ -49,6 +50,7 @@ import CalendarView from '../../components/CalendarView';
 import type { CalendarHolidayTarget } from '../../components/calendarView/types';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
+import { confirmEventDeletion } from '../../components/calendarView/confirmCalendarDeletion';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import EventsFilterBar from './components/EventsFilterBar';
 import EventsGrid from './components/EventsGrid';
@@ -408,6 +410,28 @@ const Events = () => {
     });
   };
 
+  const handleDuplicate = (event: Event) => {
+    setEditingId(null);
+    setIsFormOpen(true);
+    void ensureApplicationsLoaded();
+    setRecurrenceRule(event.recurrence_rule as RecurrenceRule);
+    setLocationType(event.location_type);
+
+    form.setFieldsValue({
+      name: `${event.name} (Copy)`,
+      date: dayjs(event.date),
+      start_time: dayjs(event.start_time, 'HH:mm:ss'),
+      end_time: dayjs(event.end_time, 'HH:mm:ss'),
+      timezone: event.timezone,
+      category: event.category,
+      location_type: event.location_type,
+      location: event.location,
+      meeting_link: event.meeting_link,
+      notes: event.notes,
+      application: event.application,
+    });
+  };
+
   const handleDelete = async (event: Event, deleteType: 'instance' | 'series' = 'series') => {
     try {
       if (event.is_virtual && event.parent_event) {
@@ -423,35 +447,29 @@ const Events = () => {
       fetchData();
       fetchCalendarData();
       setViewingEvent(null);
+      return true;
     } catch (error) {
       messageApi.error('Failed to delete event');
       console.error(error);
+      return false;
     }
   };
 
-  const handleDeleteAction = (event: Event) => {
-    if (event.is_virtual && event.parent_event) {
-      Modal.confirm({
-        title: 'Delete Recurring Event',
-        content: 'Delete this occurrence or the entire series?',
-        okText: 'Entire Series',
-        cancelText: 'Just this occurrence',
-        closable: true,
-        onOk: () => handleDelete(event, 'series'),
-        onCancel: () => {
-          handleDelete(event, 'instance');
-        },
-      });
-      return;
-    }
+  const handleDeleteAction = (event: Event) => confirmEventDeletion(event, handleDelete);
 
-    Modal.confirm({
-      title: 'Delete event?',
-      content: 'Are you sure?',
-      okText: 'Delete',
-      okType: 'danger',
-      onOk: () => handleDelete(event, 'series'),
-    });
+  const handleCalendarHolidayDelete = async (holiday: Holiday) => {
+    if (holiday.is_locked || !holiday.id) return false;
+    try {
+      await deleteHoliday(holiday.id);
+      messageApi.success('Holiday deleted');
+      setEditingHoliday(null);
+      await fetchCalendarData();
+      return true;
+    } catch (error) {
+      messageApi.error('Failed to delete holiday');
+      console.error(error);
+      return false;
+    }
   };
 
   const handleDeleteAll = async () => {
@@ -792,6 +810,7 @@ const Events = () => {
                     onToggleLock={toggleLock}
                     onView={setViewingEvent}
                     onEdit={handleEdit}
+                    onDuplicate={handleDuplicate}
                     onDelete={handleDeleteAction}
                     formatEventTime={formatEventTime}
                     selectedIds={selectedIds}
@@ -892,6 +911,8 @@ const Events = () => {
         event={viewingEvent}
         onClose={() => setViewingEvent(null)}
         onEdit={handleEdit}
+        onDuplicate={handleDuplicate}
+        onDelete={handleDelete}
       />
 
       <CalendarHolidayModal
@@ -906,6 +927,7 @@ const Events = () => {
           setEditingHoliday(null);
         }}
         onSubmit={handleCalendarHolidaySubmit}
+        onDelete={handleCalendarHolidayDelete}
       />
 
       {/* Import Modal */}
