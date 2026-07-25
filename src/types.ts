@@ -528,6 +528,7 @@ export interface Experience {
   id?: number;
   title: string;
   company: string;
+  level?: string;
   location?: string;
   start_date?: string | null;
   end_date?: string | null;

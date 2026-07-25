@@ -730,9 +730,15 @@ const ExperiencePage: React.FC = () => {
     return allOffers.map((o) => {
       const company = o.application_details?.company;
       const role = o.application_details?.role_title;
+      const level = (o.application_details as any)?.level;
+      const location =
+        (o.application_details as any)?.location ||
+        (o as any)?.location ||
+        (o as any)?.office_location;
+      const empType = (o.application_details as any)?.employment_type;
       const label =
         company && role
-          ? `${company} — ${role}${o.is_current ? ' (current)' : ''}`
+          ? `${company} — ${role}${level ? ` (${level})` : ''}${o.is_current ? ' (current)' : ''}`
           : `Offer #${o.id} — $${Number(o.base_salary).toLocaleString()} base${o.is_current ? ' (current)' : ''}`;
       return {
         value: o.id as number,
@@ -740,6 +746,11 @@ const ExperiencePage: React.FC = () => {
         base_salary: Number(o.base_salary),
         bonus: Number(o.bonus),
         equity: Number(o.equity),
+        company,
+        title: role,
+        level,
+        location,
+        employment_type: empType,
       };
     });
   }, [allOffers]);
@@ -1206,6 +1217,11 @@ const ExperiencePage: React.FC = () => {
                             {exp.title}
                           </Title>
                           <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
+                          {exp.level && (
+                            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
+                              {exp.level}
+                            </span>
+                          )}
                           {exp.is_return_offer && (
                             <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
                               <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
@@ -1563,6 +1579,11 @@ const ExperiencePage: React.FC = () => {
                                     </span>
                                   )}
                                   <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
+                                  {exp.level && (
+                                    <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
+                                      {exp.level}
+                                    </span>
+                                  )}
                                   {exp.is_return_offer && (
                                     <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
                                       <LinkOutlined style={{ fontSize: 9 }} /> Return Offer

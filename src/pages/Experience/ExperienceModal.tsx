@@ -32,6 +32,11 @@ interface OfferOption {
   base_salary?: number;
   bonus?: number;
   equity?: number;
+  company?: string;
+  title?: string;
+  level?: string;
+  location?: string;
+  employment_type?: string;
 }
 
 interface ExperienceModalProps {
@@ -120,6 +125,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
         form.setFieldsValue({
           title: experience.title,
           company: experience.company,
+          level: experience.level || '',
           location: experience.location,
           dates: experience.start_date
             ? [
@@ -271,6 +277,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
         const payload: Partial<Experience> = {
           title: values.title,
           company: values.company,
+          level: values.level || '',
           location: values.location,
           employment_type: selectedEmploymentType,
           start_date,
@@ -445,13 +452,29 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             if (changed.offer !== undefined) {
               const linked = offers.find((o) => o.value === changed.offer);
               if (linked) {
-                form.setFieldsValue({
+                const currentVals = form.getFieldsValue();
+                const updates: Record<string, any> = {
                   comp: {
-                    base_salary: linked.base_salary ?? null,
-                    bonus: linked.bonus ?? null,
-                    equity: linked.equity ?? null,
+                    base_salary: linked.base_salary ?? currentVals.comp?.base_salary ?? null,
+                    bonus: linked.bonus ?? currentVals.comp?.bonus ?? null,
+                    equity: linked.equity ?? currentVals.comp?.equity ?? null,
                   } as CompValue,
-                });
+                };
+
+                if (linked.company) {
+                  updates.company = linked.company;
+                  setCompanyName(linked.company);
+                }
+                if (linked.title) updates.title = linked.title;
+                if (linked.level) updates.level = linked.level;
+                if (linked.location) updates.location = linked.location;
+                if (linked.employment_type) {
+                  updates.employment_type = linked.employment_type;
+                  setEmploymentType(linked.employment_type);
+                }
+
+                form.setFieldsValue(updates);
+                message.info('Autofilled role details from linked offer!');
               }
             }
           }}
@@ -510,13 +533,16 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Form.Item
               name="title"
               label="Job Title"
               rules={[{ required: true, message: 'Please enter job title' }]}
             >
               <Input placeholder="e.g. Software Engineer" />
+            </Form.Item>
+            <Form.Item name="level" label="Level">
+              <Input placeholder="e.g. L5, Senior, Staff, IC3" />
             </Form.Item>
             <Form.Item name="employment_type" label="Employment Type">
               <Select>
