@@ -66,6 +66,7 @@ import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
 import { EmploymentTypeBadge, StatusBadge } from './ApplicationBadges';
+import { getApplicationStatusFilterOptions } from '../../constants/applicationStages';
 import {
   APPLICATION_PAGE_SIZE,
   DEFAULT_APPLICATION_STAGES,
@@ -113,6 +114,10 @@ const Applications = () => {
     { value: 'freelance', label: 'Freelance', color: 'orange' },
   ]);
   const [appStages, setAppStages] = useState(DEFAULT_APPLICATION_STAGES);
+  const statusFilterOptions = useMemo(
+    () => getApplicationStatusFilterOptions(appStages),
+    [appStages]
+  );
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -1259,7 +1264,7 @@ const Applications = () => {
                   >
                     <Option value="ALL">All Statuses</Option>
                     <Option value="INTERVIEWS">All Interviews</Option>
-                    {appStages.map((stage) => (
+                    {statusFilterOptions.map((stage) => (
                       <Option key={stage.key} value={stage.key}>
                         {stage.label}
                       </Option>
@@ -1333,7 +1338,7 @@ const Applications = () => {
             >
               <Option value="ALL">All Statuses</Option>
               <Option value="INTERVIEWS">All Interviews</Option>
-              {appStages.map((stage) => (
+              {statusFilterOptions.map((stage) => (
                 <Option key={stage.key} value={stage.key}>
                   {stage.label}
                 </Option>

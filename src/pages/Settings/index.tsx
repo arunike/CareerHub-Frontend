@@ -1373,8 +1373,8 @@ const Settings: React.FC = () => {
                 }
               />
               <p id="settings-ghosting-threshold-help" className="text-xs text-gray-500 mt-1">
-                Applications with no activity for this many days will automatically be marked as
-                "Ghosted".
+                Applications still marked "Applied" this many days after their Date Applied will
+                automatically be marked as "Ghosted".
               </p>
             </div>
           </div>

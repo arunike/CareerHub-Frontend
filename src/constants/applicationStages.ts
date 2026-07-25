@@ -23,3 +23,26 @@ export const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
     tone: '#5F6368',
   },
 ];
+
+export const FILTER_ONLY_APPLICATION_STATUSES: ApplicationStage[] = [
+  {
+    key: 'OFFER_REJECTED',
+    label: 'Rejected Offer',
+    shortLabel: 'Rejected Offer',
+    tone: '#E85D5D',
+  },
+];
+
+export const getApplicationStatusFilterOptions = (
+  stages: ApplicationStage[]
+): ApplicationStage[] => {
+  const configuredKeys = new Set(stages.map((stage) => stage.key));
+  return [
+    ...stages,
+    ...FILTER_ONLY_APPLICATION_STATUSES.filter((status) => !configuredKeys.has(status.key)),
+  ];
+};
+
+export const findApplicationStatus = (status: string, stages: ApplicationStage[]) =>
+  stages.find((stage) => stage.key === status) ||
+  FILTER_ONLY_APPLICATION_STATUSES.find((stage) => stage.key === status);

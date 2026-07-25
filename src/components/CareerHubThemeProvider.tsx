@@ -28,6 +28,7 @@ const CAREERHUB_THEME = {
     controlHeightLG: 44,
     controlHeightSM: 30,
     lineHeight: 1.6,
+    zIndexPopupBase: 2000,
   },
   components: {
     Button: {

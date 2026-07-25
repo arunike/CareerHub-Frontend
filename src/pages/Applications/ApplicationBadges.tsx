@@ -4,10 +4,11 @@ import {
   getPaletteColorFromTone,
   getReadableTextColor,
 } from '../../utils/colorPalette';
+import { findApplicationStatus } from '../../constants/applicationStages';
 import type { ApplicationStage } from './applicationTypes';
 
 export const StatusBadge = ({ status, stages }: { status: string; stages: ApplicationStage[] }) => {
-  const stage = stages.find((s) => s.key === status);
+  const stage = findApplicationStatus(status, stages);
   const c = getPaletteColorFromTone(stage?.tone);
   const label = stage ? stage.label : status;
   const textColor = getReadableTextColor(c.dot);
