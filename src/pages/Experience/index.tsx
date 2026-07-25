@@ -32,12 +32,14 @@ import {
   LockOutlined,
   UnlockOutlined,
   InboxOutlined,
+  HolderOutlined,
 } from '@ant-design/icons';
 import { MetricCardsSkeleton, ListSkeleton } from '../../components/SkeletonLoader';
 import dayjs from 'dayjs';
 import type { UploadProps } from 'antd';
 import {
   getExperiences,
+  reorderExperiences,
   createExperience,
   updateExperience,
   deleteExperience,
@@ -50,6 +52,23 @@ import {
   updateOffer,
 } from '../../api/career';
 import { getUserSettings } from '../../api/availability';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import RowActions from '../../components/RowActions';
 import type { Experience, EmploymentType } from '../../types';
 import ExperienceModal from './ExperienceModal';
@@ -84,6 +103,39 @@ const { Title, Text } = Typography;
 const { Dragger } = Upload;
 const GROUP_ICON_ACTION_CLASS = '!h-11 !w-11 !min-w-11 lg:!h-8 lg:!w-8 lg:!min-w-8';
 
+interface SortableGroupCardProps {
+  id: number;
+  children: React.ReactNode;
+}
+
+const SortableGroupCard: React.FC<SortableGroupCardProps> = ({ id, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 30 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="group/sortable relative">
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute -left-7 top-6 hidden sm:flex items-center justify-center p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors z-20 touch-none"
+        title="Drag to reorder career timeline"
+      >
+        <HolderOutlined style={{ fontSize: 18 }} />
+      </div>
+      {children}
+    </div>
+  );
+};
+
 const ExperiencePage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -105,6 +157,87 @@ const ExperiencePage: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [aiProviderConfigured, setAiProviderConfigured] = useState(false);
   const [promotionReviewExp, setPromotionReviewExp] = useState<Experience | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = groupedExperiences.findIndex((g) => g[0].id === active.id);
+    const newIndex = groupedExperiences.findIndex((g) => g[0].id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const draggedGroup = groupedExperiences[oldIndex];
+    const targetGroup = groupedExperiences[newIndex];
+    const draggedTitle = `${draggedGroup[0].title} @ ${draggedGroup[0].company}`;
+    const targetTitle = `${targetGroup[0].title} @ ${targetGroup[0].company}`;
+
+    Modal.confirm({
+      title: 'Confirm Timeline Order Change',
+      icon: <HolderOutlined className="text-blue-500" />,
+      content: (
+        <div className="py-2">
+          <p className="text-sm text-gray-600 mb-2">
+            Are you sure you want to update the order of your work experiences on the timeline?
+          </p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs space-y-1">
+            <div>
+              <span className="font-semibold text-gray-700">Moving:</span> {draggedTitle}
+            </div>
+            <div>
+              <span className="font-semibold text-gray-700">New position:</span> Position #
+              {newIndex + 1} (near {targetTitle})
+            </div>
+          </div>
+        </div>
+      ),
+      okText: 'Save Order',
+      cancelText: 'Cancel',
+      okButtonProps: { className: 'bg-blue-600 hover:bg-blue-700' },
+      onOk: async () => {
+        try {
+          const reorderedGroups = arrayMove(groupedExperiences, oldIndex, newIndex);
+          const newOrderPayload: { id: number; position: number }[] = [];
+          let currentPos = 0;
+
+          reorderedGroups.forEach((group) => {
+            group.forEach((exp) => {
+              if (exp.id) {
+                newOrderPayload.push({ id: exp.id, position: currentPos });
+                currentPos++;
+              }
+            });
+          });
+
+          // Optimistically update local experiences
+          setExperiences((prevExps) => {
+            const posMap = new Map(newOrderPayload.map((item) => [item.id, item.position]));
+            return prevExps.map((e) => ({
+              ...e,
+              position: e.id && posMap.has(e.id) ? posMap.get(e.id) : e.position,
+            }));
+          });
+
+          await reorderExperiences(newOrderPayload);
+          message.success('Timeline order updated and saved successfully!');
+        } catch {
+          message.error('Failed to save timeline order. Please try again.');
+          await fetchExperiences();
+        }
+      },
+    });
+  };
 
   const fetchOffersData = async () => {
     try {
@@ -728,18 +861,30 @@ const ExperiencePage: React.FC = () => {
 
   const offerSelectOptions = useMemo(() => {
     return allOffers.map((o) => {
-      const company = o.application_details?.company;
-      const role = o.application_details?.role_title;
-      const level = (o.application_details as any)?.level;
+      const details = o.application_details || (o.application as any) || {};
+      const company =
+        typeof details.company === 'string'
+          ? details.company
+          : details.company?.name || (o as any).company_name || (o as any).custom_company_name;
+      const role =
+        details.role_title ||
+        details.title ||
+        (o as any).role_title ||
+        (o as any).custom_role_title;
+      const level = details.level || (o as any).level || '';
       const location =
-        (o.application_details as any)?.location ||
-        (o as any)?.location ||
-        (o as any)?.office_location;
-      const empType = (o.application_details as any)?.employment_type;
+        details.office_location ||
+        (o as any).office_location ||
+        details.location ||
+        (o as any).location ||
+        '';
+      const empType = details.employment_type || (o as any).employment_type || 'full_time';
+
       const label =
         company && role
           ? `${company} — ${role}${level ? ` (${level})` : ''}${o.is_current ? ' (current)' : ''}`
           : `Offer #${o.id} — $${Number(o.base_salary).toLocaleString()} base${o.is_current ? ' (current)' : ''}`;
+
       return {
         value: o.id as number,
         label,
@@ -840,16 +985,34 @@ const ExperiencePage: React.FC = () => {
     const seen = new Set<number>();
     const groups: Experience[][] = [];
 
-    for (let i = 0; i < filteredExperiences.length; i++) {
-      const exp = filteredExperiences[i];
+    const sortedList = [...filteredExperiences].sort((a, b) => {
+      const aPinned = a.is_pinned ? 1 : 0;
+      const bPinned = b.is_pinned ? 1 : 0;
+      if (aPinned !== bPinned) return bPinned - aPinned;
+
+      const aPos = a.position !== null && a.position !== undefined ? a.position : Infinity;
+      const bPos = b.position !== null && b.position !== undefined ? b.position : Infinity;
+      if (aPos !== bPos) return aPos - bPos;
+
+      const aStart = a.start_date ? dayjs(a.start_date).valueOf() : 0;
+      const bStart = b.start_date ? dayjs(b.start_date).valueOf() : 0;
+      if (aStart !== bStart) return bStart - aStart;
+
+      const aCreated = a.created_at ? dayjs(a.created_at).valueOf() : a.id || 0;
+      const bCreated = b.created_at ? dayjs(b.created_at).valueOf() : b.id || 0;
+      return bCreated - aCreated;
+    });
+
+    for (let i = 0; i < sortedList.length; i++) {
+      const exp = sortedList[i];
       if (seen.has(exp.id!)) continue;
 
       const company = exp.company.toLowerCase();
       const group: Experience[] = [exp];
       seen.add(exp.id!);
 
-      for (let j = i + 1; j < filteredExperiences.length; j++) {
-        const other = filteredExperiences[j];
+      for (let j = i + 1; j < sortedList.length; j++) {
+        const other = sortedList[j];
         if (!seen.has(other.id!) && other.company.toLowerCase() === company) {
           group.push(other);
           seen.add(other.id!);
@@ -859,11 +1022,7 @@ const ExperiencePage: React.FC = () => {
       groups.push(group);
     }
 
-    return groups.sort((a, b) => {
-      const aPinned = a[0].is_pinned ? 1 : 0;
-      const bPinned = b[0].is_pinned ? 1 : 0;
-      return bPinned - aPinned;
-    });
+    return groups;
   }, [filteredExperiences]);
 
   return (
@@ -1149,692 +1308,713 @@ const ExperiencePage: React.FC = () => {
           icon={<InboxOutlined />}
         />
       ) : (
-        <div className="relative pl-0 md:pl-8">
-          <div className="space-y-10 relative z-10">
-            {filteredExperiences.length === 0 && selectedSkill && (
-              <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
-                <Text className="text-gray-500">
-                  No timeline events match the selected skill filter.
-                </Text>
-                <div className="mt-2">
-                  <Button type="link" onClick={() => setSelectedSkill(null)}>
-                    Clear Filter
-                  </Button>
-                </div>
-              </div>
-            )}
-            {groupedExperiences.map((group, groupIdx) => {
-              const primary = group[0];
-              const isMulti = group.length > 1;
-              const logoSrc = getMediaUrl(primary.logo);
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={groupedExperiences.map((g) => g[0].id!)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="relative pl-0 md:pl-8">
+              <div className="space-y-10 relative z-10">
+                {filteredExperiences.length === 0 && selectedSkill && (
+                  <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
+                    <Text className="text-gray-500">
+                      No timeline events match the selected skill filter.
+                    </Text>
+                    <div className="mt-2">
+                      <Button type="link" onClick={() => setSelectedSkill(null)}>
+                        Clear Filter
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {groupedExperiences.map((group, groupIdx) => {
+                  const primary = group[0];
+                  const isMulti = group.length > 1;
+                  const logoSrc = getMediaUrl(primary.logo);
 
-              const groupAvatar = logoSrc ? (
-                <Avatar
-                  size={52}
-                  src={logoSrc}
-                  className="shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
-                />
-              ) : (
-                <Avatar
-                  size={52}
-                  style={getAvatarStyle(primary.company)}
-                  className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
-                >
-                  {primary.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
-                </Avatar>
-              );
+                  const groupAvatar = logoSrc ? (
+                    <Avatar
+                      size={52}
+                      src={logoSrc}
+                      className="shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
+                    />
+                  ) : (
+                    <Avatar
+                      size={52}
+                      style={getAvatarStyle(primary.company)}
+                      className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
+                    >
+                      {primary.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
+                    </Avatar>
+                  );
 
-              const renderSingleRole = (exp: Experience) => {
-                const skills = exp.skills || [];
-                const comp = getCompensationSnapshot(exp);
-                const internshipComp = comp?.kind === 'hourly' ? comp : null;
-                const salaryComp = comp?.kind === 'salary' ? comp : null;
-                return (
-                  <div className="p-4 sm:p-6 lg:p-7">
-                    <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-5">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex md:hidden items-center gap-3 mb-3">
-                          {logoSrc ? (
-                            <Avatar size={40} src={logoSrc} className="shadow-sm" />
-                          ) : (
-                            <Avatar
-                              size={40}
-                              style={getAvatarStyle(exp.company)}
-                              className="font-bold shadow-sm"
-                            >
-                              {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
-                            </Avatar>
-                          )}
-                          <div className="text-lg font-bold text-gray-800 tracking-tight">
-                            {exp.company}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <Title
-                            level={3}
-                            className="!mb-0 text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight"
-                          >
-                            {exp.title}
-                          </Title>
-                          <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-                          {exp.level && (
-                            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
-                              {exp.level}
-                            </span>
-                          )}
-                          {exp.is_return_offer && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
-                              <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
-                            </span>
-                          )}
-                          {exp.is_pinned && (
-                            <Tooltip title="Click to unpin">
-                              <button
-                                type="button"
-                                onClick={() => handleTogglePin(exp)}
-                                aria-label={`Unpin ${exp.title} at ${exp.company}`}
-                                className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
-                              >
-                                <PushpinFilled style={{ fontSize: 10 }} /> Pinned
-                              </button>
-                            </Tooltip>
-                          )}
-                        </div>
-                        <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">
-                          {exp.company}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 max-w-full">
-                          <div className="flex items-center gap-1.5 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                            <CalendarOutlined style={{ fontSize: 11 }} />
-                            <span className="font-semibold">{formatDuration(exp)}</span>
-                          </div>
-                          {exp.location && (
-                            <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                              <EnvironmentOutlined
-                                className="text-gray-400"
-                                style={{ fontSize: 11 }}
-                              />
-                              <span>{exp.location}</span>
+                  const renderSingleRole = (exp: Experience) => {
+                    const skills = exp.skills || [];
+                    const comp = getCompensationSnapshot(exp);
+                    const internshipComp = comp?.kind === 'hourly' ? comp : null;
+                    const salaryComp = comp?.kind === 'salary' ? comp : null;
+                    return (
+                      <div className="p-4 sm:p-6 lg:p-7">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-5">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex md:hidden items-center gap-3 mb-3">
+                              {logoSrc ? (
+                                <Avatar size={40} src={logoSrc} className="shadow-sm" />
+                              ) : (
+                                <Avatar
+                                  size={40}
+                                  style={getAvatarStyle(exp.company)}
+                                  className="font-bold shadow-sm"
+                                >
+                                  {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
+                                </Avatar>
+                              )}
+                              <div className="text-lg font-bold text-gray-800 tracking-tight">
+                                {exp.company}
+                              </div>
                             </div>
-                          )}
-                          {exp.employment_type === 'internship' &&
-                            (() => {
-                              const team = getLatestTeam(exp);
-                              return team ? (
-                                <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                  <TeamOutlined
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <Title
+                                level={3}
+                                className="!mb-0 text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight"
+                              >
+                                {exp.title}
+                              </Title>
+                              <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
+                              {exp.level && (
+                                <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
+                                  {exp.level}
+                                </span>
+                              )}
+                              {exp.is_return_offer && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
+                                  <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
+                                </span>
+                              )}
+                              {exp.is_pinned && (
+                                <Tooltip title="Click to unpin">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTogglePin(exp)}
+                                    aria-label={`Unpin ${exp.title} at ${exp.company}`}
+                                    className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
+                                  >
+                                    <PushpinFilled style={{ fontSize: 10 }} /> Pinned
+                                  </button>
+                                </Tooltip>
+                              )}
+                            </div>
+                            <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">
+                              {exp.company}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 max-w-full">
+                              <div className="flex items-center gap-1.5 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                <CalendarOutlined style={{ fontSize: 11 }} />
+                                <span className="font-semibold">{formatDuration(exp)}</span>
+                              </div>
+                              {exp.location && (
+                                <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                  <EnvironmentOutlined
                                     className="text-gray-400"
                                     style={{ fontSize: 11 }}
                                   />
-                                  <span>{team.name}</span>
+                                  <span>{exp.location}</span>
                                 </div>
-                              ) : null;
-                            })()}
-                          {exp.employment_type === 'internship' && internshipComp && (
-                            <button
-                              type="button"
-                              onClick={() => setCompBreakdownExp(exp)}
-                              title="View internship earnings breakdown"
-                              aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
-                              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                            >
-                              <DollarOutlined style={{ fontSize: 11 }} />
-                              <span>
-                                $
-                                {internshipComp.total.toLocaleString(undefined, {
-                                  maximumFractionDigits: 2,
-                                })}{' '}
-                                total earnings
-                              </span>
-                            </button>
-                          )}
-                          {exp.employment_type === 'internship' &&
-                            !internshipComp &&
-                            exp.hourly_rate != null && (
-                              <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                <DollarOutlined style={{ fontSize: 11 }} />
-                                <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
-                              </div>
-                            )}
-                          {exp.employment_type !== 'internship' &&
-                            (() => {
-                              return salaryComp ? (
-                                <div className="flex items-center shrink-0">
-                                  {exp.employment_type === 'full_time' ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => setCompBreakdownExp(exp)}
-                                      title="View pay structure breakdown"
-                                      aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
-                                      className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                    >
-                                      <DollarOutlined style={{ fontSize: 11 }} />
-                                      <span>
-                                        ${salaryComp.total.toLocaleString()} total earnings
-                                      </span>
-                                    </button>
-                                  ) : (
-                                    <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
-                                      <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
-                                        <DollarOutlined style={{ fontSize: 11 }} />
-                                        <span>${salaryComp.base.toLocaleString()} base</span>
-                                      </div>
-                                      {salaryComp.bonus > 0 && (
-                                        <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                          + ${salaryComp.bonus.toLocaleString()} bonus
-                                        </span>
-                                      )}
-                                      {salaryComp.equity > 0 && (
-                                        <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                          + ${salaryComp.equity.toLocaleString()} RSU/yr
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              ) : null;
-                            })()}
-                        </div>
-                        {exp.employment_type !== 'internship' &&
-                          (() => {
-                            const team = getLatestTeam(exp);
-                            return team ? (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-500 font-medium mt-2">
-                                <TeamOutlined className="text-gray-400" />
-                                <span>{team.name}</span>
-                              </div>
-                            ) : null;
-                          })()}
-                      </div>
-                      <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-auto lg:justify-end">
-                        <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 flex flex-wrap items-center gap-2 opacity-100">
-                          <Tooltip title="Evaluate promotion readiness for this role">
-                            <Button
-                              size="small"
-                              icon={<RiseOutlined />}
-                              onClick={() => setPromotionReviewExp(exp)}
-                              className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
-                            >
-                              Promotion
-                            </Button>
-                          </Tooltip>
-                          <Tooltip title="View / edit team norms for this role">
-                            <Button
-                              size="small"
-                              icon={<TeamOutlined />}
-                              onClick={() => setTeamHistoryExp(exp)}
-                              className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
-                            >
-                              Team Norms
-                            </Button>
-                          </Tooltip>
-                          {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
-                        </div>
-                        {getLinkedOffer(exp) && (
-                          <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 opacity-100">
-                            <Tooltip title="View / edit raise history for this role">
-                              <Button
-                                size="small"
-                                icon={<TrophyOutlined />}
-                                onClick={() => handleRaiseHistoryClick(exp)}
-                                className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
-                              >
-                                Raise History
-                              </Button>
-                            </Tooltip>
-                          </div>
-                        )}
-                        <div
-                          className={`transition-all duration-200 ${
-                            exp.is_locked
-                              ? 'opacity-100'
-                              : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
-                          }`}
-                        >
-                          <RowActions
-                            isLocked={exp.is_locked}
-                            onToggleLock={() => handleToggleLock(exp)}
-                            isPinned={exp.is_pinned}
-                            onTogglePin={() => handleTogglePin(exp)}
-                            onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
-                            onDuplicate={
-                              exp.is_locked ? undefined : () => handleDuplicateExperience(exp)
-                            }
-                            onDelete={
-                              exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)
-                            }
-                            deleteTitle="Delete Experience"
-                            deleteDescription="Are you sure you want to remove this role?"
-                            disableEdit={exp.is_locked}
-                            disableDelete={exp.is_locked}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {exp.description && (
-                      <div className="mt-6 text-[15px]">{renderDescription(exp.description)}</div>
-                    )}
-                    {skills.length > 0 && (
-                      <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
-                        {skills.map((skill) => (
-                          <Tag
-                            key={skill}
-                            className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium hover:bg-blue-50 transition-colors"
-                          >
-                            {skill}
-                          </Tag>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              };
-
-              const renderMultiRoles = () => {
-                const tenure = getGroupTenure(group);
-                return (
-                  <div className="p-4 sm:p-6 lg:p-7">
-                    {/* Company header — LinkedIn style */}
-                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex md:hidden shrink-0">
-                          {logoSrc ? (
-                            <Avatar size={44} src={logoSrc} className="shadow-sm" />
-                          ) : (
-                            <Avatar
-                              size={44}
-                              style={getAvatarStyle(primary.company)}
-                              className="font-bold shadow-sm"
-                            >
-                              {primary.company?.charAt(0)?.toUpperCase()}
-                            </Avatar>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-xl font-bold text-gray-900 tracking-tight">
-                            {primary.company}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[15px] text-gray-500">{group.length} roles</span>
-                            {tenure && (
-                              <>
-                                <span className="text-gray-300">·</span>
-                                <span className="text-[15px] font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                                  {tenure} total
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      {/* Group-level actions: pin + delete */}
-                      <div className="experience-card-actions flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
-                        {primary.is_pinned ? (
-                          <Tooltip title="Click to unpin">
-                            <button
-                              type="button"
-                              onClick={() => handleTogglePin(primary)}
-                              className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
-                              aria-label={`Unpin ${primary.company} roles`}
-                            >
-                              <PushpinFilled style={{ fontSize: 10 }} /> Pinned
-                            </button>
-                          </Tooltip>
-                        ) : (
-                          <div className="opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-                            <Tooltip title="Pin to top">
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<PushpinOutlined />}
-                                onClick={() => handleTogglePin(primary)}
-                                className={`${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-amber-500`}
-                                aria-label="Pin company roles to top"
-                              />
-                            </Tooltip>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1 opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-                          <Tooltip
-                            title={
-                              group.some((e) => !e.is_locked)
-                                ? 'Lock all roles'
-                                : 'Unlock all roles'
-                            }
-                          >
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={
-                                group.some((e) => !e.is_locked) ? (
-                                  <UnlockOutlined />
-                                ) : (
-                                  <LockOutlined />
-                                )
-                              }
-                              onClick={() => handleToggleGroupLock(group)}
-                              aria-label={
-                                group.some((e) => !e.is_locked)
-                                  ? 'Lock all company roles'
-                                  : 'Unlock all company roles'
-                              }
-                              className={
-                                group.some((e) => !e.is_locked)
-                                  ? `${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-gray-600`
-                                  : `${GROUP_ICON_ACTION_CLASS} text-amber-500 hover:text-amber-600`
-                              }
-                            />
-                          </Tooltip>
-                          <Tooltip title={`Delete all roles at ${primary.company}`}>
-                            <Popconfirm
-                              title={`Delete all ${primary.company} roles?`}
-                              description={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s).`}
-                              onConfirm={() => handleDeleteGroup(group)}
-                              okText="Delete"
-                              okButtonProps={{ danger: true }}
-                            >
-                              <Button
-                                type="text"
-                                danger
-                                size="small"
-                                icon={<DeleteOutlined />}
-                                aria-label={`Delete unlocked roles at ${primary.company}`}
-                                className={GROUP_ICON_ACTION_CLASS}
-                              />
-                            </Popconfirm>
-                          </Tooltip>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Roles — left-border timeline with dots */}
-                    <div
-                      className="relative pl-5 sm:pl-6"
-                      style={{ borderLeft: '2px solid #e5e7eb' }}
-                    >
-                      {group.map((exp, roleIdx) => {
-                        const skills = exp.skills || [];
-                        const comp = getCompensationSnapshot(exp);
-                        const internshipComp = comp?.kind === 'hourly' ? comp : null;
-                        const salaryComp = comp?.kind === 'salary' ? comp : null;
-                        return (
-                          <div
-                            key={exp.id}
-                            className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}
-                          >
-                            {/* Timeline dot */}
-                            <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                              <div className="w-2 h-2 rounded-full bg-gray-400" />
-                            </div>
-
-                            <div className="flex flex-col lg:flex-row justify-between items-start gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-semibold text-[17px] text-gray-900 leading-snug">
-                                    {exp.title}
-                                  </span>
-                                  {exp.is_promotion && (
-                                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
-                                      <RiseOutlined style={{ fontSize: 9 }} /> Promoted
-                                    </span>
-                                  )}
-                                  <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-                                  {exp.level && (
-                                    <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
-                                      {exp.level}
-                                    </span>
-                                  )}
-                                  {exp.is_return_offer && (
-                                    <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
-                                      <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-1 max-w-full">
-                                  <div className="flex items-center gap-2 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                    <CalendarOutlined style={{ fontSize: 11 }} />
-                                    <span className="font-semibold">
-                                      {formatRoleDateRange(
-                                        exp,
-                                        roleIdx > 0 ? group[roleIdx - 1].start_date : null
-                                      )}
-                                    </span>
-                                  </div>
-                                  {exp.location && (
-                                    <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md">
-                                      <EnvironmentOutlined
+                              )}
+                              {exp.employment_type === 'internship' &&
+                                (() => {
+                                  const team = getLatestTeam(exp);
+                                  return team ? (
+                                    <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                      <TeamOutlined
                                         className="text-gray-400"
                                         style={{ fontSize: 11 }}
                                       />
-                                      <span>{exp.location}</span>
+                                      <span>{team.name}</span>
                                     </div>
-                                  )}
-                                  {exp.employment_type === 'internship' &&
-                                    (() => {
-                                      const team = getLatestTeam(exp);
-                                      return team ? (
-                                        <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md">
-                                          <TeamOutlined
+                                  ) : null;
+                                })()}
+                              {exp.employment_type === 'internship' && internshipComp && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCompBreakdownExp(exp)}
+                                  title="View internship earnings breakdown"
+                                  aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
+                                  className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
+                                >
+                                  <DollarOutlined style={{ fontSize: 11 }} />
+                                  <span>
+                                    $
+                                    {internshipComp.total.toLocaleString(undefined, {
+                                      maximumFractionDigits: 2,
+                                    })}{' '}
+                                    total earnings
+                                  </span>
+                                </button>
+                              )}
+                              {exp.employment_type === 'internship' &&
+                                !internshipComp &&
+                                exp.hourly_rate != null && (
+                                  <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                    <DollarOutlined style={{ fontSize: 11 }} />
+                                    <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
+                                  </div>
+                                )}
+                              {exp.employment_type !== 'internship' &&
+                                (() => {
+                                  return salaryComp ? (
+                                    <div className="flex items-center shrink-0">
+                                      {exp.employment_type === 'full_time' ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => setCompBreakdownExp(exp)}
+                                          title="View pay structure breakdown"
+                                          aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
+                                          className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
+                                        >
+                                          <DollarOutlined style={{ fontSize: 11 }} />
+                                          <span>
+                                            ${salaryComp.total.toLocaleString()} total earnings
+                                          </span>
+                                        </button>
+                                      ) : (
+                                        <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
+                                          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
+                                            <DollarOutlined style={{ fontSize: 11 }} />
+                                            <span>${salaryComp.base.toLocaleString()} base</span>
+                                          </div>
+                                          {salaryComp.bonus > 0 && (
+                                            <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
+                                              + ${salaryComp.bonus.toLocaleString()} bonus
+                                            </span>
+                                          )}
+                                          {salaryComp.equity > 0 && (
+                                            <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
+                                              + ${salaryComp.equity.toLocaleString()} RSU/yr
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : null;
+                                })()}
+                            </div>
+                            {exp.employment_type !== 'internship' &&
+                              (() => {
+                                const team = getLatestTeam(exp);
+                                return team ? (
+                                  <div className="flex items-center gap-1.5 text-sm text-gray-500 font-medium mt-2">
+                                    <TeamOutlined className="text-gray-400" />
+                                    <span>{team.name}</span>
+                                  </div>
+                                ) : null;
+                              })()}
+                          </div>
+                          <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-auto lg:justify-end">
+                            <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 flex flex-wrap items-center gap-2 opacity-100">
+                              <Tooltip title="Evaluate promotion readiness for this role">
+                                <Button
+                                  size="small"
+                                  icon={<RiseOutlined />}
+                                  onClick={() => setPromotionReviewExp(exp)}
+                                  className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
+                                >
+                                  Promotion
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="View / edit team norms for this role">
+                                <Button
+                                  size="small"
+                                  icon={<TeamOutlined />}
+                                  onClick={() => setTeamHistoryExp(exp)}
+                                  className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
+                                >
+                                  Team Norms
+                                </Button>
+                              </Tooltip>
+                              {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
+                            </div>
+                            {getLinkedOffer(exp) && (
+                              <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 opacity-100">
+                                <Tooltip title="View / edit raise history for this role">
+                                  <Button
+                                    size="small"
+                                    icon={<TrophyOutlined />}
+                                    onClick={() => handleRaiseHistoryClick(exp)}
+                                    className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
+                                  >
+                                    Raise History
+                                  </Button>
+                                </Tooltip>
+                              </div>
+                            )}
+                            <div
+                              className={`transition-all duration-200 ${
+                                exp.is_locked
+                                  ? 'opacity-100'
+                                  : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
+                              }`}
+                            >
+                              <RowActions
+                                isLocked={exp.is_locked}
+                                onToggleLock={() => handleToggleLock(exp)}
+                                isPinned={exp.is_pinned}
+                                onTogglePin={() => handleTogglePin(exp)}
+                                onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
+                                onDuplicate={
+                                  exp.is_locked ? undefined : () => handleDuplicateExperience(exp)
+                                }
+                                onDelete={
+                                  exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)
+                                }
+                                deleteTitle="Delete Experience"
+                                deleteDescription="Are you sure you want to remove this role?"
+                                disableEdit={exp.is_locked}
+                                disableDelete={exp.is_locked}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        {exp.description && (
+                          <div className="mt-6 text-[15px]">
+                            {renderDescription(exp.description)}
+                          </div>
+                        )}
+                        {skills.length > 0 && (
+                          <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
+                            {skills.map((skill) => (
+                              <Tag
+                                key={skill}
+                                className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium hover:bg-blue-50 transition-colors"
+                              >
+                                {skill}
+                              </Tag>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  };
+
+                  const renderMultiRoles = () => {
+                    const tenure = getGroupTenure(group);
+                    return (
+                      <div className="p-4 sm:p-6 lg:p-7">
+                        {/* Company header — LinkedIn style */}
+                        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex md:hidden shrink-0">
+                              {logoSrc ? (
+                                <Avatar size={44} src={logoSrc} className="shadow-sm" />
+                              ) : (
+                                <Avatar
+                                  size={44}
+                                  style={getAvatarStyle(primary.company)}
+                                  className="font-bold shadow-sm"
+                                >
+                                  {primary.company?.charAt(0)?.toUpperCase()}
+                                </Avatar>
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-xl font-bold text-gray-900 tracking-tight">
+                                {primary.company}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[15px] text-gray-500">
+                                  {group.length} roles
+                                </span>
+                                {tenure && (
+                                  <>
+                                    <span className="text-gray-300">·</span>
+                                    <span className="text-[15px] font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
+                                      {tenure} total
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {/* Group-level actions: pin + delete */}
+                          <div className="experience-card-actions flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
+                            {primary.is_pinned ? (
+                              <Tooltip title="Click to unpin">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTogglePin(primary)}
+                                  className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
+                                  aria-label={`Unpin ${primary.company} roles`}
+                                >
+                                  <PushpinFilled style={{ fontSize: 10 }} /> Pinned
+                                </button>
+                              </Tooltip>
+                            ) : (
+                              <div className="opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
+                                <Tooltip title="Pin to top">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<PushpinOutlined />}
+                                    onClick={() => handleTogglePin(primary)}
+                                    className={`${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-amber-500`}
+                                    aria-label="Pin company roles to top"
+                                  />
+                                </Tooltip>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1 opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
+                              <Tooltip
+                                title={
+                                  group.some((e) => !e.is_locked)
+                                    ? 'Lock all roles'
+                                    : 'Unlock all roles'
+                                }
+                              >
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  icon={
+                                    group.some((e) => !e.is_locked) ? (
+                                      <UnlockOutlined />
+                                    ) : (
+                                      <LockOutlined />
+                                    )
+                                  }
+                                  onClick={() => handleToggleGroupLock(group)}
+                                  aria-label={
+                                    group.some((e) => !e.is_locked)
+                                      ? 'Lock all company roles'
+                                      : 'Unlock all company roles'
+                                  }
+                                  className={
+                                    group.some((e) => !e.is_locked)
+                                      ? `${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-gray-600`
+                                      : `${GROUP_ICON_ACTION_CLASS} text-amber-500 hover:text-amber-600`
+                                  }
+                                />
+                              </Tooltip>
+                              <Tooltip title={`Delete all roles at ${primary.company}`}>
+                                <Popconfirm
+                                  title={`Delete all ${primary.company} roles?`}
+                                  description={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s).`}
+                                  onConfirm={() => handleDeleteGroup(group)}
+                                  okText="Delete"
+                                  okButtonProps={{ danger: true }}
+                                >
+                                  <Button
+                                    type="text"
+                                    danger
+                                    size="small"
+                                    icon={<DeleteOutlined />}
+                                    aria-label={`Delete unlocked roles at ${primary.company}`}
+                                    className={GROUP_ICON_ACTION_CLASS}
+                                  />
+                                </Popconfirm>
+                              </Tooltip>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Roles — left-border timeline with dots */}
+                        <div
+                          className="relative pl-5 sm:pl-6"
+                          style={{ borderLeft: '2px solid #e5e7eb' }}
+                        >
+                          {group.map((exp, roleIdx) => {
+                            const skills = exp.skills || [];
+                            const comp = getCompensationSnapshot(exp);
+                            const internshipComp = comp?.kind === 'hourly' ? comp : null;
+                            const salaryComp = comp?.kind === 'salary' ? comp : null;
+                            return (
+                              <div
+                                key={exp.id}
+                                className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}
+                              >
+                                {/* Timeline dot */}
+                                <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                                  <div className="w-2 h-2 rounded-full bg-gray-400" />
+                                </div>
+
+                                <div className="flex flex-col lg:flex-row justify-between items-start gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-semibold text-[17px] text-gray-900 leading-snug">
+                                        {exp.title}
+                                      </span>
+                                      {exp.is_promotion && (
+                                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
+                                          <RiseOutlined style={{ fontSize: 9 }} /> Promoted
+                                        </span>
+                                      )}
+                                      <EmploymentBadge
+                                        type={exp.employment_type}
+                                        empTypes={empTypes}
+                                      />
+                                      {exp.level && (
+                                        <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
+                                          {exp.level}
+                                        </span>
+                                      )}
+                                      {exp.is_return_offer && (
+                                        <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
+                                          <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2 mt-1 max-w-full">
+                                      <div className="flex items-center gap-2 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                        <CalendarOutlined style={{ fontSize: 11 }} />
+                                        <span className="font-semibold">
+                                          {formatRoleDateRange(
+                                            exp,
+                                            roleIdx > 0 ? group[roleIdx - 1].start_date : null
+                                          )}
+                                        </span>
+                                      </div>
+                                      {exp.location && (
+                                        <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md">
+                                          <EnvironmentOutlined
                                             className="text-gray-400"
                                             style={{ fontSize: 11 }}
                                           />
-                                          <span>{team.name}</span>
+                                          <span>{exp.location}</span>
                                         </div>
-                                      ) : null;
-                                    })()}
-                                  {exp.employment_type === 'internship' && internshipComp && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setCompBreakdownExp(exp)}
-                                      title="View internship earnings breakdown"
-                                      aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
-                                      className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                    >
-                                      <DollarOutlined style={{ fontSize: 11 }} />
-                                      <span>
-                                        $
-                                        {internshipComp.total.toLocaleString(undefined, {
-                                          maximumFractionDigits: 2,
-                                        })}{' '}
-                                        total earnings
-                                      </span>
-                                    </button>
-                                  )}
-                                  {exp.employment_type === 'internship' &&
-                                    !internshipComp &&
-                                    exp.hourly_rate != null && (
-                                      <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                        <DollarOutlined style={{ fontSize: 11 }} />
-                                        <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
-                                      </div>
-                                    )}
-                                  {exp.employment_type !== 'internship' &&
-                                    (() => {
-                                      return salaryComp ? (
-                                        <>
-                                          {exp.employment_type === 'full_time' ? (
-                                            <button
-                                              type="button"
-                                              onClick={() => setCompBreakdownExp(exp)}
-                                              title="View pay structure breakdown"
-                                              aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
-                                              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                            >
-                                              <DollarOutlined style={{ fontSize: 11 }} />
-                                              <span>
-                                                ${salaryComp.total.toLocaleString()} total earnings
-                                              </span>
-                                            </button>
-                                          ) : (
-                                            <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
-                                              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
-                                                <DollarOutlined style={{ fontSize: 11 }} />
-                                                <span>
-                                                  ${salaryComp.base.toLocaleString()} base
-                                                </span>
-                                              </div>
-                                              {salaryComp.bonus > 0 && (
-                                                <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                                  + ${salaryComp.bonus.toLocaleString()} bonus
-                                                </span>
-                                              )}
-                                              {salaryComp.equity > 0 && (
-                                                <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                                  + ${salaryComp.equity.toLocaleString()} RSU/yr
-                                                </span>
-                                              )}
+                                      )}
+                                      {exp.employment_type === 'internship' &&
+                                        (() => {
+                                          const team = getLatestTeam(exp);
+                                          return team ? (
+                                            <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md">
+                                              <TeamOutlined
+                                                className="text-gray-400"
+                                                style={{ fontSize: 11 }}
+                                              />
+                                              <span>{team.name}</span>
                                             </div>
-                                          )}
-                                        </>
-                                      ) : null;
-                                    })()}
+                                          ) : null;
+                                        })()}
+                                      {exp.employment_type === 'internship' && internshipComp && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setCompBreakdownExp(exp)}
+                                          title="View internship earnings breakdown"
+                                          aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
+                                          className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
+                                        >
+                                          <DollarOutlined style={{ fontSize: 11 }} />
+                                          <span>
+                                            $
+                                            {internshipComp.total.toLocaleString(undefined, {
+                                              maximumFractionDigits: 2,
+                                            })}{' '}
+                                            total earnings
+                                          </span>
+                                        </button>
+                                      )}
+                                      {exp.employment_type === 'internship' &&
+                                        !internshipComp &&
+                                        exp.hourly_rate != null && (
+                                          <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
+                                            <DollarOutlined style={{ fontSize: 11 }} />
+                                            <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
+                                          </div>
+                                        )}
+                                      {exp.employment_type !== 'internship' &&
+                                        (() => {
+                                          return salaryComp ? (
+                                            <>
+                                              {exp.employment_type === 'full_time' ? (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setCompBreakdownExp(exp)}
+                                                  title="View pay structure breakdown"
+                                                  aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
+                                                  className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
+                                                >
+                                                  <DollarOutlined style={{ fontSize: 11 }} />
+                                                  <span>
+                                                    ${salaryComp.total.toLocaleString()} total
+                                                    earnings
+                                                  </span>
+                                                </button>
+                                              ) : (
+                                                <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
+                                                  <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
+                                                    <DollarOutlined style={{ fontSize: 11 }} />
+                                                    <span>
+                                                      ${salaryComp.base.toLocaleString()} base
+                                                    </span>
+                                                  </div>
+                                                  {salaryComp.bonus > 0 && (
+                                                    <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
+                                                      + ${salaryComp.bonus.toLocaleString()} bonus
+                                                    </span>
+                                                  )}
+                                                  {salaryComp.equity > 0 && (
+                                                    <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
+                                                      + ${salaryComp.equity.toLocaleString()} RSU/yr
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </>
+                                          ) : null;
+                                        })()}
+                                    </div>
+                                    {exp.employment_type !== 'internship' &&
+                                      (() => {
+                                        const team = getLatestTeam(exp);
+                                        return team ? (
+                                          <div className="flex items-center gap-1.5 mt-1 text-[15px] text-gray-500">
+                                            <TeamOutlined
+                                              style={{ fontSize: 12, color: '#9ca3af' }}
+                                            />
+                                            <span>{team.name}</span>
+                                          </div>
+                                        ) : null;
+                                      })()}
+                                  </div>
+                                  <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 opacity-100 transition-all duration-200 lg:ml-2 lg:w-auto lg:justify-end lg:opacity-0 lg:group-hover:opacity-100">
+                                    <Tooltip title="Evaluate promotion readiness for this role">
+                                      <Button
+                                        size="small"
+                                        icon={<RiseOutlined />}
+                                        onClick={() => setPromotionReviewExp(exp)}
+                                        className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
+                                      >
+                                        Promotion
+                                      </Button>
+                                    </Tooltip>
+                                    <Tooltip title="View / edit team norms for this role">
+                                      <Button
+                                        size="small"
+                                        icon={<TeamOutlined />}
+                                        onClick={() => setTeamHistoryExp(exp)}
+                                        className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
+                                      >
+                                        Team Norms
+                                      </Button>
+                                    </Tooltip>
+                                    {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
+                                    {getLinkedOffer(exp) ? (
+                                      <Tooltip title="View / edit raise history for this role">
+                                        <Button
+                                          size="small"
+                                          icon={<TrophyOutlined />}
+                                          onClick={() => handleRaiseHistoryClick(exp)}
+                                          className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
+                                        >
+                                          Raise History
+                                        </Button>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip title="Open Edit to link an offer and track raises">
+                                        <Button
+                                          size="small"
+                                          icon={<LinkOutlined />}
+                                          onClick={() => openEditModal(exp)}
+                                          className="text-gray-400 border-gray-200 hover:!text-blue-600 hover:!border-blue-300 whitespace-nowrap"
+                                        >
+                                          Link Offer
+                                        </Button>
+                                      </Tooltip>
+                                    )}
+                                    <div
+                                      className={`transition-all duration-200 ${
+                                        exp.is_locked
+                                          ? 'opacity-100'
+                                          : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
+                                      }`}
+                                    >
+                                      <RowActions
+                                        isLocked={exp.is_locked}
+                                        onToggleLock={() => handleToggleLock(exp)}
+                                        onEdit={
+                                          exp.is_locked ? undefined : () => openEditModal(exp)
+                                        }
+                                        onDuplicate={
+                                          exp.is_locked
+                                            ? undefined
+                                            : () => handleDuplicateExperience(exp)
+                                        }
+                                        onDelete={
+                                          exp.is_locked
+                                            ? undefined
+                                            : () => exp.id && handleDelete(exp.id)
+                                        }
+                                        deleteTitle="Delete Role"
+                                        deleteDescription="Are you sure you want to remove this role?"
+                                        disableEdit={exp.is_locked}
+                                        disableDelete={exp.is_locked}
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
-                                {exp.employment_type !== 'internship' &&
-                                  (() => {
-                                    const team = getLatestTeam(exp);
-                                    return team ? (
-                                      <div className="flex items-center gap-1.5 mt-1 text-[15px] text-gray-500">
-                                        <TeamOutlined style={{ fontSize: 12, color: '#9ca3af' }} />
-                                        <span>{team.name}</span>
-                                      </div>
-                                    ) : null;
-                                  })()}
-                              </div>
-                              <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 opacity-100 transition-all duration-200 lg:ml-2 lg:w-auto lg:justify-end lg:opacity-0 lg:group-hover:opacity-100">
-                                <Tooltip title="Evaluate promotion readiness for this role">
-                                  <Button
-                                    size="small"
-                                    icon={<RiseOutlined />}
-                                    onClick={() => setPromotionReviewExp(exp)}
-                                    className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
-                                  >
-                                    Promotion
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip title="View / edit team norms for this role">
-                                  <Button
-                                    size="small"
-                                    icon={<TeamOutlined />}
-                                    onClick={() => setTeamHistoryExp(exp)}
-                                    className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
-                                  >
-                                    Team Norms
-                                  </Button>
-                                </Tooltip>
-                                {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
-                                {getLinkedOffer(exp) ? (
-                                  <Tooltip title="View / edit raise history for this role">
-                                    <Button
-                                      size="small"
-                                      icon={<TrophyOutlined />}
-                                      onClick={() => handleRaiseHistoryClick(exp)}
-                                      className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
-                                    >
-                                      Raise History
-                                    </Button>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip title="Open Edit to link an offer and track raises">
-                                    <Button
-                                      size="small"
-                                      icon={<LinkOutlined />}
-                                      onClick={() => openEditModal(exp)}
-                                      className="text-gray-400 border-gray-200 hover:!text-blue-600 hover:!border-blue-300 whitespace-nowrap"
-                                    >
-                                      Link Offer
-                                    </Button>
-                                  </Tooltip>
+
+                                {exp.description && (
+                                  <div className="mt-4 text-[15px]">
+                                    {renderDescription(exp.description)}
+                                  </div>
                                 )}
-                                <div
-                                  className={`transition-all duration-200 ${
-                                    exp.is_locked
-                                      ? 'opacity-100'
-                                      : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
-                                  }`}
-                                >
-                                  <RowActions
-                                    isLocked={exp.is_locked}
-                                    onToggleLock={() => handleToggleLock(exp)}
-                                    onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
-                                    onDuplicate={
-                                      exp.is_locked
-                                        ? undefined
-                                        : () => handleDuplicateExperience(exp)
-                                    }
-                                    onDelete={
-                                      exp.is_locked
-                                        ? undefined
-                                        : () => exp.id && handleDelete(exp.id)
-                                    }
-                                    deleteTitle="Delete Role"
-                                    deleteDescription="Are you sure you want to remove this role?"
-                                    disableEdit={exp.is_locked}
-                                    disableDelete={exp.is_locked}
-                                  />
-                                </div>
+                                {skills.length > 0 && (
+                                  <div className="mt-4 flex flex-wrap gap-1.5">
+                                    {skills.map((skill) => (
+                                      <Tag
+                                        key={skill}
+                                        className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-sm hover:bg-blue-50 transition-colors"
+                                      >
+                                        {skill}
+                                      </Tag>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  };
 
-                            {exp.description && (
-                              <div className="mt-4 text-[15px]">
-                                {renderDescription(exp.description)}
-                              </div>
-                            )}
-                            {skills.length > 0 && (
-                              <div className="mt-4 flex flex-wrap gap-1.5">
-                                {skills.map((skill) => (
-                                  <Tag
-                                    key={skill}
-                                    className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-sm hover:bg-blue-50 transition-colors"
-                                  >
-                                    {skill}
-                                  </Tag>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              };
-
-              return (
-                <div
-                  key={`group-${groupIdx}`}
-                  className="group flex flex-col md:flex-row gap-6 w-full"
-                >
-                  <div className="flex-shrink-0 relative z-10 hidden md:flex w-[52px] justify-center">
-                    {groupIdx < groupedExperiences.length - 1 && (
+                  return (
+                    <SortableGroupCard key={primary.id || `group-${groupIdx}`} id={primary.id!}>
                       <div
-                        className="absolute left-1/2 w-0.5 -translate-x-1/2 bg-gradient-to-b from-blue-100 via-gray-100 to-gray-200"
-                        style={{ top: 26, bottom: 'calc(-2.5rem - 26px)' }}
-                      />
-                    )}
-                    <div className="relative z-10">{groupAvatar}</div>
-                  </div>
-                  <div
-                    className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
-                      primary.is_pinned
-                        ? 'border-amber-200 ring-1 ring-amber-100 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
-                        : 'border-gray-100 hover:border-blue-100 hover:shadow-md'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-0 left-0 w-2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                        primary.is_pinned
-                          ? 'bg-gradient-to-b from-amber-300 to-orange-400'
-                          : 'bg-gradient-to-b from-blue-300 to-sky-400'
-                      }`}
-                    />
-                    {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                        key={`group-${groupIdx}`}
+                        className="group flex flex-col md:flex-row gap-6 w-full"
+                      >
+                        <div className="flex-shrink-0 relative z-10 hidden md:flex w-[52px] justify-center">
+                          {groupIdx < groupedExperiences.length - 1 && (
+                            <div
+                              className="absolute left-1/2 w-0.5 -translate-x-1/2 bg-gradient-to-b from-blue-100 via-gray-100 to-gray-200"
+                              style={{ top: 26, bottom: 'calc(-2.5rem - 26px)' }}
+                            />
+                          )}
+                          <div className="relative z-10">{groupAvatar}</div>
+                        </div>
+                        <div
+                          className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
+                            primary.is_pinned
+                              ? 'border-amber-200 ring-1 ring-amber-100 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
+                              : 'border-gray-100 hover:border-blue-100 hover:shadow-md'
+                          }`}
+                        >
+                          <div
+                            className={`absolute top-0 left-0 w-2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                              primary.is_pinned
+                                ? 'bg-gradient-to-b from-amber-300 to-orange-400'
+                                : 'bg-gradient-to-b from-blue-300 to-sky-400'
+                            }`}
+                          />
+                          {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
+                        </div>
+                      </div>
+                    </SortableGroupCard>
+                  );
+                })}
+              </div>
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {raiseHistoryExp && getLinkedOffer(raiseHistoryExp) && (

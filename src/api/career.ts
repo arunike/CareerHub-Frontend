@@ -434,6 +434,8 @@ export const deleteAIArtifact = (id: number) => api.delete(`/career/ai-artifacts
 export const deleteAllAIArtifacts = () => api.delete('/career/ai-artifacts/delete_all/');
 
 export const getExperiences = () => api.get<Experience[]>('/career/experiences/');
+export const reorderExperiences = (order: { id: number; position: number }[]) =>
+  api.post('/career/experiences/reorder/', { order });
 export const createExperience = (data: Partial<Experience>) =>
   api.post<Experience>('/career/experiences/', normalizeExperiencePayload(data));
 export const updateExperience = (id: number, data: Partial<Experience>) =>

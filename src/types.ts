@@ -541,6 +541,7 @@ export interface Experience {
   is_return_offer?: boolean;
   is_locked?: boolean;
   is_pinned?: boolean;
+  position?: number | null;
   offer?: number | null;
   hourly_rate?: number | null;
   hours_per_day?: number | null;

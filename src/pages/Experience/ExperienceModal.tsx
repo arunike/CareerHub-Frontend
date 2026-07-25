@@ -20,11 +20,13 @@ import {
   BankOutlined,
   RiseOutlined,
   LinkOutlined,
+  ZoomInOutlined,
 } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Experience, EmploymentType } from '../../types';
 import CompensationFields, { type CompValue } from '../../components/CompensationFields';
 import { getMediaUrl } from '../../lib/runtimeConfig';
+import { LogoCropModal } from './LogoCropModal';
 
 interface OfferOption {
   value: number;
@@ -114,6 +116,36 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
   const [companyName, setCompanyName] = useState('');
   const roleContext = Form.useWatch('role_context', form) ?? 'none';
 
+  const handleOfferSelect = (offerId: number | null) => {
+    if (!offerId) return;
+    const linked = offers.find((o) => o.value === offerId);
+    if (linked) {
+      const currentVals = form.getFieldsValue();
+      const updates: Record<string, any> = {
+        comp: {
+          base_salary: linked.base_salary ?? currentVals.comp?.base_salary ?? null,
+          bonus: linked.bonus ?? currentVals.comp?.bonus ?? null,
+          equity: linked.equity ?? currentVals.comp?.equity ?? null,
+        } as CompValue,
+      };
+
+      if (linked.company) {
+        updates.company = linked.company;
+        setCompanyName(linked.company);
+      }
+      if (linked.title) updates.title = linked.title;
+      if (linked.level) updates.level = linked.level;
+      if (linked.location) updates.location = linked.location;
+      if (linked.employment_type) {
+        updates.employment_type = linked.employment_type;
+        setEmploymentType(linked.employment_type);
+      }
+
+      form.setFieldsValue(updates);
+      message.info('Autofilled role details from linked offer!');
+    }
+  };
+
   useEffect(() => {
     if (open) {
       if (experience) {
@@ -167,6 +199,10 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 bonus: linked.bonus ?? null,
                 equity: linked.equity ?? null,
               } as CompValue,
+              level: experience.level || linked.level || '',
+              location: experience.location || linked.location || '',
+              title: experience.title || linked.title || '',
+              company: experience.company || linked.company || '',
             });
           }
         }
@@ -229,6 +265,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
     }
   };
 
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+
   const handleLogoSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
       message.error('Logo must be an image file.');
@@ -238,11 +277,25 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
       message.error('Logo must be smaller than 4 MB.');
       return Upload.LIST_IGNORE;
     }
-    if (logoPreview) URL.revokeObjectURL(logoPreview);
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-    setRemoveLogo(false);
+    const objUrl = URL.createObjectURL(file);
+    setCropImageSrc(objUrl);
+    setCropModalOpen(true);
     return false; // prevent auto-upload
+  };
+
+  const handleOpenAdjustModal = () => {
+    if (currentLogoSrc) {
+      setCropImageSrc(currentLogoSrc);
+      setCropModalOpen(true);
+    }
+  };
+
+  const handleApplyCrop = (croppedFile: File, previewUrl: string) => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(croppedFile);
+    setLogoPreview(previewUrl);
+    setRemoveLogo(false);
+    setCropModalOpen(false);
   };
 
   const handleRemoveLogo = (e: React.MouseEvent) => {
@@ -518,18 +571,32 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 </button>
               )}
             </div>
-            <div className="flex flex-col items-center justify-center sm:items-start">
-              <Upload accept="image/*" showUploadList={false} beforeUpload={handleLogoSelect}>
-                <Button
-                  size="small"
-                  icon={<CameraOutlined />}
-                  type="link"
-                  className="!min-h-11 !px-3 text-gray-500 hover:text-blue-500 lg:!min-h-0 lg:!px-0"
-                >
-                  {currentLogoSrc ? 'Change logo' : 'Upload logo'}
-                </Button>
-              </Upload>
-              <span className="text-xs text-gray-400">PNG, JPG up to 2MB</span>
+            <div className="flex flex-col items-center justify-center sm:items-start gap-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Upload accept="image/*" showUploadList={false} beforeUpload={handleLogoSelect}>
+                  <Button
+                    size="small"
+                    icon={<CameraOutlined />}
+                    type="link"
+                    className="!min-h-11 !px-3 text-gray-600 hover:text-blue-500 font-medium lg:!min-h-0 lg:!px-0"
+                  >
+                    {currentLogoSrc ? 'Change logo' : 'Upload logo'}
+                  </Button>
+                </Upload>
+
+                {currentLogoSrc && (
+                  <Button
+                    size="small"
+                    icon={<ZoomInOutlined />}
+                    type="link"
+                    onClick={handleOpenAdjustModal}
+                    className="!min-h-11 !px-3 text-blue-600 hover:text-blue-700 font-medium lg:!min-h-0 lg:!px-0"
+                  >
+                    Adjust size / fit
+                  </Button>
+                )}
+              </div>
+              <span className="text-xs text-gray-400">PNG, JPG up to 4MB</span>
             </div>
           </div>
 
@@ -704,6 +771,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 options={offers}
                 showSearch
                 optionFilterProp="label"
+                onChange={handleOfferSelect}
               />
             </Form.Item>
           )}
@@ -786,6 +854,13 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
           </Form.Item>
         </Form>
       )}
+
+      <LogoCropModal
+        open={cropModalOpen}
+        imageSrc={cropImageSrc}
+        onCancel={() => setCropModalOpen(false)}
+        onApply={handleApplyCrop}
+      />
     </Modal>
   );
 };
