@@ -76,11 +76,17 @@ export const LogoCropModal: React.FC<LogoCropModalProps> = ({
   };
 
   const handleZoomOut = () => {
-    setScale((prev) => Math.max(0.05, Number((prev - 0.05).toFixed(3))));
+    setScale((prev) => {
+      const nextScale = prev * 0.96;
+      return Number(Math.max(0.01, nextScale).toFixed(4));
+    });
   };
 
   const handleZoomIn = () => {
-    setScale((prev) => Math.min(5.0, Number((prev + 0.05).toFixed(3))));
+    setScale((prev) => {
+      const nextScale = prev * 1.04;
+      return Number(Math.min(5.0, nextScale).toFixed(4));
+    });
   };
 
   const cycleBgMode = () => {
@@ -129,13 +135,13 @@ export const LogoCropModal: React.FC<LogoCropModalProps> = ({
     });
   };
 
-  // Mouse wheel zoom handler
+  // Smooth mouse wheel zoom handler (2.5% step)
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+    const zoomFactor = e.deltaY < 0 ? 1.025 : 0.975;
     setScale((prev) => {
       const nextScale = prev * zoomFactor;
-      return Number(Math.min(5.0, Math.max(0.02, nextScale)).toFixed(3));
+      return Number(Math.min(5.0, Math.max(0.01, nextScale)).toFixed(4));
     });
   };
 
@@ -342,11 +348,11 @@ export const LogoCropModal: React.FC<LogoCropModalProps> = ({
           </Tooltip>
 
           <Slider
-            min={0.02}
+            min={0.01}
             max={2.0}
-            step={0.01}
+            step={0.001}
             value={scale}
-            onChange={(val) => setScale(Number(val.toFixed(3)))}
+            onChange={(val) => setScale(Number(val.toFixed(4)))}
             className="flex-1 my-0"
             tooltip={{ formatter: (val) => `${Math.round((val || 1) * 100)}%` }}
           />
