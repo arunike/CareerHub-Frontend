@@ -19,36 +19,42 @@ export const PageState = ({
   onAction,
   icon,
   className = '',
-}: PageStateProps) => (
-  <section
-    className={`enterprise-empty mx-auto box-border min-w-0 w-full max-w-[calc(100vw-2rem)] overflow-hidden px-5 py-8 text-center sm:max-w-xl sm:px-8 ${className}`.trim()}
-    role={tone === 'error' ? 'alert' : 'status'}
-  >
-    {icon ? (
-      <div
-        className={`mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl ${
-          tone === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
-        }`}
-        aria-hidden="true"
-      >
-        {icon}
-      </div>
-    ) : null}
-    <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-    <p className="mx-auto mt-2 max-w-md break-words text-sm leading-6 text-slate-600">
-      {description}
-    </p>
-    {actionLabel && onAction ? (
-      <button
-        type="button"
-        onClick={onAction}
-        className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-      >
-        {actionLabel}
-      </button>
-    ) : null}
-  </section>
-);
+}: PageStateProps) => {
+  const state = (
+    <section
+      className={`enterprise-empty mx-auto box-border min-w-0 w-full max-w-[calc(100vw-2rem)] overflow-hidden px-5 py-8 text-center sm:max-w-xl sm:px-8 ${className}`.trim()}
+      role={tone === 'error' ? 'alert' : 'status'}
+    >
+      {icon ? (
+        <div
+          className={`mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl ${
+            tone === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
+          }`}
+          aria-hidden="true"
+        >
+          {icon}
+        </div>
+      ) : null}
+      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md break-words text-sm leading-6 text-slate-600">
+        {description}
+      </p>
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </section>
+  );
+
+  if (tone === 'error') return state;
+
+  return <div className="page-state-center">{state}</div>;
+};
 
 export const PanelSkeleton = ({
   rows = 4,

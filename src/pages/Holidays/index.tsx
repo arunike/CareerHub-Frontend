@@ -17,13 +17,11 @@ import {
   Col,
   Select,
   Switch,
-  Collapse,
   Tooltip,
 } from 'antd';
 import Modal from '../../components/MobileModal';
 import {
   DeleteOutlined,
-  CalendarOutlined,
   LockOutlined,
   PlusOutlined,
   SyncOutlined,
@@ -71,7 +69,7 @@ import RecurrenceModal from '../../components/RecurrenceModal';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import { ListSkeleton } from '../../components/SkeletonLoader';
 import RowActions from '../../components/RowActions';
-import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
+import { getAvailableYears, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import { getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
@@ -83,6 +81,11 @@ import type { EventDeleteScope } from '../../components/calendarView/confirmCale
 import { PageState } from '../../components/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SelectionCheckbox from '../../components/SelectionCheckbox';
+import FederalHolidayCard, {
+  groupFederalHolidays,
+  type FederalHolidayGroup,
+} from './components/FederalHolidayCard';
+import { projectHolidaysForYear } from './holidayYearProjection';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -95,6 +98,21 @@ type EventFormValues = {
 };
 
 type ApiError = { response?: { status?: number; data?: { conflict?: boolean } } };
+
+const createHolidayGroupId = () =>
+  crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+
+const getInclusiveHolidayDates = (start: dayjs.Dayjs, end: dayjs.Dayjs) => {
+  const dates: dayjs.Dayjs[] = [];
+  let current = start.startOf('day');
+
+  while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
+    dates.push(current);
+    current = current.add(1, 'day');
+  }
+
+  return dates;
+};
 
 const GroupedHolidayItem = ({
   item,
@@ -115,110 +133,136 @@ const GroupedHolidayItem = ({
   const allSelected = item.items.every((i: any) => selectedIds.includes(i.id));
   const someSelected = item.items.some((i: any) => selectedIds.includes(i.id)) && !allSelected;
 
+  const titleText = item.description || 'Time Off Range';
+  const startDayjs = dayjs(startDate);
+  const endDayjs = dayjs(endDate);
+  const formattedRange = `${startDayjs.format('MMM D')} – ${endDayjs.format('MMM D, YYYY')}`;
+
   return (
-    <List.Item key={`group-item-${item.id}`} className="holiday-list-item px-4 py-4 sm:px-5">
-      <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3 min-w-0 flex-1">
-          <SelectionCheckbox
-            selectionLabel={`${item.description || 'holiday range'} from ${dayjs(startDate).format('MMMM D, YYYY')} to ${dayjs(endDate).format('MMMM D, YYYY')}`}
-            checked={allSelected}
-            indeterminate={someSelected}
-            onChange={() => onSelectGroup(item.items, !allSelected)}
-            style={{ marginTop: 2 }}
-          />
-          <CalendarOutlined
-            style={{ fontSize: 20, color: '#2563eb', marginTop: 2 }}
-            className="shrink-0"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-slate-900 whitespace-nowrap text-sm sm:text-base">
-                {dayjs(startDate).format('YYYY-MM-DD')} to {dayjs(endDate).format('YYYY-MM-DD')}
-              </span>
-              {item.is_recurring && (
-                <Tag color="blue" icon={<SyncOutlined />} className="m-0">
-                  Yearly
-                </Tag>
-              )}
-              {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+    <List.Item key={`group-item-${item.id}`} className="holiday-list-item">
+      <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-3.5 sm:px-6 sm:py-4 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <SelectionCheckbox
+              selectionLabel={`${titleText} from ${startDayjs.format('MMMM D, YYYY')} to ${endDayjs.format('MMMM D, YYYY')}`}
+              checked={allSelected}
+              indeterminate={someSelected}
+              onChange={() => onSelectGroup(item.items, !allSelected)}
+            />
+
+            {/* Dual Mini Calendar Tiles for Range */}
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="flex h-12 w-11 flex-col items-center justify-between rounded-lg border border-red-200/80 bg-white overflow-hidden shadow-2xs">
+                <span className="w-full text-center text-[10px] font-extrabold tracking-wider py-0.5 uppercase bg-red-500 text-white truncate">
+                  {startDayjs.format('MMM')}
+                </span>
+                <span className="text-xs font-black text-slate-800 pb-1">
+                  {startDayjs.format('D')}
+                </span>
+              </div>
+              <span className="text-slate-400 font-bold text-xs px-0.5">→</span>
+              <div className="flex h-12 w-11 flex-col items-center justify-between rounded-lg border border-red-200/80 bg-white overflow-hidden shadow-2xs">
+                <span className="w-full text-center text-[10px] font-extrabold tracking-wider py-0.5 uppercase bg-red-500 text-white truncate">
+                  {endDayjs.format('MMM')}
+                </span>
+                <span className="text-xs font-black text-slate-800 pb-1">
+                  {endDayjs.format('D')}
+                </span>
+              </div>
             </div>
-            <div className="mt-2 w-full">
-              <Collapse
-                ghost
-                size="small"
-                className="bg-transparent"
-                style={{ padding: 0 }}
-                onChange={(keys) => setIsExpanded(keys.length > 0)}
-              >
-                <Collapse.Panel
-                  header={
-                    <Text type="secondary" className="hover:text-blue-500 transition-colors">
-                      {item.description || 'View Individual Days'}
-                    </Text>
-                  }
-                  key="1"
-                >
-                  <div className="pl-4 border-l-2 border-dashed border-gray-200 ml-1 mt-2">
-                    <List
-                      size="small"
-                      split={false}
-                      dataSource={item.items}
-                      renderItem={(subItem: any) => (
-                        <List.Item
-                          className="group hover:bg-gray-50 transition-colors rounded-lg mb-1 relative flex flex-wrap items-center justify-between gap-2"
-                          style={{ padding: '8px 12px' }}
-                        >
-                          {/* Tree Branch Connector */}
-                          <div className="absolute left-[-16px] top-1/2 w-4 h-px border-t-2 border-dashed border-gray-200" />
 
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <SelectionCheckbox
-                              selectionLabel={`holiday on ${dayjs(subItem.date).format('MMMM D, YYYY')}`}
-                              checked={selectedIds.includes(subItem.id)}
-                              onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
-                            />
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
-                              <span className="whitespace-nowrap text-gray-600 font-medium text-xs sm:text-sm">
-                                {dayjs(subItem.date).format('dddd, MMMM D, YYYY')}
-                              </span>
-                            </div>
-                          </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-slate-900 text-base sm:text-lg leading-tight truncate">
+                  {titleText}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                  {item.items.length} Days
+                </span>
+              </div>
 
-                          <div className="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 shrink-0">
-                            <RowActions
-                              key={`actions-${subItem.id}`}
-                              size="small"
-                              isLocked={subItem.is_locked}
-                              onToggleLock={() => toggleLock(subItem)}
-                              onEdit={() => handleEditItem(subItem)}
-                              onDuplicate={() => handleDuplicateHoliday(subItem)}
-                              onDelete={() => handleDelete(subItem.id)}
-                              disableDelete={subItem.is_locked}
-                            />
-                          </div>
-                        </List.Item>
-                      )}
-                    />
-                  </div>
-                </Collapse.Panel>
-              </Collapse>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="font-medium text-slate-600">{formattedRange}</span>
+
+                {item.is_recurring && (
+                  <Tag
+                    color="blue"
+                    icon={<SyncOutlined />}
+                    className="m-0 rounded border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium px-1.5 py-0"
+                  >
+                    Yearly
+                  </Tag>
+                )}
+
+                {item.is_locked && (
+                  <Tag
+                    color="gold"
+                    icon={<LockOutlined />}
+                    className="m-0 rounded border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium px-1.5 py-0"
+                  >
+                    Locked
+                  </Tag>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="holiday-item-actions flex shrink-0 items-center justify-end gap-2">
+            <Button
+              type="text"
+              size="small"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs font-medium text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg px-2.5 py-1 flex items-center gap-1"
+            >
+              {isExpanded ? 'Hide Days ▲' : `View Days (${item.items.length}) ▼`}
+            </Button>
+            <div className="rounded-lg border border-slate-200/60 bg-slate-50/60 p-0.5">
+              <RowActions
+                key={`actions-group-${item.id}`}
+                size="middle"
+                isLocked={item.is_locked}
+                onToggleLock={() => handleToggleLockGroup(item)}
+                onEdit={() => handleEditItem(item)}
+                onDuplicate={() => handleDuplicateHoliday(item)}
+                onDelete={() => handleDeleteGroup(item)}
+                disableDelete={item.is_locked}
+              />
             </div>
           </div>
         </div>
 
-        {!isExpanded && (
-          <div className="holiday-item-actions flex shrink-0 items-center justify-end border-t border-slate-100 pt-2 sm:border-0 sm:pt-0">
-            <RowActions
-              key={`actions-group-${item.id}`}
-              size="middle"
-              isLocked={item.is_locked}
-              onToggleLock={() => handleToggleLockGroup(item)}
-              onEdit={() => handleEditItem(item)}
-              onDuplicate={() => handleDuplicateHoliday(item)}
-              onDelete={() => handleDeleteGroup(item)}
-              disableDelete={item.is_locked}
-            />
+        {isExpanded && (
+          <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="text-xs font-semibold text-slate-500 px-1">Individual Days:</div>
+            <div className="space-y-1.5 pl-3 border-l-2 border-indigo-200">
+              {item.items.map((subItem: any) => (
+                <div
+                  key={`sub-${subItem.id}`}
+                  className="flex items-center justify-between rounded-lg bg-slate-50/80 px-3 py-2 border border-slate-200/50 hover:border-indigo-300 transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <SelectionCheckbox
+                      selectionLabel={`holiday on ${dayjs(subItem.date).format('MMMM D, YYYY')}`}
+                      checked={selectedIds.includes(subItem.id)}
+                      onChange={(e) => onSelectChange(subItem.id, e.target.checked)}
+                    />
+                    <span className="text-xs font-semibold text-slate-800">
+                      {dayjs(subItem.date).format('dddd, MMMM D, YYYY')}
+                    </span>
+                  </div>
+                  <RowActions
+                    key={`actions-${subItem.id}`}
+                    size="small"
+                    isLocked={subItem.is_locked}
+                    onToggleLock={() => toggleLock(subItem)}
+                    onEdit={() => handleEditItem(subItem)}
+                    onDuplicate={() => handleDuplicateHoliday(subItem)}
+                    onDelete={() => handleDelete(subItem.id)}
+                    disableDelete={subItem.is_locked}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -278,6 +322,7 @@ const Holidays = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
 
   const [addFederalModalOpen, setAddFederalModalOpen] = useState(false);
+  const [isFederalRangeMode, setIsFederalRangeMode] = useState(false);
   const [federalForm] = Form.useForm();
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -316,10 +361,17 @@ const Holidays = () => {
     try {
       setLoading(true);
       setLoadError(false);
+      const requestedYear = selectedYear === 'all' ? undefined : selectedYear;
       const [customResp, federalResp, settingsResp, eventsResp, categoriesResp] = await Promise.all(
-        [getHolidays(), getFederalHolidays(), getUserSettings(), getEvents(), getCategories()]
+        [
+          getHolidays(),
+          getFederalHolidays(requestedYear),
+          getUserSettings(),
+          getEvents(),
+          getCategories(),
+        ]
       );
-      setHolidays(customResp.data);
+      setHolidays(customResp.data.filter((holiday: Holiday) => holiday.holiday_type !== 'federal'));
       setFederalHolidays(federalResp.data);
       setUserSettings(settingsResp.data);
       setEvents(eventsResp.data);
@@ -331,7 +383,7 @@ const Holidays = () => {
     } finally {
       setLoading(false);
     }
-  }, [messageApi]);
+  }, [messageApi, selectedYear]);
 
   useEffect(() => {
     fetchData();
@@ -344,15 +396,22 @@ const Holidays = () => {
   const defaultEventDuration = Number(userSettings?.default_event_duration) || 60;
   const userTimezone = normalizeTimeZone(userSettings?.primary_timezone || getBrowserTimeZone());
 
+  const holidaysForSelectedYear = React.useMemo(
+    () => projectHolidaysForYear(holidays, selectedYear),
+    [holidays, selectedYear]
+  );
+
   const activeTabHolidays = React.useMemo(() => {
     if (activeTab === 'custom') {
-      return holidays.filter((h) => !h.tab || !customTabs.some((t) => t.id === h.tab));
+      return holidaysForSelectedYear.filter(
+        (h) => !h.tab || !customTabs.some((t) => t.id === h.tab)
+      );
     }
     if (activeTab === 'federal') return [];
-    return holidays.filter((h) => h.tab === activeTab);
-  }, [holidays, activeTab, customTabs]);
+    return holidaysForSelectedYear.filter((h) => h.tab === activeTab);
+  }, [holidaysForSelectedYear, activeTab, customTabs]);
 
-  const sortedHolidays = filterByYear(activeTabHolidays, selectedYear, 'date').sort((a, b) => {
+  const sortedHolidays = [...activeTabHolidays].sort((a, b) => {
     let comparison = 0;
     if (sortBy === 'date') {
       comparison = dayjs(a.date).diff(dayjs(b.date));
@@ -404,11 +463,14 @@ const Holidays = () => {
     });
   }, [selectedIds, holidays]);
 
-  const sortedFederalHolidays = filterByYear(federalHolidays, selectedYear, 'date').sort((a, b) =>
+  const sortedFederalHolidays = [...federalHolidays].sort((a, b) =>
     dayjs(a.date).diff(dayjs(b.date))
   );
+  const groupedFederalHolidays = groupFederalHolidays(sortedFederalHolidays);
 
-  const availableYears = getAvailableYears(holidays, 'date');
+  const availableYears = Array.from(
+    new Set([...getAvailableYears(holidays, 'date'), getCurrentYear() + 1])
+  ).sort((a, b) => b - a);
   const hasLoadedData =
     holidays.length > 0 ||
     federalHolidays.length > 0 ||
@@ -432,32 +494,25 @@ const Holidays = () => {
         return;
       }
 
-      const groupId = crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).substring(2, 15);
-      const promises = [];
-      let current = start.clone();
-
-      while (current.isBefore(end) || current.isSame(end, 'day')) {
-        promises.push(
-          createHoliday({
-            date: current.format('YYYY-MM-DD'),
-            group_id: groupId,
-            description,
-            is_recurring: isRecurring,
-            tab: tabValue,
-          })
-        );
-        current = current.add(1, 'day');
-      }
+      const groupId = createHolidayGroupId();
+      const promises = getInclusiveHolidayDates(start, end).map((date) =>
+        createHoliday({
+          date: date.format('YYYY-MM-DD'),
+          group_id: groupId,
+          description,
+          is_recurring: isRecurring,
+          tab: tabValue,
+        })
+      );
 
       try {
-        await Promise.allSettled(promises);
+        await Promise.all(promises);
         messageApi.success('Holiday collection added');
         form.resetFields();
         fetchData();
       } catch (e) {
         messageApi.error('Failed to create holiday collection');
+        fetchData();
       }
     } else if (values.date) {
       try {
@@ -476,24 +531,56 @@ const Holidays = () => {
     }
   };
 
+  const closeFederalModal = () => {
+    federalForm.resetFields();
+    setIsFederalRangeMode(false);
+    setAddFederalModalOpen(false);
+  };
+
   const handleAddFederal = async () => {
     try {
       const values = await federalForm.validateFields();
-      await createHoliday({
-        date: values.date.format('YYYY-MM-DD'),
-        description: values.description,
-        holiday_type: 'federal',
-        is_recurring: values.is_recurring || false,
-      });
-      messageApi.success('Custom Federal Holiday added');
-      federalForm.resetFields();
-      setAddFederalModalOpen(false);
+      const description = values.description.trim();
+      const isRecurring = values.is_recurring || false;
+
+      if (isFederalRangeMode) {
+        const [start, end] = values.dateRange;
+        if (end.isBefore(start, 'day')) {
+          messageApi.error('End date must be after start date');
+          return;
+        }
+
+        const groupId = createHolidayGroupId();
+        await Promise.all(
+          getInclusiveHolidayDates(start, end).map((date) =>
+            createHoliday({
+              date: date.format('YYYY-MM-DD'),
+              group_id: groupId,
+              description,
+              is_recurring: isRecurring,
+              holiday_type: 'federal',
+            })
+          )
+        );
+        messageApi.success('Observed holiday range added');
+      } else {
+        await createHoliday({
+          date: values.date.format('YYYY-MM-DD'),
+          description,
+          is_recurring: isRecurring,
+          holiday_type: 'federal',
+        });
+        messageApi.success('Observed holiday added');
+      }
+
+      closeFederalModal();
       fetchData();
     } catch (error) {
       if (error && (error as any).errorFields) {
         return;
       }
-      messageApi.error('Failed to create custom federal holiday');
+      messageApi.error('Failed to create observed holiday');
+      fetchData();
     }
   };
 
@@ -710,6 +797,18 @@ const Holidays = () => {
     }
   };
 
+  const handleDeleteFederalRange = async (group: FederalHolidayGroup) => {
+    try {
+      await Promise.all(group.items.map((item) => deleteHoliday(item.id)));
+      messageApi.success('Observed holiday range deleted');
+      fetchData();
+    } catch (error) {
+      messageApi.error('Failed to delete the complete observed holiday range');
+      console.error(error);
+      fetchData();
+    }
+  };
+
   const handleCalendarHolidayDelete = async (holiday: Holiday) => {
     if (holiday.is_locked || !holiday.id) return false;
     const deleted = await handleDelete(holiday.id);
@@ -916,7 +1015,7 @@ const Holidays = () => {
 
       fetchData();
     } catch (error) {
-      messageApi.error('Failed to update federal holiday settings');
+      messageApi.error('Failed to update observed holiday settings');
       console.error(error);
     }
   };
@@ -1162,49 +1261,78 @@ const Holidays = () => {
                 );
               }
 
+              const titleText = item.description || 'Holiday';
+              const itemDayjs = dayjs(item.date);
+              const monthText = itemDayjs.format('MMM').toUpperCase();
+              const dayText = itemDayjs.format('DD');
+              const formattedDate = itemDayjs.format('MMM D, YYYY');
+
               return (
-                <List.Item key={`item-${item.id}`} className="holiday-list-item px-4 py-4 sm:px-5">
-                  <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <SelectionCheckbox
-                        selectionLabel={`${item.description || 'holiday'} on ${dayjs(item.date).format('MMMM D, YYYY')}`}
-                        checked={selectedIds.includes(item.id)}
-                        onChange={(e) => handleSelectChange(item.id, e.target.checked)}
-                        style={{ marginTop: 2 }}
-                      />
-                      <CalendarOutlined
-                        style={{ fontSize: 20, color: '#2563eb', marginTop: 2 }}
-                        className="shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-slate-900 whitespace-nowrap text-sm sm:text-base">
-                            {dayjs(item.date).format('YYYY-MM-DD')}
+                <List.Item key={`item-${item.id}`} className="holiday-list-item">
+                  <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-3.5 sm:px-6 sm:py-4 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <SelectionCheckbox
+                          selectionLabel={`${titleText} on ${itemDayjs.format('MMMM D, YYYY')}`}
+                          checked={selectedIds.includes(item.id)}
+                          onChange={(e) => handleSelectChange(item.id, e.target.checked)}
+                        />
+
+                        {/* Unified Red Mini Calendar Tile */}
+                        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-between rounded-lg border border-red-200/80 bg-white overflow-hidden shadow-2xs">
+                          <span className="w-full text-center text-[10px] font-extrabold tracking-wider py-0.5 uppercase bg-red-500 text-white">
+                            {monthText}
                           </span>
-                          {item.is_recurring && (
-                            <Tag color="blue" icon={<SyncOutlined />} className="m-0">
-                              Yearly
-                            </Tag>
-                          )}
-                          {item.is_locked && <LockOutlined style={{ color: '#faad14' }} />}
+                          <span className="text-sm font-black text-slate-800 pb-1">{dayText}</span>
                         </div>
-                        <div className="mt-1 text-sm text-slate-600 break-words">
-                          {item.description || 'No description'}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-slate-900 text-base sm:text-lg leading-tight truncate">
+                              {titleText}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                            <span className="font-medium text-slate-600">{formattedDate}</span>
+
+                            {item.is_recurring && (
+                              <Tag
+                                color="blue"
+                                icon={<SyncOutlined />}
+                                className="m-0 rounded border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium px-1.5 py-0"
+                              >
+                                Yearly
+                              </Tag>
+                            )}
+
+                            {item.is_locked && (
+                              <Tag
+                                color="gold"
+                                icon={<LockOutlined />}
+                                className="m-0 rounded border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium px-1.5 py-0"
+                              >
+                                Locked
+                              </Tag>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="holiday-item-actions flex shrink-0 items-center justify-end border-t border-slate-100 pt-2 sm:border-0 sm:pt-0">
-                      <RowActions
-                        key={`actions-${item.id}`}
-                        size="middle"
-                        isLocked={item.is_locked}
-                        onToggleLock={() => toggleLock(item)}
-                        onEdit={() => handleEditClick(item)}
-                        onDuplicate={() => handleDuplicateHoliday(item)}
-                        onDelete={() => handleDelete(item.id)}
-                        disableDelete={item.is_locked}
-                      />
+                      <div className="holiday-item-actions flex shrink-0 items-center justify-end">
+                        <div className="rounded-lg border border-slate-200/60 bg-slate-50/60 p-0.5">
+                          <RowActions
+                            key={`actions-${item.id}`}
+                            size="middle"
+                            isLocked={item.is_locked}
+                            onToggleLock={() => toggleLock(item)}
+                            onEdit={() => handleEditClick(item)}
+                            onDuplicate={() => handleDuplicateHoliday(item)}
+                            onDelete={() => handleDelete(item.id)}
+                            disableDelete={item.is_locked}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </List.Item>
@@ -1253,7 +1381,7 @@ const Holidays = () => {
     })),
     {
       key: 'federal',
-      label: 'View Federal',
+      label: 'Observed Holidays',
       children: (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Card>
@@ -1261,11 +1389,11 @@ const Holidays = () => {
               <Space align="start">
                 <LockOutlined style={{ fontSize: 20, color: '#2563eb', marginTop: 4 }} />
                 <div>
-                  <Text strong>Federal Holidays are Automatic</Text>
+                  <Text strong>Observed Holidays</Text>
                   <div>
                     <Text type="secondary">
-                      These are automatically excluded from availability. You don't need to add
-                      them.
+                      Federal holidays are included automatically. Add company holidays, wellness
+                      days, or other shared days off here.
                     </Text>
                   </div>
                 </div>
@@ -1277,9 +1405,13 @@ const Holidays = () => {
                     <Button
                       type="primary"
                       icon={<PlusOutlined />}
-                      onClick={() => setAddFederalModalOpen(true)}
+                      onClick={() => {
+                        federalForm.resetFields();
+                        setIsFederalRangeMode(false);
+                        setAddFederalModalOpen(true);
+                      }}
                     >
-                      Add Federal Holiday
+                      Add Observed Holiday
                     </Button>
                   )}
                   <Space>
@@ -1313,105 +1445,16 @@ const Holidays = () => {
           ) : (
             <List
               grid={{ gutter: 24, column: 3, xs: 1, sm: 1, md: 2, lg: 3, xl: 3, xxl: 3 }}
-              dataSource={sortedFederalHolidays}
+              dataSource={groupedFederalHolidays}
               renderItem={(item) => (
                 <List.Item style={{ height: '100%', width: '100%' }}>
-                  <div
-                    className={`flex flex-col rounded-xl border p-5 transition-all duration-300 w-full ${
-                      !isAdvancedMode
-                        ? 'bg-gray-50 border-gray-200 opacity-60 grayscale cursor-default'
-                        : item.is_ignored
-                          ? 'bg-gray-100 border-dashed border-gray-300 opacity-60 grayscale-[70%]'
-                          : 'bg-white border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300'
-                    }`}
-                    style={{ height: isAdvancedMode ? 220 : 166 }}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        {item.is_ignored ? (
-                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                            <CalendarOutlined className="text-lg" />
-                          </div>
-                        ) : (
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${isAdvancedMode ? 'bg-blue-50 text-blue-500' : 'bg-gray-100 text-gray-400'}`}
-                          >
-                            <CalendarOutlined className="text-lg" />
-                          </div>
-                        )}
-                        <div className="flex flex-col">
-                          <Text
-                            strong
-                            delete={item.is_ignored}
-                            className={`text-base ${item.is_ignored ? 'text-gray-400' : 'text-gray-800'}`}
-                          >
-                            {dayjs(item.date).format('MMMM D, YYYY')}
-                          </Text>
-                          <Text
-                            className={`text-xs ${item.is_ignored ? 'text-gray-400' : 'text-gray-500'}`}
-                          >
-                            {dayjs(item.date).format('dddd')}
-                          </Text>
-                        </div>
-                      </div>
-                      <Space>
-                        {item.is_ignored ? (
-                          <Tag
-                            className="m-0 border-gray-300 text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
-                            color="default"
-                          >
-                            Ignored
-                          </Tag>
-                        ) : (
-                          <Tag
-                            className={`m-0 px-3 py-1 rounded-full ${isAdvancedMode ? 'border-blue-200 text-blue-600 bg-blue-50' : 'border-gray-200 text-gray-500 bg-gray-100'}`}
-                            color={isAdvancedMode ? 'blue' : 'default'}
-                          >
-                            Observed
-                          </Tag>
-                        )}
-                        {isAdvancedMode && item.holiday_type === 'federal' && (
-                          <Popconfirm
-                            title="Delete custom federal holiday?"
-                            onConfirm={() => handleDelete(item.id)}
-                            okText="Yes"
-                            cancelText="No"
-                          >
-                            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                          </Popconfirm>
-                        )}
-                      </Space>
-                    </div>
-
-                    <div className="flex-grow mb-4 h-10 overflow-hidden">
-                      <Text
-                        className={`text-sm line-clamp-2 ${item.is_ignored ? 'text-gray-400 line-through' : 'text-gray-600'}`}
-                        title={item.description}
-                      >
-                        {item.description}
-                      </Text>
-                    </div>
-
-                    {isAdvancedMode && (
-                      <div
-                        className={`mt-auto pt-4 border-t flex justify-between items-center ${
-                          item.is_ignored ? 'border-gray-200' : 'border-blue-50'
-                        }`}
-                      >
-                        <Text
-                          className={`text-xs font-medium ${item.is_ignored ? 'text-gray-400' : 'text-blue-400'}`}
-                        >
-                          Observance Status
-                        </Text>
-                        <Switch
-                          checked={!item.is_ignored}
-                          onChange={(checked) =>
-                            handleToggleFederalHoliday(item.description, item.date, checked)
-                          }
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <FederalHolidayCard
+                    item={item}
+                    isAdvancedMode={isAdvancedMode}
+                    onDeleteHoliday={(id) => void handleDelete(id)}
+                    onDeleteRange={(group) => void handleDeleteFederalRange(group)}
+                    onToggleObserved={handleToggleFederalHoliday}
+                  />
                 </List.Item>
               )}
             />
@@ -1428,7 +1471,7 @@ const Holidays = () => {
         <div className="mb-6">
           <PageActionToolbar
             title="Holidays"
-            subtitle="Manage personal time off and automatic federal holidays."
+            subtitle="Manage personal time off and observed holidays."
             showExtraActionsOnMobile
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
@@ -1477,7 +1520,7 @@ const Holidays = () => {
         ) : (
           <CalendarView
             events={events}
-            customHolidays={holidays}
+            customHolidays={holidaysForSelectedYear}
             federalHolidays={federalHolidays}
             categories={categories}
             holidayTabs={customTabs}
@@ -1566,26 +1609,54 @@ const Holidays = () => {
           />
         </Modal>
 
-        {/* Add Federal Holiday Modal */}
+        {/* Add Observed Holiday Modal */}
         <Modal
-          title="Add Custom Federal Holiday"
+          title="Add Observed Holiday"
           open={addFederalModalOpen}
-          onCancel={() => setAddFederalModalOpen(false)}
+          onCancel={closeFederalModal}
           onOk={handleAddFederal}
-          okText="Add"
+          okText={isFederalRangeMode ? 'Add Range' : 'Add Holiday'}
         >
           <Form form={federalForm} layout="vertical">
             <div className="mb-4 text-gray-500 text-sm">
-              Custom federal holidays will appear globally in your federal holiday list alongside
-              native federal holidays.
+              Add a company holiday, wellness day, or another shared day off as one date or a
+              continuous range.
             </div>
-            <Form.Item
-              name="date"
-              label="Date"
-              rules={[{ required: true, message: 'Please select a date' }]}
-            >
-              <DatePicker inputReadOnly className="w-full" />
-            </Form.Item>
+            <div className="mb-5">
+              <SegmentedToggle
+                value={isFederalRangeMode ? 'range' : 'single'}
+                onChange={(value) => {
+                  const nextIsRange = value === 'range';
+                  setIsFederalRangeMode(nextIsRange);
+                  federalForm.setFieldsValue(
+                    nextIsRange ? { date: undefined } : { dateRange: undefined }
+                  );
+                }}
+                wrapperClassName="w-full rounded-xl bg-gray-100 p-1"
+                buttonClassName="flex-1 justify-center px-4 py-2.5"
+                options={[
+                  { value: 'single', label: 'Single Day' },
+                  { value: 'range', label: 'Date Range' },
+                ]}
+              />
+            </div>
+            {isFederalRangeMode ? (
+              <Form.Item
+                name="dateRange"
+                label="Date Range"
+                rules={[{ required: true, message: 'Please select a date range' }]}
+              >
+                <RangePicker inputReadOnly className="w-full" />
+              </Form.Item>
+            ) : (
+              <Form.Item
+                name="date"
+                label="Date"
+                rules={[{ required: true, message: 'Please select a date' }]}
+              >
+                <DatePicker inputReadOnly className="w-full" />
+              </Form.Item>
+            )}
             <Form.Item
               name="description"
               label="Holiday Name"

@@ -1025,6 +1025,21 @@ textarea::placeholder {
   background: #ffffff;
 }
 
+.page-state-center {
+  display: grid;
+  width: 100%;
+  min-height: 20rem;
+  place-items: center;
+  padding-block: 1rem;
+}
+
+@media (min-width: 640px) {
+  .page-state-center {
+    min-height: clamp(24rem, calc(100dvh - 11rem), 40rem);
+    padding-block: 1.5rem;
+  }
+}
+
 .enterprise-kpi {
   border: 1px solid rgba(226, 232, 240, 0.88);
   border-radius: 12px;
@@ -1072,28 +1087,19 @@ textarea::placeholder {
 }
 
 .holiday-list-card > .ant-card-body {
-  padding: 0;
+  padding: 20px 24px 24px 24px;
 }
 
 .holiday-list-card .ant-list-items {
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .holiday-list-card .holiday-list-item {
-  border: 0;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.88);
-  border-radius: 0;
-  background: #ffffff;
-  transition: background-color 0.18s var(--careerhub-ease);
-}
-
-.holiday-list-card .holiday-list-item:last-child {
-  border-bottom: 0;
-}
-
-.holiday-list-card .holiday-list-item:hover {
-  background: #f8fafc;
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 .holiday-item-actions .row-actions {

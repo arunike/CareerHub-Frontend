@@ -51,7 +51,8 @@ export const updateEvent = (id: number, data: Partial<Event>, params?: Record<st
   api.patch(`/events/${id}/`, data, { params });
 
 export const getHolidays = () => api.get('/holidays/');
-export const getFederalHolidays = () => api.get('/holidays/federal/');
+export const getFederalHolidays = (year?: number) =>
+  api.get('/holidays/federal/', { params: typeof year === 'number' ? { year } : undefined });
 export const createHoliday = (data: Partial<Holiday>) => api.post('/holidays/', data);
 export const updateHoliday = (id: number, data: Partial<Holiday>) =>
   api.patch(`/holidays/${id}/`, data);

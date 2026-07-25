@@ -135,7 +135,7 @@ export const CalendarCompactDayEntries = ({
           return (
             <Tooltip
               key={item.key}
-              title={`Federal Holiday: ${holiday.description}`}
+              title={`Observed Holiday: ${holiday.description}`}
               mouseEnterDelay={0}
             >
               <div className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded truncate">
@@ -257,7 +257,7 @@ export const CalendarDayAgendaEntries = ({
           className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
         >
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Federal Holiday
+            Observed Holiday
           </div>
           <div className="mt-1">{holiday.description}</div>
         </div>
