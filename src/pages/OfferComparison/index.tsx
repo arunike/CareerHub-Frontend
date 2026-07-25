@@ -454,6 +454,7 @@ const OfferComparison = () => {
           team_score: editingApp.team_score ?? null,
           flexible_hours_policy: editingApp.flexible_hours_policy || 'UNKNOWN',
           travel_frequency: editingApp.travel_frequency || 'UNKNOWN',
+          level: editingApp.level ?? '',
         });
         updatedApplication = applicationResponse.data as Partial<Application> & {
           company_details?: { name?: string };

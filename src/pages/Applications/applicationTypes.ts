@@ -36,6 +36,7 @@ export type ApplicationFormValues = {
   role_title?: string;
   status?: string;
   employment_type?: string;
+  level?: string;
   site_link?: string;
   salary_range?: string;
   office_location?: string;

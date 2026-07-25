@@ -13,6 +13,8 @@ type IdentitySectionProps = {
   onCompanyNameChange: (value: string) => void;
   roleTitle: string;
   onRoleTitleChange: (value: string) => void;
+  level?: string;
+  onLevelChange?: (value: string) => void;
   companyPlaceholder: string;
   rolePlaceholder: string;
 };
@@ -27,6 +29,8 @@ const IdentitySection = ({
   onCompanyNameChange,
   roleTitle,
   onRoleTitleChange,
+  level = '',
+  onLevelChange,
   companyPlaceholder,
   rolePlaceholder,
 }: IdentitySectionProps) => {
@@ -123,42 +127,56 @@ const IdentitySection = ({
       )}
 
       {shouldShowCompanyRole && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Company{' '}
-              <span className="text-red-500" aria-hidden="true">
-                *
-              </span>
-            </label>
-            <input
-              type="text"
-              required
-              aria-required="true"
-              value={companyName}
-              onChange={(e) => onCompanyNameChange(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              placeholder={companyPlaceholder}
-            />
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company{' '}
+                <span className="text-red-500" aria-hidden="true">
+                  *
+                </span>
+              </label>
+              <input
+                type="text"
+                required
+                aria-required="true"
+                value={companyName}
+                onChange={(e) => onCompanyNameChange(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder={companyPlaceholder}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Role{' '}
+                <span className="text-red-500" aria-hidden="true">
+                  *
+                </span>
+              </label>
+              <input
+                type="text"
+                required
+                aria-required="true"
+                value={roleTitle}
+                onChange={(e) => onRoleTitleChange(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder={rolePlaceholder}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Role{' '}
-              <span className="text-red-500" aria-hidden="true">
-                *
-              </span>
-            </label>
-            <input
-              type="text"
-              required
-              aria-required="true"
-              value={roleTitle}
-              onChange={(e) => onRoleTitleChange(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              placeholder={rolePlaceholder}
-            />
-          </div>
-        </div>
+          {onLevelChange !== undefined && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+              <input
+                type="text"
+                value={level}
+                onChange={(e) => onLevelChange(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="e.g. L5, Senior, Staff, E5, IC3"
+              />
+            </div>
+          )}
+        </>
       )}
     </>
   );

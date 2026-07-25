@@ -24,6 +24,7 @@ export interface CareerApplication {
   team_score?: number | null;
   current_round?: number;
   employment_type?: string | null;
+  level?: string;
   notes?: string;
   is_locked?: boolean;
   source_removed_at?: string | null;

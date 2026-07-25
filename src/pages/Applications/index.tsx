@@ -594,6 +594,7 @@ const Applications = () => {
       role_title: app.role_title,
       status: app.status,
       employment_type: app.employment_type || 'full_time',
+      level: app.level || '',
       site_link: app.job_link,
       salary_range: app.salary_range,
       office_location: app.office_location || app.location,
@@ -1034,6 +1035,11 @@ const Applications = () => {
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Form.Item name="level" label="Level">
+            <Input placeholder="e.g. L5, Senior, Staff, IC3" />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>

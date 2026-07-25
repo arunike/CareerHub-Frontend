@@ -116,11 +116,8 @@ const GroupedHolidayItem = ({
   const someSelected = item.items.some((i: any) => selectedIds.includes(i.id)) && !allSelected;
 
   return (
-    <List.Item
-      key={`group-item-${item.id}`}
-      className="enterprise-card-list-item px-3 py-3 sm:px-4 sm:py-4"
-    >
-      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between min-w-0">
+    <List.Item key={`group-item-${item.id}`} className="holiday-list-item px-4 py-4 sm:px-5">
+      <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <SelectionCheckbox
             selectionLabel={`${item.description || 'holiday range'} from ${dayjs(startDate).format('MMMM D, YYYY')} to ${dayjs(endDate).format('MMMM D, YYYY')}`}
@@ -211,7 +208,7 @@ const GroupedHolidayItem = ({
         </div>
 
         {!isExpanded && (
-          <div className="flex items-center justify-end shrink-0 pt-1 sm:pt-0">
+          <div className="holiday-item-actions flex shrink-0 items-center justify-end border-t border-slate-100 pt-2 sm:border-0 sm:pt-0">
             <RowActions
               key={`actions-group-${item.id}`}
               size="middle"
@@ -1054,8 +1051,10 @@ const Holidays = () => {
 
       {/* List */}
       <Card
+        className="holiday-list-card"
         title={
           <BulkActionHeader
+            className="holiday-list-header"
             selectedCount={selectedIds.length}
             totalCount={sortedHolidays.length}
             onSelectAll={handleSelectAll}
@@ -1087,8 +1086,9 @@ const Holidays = () => {
               </>
             }
             defaultActions={
-              <>
+              <div className="holiday-list-toolbar">
                 <Select
+                  className="holiday-sort-select"
                   aria-label="Sort holidays by"
                   value={sortBy}
                   onChange={setSortBy}
@@ -1099,6 +1099,7 @@ const Holidays = () => {
                   style={{ width: 120 }}
                 />
                 <Button
+                  className="holiday-sort-direction"
                   aria-label={`Sort holidays ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
                   icon={
                     sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />
@@ -1123,6 +1124,7 @@ const Holidays = () => {
                   disabled={activeTabHolidays.length === 0}
                 >
                   <Button
+                    className="holiday-delete-all"
                     danger
                     disabled={activeTabHolidays.length === 0}
                     icon={<DeleteOutlined />}
@@ -1130,7 +1132,7 @@ const Holidays = () => {
                     Delete All
                   </Button>
                 </Popconfirm>
-              </>
+              </div>
             }
           />
         }
@@ -1161,11 +1163,8 @@ const Holidays = () => {
               }
 
               return (
-                <List.Item
-                  key={`item-${item.id}`}
-                  className="enterprise-card-list-item px-3 py-3 sm:px-4 sm:py-4"
-                >
-                  <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between min-w-0">
+                <List.Item key={`item-${item.id}`} className="holiday-list-item px-4 py-4 sm:px-5">
+                  <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
                       <SelectionCheckbox
                         selectionLabel={`${item.description || 'holiday'} on ${dayjs(item.date).format('MMMM D, YYYY')}`}
@@ -1195,7 +1194,7 @@ const Holidays = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end shrink-0 pt-1 sm:pt-0">
+                    <div className="holiday-item-actions flex shrink-0 items-center justify-end border-t border-slate-100 pt-2 sm:border-0 sm:pt-0">
                       <RowActions
                         key={`actions-${item.id}`}
                         size="middle"

@@ -9,6 +9,7 @@ export interface BulkActionHeaderProps {
   totalCount: number;
   onSelectAll?: (checked: boolean) => void;
   title: React.ReactNode;
+  className?: string;
   defaultActions?: React.ReactNode;
   bulkActions?: React.ReactNode;
   onCancelSelection?: () => void;
@@ -19,6 +20,7 @@ const BulkActionHeader: React.FC<BulkActionHeaderProps> = ({
   totalCount,
   onSelectAll,
   title,
+  className = '',
   defaultActions,
   bulkActions,
   onCancelSelection,
@@ -28,7 +30,9 @@ const BulkActionHeader: React.FC<BulkActionHeaderProps> = ({
   const isBulkMode = selectedCount > 0;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+    <div
+      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`.trim()}
+    >
       <div className="flex items-center gap-3">
         {onSelectAll && (
           <SelectionCheckbox

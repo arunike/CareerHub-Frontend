@@ -119,6 +119,8 @@ const EditOfferModal = ({
             onCompanyNameChange={(value) => patchEditingApp({ company_name: value })}
             roleTitle={editingApp?.role_title || ''}
             onRoleTitleChange={(value) => patchEditingApp({ role_title: value })}
+            level={editingApp?.level || ''}
+            onLevelChange={(value) => patchEditingApp({ level: value })}
             location={editingApp?.location || ''}
             onLocationChange={(value) => patchEditingApp({ location: value })}
             officeLocation={editingApp?.office_location || ''}

@@ -34,6 +34,8 @@ interface OfferFormFieldsProps {
   onCompanyNameChange: (value: string) => void;
   roleTitle: string;
   onRoleTitleChange: (value: string) => void;
+  level?: string;
+  onLevelChange?: (value: string) => void;
   location: string;
   onLocationChange: (value: string) => void;
   officeLocation?: string;
@@ -147,6 +149,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onCompanyNameChange,
   roleTitle,
   onRoleTitleChange,
+  level,
+  onLevelChange,
   location,
   onLocationChange,
   officeLocation,
@@ -415,6 +419,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 onCompanyNameChange={onCompanyNameChange}
                 roleTitle={roleTitle}
                 onRoleTitleChange={onRoleTitleChange}
+                level={level}
+                onLevelChange={onLevelChange}
                 companyPlaceholder={companyPlaceholder}
                 rolePlaceholder={rolePlaceholder}
               />
