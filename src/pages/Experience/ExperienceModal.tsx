@@ -25,6 +25,7 @@ import {
 import dayjs, { type Dayjs } from 'dayjs';
 import type { Experience, EmploymentType } from '../../types';
 import CompensationFields, { type CompValue } from '../../components/CompensationFields';
+import LocationSelect from '../../components/LocationSelect';
 import { getMediaUrl } from '../../lib/runtimeConfig';
 import { LogoCropModal } from './LogoCropModal';
 
@@ -658,7 +659,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
               />
             </Form.Item>
             <Form.Item name="location" label="Location">
-              <Input placeholder="e.g. San Francisco, CA (Remote)" />
+              <LocationSelect placeholder="e.g. San Francisco, CA" />
             </Form.Item>
           </div>
 

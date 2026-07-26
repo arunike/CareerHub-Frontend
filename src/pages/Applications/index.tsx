@@ -64,7 +64,7 @@ import MobileApplicationCard from './MobileApplicationCard';
 import { getCurrentYear } from '../../utils/yearFilter';
 import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import { loadUsCityOptions } from '../../lib/usCityOptions';
+import LocationSelect from '../../components/LocationSelect';
 import { EmploymentTypeBadge, StatusBadge } from './ApplicationBadges';
 import { getApplicationStatusFilterOptions } from '../../constants/applicationStages';
 import {
@@ -144,12 +144,10 @@ const Applications = () => {
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchText, setSearchText] = useState('');
   const [debouncedSearchText, setDebouncedSearchText] = useState('');
-  const [locationSearchText, setLocationSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [empTypeFilter, setEmpTypeFilter] = useState('ALL');
   const [locationFilter, setLocationFilter] = useState('ALL');
@@ -162,32 +160,6 @@ const Applications = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
-  const officeLocationOptions = useMemo(() => {
-    const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9,\s]/g, '');
-    const query = normalize(locationSearchText).trim();
-    const queryTokens = query.split(/\s+/).filter(Boolean);
-
-    const scored = allUsCityOptions
-      .map((raw) => {
-        const candidate = normalize(raw);
-        let score = 0;
-
-        if (query.length === 0) score += 1;
-        if (candidate.startsWith(query) && query.length > 0) score += 10;
-        if (candidate.includes(query) && query.length > 0) score += 6;
-        if (queryTokens.length && queryTokens.every((token) => candidate.includes(token)))
-          score += 4;
-        if (candidate === query && query.length > 0) score += 12;
-
-        return { value: raw, score };
-      })
-      .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score || a.value.localeCompare(b.value))
-      .slice(0, 80)
-      .map((item) => ({ value: item.value, label: item.value }));
-
-    return scored;
-  }, [allUsCityOptions, locationSearchText]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -284,12 +256,6 @@ const Applications = () => {
         if (stages && stages.length > 0) setAppStages(stages);
       })
       .catch(() => {});
-
-    loadUsCityOptions()
-      .then(setAllUsCityOptions)
-      .catch((error) => {
-        console.error('Failed to load US city options', error);
-      });
   }, [fetchDocuments]);
 
   useEffect(() => {
@@ -1054,20 +1020,7 @@ const Applications = () => {
         </Col>
         <Col xs={24} sm={12}>
           <Form.Item name="office_location" label="Location">
-            <Select
-              className="w-full"
-              showSearch
-              options={officeLocationOptions}
-              onSearch={(value) => setLocationSearchText(value)}
-              onChange={(value) => {
-                form.setFieldValue('office_location', value);
-                setLocationSearchText('');
-              }}
-              onBlur={() => setLocationSearchText('')}
-              placeholder="e.g. San Francisco, CA"
-              allowClear
-              filterOption={false}
-            />
+            <LocationSelect className="w-full" placeholder="e.g. San Francisco, CA" />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -1626,7 +1579,7 @@ const Applications = () => {
                 </Col>
                 <Col span={24}>
                   <Form.Item name="office_location" label="Location">
-                    <Input placeholder="Remote, San Francisco, CA, ..." />
+                    <LocationSelect placeholder="Remote, San Francisco, CA, ..." />
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>

@@ -14,6 +14,7 @@ import {
 interface RowActionsProps {
   isLocked?: boolean;
   onToggleLock?: () => void;
+  disableLock?: boolean;
   isPinned?: boolean;
   onTogglePin?: () => void;
   onView?: () => void;
@@ -37,6 +38,7 @@ interface RowActionsProps {
 const RowActions: React.FC<RowActionsProps> = ({
   isLocked = false,
   onToggleLock,
+  disableLock = false,
   isPinned = false,
   onTogglePin,
   onView,
@@ -68,8 +70,15 @@ const RowActions: React.FC<RowActionsProps> = ({
           <Button
             type="text"
             size={size}
-            icon={isLocked ? <UnlockOutlined /> : <LockOutlined />}
+            icon={
+              isLocked ? (
+                <LockOutlined className={disableLock ? 'text-amber-500/60' : 'text-amber-500'} />
+              ) : (
+                <UnlockOutlined className="text-gray-400" />
+              )
+            }
             onClick={stopAndRun(onToggleLock)}
+            disabled={disableLock}
             aria-label={lockTitle ?? (isLocked ? 'Unlock' : 'Lock')}
           />
         </Tooltip>

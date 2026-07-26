@@ -7,7 +7,6 @@ import {
   Avatar,
   Tooltip,
   Tag,
-  Card,
   Row,
   Col,
   Upload,
@@ -442,6 +441,12 @@ const ExperiencePage: React.FC = () => {
 
   const handleToggleLock = async (exp: Experience) => {
     if (!exp.id) return;
+    const group = experiences.filter((e) => e.company === exp.company);
+    const isGroupLocked = group.length > 1 && group.every((e) => e.is_locked);
+    if (isGroupLocked && exp.is_locked) {
+      message.info('Company is locked. Unlock all roles at the company header first.');
+      return;
+    }
     try {
       await updateExperience(exp.id, { is_locked: !exp.is_locked });
       setExperiences((prev) =>
@@ -1058,180 +1063,185 @@ const ExperiencePage: React.FC = () => {
 
       {/* Analytics Dashboard */}
       {experiences.length > 0 && (
-        <Card
-          style={{ marginBottom: 28 }}
-          className="rounded-2xl border-gray-100 shadow-sm"
-          bodyStyle={{ padding: '14px 18px' }}
-        >
-          <Row gutter={[16, 14]} align="top">
+        <div className="mb-7 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
+          <Row gutter={[0, 20]} align="stretch">
+            {/* 1. Total Experience */}
             <Col xs={24} md={12} xl={6}>
-              <div className="h-full xl:border-r border-gray-100 xl:pr-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-                    <ClockCircleOutlined className="text-sm" />
+              <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:pr-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                      <ClockCircleOutlined className="text-sm" />
+                    </div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Total Experience
+                    </div>
                   </div>
-                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">
-                    Total Experience
-                  </div>
-                </div>
-                <div className="mt-3 min-w-0">
-                  <div className="text-[24px] leading-none font-semibold text-gray-900">
-                    {calculateTotalCareerDuration()}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                    {Object.entries(durationByType)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([type, months]) => (
-                        <span
-                          key={type}
-                          className="flex items-center gap-1 text-[11px] text-gray-500 whitespace-nowrap"
-                        >
+                  <div className="mt-3.5 min-w-0">
+                    <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900">
+                      {calculateTotalCareerDuration()}
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+                      {Object.entries(durationByType)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([type, months]) => (
                           <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDisplay(type).dot}`}
-                          />
-                          <span className="font-medium text-gray-700">
-                            {fmtMonths(months, true)}
+                            key={type}
+                            className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500"
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${getTypeDisplay(type).dot}`}
+                            />
+                            <span className="font-semibold text-slate-700">
+                              {fmtMonths(months, true)}
+                            </span>
+                            <span>{getTypeDisplay(type).label}</span>
                           </span>
-                          <span>{getTypeDisplay(type).label}</span>
-                        </span>
-                      ))}
+                        ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </Col>
 
+            {/* 2. Companies */}
             <Col xs={24} md={12} xl={5}>
-              <div className="h-full xl:border-r border-gray-100 xl:pr-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
-                    <BankOutlined className="text-sm" />
+              <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:px-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500">
+                      <BankOutlined className="text-sm" />
+                    </div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Companies
+                    </div>
                   </div>
-                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">
-                    Companies
-                  </div>
-                </div>
-                <div className="mt-3 min-w-0">
-                  <div className="text-[24px] leading-none font-semibold text-gray-900">
-                    {totalCompanies}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                    {Object.entries(companiesByType)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([type, count]) => (
-                        <span
-                          key={type}
-                          className="flex items-center gap-1 text-[11px] text-gray-500 whitespace-nowrap"
-                        >
+                  <div className="mt-3.5 min-w-0">
+                    <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900">
+                      {totalCompanies}
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+                      {Object.entries(companiesByType)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([type, count]) => (
                           <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${getTypeDisplay(type).dot}`}
-                          />
-                          <span className="font-medium text-gray-700">{count}</span>
-                          <span>{getTypeDisplay(type).label}</span>
-                        </span>
-                      ))}
+                            key={type}
+                            className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500"
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${getTypeDisplay(type).dot}`}
+                            />
+                            <span className="font-semibold text-slate-700">{count}</span>
+                            <span>{getTypeDisplay(type).label}</span>
+                          </span>
+                        ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </Col>
 
+            {/* 3. Earnings */}
             <Col xs={24} md={12} xl={7}>
-              <div className="h-full xl:border-r border-gray-100 xl:pr-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
-                    <DollarOutlined className="text-sm" />
-                  </div>
-                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">
-                    Earnings
-                  </div>
-                </div>
-                <div className="mt-3 min-w-0">
-                  <div className="space-y-2.5">
-                    <div className="min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                              Full-Time
-                            </span>
-                            <span className="text-[17px] leading-none font-semibold text-gray-900">
-                              {fullTimeCompSummary.trackedRoleCount > 0
-                                ? `$${fullTimeCompSummary.total.toLocaleString()}`
-                                : 'No pay data'}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-[11px] leading-relaxed text-gray-500">
-                            {fullTimeCompSummary.trackedRoleCount > 0 ? (
-                              <>
-                                {fullTimeCompSummary.trackedRoleCount} tracked
-                                {fullTimeCompSummary.base > 0 &&
-                                  ` • Base $${fullTimeCompSummary.base.toLocaleString()}`}
-                                {fullTimeCompSummary.roleCount >
-                                  fullTimeCompSummary.trackedRoleCount &&
-                                  ` • ${fullTimeCompSummary.roleCount - fullTimeCompSummary.trackedRoleCount} missing`}
-                              </>
-                            ) : (
-                              'Add base, bonus, or equity to see the total.'
-                            )}
-                          </div>
-                        </div>
-                        {fullTimeCompSummary.trackedRoleCount > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setOverallCompBreakdownOpen(true)}
-                            title="View overall pay structure breakdown"
-                            aria-label="View full-time earnings breakdown"
-                            className="min-h-11 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2"
-                          >
-                            Breakdown
-                          </button>
-                        )}
-                      </div>
+              <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:px-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+                      <DollarOutlined className="text-sm" />
                     </div>
-
-                    <div className="border-t border-gray-100 pt-2.5 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
-                              Internship
-                            </span>
-                            <span className="text-[17px] leading-none font-semibold text-gray-900">
-                              {internshipCompSummary.trackedRoleCount > 0
-                                ? `$${internshipCompSummary.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                                : 'No estimate yet'}
-                            </span>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Earnings
+                    </div>
+                  </div>
+                  <div className="mt-3.5 min-w-0">
+                    <div className="space-y-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                                Full-Time
+                              </span>
+                              <span className="text-[16px] font-bold leading-none text-slate-900">
+                                {fullTimeCompSummary.trackedRoleCount > 0
+                                  ? `$${fullTimeCompSummary.total.toLocaleString()}`
+                                  : 'No pay data'}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                              {fullTimeCompSummary.trackedRoleCount > 0 ? (
+                                <>
+                                  {fullTimeCompSummary.trackedRoleCount} tracked
+                                  {fullTimeCompSummary.base > 0 &&
+                                    ` • Base $${fullTimeCompSummary.base.toLocaleString()}`}
+                                  {fullTimeCompSummary.roleCount >
+                                    fullTimeCompSummary.trackedRoleCount &&
+                                    ` • ${fullTimeCompSummary.roleCount - fullTimeCompSummary.trackedRoleCount} missing`}
+                                </>
+                              ) : (
+                                'Add pay to calculate earnings.'
+                              )}
+                            </div>
                           </div>
-                          <div className="mt-1 text-[11px] leading-relaxed text-gray-500">
-                            {internshipCompSummary.trackedRoleCount > 0 ? (
-                              <>
-                                {internshipCompSummary.trackedRoleCount} tracked
-                                {internshipCompSummary.estimatedHours > 0 &&
-                                  ` • ${internshipCompSummary.estimatedHours.toLocaleString(undefined, { maximumFractionDigits: 2 })} hrs`}
-                                {internshipCompSummary.roleCount >
-                                internshipCompSummary.trackedRoleCount
-                                  ? ` • ${internshipCompSummary.roleCount - internshipCompSummary.trackedRoleCount} missing`
-                                  : internshipCompSummary.customTotalRoleCount > 0
-                                    ? ` • ${internshipCompSummary.customTotalRoleCount} custom total`
-                                    : internshipCompSummary.manualHoursRoleCount > 0
-                                      ? ` • ${internshipCompSummary.manualHoursRoleCount} manual hrs`
-                                      : ' • Auto estimated'}
-                              </>
-                            ) : (
-                              'Add hourly rate, dates, or a total override to calculate internship earnings.'
-                            )}
-                          </div>
+                          {fullTimeCompSummary.trackedRoleCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setOverallCompBreakdownOpen(true)}
+                              title="View overall pay structure breakdown"
+                              aria-label="View full-time earnings breakdown"
+                              className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                            >
+                              Breakdown
+                            </button>
+                          )}
                         </div>
-                        {internshipCompSummary.trackedRoleCount > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setOverallInternshipBreakdownOpen(true)}
-                            title="View internship earnings breakdown"
-                            aria-label="View internship earnings breakdown"
-                            className="min-h-11 shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
-                          >
-                            Breakdown
-                          </button>
-                        )}
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-2.5 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                                Internship
+                              </span>
+                              <span className="text-[16px] font-bold leading-none text-slate-900">
+                                {internshipCompSummary.trackedRoleCount > 0
+                                  ? `$${internshipCompSummary.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                                  : 'No estimate yet'}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                              {internshipCompSummary.trackedRoleCount > 0 ? (
+                                <>
+                                  {internshipCompSummary.trackedRoleCount} tracked
+                                  {internshipCompSummary.estimatedHours > 0 &&
+                                    ` • ${internshipCompSummary.estimatedHours.toLocaleString(undefined, { maximumFractionDigits: 2 })} hrs`}
+                                  {internshipCompSummary.roleCount >
+                                  internshipCompSummary.trackedRoleCount
+                                    ? ` • ${internshipCompSummary.roleCount - internshipCompSummary.trackedRoleCount} missing`
+                                    : internshipCompSummary.customTotalRoleCount > 0
+                                      ? ` • ${internshipCompSummary.customTotalRoleCount} custom total`
+                                      : internshipCompSummary.manualHoursRoleCount > 0
+                                        ? ` • ${internshipCompSummary.manualHoursRoleCount} manual hrs`
+                                        : ' • Auto estimated'}
+                                </>
+                              ) : (
+                                'Add hourly rate to calculate earnings.'
+                              )}
+                            </div>
+                          </div>
+                          {internshipCompSummary.trackedRoleCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setOverallInternshipBreakdownOpen(true)}
+                              title="View internship earnings breakdown"
+                              aria-label="View internship earnings breakdown"
+                              className="shrink-0 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+                            >
+                              Breakdown
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1239,50 +1249,55 @@ const ExperiencePage: React.FC = () => {
               </div>
             </Col>
 
+            {/* 4. Top Skills */}
             <Col xs={24} md={12} xl={6}>
-              <div className="h-full">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shrink-0">
-                    <CodeOutlined className="text-sm" />
+              <div className="flex h-full flex-col justify-between xl:pl-6">
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                        <CodeOutlined className="text-sm" />
+                      </div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        Top Skills
+                      </div>
+                    </div>
+                    {selectedSkill && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSkill(null)}
+                        className="text-[11px] font-medium text-blue-600 transition-colors hover:text-blue-700"
+                      >
+                        Clear filter
+                      </button>
+                    )}
                   </div>
-                  <div className="text-[11px] text-gray-400 font-medium uppercase tracking-[0.14em]">
-                    Top Skills
-                  </div>
-                  {selectedSkill && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSkill(null)}
-                      className="text-[11px] text-blue-500 hover:text-blue-600 transition-colors"
-                    >
-                      Clear filter
-                    </button>
-                  )}
-                </div>
-                <div className="mt-3 min-w-0">
-                  <div className="flex flex-wrap gap-1.5">
-                    {topSkills.map((skill) => {
-                      const isSelected = selectedSkill === skill;
-                      return (
-                        <Tag.CheckableTag
-                          key={skill}
-                          checked={isSelected}
-                          onChange={(checked) => setSelectedSkill(checked ? skill : null)}
-                          className={`m-0 px-2 py-0.5 rounded-md border text-[11px] leading-5 transition-all ${
-                            isSelected
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-500'
-                          }`}
-                        >
-                          {skill} <span className="opacity-50 ml-1">{skillCounts[skill]}</span>
-                        </Tag.CheckableTag>
-                      );
-                    })}
+                  <div className="mt-3.5 min-w-0">
+                    <div className="flex flex-wrap gap-1.5">
+                      {topSkills.map((skill) => {
+                        const isSelected = selectedSkill === skill;
+                        return (
+                          <Tag.CheckableTag
+                            key={skill}
+                            checked={isSelected}
+                            onChange={(checked) => setSelectedSkill(checked ? skill : null)}
+                            className={`m-0 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-4 transition-all ${
+                              isSelected
+                                ? 'border-blue-600 bg-blue-600 text-white'
+                                : 'border-slate-200/80 bg-slate-50/60 text-slate-600 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600'
+                            }`}
+                          >
+                            {skill} <span className="ml-1 opacity-50">{skillCounts[skill]}</span>
+                          </Tag.CheckableTag>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
             </Col>
           </Row>
-        </Card>
+        </div>
       )}
 
       {loading ? (
@@ -1558,6 +1573,14 @@ const ExperiencePage: React.FC = () => {
                               <RowActions
                                 isLocked={exp.is_locked}
                                 onToggleLock={() => handleToggleLock(exp)}
+                                disableLock={group.length > 1 && group.every((e) => e.is_locked)}
+                                lockTitle={
+                                  group.length > 1 && group.every((e) => e.is_locked)
+                                    ? 'Company is locked. Unlock company header to modify individual roles.'
+                                    : exp.is_locked
+                                      ? 'Unlock role'
+                                      : 'Lock role'
+                                }
                                 isPinned={exp.is_pinned}
                                 onTogglePin={() => handleTogglePin(exp)}
                                 onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
@@ -1926,27 +1949,45 @@ const ExperiencePage: React.FC = () => {
                                           : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
                                       }`}
                                     >
-                                      <RowActions
-                                        isLocked={exp.is_locked}
-                                        onToggleLock={() => handleToggleLock(exp)}
-                                        onEdit={
-                                          exp.is_locked ? undefined : () => openEditModal(exp)
-                                        }
-                                        onDuplicate={
-                                          exp.is_locked
-                                            ? undefined
-                                            : () => handleDuplicateExperience(exp)
-                                        }
-                                        onDelete={
-                                          exp.is_locked
-                                            ? undefined
-                                            : () => exp.id && handleDelete(exp.id)
-                                        }
-                                        deleteTitle="Delete Role"
-                                        deleteDescription="Are you sure you want to remove this role?"
-                                        disableEdit={exp.is_locked}
-                                        disableDelete={exp.is_locked}
-                                      />
+                                      {(() => {
+                                        const compGroup = experiences.filter(
+                                          (e) => e.company === exp.company
+                                        );
+                                        const isGroupLocked =
+                                          compGroup.length > 1 &&
+                                          compGroup.every((e) => e.is_locked);
+                                        return (
+                                          <RowActions
+                                            isLocked={exp.is_locked}
+                                            onToggleLock={() => handleToggleLock(exp)}
+                                            disableLock={isGroupLocked}
+                                            lockTitle={
+                                              isGroupLocked
+                                                ? 'Company is locked. Unlock company to modify individual roles.'
+                                                : exp.is_locked
+                                                  ? 'Unlock role'
+                                                  : 'Lock role'
+                                            }
+                                            onEdit={
+                                              exp.is_locked ? undefined : () => openEditModal(exp)
+                                            }
+                                            onDuplicate={
+                                              exp.is_locked
+                                                ? undefined
+                                                : () => handleDuplicateExperience(exp)
+                                            }
+                                            onDelete={
+                                              exp.is_locked
+                                                ? undefined
+                                                : () => exp.id && handleDelete(exp.id)
+                                            }
+                                            deleteTitle="Delete Role"
+                                            deleteDescription="Are you sure you want to remove this role?"
+                                            disableEdit={exp.is_locked}
+                                            disableDelete={exp.is_locked}
+                                          />
+                                        );
+                                      })()}
                                     </div>
                                   </div>
                                 </div>
