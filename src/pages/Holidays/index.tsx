@@ -150,26 +150,76 @@ const GroupedHolidayItem = ({
               onChange={() => onSelectGroup(item.items, !allSelected)}
             />
 
-            {/* Dual Mini Calendar Tiles for Range */}
-            <div className="flex items-center gap-1 shrink-0">
-              <div className="flex h-12 w-11 flex-col items-center justify-between rounded-lg border border-red-200/80 bg-white overflow-hidden shadow-2xs">
-                <span className="w-full text-center text-[10px] font-extrabold tracking-wider py-0.5 uppercase bg-red-500 text-white truncate">
-                  {startDayjs.format('MMM')}
-                </span>
-                <span className="text-xs font-black text-slate-800 pb-1">
-                  {startDayjs.format('D')}
-                </span>
-              </div>
-              <span className="text-slate-400 font-bold text-xs px-0.5">→</span>
-              <div className="flex h-12 w-11 flex-col items-center justify-between rounded-lg border border-red-200/80 bg-white overflow-hidden shadow-2xs">
-                <span className="w-full text-center text-[10px] font-extrabold tracking-wider py-0.5 uppercase bg-red-500 text-white truncate">
-                  {endDayjs.format('MMM')}
-                </span>
-                <span className="text-xs font-black text-slate-800 pb-1">
-                  {endDayjs.format('D')}
-                </span>
-              </div>
-            </div>
+            {/* Calendar Tile for Range */}
+            {(() => {
+              const isSameMonth =
+                startDayjs.isSame(endDayjs, 'month') && startDayjs.isSame(endDayjs, 'year');
+              const isSameDay = isSameMonth && startDayjs.isSame(endDayjs, 'day');
+
+              if (isSameDay) {
+                return (
+                  <div className="flex h-[52px] w-12 shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 bg-white shadow-2xs">
+                    <div className="flex h-[18px] w-full items-center justify-center bg-gradient-to-r from-red-500 via-rose-500 to-red-600">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-white">
+                        {startDayjs.format('MMM')}
+                      </span>
+                    </div>
+                    <div className="flex flex-1 items-center justify-center">
+                      <span className="text-sm font-extrabold tracking-tight text-slate-800 whitespace-nowrap">
+                        {startDayjs.format('DD')}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (isSameMonth) {
+                return (
+                  <div className="flex h-[52px] w-[76px] shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 bg-white shadow-2xs">
+                    <div className="flex h-[18px] w-full items-center justify-center bg-gradient-to-r from-red-500 via-rose-500 to-red-600">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-white">
+                        {startDayjs.format('MMM')}
+                      </span>
+                    </div>
+                    <div className="flex flex-1 items-center justify-center">
+                      <span className="text-xs font-extrabold tracking-tight text-slate-800 whitespace-nowrap">
+                        {startDayjs.format('D')} – {endDayjs.format('D')}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex h-[52px] w-12 shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 bg-white shadow-2xs">
+                    <div className="flex h-[18px] w-full items-center justify-center bg-gradient-to-r from-red-500 via-rose-500 to-red-600">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-white">
+                        {startDayjs.format('MMM')}
+                      </span>
+                    </div>
+                    <div className="flex flex-1 items-center justify-center">
+                      <span className="text-sm font-extrabold tracking-tight text-slate-800 whitespace-nowrap">
+                        {startDayjs.format('DD')}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-slate-400 font-bold text-xs px-0.5">→</span>
+                  <div className="flex h-[52px] w-12 shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 bg-white shadow-2xs">
+                    <div className="flex h-[18px] w-full items-center justify-center bg-gradient-to-r from-red-500 via-rose-500 to-red-600">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-white">
+                        {endDayjs.format('MMM')}
+                      </span>
+                    </div>
+                    <div className="flex flex-1 items-center justify-center">
+                      <span className="text-sm font-extrabold tracking-tight text-slate-800 whitespace-nowrap">
+                        {endDayjs.format('DD')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -1279,11 +1329,17 @@ const Holidays = () => {
                         />
 
                         {/* Unified Red Mini Calendar Tile */}
-                        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-between rounded-lg border border-red-200/80 bg-white overflow-hidden shadow-2xs">
-                          <span className="w-full text-center text-[10px] font-extrabold tracking-wider py-0.5 uppercase bg-red-500 text-white">
-                            {monthText}
-                          </span>
-                          <span className="text-sm font-black text-slate-800 pb-1">{dayText}</span>
+                        <div className="flex shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 bg-white shadow-2xs">
+                          <div className="w-full bg-gradient-to-r from-red-500 via-rose-500 to-red-600 px-2.5 py-0.5 text-center">
+                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-white">
+                              {monthText}
+                            </span>
+                          </div>
+                          <div className="flex flex-1 items-center justify-center px-3 py-1.5 min-w-[42px]">
+                            <span className="font-extrabold text-slate-800 text-sm tracking-tight whitespace-nowrap">
+                              {dayText}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="min-w-0 flex-1">

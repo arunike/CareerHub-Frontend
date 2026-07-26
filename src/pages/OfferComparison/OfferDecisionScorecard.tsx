@@ -1028,11 +1028,14 @@ const OfferDecisionScorecard = ({
               <Segmented
                 size="middle"
                 options={[
-                  { label: 'Active Offers', value: 'active' },
                   { label: `All (${offers.length})`, value: 'all' },
+                  {
+                    label: `Active (${Math.max(0, offers.length - (rejectedOffersCount || 0))})`,
+                    value: 'active',
+                  },
                   { label: `Rejected (${rejectedOffersCount || 0})`, value: 'rejected' },
                 ]}
-                value={statusFilter || 'active'}
+                value={statusFilter || 'all'}
                 onChange={(val) => setStatusFilter(val as 'active' | 'all' | 'rejected')}
               />
             )}

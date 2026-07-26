@@ -312,42 +312,57 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const SidebarContent = (
     <div className="enterprise-shell flex h-full flex-col">
       <div
-        className={`relative shrink-0 border-b border-slate-200/70 ${
+        className={`relative shrink-0 border-b border-slate-200/70 transition-all duration-200 ${
           isDesktopSidebarCollapsed
-            ? 'h-[96px] px-0 py-4 flex flex-col items-center justify-center gap-2'
-            : 'h-[96px] px-5 py-4 flex items-center justify-between gap-3'
+            ? 'h-[72px] px-0 flex items-center justify-center'
+            : 'h-[72px] px-5 py-3 flex items-center justify-between gap-3'
         }`}
       >
-        <img
-          src={isDesktopSidebarCollapsed ? logo : logoWithText}
-          alt="CareerHub"
-          className={isDesktopSidebarCollapsed ? 'h-10 w-10 object-contain' : 'h-14 object-contain'}
-        />
-        {screens.lg ? (
-          <Tooltip
-            title={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            placement="right"
-          >
-            <Button
-              type="text"
-              icon={isDesktopSidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={toggleDesktopSidebar}
-              aria-label={isDesktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className={
-                isDesktopSidebarCollapsed
-                  ? '!h-8 !w-8 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50'
-                  : '!h-8 !w-8 !shrink-0 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50'
-              }
-            />
-          </Tooltip>
+        {isDesktopSidebarCollapsed ? (
+          screens.lg ? (
+            <Tooltip title="Expand sidebar" placement="right">
+              <button
+                type="button"
+                onClick={toggleDesktopSidebar}
+                aria-label="Expand sidebar"
+                className="group relative flex h-11 w-12 items-center justify-center rounded-xl border border-transparent transition-all duration-200 hover:border-slate-200/90 hover:bg-white hover:shadow-xs"
+              >
+                <img
+                  src={logo}
+                  alt="CareerHub"
+                  className="h-7 w-7 object-contain block mx-auto transition-transform duration-200 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-blue-600/90 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <MenuUnfoldOutlined style={{ fontSize: 16 }} />
+                </div>
+              </button>
+            </Tooltip>
+          ) : (
+            <img src={logo} alt="CareerHub" className="h-7 w-7 object-contain block mx-auto" />
+          )
         ) : (
-          <Button
-            type="text"
-            icon={<CloseOutlined />}
-            onClick={() => setCollapsed(true)}
-            aria-label="Close navigation"
-            className="!h-11 !w-11 !text-gray-500 hover:!text-gray-700"
-          />
+          <>
+            <img src={logoWithText} alt="CareerHub" className="h-10 object-contain" />
+            {screens.lg ? (
+              <Tooltip title="Collapse sidebar" placement="right">
+                <Button
+                  type="text"
+                  icon={<MenuFoldOutlined />}
+                  onClick={toggleDesktopSidebar}
+                  aria-label="Collapse sidebar"
+                  className="!h-9 !w-9 !shrink-0 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50"
+                />
+              </Tooltip>
+            ) : (
+              <Button
+                type="text"
+                icon={<CloseOutlined />}
+                onClick={() => setCollapsed(true)}
+                aria-label="Close navigation"
+                className="!h-11 !w-11 !text-gray-500 hover:!text-gray-700"
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -396,16 +411,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </ConfigProvider>
       </div>
 
-      <div className="border-t border-slate-200/70 p-4">
+      <div
+        className={
+          isDesktopSidebarCollapsed
+            ? 'border-t border-slate-200/70 py-4 px-0'
+            : 'border-t border-slate-200/70 p-4'
+        }
+      >
         {isDesktopSidebarCollapsed ? (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center justify-center gap-3 w-full">
             {notificationBell}
             <Tooltip title={displayName || user?.full_name || 'Profile'} placement="right">
               <button
                 type="button"
                 onClick={() => navigate('/profile')}
                 aria-label="Open profile"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white/75 shadow-sm transition-all hover:border-blue-200 hover:bg-white hover:shadow-lg hover:shadow-blue-900/5"
+                className="flex h-10 w-12 items-center justify-center rounded-xl border border-slate-200/80 bg-white/75 shadow-sm transition-all hover:border-blue-200 hover:bg-white hover:shadow-lg hover:shadow-blue-900/5"
               >
                 <IdentityAvatar
                   imageUrl={profilePic}
@@ -430,7 +451,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   }
                 }}
                 aria-label="Sign out"
-                className="!h-10 !w-10 !rounded-xl !text-slate-400 hover:!text-rose-500 hover:!bg-rose-50"
+                className="!h-10 !w-12 !rounded-xl !text-slate-400 hover:!text-rose-500 hover:!bg-rose-50"
               />
             </Tooltip>
           </div>

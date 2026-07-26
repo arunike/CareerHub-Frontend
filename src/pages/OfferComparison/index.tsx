@@ -256,7 +256,7 @@ const OfferComparison = () => {
   );
   const [statusFilter, setStatusFilter] = usePersistedState<'active' | 'all' | 'rejected'>(
     'offerComparisonStatusFilter',
-    'active'
+    'all'
   );
   const [visibleOfferIds, setVisibleOfferIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);

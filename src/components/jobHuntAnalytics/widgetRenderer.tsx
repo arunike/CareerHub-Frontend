@@ -8,8 +8,9 @@ import {
   QuestionCircleOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import Tooltip from 'antd/es/tooltip';
 import CustomWidgetCard from '../CustomWidgetCard';
+import CrispInfoIcon from '../CrispInfoIcon';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { ApplicationTimelineAnalytics } from '../../types';
 
@@ -80,9 +81,12 @@ const TooltipLabel = ({
   className?: string;
 }) => (
   <Tooltip title={title} placement="top" overlayClassName="analytics-help-tooltip">
-    <span className={`inline-flex cursor-help items-center gap-1 ${className}`}>
+    <span className={`inline-flex cursor-help items-center gap-1 group ${className}`}>
       <span>{children}</span>
-      <QuestionCircleOutlined className="text-[11px] opacity-60" />
+      <CrispInfoIcon
+        size={13}
+        className="text-slate-400 opacity-70 group-hover:opacity-100 group-hover:text-blue-600 transition-all"
+      />
     </span>
   </Tooltip>
 );

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip, type TooltipProps } from 'antd';
 import clsx from 'clsx';
+import CrispInfoIcon from './CrispInfoIcon';
 
 type HelpTooltipTriggerProps = {
   ariaLabel: string;
@@ -25,7 +25,7 @@ const HelpTooltipTrigger = ({
       type="button"
       aria-label={ariaLabel}
       className={clsx(
-        'inline-flex min-h-11 min-w-11 items-center gap-1 rounded-md bg-transparent p-0 transition-colors',
+        'group inline-flex min-h-11 min-w-11 items-center gap-1.5 rounded-md bg-transparent p-0 transition-colors',
         'hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/45 focus-visible:ring-offset-2',
         'lg:min-h-6 lg:min-w-6',
         density === 'compact' && '-my-3.5 lg:-my-1',
@@ -35,7 +35,9 @@ const HelpTooltipTrigger = ({
       )}
     >
       {children}
-      <InfoCircleOutlined aria-hidden="true" className="shrink-0 text-xs text-slate-400" />
+      <span className="inline-flex shrink-0 items-center justify-center text-slate-400/90 transition-colors group-hover:text-blue-600">
+        <CrispInfoIcon size={14} className="text-slate-400 group-hover:text-blue-600" />
+      </span>
     </button>
   </Tooltip>
 );
