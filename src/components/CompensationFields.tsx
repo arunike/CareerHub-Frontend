@@ -22,7 +22,7 @@ interface Props {
 type BonusMode = '$' | '%';
 type EquityMode = 'annual' | 'total';
 
-const num = (v: number | null | undefined) => (v == null ? '' : String(v));
+const num = (v: number | null | undefined) => (v == null || v === 0 ? '' : String(v));
 const formatPct = (value: number) =>
   Number(value)
     .toFixed(2)

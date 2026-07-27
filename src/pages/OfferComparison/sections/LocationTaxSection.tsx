@@ -166,8 +166,11 @@ const LocationTaxSection = ({
           <input
             type="number"
             min={0}
-            value={editableMonthlyRent}
-            onChange={(e) => onEditableMonthlyRentChange(Number(e.target.value) || 0)}
+            value={editableMonthlyRent === 0 ? '' : editableMonthlyRent}
+            placeholder="0"
+            onChange={(e) =>
+              onEditableMonthlyRentChange(e.target.value === '' ? 0 : Number(e.target.value))
+            }
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           />
         </div>

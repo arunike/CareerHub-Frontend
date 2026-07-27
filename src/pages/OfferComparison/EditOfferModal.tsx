@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { message } from 'antd';
 import ConfirmModal from '../../components/ConfirmModal';
 import ModalShell from '../../components/ModalShell';
 import OfferFormFields from './OfferFormFields';
@@ -53,9 +54,27 @@ const EditOfferModal = ({
   });
   const [initialDraftSnapshot] = useState(draftSnapshot);
   const hasChanges = offerModalMode === 'edit' && draftSnapshot !== initialDraftSnapshot;
-  const hasRequiredFields = Boolean(
-    editingApp?.company_name?.trim() && editingApp?.role_title?.trim()
-  );
+
+  const missingFields: string[] = [];
+  if (!editingApp?.company_name?.trim()) missingFields.push('Company Name');
+  if (!editingApp?.role_title?.trim()) missingFields.push('Role Title');
+  const hasRequiredFields = missingFields.length === 0;
+
+  const handleSave = () => {
+    if (!hasRequiredFields) {
+      message.error(`Please fill in required fields: ${missingFields.join(', ')}`);
+      const targetId = !editingApp?.company_name?.trim()
+        ? 'offer-form-company-name'
+        : 'offer-form-role-title';
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+    onSave();
+  };
 
   if (!editingOffer) return null;
 
@@ -106,9 +125,13 @@ const EditOfferModal = ({
           <OfferFormModalFooter
             mode={offerModalMode}
             onClose={requestClose}
-            onSave={onSave}
+            onSave={handleSave}
             saveLabel="Save Offer"
-            saveDisabled={!hasRequiredFields}
+            tooltip={
+              !hasRequiredFields
+                ? `Missing required fields: ${missingFields.join(', ')}`
+                : undefined
+            }
           />
         }
       >
@@ -181,6 +204,7 @@ const EditOfferModal = ({
             onUpdateBenefitItem={updateEditingBenefitItem}
             onRemoveBenefitItem={removeEditingBenefitItem}
             computeBenefitsTotal={computeBenefitsTotal}
+            taxRate={baseTaxRate}
             workMode={
               editingApp?.rto_policy === 'REMOTE'
                 ? 'REMOTE'
@@ -250,27 +274,99 @@ const EditOfferModal = ({
             }
             holidayDays={Number(editingOffer.holiday_days ?? 11)}
             onHolidayDaysChange={(value) => setEditingOfferField('holiday_days', value)}
-            healthPremiumMonthly={Number(editingOffer.health_premium_monthly) || 0}
+            paychecksPerYear={Number(editingOffer.paychecks_per_year) || 26}
+            onPaychecksPerYearChange={(value) => setEditingOfferField('paychecks_per_year', value)}
+            healthPremiumPaycheck={editingOffer.health_premium_paycheck ?? ''}
+            onHealthPremiumPaycheckChange={(value) =>
+              setEditingOfferField('health_premium_paycheck', value)
+            }
+            healthPremiumMonthly={editingOffer.health_premium_monthly ?? ''}
             onHealthPremiumMonthlyChange={(value) =>
               setEditingOfferField('health_premium_monthly', value)
             }
-            hsaEmployerContribution={Number(editingOffer.hsa_employer_contribution) || 0}
+            hsaEmployerContribution={editingOffer.hsa_employer_contribution ?? ''}
             onHsaEmployerContributionChange={(value) =>
               setEditingOfferField('hsa_employer_contribution', value)
             }
             healthPlanType={editingOffer.health_plan_type || ''}
             onHealthPlanTypeChange={(value) => setEditingOfferField('health_plan_type', value)}
-            healthOopMax={Number(editingOffer.health_oop_max) || 0}
+            healthOopMax={editingOffer.health_oop_max ?? ''}
             onHealthOopMaxChange={(value) => setEditingOfferField('health_oop_max', value)}
-            fortyOneKMatchPercent={Number(editingOffer.forty_one_k_match_percent) || 0}
+            healthDeductible={editingOffer.health_deductible ?? ''}
+            onHealthDeductibleChange={(value) => setEditingOfferField('health_deductible', value)}
+            healthFamilyOopMax={editingOffer.health_family_oop_max ?? ''}
+            onHealthFamilyOopMaxChange={(value) =>
+              setEditingOfferField('health_family_oop_max', value)
+            }
+            healthPcpCopay={editingOffer.health_pcp_copay ?? ''}
+            onHealthPcpCopayChange={(value) => setEditingOfferField('health_pcp_copay', value)}
+            healthSpecialistCopay={editingOffer.health_specialist_copay ?? ''}
+            onHealthSpecialistCopayChange={(value) =>
+              setEditingOfferField('health_specialist_copay', value)
+            }
+            dentalPlanName={editingOffer.dental_plan_name || ''}
+            onDentalPlanNameChange={(value) => setEditingOfferField('dental_plan_name', value)}
+            dentalPremiumPaycheck={editingOffer.dental_premium_paycheck ?? ''}
+            onDentalPremiumPaycheckChange={(value) =>
+              setEditingOfferField('dental_premium_paycheck', value)
+            }
+            dentalMonthlyPremium={editingOffer.dental_monthly_premium ?? ''}
+            onDentalMonthlyPremiumChange={(value) =>
+              setEditingOfferField('dental_monthly_premium', value)
+            }
+            dentalAnnualMax={editingOffer.dental_annual_max ?? ''}
+            onDentalAnnualMaxChange={(value) => setEditingOfferField('dental_annual_max', value)}
+            dentalDeductible={editingOffer.dental_deductible ?? ''}
+            onDentalDeductibleChange={(value) => setEditingOfferField('dental_deductible', value)}
+            visionPlanName={editingOffer.vision_plan_name || ''}
+            onVisionPlanNameChange={(value) => setEditingOfferField('vision_plan_name', value)}
+            visionPremiumPaycheck={editingOffer.vision_premium_paycheck ?? ''}
+            onVisionPremiumPaycheckChange={(value) =>
+              setEditingOfferField('vision_premium_paycheck', value)
+            }
+            visionMonthlyPremium={editingOffer.vision_monthly_premium ?? ''}
+            onVisionMonthlyPremiumChange={(value) =>
+              setEditingOfferField('vision_monthly_premium', value)
+            }
+            visionFramesAllowance={editingOffer.vision_frames_allowance ?? ''}
+            onVisionFramesAllowanceChange={(value) =>
+              setEditingOfferField('vision_frames_allowance', value)
+            }
+            visionContactsAllowance={editingOffer.vision_contacts_allowance ?? ''}
+            onVisionContactsAllowanceChange={(value) =>
+              setEditingOfferField('vision_contacts_allowance', value)
+            }
+            hasDependents={!!editingOffer.has_dependents}
+            onHasDependentsChange={(value) => setEditingOfferField('has_dependents', value)}
+            dependentCoverageTier={editingOffer.dependent_coverage_tier || 'EMPLOYEE_SPOUSE'}
+            onDependentCoverageTierChange={(value) =>
+              setEditingOfferField('dependent_coverage_tier', value)
+            }
+            healthFamilyDeductible={editingOffer.health_family_deductible ?? ''}
+            onHealthFamilyDeductibleChange={(value) =>
+              setEditingOfferField('health_family_deductible', value)
+            }
+            dependentHealthPremiumPaycheck={editingOffer.dependent_health_premium_paycheck ?? ''}
+            onDependentHealthPremiumPaycheckChange={(value) =>
+              setEditingOfferField('dependent_health_premium_paycheck', value)
+            }
+            dependentDentalPremiumPaycheck={editingOffer.dependent_dental_premium_paycheck ?? ''}
+            onDependentDentalPremiumPaycheckChange={(value) =>
+              setEditingOfferField('dependent_dental_premium_paycheck', value)
+            }
+            dependentVisionPremiumPaycheck={editingOffer.dependent_vision_premium_paycheck ?? ''}
+            onDependentVisionPremiumPaycheckChange={(value) =>
+              setEditingOfferField('dependent_vision_premium_paycheck', value)
+            }
+            fortyOneKMatchPercent={editingOffer.forty_one_k_match_percent ?? ''}
             onFortyOneKMatchPercentChange={(value) =>
               setEditingOfferField('forty_one_k_match_percent', value)
             }
-            fortyOneKMaxMatch={Number(editingOffer.forty_one_k_max_match) || 0}
+            fortyOneKMaxMatch={editingOffer.forty_one_k_max_match ?? ''}
             onFortyOneKMaxMatchChange={(value) =>
               setEditingOfferField('forty_one_k_max_match', value)
             }
-            relocationBonus={Number(editingOffer.relocation_bonus) || 0}
+            relocationBonus={editingOffer.relocation_bonus ?? ''}
             onRelocationBonusChange={(value) => setEditingOfferField('relocation_bonus', value)}
             flexibleHoursPolicy={editingApp?.flexible_hours_policy || 'UNKNOWN'}
             onFlexibleHoursPolicyChange={(value) =>

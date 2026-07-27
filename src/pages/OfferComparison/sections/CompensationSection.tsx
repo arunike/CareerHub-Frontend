@@ -22,8 +22,8 @@ type CompensationSectionProps = {
   defaultEquityMode?: 'annual' | 'total';
   signOn: number;
   onSignOnChange: (value: number) => void;
-  relocationBonus?: number;
-  onRelocationBonusChange?: (value: number) => void;
+  relocationBonus?: number | string;
+  onRelocationBonusChange?: (value: number | string) => void;
 };
 
 const CompensationSection = ({
@@ -99,9 +99,12 @@ const CompensationSection = ({
                 <input
                   type="number"
                   min={0}
-                  value={equityBuybackValue}
+                  value={equityBuybackValue === 0 ? '' : equityBuybackValue}
+                  placeholder="0"
                   onChange={(event) =>
-                    onEquityBuybackValueChange(Math.max(0, Number(event.target.value) || 0))
+                    onEquityBuybackValueChange(
+                      event.target.value === '' ? 0 : Math.max(0, Number(event.target.value))
+                    )
                   }
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pl-6 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
@@ -129,8 +132,9 @@ const CompensationSection = ({
             </span>
             <input
               type="number"
-              value={signOn}
-              onChange={(e) => onSignOnChange(Number(e.target.value) || 0)}
+              value={signOn === 0 ? '' : signOn}
+              placeholder="0"
+              onChange={(e) => onSignOnChange(e.target.value === '' ? 0 : Number(e.target.value))}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 pl-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
             />
           </div>
@@ -145,8 +149,11 @@ const CompensationSection = ({
             </span>
             <input
               type="number"
-              value={relocationBonus || 0}
-              onChange={(e) => onRelocationBonusChange?.(Number(e.target.value) || 0)}
+              value={!relocationBonus ? '' : relocationBonus}
+              placeholder="0"
+              onChange={(e) =>
+                onRelocationBonusChange?.(e.target.value === '' ? 0 : Number(e.target.value))
+              }
               className="w-full rounded-lg border border-gray-200 px-3 py-2 pl-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
             />
           </div>

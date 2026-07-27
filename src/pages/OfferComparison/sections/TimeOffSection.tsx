@@ -75,8 +75,11 @@ const TimeOffSection = ({
           <input
             type="number"
             min={0}
-            value={ptoDays}
-            onChange={(e) => onPtoDaysChange(Math.max(0, Number(e.target.value) || 0))}
+            value={ptoDays === 0 ? '' : ptoDays}
+            placeholder="0"
+            onChange={(e) =>
+              onPtoDaysChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))
+            }
             disabled={isUnlimitedPto}
             className={`w-full rounded-lg border px-3 py-2 text-sm ${
               isUnlimitedPto
@@ -95,8 +98,11 @@ const TimeOffSection = ({
           <input
             type="number"
             min={0}
-            value={sickLeaveDays}
-            onChange={(e) => onSickLeaveDaysChange(Math.max(0, Number(e.target.value) || 0))}
+            value={sickLeaveDays === 0 ? '' : sickLeaveDays}
+            placeholder="0"
+            onChange={(e) =>
+              onSickLeaveDaysChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))
+            }
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           />
           <p className="mt-1 text-xs text-gray-500">Paid sick days, separate from PTO.</p>
@@ -108,8 +114,11 @@ const TimeOffSection = ({
           <input
             type="number"
             min={0}
-            value={holidayDays}
-            onChange={(e) => onHolidayDaysChange(Math.max(0, Number(e.target.value) || 0))}
+            value={holidayDays === 0 ? '' : holidayDays}
+            placeholder="0"
+            onChange={(e) =>
+              onHolidayDaysChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))
+            }
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           />
         </div>

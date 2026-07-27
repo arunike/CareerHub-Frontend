@@ -1,4 +1,5 @@
 import type React from 'react';
+import { message } from 'antd';
 import ModalShell from '../../components/ModalShell';
 import OfferFormFields from './OfferFormFields';
 import OfferFormModalFooter from './components/OfferFormModalFooter';
@@ -70,6 +71,29 @@ const ScenarioOfferModal = ({
   removeScenarioBenefitItem,
   onAddLoadedApplication,
 }: Props) => {
+  const missingScenarioFields: string[] = [];
+  if (!newScenario.application) {
+    if (!newScenario.custom_company_name?.trim()) missingScenarioFields.push('Company Name');
+    if (!newScenario.custom_role_title?.trim()) missingScenarioFields.push('Role Title');
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (missingScenarioFields.length > 0) {
+      message.error(`Please fill in required fields: ${missingScenarioFields.join(', ')}`);
+      const targetId = !newScenario.custom_company_name?.trim()
+        ? 'offer-form-company-name'
+        : 'offer-form-role-title';
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+    onSubmit(e);
+  };
+
   return (
     <ModalShell
       isOpen={isOpen}
@@ -104,10 +128,15 @@ const ScenarioOfferModal = ({
           onClose={onClose}
           submitFormId="scenario-offer-form"
           saveLabel={editingScenarioId ? 'Save Changes' : 'Add Custom Offer'}
+          tooltip={
+            missingScenarioFields.length > 0
+              ? `Missing required fields: ${missingScenarioFields.join(', ')}`
+              : undefined
+          }
         />
       }
     >
-      <form id="scenario-offer-form" onSubmit={onSubmit} className="min-h-0">
+      <form id="scenario-offer-form" onSubmit={handleSubmit} className="min-h-0">
         <div className="min-h-0">
           <fieldset disabled={scenarioModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
             <OfferFormFields
@@ -223,6 +252,7 @@ const ScenarioOfferModal = ({
               onUpdateBenefitItem={updateScenarioBenefitItem}
               onRemoveBenefitItem={removeScenarioBenefitItem}
               computeBenefitsTotal={computeBenefitsTotal}
+              taxRate={Number(newScenario.tax_base_rate ?? 32)}
               workMode={newScenario.work_mode}
               onWorkModeChange={(value) => setNewScenarioField('work_mode', value)}
               rtoDaysPerWeek={Number(newScenario.rto_days_per_week) || 0}
@@ -256,27 +286,97 @@ const ScenarioOfferModal = ({
               }
               holidayDays={Number(newScenario.holiday_days ?? 11)}
               onHolidayDaysChange={(value) => setNewScenarioField('holiday_days', value)}
-              healthPremiumMonthly={Number(newScenario.health_premium_monthly) || 0}
+              healthPremiumPaycheck={newScenario.health_premium_paycheck ?? ''}
+              onHealthPremiumPaycheckChange={(value) =>
+                setNewScenarioField('health_premium_paycheck', value)
+              }
+              healthPremiumMonthly={newScenario.health_premium_monthly ?? ''}
               onHealthPremiumMonthlyChange={(value) =>
                 setNewScenarioField('health_premium_monthly', value)
               }
-              hsaEmployerContribution={Number(newScenario.hsa_employer_contribution) || 0}
+              hsaEmployerContribution={newScenario.hsa_employer_contribution ?? ''}
               onHsaEmployerContributionChange={(value) =>
                 setNewScenarioField('hsa_employer_contribution', value)
               }
               healthPlanType={newScenario.health_plan_type || ''}
               onHealthPlanTypeChange={(value) => setNewScenarioField('health_plan_type', value)}
-              healthOopMax={Number(newScenario.health_oop_max) || 0}
+              healthOopMax={newScenario.health_oop_max ?? ''}
               onHealthOopMaxChange={(value) => setNewScenarioField('health_oop_max', value)}
-              fortyOneKMatchPercent={Number(newScenario.forty_one_k_match_percent) || 0}
+              healthDeductible={newScenario.health_deductible ?? ''}
+              onHealthDeductibleChange={(value) => setNewScenarioField('health_deductible', value)}
+              healthFamilyOopMax={newScenario.health_family_oop_max ?? ''}
+              onHealthFamilyOopMaxChange={(value) =>
+                setNewScenarioField('health_family_oop_max', value)
+              }
+              healthPcpCopay={newScenario.health_pcp_copay ?? ''}
+              onHealthPcpCopayChange={(value) => setNewScenarioField('health_pcp_copay', value)}
+              healthSpecialistCopay={newScenario.health_specialist_copay ?? ''}
+              onHealthSpecialistCopayChange={(value) =>
+                setNewScenarioField('health_specialist_copay', value)
+              }
+              dentalPlanName={newScenario.dental_plan_name || ''}
+              onDentalPlanNameChange={(value) => setNewScenarioField('dental_plan_name', value)}
+              dentalPremiumPaycheck={newScenario.dental_premium_paycheck ?? ''}
+              onDentalPremiumPaycheckChange={(value) =>
+                setNewScenarioField('dental_premium_paycheck', value)
+              }
+              dentalMonthlyPremium={newScenario.dental_monthly_premium ?? ''}
+              onDentalMonthlyPremiumChange={(value) =>
+                setNewScenarioField('dental_monthly_premium', value)
+              }
+              dentalAnnualMax={newScenario.dental_annual_max ?? ''}
+              onDentalAnnualMaxChange={(value) => setNewScenarioField('dental_annual_max', value)}
+              dentalDeductible={newScenario.dental_deductible ?? ''}
+              onDentalDeductibleChange={(value) => setNewScenarioField('dental_deductible', value)}
+              visionPlanName={newScenario.vision_plan_name || ''}
+              onVisionPlanNameChange={(value) => setNewScenarioField('vision_plan_name', value)}
+              visionPremiumPaycheck={newScenario.vision_premium_paycheck ?? ''}
+              onVisionPremiumPaycheckChange={(value) =>
+                setNewScenarioField('vision_premium_paycheck', value)
+              }
+              visionMonthlyPremium={newScenario.vision_monthly_premium ?? ''}
+              onVisionMonthlyPremiumChange={(value) =>
+                setNewScenarioField('vision_monthly_premium', value)
+              }
+              visionFramesAllowance={newScenario.vision_frames_allowance ?? ''}
+              onVisionFramesAllowanceChange={(value) =>
+                setNewScenarioField('vision_frames_allowance', value)
+              }
+              visionContactsAllowance={newScenario.vision_contacts_allowance ?? ''}
+              onVisionContactsAllowanceChange={(value) =>
+                setNewScenarioField('vision_contacts_allowance', value)
+              }
+              hasDependents={!!newScenario.has_dependents}
+              onHasDependentsChange={(value) => setNewScenarioField('has_dependents', value)}
+              dependentCoverageTier={newScenario.dependent_coverage_tier || 'EMPLOYEE_SPOUSE'}
+              onDependentCoverageTierChange={(value) =>
+                setNewScenarioField('dependent_coverage_tier', value)
+              }
+              healthFamilyDeductible={newScenario.health_family_deductible ?? ''}
+              onHealthFamilyDeductibleChange={(value) =>
+                setNewScenarioField('health_family_deductible', value)
+              }
+              dependentHealthPremiumPaycheck={newScenario.dependent_health_premium_paycheck ?? ''}
+              onDependentHealthPremiumPaycheckChange={(value) =>
+                setNewScenarioField('dependent_health_premium_paycheck', value)
+              }
+              dependentDentalPremiumPaycheck={newScenario.dependent_dental_premium_paycheck ?? ''}
+              onDependentDentalPremiumPaycheckChange={(value) =>
+                setNewScenarioField('dependent_dental_premium_paycheck', value)
+              }
+              dependentVisionPremiumPaycheck={newScenario.dependent_vision_premium_paycheck ?? ''}
+              onDependentVisionPremiumPaycheckChange={(value) =>
+                setNewScenarioField('dependent_vision_premium_paycheck', value)
+              }
+              fortyOneKMatchPercent={newScenario.forty_one_k_match_percent ?? ''}
               onFortyOneKMatchPercentChange={(value) =>
                 setNewScenarioField('forty_one_k_match_percent', value)
               }
-              fortyOneKMaxMatch={Number(newScenario.forty_one_k_max_match) || 0}
+              fortyOneKMaxMatch={newScenario.forty_one_k_max_match ?? ''}
               onFortyOneKMaxMatchChange={(value) =>
                 setNewScenarioField('forty_one_k_max_match', value)
               }
-              relocationBonus={Number(newScenario.relocation_bonus) || 0}
+              relocationBonus={newScenario.relocation_bonus ?? ''}
               onRelocationBonusChange={(value) => setNewScenarioField('relocation_bonus', value)}
               flexibleHoursPolicy={newScenario.flexible_hours_policy || 'UNKNOWN'}
               onFlexibleHoursPolicyChange={(value) =>

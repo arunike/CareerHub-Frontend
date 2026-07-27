@@ -137,12 +137,17 @@ const IdentitySection = ({
                 </span>
               </label>
               <input
+                id="offer-form-company-name"
                 type="text"
                 required
                 aria-required="true"
                 value={companyName}
                 onChange={(e) => onCompanyNameChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
+                  !companyName.trim()
+                    ? 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    : 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                }`}
                 placeholder={companyPlaceholder}
               />
             </div>
@@ -154,12 +159,17 @@ const IdentitySection = ({
                 </span>
               </label>
               <input
+                id="offer-form-role-title"
                 type="text"
                 required
                 aria-required="true"
                 value={roleTitle}
                 onChange={(e) => onRoleTitleChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
+                  !roleTitle.trim()
+                    ? 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    : 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                }`}
                 placeholder={rolePlaceholder}
               />
             </div>

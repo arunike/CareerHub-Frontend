@@ -119,24 +119,71 @@ interface OfferFormFieldsProps {
   locationPlaceholder?: string;
 
   // New Fields
-  healthPremiumMonthly?: number;
-  onHealthPremiumMonthlyChange?: (value: number) => void;
-  hsaEmployerContribution?: number;
-  onHsaEmployerContributionChange?: (value: number) => void;
+  paychecksPerYear?: number;
+  onPaychecksPerYearChange?: (value: number) => void;
+  healthPremiumPaycheck?: number | string;
+  onHealthPremiumPaycheckChange?: (value: number | string) => void;
+  healthPremiumMonthly?: number | string;
+  onHealthPremiumMonthlyChange?: (value: number | string) => void;
+  hsaEmployerContribution?: number | string;
+  onHsaEmployerContributionChange?: (value: number | string) => void;
   healthPlanType?: string;
   onHealthPlanTypeChange?: (value: string) => void;
-  healthOopMax?: number;
-  onHealthOopMaxChange?: (value: number) => void;
-  fortyOneKMatchPercent?: number;
-  onFortyOneKMatchPercentChange?: (value: number) => void;
-  fortyOneKMaxMatch?: number;
-  onFortyOneKMaxMatchChange?: (value: number) => void;
-  relocationBonus?: number;
-  onRelocationBonusChange?: (value: number) => void;
+  healthOopMax?: number | string;
+  onHealthOopMaxChange?: (value: number | string) => void;
+  healthDeductible?: number | string;
+  onHealthDeductibleChange?: (value: number | string) => void;
+  healthFamilyOopMax?: number | string;
+  onHealthFamilyOopMaxChange?: (value: number | string) => void;
+  healthPcpCopay?: number | string;
+  onHealthPcpCopayChange?: (value: number | string) => void;
+  healthSpecialistCopay?: number | string;
+  onHealthSpecialistCopayChange?: (value: number | string) => void;
+  dentalPlanName?: string;
+  onDentalPlanNameChange?: (value: string) => void;
+  dentalPremiumPaycheck?: number | string;
+  onDentalPremiumPaycheckChange?: (value: number | string) => void;
+  dentalMonthlyPremium?: number | string;
+  onDentalMonthlyPremiumChange?: (value: number | string) => void;
+  dentalAnnualMax?: number | string;
+  onDentalAnnualMaxChange?: (value: number | string) => void;
+  dentalDeductible?: number | string;
+  onDentalDeductibleChange?: (value: number | string) => void;
+  visionPlanName?: string;
+  onVisionPlanNameChange?: (value: string) => void;
+  visionPremiumPaycheck?: number | string;
+  onVisionPremiumPaycheckChange?: (value: number | string) => void;
+  visionMonthlyPremium?: number | string;
+  onVisionMonthlyPremiumChange?: (value: number | string) => void;
+  visionFramesAllowance?: number | string;
+  onVisionFramesAllowanceChange?: (value: number | string) => void;
+  visionContactsAllowance?: number | string;
+  onVisionContactsAllowanceChange?: (value: number | string) => void;
+  // Dependent Coverage
+  hasDependents?: boolean;
+  onHasDependentsChange?: (value: boolean) => void;
+  dependentCoverageTier?: string;
+  onDependentCoverageTierChange?: (value: string) => void;
+  healthFamilyDeductible?: number | string;
+  onHealthFamilyDeductibleChange?: (value: number | string) => void;
+  dependentHealthPremiumPaycheck?: number | string;
+  onDependentHealthPremiumPaycheckChange?: (value: number | string) => void;
+  dependentDentalPremiumPaycheck?: number | string;
+  onDependentDentalPremiumPaycheckChange?: (value: number | string) => void;
+  dependentVisionPremiumPaycheck?: number | string;
+  onDependentVisionPremiumPaycheckChange?: (value: number | string) => void;
+  fortyOneKMatchPercent?: number | string;
+  onFortyOneKMatchPercentChange?: (value: number | string) => void;
+  fortyOneKMaxMatch?: number | string;
+  onFortyOneKMaxMatchChange?: (value: number | string) => void;
+  relocationBonus?: number | string;
+  onRelocationBonusChange?: (value: number | string) => void;
   flexibleHoursPolicy?: string;
   onFlexibleHoursPolicyChange?: (value: string) => void;
   travelFrequency?: string;
   onTravelFrequencyChange?: (value: string) => void;
+  // Tax rate for after-tax custom benefit display
+  taxRate?: number;
 }
 
 const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
@@ -227,6 +274,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   locationPlaceholder = 'e.g. San Jose, CA, United States',
 
   // New Fields
+  paychecksPerYear = 26,
+  onPaychecksPerYearChange,
+  healthPremiumPaycheck = 0,
+  onHealthPremiumPaycheckChange,
   healthPremiumMonthly = 0,
   onHealthPremiumMonthlyChange,
   hsaEmployerContribution = 0,
@@ -235,6 +286,46 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onHealthPlanTypeChange,
   healthOopMax = 0,
   onHealthOopMaxChange,
+  healthDeductible = 0,
+  onHealthDeductibleChange,
+  healthFamilyOopMax = 0,
+  onHealthFamilyOopMaxChange,
+  healthPcpCopay = 0,
+  onHealthPcpCopayChange,
+  healthSpecialistCopay = 0,
+  onHealthSpecialistCopayChange,
+  dentalPlanName = '',
+  onDentalPlanNameChange,
+  dentalPremiumPaycheck = 0,
+  onDentalPremiumPaycheckChange,
+  dentalMonthlyPremium = 0,
+  onDentalMonthlyPremiumChange,
+  dentalAnnualMax = 0,
+  onDentalAnnualMaxChange,
+  dentalDeductible = 0,
+  onDentalDeductibleChange,
+  visionPlanName = '',
+  onVisionPlanNameChange,
+  visionPremiumPaycheck = 0,
+  onVisionPremiumPaycheckChange,
+  visionMonthlyPremium = 0,
+  onVisionMonthlyPremiumChange,
+  visionFramesAllowance = 0,
+  onVisionFramesAllowanceChange,
+  visionContactsAllowance = 0,
+  onVisionContactsAllowanceChange,
+  hasDependents = false,
+  onHasDependentsChange,
+  dependentCoverageTier = 'EMPLOYEE_SPOUSE',
+  onDependentCoverageTierChange,
+  healthFamilyDeductible = 0,
+  onHealthFamilyDeductibleChange,
+  dependentHealthPremiumPaycheck = 0,
+  onDependentHealthPremiumPaycheckChange,
+  dependentDentalPremiumPaycheck = 0,
+  onDependentDentalPremiumPaycheckChange,
+  dependentVisionPremiumPaycheck = 0,
+  onDependentVisionPremiumPaycheckChange,
   fortyOneKMatchPercent = 0,
   onFortyOneKMatchPercentChange,
   fortyOneKMaxMatch = 0,
@@ -245,6 +336,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onFlexibleHoursPolicyChange,
   travelFrequency = 'UNKNOWN',
   onTravelFrequencyChange,
+  taxRate = 0,
 }) => {
   const formId = useId().replace(/:/g, '');
   const shouldShowCompanyRole = !(hideCompanyRoleWhenLinked && linkedApplicationId);
@@ -532,6 +624,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 onRemoveBenefitItem={onRemoveBenefitItem}
                 computeBenefitsTotal={computeBenefitsTotal}
                 benefitsValue={benefitsValue}
+                paychecksPerYear={paychecksPerYear}
+                onPaychecksPerYearChange={onPaychecksPerYearChange}
+                healthPremiumPaycheck={healthPremiumPaycheck}
+                onHealthPremiumPaycheckChange={onHealthPremiumPaycheckChange}
                 healthPremiumMonthly={healthPremiumMonthly}
                 onHealthPremiumMonthlyChange={onHealthPremiumMonthlyChange}
                 hsaEmployerContribution={hsaEmployerContribution}
@@ -540,10 +636,51 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 onHealthPlanTypeChange={onHealthPlanTypeChange}
                 healthOopMax={healthOopMax}
                 onHealthOopMaxChange={onHealthOopMaxChange}
+                healthDeductible={healthDeductible}
+                onHealthDeductibleChange={onHealthDeductibleChange}
+                healthFamilyOopMax={healthFamilyOopMax}
+                onHealthFamilyOopMaxChange={onHealthFamilyOopMaxChange}
+                healthPcpCopay={healthPcpCopay}
+                onHealthPcpCopayChange={onHealthPcpCopayChange}
+                healthSpecialistCopay={healthSpecialistCopay}
+                onHealthSpecialistCopayChange={onHealthSpecialistCopayChange}
+                dentalPlanName={dentalPlanName}
+                onDentalPlanNameChange={onDentalPlanNameChange}
+                dentalPremiumPaycheck={dentalPremiumPaycheck}
+                onDentalPremiumPaycheckChange={onDentalPremiumPaycheckChange}
+                dentalMonthlyPremium={dentalMonthlyPremium}
+                onDentalMonthlyPremiumChange={onDentalMonthlyPremiumChange}
+                dentalAnnualMax={dentalAnnualMax}
+                onDentalAnnualMaxChange={onDentalAnnualMaxChange}
+                dentalDeductible={dentalDeductible}
+                onDentalDeductibleChange={onDentalDeductibleChange}
+                visionPlanName={visionPlanName}
+                onVisionPlanNameChange={onVisionPlanNameChange}
+                visionPremiumPaycheck={visionPremiumPaycheck}
+                onVisionPremiumPaycheckChange={onVisionPremiumPaycheckChange}
+                visionMonthlyPremium={visionMonthlyPremium}
+                onVisionMonthlyPremiumChange={onVisionMonthlyPremiumChange}
+                visionFramesAllowance={visionFramesAllowance}
+                onVisionFramesAllowanceChange={onVisionFramesAllowanceChange}
+                visionContactsAllowance={visionContactsAllowance}
+                onVisionContactsAllowanceChange={onVisionContactsAllowanceChange}
+                hasDependents={hasDependents}
+                onHasDependentsChange={onHasDependentsChange}
+                dependentCoverageTier={dependentCoverageTier}
+                onDependentCoverageTierChange={onDependentCoverageTierChange}
+                healthFamilyDeductible={healthFamilyDeductible}
+                onHealthFamilyDeductibleChange={onHealthFamilyDeductibleChange}
+                dependentHealthPremiumPaycheck={dependentHealthPremiumPaycheck}
+                onDependentHealthPremiumPaycheckChange={onDependentHealthPremiumPaycheckChange}
+                dependentDentalPremiumPaycheck={dependentDentalPremiumPaycheck}
+                onDependentDentalPremiumPaycheckChange={onDependentDentalPremiumPaycheckChange}
+                dependentVisionPremiumPaycheck={dependentVisionPremiumPaycheck}
+                onDependentVisionPremiumPaycheckChange={onDependentVisionPremiumPaycheckChange}
                 fortyOneKMatchPercent={fortyOneKMatchPercent}
                 onFortyOneKMatchPercentChange={onFortyOneKMatchPercentChange}
                 fortyOneKMaxMatch={fortyOneKMaxMatch}
                 onFortyOneKMaxMatchChange={onFortyOneKMaxMatchChange}
+                taxRate={taxRate}
               />
             </OfferFormSection>
           </div>

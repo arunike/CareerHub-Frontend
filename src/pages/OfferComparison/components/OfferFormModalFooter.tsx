@@ -1,3 +1,5 @@
+import { Tooltip } from 'antd';
+
 type OfferFormModalFooterProps = {
   mode: 'view' | 'edit' | 'add';
   onClose: () => void;
@@ -5,6 +7,7 @@ type OfferFormModalFooterProps = {
   submitFormId?: string;
   saveLabel?: string;
   saveDisabled?: boolean;
+  tooltip?: string;
 };
 
 const OfferFormModalFooter = ({
@@ -14,8 +17,21 @@ const OfferFormModalFooter = ({
   submitFormId,
   saveLabel,
   saveDisabled = false,
+  tooltip,
 }: OfferFormModalFooterProps) => {
   const closeLabel = mode === 'view' ? 'Close' : 'Cancel';
+
+  const saveBtn = (
+    <button
+      type={submitFormId ? 'submit' : 'button'}
+      form={submitFormId}
+      onClick={submitFormId ? undefined : onSave}
+      disabled={saveDisabled}
+      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_-14px_rgba(37,99,235,0.85)] transition hover:border-blue-700 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:active:translate-y-0 sm:min-h-10"
+    >
+      {saveLabel || (mode === 'add' ? 'Add' : 'Save')}
+    </button>
+  );
 
   return (
     <>
@@ -26,17 +42,14 @@ const OfferFormModalFooter = ({
       >
         {closeLabel}
       </button>
-      {mode !== 'view' && (
-        <button
-          type={submitFormId ? 'submit' : 'button'}
-          form={submitFormId}
-          onClick={submitFormId ? undefined : onSave}
-          disabled={saveDisabled}
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_-14px_rgba(37,99,235,0.85)] transition hover:border-blue-700 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:active:translate-y-0 sm:min-h-10"
-        >
-          {saveLabel || (mode === 'add' ? 'Add' : 'Save')}
-        </button>
-      )}
+      {mode !== 'view' &&
+        (tooltip ? (
+          <Tooltip title={tooltip}>
+            <span className="inline-block">{saveBtn}</span>
+          </Tooltip>
+        ) : (
+          saveBtn
+        ))}
     </>
   );
 };

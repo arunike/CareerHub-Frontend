@@ -73,8 +73,11 @@ const WorkSetupSection = ({
             type="number"
             min={0}
             max={5}
-            value={rtoDaysPerWeek}
-            onChange={(e) => onRtoDaysPerWeekChange(Number(e.target.value) || 0)}
+            value={rtoDaysPerWeek === 0 ? '' : rtoDaysPerWeek}
+            placeholder="0"
+            onChange={(e) =>
+              onRtoDaysPerWeekChange(e.target.value === '' ? 0 : Number(e.target.value))
+            }
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           />
         </div>
@@ -117,8 +120,11 @@ const WorkSetupSection = ({
             <input
               type="number"
               min={0}
-              value={commuteCostValue}
-              onChange={(e) => onCommuteCostValueChange(Number(e.target.value) || 0)}
+              value={commuteCostValue === 0 ? '' : commuteCostValue}
+              placeholder="0"
+              onChange={(e) =>
+                onCommuteCostValueChange(e.target.value === '' ? 0 : Number(e.target.value))
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
             <select
@@ -147,8 +153,11 @@ const WorkSetupSection = ({
             <input
               type="number"
               min={0}
-              value={freeFoodPerkValue}
-              onChange={(e) => onFreeFoodPerkValueChange(Number(e.target.value) || 0)}
+              value={freeFoodPerkValue === 0 ? '' : freeFoodPerkValue}
+              placeholder="0"
+              onChange={(e) =>
+                onFreeFoodPerkValueChange(e.target.value === '' ? 0 : Number(e.target.value))
+              }
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
             <select

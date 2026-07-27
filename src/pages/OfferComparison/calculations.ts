@@ -24,6 +24,7 @@ export interface BenefitItem {
   label: string;
   amount: number;
   frequency: 'MONTHLY' | 'YEARLY';
+  is_taxable?: boolean;
 }
 
 export interface SimulatedOffer {
@@ -59,13 +60,40 @@ export interface SimulatedOffer {
   tax_bonus_rate?: number;
   tax_equity_rate?: number;
   monthly_rent?: number;
-  health_premium_monthly?: number;
-  hsa_employer_contribution?: number;
+  health_premium_monthly?: number | string;
+  hsa_employer_contribution?: number | string;
   health_plan_type?: string;
-  health_oop_max?: number;
-  forty_one_k_match_percent?: number;
-  forty_one_k_max_match?: number;
-  relocation_bonus?: number;
+  health_oop_max?: number | string;
+  health_deductible?: number | string;
+  health_family_oop_max?: number | string;
+  health_pcp_copay?: number | string;
+  health_specialist_copay?: number | string;
+  rx_specialty_coverage_type?: 'COPAY' | 'COINSURANCE';
+  rx_rinvoq_copay?: number;
+  rx_copay_assistance_counts_to_oop?: boolean;
+  paychecks_per_year?: number;
+  health_premium_paycheck?: number | string;
+  dental_premium_paycheck?: number | string;
+  vision_premium_paycheck?: number | string;
+  dental_plan_name?: string;
+  dental_monthly_premium?: number | string;
+  dental_annual_max?: number | string;
+  dental_deductible?: number | string;
+  vision_plan_name?: string;
+  vision_monthly_premium?: number | string;
+  vision_frames_allowance?: number | string;
+  vision_contacts_allowance?: number | string;
+  // Dependent Coverage
+  has_dependents?: boolean;
+  dependent_coverage_tier?: string;
+  dependent_count?: number;
+  health_family_deductible?: number | string;
+  dependent_health_premium_paycheck?: number | string;
+  dependent_dental_premium_paycheck?: number | string;
+  dependent_vision_premium_paycheck?: number | string;
+  forty_one_k_match_percent?: number | string;
+  forty_one_k_max_match?: number | string;
+  relocation_bonus?: number | string;
   flexible_hours_policy?: string;
   travel_frequency?: string;
 }
@@ -92,14 +120,224 @@ export interface OfferLike {
   holiday_days?: number;
   is_current: boolean;
   created_at?: string;
-  health_premium_monthly?: number;
-  hsa_employer_contribution?: number;
+  paychecks_per_year?: number;
+  health_premium_paycheck?: number | string;
+  health_premium_monthly?: number | string;
+  hsa_employer_contribution?: number | string;
   health_plan_type?: string;
-  health_oop_max?: number;
-  forty_one_k_match_percent?: number;
-  forty_one_k_max_match?: number;
-  relocation_bonus?: number;
+  health_oop_max?: number | string;
+  health_deductible?: number | string;
+  health_family_oop_max?: number | string;
+  health_pcp_copay?: number | string;
+  health_specialist_copay?: number | string;
+  dental_plan_name?: string;
+  dental_premium_paycheck?: number | string;
+  dental_monthly_premium?: number | string;
+  dental_annual_max?: number | string;
+  dental_deductible?: number | string;
+  vision_plan_name?: string;
+  vision_premium_paycheck?: number | string;
+  vision_monthly_premium?: number | string;
+  vision_frames_allowance?: number | string;
+  vision_contacts_allowance?: number | string;
+  // Dependent Coverage
+  has_dependents?: boolean;
+  dependent_coverage_tier?: string;
+  dependent_count?: number;
+  health_family_deductible?: number | string;
+  dependent_health_premium_paycheck?: number | string;
+  dependent_dental_premium_paycheck?: number | string;
+  dependent_vision_premium_paycheck?: number | string;
+  forty_one_k_match_percent?: number | string;
+  forty_one_k_max_match?: number | string;
+  relocation_bonus?: number | string;
   [key: string]: unknown;
+}
+
+export function computeTotalAnnualHealthPremiums(
+  offer: Partial<SimulatedOffer | OfferLike>
+): number {
+  const paychecks = Number(offer.paychecks_per_year) || 26;
+
+  let medicalPaycheck = 0;
+  if (
+    offer.health_premium_paycheck !== undefined &&
+    offer.health_premium_paycheck !== null &&
+    Number(offer.health_premium_paycheck) > 0
+  ) {
+    medicalPaycheck = Number(offer.health_premium_paycheck);
+  } else {
+    medicalPaycheck = ((Number(offer.health_premium_monthly) || 0) * 12) / paychecks;
+  }
+
+  let dentalPaycheck = 0;
+  if (
+    offer.dental_premium_paycheck !== undefined &&
+    offer.dental_premium_paycheck !== null &&
+    Number(offer.dental_premium_paycheck) > 0
+  ) {
+    dentalPaycheck = Number(offer.dental_premium_paycheck);
+  } else {
+    dentalPaycheck = ((Number(offer.dental_monthly_premium) || 0) * 12) / paychecks;
+  }
+
+  let visionPaycheck = 0;
+  if (
+    offer.vision_premium_paycheck !== undefined &&
+    offer.vision_premium_paycheck !== null &&
+    Number(offer.vision_premium_paycheck) > 0
+  ) {
+    visionPaycheck = Number(offer.vision_premium_paycheck);
+  } else {
+    visionPaycheck = ((Number(offer.vision_monthly_premium) || 0) * 12) / paychecks;
+  }
+
+  if (offer.has_dependents) {
+    medicalPaycheck += Number(offer.dependent_health_premium_paycheck) || 0;
+    dentalPaycheck += Number(offer.dependent_dental_premium_paycheck) || 0;
+    visionPaycheck += Number(offer.dependent_vision_premium_paycheck) || 0;
+  }
+
+  const medicalAnnual = medicalPaycheck * paychecks;
+  const dentalAnnual = dentalPaycheck * paychecks;
+  const visionAnnual = visionPaycheck * paychecks;
+
+  return medicalAnnual + dentalAnnual + visionAnnual;
+}
+
+export function computeNetAnnualHealthCost(offer: Partial<SimulatedOffer | OfferLike>): number {
+  const totalPremiums = computeTotalAnnualHealthPremiums(offer);
+  const hsa = Number(offer.hsa_employer_contribution) || 0;
+  return Math.max(0, totalPremiums - hsa);
+}
+
+export function computeMedicalWorstCaseRisk(offer: Partial<SimulatedOffer | OfferLike>): number {
+  const totalPremiums = computeTotalAnnualHealthPremiums(offer);
+  const oopMax = offer.has_dependents
+    ? Number(offer.health_family_oop_max) || Number(offer.health_oop_max) || 0
+    : Number(offer.health_oop_max) || 0;
+  const hsa = Number(offer.hsa_employer_contribution) || 0;
+  return Math.max(0, totalPremiums + oopMax - hsa);
+}
+
+export interface DetailedMedicalBreakdown {
+  paychecks: number;
+  totalMedPaycheck: number;
+  annualMedPrem: number;
+  totalDenPaycheck: number;
+  annualDenPrem: number;
+  totalVisPaycheck: number;
+  annualVisPrem: number;
+  totalAnnualPremiums: number;
+  indDeductible: number;
+  famDeductible: number;
+  indOopMax: number;
+  famOopMax: number;
+  effectiveOopMax: number;
+  hsaMatch: number;
+  pcpCopay: number;
+  specCopay: number;
+  worstCaseRisk: number;
+  hasDependents: boolean;
+  dependentTier: string;
+  planType: string;
+  dentalPlanName: string;
+  dentalAnnualMax: number;
+  dentalDeductible: number;
+  visionPlanName: string;
+  visionFramesAllowance: number;
+  visionContactsAllowance: number;
+}
+
+export function computeDetailedMedicalBreakdown(
+  offer: Partial<SimulatedOffer | OfferLike>
+): DetailedMedicalBreakdown {
+  const paychecks = Number(offer.paychecks_per_year) || 26;
+
+  let medPaycheck = 0;
+  if (
+    offer.health_premium_paycheck !== undefined &&
+    offer.health_premium_paycheck !== null &&
+    Number(offer.health_premium_paycheck) > 0
+  ) {
+    medPaycheck = Number(offer.health_premium_paycheck);
+  } else {
+    medPaycheck = ((Number(offer.health_premium_monthly) || 0) * 12) / paychecks;
+  }
+
+  let denPaycheck = 0;
+  if (
+    offer.dental_premium_paycheck !== undefined &&
+    offer.dental_premium_paycheck !== null &&
+    Number(offer.dental_premium_paycheck) > 0
+  ) {
+    denPaycheck = Number(offer.dental_premium_paycheck);
+  } else {
+    denPaycheck = ((Number(offer.dental_monthly_premium) || 0) * 12) / paychecks;
+  }
+
+  let visPaycheck = 0;
+  if (
+    offer.vision_premium_paycheck !== undefined &&
+    offer.vision_premium_paycheck !== null &&
+    Number(offer.vision_premium_paycheck) > 0
+  ) {
+    visPaycheck = Number(offer.vision_premium_paycheck);
+  } else {
+    visPaycheck = ((Number(offer.vision_monthly_premium) || 0) * 12) / paychecks;
+  }
+
+  if (offer.has_dependents) {
+    medPaycheck += Number(offer.dependent_health_premium_paycheck) || 0;
+    denPaycheck += Number(offer.dependent_dental_premium_paycheck) || 0;
+    visPaycheck += Number(offer.dependent_vision_premium_paycheck) || 0;
+  }
+
+  const annualMedPrem = Math.round(medPaycheck * paychecks);
+  const annualDenPrem = Math.round(denPaycheck * paychecks);
+  const annualVisPrem = Math.round(visPaycheck * paychecks);
+  const totalAnnualPremiums = annualMedPrem + annualDenPrem + annualVisPrem;
+
+  const indDeductible = Number(offer.health_deductible) || 0;
+  const famDeductible = Number(offer.health_family_deductible) || 0;
+  const indOopMax = Number(offer.health_oop_max) || 0;
+  const famOopMax = Number(offer.health_family_oop_max) || 0;
+  const effectiveOopMax = offer.has_dependents ? famOopMax || indOopMax : indOopMax;
+
+  const hsaMatch = Number(offer.hsa_employer_contribution) || 0;
+  const pcpCopay = Number(offer.health_pcp_copay) || 0;
+  const specCopay = Number(offer.health_specialist_copay) || 0;
+
+  const worstCaseRisk = Math.max(0, totalAnnualPremiums + effectiveOopMax - hsaMatch);
+
+  return {
+    paychecks,
+    totalMedPaycheck: Math.round(medPaycheck * 100) / 100,
+    annualMedPrem,
+    totalDenPaycheck: Math.round(denPaycheck * 100) / 100,
+    annualDenPrem,
+    totalVisPaycheck: Math.round(visPaycheck * 100) / 100,
+    annualVisPrem,
+    totalAnnualPremiums,
+    indDeductible,
+    famDeductible,
+    indOopMax,
+    famOopMax,
+    effectiveOopMax,
+    hsaMatch,
+    pcpCopay,
+    specCopay,
+    worstCaseRisk,
+    hasDependents: !!offer.has_dependents,
+    dependentTier: offer.dependent_coverage_tier || 'EMPLOYEE_SPOUSE',
+    planType: offer.health_plan_type || 'Standard Plan',
+    dentalPlanName: offer.dental_plan_name || '',
+    dentalAnnualMax: Number(offer.dental_annual_max) || 0,
+    dentalDeductible: Number(offer.dental_deductible) || 0,
+    visionPlanName: offer.vision_plan_name || '',
+    visionFramesAllowance: Number(offer.vision_frames_allowance) || 0,
+    visionContactsAllowance: Number(offer.vision_contacts_allowance) || 0,
+  };
 }
 
 export interface ApplicationLike {
@@ -341,11 +579,22 @@ export const calculateScenarioValue = ({
   bonusTaxRate,
   equityTaxRate,
   costOfLivingIndex,
+  paychecks_per_year = 26,
+  health_premium_paycheck,
   health_premium_monthly = 0,
+  dental_premium_paycheck,
+  dental_monthly_premium = 0,
+  vision_premium_paycheck,
+  vision_monthly_premium = 0,
+  has_dependents = false,
+  dependent_health_premium_paycheck = 0,
+  dependent_dental_premium_paycheck = 0,
+  dependent_vision_premium_paycheck = 0,
   hsa_employer_contribution = 0,
   forty_one_k_match_percent = 0,
   forty_one_k_max_match = 0,
   relocation_bonus = 0,
+  benefit_items = [],
 }: {
   base_salary: number;
   bonus: number;
@@ -358,16 +607,47 @@ export const calculateScenarioValue = ({
   bonusTaxRate: number;
   equityTaxRate: number;
   costOfLivingIndex: number;
+  paychecks_per_year?: number;
+  health_premium_paycheck?: number;
   health_premium_monthly?: number;
+  dental_premium_paycheck?: number;
+  dental_monthly_premium?: number;
+  vision_premium_paycheck?: number;
+  vision_monthly_premium?: number;
+  has_dependents?: boolean;
+  dependent_health_premium_paycheck?: number;
+  dependent_dental_premium_paycheck?: number;
+  dependent_vision_premium_paycheck?: number;
   hsa_employer_contribution?: number;
   forty_one_k_match_percent?: number;
   forty_one_k_max_match?: number;
   relocation_bonus?: number;
+  benefit_items?: BenefitItem[];
 }) => {
-  const healthPremiumAnnual = (Number(health_premium_monthly) || 0) * 12;
+  const healthPremiumAnnual = computeTotalAnnualHealthPremiums({
+    paychecks_per_year,
+    health_premium_paycheck,
+    health_premium_monthly,
+    dental_premium_paycheck,
+    dental_monthly_premium,
+    vision_premium_paycheck,
+    vision_monthly_premium,
+    has_dependents,
+    dependent_health_premium_paycheck,
+    dependent_dental_premium_paycheck,
+    dependent_vision_premium_paycheck,
+  });
   const taxedBase =
     Math.max(0, Number(base_salary) - healthPremiumAnnual) * (1 - baseTaxRate / 100);
-  const taxedBenefits = Number(benefits_value) * (1 - baseTaxRate / 100);
+
+  let taxedBenefits = 0;
+  if (benefit_items && benefit_items.length > 0) {
+    const taxableBenefits = computeTaxableBenefitsTotal(benefit_items);
+    const nonTaxableBenefits = computeNonTaxableBenefitsTotal(benefit_items);
+    taxedBenefits = taxableBenefits * (1 - baseTaxRate / 100) + nonTaxableBenefits;
+  } else {
+    taxedBenefits = Number(benefits_value) * (1 - baseTaxRate / 100);
+  }
   const taxedBonus = Number(bonus) * (1 - bonusTaxRate / 100);
   const taxedSignOn = Number(sign_on) * (1 - bonusTaxRate / 100);
   const taxedRelocation = (Number(relocation_bonus) || 0) * (1 - bonusTaxRate / 100);
@@ -409,6 +689,20 @@ export const calculateScenarioValue = ({
 
 export const computeBenefitsTotal = (items: BenefitItem[]) =>
   items.reduce((sum, item) => {
+    const normalized = Number(item.amount) || 0;
+    return sum + (item.frequency === 'MONTHLY' ? normalized * 12 : normalized);
+  }, 0);
+
+export const computeTaxableBenefitsTotal = (items: BenefitItem[]) =>
+  items.reduce((sum, item) => {
+    if (!item.is_taxable) return sum;
+    const normalized = Number(item.amount) || 0;
+    return sum + (item.frequency === 'MONTHLY' ? normalized * 12 : normalized);
+  }, 0);
+
+export const computeNonTaxableBenefitsTotal = (items: BenefitItem[]) =>
+  items.reduce((sum, item) => {
+    if (item.is_taxable) return sum;
     const normalized = Number(item.amount) || 0;
     return sum + (item.frequency === 'MONTHLY' ? normalized * 12 : normalized);
   }, 0);

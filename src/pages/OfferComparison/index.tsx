@@ -68,6 +68,7 @@ const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): B
   label: item.label || '',
   amount: Number(item.amount) || 0,
   frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
+  is_taxable: Boolean(item.is_taxable),
 });
 
 const normalizeDecisionScore = (value: unknown) => {
