@@ -25,6 +25,11 @@ import {
   type ImmigrationSignalValue,
 } from './immigrationSignal';
 import { getEquityLiquidityCopy, getRealizableEquity } from './equityLiquidity';
+import {
+  computeIndependentFinancialScore,
+  FINANCIAL_SCORE_LOG_SCALE,
+  FINANCIAL_SCORE_REFERENCE_VALUE,
+} from './financialScore';
 import AccessibleStarRating from './AccessibleStarRating';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
 
@@ -338,13 +343,6 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(value));
 
-const FINANCIAL_BENCHMARK_BASE = 100000;
-
-const computeIndependentFinancialScore = (financialValue: number) => {
-  if (financialValue <= 0) return 0;
-  return Math.min(100, Math.max(0, (financialValue / FINANCIAL_BENCHMARK_BASE) * 100));
-};
-
 const buildFinancialCalculationLines = ({
   offer,
   metrics,
@@ -446,9 +444,13 @@ const buildFinancialCalculationLines = ({
     `Adjusted value: ${formatCurrency(purchasingPowerAdjusted)} + ${formatCurrency(
       cashAdjustment
     )} - ${formatCurrency(rentAnnual)} = ${formatCurrency(financialValue)}`,
-    `Financial score: ${formatCurrency(financialValue)} / $100,000 baseline x 100 = ${Math.round(
+    `Financial score: 100 x ln(1 + ${formatCurrency(
+      financialValue
+    )} / ${formatCurrency(FINANCIAL_SCORE_LOG_SCALE)}) / ln(1 + ${formatCurrency(
+      FINANCIAL_SCORE_REFERENCE_VALUE
+    )} / ${formatCurrency(FINANCIAL_SCORE_LOG_SCALE)}) = ${Math.round(
       financialScore
-    )} (independent absolute score)`,
+    )} (${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} benchmark = 100; uncapped logarithmic score)`,
   ];
 };
 
@@ -892,9 +894,10 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
             </p>
             <p>
               The remaining active categories only add up to <strong>{activeWeightTotal}%</strong>.
-              To keep the scale fair (0–100), the sum is divided by {activeWeightTotal}% — this
-              stretches the remaining categories to fill the full range, so you're not penalised for
-              leaving optional fields empty.
+              To preserve the configured relative weights, the sum is divided by {activeWeightTotal}
+              % — this stretches the remaining categories proportionally, so you're not penalised
+              for leaving optional fields empty. The total may exceed 100 when Financial exceeds its
+              $300k benchmark.
             </p>
           </div>
         )}
@@ -1005,6 +1008,13 @@ const OfferDecisionScorecard = ({
   }, [onDecisionOrderChange, rows]);
 
   if (rows.length === 0) return null;
+
+  const financialBarMax = Math.max(
+    100,
+    ...rows.map(
+      (row) => row.categories.find((category) => category.key === 'financial')?.score || 0
+    )
+  );
 
   const currentOffer = offers.find((o) => o.is_current);
   const currentTotal = currentOffer
@@ -1756,9 +1766,12 @@ const OfferDecisionScorecard = ({
                       const app = applicationsById[row.applicationId];
 
                       if (category.key === 'financial' || category.key === 'location') {
+                        const barWidth =
+                          category.key === 'financial'
+                            ? clamp((category.score / financialBarMax) * 100)
+                            : clamp(category.score);
                         const tooltips: Record<string, string> = {
-                          financial:
-                            'Weighted score based on adjusted total comp (after tax, cost of living, commute, rent). Higher adjusted value = higher score.',
+                          financial: `Adjusted annual value after tax, cost of living, commute, and rent, mapped to an uncapped logarithmic score where $300k = 100. The bar is scaled against the highest visible Financial score (${Math.round(financialBarMax)}); the numeric score stays fixed.`,
                           location:
                             'Score based on city cost-of-living index vs. your reference city. A higher-cost location reduces this score.',
                         };
@@ -1783,7 +1796,7 @@ const OfferDecisionScorecard = ({
                                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
                                   category.key === 'financial' ? 'bg-emerald-500' : 'bg-sky-500'
                                 }`}
-                                style={{ width: `${Math.round(category.score)}%` }}
+                                style={{ width: `${barWidth}%` }}
                               />
                             </div>
                             <p className="mt-2 text-[10px] font-medium text-slate-500 line-clamp-1">
@@ -2183,9 +2196,11 @@ const OfferDecisionScorecard = ({
                   <div className="space-y-1.5 p-1 text-[11px] leading-relaxed text-slate-200">
                     <p className="font-semibold text-white">General Formula</p>
                     <p>
-                      Each category creates a 0-100 score. Total score = sum(category score ×
-                      weight) / active weight. Detailed field-level math lives in each offer's Total
-                      Score popover.
+                      Most categories create a 0-100 score. Financial uses an uncapped logarithmic
+                      score where $300k adjusted annual value = 100. Total score = sum(category
+                      score × weight) / active weight, so exceptional Financial values can push the
+                      total above 100. Detailed field-level math lives in each offer's Total Score
+                      popover.
                     </p>
                     <p className="border-t border-slate-700 pt-1 text-[10px] text-slate-400">
                       Includes money adjustments, location friction, PTO/holidays, manual signals,
