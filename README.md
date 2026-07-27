@@ -52,7 +52,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 - **Interactive Bar Chart**: Recharts stacked chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
 - **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
-- **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled; Financial counts direct commute and food cash effects while Remote/RTO preferences remain in Location and WLB
+- **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled; Financial maps adjusted annual value to an uncapped logarithmic score where $300k = 100, scales its comparison bars to the highest visible score, counts direct commute and food cash effects, and keeps Remote/RTO preferences in Location and WLB
 - **Decision Snapshots**: Save point-in-time offer decisions with current score, rank, total comp, adjusted value, rent/tax/commute assumptions, category breakdown, and notes; locked snapshots are preserved from deletion
 - **Compensation Simulator**: After-tax monthly take-home view with rent, commute, food budget, PTO value, and equity vesting scenarios for real offers and custom scenarios
 - **Private Equity Liquidity**: Mark equity as freely tradable, company-buyback, or currently unsellable. The scorecard, adjusted value, deltas, chart, snapshots, and simulator count only realizable equity, while the full paper grant remains visible for context
