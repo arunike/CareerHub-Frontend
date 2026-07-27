@@ -280,7 +280,9 @@ const PublicBookingManager = ({
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-sm font-bold text-gray-900 m-0">{link.title}</h3>
+                            <h3 className="m-0 min-w-0 break-words text-sm font-bold text-gray-900 [overflow-wrap:anywhere]">
+                              {link.title}
+                            </h3>
                             {link.is_locked && <LockOutlined className="text-amber-500 text-xs" />}
                             <span
                               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${
@@ -323,13 +325,13 @@ const PublicBookingManager = ({
                             </span>
                           </div>
                           {link.intake_questions?.length > 0 && (
-                            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                            <p className="mt-2 break-words text-xs leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
                               Intake:{' '}
                               {link.intake_questions.map((question) => question.label).join(', ')}
                             </p>
                           )}
                           {link.public_note && (
-                            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                            <p className="mt-2 break-words text-xs leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
                               {link.public_note}
                             </p>
                           )}
@@ -441,8 +443,10 @@ const PublicBookingManager = ({
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-gray-900 m-0">{booking.name}</h3>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <h3 className="m-0 min-w-0 break-words text-sm font-bold text-gray-900 [overflow-wrap:anywhere]">
+                          {booking.name}
+                        </h3>
                         {booking.is_locked && <LockOutlined className="text-amber-500 text-xs" />}
                         {booking.status === 'canceled' && (
                           <span className="rounded-full border border-rose-100 bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
@@ -452,31 +456,33 @@ const PublicBookingManager = ({
                       </div>
                       <CheckCircleOutlined className="text-emerald-500" />
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{booking.email}</p>
+                    <p className="mt-0.5 break-words text-xs text-gray-500 [overflow-wrap:anywhere]">
+                      {booking.email}
+                    </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1">
+                      <span className="inline-flex max-w-full items-center gap-1 break-words rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 [overflow-wrap:anywhere]">
                         <CalendarOutlined /> {booking.date}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1">
+                      <span className="inline-flex max-w-full items-center gap-1 break-words rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 [overflow-wrap:anywhere]">
                         <ClockCircleOutlined /> {formatTime(booking.start_time)} -{' '}
                         {formatTime(booking.end_time)} {booking.timezone}
                       </span>
                     </div>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                    <p className="mt-2 break-words text-[11px] font-semibold uppercase tracking-wide text-gray-400 [overflow-wrap:anywhere]">
                       {booking.share_link_title || 'Public booking link'}
                     </p>
                     {booking.notes && (
-                      <p className="mt-2 rounded-lg bg-amber-50 border border-amber-100 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                      <p className="mt-2 break-words rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 [overflow-wrap:anywhere]">
                         {booking.notes}
                       </p>
                     )}
                     {booking.cancel_reason && (
-                      <p className="mt-2 rounded-lg bg-rose-50 border border-rose-100 px-3 py-2 text-xs leading-relaxed text-rose-900">
+                      <p className="mt-2 break-words rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-900 [overflow-wrap:anywhere]">
                         <span className="font-bold">Cancel reason:</span> {booking.cancel_reason}
                       </p>
                     )}
                     {booking.intake_answers && Object.keys(booking.intake_answers).length > 0 && (
-                      <div className="mt-2 rounded-lg bg-sky-50 border border-sky-100 px-3 py-2 text-xs leading-relaxed text-sky-900">
+                      <div className="mt-2 break-words rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs leading-relaxed text-sky-900 [overflow-wrap:anywhere]">
                         {Object.entries(booking.intake_answers).map(([key, value]) => (
                           <div key={key}>
                             <span className="font-bold">{key}:</span> {String(value)}
@@ -525,7 +531,7 @@ const PublicBookingManager = ({
           <Form.Item name="title" label="Link Title (Optional)">
             <Input placeholder="Leave empty to keep current" />
           </Form.Item>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Form.Item name="duration_days" label="Duration (Days)">
               <InputNumber min={1} max={90} className="w-full" placeholder="Days" />
             </Form.Item>

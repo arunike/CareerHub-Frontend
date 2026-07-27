@@ -29,13 +29,13 @@ const AvailabilityGeneratorCard = ({
   const rangeId = useId();
 
   return (
-    <div className="enterprise-section p-6">
-      <div className="flex flex-col md:flex-row md:items-end gap-4">
-        <div className="flex-1">
+    <div className="enterprise-section p-4 sm:p-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.55fr)_auto] xl:items-end">
+        <div className="min-w-0">
           <label htmlFor={startDateId} className="block text-sm font-medium text-gray-700 mb-1">
             Start Date
           </label>
-          <div className="relative">
+          <div className="relative min-w-0">
             <CalendarOutlined
               aria-hidden="true"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"
@@ -45,16 +45,16 @@ const AvailabilityGeneratorCard = ({
               type="date"
               value={startDate}
               onChange={(e) => onStartDateChange(e.target.value)}
-              className="min-h-11 pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="min-h-11 min-w-0 w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        <div className="flex-1">
+        <div className="min-w-0">
           <label htmlFor={timezoneId} className="block text-sm font-medium text-gray-700 mb-1">
             Timezone
           </label>
-          <div className="relative">
+          <div className="relative min-w-0">
             <ClockCircleOutlined
               aria-hidden="true"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"
@@ -63,7 +63,7 @@ const AvailabilityGeneratorCard = ({
               id={timezoneId}
               value={timezone}
               onChange={(e) => onTimezoneChange(e.target.value)}
-              className="min-h-11 pl-10 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none bg-white"
+              className="min-h-11 min-w-0 w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pl-10 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             >
               {TIMEZONE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -74,7 +74,7 @@ const AvailabilityGeneratorCard = ({
           </div>
         </div>
 
-        <div className="flex-1">
+        <div className="min-w-0">
           <label htmlFor={rangeId} className="block text-sm font-medium text-gray-700 mb-1">
             Range (weeks)
           </label>
@@ -85,15 +85,15 @@ const AvailabilityGeneratorCard = ({
             value={availabilityWeeks}
             fallbackValue={2}
             onCommit={onAvailabilityWeeksChange}
-            className="min-h-11 w-full rounded-lg border-gray-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+            className="min-h-11 min-w-0 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div className="flex-none w-full md:w-auto">
+        <div className="min-w-0 sm:self-end xl:w-auto">
           <button
             onClick={onGenerate}
             disabled={loading}
-            className="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_10px_18px_-16px_rgba(49,88,183,0.74)] transition-colors hover:border-blue-700 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
+            className="min-h-11 w-full rounded-lg border border-blue-600 bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_10px_18px_-16px_rgba(49,88,183,0.74)] transition-colors hover:border-blue-700 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 xl:w-auto"
           >
             {loading ? 'Calculating...' : 'Generate Availability'}
           </button>
