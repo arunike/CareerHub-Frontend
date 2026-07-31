@@ -282,7 +282,7 @@ const GroupedHolidayItem = ({
         </div>
 
         {isExpanded && (
-          <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 space-y-1.5">
             <div className="text-xs font-semibold text-slate-500 px-1">Individual Days:</div>
             <div className="space-y-1.5 pl-3 border-l-2 border-indigo-200">
               {item.items.map((subItem: any) => (
@@ -1484,7 +1484,7 @@ const Holidays = () => {
             </div>
           </Card>
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div key={idx} className="enterprise-card p-5 space-y-4" style={{ height: 166 }}>
                   <div className="flex items-center gap-3">

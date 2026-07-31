@@ -42,15 +42,11 @@ const AvailabilityGroups = ({
 
   return (
     <div className="space-y-8">
-      {groupedData.map((group, groupIdx) => {
+      {groupedData.map((group) => {
         if (group.items.length === 0) return null;
 
         return (
-          <div
-            key={group.title}
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: `${groupIdx * 100}ms` }}
-          >
+          <div key={group.title}>
             <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 ml-1">
               {group.title}
             </h3>

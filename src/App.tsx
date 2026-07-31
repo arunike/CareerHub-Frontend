@@ -168,7 +168,7 @@ const RouteFallback = () => {
     return (
       <div className="w-full space-y-6">
         <PageHeaderSkeleton />
-        <div className="enterprise-card p-5 space-y-4 animate-in fade-in duration-300">
+        <div className="enterprise-card p-5 space-y-4">
           <div className="border-b border-slate-100 pb-3 flex justify-between">
             <SkeletonBlock width="120px" height="1.1rem" />
             <SkeletonBlock width="80px" height="1.1rem" />
@@ -221,7 +221,7 @@ const RouteFallback = () => {
     return (
       <div className="w-full space-y-6">
         <PageHeaderSkeleton />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1 enterprise-card p-6 space-y-4">
             <SkeletonBlock width="120px" height="1.1rem" />
             <SkeletonBlock width="100%" height="2.25rem" />
@@ -246,7 +246,7 @@ const RouteFallback = () => {
     return (
       <div className="w-full space-y-6">
         <PageHeaderSkeleton />
-        <div className="enterprise-card p-6 flex flex-col md:flex-row gap-6 animate-in fade-in duration-300">
+        <div className="enterprise-card p-6 flex flex-col md:flex-row gap-6">
           <div className="flex flex-col items-center shrink-0">
             <SkeletonBlock width="100px" height="100px" circle />
             <SkeletonBlock width="120px" height="1.1rem" className="mt-3" />
@@ -271,7 +271,7 @@ const RouteFallback = () => {
   }
 
   return (
-    <div className="flex min-h-[40vh] items-center justify-center animate-in fade-in duration-300">
+    <div className="flex min-h-[40vh] items-center justify-center">
       <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
         <div className="flex items-center gap-3">
           <div className="shimmer-bg w-6 h-6 rounded-full" />

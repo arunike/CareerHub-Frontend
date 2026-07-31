@@ -223,7 +223,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       {isOpen && (
         <div
           className={`
-            absolute z-50 w-[calc(100vw-1rem)] max-w-80 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)] animate-in fade-in zoom-in-95 duration-100
+            absolute z-50 w-[calc(100vw-1rem)] max-w-80 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)]
             ${
               placement === 'bottom-right'
                 ? 'top-full right-0 mt-2 origin-top-right'

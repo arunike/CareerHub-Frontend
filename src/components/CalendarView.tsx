@@ -238,7 +238,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     addActionHighlight === 'holidays' || addActionHighlight === 'all';
 
   return (
-    <div className="animate-in fade-in duration-500">
+    <div>
       <CalendarHeader
         headerLabel={getHeaderLabel(viewMode, anchorDate)}
         viewMode={viewMode}

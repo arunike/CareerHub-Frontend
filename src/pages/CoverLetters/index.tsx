@@ -173,7 +173,7 @@ const CoverLetters: React.FC = () => {
 
       {/* Bulk action bar */}
       {selectedIds.length > 0 && (
-        <div className="enterprise-filter-bar mb-6 p-4 animate-in fade-in slide-in-from-top-2">
+        <div className="enterprise-filter-bar mb-6 p-4">
           <BulkActionHeader
             selectedCount={selectedIds.length}
             totalCount={letters.length}

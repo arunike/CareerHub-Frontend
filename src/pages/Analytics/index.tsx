@@ -25,7 +25,7 @@ const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAn
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
 
 const SectionFallback = () => (
-  <div className="w-full space-y-6 animate-in fade-in duration-300">
+  <div className="w-full space-y-6">
     <MetricCardsSkeleton count={3} />
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 enterprise-card p-6 min-h-[360px] flex flex-col justify-between">
@@ -247,7 +247,7 @@ const Analytics: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 w-full animate-in fade-in duration-300">
+      <div className="space-y-6 w-full">
         {contextHolder}
         <PageActionToolbar
           title="Analytics"
@@ -305,7 +305,7 @@ const Analytics: React.FC = () => {
       ) : null}
 
       {activeTab === 'career' && (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6">
           {careerError ? (
             <PageState
               tone="error"

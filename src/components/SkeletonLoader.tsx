@@ -28,7 +28,7 @@ export const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
 
 export const PageHeaderSkeleton: React.FC = () => {
   return (
-    <div className="page-toolbar mb-6 animate-in fade-in duration-300">
+    <div className="page-toolbar mb-6">
       <div className="page-toolbar-heading space-y-2">
         <SkeletonBlock width="200px" height="2.25rem" />
         <SkeletonBlock width="340px" height="1rem" className="opacity-75" />
@@ -79,7 +79,7 @@ export const MetricCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 })
 
 export const TableSkeleton: React.FC = () => {
   return (
-    <div className="enterprise-table-shell animate-in fade-in duration-300 bg-white">
+    <div className="enterprise-table-shell bg-white">
       {/* Fake Filter bar */}
       <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2.5 flex-1 max-w-lg">
@@ -170,7 +170,7 @@ export const TableSkeleton: React.FC = () => {
 
 export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-4">
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
@@ -221,7 +221,7 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
 
 export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 animate-in fade-in duration-300">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
       {Array.from({ length: count }).map((_, idx) => {
         const borderColors = [
           'border-blue-100/50',
@@ -276,7 +276,7 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
 
 export const CalendarSkeleton: React.FC = () => {
   return (
-    <div className="enterprise-section space-y-4 bg-white/50 p-4 animate-in fade-in duration-300 sm:space-y-5 sm:p-5">
+    <div className="enterprise-section space-y-4 bg-white/50 p-4 sm:space-y-5 sm:p-5">
       {/* Calendar Header */}
       <div className="flex items-center justify-between gap-4">
         <SkeletonBlock width="140px" height="1.75rem" />
@@ -340,7 +340,7 @@ export const CalendarSkeleton: React.FC = () => {
 
 export const AvailabilityTextSkeleton: React.FC = () => {
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6">
       {/* AvailabilityGeneratorCard Skeleton */}
       <div className="enterprise-card p-6 space-y-4 bg-white">
         <SkeletonBlock width="160px" height="1.25rem" />
@@ -414,7 +414,7 @@ export const AvailabilityTextSkeleton: React.FC = () => {
 
 export const SettingsSkeleton: React.FC = () => {
   return (
-    <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in duration-300">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <PageHeaderSkeleton />
 
       {/* Tab bar list */}
@@ -448,7 +448,7 @@ export const SettingsSkeleton: React.FC = () => {
 
 export const DocumentGridSkeleton: React.FC = () => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in duration-300">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, idx) => (
         <div key={idx} className="enterprise-card p-4 space-y-4 bg-white border border-slate-100">
           <div className="aspect-video bg-slate-50 border border-slate-100/50 rounded-xl flex items-center justify-center p-4">
@@ -478,7 +478,7 @@ export const DocumentGridSkeleton: React.FC = () => {
 
 export const OfferComparisonSkeleton: React.FC = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {Array.from({ length: 3 }).map((_, idx) => (
         <div key={idx} className="enterprise-card p-6 space-y-5 bg-white">
           <div className="space-y-2.5 text-center pb-4.5 border-b border-slate-100">

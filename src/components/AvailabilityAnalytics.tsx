@@ -233,7 +233,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 animate-in fade-in duration-500 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 items-start">
             {widgetOrder.map((id) => (
               <SortableItem
                 key={id}

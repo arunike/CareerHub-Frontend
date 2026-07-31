@@ -251,7 +251,7 @@ const JDReportsListPage: React.FC = () => {
 
         <div className="flex flex-col gap-6">
           {selectedIds.length > 0 && (
-            <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm">
               <BulkActionHeader
                 selectedCount={selectedIds.length}
                 totalCount={reports.length}

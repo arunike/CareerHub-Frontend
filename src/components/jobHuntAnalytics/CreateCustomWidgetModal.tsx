@@ -915,7 +915,7 @@ const CreateCustomWidgetModal = ({
                   </p>
                 </div>
               ) : currentPreviewData ? (
-                <div className="w-full animate-in fade-in duration-300">
+                <div className="w-full">
                   {currentWidgetType === 'metric' ? (
                     <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-6 relative">
                       <div className="flex items-center gap-4">

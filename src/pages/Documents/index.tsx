@@ -397,7 +397,7 @@ const Documents: React.FC = () => {
   ];
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+    <div className="space-y-6">
       <PageActionToolbar
         title="Document Vault"
         subtitle={`${documentsTotal.toLocaleString()} documents`}

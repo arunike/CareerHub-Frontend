@@ -1641,7 +1641,7 @@ const Settings: React.FC = () => {
             {isAddingCategory && !isCategoriesLocked && (
               <form
                 onSubmit={handleSaveCategory}
-                className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2"
+                className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200"
               >
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
@@ -1766,7 +1766,7 @@ const Settings: React.FC = () => {
             </div>
 
             {isAddingEmpType && !isEmpTypesLocked && (
-              <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                     <div>
@@ -1890,7 +1890,7 @@ const Settings: React.FC = () => {
             </div>
 
             {isAddingHolidayTab && !isHolidayTabsLocked && (
-              <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                     <div>
@@ -2024,7 +2024,7 @@ const Settings: React.FC = () => {
             </div>
 
             {isAddingAppStage && !isAppStagesLocked && (
-              <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200 animate-in fade-in slide-in-from-top-2">
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(140px,0.55fr)_auto] lg:items-end">
                     <div>

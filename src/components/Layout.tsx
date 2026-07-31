@@ -541,10 +541,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Mobile Overlay (Darken background when menu is open) */}
       {!screens.lg && !collapsed && (
-        <div
-          className="fixed inset-0 z-[1004] bg-black/40 animate-in fade-in"
-          onClick={() => setCollapsed(true)}
-        />
+        <div className="fixed inset-0 z-[1004] bg-black/40" onClick={() => setCollapsed(true)} />
       )}
 
       <AntLayout className="min-h-[100dvh] bg-transparent transition-all duration-300">

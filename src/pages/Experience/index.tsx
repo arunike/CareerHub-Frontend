@@ -1031,7 +1031,7 @@ const ExperiencePage: React.FC = () => {
   }, [filteredExperiences]);
 
   return (
-    <div style={{ padding: 0, width: '100%' }} className="animate-in fade-in duration-500">
+    <div style={{ padding: 0, width: '100%' }}>
       <div style={{ marginBottom: 24 }}>
         <PageActionToolbar
           title={<span className="whitespace-nowrap">Career History</span>}

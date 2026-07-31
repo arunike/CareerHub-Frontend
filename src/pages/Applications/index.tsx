@@ -1097,7 +1097,7 @@ const Applications = () => {
 
       {/* Bulk action bar */}
       {selectedRowKeys.length > 0 && (
-        <div className="enterprise-filter-bar mb-4 p-4 animate-in fade-in slide-in-from-top-2">
+        <div className="enterprise-filter-bar mb-4 p-4">
           <BulkActionHeader
             selectedCount={selectedRowKeys.length}
             totalCount={filteredData.length}
@@ -1358,10 +1358,7 @@ const Applications = () => {
         <div className="space-y-3">
           {loading ? (
             Array.from({ length: 3 }).map((_, idx) => (
-              <div
-                key={idx}
-                className="enterprise-card space-y-3 px-4 py-5 animate-in fade-in duration-300"
-              >
+              <div key={idx} className="enterprise-card space-y-3 px-4 py-5">
                 <div className="shimmer-bg h-4 w-5/12 rounded-full" />
                 <div className="shimmer-bg h-3 w-9/12 rounded-full" />
                 <div className="grid grid-cols-2 gap-2 pt-2">
