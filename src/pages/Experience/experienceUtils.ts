@@ -1,5 +1,53 @@
 import dayjs from 'dayjs';
-import type { EmploymentType } from '../../types';
+import type { EmploymentType, Experience } from '../../types';
+
+export const sortExperiencesForDisplay = (experiences: Experience[]): Experience[] =>
+  [...experiences].sort((a, b) => {
+    const aPinned = a.is_pinned ? 1 : 0;
+    const bPinned = b.is_pinned ? 1 : 0;
+    if (aPinned !== bPinned) return bPinned - aPinned;
+
+    const aPos = a.position !== null && a.position !== undefined ? a.position : Infinity;
+    const bPos = b.position !== null && b.position !== undefined ? b.position : Infinity;
+    if (aPos !== bPos) return aPos - bPos;
+
+    const aStart = a.start_date ? dayjs(a.start_date).valueOf() : 0;
+    const bStart = b.start_date ? dayjs(b.start_date).valueOf() : 0;
+    if (aStart !== bStart) return bStart - aStart;
+
+    const aCreated = a.created_at ? dayjs(a.created_at).valueOf() : (a.id ?? 0);
+    const bCreated = b.created_at ? dayjs(b.created_at).valueOf() : (b.id ?? 0);
+    return bCreated - aCreated;
+  });
+
+export const groupExperiencesByCompany = (sorted: Experience[]): Experience[][] => {
+  const seen = new Set<number>();
+  const groups: Experience[][] = [];
+
+  for (let i = 0; i < sorted.length; i++) {
+    const exp = sorted[i];
+    if (seen.has(exp.id!)) continue;
+
+    const company = exp.company.toLowerCase();
+    const group: Experience[] = [exp];
+    seen.add(exp.id!);
+
+    for (let j = i + 1; j < sorted.length; j++) {
+      const other = sorted[j];
+      if (!seen.has(other.id!) && other.company.toLowerCase() === company) {
+        group.push(other);
+        seen.add(other.id!);
+      }
+    }
+
+    groups.push(group);
+  }
+
+  return groups;
+};
+
+export const orderExperiencesAsDisplayed = (experiences: Experience[]): Experience[] =>
+  groupExperiencesByCompany(sortExperiencesForDisplay(experiences)).flat();
 
 export const toNullableNumber = (value: number | string | null | undefined): number | null => {
   if (value == null || value === '') return null;

@@ -78,6 +78,8 @@ import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
 import TeamHistoryModal from './TeamHistoryModal';
 import SchedulePhasesModal from './SchedulePhasesModal';
 import CompensationBreakdownModal from './CompensationBreakdownModal';
+import PayGrowthModal, { PayGrowthArrow } from './PayGrowthModal';
+import { buildPayGrowthSummary, formatDeltaAmount, formatDeltaPercent } from './payGrowth';
 import PromotionReviewModal from './PromotionReviewModal';
 import type { OfferLike as Offer } from '../OfferComparison/calculations';
 import type { RaiseEntry, TeamEntry } from '../../types';
@@ -92,9 +94,11 @@ import {
   DEFAULT_EMP_TYPES,
   DOT_CLASSES,
   getAvatarStyle,
+  groupExperiencesByCompany,
   nearlyEqual,
   parseExperienceDate,
   roundCompNumber,
+  sortExperiencesForDisplay,
   toNullableNumber,
 } from './experienceUtils';
 
@@ -153,6 +157,7 @@ const ExperiencePage: React.FC = () => {
   const [compBreakdownExp, setCompBreakdownExp] = useState<Experience | null>(null);
   const [overallCompBreakdownOpen, setOverallCompBreakdownOpen] = useState(false);
   const [overallInternshipBreakdownOpen, setOverallInternshipBreakdownOpen] = useState(false);
+  const [payGrowthOpen, setPayGrowthOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [aiProviderConfigured, setAiProviderConfigured] = useState(false);
   const [promotionReviewExp, setPromotionReviewExp] = useState<Experience | null>(null);
@@ -986,49 +991,17 @@ const ExperiencePage: React.FC = () => {
     };
   }, [experiences, internshipCompSnapshots]);
 
-  const groupedExperiences = useMemo((): Experience[][] => {
-    const seen = new Set<number>();
-    const groups: Experience[][] = [];
+  const payGrowth = useMemo(
+    () => buildPayGrowthSummary(experiences, getCompensationSnapshot),
+    [experiences, getCompensationSnapshot]
+  );
 
-    const sortedList = [...filteredExperiences].sort((a, b) => {
-      const aPinned = a.is_pinned ? 1 : 0;
-      const bPinned = b.is_pinned ? 1 : 0;
-      if (aPinned !== bPinned) return bPinned - aPinned;
+  const payGrowthHeadline = payGrowth.defaultComparison?.headline ?? null;
 
-      const aPos = a.position !== null && a.position !== undefined ? a.position : Infinity;
-      const bPos = b.position !== null && b.position !== undefined ? b.position : Infinity;
-      if (aPos !== bPos) return aPos - bPos;
-
-      const aStart = a.start_date ? dayjs(a.start_date).valueOf() : 0;
-      const bStart = b.start_date ? dayjs(b.start_date).valueOf() : 0;
-      if (aStart !== bStart) return bStart - aStart;
-
-      const aCreated = a.created_at ? dayjs(a.created_at).valueOf() : a.id || 0;
-      const bCreated = b.created_at ? dayjs(b.created_at).valueOf() : b.id || 0;
-      return bCreated - aCreated;
-    });
-
-    for (let i = 0; i < sortedList.length; i++) {
-      const exp = sortedList[i];
-      if (seen.has(exp.id!)) continue;
-
-      const company = exp.company.toLowerCase();
-      const group: Experience[] = [exp];
-      seen.add(exp.id!);
-
-      for (let j = i + 1; j < sortedList.length; j++) {
-        const other = sortedList[j];
-        if (!seen.has(other.id!) && other.company.toLowerCase() === company) {
-          group.push(other);
-          seen.add(other.id!);
-        }
-      }
-
-      groups.push(group);
-    }
-
-    return groups;
-  }, [filteredExperiences]);
+  const groupedExperiences = useMemo(
+    (): Experience[][] => groupExperiencesByCompany(sortExperiencesForDisplay(filteredExperiences)),
+    [filteredExperiences]
+  );
 
   return (
     <div style={{ padding: 0, width: '100%' }}>
@@ -1243,6 +1216,46 @@ const ExperiencePage: React.FC = () => {
                           )}
                         </div>
                       </div>
+
+                      {payGrowthHeadline && (
+                        <div className="border-t border-slate-100 pt-2.5 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">
+                                  Growth
+                                </span>
+                                <span
+                                  className={`flex items-center gap-1 text-[16px] font-bold leading-none ${
+                                    payGrowthHeadline.amount > 0
+                                      ? 'text-emerald-600'
+                                      : payGrowthHeadline.amount < 0
+                                        ? 'text-rose-600'
+                                        : 'text-slate-500'
+                                  }`}
+                                >
+                                  <PayGrowthArrow delta={payGrowthHeadline} />
+                                  {formatDeltaPercent(payGrowthHeadline)}
+                                </span>
+                              </div>
+                              <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                                {formatDeltaAmount(payGrowthHeadline)} vs{' '}
+                                {payGrowth.defaultComparison?.previousExp.company ??
+                                  'previous role'}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setPayGrowthOpen(true)}
+                              title="View pay growth breakdown"
+                              aria-label="View pay growth breakdown"
+                              className="shrink-0 rounded-full border border-sky-200 bg-sky-50/80 px-2.5 py-1 text-[10px] font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                            >
+                              Growth
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2141,6 +2154,15 @@ const ExperiencePage: React.FC = () => {
           base={fullTimeCompSummary.base}
           bonus={fullTimeCompSummary.bonus}
           equity={fullTimeCompSummary.equity}
+        />
+      )}
+
+      {payGrowthOpen && (
+        <PayGrowthModal
+          open={payGrowthOpen}
+          onClose={() => setPayGrowthOpen(false)}
+          summary={payGrowth}
+          getSnapshot={getCompensationSnapshot}
         />
       )}
 
