@@ -349,7 +349,7 @@ const CompensationFields: React.FC<Props> = ({
 
             <div className="flex items-center justify-between gap-2">
               <p className="min-w-0 truncate text-[11px] leading-5 text-gray-400">
-                {formatPct(vestingTotalPct)}% vested · Y1 ${yearOneEquity.toLocaleString()}
+                Schedule totals {formatPct(vestingTotalPct)}% · Y1 ${yearOneEquity.toLocaleString()}
               </p>
               <Popover
                 trigger="click"

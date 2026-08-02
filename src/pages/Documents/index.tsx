@@ -267,6 +267,8 @@ const Documents: React.FC = () => {
         return 'blue';
       case 'COVER_LETTER':
         return 'green';
+      case 'OFFER_LETTER':
+        return 'gold';
       case 'PORTFOLIO':
         return 'purple';
       default:
@@ -574,6 +576,7 @@ const Documents: React.FC = () => {
               options={[
                 { value: 'RESUME', label: 'Resume' },
                 { value: 'COVER_LETTER', label: 'Cover Letter' },
+                { value: 'OFFER_LETTER', label: 'Offer Letter' },
                 { value: 'PORTFOLIO', label: 'Portfolio' },
                 { value: 'OTHER', label: 'Other' },
               ]}

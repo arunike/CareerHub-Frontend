@@ -302,6 +302,8 @@ export const rollbackGoogleSheetSyncRun = (id: number, runId: number) =>
 
 export const getOffers = () => api.get('/career/offers/');
 export const createOffer = (data: Record<string, unknown>) => api.post('/career/offers/', data);
+export const exportOffers = (format: string) =>
+  api.get(`/career/offers/export/?fmt=${format}`, { responseType: 'blob' });
 export const updateOffer = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/offers/${id}/`, data);
 export const deleteOffer = (id: number) => api.delete(`/career/offers/${id}/`);
@@ -357,6 +359,7 @@ export const getDocuments = (params?: {
   page_size?: number;
   search?: string;
   document_type?: string;
+  application?: number;
   year?: number | 'all';
   [key: string]: unknown;
 }) => api.get('/career/documents/', { params });

@@ -140,6 +140,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
           <Select>
             <Option value="RESUME">Resume</Option>
             <Option value="COVER_LETTER">Cover Letter</Option>
+            <Option value="OFFER_LETTER">Offer Letter</Option>
             <Option value="PORTFOLIO">Portfolio</Option>
             <Option value="OTHER">Other</Option>
           </Select>

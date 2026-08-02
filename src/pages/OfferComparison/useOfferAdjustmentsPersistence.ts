@@ -1,54 +1,68 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { getUserSettings, updateUserSettings } from '../../api/availability';
 import type { MaritalStatus, SimulatedOffer } from './calculations';
 import type { SavedOfferAdjustmentSettings } from './offerAdjustmentsTypes';
 
 type Params = {
-  storageKey: string;
   normalizeSimulatedOffers: (offers: SimulatedOffer[]) => SimulatedOffer[];
 };
 
-export const useOfferAdjustmentsPersistence = ({
-  storageKey,
-  normalizeSimulatedOffers,
-}: Params) => {
+export const useOfferAdjustmentsPersistence = ({ normalizeSimulatedOffers }: Params) => {
   const [maritalStatus, setMaritalStatus] = useState<MaritalStatus>('SINGLE');
   const [simulatedOffers, setSimulatedOffers] = useState<SimulatedOffer[]>([]);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isSettingsHydrated, setIsSettingsHydrated] = useState(false);
 
+  // Latest values, so saving never depends on a stale closure.
+  const latest = useRef({ maritalStatus, simulatedOffers });
+  latest.current = { maritalStatus, simulatedOffers };
+
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
+    let cancelled = false;
 
-      const saved = JSON.parse(raw) as Partial<SavedOfferAdjustmentSettings>;
-      if (typeof saved.maritalStatus === 'string') {
-        setMaritalStatus(saved.maritalStatus as MaritalStatus);
-      }
-      if (Array.isArray(saved.simulatedOffers)) {
-        setSimulatedOffers(normalizeSimulatedOffers(saved.simulatedOffers as SimulatedOffer[]));
-      }
-      if (typeof saved.savedAt === 'string') {
-        setLastSavedAt(saved.savedAt);
-      }
-    } catch (error) {
-      console.error('Failed to load saved offer adjustments', error);
-    } finally {
-      setIsSettingsHydrated(true);
-    }
-  }, [storageKey, normalizeSimulatedOffers]);
+    const hydrate = async () => {
+      try {
+        const response = await getUserSettings();
+        if (cancelled) return;
 
-  const saveAdjustments = useCallback(() => {
+        const saved = (response.data?.offer_adjustment_settings ??
+          null) as Partial<SavedOfferAdjustmentSettings> | null;
+        if (!saved) return;
+
+        if (typeof saved.maritalStatus === 'string') {
+          setMaritalStatus(saved.maritalStatus as MaritalStatus);
+        }
+        if (Array.isArray(saved.simulatedOffers)) {
+          setSimulatedOffers(normalizeSimulatedOffers(saved.simulatedOffers as SimulatedOffer[]));
+        }
+        if (typeof saved.savedAt === 'string') {
+          setLastSavedAt(saved.savedAt);
+        }
+      } catch (error) {
+        console.error('Failed to load saved offer adjustments', error);
+      } finally {
+        if (!cancelled) setIsSettingsHydrated(true);
+      }
+    };
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [normalizeSimulatedOffers]);
+
+  const saveAdjustments = useCallback(async () => {
     const nowIso = new Date().toISOString();
     const payload: SavedOfferAdjustmentSettings = {
-      maritalStatus,
-      simulatedOffers,
+      maritalStatus: latest.current.maritalStatus,
+      simulatedOffers: latest.current.simulatedOffers,
       savedAt: nowIso,
     };
-    localStorage.setItem(storageKey, JSON.stringify(payload));
+
+    await updateUserSettings({ offer_adjustment_settings: payload } as Record<string, unknown>);
     setLastSavedAt(nowIso);
     return nowIso;
-  }, [maritalStatus, simulatedOffers, storageKey]);
+  }, []);
 
   return {
     maritalStatus,

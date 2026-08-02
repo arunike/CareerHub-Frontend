@@ -3,6 +3,7 @@ import { message } from 'antd';
 import ConfirmModal from '../../components/ConfirmModal';
 import ModalShell from '../../components/ModalShell';
 import OfferFormFields from './OfferFormFields';
+import OfferDocumentsPanel from './OfferDocumentsPanel';
 import OfferFormModalFooter from './components/OfferFormModalFooter';
 import {
   type ApplicationLike as Application,
@@ -387,6 +388,10 @@ const EditOfferModal = ({
             locationPlaceholder="e.g. San Jose, CA"
           />
         </fieldset>
+
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+          <OfferDocumentsPanel applicationId={editingOffer.application} />
+        </div>
       </ModalShell>
       <ConfirmModal
         isOpen={isDiscardConfirmOpen}

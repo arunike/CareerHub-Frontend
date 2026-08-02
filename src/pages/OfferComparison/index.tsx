@@ -7,6 +7,7 @@ import {
   updateApplication,
   deleteApplication,
   createOfferDecisionSnapshot,
+  exportOffers,
   getTransitionAdvice,
   type OfferDecisionSnapshot,
   type OfferDecisionSnapshotPayload,
@@ -77,8 +78,6 @@ const normalizeDecisionScore = (value: unknown) => {
 
 const snapshotValue = (snapshot: Record<string, unknown>, key: string) =>
   Object.prototype.hasOwnProperty.call(snapshot, key) ? snapshot[key] : undefined;
-
-const OFFER_ADJUSTMENT_SETTINGS_KEY = 'careerhub.offerAdjustments.v1';
 
 const defaultScenarioDraft = (): SimulatedOffer => ({
   id: '',
@@ -267,26 +266,8 @@ const OfferComparison = () => {
       const offersData = offersResp.data || [];
       setOffers(offersData);
 
-      let simulatedOffersLocal: any[] = [];
-      try {
-        const raw = localStorage.getItem(OFFER_ADJUSTMENT_SETTINGS_KEY);
-        if (raw) {
-          const saved = JSON.parse(raw);
-          if (Array.isArray(saved.simulatedOffers)) {
-            simulatedOffersLocal = saved.simulatedOffers;
-          }
-        }
-      } catch (err) {
-        console.error('Failed to read simulated offers from local storage', err);
-      }
-
       const linkedAppIds = Array.from(
-        new Set(
-          [
-            ...offersData.map((o: any) => o.application),
-            ...simulatedOffersLocal.map((o: any) => o.application),
-          ].filter(Boolean)
-        )
+        new Set(offersData.map((o: any) => o.application).filter(Boolean))
       ) as number[];
 
       const appsResp =
@@ -660,6 +641,14 @@ const OfferComparison = () => {
     setRaiseHistoryOffer((prev) => (prev ? { ...prev, raise_history: entries } : prev));
   };
 
+  const handleExportOffers = async (format: string) => {
+    const response = await exportOffers(format);
+    return {
+      data: response.data,
+      headers: response.headers as unknown as Record<string, string>,
+    };
+  };
+
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
   };
@@ -702,10 +691,52 @@ const OfferComparison = () => {
     setSimulatedOffers,
     isSettingsHydrated,
     saveAdjustments,
-  } = useOfferAdjustmentsPersistence({
-    storageKey: OFFER_ADJUSTMENT_SETTINGS_KEY,
-    normalizeSimulatedOffers,
-  });
+  } = useOfferAdjustmentsPersistence({ normalizeSimulatedOffers });
+
+  useEffect(() => {
+    if (!isSettingsHydrated) return;
+
+    const missingIds = Array.from(
+      new Set(
+        simulatedOffers
+          .map((offer) => offer.application)
+          .filter((id): id is number => typeof id === 'number')
+      )
+    ).filter((id) => !applications.some((app) => app.id === id));
+
+    if (missingIds.length === 0) return;
+
+    let cancelled = false;
+    void getApplications({ ids: missingIds.join(',') })
+      .then((response) => {
+        if (cancelled) return;
+        const fetched = (response.data || []).map(
+          (app: { company_details?: { name: string }; [key: string]: unknown }) => ({
+            ...app,
+            company_name: app.company_details?.name || '',
+          })
+        );
+        setApplications((prev) => {
+          const known = new Set(prev.map((app) => app.id));
+          const additions = fetched.filter((app: Application) => !known.has(app.id));
+          return additions.length > 0 ? [...prev, ...additions] : prev;
+        });
+      })
+      .catch((error) => console.error('Failed to load scenario applications', error));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSettingsHydrated, simulatedOffers, applications]);
+
+  const handleSaveAdjustments = useCallback(() => {
+    void saveAdjustments()
+      .then(() => messageApi.success('Scenarios and adjustments saved'))
+      .catch((error) => {
+        console.error('Failed to save offer adjustments', error);
+        messageApi.error('Could not save scenarios and adjustments');
+      });
+  }, [saveAdjustments, messageApi]);
 
   const handleAddLoadedApplication = useCallback((app: Application) => {
     setApplications((prev) => {
@@ -1321,6 +1352,8 @@ const OfferComparison = () => {
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         availableYears={availableYears}
+        onExport={handleExportOffers}
+        exportFilename="offers"
         primaryActionIcon={<PlusOutlined />}
         singleRowDesktop
       />
@@ -1409,7 +1442,7 @@ const OfferComparison = () => {
         maritalStatus={maritalStatus}
         setMaritalStatus={setMaritalStatus}
         maritalStatusOptions={maritalStatusOptions}
-        saveAdjustments={saveAdjustments}
+        saveAdjustments={handleSaveAdjustments}
         onEditScenario={(id) => {
           const target = simulatedOffers.find((offer) => String(offer.id) === id);
           if (!target) return;

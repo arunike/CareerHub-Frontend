@@ -313,7 +313,7 @@ export interface Document {
   title: string;
   file: string | null;
   file_name?: string | null;
-  document_type: 'RESUME' | 'COVER_LETTER' | 'PORTFOLIO' | 'OTHER';
+  document_type: 'RESUME' | 'COVER_LETTER' | 'OFFER_LETTER' | 'PORTFOLIO' | 'OTHER';
   application?: number | null;
   root_document?: number | null;
   root_document_id?: number;
