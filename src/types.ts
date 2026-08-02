@@ -353,6 +353,20 @@ export interface ApplicationTimelineEntry {
   updated_at: string;
 }
 
+export interface ApplicationContact {
+  id: number;
+  application: number | null;
+  experience: number | null;
+  // True when shown on an experience but owned by the application it came from.
+  inherited?: boolean;
+  name: string;
+  email?: string;
+  notes?: string;
+  is_locked?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ApplicationTimelineAnalytics {
   average_time_to_interview_days: number | null;
   time_to_interview_sample_size: number;
@@ -533,6 +547,7 @@ export interface SchedulePhase {
 }
 
 export interface Experience {
+  work_email?: string;
   id?: number;
   title: string;
   company: string;

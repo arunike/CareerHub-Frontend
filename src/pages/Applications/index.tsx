@@ -85,6 +85,7 @@ import {
   getCoreImportMapping,
   getImportFieldValue as readImportFieldValue,
 } from './applicationImportReview';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -515,7 +516,7 @@ const Applications = () => {
       messageApi.success('Job details extracted');
     } catch (error: unknown) {
       const apiError = error as { response?: { data?: { error?: string } } };
-      messageApi.error(apiError?.response?.data?.error || 'Failed to extract this job posting');
+      messageApi.error(getApiErrorMessage(apiError, 'Failed to extract this job posting'));
       console.error(error);
     } finally {
       setJobImportLoading(false);
@@ -551,7 +552,7 @@ const Applications = () => {
         response?: { data?: { error?: string } };
       };
       if (formError?.errorFields) return;
-      messageApi.error(formError?.response?.data?.error || 'Failed to create imported application');
+      messageApi.error(getApiErrorMessage(formError, 'Failed to create imported application'));
       console.error(error);
     } finally {
       setJobImportSaving(false);
@@ -631,7 +632,7 @@ const Applications = () => {
           setApplicationImportMapping(getCoreImportMapping(response.data.preview.mapping));
         })
         .catch((error) => {
-          messageApi.error(error?.response?.data?.error || 'Import preview failed');
+          messageApi.error(getApiErrorMessage(error, 'Import preview failed'));
         })
         .finally(() => {
           setApplicationImportPreviewing(false);
@@ -722,7 +723,7 @@ const Applications = () => {
       closeImportModal();
       fetchApplications();
     } catch (error: any) {
-      messageApi.error(error?.response?.data?.error || 'Failed to apply import');
+      messageApi.error(getApiErrorMessage(error, 'Failed to apply import'));
     } finally {
       setApplicationImportApplying(false);
     }

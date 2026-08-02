@@ -167,6 +167,14 @@ export const updateApplicationTimelineEntry = (
 ) => api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const deleteApplicationTimelineEntry = (id: number) =>
   api.delete(`/career/application-timeline/${id}/`);
+export const getContacts = (scope: { application?: number; experience?: number }) =>
+  api.get('/career/application-contacts/', { params: scope });
+export const createContact = (data: Record<string, unknown>) =>
+  api.post('/career/application-contacts/', data);
+export const updateContact = (id: number, data: Record<string, unknown>) =>
+  api.patch(`/career/application-contacts/${id}/`, data);
+export const deleteContact = (id: number) => api.delete(`/career/application-contacts/${id}/`);
+
 export const getApplicationTimelineAnalytics = () =>
   api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
 

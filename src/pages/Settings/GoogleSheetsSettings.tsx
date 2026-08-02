@@ -58,6 +58,7 @@ import type {
 import EditableNumberInput from '../../components/EditableNumberInput';
 import FriendlyTimeInput from '../../components/FriendlyTimeInput';
 import { DEFAULT_TIMEZONE, TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type Draft = {
   id?: number;
@@ -851,7 +852,7 @@ const GoogleSheetsSettings: React.FC = () => {
       openHistory(config);
       fetchConfigs();
     } catch (error: any) {
-      messageApi.error(error.response?.data?.error || 'Failed to rollback run');
+      messageApi.error(getApiErrorMessage(error, 'Failed to rollback run'));
     }
   };
 

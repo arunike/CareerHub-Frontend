@@ -45,6 +45,7 @@ import {
 } from './calculations';
 import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
 const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
@@ -187,9 +188,11 @@ const OfferComparison = () => {
     } catch (err: any) {
       console.error(err);
       setAdvisorError(
-        err.response?.data?.error ||
+        getApiErrorMessage(
+          err,
           err.message ||
-          'Failed to get career advice. Make sure your AI provider is configured in Settings.'
+            'Failed to get career advice. Make sure your AI provider is configured in Settings.'
+        )
       );
     } finally {
       setIsAdvisorLoading(false);

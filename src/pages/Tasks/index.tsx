@@ -29,6 +29,7 @@ import RowActions from '../../components/RowActions';
 import ModalShell from '../../components/ModalShell';
 import { PageState } from '../../components/PageState';
 import { parseSmartReminder } from '../../utils/smartReminder';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type TaskStatus = Task['status'];
 const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
@@ -271,7 +272,7 @@ const Tasks: React.FC = () => {
     } catch (error: unknown) {
       const apiError = error as ApiError;
       if (apiError?.errorFields) return;
-      messageApi.error(apiError?.response?.data?.error || 'Failed to save action item');
+      messageApi.error(getApiErrorMessage(apiError, 'Failed to save action item'));
       console.error(error);
     } finally {
       setSaving(false);

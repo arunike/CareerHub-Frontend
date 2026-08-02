@@ -26,6 +26,7 @@ import {
   LinkOutlined,
   DollarOutlined,
   TeamOutlined,
+  UserOutlined,
   PushpinOutlined,
   PushpinFilled,
   LockOutlined,
@@ -76,6 +77,7 @@ import PageActionToolbar from '../../components/PageActionToolbar';
 import { PageState } from '../../components/PageState';
 import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
 import TeamHistoryModal from './TeamHistoryModal';
+import ContactsPanel from '../../components/ContactsPanel';
 import SchedulePhasesModal from './SchedulePhasesModal';
 import CompensationBreakdownModal from './CompensationBreakdownModal';
 import PayGrowthModal, { PayGrowthArrow } from './PayGrowthModal';
@@ -101,6 +103,7 @@ import {
   sortExperiencesForDisplay,
   toNullableNumber,
 } from './experienceUtils';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
@@ -153,6 +156,7 @@ const ExperiencePage: React.FC = () => {
   const [allOffers, setAllOffers] = useState<Offer[]>([]);
   const [raiseHistoryExp, setRaiseHistoryExp] = useState<Experience | null>(null);
   const [teamHistoryExp, setTeamHistoryExp] = useState<Experience | null>(null);
+  const [contactsExp, setContactsExp] = useState<Experience | null>(null);
   const [schedulePhasesExp, setSchedulePhasesExp] = useState<Experience | null>(null);
   const [compBreakdownExp, setCompBreakdownExp] = useState<Experience | null>(null);
   const [overallCompBreakdownOpen, setOverallCompBreakdownOpen] = useState(false);
@@ -368,7 +372,7 @@ const ExperiencePage: React.FC = () => {
         void maybeRefineSkillsWithAI(savedExperience, skillsManuallyEdited);
       }
     } catch (err: any) {
-      message.error(err.response?.data?.detail || 'Failed to save experience');
+      message.error(getApiErrorMessage(err, 'Failed to save experience'));
       throw err;
     }
   };
@@ -379,7 +383,7 @@ const ExperiencePage: React.FC = () => {
       message.success('Experience deleted');
       fetchExperiences();
     } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to delete experience');
+      message.error(getApiErrorMessage(err, 'Failed to delete experience'));
     }
   };
 
@@ -424,7 +428,7 @@ const ExperiencePage: React.FC = () => {
           await Promise.all([fetchExperiences(), fetchOffersData()]);
         })
         .catch((err) => {
-          message.error(err.response?.data?.error || 'Import failed');
+          message.error(getApiErrorMessage(err, 'Import failed'));
         });
       return false;
     },
@@ -440,7 +444,7 @@ const ExperiencePage: React.FC = () => {
       );
       fetchExperiences();
     } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to delete company experiences');
+      message.error(getApiErrorMessage(err, 'Failed to delete company experiences'));
     }
   };
 
@@ -1404,7 +1408,7 @@ const ExperiencePage: React.FC = () => {
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <Title
                                 level={3}
-                                className="!mb-0 text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight"
+                                className="!mb-0 min-w-0 break-words text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight"
                               >
                                 {exp.title}
                               </Title>
@@ -1538,7 +1542,7 @@ const ExperiencePage: React.FC = () => {
                                 ) : null;
                               })()}
                           </div>
-                          <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-auto lg:justify-end">
+                          <div className="experience-card-actions flex w-full min-w-0 flex-wrap items-center justify-start gap-2 lg:w-auto lg:max-w-[55%] lg:justify-end">
                             <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 flex flex-wrap items-center gap-2 opacity-100">
                               <Tooltip title="Evaluate promotion readiness for this role">
                                 <Button
@@ -1558,6 +1562,16 @@ const ExperiencePage: React.FC = () => {
                                   className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
                                 >
                                   Team Norms
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="People you worked with, plus anyone from the application that led here">
+                                <Button
+                                  size="small"
+                                  icon={<UserOutlined />}
+                                  onClick={() => setContactsExp(exp)}
+                                  className="text-slate-600 border-slate-200 bg-slate-50 hover:!bg-slate-100 hover:!border-slate-300 hover:!text-slate-700 whitespace-nowrap"
+                                >
+                                  Contacts
                                 </Button>
                               </Tooltip>
                               {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
@@ -1910,7 +1924,7 @@ const ExperiencePage: React.FC = () => {
                                         ) : null;
                                       })()}
                                   </div>
-                                  <div className="experience-card-actions flex w-full shrink-0 flex-wrap items-center justify-start gap-2 opacity-100 transition-all duration-200 lg:ml-2 lg:w-auto lg:justify-end lg:opacity-0 lg:group-hover:opacity-100">
+                                  <div className="experience-card-actions flex w-full min-w-0 flex-wrap items-center justify-start gap-2 opacity-100 transition-all duration-200 lg:ml-2 lg:w-auto lg:max-w-[55%] lg:justify-end lg:opacity-0 lg:group-hover:opacity-100">
                                     <Tooltip title="Evaluate promotion readiness for this role">
                                       <Button
                                         size="small"
@@ -2080,6 +2094,31 @@ const ExperiencePage: React.FC = () => {
           roleTitle={raiseHistoryExp.title}
           onSave={handleSaveRaiseHistory}
         />
+      )}
+
+      {contactsExp && (
+        <Modal
+          open={!!contactsExp}
+          onCancel={() => setContactsExp(null)}
+          width={640}
+          footer={null}
+          title={
+            <div className="flex items-center gap-2">
+              <UserOutlined className="text-slate-500" />
+              <span>
+                Contacts
+                <span className="ml-2 font-normal text-slate-500">
+                  {contactsExp.title} @ {contactsExp.company}
+                </span>
+              </span>
+            </div>
+          }
+        >
+          <ContactsPanel
+            experienceId={contactsExp.id!}
+            description="People you worked with here, plus anyone recorded on the application that led to this role."
+          />
+        </Modal>
       )}
 
       {teamHistoryExp && (

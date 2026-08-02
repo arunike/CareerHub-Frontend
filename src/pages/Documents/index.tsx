@@ -27,6 +27,7 @@ import RowActions from '../../components/RowActions';
 import { PageState } from '../../components/PageState';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getApiErrorMessage } from '../../utils/apiError';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
@@ -194,7 +195,7 @@ const Documents: React.FC = () => {
       );
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      message.error(apiError?.response?.data?.error || 'Failed to update lock status');
+      message.error(getApiErrorMessage(apiError, 'Failed to update lock status'));
       console.error(error);
     }
   };
@@ -228,7 +229,7 @@ const Documents: React.FC = () => {
     } catch (error: unknown) {
       const apiError = error as ApiError;
       if (apiError?.errorFields) return;
-      message.error(apiError?.response?.data?.error || 'Failed to update document');
+      message.error(getApiErrorMessage(apiError, 'Failed to update document'));
       console.error(error);
     } finally {
       setSaving(false);
@@ -313,7 +314,7 @@ const Documents: React.FC = () => {
       fetchDocuments();
     } catch (error: unknown) {
       const apiError = error as ApiError;
-      message.error(apiError?.response?.data?.error || 'Failed to upload new version');
+      message.error(getApiErrorMessage(apiError, 'Failed to upload new version'));
       console.error(error);
     } finally {
       setUploadingVersion(false);

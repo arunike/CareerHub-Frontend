@@ -22,6 +22,7 @@ import {
 import { downloadDocument } from '../../api';
 import type { Document } from '../../types';
 import type { CareerApplication } from '../../types/application';
+import ContactsPanel from '../../components/ContactsPanel';
 import ApplicationPrepWorkspace from './ApplicationPrepWorkspace';
 import ApplicationTimelinePanel from './ApplicationTimelinePanel';
 import { formatDateOnly } from '../../utils/dateOnly';
@@ -237,6 +238,11 @@ const ApplicationDetailDrawer = ({
                 children: (
                   <ApplicationTimelinePanel application={application} appStages={appStages} />
                 ),
+              },
+              {
+                key: 'contacts',
+                label: 'Contacts',
+                children: <ContactsPanel applicationId={application.id} />,
               },
               {
                 key: 'documents',

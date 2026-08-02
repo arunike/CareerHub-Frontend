@@ -159,6 +159,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
           title: experience.title,
           company: experience.company,
           level: experience.level || '',
+          work_email: experience.work_email || '',
           location: experience.location,
           dates: experience.start_date
             ? [
@@ -332,6 +333,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
           title: values.title,
           company: values.company,
           level: values.level || '',
+          work_email: values.work_email || '',
           location: values.location,
           employment_type: selectedEmploymentType,
           start_date,
@@ -611,6 +613,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             </Form.Item>
             <Form.Item name="level" label="Level">
               <Input placeholder="e.g. L5, Senior, Staff, IC3" />
+            </Form.Item>
+            <Form.Item name="work_email" label="Work Email">
+              <Input type="email" placeholder="you@company.com" />
             </Form.Item>
             <Form.Item name="employment_type" label="Employment Type">
               <Select>

@@ -4,6 +4,7 @@ import Modal from '../../components/MobileModal';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { createDocument, getApplicationOptions } from '../../api';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 interface UploadDocumentModalProps {
   visible: boolean;
@@ -88,7 +89,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       if (error.errorFields) {
         return;
       }
-      message.error(error.response?.data?.error || 'Failed to upload document');
+      message.error(getApiErrorMessage(error, 'Failed to upload document'));
     } finally {
       setLoading(false);
     }
