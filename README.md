@@ -73,7 +73,8 @@ The **Frontend** is a React-based single-page application that provides an intui
 - **Adjustments Panel**: Tax/COL/rent/commute/food-perk adjustments; per-offer overrides; persisted locally
 - **Edit Offer Modal**: Shared form for real and scenario offers (bonus $/% toggle, equity total+vesting mode, benefit items)
 - **Advanced Decision Signals**: Dedicated editor for optional visa sponsorship, Day 1 GC, growth, WLB, brand, and manager/team fit inputs
-- **Add Current Job**: Quick baseline creation
+- **Set as Current**: Any offer row can be toggled as the current-job baseline, which clears the flag from every other offer. This is the only way to designate a baseline; there is no separate "Add Current Job" flow
+- **Year Filter**: Groups offers by the linked application's `date_applied`, not the offer record's `created_at`, so offers backfilled from an earlier job search stay under the year you actually applied. Falls back to `created_at` when no applied date is available
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
@@ -362,7 +363,7 @@ frontend/
 │   │   ├── reportStorage.ts         # Local fallback CRUD for JD match reports
 │   │   ├── coverLetterStorage.ts    # Local fallback CRUD for cover letters
 │   │   ├── negotiationStorage.ts    # Local fallback CRUD for negotiation results
-│   │   ├── yearFilter.ts            # Year filter helpers
+│   │   ├── yearFilter.ts            # Year filter helpers (accept a field key or an accessor)
 │   │   ├── offerDeadline.ts         # Offer deadline countdown, shared by the offers page and notification bell
 │   │   └── ...
 │   │
