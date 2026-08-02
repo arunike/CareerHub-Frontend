@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Input, Typography, Space, message, Tag } from 'antd';
 import Modal from '../../components/MobileModal';
 import {
@@ -27,6 +27,11 @@ const wordCount = (text: string) => (text.trim() ? text.trim().split(/\s+/).leng
 const CoverLetterModal = ({ application, open, onClose }: Props) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [jdText, setJdText] = useState('');
+
+  // The posting is stored on the application, so there is no reason to paste it again.
+  useEffect(() => {
+    if (open) setJdText(application.job_description || '');
+  }, [open, application.job_description]);
   const [coverLetter, setCoverLetter] = useState('');
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);

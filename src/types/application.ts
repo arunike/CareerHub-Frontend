@@ -9,6 +9,8 @@ export interface CareerApplication {
   created_at: string;
   updated_at: string;
   job_link?: string;
+  // Full posting text, kept because postings get taken down mid-process.
+  job_description?: string;
   salary_range?: string;
   location?: string;
   office_location?: string;

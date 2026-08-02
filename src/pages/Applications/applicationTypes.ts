@@ -38,6 +38,7 @@ export type ApplicationFormValues = {
   employment_type?: string;
   level?: string;
   site_link?: string;
+  job_description?: string;
   salary_range?: string;
   office_location?: string;
   visa_sponsorship?: string;

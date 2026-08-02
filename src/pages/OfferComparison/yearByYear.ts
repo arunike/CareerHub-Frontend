@@ -189,14 +189,12 @@ export const buildYearByYearProjections = (
 ): OfferProjection[] => rows.map((row) => buildOfferProjection(row, equityGrowthPct));
 
 export interface MatchGap {
-  // The offer being measured against — the highest four-year total.
   leader: string;
   candidate: string;
-  // Four-year shortfall on the selected basis.
   totalGap: number;
-  // Extra annual base needed, since base repeats every projected year.
+  // Divided across the projected years because base repeats; extraGrant is the
+  // same shortfall taken as equity instead.
   perYearBase: number;
-  // Extra total grant needed, spread across the same window.
   extraGrant: number;
 }
 

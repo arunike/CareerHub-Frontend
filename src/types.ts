@@ -249,6 +249,8 @@ export interface GoogleSheetImportReviewItem {
   salary_range: string;
   location: string;
   job_link: string;
+  // Full posting text, kept because postings get taken down mid-process.
+  job_description?: string;
   local_object_id?: number | null;
   duplicate_row?: number | null;
   duplicate_candidate?: {

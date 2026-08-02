@@ -24,7 +24,6 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(Number.isFinite(value) ? value : 0);
 
-/** Same year-1 figures as the chart, in a scannable table. */
 const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
   if (data.length === 0) return null;
 

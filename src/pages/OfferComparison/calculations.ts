@@ -354,7 +354,7 @@ export interface ApplicationLike {
   id: number;
   company_name: string;
   role_title: string;
-  /** When the application was submitted — the year an offer is grouped under. */
+  // When the application was submitted — the year an offer is grouped under.
   date_applied?: string | null;
   location?: string;
   office_location?: string;

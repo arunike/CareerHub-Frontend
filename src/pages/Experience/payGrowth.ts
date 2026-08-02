@@ -16,17 +16,12 @@ export interface PayComponentDelta {
   amount: number;
   percent: number | null;
   kind: 'changed' | 'new' | 'dropped' | 'flat';
-  /** Rendered with a $/hr suffix and 2 decimals rather than whole dollars. */
+  // Rendered with a $/hr suffix and 2 decimals rather than whole dollars.
   isRate: boolean;
 }
 
 export type ComparisonMode = 'salary' | 'hourly' | 'mixed';
 
-/**
- * A text field shown side by side rather than as a delta. Levels are free text and
- * are not comparable across companies (Adobe "P30" vs TikTok "1-2"), so these are
- * reported as-is with no ranking implied.
- */
 export interface RoleAttribute {
   key: 'title' | 'level';
   label: string;
@@ -42,14 +37,14 @@ export interface PayComparison {
   attributes: RoleAttribute[];
   components: PayComponentDelta[];
   headline: PayComponentDelta;
-  /** Per-side plain-language derivation, only populated for mixed comparisons. */
+  // Per-side plain-language derivation, only populated for mixed comparisons.
   notes: { exp: Experience; text: string }[];
 }
 
 export interface PayGrowthSummary {
-  /** The default pair: the first two comparable roles in list order. */
+  // The default pair: the first two comparable roles in list order.
   defaultComparison: PayComparison | null;
-  /** Every role that has usable pay data, in list order. Drives the dropdowns. */
+  // Every role that has usable pay data, in list order. Drives the dropdowns.
   comparableRoles: Experience[];
 }
 
@@ -127,15 +122,9 @@ const formatMoney = (value: number, decimals = 0) =>
     maximumFractionDigits: decimals,
   })}`;
 
-/**
- * A salary role has no stored hourly rate, so it gets one from a standard work year.
- * Hourly roles use the rate the compensation breakdown already shows, so the two
- * screens never disagree.
- */
 const comparableHourlyRate = (snapshot: ExperienceCompensationSnapshot): number =>
   snapshot.kind === 'salary' ? snapshot.total / SALARY_HOURS_PER_YEAR : snapshot.hourlyRate;
 
-/** Explains the one derived number, and flags that an hourly total is not annual. */
 const mixedNote = (snapshot: ExperienceCompensationSnapshot): string => {
   if (snapshot.kind === 'salary') {
     return `${formatMoney(snapshot.total)}/yr ÷ ${formatHours(SALARY_HOURS_PER_YEAR)} hrs = ${formatMoney(comparableHourlyRate(snapshot), 2)}/hr`;
@@ -143,14 +132,6 @@ const mixedNote = (snapshot: ExperienceCompensationSnapshot): string => {
   return `${formatMoney(snapshot.total, 2)} earned over ${snapshot.dateRangeLabel} — not a full year`;
 };
 
-/**
- * Builds the right set of rows for whichever two roles the user picked:
- *  - salary vs salary → base, bonus, equity, total
- *  - hourly vs hourly → hourly rate
- *  - salary vs hourly → total + hourly rate, taken straight from each role's
- *    compensation snapshot so the numbers match the earnings breakdowns, with a
- *    per-side note covering the one derived figure and the duration mismatch
- */
 export const buildPayComparison = (
   currentExp: Experience,
   previousExp: Experience,
@@ -193,8 +174,6 @@ export const buildPayComparison = (
     };
   }
 
-  // Mixed: bonus and equity have no hourly counterpart, so compare the two figures
-  // both shapes do have — the recorded total and an hourly rate.
   const total = buildComponentDelta('total', current.total, previous.total);
   const rate = buildComponentDelta(
     'hourlyRate',

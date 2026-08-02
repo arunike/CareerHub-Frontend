@@ -384,6 +384,7 @@ const Applications = () => {
         ...values,
         company_name: values.company,
         job_link: values.site_link,
+        job_description: values.job_description || '',
         date_applied: values.date_applied ? values.date_applied.format('YYYY-MM-DD') : undefined,
       };
       payload.current_round = getRoundNumberFromStatus(values.status);
@@ -539,9 +540,9 @@ const Applications = () => {
         salary_range: values.salary_range || '',
         office_location: values.office_location || '',
         location: values.office_location || '',
-        notes: values.job_description
-          ? `Job description imported from ${jobImportPreview.source_url}\n\n${values.job_description}`
-          : '',
+        // Stored in its own column now, so it stays queryable and out of your notes.
+        job_description: values.job_description || '',
+        notes: '',
         date_applied: dayjs().format('YYYY-MM-DD'),
       });
       messageApi.success('Application imported');
@@ -569,6 +570,7 @@ const Applications = () => {
       employment_type: app.employment_type || 'full_time',
       level: app.level || '',
       site_link: app.job_link,
+      job_description: app.job_description || '',
       salary_range: app.salary_range,
       office_location: app.office_location || app.location,
       rto_policy: app.rto_policy || 'UNKNOWN',
@@ -1039,6 +1041,15 @@ const Applications = () => {
         <Col span={24}>
           <Form.Item name="site_link" label="Job Link">
             <Input prefix={<GlobalOutlined />} placeholder="https://..." />
+          </Form.Item>
+        </Col>
+        <Col span={24}>
+          <Form.Item
+            name="job_description"
+            label="Job Description"
+            tooltip="Kept so you can still review the role after the posting is taken down. Pre-fills the cover letter generator."
+          >
+            <Input.TextArea rows={5} placeholder="Paste the job posting here (optional)" />
           </Form.Item>
         </Col>
         <Col span={24}>
