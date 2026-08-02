@@ -80,6 +80,10 @@ The **Frontend** is a React-based single-page application that provides an intui
 - **Attached Documents**: The offer modal lists documents linked to the offer's application, offer letters first, each opening in a new tab. Documents hang off the application and an offer has a one-to-one link to it, so no extra relation was needed
 - **Year Filter**: Groups offers by the linked application's `date_applied`, not the offer record's `created_at`, so offers backfilled from an earlier job search stay under the year you actually applied. Falls back to `created_at` when no applied date is available
 
+### 📈 Analytics (`/analytics`)
+
+- **Application Funnel**: Counts how many applications *ever reached* each stage using the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, which typically shows a pipeline several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows straight through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts
+
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
 > AI features are configured in `Settings` → `AI Provider`. The provider adapter, endpoint, and model are tied to your account, and the API key is stored encrypted on the backend.
@@ -154,6 +158,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Security Dashboard**: review deployment posture, auth throttles, Google Sheets sync health, OAuth scope readiness, and Vercel edge/WAF setup status from one Settings tab
 - **Multiple Availability Time Ranges**: define non-contiguous availability windows with per-range day chips (e.g., Mon–Thu 10am–3pm, Fri 1pm–4pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
 - **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
+- **Application Stages**: drag the handle on any stage to reorder it. Order is meaningful — the analytics funnel renders stages in this sequence — and dragging is disabled for a locked stage or a locked section, so the lock actually protects the row
 - **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
 - **Holiday Manager Tabs**: define custom tabs (name → auto-generated ID) that appear as tabs in the Holiday Manager; per-item lock; section-level lock; saved with Settings
 - **Profile & Identity** (`/profile`): Standalone management page for your professional identity:
