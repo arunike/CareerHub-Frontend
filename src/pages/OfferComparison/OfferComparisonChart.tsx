@@ -68,13 +68,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const OfferComparisonChart = ({ data }: Props) => {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="mb-4">
-        <h3 className="text-sm font-bold text-slate-900">First-Year Compensation</h3>
-        <p className="mt-1 text-xs font-medium text-slate-500">
-          Year 1 salary, bonus, realizable equity, sign-on, and benefits. Paper equity is excluded.
-        </p>
-      </div>
+    <div className="space-y-3">
       <div className="h-[280px] sm:h-[320px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
           <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -91,6 +85,9 @@ const OfferComparisonChart = ({ data }: Props) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <p className="text-[11px] leading-relaxed text-slate-400">
+        Year 1 salary, bonus, realizable equity, sign-on, and benefits. Paper equity is excluded.
+      </p>
     </div>
   );
 };

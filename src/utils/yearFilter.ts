@@ -1,16 +1,25 @@
 import { parseDateOnlyLocal } from './dateOnly';
 
+export type DateSelector<T> = keyof T | ((item: T) => string | null | undefined);
+
+const resolveYear = <T extends Record<string, any>>(
+  item: T,
+  dateField: DateSelector<T>
+): number | null => {
+  const dateValue =
+    typeof dateField === 'function' ? dateField(item) : (item[dateField] as string | undefined);
+  if (!dateValue) return null;
+  const year = parseDateOnlyLocal(dateValue)?.getFullYear();
+  return year != null && !isNaN(year) ? year : null;
+};
+
 export const getAvailableYears = <T extends Record<string, any>>(
   items: T[],
-  dateField: keyof T
+  dateField: DateSelector<T>
 ): number[] => {
   const years = items
-    .map((item) => {
-      const dateValue = item[dateField];
-      if (!dateValue) return null;
-      return parseDateOnlyLocal(dateValue as string)?.getFullYear() ?? null;
-    })
-    .filter((year): year is number => year !== null && !isNaN(year));
+    .map((item) => resolveYear(item, dateField))
+    .filter((year): year is number => year !== null);
 
   return [...new Set(years)].sort((a, b) => b - a);
 };
@@ -18,16 +27,10 @@ export const getAvailableYears = <T extends Record<string, any>>(
 export const filterByYear = <T extends Record<string, any>>(
   items: T[],
   year: number | 'all',
-  dateField: keyof T
+  dateField: DateSelector<T>
 ): T[] => {
   if (year === 'all') return items;
-
-  return items.filter((item) => {
-    const dateValue = item[dateField];
-    if (!dateValue) return false;
-    const itemYear = parseDateOnlyLocal(dateValue as string)?.getFullYear();
-    return itemYear === year;
-  });
+  return items.filter((item) => resolveYear(item, dateField) === year);
 };
 
 export const getCurrentYear = (): number => {

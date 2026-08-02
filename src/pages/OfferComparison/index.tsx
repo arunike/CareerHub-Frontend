@@ -1,12 +1,9 @@
 import React, { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getOffers,
-  createOffer,
   updateOffer,
   deleteOffer,
   getApplications,
-  getApplication,
-  createApplication,
   updateApplication,
   deleteApplication,
   createOfferDecisionSnapshot,
@@ -24,7 +21,6 @@ import {
 } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
-import { todayDateOnlyLocal } from '../../utils/dateOnly';
 import { message, Segmented, Select, Spin } from 'antd';
 import { useSafeNullableFormState, useSafeFormState } from './useSafeFormState';
 import { useScenarioRows } from './useScenarioRows';
@@ -51,7 +47,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
 const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
-const AddCurrentJobModal = lazy(() => import('./AddCurrentJobModal'));
 const EditOfferModal = lazy(() => import('./EditOfferModal'));
 const NegotiationAdvisorModal = lazy(() => import('./NegotiationAdvisorModal'));
 const NegotiationLogModal = lazy(() => import('./NegotiationLogModal'));
@@ -141,9 +136,6 @@ const OfferComparison = () => {
   const [editingBenefitItems, setEditingBenefitItems] = useState<BenefitItem[]>([]);
   const [offerModalMode, setOfferModalMode] = useState<'view' | 'edit'>('edit');
 
-  const [isAddJobOpen, setIsAddJobOpen] = useState(false);
-  const [newJobName, setNewJobName] = useState('Current Employer');
-  const [linkedJobAppId, setLinkedJobAppId] = useState<number | null>(null);
   const [compBreakdownView, setCompBreakdownView] = useState<'year1' | 'fourYear'>('year1');
   const [compBreakdownDisplay, setCompBreakdownDisplay] = useState<'list' | 'chart'>('chart');
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
@@ -168,9 +160,7 @@ const OfferComparison = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const action = params.get('action');
-    if (action === 'current-job') {
-      setIsAddJobOpen(true);
-    } else if (action === 'scenario') {
+    if (action === 'scenario') {
       setScenarioModalMode('add');
       setEditingScenarioId(null);
       setIsAddScenarioOpen(true);
@@ -670,102 +660,6 @@ const OfferComparison = () => {
     setRaiseHistoryOffer((prev) => (prev ? { ...prev, raise_history: entries } : prev));
   };
 
-  const handleAddCurrentJob = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newJobName && !linkedJobAppId) return;
-
-    try {
-      let appId = linkedJobAppId;
-      let finalAppName = newJobName;
-      let appData: any = null;
-
-      if (appId) {
-        const response = await getApplication(appId);
-        appData = response.data;
-        finalAppName = appData.company_details?.name || appData.company_name || newJobName;
-      } else {
-        const appResp = await createApplication({
-          company_name: newJobName,
-          role_title: 'Current Role',
-          status: 'ACCEPTED',
-          date_applied: todayDateOnlyLocal(),
-          office_location: '',
-          visa_sponsorship: '',
-          day_one_gc: '',
-        });
-        appId = appResp.data.id;
-        appData = appResp.data;
-      }
-
-      let newOffer: any = null;
-      if (appData && appData.offer) {
-        const offerResp = await updateOffer(appData.offer.id, {
-          ...appData.offer,
-          is_current: true,
-        });
-        newOffer = offerResp.data;
-      } else {
-        const offerResp = await createOffer({
-          application: appId,
-          base_salary: 0,
-          is_current: true,
-          bonus: 0,
-          equity: 0,
-          sign_on: 0,
-          benefits_value: 0,
-          benefit_items: [],
-          pto_days: 15,
-          is_unlimited_pto: false,
-          sick_leave_days: 0,
-          sick_leave_included_in_unlimited_pto: true,
-          holiday_days: 11,
-        });
-        newOffer = offerResp.data;
-      }
-
-      const newApp = {
-        ...appData,
-        company_name: appData.company_details?.name || appData.company_name || finalAppName,
-        rto_days_per_week:
-          typeof appData.rto_days_per_week === 'number' ? appData.rto_days_per_week : 3,
-        commute_cost_value: Number(appData.commute_cost_value || 0),
-        commute_cost_frequency: appData.commute_cost_frequency || 'MONTHLY',
-        free_food_perk_value: Number(appData.free_food_perk_value || 0),
-        free_food_perk_frequency: appData.free_food_perk_frequency || 'YEARLY',
-      };
-
-      setIsAddJobOpen(false);
-      setNewJobName('Current Employer');
-      setLinkedJobAppId(null);
-      messageApi.success('Current job added! Please fill in your compensation details.');
-
-      await fetchData();
-
-      setEditingOffer({ ...newOffer, is_unlimited_pto: !!newOffer.is_unlimited_pto });
-      setEditingApp(newApp);
-      setOfferModalMode('edit');
-
-      const benefitItems =
-        Array.isArray(newOffer.benefit_items) && newOffer.benefit_items.length > 0
-          ? newOffer.benefit_items.map((item: any, idx: number) =>
-              normalizeBenefitItem(item, `edit-benefit-${newOffer.id || Date.now()}-${idx}`)
-            )
-          : [
-              {
-                id: `edit-benefit-${Date.now()}`,
-                label: 'Benefits',
-                amount: Number(newOffer.benefits_value) || 0,
-                frequency: 'YEARLY' as const,
-              },
-            ];
-      setEditingBenefitItems(benefitItems);
-    } catch (error) {
-      messageApi.error('Failed to add current job');
-      console.error(error);
-    }
-  };
-
-  const availableYears = getAvailableYears(offers, 'created_at');
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
   };
@@ -829,7 +723,20 @@ const OfferComparison = () => {
     [applications]
   );
 
-  const filteredByYear = filterByYear(offers, selectedYear, 'created_at');
+  const offerYearDate = useCallback(
+    (offer: Offer) => applicationsById[offer.application]?.date_applied || offer.created_at,
+    [applicationsById]
+  );
+
+  const availableYears = useMemo(
+    () => getAvailableYears(offers, offerYearDate),
+    [offers, offerYearDate]
+  );
+
+  const filteredByYear = useMemo(
+    () => filterByYear(offers, selectedYear, offerYearDate),
+    [offers, selectedYear, offerYearDate]
+  );
   const rejectedOffersCount = useMemo(
     () => offers.filter((o) => isOfferRejected(o, applicationsById[o.application])).length,
     [offers, applicationsById, isOfferRejected]
@@ -1410,12 +1317,10 @@ const OfferComparison = () => {
       {contextHolder}
       <PageActionToolbar
         title="Offer Comparison"
-        subtitle="Compare first-year total compensation (TC) across your offers."
+        subtitle="Compare total compensation across your offers, in year 1 and over four years."
         selectedYear={selectedYear}
         onYearChange={handleYearChange}
         availableYears={availableYears}
-        onPrimaryAction={() => setIsAddJobOpen(true)}
-        primaryActionLabel="Add Current Job"
         primaryActionIcon={<PlusOutlined />}
         singleRowDesktop
       />
@@ -1433,11 +1338,10 @@ const OfferComparison = () => {
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-slate-950">
-                First-year compensation breakdown
+                Compensation breakdown
               </span>
               <span className="mt-0.5 block text-xs leading-5 text-slate-500">
-                Compare salary, benefits, bonus, realizable equity, and sign-on by offer — or switch
-                to the four-year outlook.
+                Year 1 by component, or the four-year outlook across the grant.
               </span>
             </span>
           </span>
@@ -1974,24 +1878,6 @@ const OfferComparison = () => {
       <Suspense fallback={<LazySectionFallback />}>
         <CompensationSimulator scenarioRows={displayScenarioRows} />
       </Suspense>
-
-      {isAddJobOpen ? (
-        <Suspense fallback={null}>
-          <AddCurrentJobModal
-            isOpen={isAddJobOpen}
-            newJobName={newJobName}
-            onNameChange={setNewJobName}
-            linkedApplicationId={linkedJobAppId}
-            onLinkedApplicationChange={setLinkedJobAppId}
-            onClose={() => {
-              setIsAddJobOpen(false);
-              setLinkedJobAppId(null);
-              setNewJobName('Current Employer');
-            }}
-            onSubmit={handleAddCurrentJob}
-          />
-        </Suspense>
-      ) : null}
 
       {editingOffer ? (
         <Suspense fallback={null}>

@@ -54,13 +54,6 @@ const ACTIONS = {
     destination: '/documents?action=upload',
     icon: FileAddOutlined,
   },
-  currentJob: {
-    key: 'current-job',
-    label: 'Add current job',
-    description: 'Create the comparison baseline',
-    destination: '/offers?action=current-job',
-    icon: DollarOutlined,
-  },
   scenario: {
     key: 'scenario',
     label: 'Add scenario',
@@ -105,8 +98,8 @@ const ACTION_GROUPS_BY_SOURCE = {
     actions: [ACTIONS.holiday],
   },
   '/offers': {
-    description: 'Set up a baseline or comparison scenario.',
-    actions: [ACTIONS.currentJob, ACTIONS.scenario],
+    description: 'Add a comparison scenario.',
+    actions: [ACTIONS.scenario],
   },
   '/documents': {
     description: 'Add a resume or another supporting file.',
