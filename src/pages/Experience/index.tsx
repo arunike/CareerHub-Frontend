@@ -1025,7 +1025,7 @@ const ExperiencePage: React.FC = () => {
           }
           onDeleteAll={handleDeleteAll}
           deleteAllLabel="Delete All"
-          deleteAllDisabled={experiences.length === 0}
+          deleteAllDisabled={!experiences.some((exp) => !exp.is_locked)}
           deleteAllConfirmTitle="Delete all experiences?"
           deleteAllConfirmDescription="This will permanently delete all unlocked experiences."
           onExport={handleExportWrapper}
@@ -1743,24 +1743,29 @@ const ExperiencePage: React.FC = () => {
                                   }
                                 />
                               </Tooltip>
-                              <Tooltip title={`Delete all roles at ${primary.company}`}>
-                                <Popconfirm
-                                  title={`Delete all ${primary.company} roles?`}
-                                  description={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s).`}
-                                  onConfirm={() => handleDeleteGroup(group)}
-                                  okText="Delete"
-                                  okButtonProps={{ danger: true }}
+
+                              {group.some((e) => !e.is_locked) && (
+                                <Tooltip
+                                  title={`Delete ${group.filter((e) => !e.is_locked).length} unlocked role(s) at ${primary.company}`}
                                 >
-                                  <Button
-                                    type="text"
-                                    danger
-                                    size="small"
-                                    icon={<DeleteOutlined />}
-                                    aria-label={`Delete unlocked roles at ${primary.company}`}
-                                    className={GROUP_ICON_ACTION_CLASS}
-                                  />
-                                </Popconfirm>
-                              </Tooltip>
+                                  <Popconfirm
+                                    title={`Delete unlocked ${primary.company} roles?`}
+                                    description={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s). Locked roles are kept.`}
+                                    onConfirm={() => handleDeleteGroup(group)}
+                                    okText="Delete"
+                                    okButtonProps={{ danger: true }}
+                                  >
+                                    <Button
+                                      type="text"
+                                      danger
+                                      size="small"
+                                      icon={<DeleteOutlined />}
+                                      aria-label={`Delete unlocked roles at ${primary.company}`}
+                                      className={GROUP_ICON_ACTION_CLASS}
+                                    />
+                                  </Popconfirm>
+                                </Tooltip>
+                              )}
                             </div>
                           </div>
                         </div>
