@@ -46,6 +46,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
 - Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, automatically generating distinct blue-to-purple tags for additional numbered rounds while private sheets remain supported through Google OAuth
 - Lock/unlock individual applications
+- **Contacts**: a tab in the application detail drawer for the recruiter and interviewers on that application — name, email (click to mail), and notes, with inline add/edit and confirmed delete. Scoped per application rather than per company, because different roles at the same company usually mean a different recruiter and panel. The shared `ContactsPanel` component also powers the Experience page
 - **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
 
 ### 💎 Offer Comparison (`/offers`)
@@ -79,10 +80,6 @@ The **Frontend** is a React-based single-page application that provides an intui
 - **Export**: Offers export to CSV, JSON, or XLSX from the page toolbar, matching the other pages
 - **Attached Documents**: The offer modal lists documents linked to the offer's application, offer letters first, each opening in a new tab. Documents hang off the application and an offer has a one-to-one link to it, so no extra relation was needed
 - **Year Filter**: Groups offers by the linked application's `date_applied`, not the offer record's `created_at`, so offers backfilled from an earlier job search stay under the year you actually applied. Falls back to `created_at` when no applied date is available
-
-### 📈 Analytics (`/analytics`)
-
-- **Application Funnel**: Counts how many applications *ever reached* each stage using the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, which typically shows a pipeline several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows straight through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts. Reads the shared `/application-timeline-analytics/` endpoint that `JobHuntAnalytics` already uses, so there is one funnel computation rather than two
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
@@ -118,6 +115,8 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Company logo upload** — upload or remove a company logo per experience entry; displayed as an avatar on the card; persisted through the backend upload API and stored in Vercel Blob on hosted deployments
 - **Raise History Modal** — accessible from experience entries linked to an offer; log raise events (date, type, before/after base/bonus/equity) with optional label and notes; persisted on the linked Offer record
 - **Team History / Team Norms** — internship and full-time roles can track structured team history in a dedicated modal
+- **Contacts** — a per-role contacts modal listing people you worked with, plus anyone recorded on the application that led to the role (shown as `from application` and edited where they live)
+- **Work Email** — store the email address you had at that job, on the experience record
 - **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
 - **Overall Earnings Panels** — combined Full-Time and Internship summaries with breakdown modals; internship totals now include overtime pay across tracked roles
 - **Pay Growth** — current vs previous role comparison in the Earnings panel, defaulting to the top two roles in list order (pinned/drag order included) with dropdowns to compare any two roles and a swap button. A **Role & level** section shows each side's title and level side by side with a Changed/Same marker; levels are reported verbatim with no ranking inferred, since they are free text on company-specific scales (Adobe `P30` vs TikTok `1-2`), and a note appears when comparing levels across different companies. The compensation table adapts to the pair: salary vs salary shows base/bonus/equity/total deltas, hourly vs hourly shows the hourly rate delta, and salary vs hourly compares total and hourly rate taken straight from each role's compensation snapshot, so the figures match the earnings breakdown modals exactly (the salary side's hourly rate is derived from a 2,080-hour year, and a note warns that an hourly total covers only the period it ran). Roles without pay data are excluded from the dropdowns rather than counted as zero
@@ -138,6 +137,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 - **Availability Analytics**: Meeting/interview volume and duration tracking
 - **Job Hunt Analytics**: Application funnel, outcome visualization, timeline conversion, stale-stage warnings, and offer-rate breakdowns by sheet source/company
+- **Application Funnel**: Counts how many applications *ever reached* each stage from the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, so the pipeline reads several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts. Shares the `/application-timeline-analytics/` endpoint with Job Hunt Analytics, so there is one funnel computation rather than two
 - **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — common queries resolve locally and free-form queries send a frontend-built data summary through the authenticated backend AI relay
 - **Drag-and-Drop Dashboard**: Reorder and save widget layouts with `dnd-kit`
 
@@ -166,6 +166,11 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
   - **Account Security**: Secure password change flow with automatic logout for session protection.
   - **Personal Details**: Update first name, last name, and display name (syncs to public booking links).
   - **Privacy & Export Center**: Download account exports, create browser-encrypted local exports, restore backups, and schedule account deletion with typed confirmation plus a 14-day login-to-cancel grace period.
+
+### 🧩 Form Validation
+
+- **antd forms** already render a required asterisk and redden a failed field. All 13 `<Form>` instances now also pass the shared `SCROLL_TO_FIRST_ERROR` config (`constants/formDefaults.ts`), so a rejected submit smooth-scrolls the first invalid field to the centre of the viewport and focuses it instead of appearing to do nothing
+- **Hand-rolled forms** (those not built on antd's Form) use the `useRequiredFields` hook for the same three behaviours — red ring via `INVALID_FIELD_CLASS`, scroll into view, and focus — plus an inline message under the field. It accepts either a DOM node or an antd component ref
 
 ### 🔐 Authentication & Security
 
@@ -373,6 +378,10 @@ frontend/
 │   │   ├── coverLetterStorage.ts    # Local fallback CRUD for cover letters
 │   │   ├── negotiationStorage.ts    # Local fallback CRUD for negotiation results
 │   │   ├── yearFilter.ts            # Year filter helpers (accept a field key or an accessor)
+│   │   ├── apiError.ts              # Turns DRF validation responses into readable messages
+│   │   └── ...
+│   ├── hooks/
+│   │   ├── useRequiredFields.ts     # Required-field validation for non-antd forms: red field, scroll, focus
 │   │   ├── offerDeadline.ts         # Offer deadline countdown, shared by the offers page and notification bell
 │   │   └── ...
 │   │
