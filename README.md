@@ -82,7 +82,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 ### 📈 Analytics (`/analytics`)
 
-- **Application Funnel**: Counts how many applications *ever reached* each stage using the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, which typically shows a pipeline several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows straight through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts
+- **Application Funnel**: Counts how many applications *ever reached* each stage using the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, which typically shows a pipeline several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows straight through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts. Reads the shared `/application-timeline-analytics/` endpoint that `JobHuntAnalytics` already uses, so there is one funnel computation rather than two
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
