@@ -388,6 +388,14 @@ export interface ApplicationTimelineAnalytics {
     offers: number;
     offer_rate: number;
   }>;
+  total_applications: number;
+  // Terminal results (offer, rejected, ghosted), kept out of the pipeline steps.
+  outcomes: Array<{ key: string; label: string; count: number }>;
+  responded_count: number;
+  response_rate: number;
+  ghosted_count: number;
+  ghost_rate: number;
+  biggest_drop: { from_label: string; to_label: string; lost: number } | null;
 }
 
 export interface Task {

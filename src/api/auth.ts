@@ -89,9 +89,6 @@ export const login = (email: string, password: string) =>
     password,
   });
 
-export const refreshAccessToken = (refresh: string) =>
-  api.post<Pick<AuthResponse, 'access' | 'refresh'>>('/auth/refresh/', { refresh });
-
 export const getSignupStatus = () => api.get<SignupStatusResponse>('/auth/signup-status/');
 
 export const getSecurityDashboard = () =>

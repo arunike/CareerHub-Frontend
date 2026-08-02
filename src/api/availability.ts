@@ -46,7 +46,6 @@ export const getEventFeed = (params?: {
 export const createEvent = (data: Partial<Event>, params?: Record<string, unknown>) =>
   api.post('/events/', data, { params });
 export const deleteEvent = (id: number) => api.delete(`/events/${id}/`);
-export const deleteAllEvents = () => api.delete('/events/delete_all/');
 export const updateEvent = (id: number, data: Partial<Event>, params?: Record<string, unknown>) =>
   api.patch(`/events/${id}/`, data, { params });
 
@@ -57,7 +56,6 @@ export const createHoliday = (data: Partial<Holiday>) => api.post('/holidays/', 
 export const updateHoliday = (id: number, data: Partial<Holiday>) =>
   api.patch(`/holidays/${id}/`, data);
 export const deleteHoliday = (id: number) => api.delete(`/holidays/${id}/`);
-export const deleteAllHolidays = () => api.delete('/holidays/delete_all/');
 
 export const getAvailability = (startDate?: string, timezone?: string, weeks?: number) =>
   api.get('/availability/generate/', { params: { start_date: startDate, timezone, weeks } });
@@ -66,11 +64,6 @@ export const createOverride = (data: { date: string; availability_text: string }
 
 export const importData = (formData: FormData) =>
   api.post('/import/', formData, { headers: { 'Content-Type': undefined } });
-
-export const getSettings = () => api.get('/settings/');
-export const updateSettings = (key: string, value: string) =>
-  api.put(`/settings/${key}/`, { key, value });
-export const createSetting = (data: { key: string; value: string }) => api.post('/settings/', data);
 
 export const getCategories = () => api.get('/categories/');
 export const createCategory = (data: { name: string; color: string; icon?: string }) =>
@@ -93,8 +86,6 @@ export const requestAIProviderChatCompletion = (data: {
   temperature?: number;
 }) => api.post('/user-settings/ai-provider/chat-completions/', data);
 
-export const getRecurringInstances = (startDate: string, endDate: string) =>
-  api.get('/events/recurring_instances/', { params: { start_date: startDate, end_date: endDate } });
 export const setRecurrence = (eventId: number, recurrenceRule: RecurrenceRule) =>
   api.post(`/events/${eventId}/set_recurrence/`, { recurrence_rule: recurrenceRule });
 export const updateRecurringSeries = (eventId: number, updates: Partial<Event>) =>
@@ -198,8 +189,6 @@ export const exportEvents = (format: string = 'csv') =>
   api.get('/events/export/', { params: { fmt: format }, responseType: 'blob' });
 export const exportHolidays = (format: string = 'csv') =>
   api.get('/holidays/export/', { params: { fmt: format }, responseType: 'blob' });
-export const exportAllData = (format: string = 'json') =>
-  api.get('/user-settings/export_all/', { params: { fmt: format }, responseType: 'blob' });
 export const exportAccountData = (format: 'json' | 'zip' = 'json') =>
   api.get('/user-settings/account-export/', { params: { fmt: format }, responseType: 'blob' });
 export const restoreAccountBackup = (formData: FormData) =>

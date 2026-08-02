@@ -105,13 +105,6 @@ const normalizeExperiencePayload = (data: Partial<Experience>): Partial<Experien
   return normalized as Partial<Experience>;
 };
 
-export const getCompanies = () => api.get('/career/companies/');
-export const createCompany = (data: Record<string, unknown>) =>
-  api.post('/career/companies/', data);
-export const updateCompany = (id: number, data: Record<string, unknown>) =>
-  api.put(`/career/companies/${id}/`, data);
-export const deleteCompany = (id: number) => api.delete(`/career/companies/${id}/`);
-
 export const getApplications = (params?: {
   page?: number;
   page_size?: number;
@@ -122,7 +115,6 @@ export const getApplications = (params?: {
   year?: number | 'all';
   [key: string]: unknown;
 }) => api.get('/career/applications/', { params });
-export const getApplicationFunnel = () => api.get('/career/applications/funnel/');
 export const getApplicationOptions = (params?: {
   search?: string;
   page_size?: number;
@@ -369,8 +361,6 @@ export const exportDocuments = (format: string = 'csv') =>
   api.get('/career/documents/export/', { params: { fmt: format }, responseType: 'blob' });
 export const createDocument = (formData: FormData) =>
   api.post('/career/documents/', formData, { headers: { 'Content-Type': undefined } });
-export const updateDocument = (id: number, formData: FormData) =>
-  api.put(`/career/documents/${id}/`, formData, { headers: { 'Content-Type': undefined } });
 export const patchDocument = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/documents/${id}/`, data);
 export const deleteDocument = (id: number) => api.delete(`/career/documents/${id}/`);

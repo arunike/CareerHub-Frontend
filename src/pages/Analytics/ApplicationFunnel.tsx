@@ -1,31 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Spin, Tooltip } from 'antd';
 import { FilterOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { getApplicationFunnel } from '../../api/career';
+import { getApplicationTimelineAnalytics } from '../../api/career';
+import type { ApplicationTimelineAnalytics } from '../../types';
 
-interface PipelineStage {
-  key: string;
-  label: string;
-  /** Applications that ever reached this stage, from the timeline. */
-  reached: number;
-  currentlyAt: number;
-}
-
-interface Outcome {
-  key: string;
-  label: string;
-  count: number;
-}
-
-interface FunnelData {
-  totalApplications: number;
-  pipeline: PipelineStage[];
-  outcomes: Outcome[];
-  respondedCount: number;
-  responseRate: number;
-  ghostedCount: number;
-  ghostRate: number;
-}
+const TERMINAL_KEYS = new Set([
+  'REJECTED',
+  'GHOSTED',
+  'REMOVED_FROM_SHEET',
+  'OFFER_REJECTED',
+  'ACCEPTED',
+]);
 
 const OUTCOME_CLASSES: Record<string, string> = {
   OFFER: 'border-emerald-200 bg-emerald-50 text-emerald-700',
@@ -39,16 +24,16 @@ const REACHED_HELP =
   'Counted from your application timeline, so an application rejected after the 3rd round still counts as having reached the 3rd round. "Now" is how many currently sit at that stage.';
 
 const ApplicationFunnel = () => {
-  const [data, setData] = useState<FunnelData | null>(null);
+  const [data, setData] = useState<ApplicationTimelineAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    void getApplicationFunnel()
+    void getApplicationTimelineAnalytics()
       .then((response) => {
         if (!cancelled) setData(response.data);
       })
-      .catch((error) => console.error('Failed to load application funnel', error))
+      .catch((error) => console.error('Failed to load application analytics', error))
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -65,21 +50,11 @@ const ApplicationFunnel = () => {
     );
   }
 
-  if (!data || data.totalApplications === 0) return null;
+  if (!data || data.total_applications === 0) return null;
 
-  const topReached = Math.max(...data.pipeline.map((stage) => stage.reached), 1);
-  // The steepest single drop is usually the most useful thing on the screen.
-  const biggestDrop = data.pipeline.reduce<{ from: string; to: string; lost: number } | null>(
-    (worst, stage, index) => {
-      if (index === 0) return worst;
-      const previous = data.pipeline[index - 1];
-      const lost = previous.reached - stage.reached;
-      if (lost <= 0) return worst;
-      return !worst || lost > worst.lost ? { from: previous.label, to: stage.label, lost } : worst;
-    },
-    null
-  );
+  const pipeline = data.stage_conversion.filter((stage) => !TERMINAL_KEYS.has(stage.key));
 
+  const topReached = Math.max(...pipeline.map((stage) => stage.reached_count), 1);
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-xs">
       <header className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
@@ -97,34 +72,34 @@ const ApplicationFunnel = () => {
             </Tooltip>
           </h3>
           <p className="text-xs text-slate-500">
-            {data.totalApplications.toLocaleString()} applications · {data.responseRate}% got past
-            the first stage · {data.ghostRate}% went silent
+            {data.total_applications.toLocaleString()} applications · {data.response_rate}% got past
+            the first stage · {data.ghost_rate}% went silent
           </p>
         </div>
       </header>
 
       <div className="space-y-5 px-6 py-5">
         <div className="space-y-2.5">
-          {data.pipeline.map((stage) => {
-            const width = (stage.reached / topReached) * 100;
+          {pipeline.map((stage) => {
+            const width = (stage.reached_count / topReached) * 100;
             return (
               <div key={stage.key}>
                 <div className="mb-1 flex items-baseline justify-between gap-3 text-[12px]">
                   <span className="truncate font-medium text-slate-700">{stage.label}</span>
                   <span className="shrink-0 text-slate-500">
                     <span className="font-semibold text-slate-900">
-                      {stage.reached.toLocaleString()}
+                      {stage.reached_count.toLocaleString()}
                     </span>{' '}
                     reached
-                    {stage.currentlyAt > 0 && (
-                      <span className="ml-2 text-slate-400">{stage.currentlyAt} now</span>
+                    {stage.current_count > 0 && (
+                      <span className="ml-2 text-slate-400">{stage.current_count} now</span>
                     )}
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full rounded-full bg-blue-500"
-                    style={{ width: `${Math.max(width, stage.reached > 0 ? 1.5 : 0)}%` }}
+                    style={{ width: `${Math.max(width, stage.reached_count > 0 ? 1.5 : 0)}%` }}
                   />
                 </div>
               </div>
@@ -132,11 +107,12 @@ const ApplicationFunnel = () => {
           })}
         </div>
 
-        {biggestDrop && (
+        {data.biggest_drop && (
           <p className="rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[13px] leading-relaxed text-amber-900">
-            Biggest drop-off is <span className="font-semibold">{biggestDrop.from}</span> →{' '}
-            <span className="font-semibold">{biggestDrop.to}</span>, where{' '}
-            {biggestDrop.lost.toLocaleString()} applications stop.
+            Biggest drop-off is{' '}
+            <span className="font-semibold">{data.biggest_drop.from_label}</span> →{' '}
+            <span className="font-semibold">{data.biggest_drop.to_label}</span>, where{' '}
+            {data.biggest_drop.lost.toLocaleString()} applications stop.
           </p>
         )}
 
