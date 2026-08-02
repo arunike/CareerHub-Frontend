@@ -56,17 +56,21 @@ const EditOfferModal = ({
   const [initialDraftSnapshot] = useState(draftSnapshot);
   const hasChanges = offerModalMode === 'edit' && draftSnapshot !== initialDraftSnapshot;
 
+  // Errors appear only after a save attempt, so an empty new form is not pre-reddened.
+  const [saveAttempted, setSaveAttempted] = useState(false);
+  const missingCompanyName = !editingApp?.company_name?.trim();
+  const missingRoleTitle = !editingApp?.role_title?.trim();
+
   const missingFields: string[] = [];
-  if (!editingApp?.company_name?.trim()) missingFields.push('Company Name');
-  if (!editingApp?.role_title?.trim()) missingFields.push('Role Title');
+  if (missingCompanyName) missingFields.push('Company Name');
+  if (missingRoleTitle) missingFields.push('Role Title');
   const hasRequiredFields = missingFields.length === 0;
 
   const handleSave = () => {
     if (!hasRequiredFields) {
+      setSaveAttempted(true);
       message.error(`Please fill in required fields: ${missingFields.join(', ')}`);
-      const targetId = !editingApp?.company_name?.trim()
-        ? 'offer-form-company-name'
-        : 'offer-form-role-title';
+      const targetId = missingCompanyName ? 'offer-form-company-name' : 'offer-form-role-title';
       const el = document.getElementById(targetId);
       if (el) {
         el.focus();
@@ -143,6 +147,8 @@ const EditOfferModal = ({
             onCompanyNameChange={(value) => patchEditingApp({ company_name: value })}
             roleTitle={editingApp?.role_title || ''}
             onRoleTitleChange={(value) => patchEditingApp({ role_title: value })}
+            invalidCompanyName={saveAttempted && missingCompanyName}
+            invalidRoleTitle={saveAttempted && missingRoleTitle}
             level={editingApp?.level || ''}
             onLevelChange={(value) => patchEditingApp({ level: value })}
             deadline={editingOffer.deadline ?? null}

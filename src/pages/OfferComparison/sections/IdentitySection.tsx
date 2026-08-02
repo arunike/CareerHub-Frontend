@@ -16,6 +16,9 @@ type IdentitySectionProps = {
   onRoleTitleChange: (value: string) => void;
   level?: string;
   onLevelChange?: (value: string) => void;
+  // Set once a save has been attempted, so errors only appear after submitting.
+  invalidCompanyName?: boolean;
+  invalidRoleTitle?: boolean;
   deadline?: string | null;
   onDeadlineChange?: (value: string | null) => void;
   companyPlaceholder: string;
@@ -34,6 +37,8 @@ const IdentitySection = ({
   onRoleTitleChange,
   level = '',
   onLevelChange,
+  invalidCompanyName = false,
+  invalidRoleTitle = false,
   deadline = null,
   onDeadlineChange,
   companyPlaceholder,
@@ -148,9 +153,10 @@ const IdentitySection = ({
                 aria-required="true"
                 value={companyName}
                 onChange={(e) => onCompanyNameChange(e.target.value)}
+                aria-invalid={invalidCompanyName}
                 className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
-                  !companyName.trim()
-                    ? 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  invalidCompanyName
+                    ? 'border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-100'
                     : 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 }`}
                 placeholder={companyPlaceholder}
@@ -170,9 +176,10 @@ const IdentitySection = ({
                 aria-required="true"
                 value={roleTitle}
                 onChange={(e) => onRoleTitleChange(e.target.value)}
+                aria-invalid={invalidRoleTitle}
                 className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
-                  !roleTitle.trim()
-                    ? 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  invalidRoleTitle
+                    ? 'border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-100'
                     : 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 }`}
                 placeholder={rolePlaceholder}

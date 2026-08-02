@@ -34,6 +34,8 @@ const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
 type PaginatedDocumentsResponse = {
   count: number;
+  // Rows across the whole filtered set that are not locked
+  unlocked_count?: number;
   results: Document[];
 };
 
@@ -48,6 +50,7 @@ const Documents: React.FC = () => {
   const isMobile = !screens.md;
   const [documents, setDocuments] = useState<Document[]>([]);
   const [documentsTotal, setDocumentsTotal] = useState(0);
+  const [documentsUnlocked, setDocumentsUnlocked] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -88,9 +91,12 @@ const Documents: React.FC = () => {
       if (isPaginatedDocumentsResponse(data)) {
         setDocuments(data.results);
         setDocumentsTotal(data.count);
+        // Counted server-side across every page; the current page cannot answer it.
+        setDocumentsUnlocked(data.unlocked_count ?? data.count);
       } else {
         setDocuments(data);
         setDocumentsTotal(data.length);
+        setDocumentsUnlocked(data.filter((item) => !item.is_locked).length);
       }
     } catch (error) {
       setLoadError(true);
@@ -412,7 +418,7 @@ const Documents: React.FC = () => {
         deleteAllLabel="Delete All"
         deleteAllConfirmTitle="Delete All Documents?"
         deleteAllConfirmDescription="This will permanently delete all documents."
-        deleteAllDisabled={documentsTotal === 0}
+        deleteAllDisabled={documentsUnlocked === 0}
         onExport={handleExportWrapper}
         exportFilename="documents"
         onImport={() => setIsUploadModalVisible(true)}

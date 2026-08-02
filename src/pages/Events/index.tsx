@@ -77,6 +77,8 @@ type EventFormValues = {
 type ApiError = { response?: { status?: number; data?: { conflict?: boolean } } };
 type PaginatedEventsResponse = {
   count: number;
+  // Rows across the whole filtered set that are not locked.
+  unlocked_count?: number;
   results: Event[];
 };
 
@@ -98,6 +100,7 @@ const Events = () => {
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
   const [eventsTotal, setEventsTotal] = useState(0);
+  const [eventsUnlocked, setEventsUnlocked] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [calendarLoading, setCalendarLoading] = useState(true);
@@ -201,9 +204,12 @@ const Events = () => {
       if (isPaginatedEventsResponse(data)) {
         setEvents(data.results);
         setEventsTotal(data.count);
+        // Counted server-side across every page; the current page cannot answer it.
+        setEventsUnlocked(data.unlocked_count ?? data.count);
       } else {
         setEvents(data);
         setEventsTotal(data.length);
+        setEventsUnlocked(data.filter((item) => !item.is_locked).length);
       }
     } catch (error) {
       setLoadError(true);
@@ -725,7 +731,7 @@ const Events = () => {
               </div>
             }
             onDeleteAll={() => setIsDeleteAllOpen(true)}
-            deleteAllDisabled={eventsTotal === 0}
+            deleteAllDisabled={eventsUnlocked === 0}
             onExport={handleExportWrapper}
             exportFilename="events"
             onImport={() => setShowImport(true)}
