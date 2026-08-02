@@ -16,6 +16,7 @@ import {
 } from '../../api';
 import {
   BarChartOutlined,
+  UnorderedListOutlined,
   PlusOutlined,
   RobotOutlined,
   CompassOutlined,
@@ -24,7 +25,7 @@ import {
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getAvailableYears, filterByYear, getCurrentYear } from '../../utils/yearFilter';
 import { todayDateOnlyLocal } from '../../utils/dateOnly';
-import { message, Select, Spin } from 'antd';
+import { message, Segmented, Select, Spin } from 'antd';
 import { useSafeNullableFormState, useSafeFormState } from './useSafeFormState';
 import { useScenarioRows } from './useScenarioRows';
 import { useOfferReferenceData } from './useOfferReferenceData';
@@ -53,8 +54,11 @@ const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
 const AddCurrentJobModal = lazy(() => import('./AddCurrentJobModal'));
 const EditOfferModal = lazy(() => import('./EditOfferModal'));
 const NegotiationAdvisorModal = lazy(() => import('./NegotiationAdvisorModal'));
+const NegotiationLogModal = lazy(() => import('./NegotiationLogModal'));
 const RaiseHistoryModal = lazy(() => import('./RaiseHistoryModal'));
 const CompensationSimulator = lazy(() => import('./CompensationSimulator'));
+const YearByYearSection = lazy(() => import('./YearByYearSection'));
+const Year1BreakdownList = lazy(() => import('./Year1BreakdownList'));
 const OfferDecisionSnapshotsModal = lazy(() => import('./OfferDecisionSnapshotsModal'));
 
 const LazySectionFallback = () => (
@@ -140,7 +144,10 @@ const OfferComparison = () => {
   const [isAddJobOpen, setIsAddJobOpen] = useState(false);
   const [newJobName, setNewJobName] = useState('Current Employer');
   const [linkedJobAppId, setLinkedJobAppId] = useState<number | null>(null);
+  const [compBreakdownView, setCompBreakdownView] = useState<'year1' | 'fourYear'>('year1');
+  const [compBreakdownDisplay, setCompBreakdownDisplay] = useState<'list' | 'chart'>('chart');
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
+  const [negotiationLogOffer, setNegotiationLogOffer] = useState<Offer | null>(null);
   const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
   const [snapshotOffer, setSnapshotOffer] = useState<Offer | null>(null);
   const [decisionOrderIds, setDecisionOrderIds] = useState<string[]>([]);
@@ -564,6 +571,18 @@ const OfferComparison = () => {
       app?.status === 'REJECTED'
     );
   }, []);
+
+  const persistOfferUpdates = useCallback(
+    async (offer: Offer, updates: Partial<Offer>) => {
+      if (typeof offer.id !== 'number') return;
+      const merged: Offer = { ...offer, ...updates };
+      await updateOffer(offer.id, merged);
+      setOffers((prev) => prev.map((o) => (o.id === offer.id ? merged : o)));
+      setNegotiationLogOffer((prev) => (prev && prev.id === offer.id ? merged : prev));
+      setNegotiatingOffer((prev) => (prev && prev.id === offer.id ? merged : prev));
+    },
+    [setOffers]
+  );
 
   const handleToggleRejected = async (offer: Offer) => {
     if (typeof offer.id !== 'number') return;
@@ -1417,7 +1436,8 @@ const OfferComparison = () => {
                 First-year compensation breakdown
               </span>
               <span className="mt-0.5 block text-xs leading-5 text-slate-500">
-                Compare salary, benefits, bonus, realizable equity, and sign-on by offer.
+                Compare salary, benefits, bonus, realizable equity, and sign-on by offer — or switch
+                to the four-year outlook.
               </span>
             </span>
           </span>
@@ -1427,9 +1447,38 @@ const OfferComparison = () => {
         </button>
 
         {isChartExpanded && (
-          <div className="border-t border-slate-200 p-3 sm:p-5">
+          <div className="space-y-5 border-t border-slate-200 p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Segmented
+                value={compBreakdownView}
+                onChange={(value) => setCompBreakdownView(value as 'year1' | 'fourYear')}
+                options={[
+                  { label: 'Year 1', value: 'year1' },
+                  { label: '4-year outlook', value: 'fourYear' },
+                ]}
+              />
+              <Segmented
+                value={compBreakdownDisplay}
+                onChange={(value) => setCompBreakdownDisplay(value as 'list' | 'chart')}
+                options={[
+                  { label: 'List', value: 'list', icon: <UnorderedListOutlined /> },
+                  { label: 'Chart', value: 'chart', icon: <BarChartOutlined /> },
+                ]}
+              />
+            </div>
             <Suspense fallback={<LazySectionFallback />}>
-              <OfferComparisonChart data={chartData} />
+              {compBreakdownView === 'year1' ? (
+                compBreakdownDisplay === 'chart' ? (
+                  <OfferComparisonChart data={chartData} />
+                ) : (
+                  <Year1BreakdownList data={chartData} />
+                )
+              ) : (
+                <YearByYearSection
+                  scenarioRows={displayScenarioRows}
+                  display={compBreakdownDisplay}
+                />
+              )}
             </Suspense>
           </div>
         )}
@@ -1532,6 +1581,7 @@ const OfferComparison = () => {
         onToggleCurrent={toggleCurrent}
         onToggleRejected={handleToggleRejected}
         onNegotiateClick={setNegotiatingOffer}
+        onNegotiationLogClick={setNegotiationLogOffer}
         onRaiseHistoryClick={setRaiseHistoryOffer}
         onSaveSnapshotClick={handleSaveDecisionSnapshot}
         onSnapshotsClick={(offer) => {
@@ -2036,6 +2086,19 @@ const OfferComparison = () => {
             application={applicationsById[negotiatingOffer.application]}
             open={!!negotiatingOffer}
             onClose={() => setNegotiatingOffer(null)}
+            onPersistRisks={(risks) => persistOfferUpdates(negotiatingOffer, { risk_notes: risks })}
+          />
+        </Suspense>
+      )}
+
+      {negotiationLogOffer && (
+        <Suspense fallback={null}>
+          <NegotiationLogModal
+            offer={negotiationLogOffer}
+            offerLabel={getApplicationName(negotiationLogOffer.application)}
+            open={!!negotiationLogOffer}
+            onClose={() => setNegotiationLogOffer(null)}
+            onSave={(updates) => persistOfferUpdates(negotiationLogOffer, updates)}
           />
         </Suspense>
       )}

@@ -8,7 +8,7 @@ import {
   LineChartOutlined,
 } from '@ant-design/icons';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
-import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
+import { buildGrossVestingYears, getEquityGrowth, type EquityPreset } from './vestingSchedule';
 import CompensationSimulatorMobile from './CompensationSimulatorMobile';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
 
@@ -24,8 +24,6 @@ type OfferWithCompFields = ScenarioRow['offer'] & {
   equity_buyback_value?: number;
 };
 
-type EquityPreset = 'downside' | 'base' | 'upside' | 'custom';
-
 const formatCurrency = (value: number, options?: Intl.NumberFormatOptions) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -33,8 +31,6 @@ const formatCurrency = (value: number, options?: Intl.NumberFormatOptions) =>
     maximumFractionDigits: 0,
     ...options,
   }).format(Number.isFinite(value) ? value : 0);
-
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const Explain = ({ label, title }: { label: string; title: ReactNode }) => (
   <HelpTooltipTrigger
@@ -44,57 +40,11 @@ const Explain = ({ label, title }: { label: string; title: ReactNode }) => (
   />
 );
 
-const getEquityGrowth = (preset: EquityPreset, customGrowthPct: number) => {
-  if (preset === 'downside') return -20;
-  if (preset === 'upside') return 25;
-  if (preset === 'custom') return customGrowthPct;
-  return 0;
-};
-
-const getTotalGrant = (offer: OfferWithCompFields) => {
-  const annualEquity = Number(offer.equity || 0);
-  const explicitGrant = Number(offer.equity_total_grant || 0);
-  if (explicitGrant > 0) return explicitGrant;
-  const vestPct = Number(offer.equity_vesting_percent || 25);
-  return vestPct > 0 ? annualEquity / (vestPct / 100) : annualEquity * 4;
-};
-
-const buildGrossVestingYears = (row: ScenarioRow, equityGrowthPct: number) => {
-  const offer = row.offer as OfferWithCompFields;
-  const liquidity = normalizeEquityLiquidity(offer.equity_liquidity);
-  if (liquidity === 'ILLIQUID') return [0, 0, 0, 0];
-  if (liquidity === 'BUYBACK') {
-    const annualBuybackValue = getRealizableEquity(offer);
-    return [annualBuybackValue, annualBuybackValue, annualBuybackValue, annualBuybackValue];
-  }
-  const totalGrant = getTotalGrant(offer);
-  const vestPct = clamp(Number(offer.equity_vesting_percent || 25), 1, 100);
-  const explicitSchedule = Array.isArray(offer.equity_vesting_schedule)
-    ? offer.equity_vesting_schedule.slice(0, 4).map((pct) => clamp(Number(pct) || 0, 0, 100))
-    : [];
-  const schedule =
-    explicitSchedule.length > 0
-      ? Array.from({ length: 4 }, (_, index) => explicitSchedule[index] ?? 0)
-      : null;
-  const vestingYears = clamp(Math.round(100 / vestPct), 1, 6);
-  const annualGrantSlice = totalGrant / vestingYears;
-  const growthMultiplier = equityGrowthPct / 100;
-
-  return Array.from({ length: 4 }, (_, index) => {
-    const year = index + 1;
-    const vestedGrant = schedule
-      ? totalGrant * ((schedule[index] || 0) / 100)
-      : year > vestingYears
-        ? 0
-        : annualGrantSlice;
-    const marketValue = vestedGrant * Math.pow(1 + growthMultiplier, year - 1);
-    return Math.max(0, marketValue);
-  });
-};
-
 const buildVestingYears = (row: ScenarioRow, equityGrowthPct: number) => {
   const afterTaxMultiplier = 1 - row.usedEquityTaxRate / 100;
-  return buildGrossVestingYears(row, equityGrowthPct).map((value) => value * afterTaxMultiplier);
+  return buildGrossVestingYears(row.offer as OfferWithCompFields, equityGrowthPct).map(
+    (value) => value * afterTaxMultiplier
+  );
 };
 
 const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }) => {
@@ -114,7 +64,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
       const afterTaxCashMonthly = (row.afterTaxBase + row.afterTaxBonus) / 12;
       const preTaxSignOnMonthly = Number(offer.sign_on || 0) / 12;
       const afterTaxSignOnMonthly = Number(row.afterTaxSignOn || 0) / 12;
-      const grossVestingYears = buildGrossVestingYears(row, equityGrowthPct);
+      const grossVestingYears = buildGrossVestingYears(offer, equityGrowthPct);
       const vestingYears = buildVestingYears(row, equityGrowthPct);
       const grossEquityMonthly = grossVestingYears[0] / 12;
       const equityMonthly = vestingYears[0] / 12;

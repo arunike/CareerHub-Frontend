@@ -7,6 +7,7 @@ import {
   getTasks,
   updateTask,
 } from '../api';
+import { getOffers } from '../api/career';
 import {
   format,
   parseISO,
@@ -29,6 +30,11 @@ import { Link } from 'react-router-dom';
 import type { ConflictAlert, Event, Task } from '../types';
 import ConfirmModal from './ConfirmModal';
 import { message } from 'antd';
+import {
+  getDeadlineStatus,
+  isDecisionSettled,
+  type OfferDeadlineSource,
+} from '../utils/offerDeadline';
 
 interface NotificationBellProps {
   placement?: 'bottom-right' | 'top-left';
@@ -38,14 +44,22 @@ type DeadlinePriority = 'P0' | 'P1' | 'P2';
 
 interface DeadlineItem {
   id: string;
-  taskId: number;
+  kind: 'task' | 'offer';
+  // Only present for tasks, which are the only kind that can be marked done.
+  taskId?: number;
   title: string;
+  subtitle: string;
+  linkTo: string;
   priority: DeadlinePriority;
   dueLabel: string;
   dueDate: Date;
 }
 
 const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
+// Only surface deadlines inside this window.
+const MAX_DEADLINE_DAYS = 7;
+
+type RankedDeadline = DeadlineItem & { rank: number };
 const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
 
 const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom-right' }) => {
@@ -77,10 +91,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         console.error('Detection failed', error);
       }
 
-      const [eventsResp, conflictsResp, tasksResp] = await Promise.all([
+      const [eventsResp, conflictsResp, tasksResp, offersResp] = await Promise.all([
         getEvents(),
         getUnresolvedConflicts(),
         getTasks(),
+        getOffers().catch(() => ({ data: [] })),
       ]);
 
       const allEvents = eventsResp.data;
@@ -100,7 +115,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
       setEvents(upcoming);
       setConflicts(conflictsResp.data);
-      setDeadlines(buildTaskDeadlines(tasksResp.data as Task[], snoozed));
+      setDeadlines(
+        mergeDeadlines(
+          buildTaskDeadlines(tasksResp.data as Task[], snoozed),
+          buildOfferDeadlines(offersResp.data as OfferDeadlineSource[], snoozed)
+        )
+      );
     } catch (error) {
       messageApi.error('Failed to fetch data');
       console.error('Failed to fetch data', error);
@@ -294,7 +314,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   <div className="bg-amber-50/40">
                     <div className="px-3 py-2 text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-2">
                       <FlagOutlined className="text-xs" />
-                      Deadline Radar (Tasks)
+                      Deadline Radar
                     </div>
                     {deadlines.map((deadline) => (
                       <div key={deadline.id} className="p-3 hover:bg-amber-50 transition-colors">
@@ -303,7 +323,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                             <div className="text-xs font-medium text-gray-900 truncate">
                               {deadline.title}
                             </div>
-                            <div className="text-[11px] text-gray-600 mt-1">Action Item</div>
+                            <div className="text-[11px] text-gray-600 mt-1">
+                              {deadline.subtitle}
+                            </div>
                           </div>
                           <span
                             className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium ${
@@ -319,26 +341,28 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <Link
-                            to={`/tasks?taskId=${deadline.taskId}&mode=view`}
+                            to={deadline.linkTo}
                             className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-600 hover:text-blue-700"
                             onClick={() => setIsOpen(false)}
                           >
                             Open
                           </Link>
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={(e) => markTaskDone(deadline.taskId, deadline.id, e)}
-                              className="min-h-11 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
-                            >
-                              Done
-                            </button>
+                            {deadline.kind === 'task' && deadline.taskId != null && (
+                              <button
+                                type="button"
+                                onClick={(e) => markTaskDone(deadline.taskId!, deadline.id, e)}
+                                className="min-h-11 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
+                              >
+                                Done
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={(e) => snoozeDeadline(deadline.id, e)}
                               className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100"
                             >
-                              Snooze 1d
+                              Dismiss 1d
                             </button>
                           </div>
                         </div>
@@ -411,10 +435,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
 export default NotificationBell;
 
-const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): DeadlineItem[] => {
+const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): RankedDeadline[] => {
   const now = new Date();
-  const maxDays = 7;
-  const items: Array<DeadlineItem & { rank: number }> = [];
+  const maxDays = MAX_DEADLINE_DAYS;
+  const items: RankedDeadline[] = [];
 
   const isVisible = (id: string) => {
     const until = snoozed[id];
@@ -447,8 +471,11 @@ const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): Dea
 
     items.push({
       id,
+      kind: 'task',
       taskId: task.id,
       title: task.title,
+      subtitle: 'Action Item',
+      linkTo: `/tasks?taskId=${task.id}&mode=view`,
       priority,
       dueLabel,
       dueDate,
@@ -456,8 +483,50 @@ const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): Dea
     });
   });
 
-  return items
+  return items;
+};
+
+const buildOfferDeadlines = (
+  offers: OfferDeadlineSource[],
+  snoozed: Record<string, string>
+): RankedDeadline[] => {
+  const now = new Date();
+  const items: RankedDeadline[] = [];
+
+  offers.forEach((offer) => {
+    if (offer.id == null) return;
+    if (isDecisionSettled(offer.final_decision_status)) return;
+
+    const status = getDeadlineStatus(offer.deadline);
+    if (!status || status.isExpired) return;
+    if (status.daysRemaining > MAX_DEADLINE_DAYS) return;
+
+    const id = `offer-${offer.id}`;
+    const until = snoozed[id];
+    if (until && new Date(until).getTime() > now.getTime()) return;
+
+    const priority: DeadlinePriority =
+      status.daysRemaining <= 0 ? 'P0' : status.daysRemaining <= 3 ? 'P1' : 'P2';
+
+    items.push({
+      id,
+      kind: 'offer',
+      title: offer.application_details?.company || `Offer #${offer.id}`,
+      subtitle: 'Offer decision',
+      linkTo: '/offers',
+      priority,
+      dueLabel: status.daysRemaining === 0 ? 'Today' : `${status.daysRemaining}d left`,
+      dueDate: parseISO(status.date),
+      rank: status.daysRemaining <= 0 ? 0 : status.daysRemaining <= 3 ? 1 : 2,
+    });
+  });
+
+  return items;
+};
+
+const mergeDeadlines = (...groups: RankedDeadline[][]): DeadlineItem[] =>
+  groups
+    .flat()
     .sort((a, b) => a.rank - b.rank || compareAsc(a.dueDate, b.dueDate))
     .slice(0, 10)
     .map(({ rank: _rank, ...rest }) => rest);
-};

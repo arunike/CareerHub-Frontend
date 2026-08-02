@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Select, Spin } from 'antd';
+import { DatePicker, Select, Spin } from 'antd';
+import dayjs from 'dayjs';
 import { getApplicationOptions } from '../../../api';
 import type { ApplicationOption } from './types';
 
@@ -15,6 +16,8 @@ type IdentitySectionProps = {
   onRoleTitleChange: (value: string) => void;
   level?: string;
   onLevelChange?: (value: string) => void;
+  deadline?: string | null;
+  onDeadlineChange?: (value: string | null) => void;
   companyPlaceholder: string;
   rolePlaceholder: string;
 };
@@ -31,6 +34,8 @@ const IdentitySection = ({
   onRoleTitleChange,
   level = '',
   onLevelChange,
+  deadline = null,
+  onDeadlineChange,
   companyPlaceholder,
   rolePlaceholder,
 }: IdentitySectionProps) => {
@@ -174,18 +179,37 @@ const IdentitySection = ({
               />
             </div>
           </div>
-          {onLevelChange !== undefined && (
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-              <input
-                type="text"
-                value={level}
-                onChange={(e) => onLevelChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder="e.g. L5, Senior, Staff, E5, IC3"
-              />
-            </div>
-          )}
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {onLevelChange !== undefined && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                <input
+                  type="text"
+                  value={level}
+                  onChange={(e) => onLevelChange(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  placeholder="e.g. L5, Senior, Staff, E5, IC3"
+                />
+              </div>
+            )}
+            {onDeadlineChange !== undefined && (
+              <div>
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                  htmlFor="offer-form-deadline"
+                >
+                  Decision deadline
+                </label>
+                <DatePicker
+                  id="offer-form-deadline"
+                  className="w-full"
+                  value={deadline ? dayjs(deadline) : null}
+                  onChange={(date) => onDeadlineChange(date ? date.format('YYYY-MM-DD') : null)}
+                  placeholder="When this offer expires"
+                />
+              </div>
+            )}
+          </div>
         </>
       )}
     </>

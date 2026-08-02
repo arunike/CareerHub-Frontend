@@ -36,6 +36,8 @@ interface OfferFormFieldsProps {
   onRoleTitleChange: (value: string) => void;
   level?: string;
   onLevelChange?: (value: string) => void;
+  deadline?: string | null;
+  onDeadlineChange?: (value: string | null) => void;
   location: string;
   onLocationChange: (value: string) => void;
   officeLocation?: string;
@@ -198,6 +200,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onRoleTitleChange,
   level,
   onLevelChange,
+  deadline,
+  onDeadlineChange,
   location,
   onLocationChange,
   officeLocation,
@@ -512,6 +516,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 roleTitle={roleTitle}
                 onRoleTitleChange={onRoleTitleChange}
                 level={level}
+                deadline={deadline}
+                onDeadlineChange={onDeadlineChange}
                 onLevelChange={onLevelChange}
                 companyPlaceholder={companyPlaceholder}
                 rolePlaceholder={rolePlaceholder}

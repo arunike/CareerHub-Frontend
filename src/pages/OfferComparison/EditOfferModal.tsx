@@ -144,6 +144,8 @@ const EditOfferModal = ({
             onRoleTitleChange={(value) => patchEditingApp({ role_title: value })}
             level={editingApp?.level || ''}
             onLevelChange={(value) => patchEditingApp({ level: value })}
+            deadline={editingOffer.deadline ?? null}
+            onDeadlineChange={(value) => setEditingOfferField('deadline', value)}
             location={editingApp?.location || ''}
             onLocationChange={(value) => patchEditingApp({ location: value })}
             officeLocation={editingApp?.office_location || ''}

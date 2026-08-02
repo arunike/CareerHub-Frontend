@@ -25,6 +25,8 @@ interface Props {
   application: Application | undefined;
   open: boolean;
   onClose: () => void;
+  // Persists the generated "Watch Out For" list to the offer record.
+  onPersistRisks?: (risks: string) => Promise<void>;
 }
 
 const fmt = (n: number | null | undefined) => (n != null ? `$${Number(n).toLocaleString()}` : null);
@@ -70,7 +72,7 @@ const Section = ({
   </div>
 );
 
-const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) => {
+const NegotiationAdvisorModal = ({ offer, application, open, onClose, onPersistRisks }: Props) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [advice, setAdvice] = useState<NegotiationAdvice | null>(null);
@@ -99,6 +101,14 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose }: Props) =
         currentOffer,
       });
       setAdvice(data);
+
+      if (onPersistRisks && data.caution_points?.length) {
+        try {
+          await onPersistRisks(data.caution_points.map((point) => `• ${point}`).join('\n'));
+        } catch (persistError) {
+          console.error('Failed to persist negotiation risks', persistError);
+        }
+      }
       const saved = saveNegotiationResult(
         offer.id,
         application?.company_name ?? '',

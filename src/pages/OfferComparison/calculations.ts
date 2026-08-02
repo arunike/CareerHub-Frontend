@@ -14,6 +14,8 @@ export type VisaSponsorshipStatus =
 
 export type DayOneGcStatus = '' | 'UNKNOWN' | 'YES' | 'NO' | 'NOT_APPLICABLE';
 
+import type { FinalDecisionStatus, NegotiationRound } from './offerLifecycle';
+
 export interface MaritalStatusOption {
   code: MaritalStatus;
   label: string;
@@ -102,6 +104,12 @@ export interface OfferLike {
   id?: number;
   application: number;
   application_details?: { company: string; role_title: string };
+  // ISO date the offer expires, e.g. '2026-08-14'.
+  deadline?: string | null;
+  negotiation_rounds?: NegotiationRound[];
+  risk_notes?: string;
+  final_decision_status?: FinalDecisionStatus;
+  final_decision_reasoning?: string;
   base_salary: number;
   bonus: number;
   equity: number;

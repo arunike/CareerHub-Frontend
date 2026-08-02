@@ -46,6 +46,7 @@ type Props = {
   setStatusFilter?: (filter: 'active' | 'all' | 'rejected') => void;
   rejectedOffersCount?: number;
   onNegotiateClick: (offer: Offer) => void;
+  onNegotiationLogClick?: (offer: Offer) => void;
   onRaiseHistoryClick: (offer: Offer) => void;
   onSaveSnapshotClick: (offer: Offer, row: DecisionRow) => void;
   onSnapshotsClick: (offer: Offer) => void;
@@ -91,7 +92,6 @@ export type DecisionRow = {
   isSimulated: boolean;
 };
 
-/** Default weights for the 6 user-adjustable categories. Always sum to 100%. */
 const DEFAULT_WEIGHTS: Record<CategoryKey, number> = {
   financial: 44,
   workLife: 19,
@@ -148,7 +148,7 @@ const normalizeScoreWeights = (value: unknown): Record<CategoryKey, number> => {
   );
 };
 
-/** Immigration weight injected only when a visa/GC signal exists. Other weights are scaled down proportionally. */
+// Immigration weight injected only when a visa/GC signal exists. Other weights are scaled down proportionally.
 const VISA_OVERLAY_WEIGHT = 20;
 
 const CATEGORY_LABELS: Record<CategoryKey | 'visa', string> = {
@@ -823,7 +823,7 @@ const buildRows = (
     .map((row, index) => ({ ...row, rank: index + 1 }));
 };
 
-/** Renders the full score formula breakdown for a single row */
+// Renders the full score formula breakdown for a single row
 const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
   const scored = row.categories.filter((c) => c.isScored);
   const skipped = row.categories.filter((c) => !c.isScored);
@@ -932,6 +932,7 @@ const OfferDecisionScorecard = ({
   setStatusFilter,
   rejectedOffersCount,
   onNegotiateClick,
+  onNegotiationLogClick,
   onRaiseHistoryClick,
   onSaveSnapshotClick,
   onSnapshotsClick,
@@ -2032,6 +2033,15 @@ const OfferDecisionScorecard = ({
                                   className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 hover:bg-purple-50"
                                 >
                                   Negotiate
+                                </button>
+                              )}
+                              {onNegotiationLogClick && !row.isSimulated && (
+                                <button
+                                  type="button"
+                                  onClick={() => onNegotiationLogClick(row.offer as Offer)}
+                                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+                                >
+                                  Negotiation Log
                                 </button>
                               )}
                               <button
