@@ -50,7 +50,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 ### 💎 Offer Comparison (`/offers`)
 
-- **Interactive Bar Chart**: Recharts stacked chart showing TC breakdown (Base, Bonus, Equity, Sign-On, Benefits)
+- **Compensation Breakdown**: One collapsible panel with two switches — `Year 1` / `4-year outlook` and `List` / `Chart`. Year 1 renders either a Recharts stacked bar chart (Base, Bonus, Equity, Sign-On, Benefits) or a component table; the 4-year outlook renders either a year-grouped bar chart or the projection table
 - **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
 - **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled; Financial maps adjusted annual value to an uncapped logarithmic score where $300k = 100, scales its comparison bars to the highest visible score, counts direct commute and food cash effects, and keeps Remote/RTO preferences in Location and WLB
 - **Decision Snapshots**: Save point-in-time offer decisions with current score, rank, total comp, adjusted value, rent/tax/commute assumptions, category breakdown, and notes; locked snapshots are preserved from deletion
@@ -67,6 +67,9 @@ The **Frontend** is a React-based single-page application that provides an intui
   - **Qualitative Input**: Predefined pain points (burnout, bad WLB, commute, low growth, toxic culture) and custom free-text situational inputs.
   - **Strategic Outcome**: Side-by-side comparison of Option A (Stay at current job / Accept current best offer) vs. Option B (Start job hunting) to preview outcomes.
   - **Target Criteria**: List of target company types, salary targets, WLB/remote policies, and culture criteria to look for in your next search.
+- **Four-Year Total Comp**: Lives inside the **Compensation breakdown** panel behind a `Year 1` / `4-year outlook` switch, so the year-1 view stays the default. Available as a table or a year-grouped bar chart, where a back-loaded grant visibly climbs past a sign-on-heavy offer. Sign-on and relocation count in year 1 only; equity follows each offer's `equity_vesting_schedule` (e.g. `[5, 15, 40, 40]`), honouring liquidity so illiquid equity counts as $0 and a buyback pays a flat realizable amount. Gross/Adjusted toggle plus a downside/flat/upside equity scenario, a 4-year cumulative column, per-year best-offer highlighting, and a **crossover callout** ("Offer B overtakes Offer A in year 4") that catches offers which win year 1 on a sign-on but lose over the grant
+- **Decision Deadlines**: `Offer.deadline` is editable on the offer form and surfaced in the **notification bell** alongside task deadlines, sharing the existing Deadline Radar snooze so each entry can be dismissed for a day. Offers inside 7 days appear as `Nd left` / `Today` with P0/P1/P2 priority; settled offers (accepted, declined, expired, withdrawn) and past-due offers are filtered out
+- **Negotiation Log**: Per-offer record of each negotiation round — date, outcome, and asked-vs-received for base, bonus, equity, and sign-on with the gap computed per component. Also holds **Risks & watch-outs**, which the Negotiation Advisor now writes its "Watch Out For" list into so it persists server-side instead of only in localStorage, and the **Final decision** (status plus reasoning)
 - **Adjustments Panel**: Tax/COL/rent/commute/food-perk adjustments; per-offer overrides; persisted locally
 - **Edit Offer Modal**: Shared form for real and scenario offers (bonus $/% toggle, equity total+vesting mode, benefit items)
 - **Advanced Decision Signals**: Dedicated editor for optional visa sponsorship, Day 1 GC, growth, WLB, brand, and manager/team fit inputs
@@ -108,6 +111,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Team History / Team Norms** — internship and full-time roles can track structured team history in a dedicated modal
 - **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
 - **Overall Earnings Panels** — combined Full-Time and Internship summaries with breakdown modals; internship totals now include overtime pay across tracked roles
+- **Pay Growth** — current vs previous role comparison in the Earnings panel, defaulting to the top two roles in list order (pinned/drag order included) with dropdowns to compare any two roles and a swap button. A **Role & level** section shows each side's title and level side by side with a Changed/Same marker; levels are reported verbatim with no ranking inferred, since they are free text on company-specific scales (Adobe `P30` vs TikTok `1-2`), and a note appears when comparing levels across different companies. The compensation table adapts to the pair: salary vs salary shows base/bonus/equity/total deltas, hourly vs hourly shows the hourly rate delta, and salary vs hourly compares total and hourly rate taken straight from each role's compensation snapshot, so the figures match the earnings breakdown modals exactly (the salary side's hourly rate is derived from a 2,080-hour year, and a note warns that an hourly total covers only the period it ran). Roles without pay data are excluded from the dropdowns rather than counted as zero
 - **Schedule Phases** — split an internship into multiple schedule phases with per-phase rate, schedule, overtime, and total-hours inputs
 - **Quick Import Weekly Schedule** — paste weekly timesheet-style text into the Schedule Phases modal to auto-generate merged phases from dates, hours, and overtime rows
 - **Experience Import / Export** — toolbar supports import/export for the entire Experience page; JSON round-trips the richest payload, including logos, linked offer/application snapshots, team history, and schedule phases
@@ -293,6 +297,13 @@ frontend/
 │   │   │   ├── index.tsx            # Offer comparison page
 │   │   │   ├── OfferDetailsTable.tsx
 │   │   │   ├── OfferDecisionScorecard.tsx
+│   │   │   ├── YearByYearSection.tsx # Four-year total comp panel (table or chart) and crossover callout
+│   │   │   ├── YearByYearChart.tsx  # Year-grouped bar chart for the four-year outlook
+│   │   │   ├── Year1BreakdownList.tsx # Year-1 component table (list view of the bar chart)
+│   │   │   ├── yearByYear.ts        # Per-year TC projection and crossover detection
+│   │   │   ├── vestingSchedule.ts   # Shared four-year equity vesting engine
+│   │   │   ├── NegotiationLogModal.tsx # Negotiation rounds, risks, and final decision
+│   │   │   ├── offerLifecycle.ts    # Negotiation round and decision-status helpers (re-exports deadline utils)
 │   │   │   ├── CompensationSimulator.tsx # Monthly take-home, cost, PTO, and equity vesting simulator
 │   │   │   ├── NegotiationAdvisorModal.tsx  # AI negotiation advisor (auto-saves result)
 │   │   │   ├── OfferAdjustmentsPanel.tsx
@@ -306,6 +317,8 @@ frontend/
 │   │   │   ├── TeamHistoryModal.tsx # Team history / norms editor
 │   │   │   ├── SchedulePhasesModal.tsx # Internship multi-phase schedule editor + weekly quick import
 │   │   │   ├── CompensationBreakdownModal.tsx # Per-role and overall earnings breakdown UI
+│   │   │   ├── PayGrowthModal.tsx   # Role-vs-role pay comparison UI with selectable sides
+│   │   │   ├── payGrowth.ts         # Salary/hourly/mixed pay delta calculations
 │   │   │   └── compensation.ts      # Compensation snapshot and hourly/salary calculation helpers
 │   │   ├── JDReportsList/
 │   │   │   └── index.tsx            # Saved JD match reports list
@@ -350,6 +363,7 @@ frontend/
 │   │   ├── coverLetterStorage.ts    # Local fallback CRUD for cover letters
 │   │   ├── negotiationStorage.ts    # Local fallback CRUD for negotiation results
 │   │   ├── yearFilter.ts            # Year filter helpers
+│   │   ├── offerDeadline.ts         # Offer deadline countdown, shared by the offers page and notification bell
 │   │   └── ...
 │   │
 │   ├── hooks/
