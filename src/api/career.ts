@@ -122,6 +122,7 @@ export const getApplications = (params?: {
   year?: number | 'all';
   [key: string]: unknown;
 }) => api.get('/career/applications/', { params });
+export const getApplicationFunnel = () => api.get('/career/applications/funnel/');
 export const getApplicationOptions = (params?: {
   search?: string;
   page_size?: number;

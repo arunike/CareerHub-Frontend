@@ -10,10 +10,28 @@ import {
 } from '../../api';
 import type { EventCategory, UserSettings, EmploymentType, HolidayTab } from '../../types';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   ApiOutlined,
   SaveOutlined,
   PlusOutlined,
   CloseOutlined,
+  HolderOutlined,
   LockOutlined,
   UnlockOutlined,
   RobotOutlined,
@@ -55,6 +73,62 @@ import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 dayjs.extend(customParseFormat);
 
 type ApplicationStage = NonNullable<UserSettings['application_stages']>[number];
+
+const SortableStageRow: React.FC<{
+  id: string;
+  disabled: boolean;
+  isLocked: boolean;
+  sectionLocked: boolean;
+  onToggleLock: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  children: React.ReactNode;
+}> = ({ id, disabled, isLocked, sectionLocked, onToggleLock, onEdit, onDelete, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.55 : 1,
+        zIndex: isDragging ? 10 : undefined,
+        position: 'relative',
+      }}
+    >
+      <LockableListItem
+        isLocked={isLocked}
+        sectionLocked={sectionLocked}
+        onToggleLock={onToggleLock}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      >
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          disabled={disabled}
+          aria-label={disabled ? 'Reordering disabled' : 'Drag to reorder stage'}
+          title={
+            disabled
+              ? 'Unlock the stage to reorder it'
+              : 'Drag to reorder — this sets the funnel order'
+          }
+          className={`shrink-0 rounded p-1 text-gray-300 transition-colors ${
+            disabled ? 'cursor-not-allowed' : 'cursor-grab text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <HolderOutlined />
+        </button>
+        {children}
+      </LockableListItem>
+    </div>
+  );
+};
 type AvailabilityTimeRange = UserSettings['work_time_ranges'][number];
 
 const WORK_DAY_OPTIONS = [
@@ -404,6 +478,24 @@ const Settings: React.FC = () => {
   );
 
   const getAppStages = (): ApplicationStage[] => settings?.application_stages || [];
+
+  const stageSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleAppStageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const current = getAppStages();
+    const from = current.findIndex((stage) => stage.key === active.id);
+    const to = current.findIndex((stage) => stage.key === over.id);
+    if (from === -1 || to === -1) return;
+
+    const reordered = arrayMove(current, from, to);
+    setSettings((prev) => (prev ? { ...prev, application_stages: reordered } : null));
+  };
 
   const handleSaveAppStage = () => {
     if (!newAppStageLabel.trim() || !newAppStageShortLabel.trim() || !settings) return;
@@ -2077,43 +2169,58 @@ const Settings: React.FC = () => {
                 No custom stages defined. Add one to get started.
               </p>
             ) : (
-              <div className="space-y-2">
-                {getAppStages().map((t) => (
-                  <LockableListItem
-                    key={t.key}
-                    isLocked={!!t.locked}
-                    sectionLocked={isAppStagesLocked}
-                    onToggleLock={() => {
-                      const current = getAppStages();
-                      setSettings((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              application_stages: current.map((x) =>
-                                x.key === t.key ? { ...x, locked: !t.locked } : x
-                              ),
-                            }
-                          : null
-                      );
-                    }}
-                    onEdit={() => handleEditAppStage(t)}
-                    onDelete={() => handleDeleteAppStage(t.key)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: getPaletteColorFromTone(t.tone).dot }}
-                      ></div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-800 leading-tight">{t.label}</span>
-                        <span className="text-xs text-gray-400 font-mono mt-0.5">
-                          {t.key} · {t.shortLabel}
-                        </span>
-                      </div>
-                    </div>
-                  </LockableListItem>
-                ))}
-              </div>
+              <DndContext
+                sensors={stageSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleAppStageDragEnd}
+              >
+                <SortableContext
+                  items={getAppStages().map((t) => t.key)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {getAppStages().map((t) => (
+                      <SortableStageRow
+                        key={t.key}
+                        id={t.key}
+                        disabled={isAppStagesLocked || !!t.locked}
+                        isLocked={!!t.locked}
+                        sectionLocked={isAppStagesLocked}
+                        onToggleLock={() => {
+                          const current = getAppStages();
+                          setSettings((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  application_stages: current.map((x) =>
+                                    x.key === t.key ? { ...x, locked: !t.locked } : x
+                                  ),
+                                }
+                              : null
+                          );
+                        }}
+                        onEdit={() => handleEditAppStage(t)}
+                        onDelete={() => handleDeleteAppStage(t.key)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getPaletteColorFromTone(t.tone).dot }}
+                          ></div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-800 leading-tight">
+                              {t.label}
+                            </span>
+                            <span className="text-xs text-gray-400 font-mono mt-0.5">
+                              {t.key} · {t.shortLabel}
+                            </span>
+                          </div>
+                        </div>
+                      </SortableStageRow>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         )}

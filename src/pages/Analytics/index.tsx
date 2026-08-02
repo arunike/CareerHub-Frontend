@@ -21,6 +21,7 @@ import { parseDateOnlyLocal } from '../../utils/dateOnly';
 import { MetricCardsSkeleton, SkeletonBlock } from '../../components/SkeletonLoader';
 
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
+const ApplicationFunnel = lazy(() => import('./ApplicationFunnel'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
 
@@ -62,11 +63,6 @@ const Analytics: React.FC = () => {
   });
 
   const [careerStats, setCareerStats] = useState({
-    totalApplications: 0,
-    responseRate: 0,
-    activeProcesses: 0,
-    offers: 0,
-    funnelData: [] as { name: string; value: number; fill: string }[],
     weeklyActivity: [] as { date: string; count: number }[],
   });
 
@@ -179,42 +175,6 @@ const Analytics: React.FC = () => {
   const processCareerData = (
     data: Array<{ status: string; date_applied?: string; [key: string]: unknown }>
   ) => {
-    const stageCounts = {
-      APPLIED: 0,
-      OA: 0,
-      SCREEN: 0,
-      ONSITE: 0,
-      OFFER: 0,
-      REJECTED: 0,
-    };
-
-    let activeCount = 0;
-
-    data.forEach((app) => {
-      const status = app.status;
-      if (Object.prototype.hasOwnProperty.call(stageCounts, status)) {
-        // @ts-expect-error - dynamic key access
-        stageCounts[status]++;
-      }
-
-      if (['APPLIED', 'OA', 'SCREEN', 'ONSITE'].includes(status)) {
-        activeCount++;
-      }
-    });
-
-    const funnelData = [
-      { name: 'Applied', value: stageCounts.APPLIED, fill: '#2563eb' },
-      { name: 'Online Assessment', value: stageCounts.OA, fill: '#60a5fa' },
-      { name: 'Phone Screen', value: stageCounts.SCREEN, fill: '#ec4899' },
-      { name: 'Onsite', value: stageCounts.ONSITE, fill: '#10b981' },
-      { name: 'Offer', value: stageCounts.OFFER, fill: '#059669' },
-    ].filter((item) => item.value > 0);
-
-    const positiveResponses = stageCounts.SCREEN + stageCounts.ONSITE + stageCounts.OFFER;
-    const totalApplications = data.length;
-    const responseRate =
-      totalApplications > 0 ? Math.round((positiveResponses / totalApplications) * 100) : 0;
-
     const weeks = [];
     const now = new Date();
     for (let i = 11; i >= 0; i--) {
@@ -235,14 +195,7 @@ const Analytics: React.FC = () => {
       });
     }
 
-    setCareerStats({
-      totalApplications,
-      responseRate,
-      activeProcesses: activeCount,
-      offers: stageCounts.OFFER,
-      funnelData,
-      weeklyActivity: weeks,
-    });
+    setCareerStats({ weeklyActivity: weeks });
   };
 
   if (loading) {
@@ -318,6 +271,10 @@ const Analytics: React.FC = () => {
             <SectionFallback />
           ) : (
             <>
+              <Suspense fallback={<SectionFallback />}>
+                <ApplicationFunnel />
+              </Suspense>
+
               <Suspense fallback={<SectionFallback />}>
                 <JobHuntAnalytics applications={applications} />
               </Suspense>
