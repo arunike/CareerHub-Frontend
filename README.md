@@ -170,6 +170,8 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### 🧩 Form Validation
 
 - **antd forms** already render a required asterisk and redden a failed field. All 13 `<Form>` instances now also pass the shared `SCROLL_TO_FIRST_ERROR` config (`constants/formDefaults.ts`), so a rejected submit smooth-scrolls the first invalid field to the centre of the viewport and focuses it instead of appearing to do nothing
+- **Delete All** on Experience, Documents, and Events is disabled when nothing is deletable. Documents and Events read `unlocked_count` from the paginated response rather than inspecting the current page, which would wrongly disable the button when the only unlocked row is on another page
+- **The offer form** reddens Company and Role after a failed save, alongside the existing asterisk, toast, focus, and scroll
 - **Hand-rolled forms** (those not built on antd's Form) use the `useRequiredFields` hook for the same three behaviours — red ring via `INVALID_FIELD_CLASS`, scroll into view, and focus — plus an inline message under the field. It accepts either a DOM node or an antd component ref
 
 ### 🔐 Authentication & Security
