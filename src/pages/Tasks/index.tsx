@@ -30,6 +30,7 @@ import ModalShell from '../../components/ModalShell';
 import { PageState } from '../../components/PageState';
 import { parseSmartReminder } from '../../utils/smartReminder';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 type TaskStatus = Task['status'];
 const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
@@ -733,7 +734,7 @@ const Tasks: React.FC = () => {
           )
         }
       >
-        <Form form={form} layout="vertical">
+        <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={form} layout="vertical">
           <Form.Item
             name="title"
             label="Title"

@@ -28,6 +28,7 @@ import { PageState } from '../../components/PageState';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
@@ -560,7 +561,7 @@ const Documents: React.FC = () => {
         confirmLoading={saving}
         okText="Save"
       >
-        <Form form={form} layout="vertical">
+        <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={form} layout="vertical">
           <Form.Item
             name="title"
             label="Document Title"

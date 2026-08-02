@@ -28,6 +28,7 @@ import CompensationFields, { type CompValue } from '../../components/Compensatio
 import LocationSelect from '../../components/LocationSelect';
 import { getMediaUrl } from '../../lib/runtimeConfig';
 import { LogoCropModal } from './LogoCropModal';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 interface OfferOption {
   value: number;
@@ -497,6 +498,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
 
       {activeTab === 'manual' && (
         <Form
+          scrollToFirstError={SCROLL_TO_FIRST_ERROR}
           form={form}
           layout="vertical"
           className="mt-4"
@@ -845,7 +847,12 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
       )}
 
       {activeTab === 'import' && (
-        <Form form={importForm} layout="vertical" className="mt-4">
+        <Form
+          scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+          form={importForm}
+          layout="vertical"
+          className="mt-4"
+        >
           <Form.Item
             name="raw_text"
             label="Paste Resume Section"

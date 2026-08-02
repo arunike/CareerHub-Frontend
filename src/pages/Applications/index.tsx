@@ -86,6 +86,7 @@ import {
   getImportFieldValue as readImportFieldValue,
 } from './applicationImportReview';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -975,7 +976,12 @@ const Applications = () => {
     submitLabel = 'Save',
     showActions = true
   ) => (
-    <Form form={form} layout="vertical" onFinish={handleAddEdit}>
+    <Form
+      scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+      form={form}
+      layout="vertical"
+      onFinish={handleAddEdit}
+    >
       <Row gutter={16}>
         <Col xs={24} sm={12}>
           <Form.Item name="company" label="Company" rules={[{ required: true }]}>
@@ -1555,7 +1561,7 @@ const Applications = () => {
           />
 
           {jobImportPreview && (
-            <Form form={jobImportForm} layout="vertical">
+            <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={jobImportForm} layout="vertical">
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
                   <Form.Item

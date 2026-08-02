@@ -16,6 +16,7 @@ import Modal from '../../../components/MobileModal';
 import type { PublicBooking, ShareLink } from '../../../types';
 import BulkActionHeader from '../../../components/BulkActionHeader';
 import SelectionCheckbox from '../../../components/SelectionCheckbox';
+import { SCROLL_TO_FIRST_ERROR } from '../../../constants/formDefaults';
 
 type Props = {
   links: ShareLink[];
@@ -527,7 +528,12 @@ const PublicBookingManager = ({
         onOk={handleBulkEditLinksSubmit}
         destroyOnClose
       >
-        <Form form={editForm} layout="vertical" className="mt-4">
+        <Form
+          scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+          form={editForm}
+          layout="vertical"
+          className="mt-4"
+        >
           <Form.Item name="title" label="Link Title (Optional)">
             <Input placeholder="Leave empty to keep current" />
           </Form.Item>

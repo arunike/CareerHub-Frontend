@@ -6,6 +6,7 @@ import ModalShell from '../ModalShell';
 import type { Holiday, HolidayTab } from '../../types';
 import type { CalendarHolidayTarget } from './types';
 import { confirmHolidayDeletion } from './confirmCalendarDeletion';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 export type CalendarHolidayFormValues = {
   description?: string;
@@ -89,7 +90,12 @@ const CalendarHolidayModal = ({
         </>
       }
     >
-      <Form form={form} layout="vertical" onFinish={onSubmit}>
+      <Form
+        scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+        form={form}
+        layout="vertical"
+        onFinish={onSubmit}
+      >
         <Form.Item name="description" label="Holiday Name">
           <Input
             size="large"

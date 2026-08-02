@@ -5,6 +5,7 @@ import { InboxOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { createDocument, getApplicationOptions } from '../../api';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 interface UploadDocumentModalProps {
   visible: boolean;
@@ -123,7 +124,12 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       okText="Upload"
       destroyOnClose
     >
-      <Form form={form} layout="vertical" className="mt-4">
+      <Form
+        scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+        form={form}
+        layout="vertical"
+        className="mt-4"
+      >
         <Form.Item
           name="title"
           label="Document Title"

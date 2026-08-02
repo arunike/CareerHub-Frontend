@@ -18,6 +18,7 @@ import CategoryBadge from '../../../components/CategoryBadge';
 import FriendlyTimeInput from '../../../components/FriendlyTimeInput';
 import { TIMEZONE_OPTIONS } from '../../../lib/timezones';
 import IconPicker from '../../../components/IconPicker';
+import { SCROLL_TO_FIRST_ERROR } from '../../../constants/formDefaults';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -87,7 +88,12 @@ const EventEditorModal = ({
       footer={null}
       width={600}
     >
-      <Form form={form} layout="vertical" onFinish={onFinish}>
+      <Form
+        scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+      >
         <Form.Item name="name" label="Event Name" rules={[{ required: true }]}>
           <Input placeholder="Team Sync" />
         </Form.Item>

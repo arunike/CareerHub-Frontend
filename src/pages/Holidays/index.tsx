@@ -86,6 +86,7 @@ import FederalHolidayCard, {
   type FederalHolidayGroup,
 } from './components/FederalHolidayCard';
 import { projectHolidaysForYear } from './holidayYearProjection';
+import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -1132,6 +1133,7 @@ const Holidays = () => {
       {/* Add Form */}
       <Card id="holiday-create-form" title="Add New Holiday">
         <Form
+          scrollToFirstError={SCROLL_TO_FIRST_ERROR}
           form={form}
           layout="vertical"
           onFinish={handleAdd}
@@ -1603,7 +1605,7 @@ const Holidays = () => {
           onOk={handleEditSubmit}
           okText="Save"
         >
-          <Form form={editForm} layout="vertical">
+          <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={editForm} layout="vertical">
             {editingItem?.isBulk && !editingItem?.allSameDesc && (
               <div className="mb-4 text-gray-500 text-sm italic">
                 You are editing multiple holidays with different names. Leave the name field blank
@@ -1673,7 +1675,7 @@ const Holidays = () => {
           onOk={handleAddFederal}
           okText={isFederalRangeMode ? 'Add Range' : 'Add Holiday'}
         >
-          <Form form={federalForm} layout="vertical">
+          <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={federalForm} layout="vertical">
             <div className="mb-4 text-gray-500 text-sm">
               Add a company holiday, wellness day, or another shared day off as one date or a
               continuous range.

@@ -3,6 +3,7 @@ import { Button, Input, Popconfirm, Spin, message } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { createContact, deleteContact, getContacts, updateContact } from '../api/career';
 import type { ApplicationContact } from '../types';
+import { INVALID_FIELD_CLASS, useRequiredFields } from '../hooks/useRequiredFields';
 
 const { TextArea } = Input;
 
@@ -36,6 +37,7 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | 'new' | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
+  const { register, errorFor, validate, clearError, clearAll } = useRequiredFields<'name'>();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,26 +60,26 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
   }, [load]);
 
   const startAdd = () => {
+    clearAll();
     setEditingId('new');
     setDraft(emptyDraft());
   };
 
   const startEdit = (contact: ApplicationContact) => {
+    clearAll();
     setEditingId(contact.id);
     setDraft({ name: contact.name, email: contact.email ?? '', notes: contact.notes ?? '' });
   };
 
   const cancelEdit = () => {
+    clearAll();
     setEditingId(null);
     setDraft(emptyDraft());
   };
 
   const save = async () => {
+    if (!validate({ name: { value: draft.name, label: 'Name' } })) return;
     const name = draft.name.trim();
-    if (!name) {
-      message.warning('A name is required');
-      return;
-    }
 
     setSaving(true);
     try {
@@ -113,17 +115,27 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className={FIELD_LABEL} htmlFor="contact-name">
-            Name
+            Name{' '}
+            <span className="text-rose-500" aria-hidden="true">
+              *
+            </span>
           </label>
           <Input
             id="contact-name"
+            {...register('name')}
             value={draft.name}
-            onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(e) => {
+              setDraft((prev) => ({ ...prev, name: e.target.value }));
+              if (errorFor('name')) clearError('name');
+            }}
             placeholder="Sarah Chen"
-            className="!rounded-lg"
+            status={errorFor('name') ? 'error' : undefined}
+            aria-invalid={!!errorFor('name')}
+            className={`!rounded-lg ${errorFor('name') ? INVALID_FIELD_CLASS : ''}`}
             autoFocus
             onPressEnter={save}
           />
+          {errorFor('name') && <p className="mt-1 text-[11px] text-rose-500">{errorFor('name')}</p>}
         </div>
         <div>
           <label className={FIELD_LABEL} htmlFor="contact-email">
