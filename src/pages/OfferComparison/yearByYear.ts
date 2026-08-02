@@ -187,3 +187,34 @@ export const buildYearByYearProjections = (
   rows: ScenarioRow[],
   equityGrowthPct: number
 ): OfferProjection[] => rows.map((row) => buildOfferProjection(row, equityGrowthPct));
+
+export interface MatchGap {
+  // The offer being measured against — the highest four-year total.
+  leader: string;
+  candidate: string;
+  // Four-year shortfall on the selected basis.
+  totalGap: number;
+  // Extra annual base needed, since base repeats every projected year.
+  perYearBase: number;
+  // Extra total grant needed, spread across the same window.
+  extraGrant: number;
+}
+
+export const findMatchGap = (projections: OfferProjection[]): MatchGap | null => {
+  const contenders = projections.filter((projection) => !projection.isCurrent);
+  if (contenders.length < 2) return null;
+
+  const ranked = [...contenders].sort((a, b) => b.grossTotal - a.grossTotal);
+  const leader = ranked[0];
+  const candidate = ranked[1];
+  const totalGap = leader.grossTotal - candidate.grossTotal;
+  if (totalGap <= 0) return null;
+
+  return {
+    leader: leader.label,
+    candidate: candidate.label,
+    totalGap,
+    perYearBase: totalGap / PROJECTION_YEARS,
+    extraGrant: totalGap,
+  };
+};

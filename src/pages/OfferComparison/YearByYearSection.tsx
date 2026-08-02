@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Segmented, Select } from 'antd';
-import { SwapRightOutlined } from '@ant-design/icons';
+import { AimOutlined, SwapRightOutlined } from '@ant-design/icons';
 import YearByYearChart from './YearByYearChart';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { getEquityGrowth, PROJECTION_YEARS, type EquityPreset } from './vestingSchedule';
 import {
   buildYearByYearProjections,
   findCrossover,
+  findMatchGap,
   type OfferProjection,
   type ProjectionBasis,
 } from './yearByYear';
@@ -53,6 +54,7 @@ const YearByYearSection = ({
   );
 
   const crossover = useMemo(() => findCrossover(projections, basis), [projections, basis]);
+  const matchGap = useMemo(() => findMatchGap(projections), [projections]);
 
   // Highest four-year total sets the bar scale, so every row is read against the best.
   const maxTotal = useMemo(
@@ -109,6 +111,22 @@ const YearByYearSection = ({
             <span className="font-semibold">{crossover.lateLeader}</span> overtakes{' '}
             <span className="font-semibold">{crossover.earlyLeader}</span> in year {crossover.year},
             and is ahead by {formatCurrency(crossover.gapAtFlip)} cumulatively by then.
+          </p>
+        </div>
+      )}
+
+      {matchGap && (
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+          <AimOutlined className="mt-0.5 shrink-0 text-emerald-600" />
+          <p className="text-[13px] leading-relaxed text-emerald-900">
+            To match <span className="font-semibold">{matchGap.leader}</span> over four years,{' '}
+            <span className="font-semibold">{matchGap.candidate}</span> needs{' '}
+            <span className="font-semibold">+{formatCurrency(matchGap.perYearBase)}/yr base</span>{' '}
+            or <span className="font-semibold">+{formatCurrency(matchGap.extraGrant)} equity</span>{' '}
+            — a {formatCurrency(matchGap.totalGap)} gap.
+            <span className="mt-1 block text-[11px] text-emerald-700/80">
+              Gross figures, so they are ready to use as a counter-ask.
+            </span>
           </p>
         </div>
       )}

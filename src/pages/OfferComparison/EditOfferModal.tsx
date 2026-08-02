@@ -175,6 +175,14 @@ const EditOfferModal = ({
             onBonusChange={(value) => setEditingOfferField('bonus', value)}
             equity={Number(editingOffer.equity) || 0}
             onEquityChange={(value) => setEditingOfferField('equity', value)}
+            annualRefreshValue={Number(editingOffer.annual_refresh_value) || 0}
+            onAnnualRefreshValueChange={(value) =>
+              setEditingOfferField('annual_refresh_value', value)
+            }
+            refreshStartsYear={Number(editingOffer.refresh_starts_year) || 2}
+            onRefreshStartsYearChange={(value) =>
+              setEditingOfferField('refresh_starts_year', value)
+            }
             equityLiquidity={normalizeEquityLiquidity(editingOffer.equity_liquidity)}
             onEquityLiquidityChange={(value) => setEditingOfferField('equity_liquidity', value)}
             equityBuybackValue={Number(editingOffer.equity_buyback_value) || 0}

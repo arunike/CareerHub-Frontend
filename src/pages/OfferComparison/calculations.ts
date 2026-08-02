@@ -118,6 +118,8 @@ export interface OfferLike {
   equity_vesting_schedule?: number[];
   equity_liquidity?: 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
   equity_buyback_value?: number;
+  annual_refresh_value?: number;
+  refresh_starts_year?: number;
   sign_on: number;
   benefits_value: number;
   benefit_items?: BenefitItem[];

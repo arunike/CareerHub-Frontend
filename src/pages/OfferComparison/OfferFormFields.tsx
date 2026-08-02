@@ -60,6 +60,10 @@ interface OfferFormFieldsProps {
   equityBuybackValue: number;
   onEquityBuybackValueChange: (value: number) => void;
   equityTotalGrant?: number;
+  annualRefreshValue?: number;
+  onAnnualRefreshValueChange?: (value: number) => void;
+  refreshStartsYear?: number;
+  onRefreshStartsYearChange?: (value: number) => void;
   onEquityTotalGrantChange?: (value: number) => void;
   equityVestingPercent?: number;
   onEquityVestingPercentChange?: (value: number) => void;
@@ -223,6 +227,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   equityBuybackValue,
   onEquityBuybackValueChange,
   equityTotalGrant,
+  annualRefreshValue,
+  onAnnualRefreshValueChange,
+  refreshStartsYear,
+  onRefreshStartsYearChange,
   onEquityTotalGrantChange,
   equityVestingPercent,
   onEquityVestingPercentChange,
@@ -597,6 +605,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 equityBuybackValue={equityBuybackValue}
                 onEquityBuybackValueChange={onEquityBuybackValueChange}
                 equityTotalGrant={equityTotalGrant}
+                annualRefreshValue={annualRefreshValue}
+                onAnnualRefreshValueChange={onAnnualRefreshValueChange}
+                refreshStartsYear={refreshStartsYear}
+                onRefreshStartsYearChange={onRefreshStartsYearChange}
                 onEquityTotalGrantChange={onEquityTotalGrantChange}
                 effectiveEquityVestingPercent={effectiveEquityVestingPercent}
                 setEquityVestingPercentInternal={setEquityVestingPercentInternal}

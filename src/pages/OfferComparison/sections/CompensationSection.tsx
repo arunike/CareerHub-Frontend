@@ -18,6 +18,10 @@ type CompensationSectionProps = {
   setEquityVestingPercentInternal: (value: number) => void;
   onEquityVestingPercentChange?: (value: number) => void;
   equityVestingSchedule?: number[];
+  annualRefreshValue?: number;
+  onAnnualRefreshValueChange?: (value: number) => void;
+  refreshStartsYear?: number;
+  onRefreshStartsYearChange?: (value: number) => void;
   onEquityVestingScheduleChange?: (value: number[]) => void;
   defaultEquityMode?: 'annual' | 'total';
   signOn: number;
@@ -42,6 +46,10 @@ const CompensationSection = ({
   effectiveEquityVestingPercent,
   onEquityVestingPercentChange,
   equityVestingSchedule,
+  annualRefreshValue = 0,
+  onAnnualRefreshValueChange,
+  refreshStartsYear = 2,
+  onRefreshStartsYearChange,
   onEquityVestingScheduleChange,
   defaultEquityMode,
   setEquityVestingPercentInternal,
@@ -70,6 +78,56 @@ const CompensationSection = ({
           onEquityVestingPercentChange?.(v);
         }}
       />
+      {onAnnualRefreshValueChange && equityLiquidity === 'LIQUID' && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+          <div className="mb-3">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Annual equity refresh <span className="normal-case text-slate-400">(optional)</span>
+            </span>
+            <p className="mt-1 text-[11px] leading-5 text-slate-500">
+              Many companies grant a new equity award each year. Leave at 0 to model only the
+              initial grant. Each refresh vests evenly over four years, so they stack.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label className="min-w-0">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Refresh grant value
+              </span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                  $
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  value={annualRefreshValue === 0 ? '' : annualRefreshValue}
+                  placeholder="0"
+                  onChange={(event) => onAnnualRefreshValueChange(Number(event.target.value) || 0)}
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-7 pr-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+            </label>
+            <label className="min-w-0">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                First refresh year
+              </span>
+              <select
+                value={refreshStartsYear}
+                disabled={annualRefreshValue <= 0}
+                onChange={(event) => onRefreshStartsYearChange?.(Number(event.target.value) || 2)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                <option value={1}>Year 1</option>
+                <option value={2}>Year 2</option>
+                <option value={3}>Year 3</option>
+                <option value={4}>Year 4</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <label className="min-w-0">
