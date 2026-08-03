@@ -151,7 +151,7 @@ const AvailabilityBookingCard = ({
                 className={`${bookingFieldClass} ${
                   !hostDisplayName.trim() && generatingLink ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="e.g. John"
+                placeholder="e.g. John Smith"
                 required
               />
             </div>
@@ -167,7 +167,7 @@ const AvailabilityBookingCard = ({
                 className={`${bookingFieldClass} ${
                   !hostEmail.trim() && generatingLink ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="e.g. john@example.com"
+                placeholder="e.g. john.smith@example.com"
                 required
               />
             </div>

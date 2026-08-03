@@ -9,17 +9,22 @@ import {
 } from '@ant-design/icons';
 import {
   deleteContact,
+  deleteContactRelationship,
   getContactRelationships,
   getContacts,
   mergeContacts,
 } from '../../api/career';
+import { getApiErrorMessage } from '../../utils/apiError';
 import type { ApplicationContact, ContactRelationship, ContactRelationshipKind } from '../../types';
 import { ListSkeleton, PageHeaderSkeleton } from '../../components/SkeletonLoader';
 import { PageState } from '../../components/PageState';
 import Modal from '../../components/MobileModal';
 import ContactEditorModal from '../../components/contacts/ContactEditorModal';
 import RelationshipEditorModal from '../../components/contacts/RelationshipEditorModal';
-import { CONTACT_RELATIONSHIP_OPTIONS } from '../../components/contacts/contactOptions';
+import {
+  CONTACT_RELATIONSHIP_OPTIONS,
+  withoutGenericContact,
+} from '../../components/contacts/contactOptions';
 import ContactDetailsDrawer from './ContactDetailsDrawer';
 import ContactList from './ContactList';
 import ContactNetwork from './ContactNetwork';
@@ -58,6 +63,7 @@ const ContactsPage = () => {
   const [editingContact, setEditingContact] = useState<ApplicationContact | null>(null);
   const [relationshipSource, setRelationshipSource] = useState<ApplicationContact | null>(null);
   const [relationshipOpen, setRelationshipOpen] = useState(false);
+  const [editingRelationship, setEditingRelationship] = useState<ContactRelationship | null>(null);
   const [mergeContact, setMergeContact] = useState<ApplicationContact | null>(null);
   const [mergeDuplicateId, setMergeDuplicateId] = useState<number>();
   const [merging, setMerging] = useState(false);
@@ -208,7 +214,11 @@ const ContactsPage = () => {
       (relationship) =>
         relationship.source_contact === null && relationship.target_contact === contact.id
     );
-    if (direct.length) return Array.from(new Set(direct.map((item) => item.label))).join(' · ');
+    if (direct.length) {
+      return Array.from(new Set(withoutGenericContact(direct).map((item) => item.label))).join(
+        ' · '
+      );
+    }
     const connected = relationships.find(
       (relationship) =>
         relationship.source_contact === contact.id || relationship.target_contact === contact.id
@@ -221,6 +231,17 @@ const ContactsPage = () => {
 
   const saveRefresh = async () => {
     await load();
+  };
+
+  const removeRelationship = async (targets: ContactRelationship[]) => {
+    try {
+      await Promise.all(targets.map((target) => deleteContactRelationship(target.id)));
+      message.success(targets.length > 1 ? 'Relationships removed' : 'Relationship removed');
+      await load();
+    } catch (error) {
+      console.error('Failed to remove relationship', error);
+      message.error(getApiErrorMessage(error, 'Could not remove the relationship'));
+    }
   };
 
   const remove = async (contact: ApplicationContact) => {
@@ -419,16 +440,27 @@ const ContactsPage = () => {
         relationships={relationships}
         onClose={() => setSelected(null)}
         onEdit={(contact) => {
+          setSelected(null);
           setEditingContact(contact);
           setEditorOpen(true);
         }}
         onAddRelationship={(contact) => {
+          setSelected(null);
           setRelationshipSource(contact);
+          setEditingRelationship(null);
           setRelationshipOpen(true);
         }}
+        onEditRelationship={(relationship) => {
+          setSelected(null);
+          setRelationshipSource(null);
+          setEditingRelationship(relationship);
+          setRelationshipOpen(true);
+        }}
+        onDeleteRelationship={(targets) => void removeRelationship(targets)}
         onExplore={explore}
         onDelete={(contact) => void remove(contact)}
         onMerge={(contact) => {
+          setSelected(null);
           setMergeContact(contact);
           setMergeDuplicateId(undefined);
         }}
@@ -447,6 +479,7 @@ const ContactsPage = () => {
         open={relationshipOpen}
         contacts={contacts}
         sourceContact={relationshipSource}
+        relationship={editingRelationship}
         careerRecord={relationshipSource?.contexts?.[0]?.career_record}
         onClose={() => setRelationshipOpen(false)}
         onSaved={saveRefresh}

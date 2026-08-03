@@ -378,8 +378,7 @@ export type ContactRelationshipKind =
   | 'MANAGER'
   | 'DIRECT_TEAMMATE'
   | 'COWORKER'
-  | 'DIRECT_REPORT'
-  | 'REFERRAL'
+  | 'TECH_LEAD'
   | 'MENTOR'
   | 'WORKS_WITH'
   | 'CUSTOM';

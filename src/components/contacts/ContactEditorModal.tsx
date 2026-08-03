@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Checkbox, Form, Input, Select, message } from 'antd';
+import { AutoComplete, Checkbox, Form, Input, Select, message } from 'antd';
 import Modal from '../MobileModal';
 import { createContact, updateContact } from '../../api/career';
 import type { ApplicationContact, ContactRelationshipKind } from '../../types';
@@ -121,15 +121,21 @@ const ContactEditorModal = ({
           <Form.Item name="job_title" label="Job title">
             <Input placeholder="Senior engineer" />
           </Form.Item>
-          <Form.Item name="company" label="Company">
-            <Select
+          <Form.Item
+            name="company"
+            label="Company"
+            rules={[{ required: true, whitespace: true, message: 'Enter a company' }]}
+          >
+            <AutoComplete
               allowClear
-              showSearch
-              optionFilterProp="label"
-              loading={companiesLoading}
+              filterOption={(input, option) =>
+                String(option?.value ?? '')
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
               options={companyOptions}
-              placeholder="Select an application company"
-              notFoundContent={companiesLoading ? 'Loading companies…' : 'No application companies'}
+              placeholder="Google"
+              notFoundContent={companiesLoading ? 'Loading companies…' : null}
             />
           </Form.Item>
           <Form.Item name="email" label="Email" rules={[{ type: 'email' }]}>

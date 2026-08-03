@@ -11,8 +11,7 @@ export const CONTACT_RELATIONSHIP_OPTIONS: Array<{
   { value: 'MANAGER', label: 'Manager' },
   { value: 'DIRECT_TEAMMATE', label: 'Direct teammate' },
   { value: 'COWORKER', label: 'Coworker' },
-  { value: 'DIRECT_REPORT', label: 'Direct report' },
-  { value: 'REFERRAL', label: 'Referral' },
+  { value: 'TECH_LEAD', label: 'Tech lead' },
   { value: 'MENTOR', label: 'Mentor' },
   { value: 'WORKS_WITH', label: 'Works with' },
   { value: 'CUSTOM', label: 'Custom relationship' },
@@ -22,6 +21,11 @@ export const relationshipLabel = (kind: ContactRelationshipKind, customLabel?: s
   kind === 'CUSTOM'
     ? customLabel || 'Custom'
     : CONTACT_RELATIONSHIP_OPTIONS.find((option) => option.value === kind)?.label || kind;
+
+export const withoutGenericContact = <T extends { kind: string }>(group: T[]): T[] => {
+  const specific = group.filter((relationship) => relationship.kind !== 'CONTACT');
+  return specific.length ? specific : group;
+};
 
 export const contactInitials = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);

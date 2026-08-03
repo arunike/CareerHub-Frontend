@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Form, Input, Segmented, Select, message } from 'antd';
+import { Form, Input, Segmented, Select, Tooltip, message } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { SelectProps } from 'antd';
 import Modal from '../MobileModal';
-import { createContact, createContactRelationship } from '../../api/career';
+import {
+  createContact,
+  createContactRelationship,
+  updateContactRelationship,
+} from '../../api/career';
 import type { ApplicationContact, ContactRelationship, ContactRelationshipKind } from '../../types';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
+import { getApiErrorMessage } from '../../utils/apiError';
 import { CONTACT_RELATIONSHIP_OPTIONS } from './contactOptions';
+
+const DIRECTION_HELP =
+  'Relationships have a direction. The person in "To" is the one who holds the role: ' +
+  'From San Zhang, To Chris Wong, Manager means Chris is San’s manager. ' +
+  'Flip From and To to say the opposite.';
 
 interface Values {
   source_contact?: number | 'me';
@@ -20,6 +31,8 @@ interface Props {
   open: boolean;
   contacts: ApplicationContact[];
   sourceContact?: ApplicationContact | null;
+  // When set the modal edits this relationship instead of creating one.
+  relationship?: ContactRelationship | null;
   careerRecord?: number | null;
   onClose: () => void;
   onSaved: (relationship: ContactRelationship) => void | Promise<void>;
@@ -29,6 +42,7 @@ const RelationshipEditorModal = ({
   open,
   contacts,
   sourceContact,
+  relationship,
   careerRecord,
   onClose,
   onSaved,
@@ -38,10 +52,22 @@ const RelationshipEditorModal = ({
   const [saving, setSaving] = useState(false);
   const kind = Form.useWatch('kind', form);
   const source = Form.useWatch('source_contact', form);
+  const isEditing = Boolean(relationship);
 
   useEffect(() => {
     if (!open) return;
     setTargetMode('existing');
+    if (relationship) {
+      form.setFieldsValue({
+        source_contact: relationship.source_contact ?? 'me',
+        target_contact: relationship.target_contact,
+        kind: relationship.kind,
+        custom_label: relationship.custom_label || '',
+        new_name: '',
+        new_email: '',
+      });
+      return;
+    }
     form.setFieldsValue({
       source_contact: sourceContact?.id || 'me',
       target_contact: undefined,
@@ -50,7 +76,18 @@ const RelationshipEditorModal = ({
       new_name: '',
       new_email: '',
     });
-  }, [form, open, sourceContact]);
+  }, [form, open, relationship, sourceContact]);
+
+  const handleSourceChange = (value: number | 'me') => {
+    const target = form.getFieldValue('target_contact') as number | undefined;
+    if (value === 'me') {
+      if (sourceContact && (target === undefined || target === sourceContact.id)) {
+        form.setFieldsValue({ target_contact: sourceContact.id });
+      }
+      return;
+    }
+    if (target === value) form.setFieldsValue({ target_contact: undefined });
+  };
 
   const save = async () => {
     const values = await form.validateFields();
@@ -77,20 +114,24 @@ const RelationshipEditorModal = ({
       const sharedRecord = selectedTarget?.contexts?.find((context) =>
         sourceRecords.has(context.career_record)
       )?.career_record;
-      const response = await createContactRelationship({
+      const payload = {
         source_contact: values.source_contact === 'me' ? null : values.source_contact,
         target_contact: targetId,
         kind: values.kind,
         custom_label: values.kind === 'CUSTOM' ? values.custom_label : '',
-        career_record: careerRecord || sharedRecord || null,
-      });
+        // Keep whatever the relationship was already tied to; editing the kind must not drop it.
+        career_record: careerRecord || sharedRecord || relationship?.career_record || null,
+      };
+      const response = relationship
+        ? await updateContactRelationship(relationship.id, payload)
+        : await createContactRelationship(payload);
       await onSaved(response.data);
-      message.success('Relationship added');
+      message.success(relationship ? 'Relationship updated' : 'Relationship added');
       onClose();
     } catch (error) {
       if ((error as { errorFields?: unknown }).errorFields) return;
-      console.error('Failed to add relationship', error);
-      message.error('Could not add the relationship');
+      console.error('Failed to save relationship', error);
+      message.error(getApiErrorMessage(error, 'Could not save the relationship'));
     } finally {
       setSaving(false);
     }
@@ -125,8 +166,19 @@ const RelationshipEditorModal = ({
   return (
     <Modal
       open={open}
-      title={sourceContact ? `Add a connection for ${sourceContact.name}` : 'Add relationship'}
-      okText="Add relationship"
+      title={
+        <span className="flex items-center gap-2">
+          {isEditing
+            ? 'Edit relationship'
+            : sourceContact
+              ? `Add a connection for ${sourceContact.name}`
+              : 'Add relationship'}
+          <Tooltip title={DIRECTION_HELP}>
+            <QuestionCircleOutlined className="text-sm text-slate-400" />
+          </Tooltip>
+        </span>
+      }
+      okText={isEditing ? 'Save changes' : 'Add relationship'}
       confirmLoading={saving}
       onOk={save}
       onCancel={onClose}
@@ -135,6 +187,9 @@ const RelationshipEditorModal = ({
       <Form form={form} layout="vertical" {...SCROLL_TO_FIRST_ERROR} className="pt-2">
         <Form.Item name="source_contact" label="From">
           <Select
+            showSearch
+            optionFilterProp="label"
+            onChange={handleSourceChange}
             options={[
               { value: 'me', label: 'Me' },
               ...contacts.map((contact) => ({ value: contact.id, label: contact.name })),
@@ -157,7 +212,7 @@ const RelationshipEditorModal = ({
         {targetMode === 'existing' ? (
           <Form.Item
             name="target_contact"
-            label="Person"
+            label="To"
             rules={[{ required: true, message: 'Choose a person' }]}
           >
             <Select showSearch optionFilterProp="label" options={contactOptions} />
@@ -191,8 +246,9 @@ const RelationshipEditorModal = ({
             </Form.Item>
           )}
         </div>
-        <p className="text-xs leading-relaxed text-slate-500">
-          This creates only the relationship you specify. CareerHub will not infer reporting lines.
+        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
+          {DIRECTION_HELP} Only the relationship you specify is saved — CareerHub will not infer
+          reporting lines from it.
         </p>
       </Form>
     </Modal>

@@ -171,7 +171,7 @@ const TeamHistoryModal: React.FC<Props> = ({
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Manager</label>
                 <Input
-                  placeholder="e.g. Jane Smith"
+                  placeholder="e.g. San Zhang"
                   value={form.manager ?? ''}
                   onChange={(e) => setForm((f) => ({ ...f, manager: e.target.value }))}
                 />
