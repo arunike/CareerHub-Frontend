@@ -11,6 +11,9 @@ interface UploadDocumentModalProps {
   visible: boolean;
   onCancel: () => void;
   onSuccess: () => void;
+  // When opened from an application, the link is fixed and the picker is hidden.
+  lockedApplicationId?: number;
+  lockedApplicationLabel?: string;
 }
 
 const { Dragger } = Upload;
@@ -33,6 +36,8 @@ const validateDocumentFile = (file: File) => {
 };
 
 const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
+  lockedApplicationId,
+  lockedApplicationLabel,
   visible,
   onCancel,
   onSuccess,
@@ -73,8 +78,9 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       const formData = new FormData();
       formData.append('title', values.title);
       formData.append('document_type', values.document_type);
-      if (values.application) {
-        formData.append('application', String(values.application));
+      const applicationId = lockedApplicationId ?? values.application;
+      if (applicationId) {
+        formData.append('application', String(applicationId));
       }
       const selectedFile = fileList[0]?.originFileObj ?? (fileList[0] as unknown as File);
       if (!(selectedFile instanceof File)) {
@@ -153,23 +159,29 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
           </Select>
         </Form.Item>
 
-        <Form.Item name="application" label="Link to Application (Optional)">
-          <Select
-            showSearch
-            allowClear
-            placeholder="Select an application"
-            optionFilterProp="children"
-            filterOption={(input, option: any) =>
-              option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-            }
-          >
-            {applications.map((app) => (
-              <Option key={app.id} value={app.id}>
-                {app.role_title} @ {app.company_details?.name || 'Unknown'}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
+        {lockedApplicationId ? (
+          <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Linking to <span className="font-medium text-slate-900">{lockedApplicationLabel}</span>
+          </div>
+        ) : (
+          <Form.Item name="application" label="Link to Application (Optional)">
+            <Select
+              showSearch
+              allowClear
+              placeholder="Select an application"
+              optionFilterProp="children"
+              filterOption={(input, option: any) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+            >
+              {applications.map((app) => (
+                <Option key={app.id} value={app.id}>
+                  {app.role_title} @ {app.company_details?.name || 'Unknown'}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
 
         <Form.Item label="File" required>
           <Dragger {...uploadProps}>

@@ -355,6 +355,21 @@ export interface ApplicationTimelineEntry {
   updated_at: string;
 }
 
+export interface InterviewDebrief {
+  id: number;
+  application: number;
+  stage: string;
+  interview_date?: string | null;
+  questions_asked?: string;
+  went_well?: string;
+  weak_areas?: string;
+  interviewer_notes?: string;
+  confidence?: number | null;
+  next_steps?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ApplicationContact {
   id: number;
   application: number | null;

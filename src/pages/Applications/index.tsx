@@ -1497,6 +1497,7 @@ const Applications = () => {
       <ApplicationDetailDrawer
         application={detailApp}
         documents={documents}
+        onDocumentsChange={fetchDocuments}
         open={!!detailApp}
         mode={detailDrawerMode}
         appStages={appStages}

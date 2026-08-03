@@ -11,6 +11,10 @@ export interface CareerApplication {
   job_link?: string;
   // Full posting text, kept because postings get taken down mid-process.
   job_description?: string;
+  // Exact document versions submitted; a later upload does not replace them.
+  submitted_documents?: number[];
+  // True once the timeline shows a round, onsite, or offer.
+  has_reached_interview?: boolean;
   salary_range?: string;
   location?: string;
   office_location?: string;

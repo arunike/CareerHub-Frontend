@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode, useMemo } from 'react';
+import { lazy, Suspense, type ReactNode, useMemo, useState } from 'react';
 import {
   Button,
   Descriptions,
@@ -17,15 +17,20 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  UploadOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { downloadDocument } from '../../api';
 import type { Document } from '../../types';
 import type { CareerApplication } from '../../types/application';
 import ContactsPanel from '../../components/ContactsPanel';
+import InterviewDebriefPanel from './InterviewDebriefPanel';
+import UploadDocumentModal from '../Documents/UploadDocumentModal';
 import ApplicationPrepWorkspace from './ApplicationPrepWorkspace';
 import ApplicationTimelinePanel from './ApplicationTimelinePanel';
 import { formatDateOnly } from '../../utils/dateOnly';
+import { updateApplication } from '../../api/career';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const RichNotesEditor = lazy(() => import('./RichNotesEditor'));
 
@@ -60,6 +65,8 @@ type Props = {
   onDuplicate?: (application: CareerApplication) => void;
   onGenerateCoverLetter: (application: CareerApplication) => void;
   onNotesUpdate?: (id: number, notes: string) => void;
+  onSubmittedDocumentsChange?: (id: number, documentIds: number[]) => void;
+  onDocumentsChange?: () => void;
 };
 
 const { Text, Title } = Typography;
@@ -92,6 +99,8 @@ const ApplicationDetailDrawer = ({
   onDuplicate,
   onGenerateCoverLetter,
   onNotesUpdate,
+  onSubmittedDocumentsChange,
+  onDocumentsChange,
 }: Props) => {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -99,6 +108,27 @@ const ApplicationDetailDrawer = ({
     () => documents.filter((document) => document.application === application?.id),
     [application?.id, documents]
   );
+
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  const submittedIds = useMemo(
+    () => new Set(application?.submitted_documents ?? []),
+    [application?.submitted_documents]
+  );
+
+  const toggleSubmitted = async (documentId: number) => {
+    if (!application) return;
+    const next = new Set(submittedIds);
+    if (next.has(documentId)) next.delete(documentId);
+    else next.add(documentId);
+    try {
+      await updateApplication(application.id, { submitted_documents: Array.from(next) });
+      onSubmittedDocumentsChange?.(application.id, Array.from(next));
+    } catch (error) {
+      console.error('Failed to update submitted documents', error);
+      message.error(getApiErrorMessage(error, 'Could not update submitted documents'));
+    }
+  };
 
   const companyName = application?.company_details?.name || 'Application';
 
@@ -239,6 +269,22 @@ const ApplicationDetailDrawer = ({
                   <ApplicationTimelinePanel application={application} appStages={appStages} />
                 ),
               },
+              // Only once the process actually reached an interview. Computed from the
+              // timeline, so a rejected-after-round-3 application still qualifies.
+              ...(application.has_reached_interview
+                ? [
+                    {
+                      key: 'debriefs',
+                      label: 'Debriefs',
+                      children: (
+                        <InterviewDebriefPanel
+                          applicationId={application.id}
+                          appStages={appStages}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
               {
                 key: 'contacts',
                 label: 'Contacts',
@@ -247,56 +293,90 @@ const ApplicationDetailDrawer = ({
               {
                 key: 'documents',
                 label: 'Documents',
-                children:
-                  linkedDocuments.length === 0 ? (
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description={
-                        <span className="text-sm text-slate-400">
-                          No documents linked to this application yet.
-                        </span>
-                      }
-                      className="py-10"
-                    />
-                  ) : (
-                    <List
-                      dataSource={linkedDocuments}
-                      renderItem={(documentRecord) => (
-                        <List.Item
-                          className="!rounded-xl !border !border-slate-200 !px-4 !py-3 hover:!border-sky-200 hover:!bg-sky-50/30"
-                          actions={[
-                            <Button
-                              key="view"
-                              type="primary"
-                              size="small"
-                              icon={<EyeOutlined />}
-                              onClick={() => openDocument(documentRecord)}
-                            >
-                              View
-                            </Button>,
-                          ]}
-                        >
-                          <List.Item.Meta
-                            avatar={<FileTextOutlined className="text-base text-slate-500" />}
-                            title={
-                              <span className="font-semibold text-slate-900">
-                                {documentRecord.title}
-                              </span>
-                            }
-                            description={
-                              <span
-                                className="cursor-pointer text-sky-500 hover:underline"
+                children: (
+                  <>
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                      <p className="text-sm text-slate-500">Files linked to this application.</p>
+                      <Button
+                        size="small"
+                        icon={<UploadOutlined />}
+                        className="!rounded-lg !px-3 !text-xs !font-semibold"
+                        onClick={() => setIsUploadOpen(true)}
+                      >
+                        Upload
+                      </Button>
+                    </div>
+                    {linkedDocuments.length === 0 ? (
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={
+                          <span className="text-sm text-slate-400">
+                            No documents linked to this application yet.
+                          </span>
+                        }
+                        className="py-10"
+                      />
+                    ) : (
+                      <List
+                        dataSource={linkedDocuments}
+                        renderItem={(documentRecord) => (
+                          <List.Item
+                            className="!rounded-xl !border !border-slate-200 !px-4 !py-3 hover:!border-sky-200 hover:!bg-sky-50/30"
+                            actions={[
+                              <Button
+                                key="submitted"
+                                size="small"
+                                type={submittedIds.has(documentRecord.id) ? 'default' : 'text'}
+                                className={
+                                  submittedIds.has(documentRecord.id)
+                                    ? '!border-emerald-200 !bg-emerald-50 !text-emerald-700'
+                                    : '!text-slate-400'
+                                }
+                                onClick={() => toggleSubmitted(documentRecord.id)}
+                                title={
+                                  submittedIds.has(documentRecord.id)
+                                    ? 'This exact version is recorded as submitted. A newer version will not replace it.'
+                                    : 'Record this exact version as the one you submitted'
+                                }
+                              >
+                                {submittedIds.has(documentRecord.id)
+                                  ? `Submitted v${documentRecord.version_number ?? 1}`
+                                  : 'Mark submitted'}
+                              </Button>,
+                              <Button
+                                key="view"
+                                type="primary"
+                                size="small"
+                                icon={<EyeOutlined />}
                                 onClick={() => openDocument(documentRecord)}
                               >
-                                {documentRecord.file_name || documentRecord.document_type}
-                              </span>
-                            }
-                          />
-                          <Tag>{documentRecord.document_type}</Tag>
-                        </List.Item>
-                      )}
-                    />
-                  ),
+                                View
+                              </Button>,
+                            ]}
+                          >
+                            <List.Item.Meta
+                              avatar={<FileTextOutlined className="text-base text-slate-500" />}
+                              title={
+                                <span className="font-semibold text-slate-900">
+                                  {documentRecord.title}
+                                </span>
+                              }
+                              description={
+                                <span
+                                  className="cursor-pointer text-sky-500 hover:underline"
+                                  onClick={() => openDocument(documentRecord)}
+                                >
+                                  {documentRecord.file_name || documentRecord.document_type}
+                                </span>
+                              }
+                            />
+                            <Tag>{documentRecord.document_type}</Tag>
+                          </List.Item>
+                        )}
+                      />
+                    )}
+                  </>
+                ),
               },
               {
                 key: 'notes',
@@ -315,6 +395,18 @@ const ApplicationDetailDrawer = ({
             ]}
           />
         </div>
+      )}
+      {isUploadOpen && application && (
+        <UploadDocumentModal
+          visible={isUploadOpen}
+          lockedApplicationId={application.id}
+          lockedApplicationLabel={`${application.role_title} @ ${companyName}`}
+          onCancel={() => setIsUploadOpen(false)}
+          onSuccess={() => {
+            setIsUploadOpen(false);
+            onDocumentsChange?.();
+          }}
+        />
       )}
     </Drawer>
   );

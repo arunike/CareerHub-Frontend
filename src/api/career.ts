@@ -175,6 +175,15 @@ export const updateContact = (id: number, data: Record<string, unknown>) =>
   api.patch(`/career/application-contacts/${id}/`, data);
 export const deleteContact = (id: number) => api.delete(`/career/application-contacts/${id}/`);
 
+export const getInterviewDebriefs = (applicationId: number) =>
+  api.get('/career/interview-debriefs/', { params: { application: applicationId } });
+export const createInterviewDebrief = (data: Record<string, unknown>) =>
+  api.post('/career/interview-debriefs/', data);
+export const updateInterviewDebrief = (id: number, data: Record<string, unknown>) =>
+  api.patch(`/career/interview-debriefs/${id}/`, data);
+export const deleteInterviewDebrief = (id: number) =>
+  api.delete(`/career/interview-debriefs/${id}/`);
+
 export const getApplicationTimelineAnalytics = () =>
   api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
 
