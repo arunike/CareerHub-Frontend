@@ -26,6 +26,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 🔐 **JWT Auth Flow**: Login, refresh, and protected-route bootstrapping now use Bearer tokens so the frontend can talk to a separate `*.vercel.app` backend without shared cookies
 - 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current" and weighted decision scoring
 - 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
+- 👥 **Career Relationships**: A central list and relationship graph connects people across applications and work experience while keeping Application and Experience as searchable context
 - 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
 - 📥 **Import/Export**: Bulk upload via CSV/XLSX plus full-fidelity Experience import/export in CSV, JSON, or XLSX formats (JSON recommended for logos + linked snapshots)
 - 🔄 **Google Sheets Sync**: Settings can connect Google for private read-only Sheets access, link a Google Sheet to Applications or Events, auto-map columns from sheet headers, review detected application imports, resolve possible duplicates, inspect last-run change history, configure the daily sync time/timezone, and run imports on demand while cron keeps enabled syncs current
@@ -46,8 +47,14 @@ The **Frontend** is a React-based single-page application that provides an intui
 - Import from CSV/XLSX or public HTTPS job URLs, with AI-assisted extraction when configured, deterministic fallback, and a copyable bookmarklet for sending the current job page into CareerHub; export to CSV, JSON, XLSX
 - Optional Google Sheets sync imports auto-mapped sheet rows into Applications from Settings, automatically generating distinct blue-to-purple tags for additional numbered rounds while private sheets remain supported through Google OAuth
 - Lock/unlock individual applications
-- **Contacts**: a tab in the application detail drawer for the recruiter and interviewers on that application — name, email (click to mail), and notes, with inline add/edit and confirmed delete. Scoped per application rather than per company, because different roles at the same company usually mean a different recruiter and panel. The shared `ContactsPanel` component also powers the Experience page
-- **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — paste optional JD, generate, auto-save
+- **Debriefs**: appears only once an application has actually reached an interview, judged from the timeline rather than current status — so an application rejected after the 3rd round still shows it. A tab in the application detail drawer holding one debrief per interview round — questions asked, what went well, weak areas, interviewer notes, a confidence rating, and next steps. Rounds come from your configured application stages, and the round selector defaults to the first one without a debrief
+- **Upload from the drawer**: the Documents tab has an Upload button that opens the same upload modal with this application pre-linked and the picker hidden, so a file can be attached without going to the Documents page and finding the application again
+- **Submitted documents**: each linked document can be marked as the version actually submitted. The mark pins that exact version, so uploading a newer one leaves the record intact and the badge keeps showing what you sent
+- **Shared application picker**: every "link an application" field uses one `ApplicationSelect` component that pages the options endpoint as you scroll (25 at a time) and searches server-side, so no screen hardcodes a page size or silently truncates the list. A value already saved is fetched by id, so it renders its label even when it sits many pages deep
+- **Shared company list**: Application, Experience, Contact, and Offer company fields reuse one company-list API and shared hook; new Application, Experience, and custom Offer entries still accept company names that are not in the list
+- **Contacts**: the application drawer uses the shared canonical contact editor for name, role, company, email, and notes; company is a searchable selector sourced from the shared company list, and removing someone here detaches only this application context while the central Contacts page retains the person when used elsewhere
+- **Job Description**: the full posting is saved on the application, so it survives the posting being taken down mid-process. Captured automatically by the URL importer (previously appended to `notes`) and editable on the application form
+- **⚡ Cover Letter Generator**: per-row button opens `CoverLetterModal` — the JD pre-fills from the saved posting instead of being pasted again, generate, auto-save
 
 ### 💎 Offer Comparison (`/offers`)
 
@@ -116,6 +123,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Raise History Modal** — accessible from experience entries linked to an offer; log raise events (date, type, before/after base/bonus/equity) with optional label and notes; persisted on the linked Offer record
 - **Team History / Team Norms** — internship and full-time roles can track structured team history in a dedicated modal
 - **Contacts** — a per-role contacts modal listing people you worked with, plus anyone recorded on the application that led to the role (shown as `from application` and edited where they live)
+- **Application → Experience** — selecting the offer that led to a role keeps the accepted application in Applications, links both surfaces to one career record, and offers a non-blocking contact review after save; leaving the offer blank creates a historical role
 - **Work Email** — store the email address you had at that job, on the experience record
 - **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
 - **Overall Earnings Panels** — combined Full-Time and Internship summaries with breakdown modals; internship totals now include overtime pay across tracked roles
@@ -123,6 +131,26 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Schedule Phases** — split an internship into multiple schedule phases with per-phase rate, schedule, overtime, and total-hours inputs
 - **Quick Import Weekly Schedule** — paste weekly timesheet-style text into the Schedule Phases modal to auto-generate merged phases from dates, hours, and overtime rows
 - **Experience Import / Export** — toolbar supports import/export for the entire Experience page; JSON round-trips the richest payload, including logos, linked offer/application snapshots, team history, and schedule phases
+
+### 👥 Contacts (`/contacts`)
+
+- List and relationship-network views share one canonical contact dataset across Applications and Experience
+- Search spans people, companies, roles, notes, career context, and relationship labels; Application/Experience, relationship, and company filters apply to both List and Network, while the responsive directory rows show email, relationship badges, company and role hierarchy, Application/Experience context counts, and compact company or career-record grouping
+- The network keeps `Me` at the center and lays people out by their contact-to-contact edges rather than by distance from `Me`, so everyone sharing an anchor (two reports under one manager, for example) clusters around that person instead of flattening onto a single ring; clicking a person hides unrelated branches while preserving the path back to `Me` and expanding that person's connections
+- Every edge is drawn with an arrowhead per recorded direction, so a one-way link reads as `source → target` and a mutual pair shows both heads
+- Edge labels render above the nodes and can be dragged along their own line to clear a crowded corner; people can be dragged anywhere on the canvas for the same reason, and a `Reset layout` button appears once anything has been moved
+- Drag positions persist in `localStorage`; node positions are scoped per view, since focusing someone lays the graph out differently and a drag made on the `Me` view should not follow them there
+- A fullscreen button hands the graph the whole screen for a dense network, keeping the `Back to me`, `Reset layout`, and drag controls with it; `Esc` or the button exits, and the button is hidden where the browser does not allow fullscreen
+- The automatic `Contact` edge every person gets is dropped from a label once a real role sits alongside it, so an edge reads `Recruiter` rather than `Contact · Recruiter`, and stays `Contact` only when that is all there is
+- Contact details open in a compact profile drawer with contact/work details, relationships, a `Linked applications` list, possible-duplicate review, merge, and delete controls; edit, relationship, and merge actions close the drawer before opening their editor so overlays never compete
+- A contact's job title is only ever what was entered on that contact. It never falls back to the linked application's role, which is the job *you* applied for and would otherwise label every contact with your own title; company still falls back to the linked record
+- The drawer's relationship list is one row per other person however many edges that pair has, each showing direction and inline edit/remove; your own link to the contact is a `To you:` badge on the header rather than a row named `Me`
+- Relationships support standard or custom labels, multiple edges, indirect people who are not connected to the user, and same-Experience candidate suggestions without inferring reporting lines automatically
+- The relationship editor creates and edits edges from one modal, explains that `To` names the person holding the role, and pre-fills `To` with the drawer's contact once `From` is set to `Me`
+- Company is required when adding or editing a contact, entered as free text with application companies offered as suggestions
+- The contact editor can link a person to an existing application from the Contacts page, searchable by company or role. Picking one adds a link rather than replacing existing ones, and the field is hidden when the editor was already opened from inside an application or experience, which supplies the link itself
+- The company drives the link, so there is no separate application field to fill in. Choosing a company resolves the application outright when that company has only one, showing the role and its status inline; a company with several asks which one, and a company with no applications says so
+- The lookup queries `/applications/options/` scoped to the chosen company rather than filtering a client-side page. That endpoint caps `page_size` at 100, so with several hundred applications an unfiltered page silently omits most of them; results are still matched on exact company name, since the endpoint's search also matches role and location
 
 ### 📅 Availability & Events
 
@@ -137,7 +165,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 - **Availability Analytics**: Meeting/interview volume and duration tracking
 - **Job Hunt Analytics**: Application funnel, outcome visualization, timeline conversion, stale-stage warnings, and offer-rate breakdowns by sheet source/company
-- **Application Funnel**: Counts how many applications *ever reached* each stage from the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, so the pipeline reads several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts. Shares the `/application-timeline-analytics/` endpoint with Job Hunt Analytics, so there is one funnel computation rather than two
+- **Application Funnel**: Counts how many applications _ever reached_ each stage from the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, so the pipeline reads several times larger than current status alone. Stages come from `UserSettings.application_stages`, so renaming or reordering them in Settings flows through. Also reports response rate, ghost rate, the biggest stage-to-stage drop-off, and terminal outcome counts. Shares the `/application-timeline-analytics/` endpoint with Job Hunt Analytics, so there is one funnel computation rather than two
 - **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — common queries resolve locally and free-form queries send a frontend-built data summary through the authenticated backend AI relay
 - **Drag-and-Drop Dashboard**: Reorder and save widget layouts with `dnd-kit`
 
@@ -291,6 +319,8 @@ frontend/
 │   │   ├── PageActionToolbar.tsx    # Page header with title, year filter, export, import, primary action
 │   │   ├── BulkActionHeader.tsx     # Selection count + bulk actions bar
 │   │   ├── RowActions.tsx           # Per-row lock / view / edit / delete buttons
+│   │   ├── ContactsPanel.tsx         # Shared Application/Experience contact context panel
+│   │   ├── contacts/                 # Shared contact and relationship editors
 │   │   ├── LockableListItem.tsx     # Per-item row with lock / edit / delete (used in Settings)
 │   │   ├── ExportButton.tsx         # CSV / XLSX / JSON dropdown export
 │   │   ├── NotificationBell.tsx     # Conflict / deadline radar fed by standard API polling
@@ -337,6 +367,7 @@ frontend/
 │   │   │   ├── PayGrowthModal.tsx   # Role-vs-role pay comparison UI with selectable sides
 │   │   │   ├── payGrowth.ts         # Salary/hourly/mixed pay delta calculations
 │   │   │   └── compensation.ts      # Compensation snapshot and hourly/salary calculation helpers
+│   │   ├── Contacts/                 # Canonical list/network workspace and contact detail drawer
 │   │   ├── JDReportsList/
 │   │   │   └── index.tsx            # Saved JD match reports list
 │   │   ├── JDReport/
@@ -416,6 +447,7 @@ frontend/
 | `/documents`                        | Documents           | Document vault with versioning                                                                                                  |
 | `/tasks`                            | Action Items        | Kanban task board with smart reminder creation                                                                                  |
 | `/experience`                       | Experience          | Work history, team history, schedule phases, internship earnings breakdowns, import/export, AI JD matcher, and promotion review |
+| `/contacts`                         | Contacts            | Searchable people list and focused relationship network across applications and experiences                                     |
 | `/jd-reports`                       | JD Reports          | Saved AI JD match report history                                                                                                |
 | `/ai-tools?tab=cover-letters`       | Cover Letters       | Saved AI cover letter history                                                                                                   |
 | `/ai-tools?tab=negotiation-results` | Negotiation Results | Saved AI negotiation result history                                                                                             |
