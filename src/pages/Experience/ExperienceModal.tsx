@@ -29,6 +29,7 @@ import LocationSelect from '../../components/LocationSelect';
 import { getMediaUrl } from '../../lib/runtimeConfig';
 import { LogoCropModal } from './LogoCropModal';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
+import { useCompanyList } from '../../hooks/useCompanyList';
 
 interface OfferOption {
   value: number;
@@ -116,6 +117,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [removeLogo, setRemoveLogo] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const { options: applicationCompanyOptions } = useCompanyList(open);
   const roleContext = Form.useWatch('role_context', form) ?? 'none';
 
   const handleOfferSelect = (offerId: number | null) => {
@@ -229,7 +231,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
     };
   }, [logoPreview]);
 
-  const companyOptions = useMemo(() => {
+  const experienceCompanyOptions = useMemo(() => {
     const seen = new Map<string, { name: string; logo: string | null }>();
     for (const exp of experiences) {
       if (exp.id === experience?.id) continue;
@@ -242,15 +244,28 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
       }
     }
     return Array.from(seen.values()).map(({ name, logo }) => ({
-      value: name, // plain string → shown in input after selection
-      logoUrl: logo, // extra data used by optionRender and onSelect
+      value: name,
+      logoUrl: logo,
     }));
   }, [experiences, experience]);
 
+  const companyOptions = useMemo(() => {
+    const options = new Map<string, { value: string; logoUrl: string | null }>();
+    for (const option of applicationCompanyOptions) {
+      options.set(option.value.toLocaleLowerCase(), { value: option.value, logoUrl: null });
+    }
+    for (const option of experienceCompanyOptions) {
+      options.set(option.value.toLocaleLowerCase(), option);
+    }
+    return Array.from(options.values());
+  }, [applicationCompanyOptions, experienceCompanyOptions]);
+
   const isExistingCompany = useMemo(() => {
     if (!companyName) return false;
-    return companyOptions.some((opt) => opt.value.toLowerCase() === companyName.toLowerCase());
-  }, [companyName, companyOptions]);
+    return experienceCompanyOptions.some(
+      (option) => option.value.toLowerCase() === companyName.toLowerCase()
+    );
+  }, [companyName, experienceCompanyOptions]);
 
   const handleCompanySelect = async (_value: string, option: { logoUrl?: string | null }) => {
     const logoUrl: string | null = option.logoUrl ?? null;
@@ -759,23 +774,24 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             </Form.Item>
           )}
 
-          {/* Link Offer — for raise history tracking */}
+          {/* Link Offer — for lifecycle continuity and raise history */}
           {offers.length > 0 && (
             <Form.Item
               name="offer"
               label={
                 <span className="flex items-center gap-1.5">
                   <LinkOutlined className="text-blue-400" />
-                  Link Offer
-                  <Tooltip title="Link a compensation offer to enable raise history tracking for this role. Raise history is stored on the offer.">
+                  Start from an offer
+                  <Tooltip title="Connect this role to its application and offer. The application stays in Applications and is marked Accepted.">
                     <span className="text-gray-400 cursor-help text-xs">(optional)</span>
                   </Tooltip>
                 </span>
               }
+              extra="Choose an offer for a connected Application → Experience record. Leave blank for a historical role."
             >
               <Select
                 allowClear
-                placeholder="Select an offer to link raise tracking…"
+                placeholder="Select the offer that led to this role…"
                 options={offers}
                 showSearch
                 optionFilterProp="label"

@@ -77,6 +77,6 @@ export const summarizeApplications = (
       app.status === 'ONSITE' ||
       app.status.startsWith('ROUND_')
   ).length,
-  offers: applications.filter((app) => app.status === 'OFFER').length,
+  offers: applications.filter((app) => Boolean(app.offer)).length,
   locked: applications.filter((app) => app.is_locked).length,
 });

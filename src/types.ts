@@ -370,16 +370,63 @@ export interface InterviewDebrief {
   updated_at?: string;
 }
 
+export type ContactRelationshipKind =
+  | 'CONTACT'
+  | 'RECRUITER'
+  | 'INTERVIEWER'
+  | 'HIRING_MANAGER'
+  | 'MANAGER'
+  | 'DIRECT_TEAMMATE'
+  | 'COWORKER'
+  | 'DIRECT_REPORT'
+  | 'REFERRAL'
+  | 'MENTOR'
+  | 'WORKS_WITH'
+  | 'CUSTOM';
+
+export interface ContactContext {
+  id: number;
+  career_record: number;
+  application: number | null;
+  experience: number | null;
+  source: 'APPLICATION' | 'EXPERIENCE' | 'MANUAL';
+  notes?: string;
+  summary: {
+    type: 'APPLICATION' | 'EXPERIENCE';
+    company: string;
+    role: string;
+    status: string;
+  };
+  created_at: string;
+}
+
 export interface ApplicationContact {
   id: number;
   application: number | null;
   experience: number | null;
-  // True when shown on an experience but owned by the application it came from.
   inherited?: boolean;
+  possible_duplicate?: boolean;
   name: string;
   email?: string;
+  job_title?: string;
+  company?: string;
   notes?: string;
   is_locked?: boolean;
+  contexts?: ContactContext[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ContactRelationship {
+  id: number;
+  source_contact: number | null;
+  source_name: string;
+  target_contact: number;
+  target_name: string;
+  kind: ContactRelationshipKind;
+  custom_label?: string;
+  label: string;
+  career_record?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -583,6 +630,7 @@ export interface Experience {
   is_pinned?: boolean;
   position?: number | null;
   offer?: number | null;
+  career_record?: number | null;
   hourly_rate?: number | null;
   hours_per_day?: number | null;
   working_days_per_week?: number | null;

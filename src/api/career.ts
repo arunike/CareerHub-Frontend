@@ -12,6 +12,9 @@ import type {
   Document,
   Task,
   Experience,
+  ApplicationContact,
+  ContactRelationship,
+  ContactRelationshipKind,
   WeeklyReview,
 } from '../types';
 import type { AxiosRequestConfig } from 'axios';
@@ -120,6 +123,13 @@ export const getApplicationOptions = (params?: {
   page_size?: number;
   page?: number;
 }) => api.get('/career/applications/options/', { params });
+export interface CompanyListItem {
+  id: number;
+  name: string;
+}
+
+export const getCompanyList = () =>
+  api.get<CompanyListItem[]>('/career/applications/company-list/');
 export const getApplication = (id: number) => api.get(`/career/applications/${id}/`);
 export const createApplication = (data: Record<string, unknown>) =>
   api.post('/career/applications/', data);
@@ -167,13 +177,35 @@ export const updateApplicationTimelineEntry = (
 ) => api.patch<ApplicationTimelineEntry>(`/career/application-timeline/${id}/`, data);
 export const deleteApplicationTimelineEntry = (id: number) =>
   api.delete(`/career/application-timeline/${id}/`);
-export const getContacts = (scope: { application?: number; experience?: number }) =>
-  api.get('/career/application-contacts/', { params: scope });
+export interface ContactQuery {
+  application?: number;
+  experience?: number;
+  search?: string;
+  context?: 'APPLICATION' | 'EXPERIENCE';
+  relationship?: ContactRelationshipKind;
+  direct?: boolean;
+}
+
+export const getContacts = (params: ContactQuery = {}) =>
+  api.get<ApplicationContact[]>('/career/contacts/', { params });
 export const createContact = (data: Record<string, unknown>) =>
-  api.post('/career/application-contacts/', data);
+  api.post<ApplicationContact>('/career/contacts/', data);
 export const updateContact = (id: number, data: Record<string, unknown>) =>
-  api.patch(`/career/application-contacts/${id}/`, data);
-export const deleteContact = (id: number) => api.delete(`/career/application-contacts/${id}/`);
+  api.patch<ApplicationContact>(`/career/contacts/${id}/`, data);
+export const deleteContact = (id: number, scope?: { application?: number; experience?: number }) =>
+  api.delete(`/career/contacts/${id}/`, { params: scope });
+export const mergeContacts = (id: number, duplicateId: number) =>
+  api.post<ApplicationContact>(`/career/contacts/${id}/merge/`, { duplicate_id: duplicateId });
+export const getContactRelationships = (contact?: number) =>
+  api.get<ContactRelationship[]>('/career/contact-relationships/', {
+    params: contact ? { contact } : undefined,
+  });
+export const createContactRelationship = (data: Record<string, unknown>) =>
+  api.post<ContactRelationship>('/career/contact-relationships/', data);
+export const updateContactRelationship = (id: number, data: Record<string, unknown>) =>
+  api.patch<ContactRelationship>(`/career/contact-relationships/${id}/`, data);
+export const deleteContactRelationship = (id: number) =>
+  api.delete(`/career/contact-relationships/${id}/`);
 
 export const getInterviewDebriefs = (applicationId: number) =>
   api.get('/career/interview-debriefs/', { params: { application: applicationId } });

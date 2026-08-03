@@ -338,7 +338,6 @@ const ExperiencePage: React.FC = () => {
         const res = await createExperience(data);
         savedExperience = res.data;
         expId = res.data.id;
-        message.success('Experience added successfully');
       }
 
       if (expId) {
@@ -370,6 +369,27 @@ const ExperiencePage: React.FC = () => {
       await fetchExperiences();
       if (savedExperience) {
         void maybeRefineSkillsWithAI(savedExperience, skillsManuallyEdited);
+        if (!editingExp) {
+          const createdExperience = savedExperience;
+          message.success({
+            duration: 7,
+            content: (
+              <span>
+                {data.offer
+                  ? 'Experience added. Its application remains in Applications as Accepted.'
+                  : 'Historical experience added.'}
+                <Button
+                  type="link"
+                  size="small"
+                  className="!px-2"
+                  onClick={() => setContactsExp(createdExperience)}
+                >
+                  Review contacts
+                </Button>
+              </span>
+            ),
+          });
+        }
       }
     } catch (err: any) {
       message.error(getApiErrorMessage(err, 'Failed to save experience'));

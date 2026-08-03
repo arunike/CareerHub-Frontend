@@ -19,6 +19,7 @@ import {
   RobotOutlined,
   LogoutOutlined,
   ThunderboltOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import IdentityAvatar from './IdentityAvatar';
 import logo from '../assets/logo.png';
@@ -154,6 +155,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
         { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Action Items' },
         { key: '/experience', icon: <TrophyOutlined />, label: 'Experience' },
+        { key: '/contacts', icon: <TeamOutlined />, label: 'Contacts' },
         {
           key: 'intelligence',
           icon: <RobotOutlined />,

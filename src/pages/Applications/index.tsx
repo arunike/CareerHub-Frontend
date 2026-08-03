@@ -17,6 +17,7 @@ import {
   Tooltip,
   Grid,
   Pagination,
+  AutoComplete,
 } from 'antd';
 import {
   PlusOutlined,
@@ -66,7 +67,10 @@ import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import LocationSelect from '../../components/LocationSelect';
 import { EmploymentTypeBadge, StatusBadge } from './ApplicationBadges';
-import { getApplicationStatusFilterOptions } from '../../constants/applicationStages';
+import {
+  getApplicationStatusEditOptions,
+  getApplicationStatusFilterOptions,
+} from '../../constants/applicationStages';
 import {
   APPLICATION_PAGE_SIZE,
   DEFAULT_APPLICATION_STAGES,
@@ -87,6 +91,7 @@ import {
 } from './applicationImportReview';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
+import { useCompanyList } from '../../hooks/useCompanyList';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -100,6 +105,7 @@ const Applications = () => {
   const [jobImportForm] = Form.useForm();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
+  const { options: companyListOptions, loading: companyListLoading } = useCompanyList();
 
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -118,6 +124,10 @@ const Applications = () => {
   const [appStages, setAppStages] = useState(DEFAULT_APPLICATION_STAGES);
   const statusFilterOptions = useMemo(
     () => getApplicationStatusFilterOptions(appStages),
+    [appStages]
+  );
+  const editableStatusOptions = useMemo(
+    () => getApplicationStatusEditOptions(appStages),
     [appStages]
   );
 
@@ -987,7 +997,16 @@ const Applications = () => {
       <Row gutter={16}>
         <Col xs={24} sm={12}>
           <Form.Item name="company" label="Company" rules={[{ required: true }]}>
-            <Input placeholder="Google" />
+            <AutoComplete
+              options={companyListOptions}
+              filterOption={(input, option) =>
+                String(option?.value || '')
+                  .toLocaleLowerCase()
+                  .includes(input.toLocaleLowerCase())
+              }
+              placeholder="Google"
+              notFoundContent={companyListLoading ? 'Loading companies…' : 'Enter a new company'}
+            />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>
@@ -998,7 +1017,7 @@ const Applications = () => {
         <Col xs={24} sm={12}>
           <Form.Item name="status" label="Status">
             <Select>
-              {appStages.map((stage) => (
+              {editableStatusOptions.map((stage) => (
                 <Option key={stage.key} value={stage.key}>
                   {stage.label}
                 </Option>
@@ -1581,7 +1600,17 @@ const Applications = () => {
                     label="Company"
                     rules={[{ required: true, message: 'Company is required' }]}
                   >
-                    <Input />
+                    <AutoComplete
+                      options={companyListOptions}
+                      filterOption={(input, option) =>
+                        String(option?.value || '')
+                          .toLocaleLowerCase()
+                          .includes(input.toLocaleLowerCase())
+                      }
+                      notFoundContent={
+                        companyListLoading ? 'Loading companies…' : 'Enter a new company'
+                      }
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>

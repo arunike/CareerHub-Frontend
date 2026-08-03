@@ -3,6 +3,7 @@ import { DatePicker, Select, Spin } from 'antd';
 import dayjs from 'dayjs';
 import { getApplicationOptions } from '../../../api';
 import type { ApplicationOption } from './types';
+import { useCompanyList } from '../../../hooks/useCompanyList';
 
 type IdentitySectionProps = {
   showLinkApplication: boolean;
@@ -44,6 +45,7 @@ const IdentitySection = ({
   companyPlaceholder,
   rolePlaceholder,
 }: IdentitySectionProps) => {
+  const { options: companyListOptions } = useCompanyList(shouldShowCompanyRole);
   const [options, setOptions] = useState<{ value: number; label: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
@@ -149,6 +151,7 @@ const IdentitySection = ({
               <input
                 id="offer-form-company-name"
                 type="text"
+                list="offer-form-company-list"
                 required
                 aria-required="true"
                 value={companyName}
@@ -161,6 +164,11 @@ const IdentitySection = ({
                 }`}
                 placeholder={companyPlaceholder}
               />
+              <datalist id="offer-form-company-list">
+                {companyListOptions.map((option) => (
+                  <option key={option.value} value={option.value} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

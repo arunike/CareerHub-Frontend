@@ -29,6 +29,7 @@ const OfferComparison = lazy(() => import('./pages/OfferComparison'));
 const Documents = lazy(() => import('./pages/Documents'));
 const Tasks = lazy(() => import('./pages/Tasks'));
 const ExperiencePage = lazy(() => import('./pages/Experience'));
+const ContactsPage = lazy(() => import('./pages/Contacts'));
 const PublicBookingPage = lazy(() => import('./pages/PublicBooking'));
 const JDReportPage = lazy(() => import('./pages/JDReport'));
 const JDReportsListPage = lazy(() => import('./pages/JDReportsList'));
@@ -55,6 +56,7 @@ const getRouteTitle = (pathname: string, isAuthenticated: boolean) => {
   if (pathname === '/documents') return 'Documents | CareerHub';
   if (pathname === '/tasks') return 'Tasks | CareerHub';
   if (pathname === '/experience') return 'Experience | CareerHub';
+  if (pathname === '/contacts') return 'Contacts | CareerHub';
   if (pathname === '/jd-reports') return 'Job match reports | CareerHub';
   if (pathname === '/cover-letters' || pathname === '/ai-tools') {
     return 'Intelligence | CareerHub';
@@ -200,6 +202,15 @@ const RouteFallback = () => {
         <PageHeaderSkeleton />
         <MetricCardsSkeleton count={4} />
         <ListSkeleton count={3} />
+      </div>
+    );
+  }
+
+  if (path.startsWith('/contacts')) {
+    return (
+      <div className="w-full space-y-6">
+        <PageHeaderSkeleton />
+        <ListSkeleton count={5} />
       </div>
     );
   }
@@ -369,6 +380,7 @@ function AppRoutes() {
               <Route path="/documents" element={<Documents />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/experience" element={<ExperiencePage />} />
+              <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/jd-reports" element={<JDReportsListPage />} />
               <Route path="/cover-letters" element={<AIToolsPage />} />
               <Route path="/ai-tools" element={<AIToolsPage />} />

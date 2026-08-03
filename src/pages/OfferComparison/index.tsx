@@ -554,8 +554,11 @@ const OfferComparison = () => {
       setOffers((prev) => prev.map((o) => (o.id === offer.id ? merged : o)));
       setNegotiationLogOffer((prev) => (prev && prev.id === offer.id ? merged : prev));
       setNegotiatingOffer((prev) => (prev && prev.id === offer.id ? merged : prev));
+      if (Object.prototype.hasOwnProperty.call(updates, 'final_decision_status')) {
+        await fetchData();
+      }
     },
-    [setOffers]
+    [fetchData, setOffers]
   );
 
   const handleToggleRejected = async (offer: Offer) => {

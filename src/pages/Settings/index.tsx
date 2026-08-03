@@ -2263,6 +2263,7 @@ const Settings: React.FC = () => {
                     { key: '/documents', label: 'Documents' },
                     { key: '/tasks', label: 'Action Items' },
                     { key: '/experience', label: 'Experience' },
+                    { key: '/contacts', label: 'Contacts' },
                     {
                       key: 'intelligence',
                       label: 'Intelligence',

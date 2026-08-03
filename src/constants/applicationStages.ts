@@ -26,6 +26,12 @@ export const DEFAULT_APPLICATION_STAGES: ApplicationStage[] = [
 
 export const FILTER_ONLY_APPLICATION_STATUSES: ApplicationStage[] = [
   {
+    key: 'ACCEPTED',
+    label: 'Accepted',
+    shortLabel: 'Accepted',
+    tone: '#18864B',
+  },
+  {
     key: 'OFFER_REJECTED',
     label: 'Rejected Offer',
     shortLabel: 'Rejected Offer',
@@ -33,13 +39,34 @@ export const FILTER_ONLY_APPLICATION_STATUSES: ApplicationStage[] = [
   },
 ];
 
+const SYSTEM_MANAGED_APPLICATION_STATUS_KEYS = new Set(
+  FILTER_ONLY_APPLICATION_STATUSES.map((status) => status.key)
+);
+
+export const getApplicationStatusEditOptions = (stages: ApplicationStage[]): ApplicationStage[] =>
+  stages.filter((stage) => !SYSTEM_MANAGED_APPLICATION_STATUS_KEYS.has(stage.key));
+
 export const getApplicationStatusFilterOptions = (
   stages: ApplicationStage[]
 ): ApplicationStage[] => {
   const configuredKeys = new Set(stages.map((stage) => stage.key));
+  const acceptedStatus = FILTER_ONLY_APPLICATION_STATUSES.find(
+    (status) => status.key === 'ACCEPTED'
+  );
+  const options = stages.flatMap((stage) => {
+    if (stage.key !== 'OFFER' || configuredKeys.has('ACCEPTED') || !acceptedStatus) {
+      return [stage];
+    }
+    return [stage, acceptedStatus];
+  });
+
   return [
-    ...stages,
-    ...FILTER_ONLY_APPLICATION_STATUSES.filter((status) => !configuredKeys.has(status.key)),
+    ...options,
+    ...FILTER_ONLY_APPLICATION_STATUSES.filter(
+      (status) =>
+        !configuredKeys.has(status.key) &&
+        !(status.key === 'ACCEPTED' && options.some((option) => option.key === 'ACCEPTED'))
+    ),
   ];
 };
 

@@ -9,6 +9,7 @@ import {
   ScheduleOutlined,
   SolutionOutlined,
   TrophyOutlined,
+  TeamOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
@@ -24,6 +25,7 @@ export const MOBILE_NAVIGATION_ITEMS = [
   { key: '/documents', label: 'Documents', shortLabel: 'Docs', icon: FileTextOutlined },
   { key: '/tasks', label: 'Action Items', shortLabel: 'Tasks', icon: CheckSquareOutlined },
   { key: '/experience', label: 'Experience', shortLabel: 'Career', icon: TrophyOutlined },
+  { key: '/contacts', label: 'Contacts', shortLabel: 'People', icon: TeamOutlined },
   { key: '/jd-reports', label: 'JD Reports', shortLabel: 'Reports', icon: RobotOutlined },
   {
     key: '/ai-tools?tab=cover-letters',
@@ -85,6 +87,7 @@ const CONTEXTUAL_SMART_KEYS: Array<[string, string]> = [
   ['/documents', '/applications'],
   ['/tasks', '/applications'],
   ['/experience', '/ai-tools?tab=promotion-reviews'],
+  ['/contacts', '/tasks'],
   ['/jd-reports', '/ai-tools?tab=cover-letters'],
   ['/analytics', '/applications'],
   ['/', '/events'],
