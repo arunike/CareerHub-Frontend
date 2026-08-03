@@ -38,7 +38,7 @@ const contextCounts = (contact: ApplicationContact) => {
 const ContextBadges = ({ contact }: { contact: ApplicationContact }) => {
   const { applications, experiences } = contextCounts(contact);
   if (!applications && !experiences) {
-    return <span className="text-xs text-slate-400">No career context</span>;
+    return <span className="text-xs text-slate-400">Not linked</span>;
   }
 
   return (
@@ -65,7 +65,7 @@ const ContactList = ({ groups, groupMode, relationshipSummary, onSelect }: Props
           <div className="mb-2 flex items-center justify-between gap-4 px-1">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                {groupMode === 'COMPANY' ? 'Company' : 'Career record'}
+                {groupMode === 'COMPANY' ? 'Company' : 'Linked application'}
               </p>
               <h2 className="truncate text-sm font-semibold text-slate-800">{group}</h2>
             </div>
@@ -83,7 +83,7 @@ const ContactList = ({ groups, groupMode, relationshipSummary, onSelect }: Props
             <span>Person</span>
             <span>Relationship</span>
             <span>Work</span>
-            <span>Career context</span>
+            <span>Linked to</span>
             <span />
           </div>
 
@@ -92,7 +92,8 @@ const ContactList = ({ groups, groupMode, relationshipSummary, onSelect }: Props
               const context = contact.contexts?.[0]?.summary;
               const relationship = relationshipSummary(contact);
               const company = contact.company || context?.company;
-              const role = contact.job_title || context?.role;
+              // No fallback to context.role: that is the role you applied for, not theirs.
+              const role = contact.job_title?.trim() || '';
 
               return (
                 <button

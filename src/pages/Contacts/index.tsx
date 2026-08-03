@@ -156,7 +156,6 @@ const ContactsPage = () => {
           context.summary.company,
           context.summary.role,
           context.summary.status,
-          context.notes,
         ]),
         ...contactRelationships.flatMap((relationship) => [
           relationship.label,
@@ -185,7 +184,7 @@ const ContactsPage = () => {
           : groupMode === 'CAREER'
             ? firstContext
               ? `${firstContext.summary.company} · ${firstContext.summary.role}`
-              : 'No career context'
+              : 'No linked application'
             : 'All contacts';
       groups.set(key, [...(groups.get(key) || []), contact]);
     }
@@ -387,7 +386,7 @@ const ContactsPage = () => {
             options={[
               { value: 'NONE', label: 'No grouping' },
               { value: 'COMPANY', label: 'Group by company' },
-              { value: 'CAREER', label: 'Group by career record' },
+              { value: 'CAREER', label: 'Group by linked application' },
             ]}
           />
         )}
@@ -494,7 +493,7 @@ const ContactsPage = () => {
         onCancel={() => setMergeContact(null)}
       >
         <p className="mb-4 text-sm text-slate-500">
-          Career contexts, notes, and relationships will be kept on {mergeContact?.name}.
+          Linked applications, notes, and relationships will be kept on {mergeContact?.name}.
         </p>
         <Select
           showSearch

@@ -37,7 +37,6 @@ import {
   updateRecurringSeries,
   deleteRecurringSeries,
   deleteRecurringInstance,
-  getApplicationOptions,
   getUserSettings,
   exportEvents,
 } from '../../api';
@@ -106,15 +105,6 @@ const Events = () => {
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarLoadError, setCalendarLoadError] = useState(false);
   const [categories, setCategories] = useState<EventCategory[]>([]);
-  const [applications, setApplications] = useState<
-    Array<{
-      id: number;
-      company_details?: { name: string };
-      role_title: string;
-      [key: string]: unknown;
-    }>
-  >([]);
-  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
@@ -263,19 +253,6 @@ const Events = () => {
     }
   }, [messageApi]);
 
-  const ensureApplicationsLoaded = useCallback(async () => {
-    if (hasLoadedApplications) return;
-
-    try {
-      const res = await getApplicationOptions({ page_size: 100 });
-      setApplications(res.data);
-      setHasLoadedApplications(true);
-    } catch (error) {
-      messageApi.error('Failed to load applications');
-      console.error(error);
-    }
-  }, [hasLoadedApplications, messageApi]);
-
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -354,7 +331,6 @@ const Events = () => {
       setRecurrenceRule(null);
       setLocationType('virtual');
       setIsFormOpen(true);
-      void ensureApplicationsLoaded();
       form.resetFields();
 
       const now = dayjs();
@@ -374,7 +350,7 @@ const Events = () => {
         location_type: 'virtual',
       });
     },
-    [defaultCategory, defaultDuration, ensureApplicationsLoaded, form, userTimezone]
+    [defaultCategory, defaultDuration, form, userTimezone]
   );
 
   useEffect(() => {
@@ -397,7 +373,6 @@ const Events = () => {
   const handleEdit = (event: Event) => {
     setEditingId(event.id);
     setIsFormOpen(true);
-    void ensureApplicationsLoaded();
     setRecurrenceRule(event.recurrence_rule as RecurrenceRule);
     setLocationType(event.location_type);
 
@@ -419,7 +394,6 @@ const Events = () => {
   const handleDuplicate = (event: Event) => {
     setEditingId(null);
     setIsFormOpen(true);
-    void ensureApplicationsLoaded();
     setRecurrenceRule(event.recurrence_rule as RecurrenceRule);
     setLocationType(event.location_type);
 
@@ -899,7 +873,6 @@ const Events = () => {
         recurrenceRule={recurrenceRule}
         onOpenRecurrence={() => setShowRecurrenceModal(true)}
         onClearRecurrence={() => setRecurrenceRule(null)}
-        applications={applications}
       />
 
       {/* Recurrence Component */}

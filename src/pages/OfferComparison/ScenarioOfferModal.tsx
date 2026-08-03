@@ -188,10 +188,6 @@ const ScenarioOfferModal = ({
                   );
                 }
               }}
-              applicationOptions={applications.map((app) => ({
-                id: app.id,
-                label: `${app.company_name} - ${app.role_title}`,
-              }))}
               hideCompanyRoleWhenLinked
               companyName={newScenario.custom_company_name || ''}
               onCompanyNameChange={(value) => setNewScenarioField('custom_company_name', value)}

@@ -122,6 +122,8 @@ export const getApplicationOptions = (params?: {
   search?: string;
   page_size?: number;
   page?: number;
+  // Comma-separated ids; returns exactly those, bypassing search and paging.
+  ids?: string;
 }) => api.get('/career/applications/options/', { params });
 export interface CompanyListItem {
   id: number;

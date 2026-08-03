@@ -9,7 +9,6 @@ import {
   LockOutlined,
 } from '@ant-design/icons';
 import {
-  getApplicationOptions,
   getDocuments,
   deleteDocument,
   deleteAllDocuments,
@@ -29,6 +28,7 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
+import ApplicationSelect from '../../components/ApplicationSelect';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
@@ -64,10 +64,6 @@ const Documents: React.FC = () => {
   const [versionTarget, setVersionTarget] = useState<Document | null>(null);
   const [versionList, setVersionList] = useState<Document[]>([]);
   const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
-  const [applications, setApplications] = useState<
-    Array<{ id: number; role_title: string; company_details?: { name: string } }>
-  >([]);
-  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
   const [form] = Form.useForm();
   const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
     'documentsSelectedYear',
@@ -124,17 +120,6 @@ const Documents: React.FC = () => {
       setCurrentPage(maxPage);
     }
   }, [currentPage, documentsTotal]);
-
-  const ensureApplicationsLoaded = async () => {
-    if (hasLoadedApplications) return;
-    try {
-      const response = await getApplicationOptions({ page_size: 100 });
-      setApplications(response.data);
-      setHasLoadedApplications(true);
-    } catch (error) {
-      console.error('Failed to load applications', error);
-    }
-  };
 
   const handleYearChange = (year: number | 'all') => {
     setSelectedYear(year);
@@ -215,7 +200,6 @@ const Documents: React.FC = () => {
       application: record.application ?? undefined,
     });
     setIsEditModalOpen(true);
-    void ensureApplicationsLoaded();
   };
 
   const handleSaveEdit = async () => {
@@ -591,14 +575,9 @@ const Documents: React.FC = () => {
             />
           </Form.Item>
           <Form.Item name="application" label="Link to Application (Optional)">
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              options={applications.map((app) => ({
-                value: app.id,
-                label: `${app.role_title} @ ${app.company_details?.name || 'Unknown'}`,
-              }))}
+            <ApplicationSelect
+              className="w-full"
+              formatLabel={(a) => `${a.role_title} @ ${a.company_details?.name || 'Unknown'}`}
             />
           </Form.Item>
         </Form>

@@ -3,9 +3,10 @@ import { Form, Input, Select, Upload, message } from 'antd';
 import Modal from '../../components/MobileModal';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
-import { createDocument, getApplicationOptions } from '../../api';
+import { createDocument } from '../../api';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
+import ApplicationSelect from '../../components/ApplicationSelect';
 
 interface UploadDocumentModalProps {
   visible: boolean;
@@ -45,25 +46,13 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [applications, setApplications] = useState<any[]>([]);
 
   useEffect(() => {
-    if (visible) {
-      fetchApplications();
-    } else {
+    if (!visible) {
       form.resetFields();
       setFileList([]);
     }
   }, [visible, form]);
-
-  const fetchApplications = async () => {
-    try {
-      const response = await getApplicationOptions({ page_size: 100 });
-      setApplications(response.data);
-    } catch (error) {
-      console.error('Failed to fetch applications', error);
-    }
-  };
 
   const handleOk = async () => {
     try {
@@ -165,21 +154,11 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
           </div>
         ) : (
           <Form.Item name="application" label="Link to Application (Optional)">
-            <Select
-              showSearch
-              allowClear
+            <ApplicationSelect
+              className="w-full"
               placeholder="Select an application"
-              optionFilterProp="children"
-              filterOption={(input, option: any) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {applications.map((app) => (
-                <Option key={app.id} value={app.id}>
-                  {app.role_title} @ {app.company_details?.name || 'Unknown'}
-                </Option>
-              ))}
-            </Select>
+              formatLabel={(a) => `${a.role_title} @ ${a.company_details?.name || 'Unknown'}`}
+            />
           </Form.Item>
         )}
 

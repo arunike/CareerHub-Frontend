@@ -48,7 +48,6 @@ import {
   updateHoliday,
   updateRecurringSeries,
   exportHolidays,
-  getApplicationOptions,
   importData,
   getUserSettings,
   updateUserSettings,
@@ -331,14 +330,6 @@ const Holidays = () => {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<EventCategory[]>([]);
-  const [applications, setApplications] = useState<
-    Array<{
-      id: number;
-      company_details?: { name: string };
-      role_title: string;
-      [key: string]: unknown;
-    }>
-  >([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
@@ -386,7 +377,6 @@ const Holidays = () => {
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
-  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -675,19 +665,6 @@ const Holidays = () => {
     }
   };
 
-  const ensureApplicationsLoaded = async () => {
-    if (hasLoadedApplications) return;
-
-    try {
-      const response = await getApplicationOptions({ page_size: 100 });
-      setApplications(response.data);
-      setHasLoadedApplications(true);
-    } catch (error) {
-      messageApi.error('Failed to load applications');
-      console.error(error);
-    }
-  };
-
   const handleCalendarEventSelect = (event: Event) => {
     setViewingEvent(event);
   };
@@ -705,7 +682,6 @@ const Holidays = () => {
     setRecurrenceRule(null);
     setLocationType('virtual');
     setIsEventFormOpen(true);
-    void ensureApplicationsLoaded();
     eventForm.resetFields();
     eventForm.setFieldsValue({
       date: dayjs(date),
@@ -720,7 +696,6 @@ const Holidays = () => {
     setViewingEvent(null);
     setEditingEventId(event.id);
     setIsEventFormOpen(true);
-    void ensureApplicationsLoaded();
     setRecurrenceRule((event.recurrence_rule as RecurrenceRule) || null);
     setLocationType(event.location_type || 'virtual');
 
@@ -1753,7 +1728,6 @@ const Holidays = () => {
           recurrenceRule={recurrenceRule}
           onOpenRecurrence={() => setShowRecurrenceModal(true)}
           onClearRecurrence={() => setRecurrenceRule(null)}
-          applications={applications}
         />
 
         <RecurrenceModal

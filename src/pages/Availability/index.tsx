@@ -20,7 +20,6 @@ import {
   getEvents,
   getFederalHolidays,
   getHolidays,
-  getApplicationOptions,
   getPublicBookings,
   getShareLinks,
   updatePublicBooking,
@@ -147,15 +146,6 @@ const Availability = () => {
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
   const [categories, setCategories] = useState<EventCategory[]>([]);
-  const [applications, setApplications] = useState<
-    Array<{
-      id: number;
-      company_details?: { name: string };
-      role_title: string;
-      [key: string]: unknown;
-    }>
-  >([]);
-  const [hasLoadedApplications, setHasLoadedApplications] = useState(false);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
@@ -208,19 +198,6 @@ const Availability = () => {
       console.error('Failed to fetch calendar data', error);
     } finally {
       setCalendarLoading(false);
-    }
-  };
-
-  const ensureApplicationsLoaded = async () => {
-    if (hasLoadedApplications) return;
-
-    try {
-      const applicationsResp = await getApplicationOptions({ page_size: 100 });
-      setApplications(applicationsResp.data);
-      setHasLoadedApplications(true);
-    } catch (error) {
-      messageApi.error('Failed to load applications');
-      console.error('Failed to load applications', error);
     }
   };
 
@@ -360,7 +337,6 @@ const Availability = () => {
     setViewingEvent(null);
     setEditingEventId(event.id);
     setIsEventFormOpen(true);
-    void ensureApplicationsLoaded();
     setRecurrenceRule((event.recurrence_rule as RecurrenceRule) || null);
     setLocationType(event.location_type || 'virtual');
 
@@ -414,7 +390,6 @@ const Availability = () => {
     setRecurrenceRule(null);
     setLocationType('virtual');
     setIsEventFormOpen(true);
-    void ensureApplicationsLoaded();
     eventForm.resetFields();
     eventForm.setFieldsValue({
       date: dayjs(date),
@@ -966,7 +941,6 @@ const Availability = () => {
         recurrenceRule={recurrenceRule}
         onOpenRecurrence={() => setShowRecurrenceModal(true)}
         onClearRecurrence={() => setRecurrenceRule(null)}
-        applications={applications}
       />
 
       <RecurrenceModal

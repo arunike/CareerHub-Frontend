@@ -17,7 +17,6 @@ import {
   LocationTaxSection,
   TimeOffSection,
   WorkSetupSection,
-  type ApplicationOption,
   type EditableTaxRates,
   type TaxRatePreview,
 } from './sections';
@@ -27,7 +26,6 @@ interface OfferFormFieldsProps {
   showLinkApplication?: boolean;
   linkedApplicationId?: number | null;
   onLinkedApplicationChange?: (value: number | null) => void;
-  applicationOptions?: ApplicationOption[];
   hideCompanyRoleWhenLinked?: boolean;
 
   companyName: string;
@@ -198,7 +196,6 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   showLinkApplication = false,
   linkedApplicationId = null,
   onLinkedApplicationChange,
-  applicationOptions = [],
   hideCompanyRoleWhenLinked = false,
   companyName,
   onCompanyNameChange,
@@ -521,7 +518,6 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 showLinkApplication={showLinkApplication}
                 linkedApplicationId={linkedApplicationId}
                 onLinkedApplicationChange={onLinkedApplicationChange}
-                applicationOptions={applicationOptions}
                 shouldShowCompanyRole={shouldShowCompanyRole}
                 companyName={companyName}
                 onCompanyNameChange={onCompanyNameChange}

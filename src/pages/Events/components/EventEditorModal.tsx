@@ -11,6 +11,7 @@ import {
   Typography,
 } from 'antd';
 import Modal from '../../../components/MobileModal';
+import ApplicationSelect from '../../../components/ApplicationSelect';
 import { EnvironmentOutlined, PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
 import type { EventCategory, RecurrenceRule } from '../../../types';
@@ -32,12 +33,6 @@ const QUICK_DURATIONS = [
   { label: '3h', minutes: 180 },
 ];
 
-type ApplicationOption = {
-  id: number;
-  company_details?: { name: string };
-  role_title: string;
-};
-
 type EventEditorModalProps = {
   open: boolean;
   editingId: number | null;
@@ -56,7 +51,6 @@ type EventEditorModalProps = {
   recurrenceRule: RecurrenceRule | null;
   onOpenRecurrence: () => void;
   onClearRecurrence: () => void;
-  applications: ApplicationOption[];
 };
 
 const EventEditorModal = ({
@@ -77,7 +71,6 @@ const EventEditorModal = ({
   recurrenceRule,
   onOpenRecurrence,
   onClearRecurrence,
-  applications,
 }: EventEditorModalProps) => {
   return (
     <Modal
@@ -230,12 +223,11 @@ const EventEditorModal = ({
                   </Form.Item>
 
                   <Form.Item name="application" label="Link Application">
-                    <Select
-                      allowClear
-                      options={applications.map((a) => ({
-                        label: `${a.company_details?.name || 'Unknown'} - ${a.role_title}`,
-                        value: a.id,
-                      }))}
+                    <ApplicationSelect
+                      className="w-full"
+                      formatLabel={(a) =>
+                        `${a.company_details?.name || 'Unknown'} - ${a.role_title}`
+                      }
                     />
                   </Form.Item>
 

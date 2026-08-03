@@ -92,7 +92,9 @@ const ContactDetailsDrawer = ({
 
   const primaryContext = contact?.contexts?.[0]?.summary;
   const company = contact?.company || primaryContext?.company;
-  const jobTitle = contact?.job_title || primaryContext?.role;
+  // Only what was typed on the contact. The context role is the role *you* applied for,
+  // so falling back to it labelled every contact with your own job title.
+  const jobTitle = contact?.job_title?.trim() || '';
 
   return (
     <Drawer
@@ -280,7 +282,11 @@ const ContactDetailsDrawer = ({
             </section>
 
             <section>
-              <SectionHeading>Career context</SectionHeading>
+              <SectionHeading>
+                {contact.contexts?.some((context) => context.summary.type === 'EXPERIENCE')
+                  ? 'Linked records'
+                  : 'Linked applications'}
+              </SectionHeading>
               <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
                 {contact.contexts?.length ? (
                   contact.contexts.map((context) => (
@@ -288,32 +294,29 @@ const ContactDetailsDrawer = ({
                       key={context.id}
                       className="border-b border-slate-100 px-3.5 py-3.5 last:border-0"
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-slate-800">
-                          {context.summary.company}
+                      <div className="flex items-start justify-between gap-2">
+                        {/* The role here is the job you applied for, not this person's title. */}
+                        <p className="min-w-0 text-sm font-medium text-slate-800">
+                          {[context.summary.role, context.summary.company]
+                            .filter(Boolean)
+                            .join(' at ')}
                         </p>
                         <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                           {context.summary.type === 'APPLICATION' ? 'Application' : 'Experience'}
                         </span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                        <p className="text-xs text-slate-500">{context.summary.role}</p>
                         <span
                           className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${statusTone(context.summary.status)}`}
                         >
                           {context.summary.status}
                         </span>
                       </div>
-                      {context.notes && (
-                        <p className="mt-2 whitespace-pre-wrap border-l-2 border-slate-200 pl-2 text-xs leading-relaxed text-slate-500">
-                          {context.notes}
-                        </p>
-                      )}
                     </div>
                   ))
                 ) : (
                   <div className="px-3.5 py-4 text-sm text-slate-400">
-                    No application or experience context.
+                    Not linked to an application yet.
                   </div>
                 )}
               </div>
