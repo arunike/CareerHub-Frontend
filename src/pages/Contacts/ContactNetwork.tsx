@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Button } from 'antd';
-import {
-  AimOutlined,
-  FullscreenExitOutlined,
-  FullscreenOutlined,
-  UndoOutlined,
-} from '@ant-design/icons';
+import { AimOutlined, CompressOutlined, ExpandOutlined, UndoOutlined } from '@ant-design/icons';
 import type { ApplicationContact, ContactRelationship } from '../../types';
 import { contactInitials, withoutGenericContact } from '../../components/contacts/contactOptions';
 
@@ -377,27 +372,24 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
     action();
   };
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const fullscreenSupported =
-    typeof document !== 'undefined' && Boolean(document.fullscreenEnabled);
+  // An in-app full-page view rather than the Fullscreen API: it keeps the app's own chrome
+  // and works on iOS Safari, which refuses element fullscreen outright.
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Esc and the browser's own chrome can exit without going through the button.
   useEffect(() => {
-    const sync = () => setIsFullscreen(document.fullscreenElement === wrapperRef.current);
-    document.addEventListener('fullscreenchange', sync);
-    return () => document.removeEventListener('fullscreenchange', sync);
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (document.fullscreenElement) {
-      void document.exitFullscreen().catch(() => undefined);
-      return;
-    }
-    void wrapperRef.current?.requestFullscreen().catch((error) => {
-      console.error('Could not enter fullscreen', error);
-    });
-  };
+    if (!isExpanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsExpanded(false);
+    };
+    // Stop the page behind from scrolling while the graph owns the viewport.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isExpanded]);
 
   const selfPoint = positions.get(SELF_ID) ?? SELF_POINT;
 
@@ -455,11 +447,10 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
   }, [focusId]);
 
   return (
-    // Controls live outside the scroller so they stay put while the canvas scrolls. The
-    // wrapper is what goes fullscreen, so the controls come with it.
+    // Controls live outside the scroller so they stay put while the canvas scrolls, and
+    // inside the wrapper so they come along when it takes over the page.
     <div
-      ref={wrapperRef}
-      className={isFullscreen ? 'relative flex h-full flex-col bg-white p-3' : 'relative'}
+      className={isExpanded ? 'fixed inset-0 z-40 flex flex-col bg-white p-3 sm:p-4' : 'relative'}
     >
       <div className="absolute left-4 top-4 z-[2] flex flex-wrap items-center gap-2">
         {focusId && (
@@ -477,20 +468,20 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
         <p className="pointer-events-none hidden text-xs text-slate-400 sm:block">
           Drag people or labels to rearrange
         </p>
-        {fullscreenSupported && (
-          <Button
-            size="small"
-            icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'View fullscreen'}
-            title={isFullscreen ? 'Exit fullscreen (Esc)' : 'View fullscreen'}
-            onClick={toggleFullscreen}
-          />
-        )}
+        <Button
+          size="small"
+          icon={isExpanded ? <CompressOutlined /> : <ExpandOutlined />}
+          aria-label={isExpanded ? 'Exit full page' : 'Expand to full page'}
+          title={isExpanded ? 'Exit full page (Esc)' : 'Expand to full page'}
+          onClick={() => setIsExpanded((previous) => !previous)}
+        >
+          {isExpanded ? 'Exit' : null}
+        </Button>
       </div>
       <div
         ref={containerRef}
         className={`overflow-auto rounded-2xl border border-slate-200 bg-slate-50/60 ${
-          isFullscreen ? 'min-h-0 flex-1' : 'max-h-[80vh] min-h-[560px]'
+          isExpanded ? 'min-h-0 flex-1' : 'max-h-[80vh] min-h-[560px]'
         }`}
       >
         <svg
