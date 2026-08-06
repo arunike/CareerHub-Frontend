@@ -67,6 +67,11 @@ export interface Event {
   id: number;
   name: string;
   date: string;
+  // Null for a single-day event; otherwise the last day it spans.
+  end_date?: string | null;
+  // Set on a single day that was edited out of a multi-day span.
+  span_parent?: number | null;
+  override_date?: string | null;
   start_time: string;
   end_time: string;
   timezone: string;
@@ -91,6 +96,7 @@ export interface Event {
   created_at: string;
   updated_at: string;
   is_virtual?: boolean;
+  is_all_day?: boolean;
   is_locked?: boolean;
 }
 

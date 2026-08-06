@@ -19,6 +19,8 @@ type EventViewModalProps = {
 };
 
 const EventViewModal = ({ event, onClose, onEdit, onDuplicate, onDelete }: EventViewModalProps) => {
+  const isMultiDay = Boolean(event?.end_date && event.end_date !== event.date);
+
   return (
     <Modal
       title={event?.name}
@@ -69,14 +71,23 @@ const EventViewModal = ({ event, onClose, onEdit, onDuplicate, onDelete }: Event
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
-              <Text type="secondary">Date</Text>
-              <div>{dayjs(event.date).format('MMMM D, YYYY')}</div>
+              <Text type="secondary">{isMultiDay ? 'Dates' : 'Date'}</Text>
+              <div>
+                {dayjs(event.date).format('MMMM D, YYYY')}
+                {isMultiDay && ` – ${dayjs(event.end_date).format('MMMM D, YYYY')}`}
+              </div>
             </Col>
             <Col xs={24} sm={12}>
               <Text type="secondary">Time</Text>
-              <div>
-                {event.start_time} - {event.end_time}
-              </div>
+              {event.is_all_day ? (
+                <div>All day</div>
+              ) : (
+                <div>
+                  {isMultiDay
+                    ? `${event.start_time.substring(0, 5)} on ${dayjs(event.date).format('MMM D')} – ${event.end_time.substring(0, 5)} on ${dayjs(event.end_date).format('MMM D')}`
+                    : `${event.start_time.substring(0, 5)} - ${event.end_time.substring(0, 5)}`}
+                </div>
+              )}
             </Col>
           </Row>
           {event.meeting_link && (

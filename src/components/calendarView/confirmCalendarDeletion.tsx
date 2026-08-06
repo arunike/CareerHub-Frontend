@@ -1,4 +1,5 @@
-import { Button, Modal } from 'antd';
+import { Button } from 'antd';
+import Modal from '../MobileModal';
 import type { Event, Holiday } from '../../types';
 
 export type EventDeleteScope = 'instance' | 'series';

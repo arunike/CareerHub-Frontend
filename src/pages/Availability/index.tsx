@@ -55,7 +55,8 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import CalendarView from '../../components/CalendarView';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { PageState, PanelSkeleton } from '../../components/PageState';
-import { Form, message, Modal } from 'antd';
+import { Form, message } from 'antd';
+import Modal from '../../components/MobileModal';
 import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
 import type { CalendarHolidayFormValues } from '../../components/calendarView/CalendarHolidayModal';
 import type { EventDeleteScope } from '../../components/calendarView/confirmCalendarDeletion';
@@ -73,6 +74,12 @@ import {
 } from './components';
 import { useAuth } from '../../context/AuthContext';
 import { getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
+import {
+  confirmEventMove,
+  confirmHolidayMove,
+} from '../../components/calendarView/confirmCalendarMove';
+import type { CalendarDragItem } from '../../components/calendarView/CalendarDayContent';
+import { buildEventMovePatch } from '../../components/calendarView/utils';
 
 dayjs.extend(customParseFormat);
 
@@ -80,6 +87,9 @@ type EventFormValues = {
   date: dayjs.Dayjs;
   start_time: dayjs.Dayjs;
   end_time: dayjs.Dayjs;
+  is_all_day?: boolean;
+  is_multi_day?: boolean;
+  end_date?: dayjs.Dayjs | null;
   [key: string]: unknown;
 };
 
@@ -329,6 +339,37 @@ const Availability = () => {
     return `${window.location.origin}/book/${shareLink.uuid}`;
   };
 
+  // Confirmed before saving: a drop is easy to trigger by accident on a dense month grid.
+  const handleCalendarItemDrop = (item: CalendarDragItem, day: Date) => {
+    const nextDate = dayjs(day).format('YYYY-MM-DD');
+    if (item.kind === 'event') {
+      if (nextDate === item.event.date) return;
+      confirmEventMove(item.event, day, async (event) => {
+        try {
+          await updateEvent(event.id, buildEventMovePatch(event, day));
+          messageApi.success(`Moved "${event.name}" to ${dayjs(day).format('MMM D, YYYY')}`);
+          await fetchCalendarData();
+        } catch (error) {
+          console.error('Failed to move event', error);
+          messageApi.error(getErrorMessage(error, 'Could not move the event'));
+        }
+      });
+      return;
+    }
+    if (nextDate === item.holiday.date) return;
+    confirmHolidayMove(item.holiday, day, async (holiday) => {
+      try {
+        await updateHoliday(holiday.id, { date: nextDate });
+        messageApi.success(
+          `Moved "${holiday.description || 'holiday'}" to ${dayjs(day).format('MMM D, YYYY')}`
+        );
+        await fetchCalendarData();
+      } catch (error) {
+        console.error('Failed to move holiday', error);
+        messageApi.error(getErrorMessage(error, 'Could not move the holiday'));
+      }
+    });
+  };
   const handleCalendarEventSelect = (event: Event) => {
     setViewingEvent(event);
   };
@@ -345,6 +386,9 @@ const Availability = () => {
       date: dayjs(event.date),
       start_time: dayjs(event.start_time, 'HH:mm:ss'),
       end_time: dayjs(event.end_time, 'HH:mm:ss'),
+      is_all_day: Boolean(event.is_all_day),
+      is_multi_day: Boolean(event.end_date && event.end_date !== event.date),
+      end_date: event.end_date ? dayjs(event.end_date) : null,
       timezone: normalizeTimeZone(event.timezone || timezone),
       category: event.category,
       location_type: event.location_type || 'virtual',
@@ -429,8 +473,13 @@ const Availability = () => {
     const payload = {
       ...values,
       date: values.date.format('YYYY-MM-DD'),
-      start_time: values.start_time.format('HH:mm:ss'),
-      end_time: values.end_time.format('HH:mm:ss'),
+      // Cleared when the toggle is off, so unticking Multi-day really shortens the event.
+      end_date:
+        values.is_multi_day && values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
+      // An all-day event still needs times stored, so it spans the whole day.
+      start_time: values.is_all_day ? '00:00:00' : values.start_time.format('HH:mm:ss'),
+      end_time: values.is_all_day ? '23:59:00' : values.end_time.format('HH:mm:ss'),
+      is_all_day: Boolean(values.is_all_day),
       is_recurring: !!recurrenceRule,
       recurrence_rule: recurrenceRule,
       reminder_minutes: 15,
@@ -798,6 +847,7 @@ const Availability = () => {
           />
         ) : (
           <CalendarView
+            onItemDrop={handleCalendarItemDrop}
             events={events}
             customHolidays={customHolidays}
             federalHolidays={federalHolidays}

@@ -5,14 +5,34 @@ import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { DayData } from './types';
-import { hasDayItems } from './utils';
+import { eventTimeLabel, eventTimeRangeLabel, hasDayItems } from './utils';
 
 type DayDataProps = {
   dayData: DayData;
-  onEventSelect?: (event: Event) => void;
+  onEventSelect?: (event: Event, day?: Date) => void;
   onHolidaySelect?: (holiday: Holiday) => void;
   onViewMore?: () => void;
+  onItemDragStart?: (item: CalendarDragItem) => void;
+  onItemDragEnd?: () => void;
+  day?: Date;
 };
+
+// What is being dragged between days, so the drop target can act on either kind.
+export type CalendarDragItem =
+  | { kind: 'event'; event: Event }
+  | { kind: 'holiday'; holiday: Holiday };
+
+// A locked event is deliberately pinned, and one occurrence of a series has no obvious
+// meaning on its own, so neither can be dragged to another day.
+export const canDragEvent = (event: Event) =>
+  !event.is_locked && !event.is_recurring && !event.parent_event;
+
+// Federal holidays are fixed calendar facts; only your own custom ones can move.
+export const canDragHoliday = (holiday: Holiday) =>
+  Boolean(holiday.id) &&
+  holiday.holiday_type !== 'federal' &&
+  !holiday.is_locked &&
+  !holiday.is_recurring;
 
 type DayTooltipProps = {
   day: Date;
@@ -35,7 +55,7 @@ export const CalendarDayTooltipContent = ({ day, dayData }: DayTooltipProps) => 
       ))}
       {dayData.events.map((event) => (
         <div key={event.id}>
-          {event.start_time.substring(0, 5)} {event.name}
+          {eventTimeLabel(event)} {event.name}
         </div>
       ))}
     </div>
@@ -44,12 +64,14 @@ export const CalendarDayTooltipContent = ({ day, dayData }: DayTooltipProps) => 
 
 const handleEventEntryClick = (
   event: Event,
-  onEventSelect: ((event: Event) => void) | undefined,
-  clickEvent: MouseEvent<HTMLElement>
+  onEventSelect: ((event: Event, day?: Date) => void) | undefined,
+  clickEvent: MouseEvent<HTMLElement>,
+  day?: Date
 ) => {
   if (!onEventSelect) return;
   clickEvent.stopPropagation();
-  onEventSelect(event);
+  // The clicked day matters for a multi-day span: it decides which day an edit targets.
+  onEventSelect(event, day);
 };
 
 const handleHolidayEntryClick = (
@@ -121,6 +143,9 @@ export const CalendarCompactDayEntries = ({
   onEventSelect,
   onHolidaySelect,
   onViewMore,
+  onItemDragStart,
+  onItemDragEnd,
+  day,
 }: DayDataProps) => {
   const compactItems = getCompactItems(dayData);
   const visibleItems = compactItems.slice(0, 3);
@@ -158,6 +183,13 @@ export const CalendarCompactDayEntries = ({
               {onHolidaySelect ? (
                 <button
                   type="button"
+                  draggable={Boolean(onItemDragStart) && canDragHoliday(holiday)}
+                  onDragStart={(dragEvent) => {
+                    dragEvent.dataTransfer.effectAllowed = 'move';
+                    dragEvent.dataTransfer.setData('text/plain', String(holiday.id));
+                    onItemDragStart?.({ kind: 'holiday', holiday });
+                  }}
+                  onDragEnd={() => onItemDragEnd?.()}
                   onClick={(clickEvent) =>
                     handleHolidayEntryClick(holiday, onHolidaySelect, clickEvent)
                   }
@@ -190,16 +222,23 @@ export const CalendarCompactDayEntries = ({
         const { event } = item;
         const eventColor = getEventColor(event);
         const titlePrefix = event.category_details?.name ? `${event.category_details.name}: ` : '';
-
         return (
           <Tooltip
             key={item.key}
-            title={`${titlePrefix}${event.name} (${event.start_time.substring(0, 5)})`}
+            title={`${titlePrefix}${event.name} (${eventTimeLabel(event)})`}
             mouseEnterDelay={0}
           >
             <button
               type="button"
-              onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
+              draggable={Boolean(onItemDragStart) && canDragEvent(event)}
+              onDragStart={(dragEvent) => {
+                dragEvent.dataTransfer.effectAllowed = 'move';
+                // Firefox ignores a drag that sets no data.
+                dragEvent.dataTransfer.setData('text/plain', String(event.id));
+                onItemDragStart?.({ kind: 'event', event });
+              }}
+              onDragEnd={() => onItemDragEnd?.()}
+              onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent, day)}
               className="block w-full rounded border px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
               style={
                 {
@@ -217,7 +256,7 @@ export const CalendarCompactDayEntries = ({
               }}
             >
               <span className="block truncate">
-                {event.start_time.substring(0, 5)} {event.name}
+                {eventTimeLabel(event)} {event.name}
               </span>
             </button>
           </Tooltip>
@@ -244,6 +283,7 @@ export const CalendarDayAgendaEntries = ({
   dayData,
   onEventSelect,
   onHolidaySelect,
+  day,
 }: DayDataProps) => {
   if (!hasDayItems(dayData)) {
     return <div className="text-sm text-gray-400 italic">No events or holidays scheduled.</div>;
@@ -316,7 +356,7 @@ export const CalendarDayAgendaEntries = ({
           <button
             type="button"
             key={event.id}
-            onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent)}
+            onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent, day)}
             className="block w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
             style={
               {
@@ -338,7 +378,7 @@ export const CalendarDayAgendaEntries = ({
                 className="rounded px-1.5 py-0.5 font-mono text-xs"
                 style={{ backgroundColor: eventColor.hoverBg, color: eventColor.text }}
               >
-                {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
+                {eventTimeRangeLabel(event)}
               </span>
               <span className="font-medium">{event.name}</span>
               {event.category_details && (

@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+import { addDays, differenceInCalendarDays, format } from 'date-fns';
+
+// A plain yyyy-MM-dd parses as UTC midnight, which lands on the previous day west of GMT.
+const parseCalendarDate = (value: string) => new Date(`${value}T00:00:00`);
+// A safety rail on the day-expansion loop, not a product limit.
+const MAX_EVENT_SPAN_DAYS = 366;
 import { Button } from 'antd';
 import Modal from './MobileModal';
 import type { Event, EventCategory, Holiday, HolidayTab } from '../types';
 import CalendarDetailsPanel from './calendarView/CalendarDetailsPanel';
 import CalendarHeader from './calendarView/CalendarHeader';
 import CalendarMonthView from './calendarView/CalendarMonthView';
+import type { CalendarDragItem } from './calendarView/CalendarDayContent';
 import CalendarRangeView from './calendarView/CalendarRangeView';
 import CalendarYearView from './calendarView/CalendarYearView';
 import type {
@@ -24,7 +30,8 @@ interface CalendarViewProps {
   holidayTabs?: HolidayTab[];
   addActionHighlight?: 'events' | 'holidays' | 'all';
   loading?: boolean;
-  onEventSelect?: (event: Event) => void;
+  onEventSelect?: (event: Event, day?: Date) => void;
+  onItemDrop?: (item: CalendarDragItem, day: Date) => void;
   onHolidaySelect?: (holiday: Holiday) => void;
   onAddEvent?: (day: Date) => void;
   onAddHoliday?: (day: Date, target: CalendarHolidayTarget) => void;
@@ -39,6 +46,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   addActionHighlight = 'all',
   loading = false,
   onEventSelect,
+  onItemDrop,
   onHolidaySelect,
   onAddEvent,
   onAddHoliday,
@@ -98,12 +106,29 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     });
   }, [categories, holidayTabs]);
 
+  // Days of a span that were edited on their own; the parent yields to them there.
+  const overriddenDays = new Map<number, Set<string>>();
+  events.forEach((event) => {
+    if (!event.span_parent || !event.override_date) return;
+    const days = overriddenDays.get(event.span_parent) ?? new Set<string>();
+    days.add(event.override_date);
+    overriddenDays.set(event.span_parent, days);
+  });
+
+  // A multi-day event is indexed under every day it covers, so it shows on each of them.
   const eventsByDate: Record<string, Event[]> = {};
   events.forEach((event) => {
-    if (!eventsByDate[event.date]) {
-      eventsByDate[event.date] = [];
+    const skip = overriddenDays.get(event.id);
+    const start = parseCalendarDate(event.date);
+    const last = event.end_date ? parseCalendarDate(event.end_date) : start;
+    // Guard against a bad range so a malformed record cannot spin here.
+    const span = Math.min(Math.max(differenceInCalendarDays(last, start), 0), MAX_EVENT_SPAN_DAYS);
+    for (let offset = 0; offset <= span; offset += 1) {
+      const key = format(addDays(start, offset), 'yyyy-MM-dd');
+      if (skip?.has(key)) continue;
+      if (!eventsByDate[key]) eventsByDate[key] = [];
+      eventsByDate[key].push(event);
     }
-    eventsByDate[event.date].push(event);
   });
 
   Object.values(eventsByDate).forEach((items) => {
@@ -279,6 +304,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
               onDateDoubleClick={canAddFromCalendar ? handleDateDoubleClick : undefined}
               onViewMore={handleViewMore}
               onEventSelect={onEventSelect}
+              onItemDrop={onItemDrop}
               onHolidaySelect={onHolidaySelect}
               getDayData={getDayData}
             />

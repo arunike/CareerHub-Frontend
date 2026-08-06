@@ -11,7 +11,7 @@ type Props = {
   selectedDate: Date;
   onDateSelect: (day: Date) => void;
   onDateDoubleClick?: (day: Date) => void;
-  onEventSelect?: (event: Event) => void;
+  onEventSelect?: (event: Event, day?: Date) => void;
   onHolidaySelect?: (holiday: Holiday) => void;
   getDayData: GetDayData;
 };
@@ -79,6 +79,7 @@ const CalendarRangeView = ({
 
               <div className="min-h-[320px] p-4">
                 <CalendarDayAgendaEntries
+                  day={day}
                   dayData={dayData}
                   onEventSelect={onEventSelect}
                   onHolidaySelect={onHolidaySelect}

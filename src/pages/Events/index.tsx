@@ -59,6 +59,19 @@ import { getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getApiErrorMessage } from '../../utils/apiError';
+import {
+  confirmEventMove,
+  confirmHolidayMove,
+} from '../../components/calendarView/confirmCalendarMove';
+import type { CalendarDragItem } from '../../components/calendarView/CalendarDayContent';
+import { buildEventMovePatch } from '../../components/calendarView/utils';
+import {
+  askOverrideOverwrite,
+  askSpanEditScope,
+  isSpanEvent,
+  type SpanEditScope,
+} from '../../components/calendarView/confirmSpanEdit';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -70,6 +83,9 @@ type EventFormValues = {
   date: dayjs.Dayjs;
   start_time: dayjs.Dayjs;
   end_time: dayjs.Dayjs;
+  is_all_day?: boolean;
+  is_multi_day?: boolean;
+  end_date?: dayjs.Dayjs | null;
   [key: string]: unknown;
 };
 
@@ -132,7 +148,10 @@ const Events = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  // How the next save applies to a multi-day span, and which day was clicked.
+  const [spanScope, setSpanScope] = useState<{ scope: SpanEditScope; day: string } | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const [viewingDay, setViewingDay] = useState<string | null>(null);
   const [pendingCalendarHoliday, setPendingCalendarHoliday] = useState<{
     date: Date;
     target: CalendarHolidayTarget;
@@ -370,7 +389,21 @@ const Events = () => {
     setEditingHoliday(holiday);
   };
 
-  const handleEdit = (event: Event) => {
+  // A span asks first whether the edit is for the clicked day or the whole run.
+  const handleEdit = (event: Event, clickedDay?: string) => {
+    if (isSpanEvent(event)) {
+      const clicked = clickedDay || event.date;
+      askSpanEditScope(event, clicked, (scope) => {
+        setSpanScope({ scope, day: clicked });
+        openEditForm(event, scope === 'day' ? clicked : event.date);
+      });
+      return;
+    }
+    setSpanScope(null);
+    openEditForm(event);
+  };
+
+  const openEditForm = (event: Event, dayOverride?: string) => {
     setEditingId(event.id);
     setIsFormOpen(true);
     setRecurrenceRule(event.recurrence_rule as RecurrenceRule);
@@ -378,9 +411,12 @@ const Events = () => {
 
     form.setFieldsValue({
       name: event.name,
-      date: dayjs(event.date),
+      date: dayjs(dayOverride || event.date),
       start_time: dayjs(event.start_time, 'HH:mm:ss'),
       end_time: dayjs(event.end_time, 'HH:mm:ss'),
+      is_all_day: Boolean(event.is_all_day),
+      is_multi_day: Boolean(event.end_date && event.end_date !== event.date),
+      end_date: event.end_date ? dayjs(event.end_date) : null,
       timezone: event.timezone,
       category: event.category,
       location_type: event.location_type,
@@ -402,6 +438,9 @@ const Events = () => {
       date: dayjs(event.date),
       start_time: dayjs(event.start_time, 'HH:mm:ss'),
       end_time: dayjs(event.end_time, 'HH:mm:ss'),
+      is_all_day: Boolean(event.is_all_day),
+      is_multi_day: Boolean(event.end_date && event.end_date !== event.date),
+      end_date: event.end_date ? dayjs(event.end_date) : null,
       timezone: event.timezone,
       category: event.category,
       location_type: event.location_type,
@@ -461,12 +500,73 @@ const Events = () => {
     const payload = {
       ...values,
       date: values.date.format('YYYY-MM-DD'),
-      start_time: values.start_time.format('HH:mm:ss'),
-      end_time: values.end_time.format('HH:mm:ss'),
+      // Cleared when the toggle is off, so unticking Multi-day really shortens the event.
+      end_date:
+        values.is_multi_day && values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
+      // An all-day event still needs times stored, so it spans the whole day.
+      start_time: values.is_all_day ? '00:00:00' : values.start_time.format('HH:mm:ss'),
+      end_time: values.is_all_day ? '23:59:00' : values.end_time.format('HH:mm:ss'),
+      is_all_day: Boolean(values.is_all_day),
       is_recurring: !!recurrenceRule,
       recurrence_rule: recurrenceRule,
       reminder_minutes: 15,
     };
+
+    // "This day only" saves a standalone override attached to the span instead of
+    // rewriting the parent, so the rest of the run is untouched.
+    if (spanScope?.scope === 'day' && editingId) {
+      const parent = events.find((candidate) => candidate.id === editingId);
+      const existing = events.find(
+        (candidate) =>
+          candidate.span_parent === editingId && candidate.override_date === spanScope.day
+      );
+      const dayPayload = {
+        ...payload,
+        end_date: null,
+        is_recurring: false,
+        recurrence_rule: null,
+        span_parent: parent?.span_parent ?? editingId,
+        override_date: spanScope.day,
+      };
+      try {
+        if (existing) await updateEvent(existing.id, dayPayload);
+        else await createEvent(dayPayload);
+        messageApi.success(`Updated ${dayjs(spanScope.day).format('MMM D')} only`);
+        setIsFormOpen(false);
+        setSpanScope(null);
+        fetchData();
+        fetchCalendarData();
+      } catch (error) {
+        console.error('Failed to save the day override', error);
+        messageApi.error(getApiErrorMessage(error, 'Could not save that day'));
+      }
+      return;
+    }
+
+    // Editing the whole span would wipe any day already edited on its own, so ask first.
+    if (spanScope?.scope === 'all' && editingId) {
+      const overrides = events.filter((candidate) => candidate.span_parent === editingId);
+      if (overrides.length > 0) {
+        askOverrideOverwrite(overrides.length, async (discard) => {
+          try {
+            if (discard) {
+              await Promise.all(overrides.map((override) => deleteEvent(override.id)));
+            }
+            await updateEvent(editingId, payload);
+            messageApi.success(discard ? 'Event updated; separate days replaced' : 'Event updated');
+            setIsFormOpen(false);
+            setSpanScope(null);
+            fetchData();
+            fetchCalendarData();
+          } catch (error) {
+            console.error('Failed to update the span', error);
+            messageApi.error(getApiErrorMessage(error, 'Could not update the event'));
+          }
+        });
+        return;
+      }
+      setSpanScope(null);
+    }
 
     try {
       if (editingId) {
@@ -662,6 +762,40 @@ const Events = () => {
     }
   };
 
+  // Confirmed before saving: a drop is easy to trigger by accident on a dense month grid.
+  const handleCalendarItemDrop = (item: CalendarDragItem, day: Date) => {
+    const nextDate = dayjs(day).format('YYYY-MM-DD');
+    if (item.kind === 'event') {
+      if (nextDate === item.event.date) return;
+      confirmEventMove(item.event, day, async (event) => {
+        try {
+          await updateEvent(event.id, buildEventMovePatch(event, day));
+          messageApi.success(`Moved "${event.name}" to ${dayjs(day).format('MMM D, YYYY')}`);
+          await fetchData();
+          await fetchCalendarData();
+        } catch (error) {
+          console.error('Failed to move event', error);
+          messageApi.error(getApiErrorMessage(error, 'Could not move the event'));
+        }
+      });
+      return;
+    }
+    if (nextDate === item.holiday.date) return;
+    confirmHolidayMove(item.holiday, day, async (holiday) => {
+      try {
+        await updateHoliday(holiday.id, { date: nextDate });
+        messageApi.success(
+          `Moved "${holiday.description || 'holiday'}" to ${dayjs(day).format('MMM D, YYYY')}`
+        );
+        await fetchData();
+        await fetchCalendarData();
+      } catch (error) {
+        console.error('Failed to move holiday', error);
+        messageApi.error(getApiErrorMessage(error, 'Could not move the holiday'));
+      }
+    });
+  };
+
   return (
     <>
       {contextHolder}
@@ -789,7 +923,7 @@ const Events = () => {
                     userTimezone={userTimezone}
                     onToggleLock={toggleLock}
                     onView={setViewingEvent}
-                    onEdit={handleEdit}
+                    onEdit={(event: Event) => handleEdit(event, viewingDay || undefined)}
                     onDuplicate={handleDuplicate}
                     onDelete={handleDeleteAction}
                     formatEventTime={formatEventTime}
@@ -829,6 +963,7 @@ const Events = () => {
             />
           ) : (
             <CalendarView
+              onItemDrop={handleCalendarItemDrop}
               events={calendarEvents}
               customHolidays={customHolidays}
               federalHolidays={federalHolidays}
@@ -836,7 +971,10 @@ const Events = () => {
               holidayTabs={holidayTabs}
               addActionHighlight="events"
               loading={calendarLoading}
-              onEventSelect={setViewingEvent}
+              onEventSelect={(event, day) => {
+                setViewingEvent(event);
+                setViewingDay(day ? dayjs(day).format('YYYY-MM-DD') : null);
+              }}
               onHolidaySelect={handleHolidaySelect}
               onAddEvent={handleAdd}
               onAddHoliday={handleCalendarHolidayAdd}

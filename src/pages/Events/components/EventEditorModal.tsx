@@ -1,5 +1,6 @@
 import {
   Button,
+  Checkbox,
   Collapse,
   Col,
   DatePicker,
@@ -72,6 +73,9 @@ const EventEditorModal = ({
   onOpenRecurrence,
   onClearRecurrence,
 }: EventEditorModalProps) => {
+  const isAllDay = Form.useWatch('is_all_day', form);
+  const isMultiDay = Form.useWatch('is_multi_day', form);
+
   return (
     <Modal
       title={editingId ? 'Edit Event' : 'Add Event'}
@@ -104,10 +108,61 @@ const EventEditorModal = ({
           </Col>
         </Row>
 
+        {isMultiDay && (
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="end_date"
+                label="End Date"
+                dependencies={['date']}
+                rules={[
+                  { required: true, message: 'Pick the last day' },
+                  ({ getFieldValue }) => ({
+                    validator: (_rule, value) => {
+                      const start = getFieldValue('date');
+                      if (!value || !start || !value.isBefore(start, 'day')) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error('The end date cannot be before the start date')
+                      );
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker inputReadOnly style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+
+        <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <Form.Item name="is_all_day" valuePropName="checked" noStyle>
+            <Checkbox>All day</Checkbox>
+          </Form.Item>
+          <Form.Item name="is_multi_day" valuePropName="checked" noStyle>
+            <Checkbox
+              onChange={(changeEvent) => {
+                // Seed the end date with the start so the picker opens somewhere sensible.
+                if (changeEvent.target.checked && !form.getFieldValue('end_date')) {
+                  form.setFieldValue('end_date', form.getFieldValue('date'));
+                }
+              }}
+            >
+              Multi-day
+            </Checkbox>
+          </Form.Item>
+        </div>
+
         <Row gutter={16}>
           <Col xs={24} sm={12}>
-            <Form.Item name="start_time" label="Start Time" rules={[{ required: true }]}>
+            <Form.Item
+              name="start_time"
+              label={isMultiDay ? 'Start Time (first day)' : 'Start Time'}
+              rules={[{ required: !isAllDay }]}
+            >
               <FriendlyTimeInput
+                disabled={isAllDay}
                 minuteStep={5}
                 onChange={(val) => {
                   if (val) {
@@ -119,13 +174,17 @@ const EventEditorModal = ({
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>
-            <Form.Item name="end_time" label="End Time" rules={[{ required: true }]}>
-              <FriendlyTimeInput minuteStep={5} />
+            <Form.Item
+              name="end_time"
+              label={isMultiDay ? 'End Time (last day)' : 'End Time'}
+              rules={[{ required: !isAllDay }]}
+            >
+              <FriendlyTimeInput disabled={isAllDay} minuteStep={5} />
             </Form.Item>
           </Col>
         </Row>
 
-        <div className="-mt-3 mb-5">
+        <div className={isMultiDay ? 'hidden' : '-mt-3 mb-5'}>
           <Text type="secondary" className="mb-2 block text-xs">
             Quick duration
           </Text>
@@ -135,6 +194,7 @@ const EventEditorModal = ({
                 key={duration.minutes}
                 type="default"
                 size="small"
+                disabled={isAllDay}
                 className="!min-h-11 !min-w-11 md:!min-h-0 md:!min-w-0"
                 onClick={() => {
                   const startTime = form.getFieldValue('start_time');

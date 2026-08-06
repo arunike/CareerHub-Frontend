@@ -10,6 +10,9 @@ const MobileModalBase = ({
   modalRender,
   wrapClassName,
   mobileExpandable = true,
+  // Every modal in the app is vertically centered unless it opts out. antd defaults to
+  // pinning near the top, which reads as misaligned on tall screens.
+  centered = true,
   ...props
 }: MobileModalProps) => {
   const isOpen = Boolean(props.open);
@@ -47,7 +50,14 @@ const MobileModalBase = ({
   }, [isOpen]);
 
   if (!isMobile) {
-    return <AntModal {...props} wrapClassName={wrapClassName} modalRender={modalRender} />;
+    return (
+      <AntModal
+        {...props}
+        centered={centered}
+        wrapClassName={wrapClassName}
+        modalRender={modalRender}
+      />
+    );
   }
 
   // Mobile viewport: Render a premium native bottom Drawer
@@ -101,13 +111,21 @@ const MobileModalBase = ({
   );
 };
 
+// The imperative dialogs bypass the component above, so centre them at the source rather
+// than relying on every call site to remember.
+type DialogFn = typeof AntModal.confirm;
+const centeredDialog =
+  (dialog: DialogFn): DialogFn =>
+  (config) =>
+    dialog({ centered: true, ...config });
+
 const MobileModal = Object.assign(MobileModalBase, {
-  info: AntModal.info,
-  success: AntModal.success,
-  error: AntModal.error,
-  warning: AntModal.warning,
-  warn: AntModal.warn,
-  confirm: AntModal.confirm,
+  info: centeredDialog(AntModal.info),
+  success: centeredDialog(AntModal.success),
+  error: centeredDialog(AntModal.error),
+  warning: centeredDialog(AntModal.warning),
+  warn: centeredDialog(AntModal.warn),
+  confirm: centeredDialog(AntModal.confirm),
   destroyAll: AntModal.destroyAll,
   config: AntModal.config,
   useModal: AntModal.useModal,

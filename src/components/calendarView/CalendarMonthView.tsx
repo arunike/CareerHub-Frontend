@@ -8,8 +8,18 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
+import { useState } from 'react';
 import clsx from 'clsx';
-import { CalendarCompactDayEntries, CalendarMobileDaySummary } from './CalendarDayContent';
+import { Tooltip } from 'antd';
+import {
+  CalendarCompactDayEntries,
+  CalendarMobileDaySummary,
+  canDragEvent,
+} from './CalendarDayContent';
+import type { CalendarDragItem } from './CalendarDayContent';
+import { buildWeekSpans, isMultiDay, type WeekSpan } from './spanLayout';
+import { eventSpanDays, eventTimeLabel } from './utils';
+import { getEventColor } from '../../utils/eventCategoryColors';
 import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
@@ -22,9 +32,65 @@ type Props = {
   onDateSelect: (day: Date) => void;
   onDateDoubleClick?: (day: Date) => void;
   onViewMore?: (day: Date) => void;
-  onEventSelect?: (event: Event) => void;
+  onEventSelect?: (event: Event, day?: Date) => void;
   onHolidaySelect?: (holiday: Holiday) => void;
+  onItemDrop?: (item: CalendarDragItem, day: Date) => void;
   getDayData: GetDayData;
+};
+
+// One continuous bar across however many day columns the span covers in this row. Drawn as
+// a single element over the grid, so cell borders and padding cannot break it up.
+const SpanBar = ({
+  span,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}: {
+  span: WeekSpan;
+  onSelect?: (event: Event, day?: Date) => void;
+  onDragStart?: (item: CalendarDragItem) => void;
+  onDragEnd?: () => void;
+}) => {
+  const { event, startCol, endCol, lane, continuesLeft, continuesRight } = span;
+  const color = getEventColor(event);
+  const label = event.is_all_day ? event.name : `${event.start_time.substring(0, 5)} ${event.name}`;
+
+  return (
+    <Tooltip title={`${event.name} (${eventTimeLabel(event)} · ${eventSpanDays(event)} days)`}>
+      <button
+        type="button"
+        draggable={Boolean(onDragStart) && canDragEvent(event)}
+        onDragStart={(dragEvent) => {
+          dragEvent.dataTransfer.effectAllowed = 'move';
+          dragEvent.dataTransfer.setData('text/plain', String(event.id));
+          onDragStart?.({ kind: 'event', event });
+        }}
+        onDragEnd={() => onDragEnd?.()}
+        onClick={(clickEvent) => {
+          clickEvent.stopPropagation();
+          onSelect?.(event);
+        }}
+        className={clsx(
+          'pointer-events-auto mx-0.5 h-[18px] truncate px-1.5 text-left text-[11px] leading-[18px] transition-opacity hover:opacity-85',
+          continuesLeft ? 'rounded-l-none' : 'rounded-l',
+          continuesRight ? 'rounded-r-none' : 'rounded-r'
+        )}
+        style={{
+          gridColumn: `${startCol + 1} / ${endCol + 2}`,
+          gridRow: lane + 1,
+          backgroundColor: color.bg,
+          color: color.text,
+          borderLeft: continuesLeft ? 'none' : `1px solid ${color.border}`,
+          borderRight: continuesRight ? 'none' : `1px solid ${color.border}`,
+          borderTop: `1px solid ${color.border}`,
+          borderBottom: `1px solid ${color.border}`,
+        }}
+      >
+        {/* Only the true start names it; a continuation shows an arrow instead. */}
+        {continuesLeft ? `↳ ${event.name}` : label}
+      </button>
+    </Tooltip>
+  );
 };
 
 const CalendarMonthView = ({
@@ -36,24 +102,54 @@ const CalendarMonthView = ({
   onViewMore,
   onEventSelect,
   onHolidaySelect,
+  onItemDrop,
   getDayData,
 }: Props) => {
   const handlePointerUp = useCalendarDoubleTap(onDateDoubleClick);
+  const [dragging, setDragging] = useState<CalendarDragItem | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
   const monthStart = startOfMonth(anchorDate);
   const monthEnd = endOfMonth(monthStart);
   const gridStart = startOfWeek(monthStart);
   const gridEnd = endOfWeek(monthEnd);
   const rows = [];
   let days = [];
+  let weekDays: Date[] = [];
+  let weekEvents: Event[] = [];
   let day = gridStart;
 
   while (day <= gridEnd) {
+    weekDays = [];
+    weekEvents = [];
+    for (let offset = 0; offset < 7; offset += 1) {
+      const probe = addDays(day, offset);
+      weekDays.push(probe);
+      for (const event of getDayData(probe).events) {
+        if (isMultiDay(event) && !weekEvents.some((seen) => seen.id === event.id)) {
+          weekEvents.push(event);
+        }
+      }
+    }
+    const { spans, lanes } = buildWeekSpans(weekDays, weekEvents);
+
     for (let index = 0; index < 7; index++) {
       const cloneDay = day;
-      const dayData = getDayData(cloneDay);
+      const rawDayData = getDayData(cloneDay);
+      // Multi-day events are drawn as bars over the row, so keep them out of the cell list.
+      const dayData = {
+        ...rawDayData,
+        events: rawDayData.events.filter((event) => !isMultiDay(event)),
+      };
       const isTodayDate = isSameDay(cloneDay, today);
       const isSelected = isSameDay(cloneDay, selectedDate);
       const isCurrentMonth = isSameMonth(cloneDay, monthStart);
+
+      const dayKey = cloneDay.toDateString();
+      // Dropping an event back on the day it already sits on is a no-op, so do not invite it.
+      const draggingDate =
+        dragging && (dragging.kind === 'event' ? dragging.event.date : dragging.holiday.date);
+      const isDropCandidate =
+        Boolean(dragging) && !isSameDay(cloneDay, new Date(`${draggingDate}T00:00:00`));
 
       days.push(
         <div
@@ -62,11 +158,28 @@ const CalendarMonthView = ({
             'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
             !isCurrentMonth && 'bg-gray-50/50 text-gray-400',
             isTodayDate && 'bg-blue-50/30',
-            isSelected && 'ring-2 ring-blue-500 ring-inset z-10 rounded-lg'
+            isSelected && 'ring-2 ring-blue-500 ring-inset z-10 rounded-lg',
+            isDropCandidate && 'border-dashed border-blue-300',
+            dropTarget === dayKey && 'bg-blue-100/70 ring-2 ring-blue-500 ring-inset z-10'
           )}
           onClick={() => onDateSelect(cloneDay)}
           onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
           onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, cloneDay)}
+          onDragOver={(dragEvent) => {
+            if (!isDropCandidate) return;
+            // Without preventDefault the browser refuses the drop outright.
+            dragEvent.preventDefault();
+            dragEvent.dataTransfer.dropEffect = 'move';
+            if (dropTarget !== dayKey) setDropTarget(dayKey);
+          }}
+          onDragLeave={() => setDropTarget((current) => (current === dayKey ? null : current))}
+          onDrop={(dragEvent) => {
+            dragEvent.preventDefault();
+            const dropped = dragging;
+            setDropTarget(null);
+            setDragging(null);
+            if (dropped && isDropCandidate) onItemDrop?.(dropped, cloneDay);
+          }}
         >
           <div className="-mx-1 -mt-1 flex items-start justify-between sm:m-0">
             <button
@@ -86,12 +199,19 @@ const CalendarMonthView = ({
           </div>
 
           <CalendarMobileDaySummary dayData={dayData} />
+          {lanes > 0 && <div className="hidden shrink-0 sm:block" style={{ height: lanes * 20 }} />}
           <div className="hidden min-h-0 flex-1 sm:flex">
             <CalendarCompactDayEntries
               dayData={dayData}
               onEventSelect={onEventSelect}
               onHolidaySelect={onHolidaySelect}
+              day={cloneDay}
               onViewMore={() => onViewMore?.(cloneDay)}
+              onItemDragStart={onItemDrop ? setDragging : undefined}
+              onItemDragEnd={() => {
+                setDragging(null);
+                setDropTarget(null);
+              }}
             />
           </div>
         </div>
@@ -100,8 +220,28 @@ const CalendarMonthView = ({
     }
 
     rows.push(
-      <div className="grid grid-cols-7" key={day.toString()}>
-        {days}
+      <div className="relative" key={day.toString()}>
+        <div className="grid grid-cols-7">{days}</div>
+        {spans.length > 0 && (
+          <div
+            className="pointer-events-none absolute inset-x-0 hidden grid-cols-7 gap-y-0.5 px-px sm:grid"
+            // Clears the day-number row; bars then stack downwards lane by lane.
+            style={{ top: 34 }}
+          >
+            {spans.map((span) => (
+              <SpanBar
+                key={`${span.event.id}-${span.startCol}`}
+                span={span}
+                onSelect={onEventSelect}
+                onDragStart={onItemDrop ? setDragging : undefined}
+                onDragEnd={() => {
+                  setDragging(null);
+                  setDropTarget(null);
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
     days = [];

@@ -4,13 +4,13 @@ import type { CSSProperties } from 'react';
 import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
-import { hasDayItems } from './utils';
+import { hasDayItems, eventTimeRangeLabel } from './utils';
 import type { DayData } from './types';
 
 type Props = {
   selectedDate: Date;
   dayData: DayData;
-  onEventSelect?: (event: Event) => void;
+  onEventSelect?: (event: Event, day?: Date) => void;
   onHolidaySelect?: (holiday: Holiday) => void;
 };
 
@@ -111,7 +111,7 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidayS
                     className="shrink-0 rounded px-1 font-mono text-xs"
                     style={{ backgroundColor: eventColor.hoverBg, color: eventColor.text }}
                   >
-                    {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}
+                    {eventTimeRangeLabel(event)}
                   </span>
                   {event.category_details && (
                     <span className="font-medium">{event.category_details.name}:</span>

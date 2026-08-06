@@ -5,7 +5,6 @@ import {
   Input,
   Select,
   Spin,
-  Modal,
   Form,
   Space,
   Upload,
@@ -57,6 +56,7 @@ import type { CareerApplication } from '../../types/application';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import BulkActionHeader from '../../components/BulkActionHeader';
 import RowActions from '../../components/RowActions';
+import Modal from '../../components/MobileModal';
 import ModalShell from '../../components/ModalShell';
 import { PageState } from '../../components/PageState';
 import CoverLetterModal from './CoverLetterModal';
