@@ -35,7 +35,7 @@ const ACTIONS = {
   },
   holiday: {
     key: 'holiday',
-    label: 'Add holiday',
+    label: 'Add time off',
     description: 'Block one day or a date range',
     destination: '/holidays?action=create',
     icon: ScheduleOutlined,
@@ -94,7 +94,7 @@ const ACTION_GROUPS_BY_SOURCE = {
     actions: [ACTIONS.event],
   },
   '/holidays': {
-    description: 'Add a personal holiday or blocked date.',
+    description: 'Add time off or a blocked date.',
     actions: [ACTIONS.holiday],
   },
   '/offers': {

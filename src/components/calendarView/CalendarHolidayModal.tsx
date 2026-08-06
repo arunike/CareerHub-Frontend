@@ -51,8 +51,8 @@ const CalendarHolidayModal = ({
 
   const title =
     mode === 'edit'
-      ? 'Edit Holiday'
-      : `Add ${target?.label || 'Holiday'}${date ? ` on ${format(date, 'MMMM d, yyyy')}` : ''}`;
+      ? 'Edit Time Off'
+      : `Add ${target?.label || 'Time off'}${date ? ` on ${format(date, 'MMMM d, yyyy')}` : ''}`;
 
   return (
     <ModalShell
@@ -69,11 +69,11 @@ const CalendarHolidayModal = ({
               size="large"
               icon={<DeleteOutlined />}
               disabled={holiday.is_locked}
-              title={holiday.is_locked ? 'Unlock this holiday to delete it' : undefined}
+              title={holiday.is_locked ? 'Unlock this time off to delete it' : undefined}
               onClick={() => confirmHolidayDeletion(holiday, onDelete)}
               className="w-full sm:mr-auto sm:w-auto"
             >
-              Delete holiday
+              Delete Time Off
             </Button>
           ) : null}
           <Button size="large" onClick={onCancel} className="w-full sm:w-auto">
@@ -85,7 +85,7 @@ const CalendarHolidayModal = ({
             onClick={() => form.submit()}
             className="w-full sm:w-auto"
           >
-            Save holiday
+            Save Time Off
           </Button>
         </>
       }
@@ -96,17 +96,14 @@ const CalendarHolidayModal = ({
         layout="vertical"
         onFinish={onSubmit}
       >
-        <Form.Item name="description" label="Holiday Name">
-          <Input
-            size="large"
-            placeholder={target?.label || holiday?.description || 'Custom Holiday'}
-          />
+        <Form.Item name="description" label="Name">
+          <Input size="large" placeholder={target?.label || holiday?.description || 'Time off'} />
         </Form.Item>
         <Form.Item name="tab" label="Holiday Tab">
           <Select
             size="large"
             options={[
-              { label: 'My Holiday', value: '' },
+              { label: 'My Time Off', value: '' },
               ...holidayTabs.map((tab) => ({ label: tab.name, value: tab.id })),
             ]}
           />

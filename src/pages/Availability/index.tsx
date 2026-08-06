@@ -361,12 +361,12 @@ const Availability = () => {
       try {
         await updateHoliday(holiday.id, { date: nextDate });
         messageApi.success(
-          `Moved "${holiday.description || 'holiday'}" to ${dayjs(day).format('MMM D, YYYY')}`
+          `Moved "${holiday.description || 'time off'}" to ${dayjs(day).format('MMM D, YYYY')}`
         );
         await fetchCalendarData();
       } catch (error) {
-        console.error('Failed to move holiday', error);
-        messageApi.error(getErrorMessage(error, 'Could not move the holiday'));
+        console.error('Failed to move time off', error);
+        messageApi.error(getErrorMessage(error, 'Could not move the time off'));
       }
     });
   };
@@ -458,12 +458,12 @@ const Availability = () => {
     if (holiday.is_locked || !holiday.id) return false;
     try {
       await deleteHoliday(holiday.id);
-      messageApi.success('Holiday deleted');
+      messageApi.success('Time off deleted');
       setEditingHoliday(null);
       await fetchCalendarData();
       return true;
     } catch (error) {
-      messageApi.error(getErrorMessage(error, 'Failed to delete holiday'));
+      messageApi.error(getErrorMessage(error, 'Failed to delete time off'));
       console.error(error);
       return false;
     }
@@ -537,7 +537,7 @@ const Availability = () => {
           is_recurring: !!values.is_recurring,
           tab: values.tab || null,
         });
-        messageApi.success('Holiday updated');
+        messageApi.success('Time off updated');
       } else if (pendingHolidayAdd) {
         await createHoliday({
           date: format(pendingHolidayAdd.date, 'yyyy-MM-dd'),
@@ -545,14 +545,14 @@ const Availability = () => {
           is_recurring: !!values.is_recurring,
           tab: values.tab || null,
         });
-        messageApi.success('Holiday added');
+        messageApi.success('Time off added');
       }
 
       setPendingHolidayAdd(null);
       setEditingHoliday(null);
       await fetchCalendarData();
     } catch (error) {
-      messageApi.error(editingHoliday ? 'Failed to update holiday' : 'Failed to create holiday');
+      messageApi.error(editingHoliday ? 'Failed to update time off' : 'Failed to create time off');
       console.error(error);
     }
   };

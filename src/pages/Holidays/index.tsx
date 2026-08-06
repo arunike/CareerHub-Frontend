@@ -429,7 +429,7 @@ const Holidays = () => {
       setCategories(categoriesResp.data);
     } catch (error) {
       setLoadError(true);
-      messageApi.error('Failed to load holidays');
+      messageApi.error('Failed to load time off');
       console.error(error);
     } finally {
       setLoading(false);
@@ -534,7 +534,7 @@ const Holidays = () => {
   };
 
   const handleAdd = async (values: any) => {
-    const description = values.name || 'Custom Holiday';
+    const description = values.name || 'Time off';
     const isRecurring = values.is_recurring;
     const tabValue = activeTab === 'custom' ? undefined : activeTab;
 
@@ -558,11 +558,11 @@ const Holidays = () => {
 
       try {
         await Promise.all(promises);
-        messageApi.success('Holiday collection added');
+        messageApi.success('Time off collection added');
         form.resetFields();
         fetchData();
       } catch (e) {
-        messageApi.error('Failed to create holiday collection');
+        messageApi.error('Failed to create time off collection');
         fetchData();
       }
     } else if (values.date) {
@@ -573,11 +573,11 @@ const Holidays = () => {
           is_recurring: isRecurring,
           tab: tabValue,
         });
-        messageApi.success('Holiday added');
+        messageApi.success('Time off added');
         form.resetFields();
         fetchData();
       } catch (error) {
-        messageApi.error('Failed to create holiday');
+        messageApi.error('Failed to create time off');
       }
     }
   };
@@ -653,7 +653,7 @@ const Holidays = () => {
           is_recurring: !!values.is_recurring,
           tab: values.tab || null,
         });
-        messageApi.success('Holiday updated');
+        messageApi.success('Time off updated');
       } else if (pendingCalendarHoliday) {
         await createHoliday({
           date: dayjs(pendingCalendarHoliday.date).format('YYYY-MM-DD'),
@@ -661,7 +661,7 @@ const Holidays = () => {
           is_recurring: !!values.is_recurring,
           tab: values.tab || null,
         });
-        messageApi.success('Holiday added');
+        messageApi.success('Time off added');
       }
 
       setPendingCalendarHoliday(null);
@@ -669,7 +669,7 @@ const Holidays = () => {
       fetchData();
     } catch (error) {
       messageApi.error(
-        editingCalendarHoliday ? 'Failed to update holiday' : 'Failed to create holiday'
+        editingCalendarHoliday ? 'Failed to update time off' : 'Failed to create time off'
       );
       console.error(error);
     }
@@ -697,12 +697,12 @@ const Holidays = () => {
       try {
         await updateHoliday(holiday.id, { date: nextDate });
         messageApi.success(
-          `Moved "${holiday.description || 'holiday'}" to ${dayjs(day).format('MMM D, YYYY')}`
+          `Moved "${holiday.description || 'time off'}" to ${dayjs(day).format('MMM D, YYYY')}`
         );
         await fetchData();
       } catch (error) {
-        console.error('Failed to move holiday', error);
-        messageApi.error(getApiErrorMessage(error, 'Could not move the holiday'));
+        console.error('Failed to move time off', error);
+        messageApi.error(getApiErrorMessage(error, 'Could not move the time off'));
       }
     });
   };
@@ -862,11 +862,11 @@ const Holidays = () => {
   const handleDelete = async (id: number) => {
     try {
       await deleteHoliday(id);
-      messageApi.success('Holiday deleted');
+      messageApi.success('Time off deleted');
       fetchData();
       return true;
     } catch (error) {
-      messageApi.error('Failed to delete holiday');
+      messageApi.error('Failed to delete time off');
       console.error(error);
       return false;
     }
@@ -896,12 +896,12 @@ const Holidays = () => {
     setEditingCalendarHoliday(null);
     setPendingCalendarHoliday({
       date: sampleItem.date ? new Date(sampleItem.date) : new Date(),
-      target: { tab: sampleItem.tab || null, label: sampleItem.tab_name || 'My Holiday' },
+      target: { tab: sampleItem.tab || null, label: sampleItem.tab_name || 'My Time Off' },
     });
     setEditingCalendarHoliday({
       ...sampleItem,
       id: 0,
-      description: sampleItem.description ? `${sampleItem.description} (Copy)` : 'Holiday (Copy)',
+      description: sampleItem.description ? `${sampleItem.description} (Copy)` : 'Time off (Copy)',
     });
   };
 
@@ -944,7 +944,7 @@ const Holidays = () => {
         })
       );
 
-      messageApi.success('Holiday updated successfully');
+      messageApi.success('Time off updated');
       setEditModalOpen(false);
       setSelectedIds([]);
       fetchData();
@@ -952,7 +952,7 @@ const Holidays = () => {
       if (error && (error as any).errorFields) {
         return;
       }
-      messageApi.error('Failed to update holiday');
+      messageApi.error('Failed to update time off');
       console.error(error);
     }
   };
@@ -1002,7 +1002,7 @@ const Holidays = () => {
 
   const handleBulkDelete = () => {
     Modal.confirm({
-      title: 'Delete Selected Holidays',
+      title: 'Delete Selected Time Off',
       content: `Are you sure you want to delete ${selectedIds.length} holidays?`,
       okText: 'Yes',
       okType: 'danger',
@@ -1014,7 +1014,7 @@ const Holidays = () => {
           setSelectedIds([]);
           fetchData();
         } catch (error) {
-          messageApi.error('Failed to delete some holidays');
+          messageApi.error('Failed to delete some time off');
           fetchData();
         }
       },
@@ -1111,7 +1111,7 @@ const Holidays = () => {
 
   const handleDeleteGroup = (groupItem: any) => {
     Modal.confirm({
-      title: 'Delete Holiday Collection',
+      title: 'Delete Time Off Collection',
       content: `Are you sure you want to delete all ${groupItem.items.length} days in this collection?`,
       okText: 'Yes',
       okType: 'danger',
@@ -1119,10 +1119,10 @@ const Holidays = () => {
       onOk: async () => {
         try {
           await Promise.all(groupItem.items.map((i: any) => deleteHoliday(i.id)));
-          messageApi.success('Holiday collection deleted');
+          messageApi.success('Time off collection deleted');
           fetchData();
         } catch (error) {
-          messageApi.error('Failed to delete some holidays in the collection');
+          messageApi.error('Failed to delete some time off in the collection');
           fetchData();
         }
       },
@@ -1290,7 +1290,7 @@ const Holidays = () => {
                     try {
                       const toDelete = activeTabHolidays.filter((h) => !h.is_locked);
                       await Promise.all(toDelete.map((h) => deleteHoliday(h.id)));
-                      messageApi.success('All unlocked holidays deleted');
+                      messageApi.success('All unlocked time off deleted');
                       fetchData();
                     } catch (e) {
                       messageApi.error('Failed to delete all');
@@ -1337,7 +1337,7 @@ const Holidays = () => {
                 );
               }
 
-              const titleText = item.description || 'Holiday';
+              const titleText = item.description || 'Time off';
               const itemDayjs = dayjs(item.date);
               const monthText = itemDayjs.format('MMM').toUpperCase();
               const dayText = itemDayjs.format('DD');
@@ -1424,11 +1424,11 @@ const Holidays = () => {
               emptyText: (
                 <PageState
                   title={
-                    selectedYear === 'all' ? 'No holidays yet' : `No holidays in ${selectedYear}`
+                    selectedYear === 'all' ? 'No time off yet' : `No time off in ${selectedYear}`
                   }
                   description={
                     selectedYear === 'all'
-                      ? 'Add a personal holiday or time-off range using the form above.'
+                      ? 'Add time off using the form above.'
                       : 'Add one above or show all years to review older entries.'
                   }
                   actionLabel={selectedYear === 'all' ? undefined : 'Show all years'}
@@ -1445,8 +1445,8 @@ const Holidays = () => {
   const items = [
     {
       key: 'custom',
-      label: 'Manage Custom',
-      children: renderHolidayListTab('custom', 'Manage Custom'),
+      label: 'My Time Off',
+      children: renderHolidayListTab('custom', 'My Time Off'),
     },
     ...customTabs.map((t) => ({
       key: t.id,
@@ -1620,10 +1620,10 @@ const Holidays = () => {
         <Modal
           title={
             editingItem?.isGroup
-              ? 'Edit Holiday Collection'
+              ? 'Edit Time Off Collection'
               : editingItem?.isBulk
                 ? `Edit ${editingItem.items.length} Holidays`
-                : 'Edit Holiday'
+                : 'Edit Time Off'
           }
           open={editModalOpen}
           onCancel={() => setEditModalOpen(false)}
@@ -1665,7 +1665,7 @@ const Holidays = () => {
                       <span className="text-gray-400 italic">Leave unchanged</span>
                     </Select.Option>
                   )}
-                  <Select.Option value="">Manage Custom (default)</Select.Option>
+                  <Select.Option value="">My Time Off (default)</Select.Option>
                   {customTabs.map((t) => (
                     <Select.Option key={t.id} value={t.id}>
                       {t.name}
@@ -1698,7 +1698,7 @@ const Holidays = () => {
           open={addFederalModalOpen}
           onCancel={closeFederalModal}
           onOk={handleAddFederal}
-          okText={isFederalRangeMode ? 'Add Range' : 'Add Holiday'}
+          okText={isFederalRangeMode ? 'Add Range' : 'Add time off'}
         >
           <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={federalForm} layout="vertical">
             <div className="mb-4 text-gray-500 text-sm">
@@ -1742,7 +1742,7 @@ const Holidays = () => {
             )}
             <Form.Item
               name="description"
-              label="Holiday Name"
+              label="Name"
               rules={[{ required: true, message: 'Please enter a name' }]}
             >
               <Input placeholder="E.g., Company Founders Day" />

@@ -141,7 +141,7 @@ const FederalHolidayCard = ({
                 isGroup ? `This removes all ${item.items.length} days in the range.` : undefined
               }
               onConfirm={() => (isGroup ? onDeleteRange(item) : onDeleteHoliday(item.id))}
-              okText={isGroup ? 'Delete range' : 'Delete holiday'}
+              okText={isGroup ? 'Delete range' : 'Delete time off'}
               okType="danger"
               cancelText="Cancel"
             >

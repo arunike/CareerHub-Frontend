@@ -51,7 +51,10 @@ export const CalendarDayTooltipContent = ({ day, dayData }: DayTooltipProps) => 
         <div key={`fed-${index}`}>Federal: {holiday.description}</div>
       ))}
       {dayData.customHolidays.map((holiday, index) => (
-        <div key={`cust-${index}`}>Holiday: {holiday.description}</div>
+        // Same label as every other surface: the tab it belongs to, not a generic word.
+        <div key={`cust-${index}`}>
+          {holiday.tab_name || 'My Time Off'}: {holiday.description}
+        </div>
       ))}
       {dayData.events.map((event) => (
         <div key={event.id}>
@@ -177,7 +180,7 @@ export const CalendarCompactDayEntries = ({
           return (
             <Tooltip
               key={item.key}
-              title={`${holiday.tab_name || 'My Holiday'}: ${holiday.description}`}
+              title={`${holiday.tab_name || 'My Time Off'}: ${holiday.description}`}
               mouseEnterDelay={0}
             >
               {onHolidaySelect ? (
@@ -286,7 +289,7 @@ export const CalendarDayAgendaEntries = ({
   day,
 }: DayDataProps) => {
   if (!hasDayItems(dayData)) {
-    return <div className="text-sm text-gray-400 italic">No events or holidays scheduled.</div>;
+    return <div className="text-sm text-gray-400 italic">No events or time off scheduled.</div>;
   }
 
   return (
@@ -308,7 +311,7 @@ export const CalendarDayAgendaEntries = ({
         const content = (
           <>
             <div className="text-xs font-semibold uppercase tracking-wide opacity-75">
-              {holiday.tab_name || 'My Holiday'}
+              {holiday.tab_name || 'My Time Off'}
             </div>
             <div className="mt-1">
               {holiday.description}

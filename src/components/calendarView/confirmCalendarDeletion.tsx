@@ -62,11 +62,11 @@ export const confirmHolidayDeletion = (holiday: Holiday, onDelete: HolidayDelete
   if (holiday.is_locked || !holiday.id) return;
 
   Modal.confirm({
-    title: 'Delete holiday?',
-    content: `Delete “${holiday.description || 'this holiday'}”? This cannot be undone.`,
-    okText: 'Delete holiday',
+    title: 'Delete time off?',
+    content: `Delete “${holiday.description || 'this time off'}”? This cannot be undone.`,
+    okText: 'Delete time off',
     okType: 'danger',
-    cancelText: 'Keep holiday',
+    cancelText: 'Keep time off',
     onOk: () => onDelete(holiday),
   });
 };

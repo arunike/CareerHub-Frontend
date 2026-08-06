@@ -1940,7 +1940,7 @@ const Settings: React.FC = () => {
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Holiday Manager Tabs</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Time Off Tabs</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Custom tabs in Holiday Manager — saved with Settings
                 </p>
@@ -2064,7 +2064,7 @@ const Settings: React.FC = () => {
               </div>
             )}
             <p className="text-xs text-gray-400 mt-3">
-              Deleting a tab moves its holidays back to <em>Manage Custom</em>.
+              Deleting a tab moves its time off back to <em>My Time Off</em>.
             </p>
           </div>
         )}

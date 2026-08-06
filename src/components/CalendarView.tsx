@@ -363,10 +363,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             <>
               <Button
                 type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
-                onClick={() => handleAddHoliday({ tab: null, label: 'My Holiday' })}
+                onClick={() => handleAddHoliday({ tab: null, label: 'My Time Off' })}
                 block
               >
-                Add My Holiday
+                Add Time Off
               </Button>
               {holidayTabs.map((tab) => (
                 <Button

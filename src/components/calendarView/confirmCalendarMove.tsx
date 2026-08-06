@@ -84,14 +84,14 @@ export const confirmEventMove = (event: Event, day: Date, onMove: MoveHandler<Ev
 export const confirmHolidayMove = (holiday: Holiday, day: Date, onMove: MoveHandler<Holiday>) =>
   Modal.confirm({
     ...baseOptions,
-    title: 'Move this holiday?',
+    title: 'Move this time off?',
     content: (
       <MoveSummary
-        name={holiday.description || 'Untitled holiday'}
+        name={holiday.description || 'Untitled time off'}
         from={parseApiDate(holiday.date)}
         to={day}
       />
     ),
-    okText: 'Move holiday',
+    okText: 'Move time off',
     onOk: () => onMove(holiday, day),
   });

@@ -23,7 +23,7 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidayS
       </h3>
       <div className="space-y-2">
         {!hasDayItems(dayData) ? (
-          <div className="text-gray-400 text-sm italic">No events or holidays scheduled.</div>
+          <div className="text-gray-400 text-sm italic">No events or time off scheduled.</div>
         ) : (
           <>
             {dayData.federalHolidays.map((holiday, index) => (
@@ -43,7 +43,7 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidayS
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: tabColor.dot }}
                   ></span>
-                  <span className="font-medium">{holiday.tab_name || 'My Holiday'}:</span>
+                  <span className="font-medium">{holiday.tab_name || 'My Time Off'}:</span>
                   {holiday.description} {holiday.is_recurring && '(Yearly)'}
                 </>
               );

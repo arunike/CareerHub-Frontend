@@ -111,7 +111,7 @@ const CalendarHeader = ({
                 backgroundColor: filters.customHolidayTabs.has('default') ? '#22c55e' : '#d1d5db',
               }}
             />
-            <span>My Holiday</span>
+            <span>My Time Off</span>
           </button>
 
           {holidayTabs.map((tab) => {
