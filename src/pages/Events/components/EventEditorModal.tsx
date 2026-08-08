@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 import {
   Button,
   Checkbox,
@@ -13,6 +15,7 @@ import {
 } from 'antd';
 import Modal from '../../../components/MobileModal';
 import ApplicationSelect from '../../../components/ApplicationSelect';
+import { suggestEventLink, type EventLinkHint } from '../../../api/availability';
 import { EnvironmentOutlined, PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd/es/form';
 import type { EventCategory, RecurrenceRule } from '../../../types';
@@ -75,6 +78,33 @@ const EventEditorModal = ({
 }: EventEditorModalProps) => {
   const isAllDay = Form.useWatch('is_all_day', form);
   const isMultiDay = Form.useWatch('is_multi_day', form);
+  const eventName = Form.useWatch('name', form);
+  const linkedApplication = Form.useWatch('application', form);
+  const eventDate = Form.useWatch('date', form);
+  const [linkHint, setLinkHint] = useState<EventLinkHint | null>(null);
+
+  // Offered, never applied automatically: a wrong silent link is worse than none.
+  useEffect(() => {
+    if (linkedApplication || !eventName || eventName.trim().length < 3) {
+      setLinkHint(null);
+      return;
+    }
+    let active = true;
+    const timer = window.setTimeout(() => {
+      void suggestEventLink(
+        eventName,
+        eventDate ? dayjs(eventDate).format('YYYY-MM-DD') : undefined
+      )
+        .then((response) => {
+          if (active) setLinkHint(response.data.suggestion);
+        })
+        .catch(() => undefined);
+    }, 400);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [eventName, eventDate, linkedApplication]);
 
   return (
     <Modal
@@ -282,7 +312,7 @@ const EventEditorModal = ({
                     )}
                   </Form.Item>
 
-                  <Form.Item name="application" label="Link Application">
+                  <Form.Item name="application" label="Link Application" className="!mb-2">
                     <ApplicationSelect
                       className="w-full"
                       formatLabel={(a) =>
@@ -290,6 +320,26 @@ const EventEditorModal = ({
                       }
                     />
                   </Form.Item>
+                  {linkHint && (
+                    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-blue-50/70 px-3 py-2 text-xs text-slate-600">
+                      <span className="min-w-0">
+                        Looks like{' '}
+                        <strong className="font-semibold text-slate-800">
+                          {linkHint.company_name} · {linkHint.role_title}
+                        </strong>
+                        {linkHint.other_applications > 0 &&
+                          ` (+${linkHint.other_applications} other at this company)`}
+                      </span>
+                      <Button
+                        size="small"
+                        type="link"
+                        className="!h-auto !px-0 !text-xs"
+                        onClick={() => form.setFieldValue('application', linkHint.application)}
+                      >
+                        Link it
+                      </Button>
+                    </div>
+                  )}
 
                   <Form.Item name="notes" label="Notes">
                     <TextArea rows={3} />

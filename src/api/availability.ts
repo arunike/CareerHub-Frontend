@@ -16,6 +16,7 @@ export const getEvents = (
         start_date?: string;
         end_date?: string;
         include_instances?: boolean;
+        application?: number;
         page?: number;
         page_size?: number;
       },
@@ -200,3 +201,36 @@ export const deleteAccount = (confirm: 'DELETE') =>
     account_deletion_requested_at: string;
     account_deletion_scheduled_for: string;
   }>('/user-settings/account/', { data: { confirm } });
+
+export interface EventLinkSuggestion {
+  event: number;
+  event_name: string;
+  event_date: string | null;
+  application: number;
+  company_name: string;
+  role_title: string;
+  application_status: string;
+  other_applications: number;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export const getEventLinkSuggestions = () =>
+  api.get<{ suggestions: EventLinkSuggestion[]; unlinked_total: number }>(
+    '/events/link-suggestions/'
+  );
+
+export const applyEventLinks = (links: Array<{ event: number; application: number }>) =>
+  api.post<{ linked: number; requested: number }>('/events/apply-links/', { links });
+
+export interface EventLinkHint {
+  application: number;
+  company_name: string;
+  role_title: string;
+  application_status: string;
+  other_applications: number;
+}
+
+export const suggestEventLink = (title: string, date?: string) =>
+  api.get<{ suggestion: EventLinkHint | null }>('/events/suggest-link/', {
+    params: { title, date },
+  });

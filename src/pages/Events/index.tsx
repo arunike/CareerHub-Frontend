@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   Typography,
   Space,
@@ -13,7 +13,13 @@ import {
   Pagination,
 } from 'antd';
 import Modal from '../../components/MobileModal';
-import { PlusOutlined, LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  LinkOutlined,
+  PlusOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import utc from 'dayjs/plugin/utc';
@@ -66,6 +72,7 @@ import {
 } from '../../components/calendarView/confirmCalendarMove';
 import type { CalendarDragItem } from '../../components/calendarView/CalendarDayContent';
 import { buildEventMovePatch } from '../../components/calendarView/utils';
+import LinkInterviewsModal from './components/LinkInterviewsModal';
 import {
   askOverrideOverwrite,
   askSpanEditScope,
@@ -152,6 +159,7 @@ const Events = () => {
   const [spanScope, setSpanScope] = useState<{ scope: SpanEditScope; day: string } | null>(null);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [viewingDay, setViewingDay] = useState<string | null>(null);
+  const [isLinkInterviewsOpen, setIsLinkInterviewsOpen] = useState(false);
   const [pendingCalendarHoliday, setPendingCalendarHoliday] = useState<{
     date: Date;
     target: CalendarHolidayTarget;
@@ -390,6 +398,22 @@ const Events = () => {
   };
 
   // A span asks first whether the edit is for the clicked day or the whole run.
+  // Deep link from the notification bell: /events?event=<id> opens that event's editor.
+  const handledDeepLink = useRef(false);
+  useEffect(() => {
+    if (handledDeepLink.current || events.length === 0) return;
+    const requested = new URLSearchParams(location.search).get('event');
+    if (!requested) return;
+    const target = events.find((candidate) => String(candidate.id) === requested);
+    if (!target) return;
+    handledDeepLink.current = true;
+    handleEdit(target);
+    navigate('/events', { replace: true });
+    // handleEdit and navigate are stable for this one-shot deep link; adding them would
+    // re-run it on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, location.search]);
+
   const handleEdit = (event: Event, clickedDay?: string) => {
     if (isSpanEvent(event)) {
       const clicked = clickedDay || event.date;
@@ -811,6 +835,9 @@ const Events = () => {
             availableYears={availableYears}
             extraActions={
               <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+                <Button icon={<LinkOutlined />} onClick={() => setIsLinkInterviewsOpen(true)}>
+                  Link interviews
+                </Button>
                 <SegmentedToggle
                   value={contentView}
                   onChange={setContentView}
@@ -982,6 +1009,15 @@ const Events = () => {
           )}
         </Space>
       </div>
+
+      <LinkInterviewsModal
+        open={isLinkInterviewsOpen}
+        onClose={() => setIsLinkInterviewsOpen(false)}
+        onLinked={() => {
+          void fetchData();
+          void fetchCalendarData();
+        }}
+      />
 
       <EventEditorModal
         open={isFormOpen}

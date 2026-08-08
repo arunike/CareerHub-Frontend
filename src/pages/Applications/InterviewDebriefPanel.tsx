@@ -8,7 +8,8 @@ import {
   getInterviewDebriefs,
   updateInterviewDebrief,
 } from '../../api/career';
-import type { InterviewDebrief } from '../../types';
+import type { Event, InterviewDebrief } from '../../types';
+import { getEvents } from '../../api/availability';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 const { TextArea } = Input;
@@ -53,6 +54,8 @@ interface Props {
 }
 
 const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
+  // Linked calendar events are what tell us an interview actually happened.
+  const [interviews, setInterviews] = useState<Event[]>([]);
   const [debriefs, setDebriefs] = useState<InterviewDebrief[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,6 +89,33 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    let active = true;
+    void getEvents({ application: applicationId, include_instances: false })
+      .then((response) => {
+        if (!active) return;
+        const payload = response.data;
+        const list: Event[] = Array.isArray(payload) ? payload : (payload?.results ?? []);
+        setInterviews([...list].sort((a, b) => a.date.localeCompare(b.date)));
+      })
+      .catch((error) => console.error('Failed to load linked interviews', error));
+    return () => {
+      active = false;
+    };
+  }, [applicationId]);
+
+  const today = dayjs().format('YYYY-MM-DD');
+  const upcoming = interviews.filter((event) => event.date >= today);
+  // A past interview with nothing written is the whole reason debriefs stay empty.
+  const awaitingDebrief = interviews.filter(
+    (event) => event.date < today && !debriefs.some((entry) => entry.interview_date === event.date)
+  );
+
+  const startDebriefFor = (event: Event) => {
+    setEditingId('new');
+    setDraft({ ...emptyDraft(nextUndone), interview_date: event.date });
+  };
 
   // Default to the first round that has no debrief yet.
   const nextUndone = useMemo(() => {
@@ -251,6 +281,58 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Prompted from the calendar: an interview that happened with nothing written. */}
+          {editingId === null && awaitingDebrief.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
+              <p className="text-sm font-medium text-amber-900">
+                {awaitingDebrief.length === 1
+                  ? 'An interview has passed without a debrief'
+                  : `${awaitingDebrief.length} interviews have passed without a debrief`}
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {awaitingDebrief.map((event) => (
+                  <li key={event.id} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0 text-xs text-amber-900/80">
+                      <span className="font-medium">{dayjs(event.date).format('MMM D')}</span>{' '}
+                      <span className="truncate">{event.name}</span>
+                    </span>
+                    <Button
+                      size="small"
+                      type="primary"
+                      className="!rounded-lg !text-xs"
+                      onClick={() => startDebriefFor(event)}
+                    >
+                      Write debrief
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {editingId === null && upcoming.length > 0 && (
+            <div className="rounded-xl border border-slate-200 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Upcoming
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {upcoming.map((event) => (
+                  <li key={event.id} className="flex items-baseline gap-2 text-xs text-slate-600">
+                    <span className="font-medium text-slate-800">
+                      {dayjs(event.date).format('MMM D')}
+                    </span>
+                    <span className="truncate">{event.name}</span>
+                    {!event.is_all_day && (
+                      <span className="shrink-0 text-slate-400">
+                        {event.start_time.substring(0, 5)}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {editingId === 'new' && editor}
 
           {debriefs.length === 0 && editingId === null && (

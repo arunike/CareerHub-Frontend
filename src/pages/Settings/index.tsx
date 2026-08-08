@@ -62,6 +62,7 @@ import SecurityDashboard from './SecurityDashboard';
 import MobileToolbarSettings from './MobileToolbarSettings';
 import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
 import { DEFAULT_HOLIDAY_TAB_COLOR, getHolidayTabColor } from '../../utils/holidayTabColors';
+import { resolveSettings, type ReminderSettings } from '../../utils/eventReminders';
 import {
   DEFAULT_PALETTE_COLOR,
   getPaletteColor,
@@ -283,6 +284,23 @@ const buildAIProviderCurlPreview = (settings: AIProviderSettings) => {
 const Settings: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [settings, setSettings] = useState<UserSettings | null>(null);
+  const reminderSettings = resolveSettings(
+    (settings?.notification_preferences as Record<string, unknown> | undefined)?.eventReminders
+  );
+  const patchReminders = (patch: Partial<ReminderSettings>) => {
+    setSettings((prev) =>
+      prev
+        ? {
+            ...prev,
+            notification_preferences: {
+              ...(prev.notification_preferences || {}),
+              eventReminders: { ...reminderSettings, ...patch },
+            },
+          }
+        : prev
+    );
+    setIsDirty(true);
+  };
   const [loading, setLoading] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1441,6 +1459,89 @@ const Settings: React.FC = () => {
                 ))}
               </select>
             </div>
+
+            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 pt-4">
+              Event Reminders
+            </h2>
+
+            <p className="-mt-1 text-xs text-gray-500">
+              How the notification bell nudges you about upcoming events.
+            </p>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="settings-reminder-start"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Start reminding (days before)
+                </label>
+                <input
+                  id="settings-reminder-start"
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={reminderSettings.startDaysBefore}
+                  onChange={(e) => patchReminders({ startDaysBefore: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="settings-reminder-repeat"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Remind again after (days)
+                </label>
+                <input
+                  id="settings-reminder-repeat"
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={reminderSettings.repeatEveryDays}
+                  onChange={(e) => patchReminders({ repeatEveryDays: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  How long a dismissed reminder stays hidden.
+                </p>
+              </div>
+              <div>
+                <label
+                  htmlFor="settings-reminder-duration"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Popup stays for (seconds)
+                </label>
+                <input
+                  id="settings-reminder-duration"
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={reminderSettings.toastDurationSeconds}
+                  onChange={(e) => patchReminders({ toastDurationSeconds: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Use 0 to keep it on screen until you close it.
+                </p>
+              </div>
+            </div>
+
+            <label className="flex items-start gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={reminderSettings.allowForeverIgnore}
+                onChange={(e) => patchReminders({ allowForeverIgnore: e.target.checked })}
+              />
+              <span>
+                Offer &ldquo;Never remind me&rdquo;
+                <span className="block text-xs text-gray-400">
+                  Adds a permanent mute alongside Dismiss on each reminder.
+                </span>
+              </span>
+            </label>
 
             <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 pt-4">
               Job Hunt Settings

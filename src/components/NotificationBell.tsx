@@ -8,6 +8,21 @@ import {
   updateTask,
 } from '../api';
 import { getOffers } from '../api/career';
+import { getUserSettings } from '../api/availability';
+import {
+  DEFAULT_REMINDER_SETTINGS,
+  daysUntil,
+  dismissUntil,
+  dueReminders,
+  urgentReminders,
+  pruneReminderState,
+  readReminderState,
+  reminderUrgency,
+  resolveSettings,
+  writeReminderState,
+  type ReminderSettings,
+  type ReminderState,
+} from '../utils/eventReminders';
 import {
   format,
   parseISO,
@@ -21,15 +36,17 @@ import {
 } from 'date-fns';
 import {
   BellOutlined,
+  CalendarOutlined,
   ClockCircleOutlined,
   AlertOutlined,
   CheckOutlined,
   FlagOutlined,
 } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import EventViewModal from '../pages/Events/components/EventViewModal';
 import type { ConflictAlert, Event, Task } from '../types';
 import ConfirmModal from './ConfirmModal';
-import { message } from 'antd';
+import { Button, Spin, message, notification } from 'antd';
 import {
   getDeadlineStatus,
   isDecisionSettled,
@@ -59,16 +76,54 @@ const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
 // Only surface deadlines inside this window.
 const MAX_DEADLINE_DAYS = 7;
 
+// Colour carries the urgency, so the card reads before the text does.
+const URGENCY_TONE = {
+  today: {
+    card: 'border-l-4 border-l-rose-500 !bg-rose-50',
+    title: 'text-rose-700',
+    icon: 'text-rose-600 text-lg',
+  },
+  tomorrow: {
+    card: 'border-l-4 border-l-amber-500 !bg-amber-50',
+    title: 'text-amber-700',
+    icon: 'text-amber-600 text-lg',
+  },
+  soon: {
+    card: 'border-l-4 border-l-blue-500 !bg-blue-50/70',
+    title: 'text-blue-700',
+    icon: 'text-blue-600 text-lg',
+  },
+} as const;
+
+const countdownLabel = (date: string) => {
+  const away = daysUntil(date, new Date());
+  if (away < 0) return 'Past';
+  if (away === 0) return 'Today';
+  if (away === 1) return 'Tomorrow';
+  return `In ${away} days`;
+};
+
 type RankedDeadline = DeadlineItem & { rank: number };
 const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
+// Survives dropdown open/close and remounts; reopening the bell should not refetch.
+const CACHE_TTL_MS = 3 * 60 * 1000;
+let notificationCache: {
+  at: number;
+  events: Event[];
+  conflicts: ConflictAlert[];
+  tasks: Task[];
+  offers: OfferDeadlineSource[];
+} | null = null;
 
 const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom-right' }) => {
   const [messageApi, contextHolder] = message.useMessage();
+  const [notificationApi, notificationHolder] = notification.useNotification();
   const [events, setEvents] = useState<Event[]>([]);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
   const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const [snoozed, setSnoozed] = useState<Record<string, string>>(() => {
     const raw = localStorage.getItem(DEADLINE_SNOOZE_KEY);
     if (!raw) return {};
@@ -78,56 +133,85 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       return {};
     }
   });
+  const [reminderSettings, setReminderSettings] =
+    useState<ReminderSettings>(DEFAULT_REMINDER_SETTINGS);
+  const [reminderState, setReminderState] = useState<ReminderState>(() => readReminderState());
+  // Toasts wait for this, otherwise the first one uses the default duration and window.
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const toastedRef = useRef<Set<number>>(new Set());
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // Mirrors `snoozed` so fetchData can read it without depending on it.
+  const snoozedRef = useRef(snoozed);
+  useEffect(() => {
+    snoozedRef.current = snoozed;
+  }, [snoozed]);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-
+  const fetchData = useCallback(
+    async (options?: { force?: boolean }) => {
+      const fresh =
+        notificationCache && Date.now() - notificationCache.at < CACHE_TTL_MS && !options?.force;
       try {
-        await detectConflicts();
+        if (!fresh) setLoading(true);
+
+        if (!fresh) {
+          try {
+            // A write, so it only runs when actually refreshing rather than on every open.
+            await detectConflicts();
+          } catch (error) {
+            console.error('Detection failed', error);
+          }
+
+          const [eventsResp, conflictsResp, tasksResp, offersResp] = await Promise.all([
+            getEvents(),
+            getUnresolvedConflicts(),
+            getTasks(),
+            getOffers().catch(() => ({ data: [] })),
+          ]);
+          notificationCache = {
+            at: Date.now(),
+            events: eventsResp.data as Event[],
+            conflicts: conflictsResp.data as ConflictAlert[],
+            tasks: tasksResp.data as Task[],
+            offers: offersResp.data as OfferDeadlineSource[],
+          };
+        }
+
+        const cached = notificationCache!;
+        const allEvents = cached.events;
+        const now = new Date();
+
+        const upcoming = allEvents
+          .filter((e: Event) => {
+            const eventStart = new Date(`${e.date}T${e.start_time}`);
+            return isAfter(eventStart, now);
+          })
+          .sort((a: Event, b: Event) => {
+            const dateA = new Date(`${a.date}T${a.start_time}`);
+            const dateB = new Date(`${b.date}T${b.start_time}`);
+            return compareAsc(dateA, dateB);
+          })
+          .slice(0, 5);
+
+        setEvents(upcoming);
+        setConflicts(cached.conflicts);
+        setDeadlines(
+          mergeDeadlines(
+            buildTaskDeadlines(cached.tasks, snoozedRef.current),
+            buildOfferDeadlines(cached.offers, snoozedRef.current)
+          )
+        );
       } catch (error) {
-        messageApi.error('Detection failed');
-        console.error('Detection failed', error);
+        messageApi.error('Failed to fetch data');
+        console.error('Failed to fetch data', error);
+      } finally {
+        setLoading(false);
       }
-
-      const [eventsResp, conflictsResp, tasksResp, offersResp] = await Promise.all([
-        getEvents(),
-        getUnresolvedConflicts(),
-        getTasks(),
-        getOffers().catch(() => ({ data: [] })),
-      ]);
-
-      const allEvents = eventsResp.data;
-      const now = new Date();
-
-      const upcoming = allEvents
-        .filter((e: Event) => {
-          const eventStart = new Date(`${e.date}T${e.start_time}`);
-          return isAfter(eventStart, now);
-        })
-        .sort((a: Event, b: Event) => {
-          const dateA = new Date(`${a.date}T${a.start_time}`);
-          const dateB = new Date(`${b.date}T${b.start_time}`);
-          return compareAsc(dateA, dateB);
-        })
-        .slice(0, 5);
-
-      setEvents(upcoming);
-      setConflicts(conflictsResp.data);
-      setDeadlines(
-        mergeDeadlines(
-          buildTaskDeadlines(tasksResp.data as Task[], snoozed),
-          buildOfferDeadlines(offersResp.data as OfferDeadlineSource[], snoozed)
-        )
-      );
-    } catch (error) {
-      messageApi.error('Failed to fetch data');
-      console.error('Failed to fetch data', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [messageApi, snoozed]);
+      // Snooze is read through a ref so dismissing something cannot retrigger a fetch.
+    },
+    [messageApi]
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -141,19 +225,99 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
   useEffect(() => {
     const refreshOnTaskUpdate = () => {
-      if (isOpen) {
-        fetchData();
-      }
+      void fetchData({ force: true });
     };
     window.addEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
     return () => window.removeEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
   }, [fetchData, isOpen]);
 
+  // Loaded up front so the badge is accurate before the bell is ever clicked.
   useEffect(() => {
-    if (isOpen) {
-      fetchData();
-    }
-  }, [fetchData, isOpen]);
+    void fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    void getUserSettings()
+      .then((response) =>
+        setReminderSettings(
+          resolveSettings(response.data?.notification_preferences?.eventReminders)
+        )
+      )
+      .catch(() => undefined)
+      .finally(() => setSettingsLoaded(true));
+  }, []);
+
+  const dueSoon = dueReminders(events, reminderSettings, reminderState);
+  // Dismissing today's popup must not calm the bell — the event is still days away.
+  const urgent = urgentReminders(events, reminderSettings, reminderState);
+  const dueSoonIds = new Set(dueSoon.map((event) => event.id));
+  // Anything already shown under "Coming up" is not repeated under "Upcoming".
+  const otherUpcoming = events.filter((event) => !dueSoonIds.has(event.id));
+
+  // Keyed on the ids themselves, so this fires as soon as the data lands rather than
+  // depending on a re-render producing a new array.
+  const dueSoonKey = dueSoon
+    .map((event) => event.id)
+    .sort((a, b) => a - b)
+    .join(',');
+
+  useEffect(() => {
+    if (!dueSoonKey || !settingsLoaded) return;
+    dueSoon.forEach((event) => {
+      if (toastedRef.current.has(event.id)) return;
+      toastedRef.current.add(event.id);
+      const urgency = reminderUrgency(event.date);
+      const tone = URGENCY_TONE[urgency];
+      notificationApi.open({
+        key: `event-${event.id}`,
+        message: (
+          <span className={`text-sm font-bold ${tone.title}`}>
+            {countdownLabel(event.date)}
+            {!event.is_all_day && ` · ${event.start_time.substring(0, 5)}`}
+          </span>
+        ),
+        description: <span className="text-sm text-slate-700">{event.name}</span>,
+        placement: 'topRight',
+        // 0 tells antd to keep it up until dismissed.
+        duration: reminderSettings.toastDurationSeconds || 0,
+        className: `careerhub-reminder-toast ${tone.card}`,
+        icon: <CalendarOutlined className={tone.icon} />,
+        btn: (
+          <div className="flex gap-2">
+            <Button
+              size="small"
+              onClick={() => {
+                setReminder(event.id, dismissUntil(reminderSettings));
+                notificationApi.destroy(`event-${event.id}`);
+              }}
+            >
+              Dismiss
+            </Button>
+            <Button
+              size="small"
+              type="primary"
+              onClick={() => {
+                setViewingEvent(event);
+                notificationApi.destroy(`event-${event.id}`);
+              }}
+            >
+              View
+            </Button>
+          </div>
+        ),
+      });
+    });
+    // dueSoon is derived each render; the id list is what actually changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dueSoonKey, settingsLoaded]);
+
+  const setReminder = (eventId: number, until: string) => {
+    setReminderState((prev) => {
+      const next = pruneReminderState({ ...prev, [String(eventId)]: until }, events);
+      writeReminderState(next);
+      return next;
+    });
+  };
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -216,10 +380,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     }
   };
 
-  const hasEvents = events.length > 0;
   const hasConflicts = conflicts.length > 0;
   const hasDeadlines = deadlines.length > 0;
   const totalNotifications = events.length + conflicts.length + deadlines.length;
+  const needsAttention = urgent.length > 0 || hasConflicts || hasDeadlines;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -230,15 +394,32 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         aria-label="Open notifications"
         aria-expanded={isOpen}
       >
-        <BellOutlined className="text-xl" />
+        {/* Rings only when something actually needs attention, not merely because
+            future events exist — otherwise it would move almost all the time. */}
+        <BellOutlined className={`text-xl ${needsAttention ? 'careerhub-bell-alert' : ''}`} />
         {totalNotifications > 0 && (
           <span
-            className={`absolute top-1 right-1.5 w-2 h-2 rounded-full ring-2 ring-white ${hasConflicts || hasDeadlines ? 'bg-red-600 animate-pulse' : 'bg-red-500'}`}
+            className={`absolute right-1.5 top-1 h-2 w-2 rounded-full ring-2 ring-white ${
+              needsAttention ? 'careerhub-bell-dot-alert bg-red-600' : 'bg-red-500'
+            }`}
           />
         )}
       </button>
 
       {contextHolder}
+      {notificationHolder}
+
+      {/* Read-only from here: editing and deleting belong on the Events page, which this
+          links out to rather than duplicating those flows in the header. */}
+      <EventViewModal
+        event={viewingEvent}
+        onClose={() => setViewingEvent(null)}
+        onEdit={(event) => {
+          setViewingEvent(null);
+          setIsOpen(false);
+          navigate(`/events?event=${event.id}`);
+        }}
+      />
 
       {isOpen && (
         <div
@@ -264,7 +445,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
           <div className="max-h-75 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-xs text-gray-400">Loading...</div>
+              <div className="flex items-center justify-center gap-2 p-6 text-xs text-slate-400">
+                <Spin size="small" />
+                Checking your calendar…
+              </div>
             ) : totalNotifications === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-sm font-semibold text-slate-600">No notifications</p>
@@ -272,6 +456,54 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
+                {dueSoon.length > 0 && (
+                  <div className="bg-amber-50/50">
+                    <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+                      Coming up
+                    </p>
+                    {dueSoon.map((event) => {
+                      const away = daysUntil(event.date, new Date());
+                      return (
+                        <div key={`due-${event.id}`} className="px-4 py-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <button
+                              type="button"
+                              className="min-w-0 text-left"
+                              onClick={() => setViewingEvent(event)}
+                            >
+                              <p className="truncate text-sm font-medium text-slate-900 hover:text-blue-700">
+                                {event.name}
+                              </p>
+                              <p className="mt-0.5 text-xs text-amber-700">
+                                {away === 0 ? 'Today' : away === 1 ? 'Tomorrow' : `In ${away} days`}
+                                {!event.is_all_day && ` · ${event.start_time.substring(0, 5)}`}
+                              </p>
+                            </button>
+                          </div>
+                          <div className="mt-1.5 flex items-center gap-3">
+                            <button
+                              type="button"
+                              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                              onClick={() => setReminder(event.id, dismissUntil(reminderSettings))}
+                            >
+                              Dismiss
+                            </button>
+                            {reminderSettings.allowForeverIgnore && (
+                              <button
+                                type="button"
+                                className="text-xs text-slate-400 hover:text-slate-600"
+                                onClick={() => setReminder(event.id, 'forever')}
+                              >
+                                Never remind me
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 {conflicts.length > 0 && (
                   <div className="bg-red-50/50">
                     <div className="px-3 py-2 text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-2">
@@ -371,12 +603,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   </div>
                 )}
 
-                {hasEvents && (
+                {otherUpcoming.length > 0 && (
                   <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
                     Upcoming
                   </div>
                 )}
-                {events.map((event) => {
+                {otherUpcoming.map((event) => {
                   const eventDate = parseISO(event.date);
                   const timeLabel = format(new Date(`2000-01-01T${event.start_time}`), 'h:mm a');
                   let dayLabel = format(eventDate, 'MMM d');
@@ -385,7 +617,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   if (isTomorrow(eventDate)) dayLabel = 'Tmrw';
 
                   return (
-                    <div key={event.id} className="p-3 hover:bg-gray-50 transition-colors">
+                    <button
+                      type="button"
+                      key={event.id}
+                      onClick={() => setViewingEvent(event)}
+                      className="block w-full p-3 text-left transition-colors hover:bg-gray-50"
+                    >
                       <div className="flex justify-between items-start gap-2">
                         <span className="font-medium text-sm text-gray-900 line-clamp-1">
                           {event.name}
@@ -403,6 +640,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                       <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
                         <ClockCircleOutlined className="text-xs" />
                         <span>{timeLabel}</span>
+                        <span>•</span>
+                        <span className="font-medium text-slate-600">
+                          {countdownLabel(event.date)}
+                        </span>
                         {event.category_details && (
                           <>
                             <span>•</span>
@@ -412,7 +653,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                           </>
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

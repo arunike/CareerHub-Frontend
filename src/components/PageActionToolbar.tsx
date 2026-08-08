@@ -212,6 +212,10 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
     );
   }
 
+  const hasSecondaryRow = Boolean(
+    yearFilterNode || extraActions || deleteAllNode || exportNode || importNode
+  );
+
   return (
     <div className={`page-toolbar ${singleRowDesktop ? 'page-toolbar-single-row' : ''}`.trim()}>
       <div className="page-toolbar-heading">
@@ -242,14 +246,44 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         </div>
       </div>
 
-      <div className="page-toolbar-actions">
-        {yearFilterNode}
-        {extraActions}
-        {deleteAllNode}
-        {exportNode}
-        {importNode}
-        {primaryActionNode}
-      </div>
+      {/* Pages that opt into a single row keep one cluster. Everywhere else the primary
+          action rides with the title and the rest drops to its own row, so a long toolbar
+          does not wrap and leave the title line looking empty. */}
+      {singleRowDesktop ? (
+        <div className="page-toolbar-actions">
+          {yearFilterNode}
+          {extraActions}
+          {deleteAllNode}
+          {exportNode}
+          {importNode}
+          {primaryActionNode}
+        </div>
+      ) : (
+        <>
+          {primaryActionNode ? (
+            <div className="page-toolbar-actions page-toolbar-actions-primary">
+              {primaryActionNode}
+            </div>
+          ) : null}
+          {hasSecondaryRow ? (
+            <div className="page-toolbar-secondary">
+              {/* What you look at on the left, what you do to the data on the right, so a
+                  destructive action never sits next to a view filter. */}
+              <div className="page-toolbar-group">
+                {yearFilterNode}
+                {extraActions}
+              </div>
+              {(importNode || exportNode || deleteAllNode) && (
+                <div className="page-toolbar-group page-toolbar-group-end">
+                  {importNode}
+                  {exportNode}
+                  {deleteAllNode}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 };
