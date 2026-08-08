@@ -15,6 +15,9 @@ interface UploadDocumentModalProps {
   // When opened from an application, the link is fixed and the picker is hidden.
   lockedApplicationId?: number;
   lockedApplicationLabel?: string;
+  // Prefilled when the caller already knows what is being uploaded.
+  defaultTitle?: string;
+  defaultDocumentType?: string;
 }
 
 const { Dragger } = Upload;
@@ -39,6 +42,8 @@ const validateDocumentFile = (file: File) => {
 const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   lockedApplicationId,
   lockedApplicationLabel,
+  defaultTitle,
+  defaultDocumentType,
   visible,
   onCancel,
   onSuccess,
@@ -51,8 +56,14 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     if (!visible) {
       form.resetFields();
       setFileList([]);
+      return;
     }
-  }, [visible, form]);
+    // Seeded on open so the caller's context survives the reset above.
+    form.setFieldsValue({
+      title: defaultTitle ?? '',
+      document_type: defaultDocumentType ?? 'RESUME',
+    });
+  }, [visible, form, defaultTitle, defaultDocumentType]);
 
   const handleOk = async () => {
     try {
@@ -137,7 +148,6 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
           name="document_type"
           label="Document Type"
           rules={[{ required: true, message: 'Please select a type' }]}
-          initialValue="RESUME"
         >
           <Select>
             <Option value="RESUME">Resume</Option>

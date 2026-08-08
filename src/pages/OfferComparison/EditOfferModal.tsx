@@ -215,6 +215,8 @@ const EditOfferModal = ({
             }
             signOn={Number(editingOffer.sign_on) || 0}
             onSignOnChange={(value) => setEditingOfferField('sign_on', value)}
+            signOnSchedule={(editingOffer.sign_on_schedule as number[]) || []}
+            onSignOnScheduleChange={(value) => setEditingOfferField('sign_on_schedule', value)}
             benefitsValue={Number(editingOffer.benefits_value) || 0}
             benefitItems={editingBenefitItems}
             onAddBenefitItem={addEditingBenefitItem}
@@ -392,12 +394,19 @@ const EditOfferModal = ({
             travelFrequency={editingApp?.travel_frequency || 'UNKNOWN'}
             onTravelFrequencyChange={(value) => patchEditingApp({ travel_frequency: value })}
             locationPlaceholder="e.g. San Jose, CA"
+            // Step 1 only: it belongs with the offer's identity, not on every step.
+            documentsSlot={
+              <OfferDocumentsPanel
+                applicationId={editingOffer.application}
+                applicationLabel={
+                  [editingApp?.company_name, editingApp?.role_title].filter(Boolean).join(' · ') ||
+                  undefined
+                }
+                companyName={editingApp?.company_name || undefined}
+              />
+            }
           />
         </fieldset>
-
-        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
-          <OfferDocumentsPanel applicationId={editingOffer.application} />
-        </div>
       </ModalShell>
       <ConfirmModal
         isOpen={isDiscardConfirmOpen}

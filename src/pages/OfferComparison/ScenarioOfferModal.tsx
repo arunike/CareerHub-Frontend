@@ -242,6 +242,8 @@ const ScenarioOfferModal = ({
               }
               signOn={Number(newScenario.sign_on) || 0}
               onSignOnChange={(value) => setNewScenarioField('sign_on', value)}
+              signOnSchedule={(newScenario.sign_on_schedule as number[]) || []}
+              onSignOnScheduleChange={(value) => setNewScenarioField('sign_on_schedule', value)}
               benefitsValue={computeBenefitsTotal(scenarioBenefitItems)}
               benefitItems={scenarioBenefitItems}
               onAddBenefitItem={addScenarioBenefitItem}

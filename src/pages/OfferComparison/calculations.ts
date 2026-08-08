@@ -45,6 +45,8 @@ export interface SimulatedOffer {
   equity_liquidity?: 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
   equity_buyback_value?: number;
   sign_on: number;
+  // Per-year amounts; empty means the whole sign-on lands in year 1.
+  sign_on_schedule?: number[];
   benefits_value: number;
   benefit_items?: BenefitItem[];
   work_mode: 'REMOTE' | 'HYBRID' | 'ONSITE';
@@ -121,6 +123,8 @@ export interface OfferLike {
   annual_refresh_value?: number;
   refresh_starts_year?: number;
   sign_on: number;
+  // Per-year amounts; empty means the whole sign-on lands in year 1.
+  sign_on_schedule?: number[];
   benefits_value: number;
   benefit_items?: BenefitItem[];
   pto_days: number;

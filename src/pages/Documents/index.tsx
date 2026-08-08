@@ -16,7 +16,6 @@ import {
   patchDocument,
   getDocumentVersions,
   createDocumentVersion,
-  downloadDocument,
 } from '../../api';
 import type { Document } from '../../types';
 import UploadDocumentModal from './UploadDocumentModal';
@@ -29,6 +28,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import ApplicationSelect from '../../components/ApplicationSelect';
+import { openDocumentInNewTab } from '../../utils/openDocument';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
@@ -237,16 +237,7 @@ const Documents: React.FC = () => {
 
   const openDocument = async (record: Document) => {
     try {
-      const response = await downloadDocument(record.id);
-      const contentType = response.headers['content-type'] || 'application/octet-stream';
-      const blob = new Blob([response.data], { type: contentType });
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = objectUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      await openDocumentInNewTab(record.id);
     } catch (error) {
       message.error('Failed to open document');
       console.error(error);

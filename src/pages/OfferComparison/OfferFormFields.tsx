@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   BankOutlined,
   CalendarOutlined,
@@ -72,6 +73,10 @@ interface OfferFormFieldsProps {
   defaultEquityMode?: 'annual' | 'total';
   signOn: number;
   onSignOnChange: (value: number) => void;
+  // Rendered inside step 1 only, so it does not repeat on every step.
+  documentsSlot?: ReactNode;
+  signOnSchedule?: number[];
+  onSignOnScheduleChange?: (value: number[]) => void;
 
   benefitsValue: number;
   benefitItems: BenefitItem[];
@@ -240,6 +245,9 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   defaultEquityMode,
   signOn,
   onSignOnChange,
+  documentsSlot,
+  signOnSchedule = [],
+  onSignOnScheduleChange,
   benefitsValue,
   benefitItems,
   onAddBenefitItem,
@@ -553,6 +561,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 travelFrequency={travelFrequency}
                 onTravelFrequencyChange={onTravelFrequencyChange}
               />
+              {documentsSlot}
             </OfferFormSection>
           </div>
 
@@ -620,6 +629,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 defaultEquityMode={defaultEquityMode}
                 signOn={signOn}
                 onSignOnChange={onSignOnChange}
+                signOnSchedule={signOnSchedule}
+                onSignOnScheduleChange={onSignOnScheduleChange ?? (() => {})}
                 relocationBonus={relocationBonus}
                 onRelocationBonusChange={onRelocationBonusChange}
               />

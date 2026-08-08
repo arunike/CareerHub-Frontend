@@ -11,6 +11,7 @@ type ProjectionOffer = ScenarioRow['offer'] &
     base_salary?: number;
     bonus?: number;
     sign_on?: number;
+    sign_on_schedule?: number[];
     benefits_value?: number;
     relocation_bonus?: number;
     health_premium_monthly?: number;
@@ -77,19 +78,25 @@ export const buildOfferProjection = (
   const bonus = num(offer.bonus);
   const recurringCash = base + bonus;
   const signOn = num(offer.sign_on);
+  // Per-year sign-on amounts. An empty schedule means the whole thing lands in year 1.
+  const signOnByYear =
+    Array.isArray(offer.sign_on_schedule) && offer.sign_on_schedule.length
+      ? offer.sign_on_schedule.map(num)
+      : [signOn];
   const relocation = num(offer.relocation_bonus);
   const annualHealthPremium = num(offer.health_premium_monthly) * 12;
 
   const years: YearlyFigure[] = Array.from({ length: PROJECTION_YEARS }, (_, index) => {
     const year = index + 1;
     const equity = vesting[index] ?? 0;
-    const oneTime = year === 1 ? signOn + relocation : 0;
+    const signOnThisYear = signOnByYear[index] ?? 0;
+    const oneTime = signOnThisYear + (year === 1 ? relocation : 0);
 
     const scenario = calculateScenarioValue({
       base_salary: base,
       bonus,
-      // One-time money only exists in year 1; later years drop it entirely.
-      sign_on: year === 1 ? signOn : 0,
+      // Relocation is always year 1; the sign-on follows its payout schedule.
+      sign_on: signOnThisYear,
       relocation_bonus: year === 1 ? relocation : 0,
       benefits_value: num(offer.benefits_value),
       equity,

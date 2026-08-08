@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Spin } from 'antd';
+import { Spin, message } from 'antd';
 import { FileTextOutlined, PaperClipOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
 import { getDocuments } from '../../api/career';
+import UploadDocumentModal from '../Documents/UploadDocumentModal';
 import type { Document } from '../../types';
+import { openDocumentInNewTab } from '../../utils/openDocument';
 
 const TYPE_LABELS: Record<string, string> = {
   RESUME: 'Resume',
@@ -21,9 +22,20 @@ const TYPE_CLASSES: Record<string, string> = {
   OTHER: 'border-slate-200 bg-slate-50 text-slate-600',
 };
 
-const OfferDocumentsPanel = ({ applicationId }: { applicationId?: number | null }) => {
+const OfferDocumentsPanel = ({
+  applicationId,
+  applicationLabel,
+  companyName,
+}: {
+  applicationId?: number | null;
+  applicationLabel?: string;
+  companyName?: string;
+}) => {
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     if (!applicationId) {
@@ -55,22 +67,34 @@ const OfferDocumentsPanel = ({ applicationId }: { applicationId?: number | null 
     return () => {
       cancelled = true;
     };
-  }, [applicationId]);
+  }, [applicationId, reloadToken]);
+
+  const openDocument = async (doc: Document) => {
+    try {
+      await openDocumentInNewTab(doc.id);
+    } catch (error) {
+      console.error('Failed to open document', error);
+      message.error('Could not open that document');
+    }
+  };
 
   if (!applicationId) return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    // No box of its own: it sits inside the section card and inherits its padding, so a
+    // hairline is all that is needed to separate it from the fields above.
+    <div className="border-t border-slate-100 pt-4">
+      <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
           <PaperClipOutlined /> Attached documents
         </span>
-        <Link
-          to={`/documents?application=${applicationId}`}
+        <button
+          type="button"
+          onClick={() => setIsUploadOpen(true)}
           className="text-xs font-semibold text-blue-600 hover:text-blue-700"
         >
-          Manage
-        </Link>
+          Add
+        </button>
       </div>
 
       {loading ? (
@@ -78,29 +102,28 @@ const OfferDocumentsPanel = ({ applicationId }: { applicationId?: number | null 
           <Spin size="small" />
         </div>
       ) : documents.length === 0 ? (
-        <p className="text-xs leading-5 text-slate-500">
-          No documents yet. Upload the offer letter on the{' '}
-          <Link to="/documents" className="font-semibold text-blue-600 hover:text-blue-700">
-            Documents
-          </Link>{' '}
-          page and set its type to <strong>Offer Letter</strong> — it will show up here.
+        // One quiet line: attaching a file is optional, so it should not shout.
+        <p className="mt-2 text-xs text-slate-400">
+          None yet — use <span className="text-slate-500">Add</span> to attach the offer letter.
         </p>
       ) : (
-        <ul className="space-y-1.5">
+        <ul className="mt-2.5 space-y-1">
           {documents.map((doc) => (
-            <li key={doc.id} className="flex items-center justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-2">
+            <li
+              key={doc.id}
+              className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50"
+            >
+              <span className="flex min-w-0 items-center gap-2.5">
                 <FileTextOutlined className="shrink-0 text-slate-400" />
                 {doc.file ? (
-                  <a
-                    href={doc.file}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="truncate text-[13px] text-blue-600 hover:text-blue-700"
+                  <button
+                    type="button"
+                    onClick={() => void openDocument(doc)}
+                    className="truncate text-left text-[13px] text-blue-600 hover:text-blue-700 hover:underline"
                     title={doc.title}
                   >
                     {doc.title}
-                  </a>
+                  </button>
                 ) : (
                   <span className="truncate text-[13px] text-slate-700" title={doc.title}>
                     {doc.title}
@@ -118,6 +141,19 @@ const OfferDocumentsPanel = ({ applicationId }: { applicationId?: number | null 
           ))}
         </ul>
       )}
+
+      <UploadDocumentModal
+        visible={isUploadOpen}
+        onCancel={() => setIsUploadOpen(false)}
+        onSuccess={() => {
+          setIsUploadOpen(false);
+          setReloadToken((token) => token + 1);
+        }}
+        lockedApplicationId={applicationId ?? undefined}
+        lockedApplicationLabel={applicationLabel}
+        defaultTitle={companyName ? `${companyName} offer letter` : 'Offer letter'}
+        defaultDocumentType="OFFER_LETTER"
+      />
     </div>
   );
 };

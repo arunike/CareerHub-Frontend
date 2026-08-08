@@ -1347,7 +1347,32 @@ const OfferDecisionScorecard = ({
                             <div className="text-sm font-bold text-slate-900">
                               ${Number(row.offer.sign_on).toLocaleString()}
                             </div>
-                            <div className="text-[10px] text-slate-400">One-time</div>
+                            {(() => {
+                              const simulatedMetrics = scenarioRows.find(
+                                (scenario) => String(scenario.offer.id) === String(row.offer.id)
+                              );
+                              const afterTax = row.isSimulated
+                                ? simulatedMetrics?.afterTaxSignOn
+                                : adjustedByOfferId[Number(row.offer.id)]?.afterTaxSignOn;
+                              const schedule = (row.offer.sign_on_schedule || []).map(Number);
+                              // Only years with money in them count as a real split.
+                              const paidYears = schedule.filter((amount) => amount > 0).length;
+                              return (
+                                <div className="text-[10px] text-slate-400">
+                                  {paidYears > 1
+                                    ? `Over ${paidYears} years · ${schedule
+                                        .filter((amount) => amount > 0)
+                                        .map((amount) => `$${Math.round(amount).toLocaleString()}`)
+                                        .join(' / ')}`
+                                    : 'One-time'}
+                                  {Number(row.offer.sign_on) > 0 && (
+                                    <span className="block">
+                                      After tax: ${Math.round(afterTax || 0).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                           {Number(row.offer.relocation_bonus || 0) > 0 && (
                             <div>
