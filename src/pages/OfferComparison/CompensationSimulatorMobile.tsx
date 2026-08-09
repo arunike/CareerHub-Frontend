@@ -1,4 +1,6 @@
+import clsx from 'clsx';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
+import { isPastRole } from './calculations';
 
 export type CompensationSimulatorDisplayRow = {
   key: string;
@@ -37,8 +39,15 @@ const CompensationSimulatorMobile = ({ rows, equityGrowthPct }: Props) => (
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <h3 className="min-w-0 text-base font-bold text-slate-950">{item.row.appName}</h3>
               {item.row.offer.is_current ? (
-                <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                  Current
+                <span
+                  className={clsx(
+                    'rounded-full px-2 py-1 text-xs font-semibold',
+                    isPastRole(item.row.offer)
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-blue-50 text-blue-700'
+                  )}
+                >
+                  {isPastRole(item.row.offer) ? 'Baseline' : 'Current'}
                 </span>
               ) : null}
             </div>

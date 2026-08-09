@@ -1,3 +1,4 @@
+import type { LinkedExperience } from './calculations';
 import type {
   ApplicationLike,
   MaritalStatus,
@@ -32,6 +33,8 @@ export interface ScenarioRow {
     equity?: number;
     equity_liquidity?: string;
     equity_buyback_value?: number;
+    // Lets the simulator tell a baseline that is still a live role from one already left.
+    linked_experience?: LinkedExperience | null;
   };
   appName: string;
   locationLabel: string;

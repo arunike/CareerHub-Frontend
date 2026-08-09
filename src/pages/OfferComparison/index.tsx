@@ -38,6 +38,9 @@ import {
   type ApplicationLike as Application,
   type BenefitItem,
   type OfferLike as Offer,
+  OFFER_STATUS_FILTERS,
+  isPastRole,
+  type OfferStatusFilter,
   type SimulatedOffer,
   annualizeAmount,
   computeBenefitsTotal,
@@ -254,9 +257,18 @@ const OfferComparison = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
-  const [statusFilter, setStatusFilter] = usePersistedState<'active' | 'all' | 'rejected'>(
+  const [statusFilter, setStatusFilter] = usePersistedState<OfferStatusFilter>(
     'offerComparisonStatusFilter',
-    'all'
+    'all',
+    {
+      serialize: (value) => value,
+      // A value persisted by an older build must not resurrect a filter that no
+      // longer exists, which would render an empty page with no pill selected.
+      deserialize: (raw) =>
+        OFFER_STATUS_FILTERS.includes(raw as OfferStatusFilter)
+          ? (raw as OfferStatusFilter)
+          : 'all',
+    }
   );
   const [visibleOfferIds, setVisibleOfferIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -778,18 +790,30 @@ const OfferComparison = () => {
     () => offers.filter((o) => isOfferRejected(o, applicationsById[o.application])).length,
     [offers, applicationsById, isOfferRejected]
   );
+  // An offer that was declined was never a role held, so rejected wins over past.
+  const pastOffersCount = useMemo(
+    () =>
+      offers.filter((o) => !isOfferRejected(o, applicationsById[o.application]) && isPastRole(o))
+        .length,
+    [offers, applicationsById, isOfferRejected, isPastRole]
+  );
   const filteredOffers = useMemo(() => {
     return filteredByYear.filter((offer) => {
       const app = applicationsById[offer.application];
       const rejected = isOfferRejected(offer, app);
-      if (statusFilter === 'active') return !rejected;
+      const past = !rejected && isPastRole(offer);
       if (statusFilter === 'rejected') return rejected;
+      if (statusFilter === 'past') return past;
+      if (statusFilter === 'active') return !rejected && !past;
       return true;
     });
-  }, [filteredByYear, applicationsById, statusFilter, isOfferRejected]);
+  }, [filteredByYear, applicationsById, statusFilter, isOfferRejected, isPastRole]);
 
   const referenceLocation = useMemo(() => {
-    const current = filteredOffers.find((offer) => offer.is_current) || filteredOffers[0];
+    // Resolved from every offer, not the visible ones: the baseline is a property of the
+    // user's career, not of the tab they happen to be on. Reading it off the filtered
+    // list let a tab that excluded the current role silently re-baseline the whole page.
+    const current = offers.find((offer) => offer.is_current) || filteredOffers[0];
     if (current) {
       const currentApp = applications.find((app) => app.id === current.application);
       const currentLocation = getEffectiveTaxLocation(currentApp);
@@ -797,7 +821,7 @@ const OfferComparison = () => {
     }
     const anyLocation = applications.map((app) => getEffectiveTaxLocation(app)).find(Boolean);
     return anyLocation || 'San Francisco, CA, United States';
-  }, [filteredOffers, applications]);
+  }, [offers, filteredOffers, applications]);
 
   const {
     cityCostOfLiving,
@@ -1520,6 +1544,7 @@ const OfferComparison = () => {
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         rejectedOffersCount={rejectedOffersCount}
+        pastOffersCount={pastOffersCount}
         onEditClick={handleEditClick}
         onToggleCurrent={toggleCurrent}
         onToggleRejected={handleToggleRejected}

@@ -7,7 +7,9 @@ import {
   DollarOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
+import clsx from 'clsx';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
+import { isPastRole } from './calculations';
 import { buildGrossVestingYears, getEquityGrowth, type EquityPreset } from './vestingSchedule';
 import CompensationSimulatorMobile from './CompensationSimulatorMobile';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
@@ -342,8 +344,15 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-950">{item.row.appName}</span>
                     {item.row.offer.is_current && (
-                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">
-                        Current
+                      <span
+                        className={clsx(
+                          'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                          isPastRole(item.row.offer)
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-blue-50 text-blue-700'
+                        )}
+                      >
+                        {isPastRole(item.row.offer) ? 'Baseline' : 'Current'}
                       </span>
                     )}
                   </div>

@@ -102,8 +102,67 @@ export interface SimulatedOffer {
   travel_frequency?: string;
 }
 
+/** Pill order follows the arc of a role: held now, held before, never held. */
+export const OFFER_STATUS_FILTERS = ['all', 'active', 'past', 'rejected'] as const;
+export type OfferStatusFilter = (typeof OFFER_STATUS_FILTERS)[number];
+
+/** The role an offer turned into, if it turned into one. Read-only, from the API. */
+export interface LinkedExperience {
+  id: number;
+  title: string;
+  company: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+}
+
+import { todayDateOnlyLocal } from '../../utils/dateOnly';
+
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/** "Jan 2025 – Aug 2026", or "Jan 2025 – Present" while the role is still open. */
+export const formatExperienceRange = (experience: LinkedExperience): string => {
+  const month = (value: string) =>
+    // Date-only strings are parsed as UTC by the Date constructor, so the parts are
+    // read straight off the string instead of round-tripping through a Date.
+    `${MONTH_NAMES[Number(value.slice(5, 7)) - 1]} ${value.slice(0, 4)}`;
+  if (!experience.start_date) return '';
+  const start = month(experience.start_date);
+  return `${start} – ${experience.end_date ? month(experience.end_date) : 'Present'}`;
+};
+
+/** True when the offer's linked role has already been left.
+
+Driven by the linked experience's own flag rather than its end date alone: a role is often
+marked finished before the last day lands, and that intent is what should move the offer
+out of Active. A past end date is a fallback for an experience left with a stale flag.
+
+Note this is a different question from `Offer.is_current`, which marks the comparison
+baseline and is set by hand. The two can legitimately disagree.
+*/
+export const isPastRole = (offer: Pick<OfferLike, 'linked_experience'>): boolean => {
+  const experience = offer.linked_experience;
+  if (!experience) return false;
+  if (!experience.is_current) return true;
+  return experience.end_date != null && experience.end_date < todayDateOnlyLocal();
+};
+
 export interface OfferLike {
   id?: number;
+  linked_experience?: LinkedExperience | null;
   application: number;
   application_details?: { company: string; role_title: string };
   // ISO date the offer expires, e.g. '2026-08-14'.

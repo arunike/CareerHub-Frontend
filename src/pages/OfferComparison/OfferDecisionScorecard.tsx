@@ -10,10 +10,17 @@ import {
   computeNonTaxableBenefitsTotal,
 } from './calculations';
 import { Select, Popconfirm, Tooltip, InputNumber, Popover, Segmented } from 'antd';
-import { PlusOutlined, DownOutlined, RightOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  DownOutlined,
+  RightOutlined,
+  CloseCircleOutlined,
+  HistoryOutlined,
+} from '@ant-design/icons';
 import clsx from 'clsx';
 import type { AdjustedOfferMetrics } from './types';
-import type { MaritalStatus, SimulatedOffer } from './calculations';
+import type { MaritalStatus, OfferStatusFilter, SimulatedOffer } from './calculations';
+import { formatExperienceRange, isPastRole } from './calculations';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { formatPtoLabel, getCountedSickLeaveDays } from '../../utils/offerTimeOff';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -42,9 +49,10 @@ type Props = {
   onEditClick: (offer: Offer) => void;
   onToggleCurrent: (offer: Offer) => void;
   onToggleRejected?: (offer: Offer) => void;
-  statusFilter?: 'active' | 'all' | 'rejected';
-  setStatusFilter?: (filter: 'active' | 'all' | 'rejected') => void;
+  statusFilter?: OfferStatusFilter;
+  setStatusFilter?: (filter: OfferStatusFilter) => void;
   rejectedOffersCount?: number;
+  pastOffersCount?: number;
   onNegotiateClick: (offer: Offer) => void;
   onNegotiationLogClick?: (offer: Offer) => void;
   onRaiseHistoryClick: (offer: Offer) => void;
@@ -919,6 +927,35 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
   );
 };
 
+/** A component's gap against the same component on the baseline offer.
+
+Compares the gross figures shown directly above it rather than the realizable ones the
+aggregate "Diff vs Current" uses, so each line reconciles with the number it sits under.
+The two therefore differ when equity is not sellable, which the liquidity line already
+spells out on the card.
+*/
+const ComponentDelta = ({
+  value,
+  baseline,
+  baselineLabel,
+}: {
+  value: number;
+  baseline: number;
+  baselineLabel: string;
+}) => {
+  const diff = Math.round(value - baseline);
+  if (diff === 0) {
+    return <div className="text-[10px] font-medium text-slate-400">Same as {baselineLabel}</div>;
+  }
+  return (
+    <div
+      className={clsx('text-[10px] font-semibold', diff > 0 ? 'text-emerald-600' : 'text-rose-500')}
+    >
+      {diff > 0 ? '+' : '\u2212'}${Math.abs(diff).toLocaleString()} vs {baselineLabel}
+    </div>
+  );
+};
+
 const OfferDecisionScorecard = ({
   filteredOffers,
   offers,
@@ -931,6 +968,7 @@ const OfferDecisionScorecard = ({
   statusFilter,
   setStatusFilter,
   rejectedOffersCount,
+  pastOffersCount,
   onNegotiateClick,
   onNegotiationLogClick,
   onRaiseHistoryClick,
@@ -1017,7 +1055,18 @@ const OfferDecisionScorecard = ({
     )
   );
 
+  // Offers whose linked role is still held — the defensible places for the baseline to
+  // move to. More than one is normal (overlapping roles), so the user picks rather than
+  // the app guessing and silently rewriting every Diff vs Current.
+  // The linked experience carries the company for exactly the offers that have one,
+  // which is every baseline candidate by definition.
+  const offerLabel = (offer: Offer) =>
+    offer.linked_experience?.company || offer.application_details?.company || 'this role';
+
+  const baselineCandidates = offers.filter((o) => !o.is_current && o.linked_experience?.is_current);
+
   const currentOffer = offers.find((o) => o.is_current);
+  const baselineLabel = currentOffer ? offerLabel(currentOffer) : null;
   const currentTotal = currentOffer
     ? Number(currentOffer.base_salary) +
       Number(currentOffer.bonus) +
@@ -1067,13 +1116,18 @@ const OfferDecisionScorecard = ({
                 options={[
                   { label: `All (${offers.length})`, value: 'all' },
                   {
-                    label: `Active (${Math.max(0, offers.length - (rejectedOffersCount || 0))})`,
+                    // Both other buckets come out of Active, or past roles get counted twice.
+                    label: `Active (${Math.max(
+                      0,
+                      offers.length - (rejectedOffersCount || 0) - (pastOffersCount || 0)
+                    )})`,
                     value: 'active',
                   },
+                  { label: `Past Experience (${pastOffersCount || 0})`, value: 'past' },
                   { label: `Rejected (${rejectedOffersCount || 0})`, value: 'rejected' },
                 ]}
                 value={statusFilter || 'all'}
-                onChange={(val) => setStatusFilter(val as 'active' | 'all' | 'rejected')}
+                onChange={(val) => setStatusFilter(val as OfferStatusFilter)}
               />
             )}
             <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
@@ -1110,6 +1164,13 @@ const OfferDecisionScorecard = ({
                 app?.status === 'OFFER_REJECTED' ||
                 app?.status === 'REJECTED');
 
+            // Same precedence as the Past Experience filter: a declined offer was never
+            // a role held, so rejected wins.
+            const rowExperience = row.isSimulated ? null : (row.offer as Offer).linked_experience;
+            const isRowPast = !isRowRejected && isPastRole(row.offer as Offer);
+            // The baseline has nothing to compare itself against.
+            const showDeltas = !!currentOffer && !(row.offer as Offer).is_current;
+
             return (
               <article
                 key={row.id}
@@ -1117,7 +1178,9 @@ const OfferDecisionScorecard = ({
                   'relative flex flex-col overflow-hidden rounded-3xl border shadow-sm transition-all hover:shadow-md',
                   isRowRejected
                     ? 'border-rose-300 bg-rose-50/20 hover:border-rose-400'
-                    : 'border-slate-200 bg-white hover:border-sky-300'
+                    : isRowPast
+                      ? 'border-slate-300 bg-slate-50/40 hover:border-slate-400'
+                      : 'border-slate-200 bg-white hover:border-sky-300'
                 )}
               >
                 {/* Card Header */}
@@ -1126,7 +1189,9 @@ const OfferDecisionScorecard = ({
                     'border-b px-4 py-4 sm:px-6 sm:py-5',
                     isRowRejected
                       ? 'border-rose-100 bg-rose-50/40'
-                      : 'border-slate-100 bg-slate-50/50'
+                      : isRowPast
+                        ? 'border-slate-200 bg-slate-100/60'
+                        : 'border-slate-100 bg-slate-50/50'
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -1135,7 +1200,11 @@ const OfferDecisionScorecard = ({
                         <span
                           className={clsx(
                             'flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm',
-                            isRowRejected ? 'bg-rose-500' : 'bg-sky-600'
+                            isRowRejected
+                              ? 'bg-rose-500'
+                              : isRowPast
+                                ? 'bg-slate-500'
+                                : 'bg-sky-600'
                           )}
                         >
                           {row.rank}
@@ -1209,11 +1278,88 @@ const OfferDecisionScorecard = ({
                             <CloseCircleOutlined /> Rejected
                           </span>
                         )}
-                        {!row.isSimulated && (row.offer as Offer).is_current && (
-                          <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm">
-                            Current
+                        {isRowPast && rowExperience && (
+                          <span className="flex items-center gap-1 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
+                            <HistoryOutlined /> Past Role
+                            {rowExperience.start_date && (
+                              <span className="font-medium text-slate-500">
+                                · {formatExperienceRange(rowExperience)}
+                              </span>
+                            )}
                           </span>
                         )}
+                        {/* `Offer.is_current` marks the comparison baseline; the linked
+                            experience says whether the role is still held. On a past role
+                            the two disagree, and a plain "Current" chip next to "Past Role"
+                            reads as a bug. Say what is actually true instead of hiding it —
+                            every Diff vs Current still measures against this offer. */}
+                        {!row.isSimulated && (row.offer as Offer).is_current && (
+                          <Tooltip
+                            title={
+                              isRowPast
+                                ? 'Comparisons still measure against this role. Use Mark Current on the role you hold now to move the baseline.'
+                                : undefined
+                            }
+                          >
+                            <span
+                              className={clsx(
+                                'rounded-lg border px-2.5 py-1 text-[11px] font-semibold shadow-sm',
+                                isRowPast
+                                  ? 'cursor-help border-amber-300 bg-amber-50 text-amber-700'
+                                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                              )}
+                            >
+                              {isRowPast ? 'Comparison Baseline' : 'Current'}
+                            </span>
+                          </Tooltip>
+                        )}
+                        {isRowPast &&
+                          (row.offer as Offer).is_current &&
+                          baselineCandidates.length > 0 &&
+                          (baselineCandidates.length === 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => onToggleCurrent(baselineCandidates[0])}
+                              className="rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 shadow-sm transition-colors hover:bg-amber-50"
+                            >
+                              Move to {offerLabel(baselineCandidates[0])} →
+                            </button>
+                          ) : (
+                            <Popover
+                              trigger="click"
+                              placement="bottom"
+                              content={
+                                <div className="flex w-56 flex-col py-1">
+                                  <p className="px-2 pb-1.5 text-[11px] text-slate-500">
+                                    You hold more than one role, so pick the one comparisons should
+                                    measure against.
+                                  </p>
+                                  {baselineCandidates.map((candidate) => (
+                                    <button
+                                      key={candidate.id}
+                                      type="button"
+                                      onClick={() => onToggleCurrent(candidate)}
+                                      className="rounded-lg px-2 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                    >
+                                      {offerLabel(candidate)}
+                                      {candidate.linked_experience?.start_date && (
+                                        <span className="ml-1 font-medium text-slate-400">
+                                          {formatExperienceRange(candidate.linked_experience)}
+                                        </span>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              }
+                            >
+                              <button
+                                type="button"
+                                className="rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 shadow-sm transition-colors hover:bg-amber-50"
+                              >
+                                Move baseline →
+                              </button>
+                            </Popover>
+                          ))}
                         {[
                           row.hasImmigrationSignal ? row.immigrationLabel : '',
                           row.workModeLabel,
@@ -1277,6 +1423,13 @@ const OfferDecisionScorecard = ({
                             <div className="text-sm font-bold text-slate-900">
                               ${Number(row.offer.base_salary).toLocaleString()}
                             </div>
+                            {showDeltas && currentOffer && baselineLabel && (
+                              <ComponentDelta
+                                value={Number(row.offer.base_salary)}
+                                baseline={Number(currentOffer.base_salary)}
+                                baselineLabel={baselineLabel}
+                              />
+                            )}
                             <div className="text-[10px] text-slate-400">
                               After tax: $
                               {Math.round(
@@ -1296,6 +1449,13 @@ const OfferDecisionScorecard = ({
                             <div className="text-sm font-bold text-slate-900">
                               ${Number(row.offer.bonus).toLocaleString()}
                             </div>
+                            {showDeltas && currentOffer && baselineLabel && (
+                              <ComponentDelta
+                                value={Number(row.offer.bonus)}
+                                baseline={Number(currentOffer.bonus)}
+                                baselineLabel={baselineLabel}
+                              />
+                            )}
                             <div className="text-[10px] text-slate-400">
                               After tax: $
                               {Math.round(
@@ -1315,6 +1475,13 @@ const OfferDecisionScorecard = ({
                             <div className="text-sm font-bold text-slate-900">
                               ${Number(row.offer.equity).toLocaleString()}
                             </div>
+                            {showDeltas && currentOffer && baselineLabel && (
+                              <ComponentDelta
+                                value={Number(row.offer.equity)}
+                                baseline={Number(currentOffer.equity)}
+                                baselineLabel={baselineLabel}
+                              />
+                            )}
                             {(() => {
                               const liquidity = getEquityLiquidityCopy(row.offer);
                               const simulatedMetrics = scenarioRows.find(
@@ -1347,6 +1514,13 @@ const OfferDecisionScorecard = ({
                             <div className="text-sm font-bold text-slate-900">
                               ${Number(row.offer.sign_on).toLocaleString()}
                             </div>
+                            {showDeltas && currentOffer && baselineLabel && (
+                              <ComponentDelta
+                                value={Number(row.offer.sign_on)}
+                                baseline={Number(currentOffer.sign_on)}
+                                baselineLabel={baselineLabel}
+                              />
+                            )}
                             {(() => {
                               const simulatedMetrics = scenarioRows.find(
                                 (scenario) => String(scenario.offer.id) === String(row.offer.id)
