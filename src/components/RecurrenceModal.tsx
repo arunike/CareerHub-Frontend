@@ -3,6 +3,7 @@ import Modal from './MobileModal';
 import clsx from 'clsx';
 
 import type { RecurrenceRule } from '../types';
+import UnitNumberInput from './UnitNumberInput';
 
 interface RecurrenceModalProps {
   isOpen: boolean;
@@ -124,13 +125,12 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
           <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min="1"
-              max="99"
-              className="w-24 rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={intervalValue}
-              onChange={(e) => setIntervalValue(e.target.value)}
+            <UnitNumberInput
+              min={1}
+              max={99}
+              style={{ width: 96 }}
+              value={intervalValue === '' ? null : Number(intervalValue)}
+              onChange={(value) => setIntervalValue(value == null ? '' : String(value))}
             />
             <span className="text-sm text-gray-700">
               {frequency === 'daily' && (Number(intervalValue) === 1 ? 'day' : 'days')}
@@ -185,14 +185,13 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                 onChange={() => setEndType('count')}
               />
               <span className="text-sm text-gray-700">After</span>
-              <input
-                type="number"
-                min="1"
-                max="999"
+              <UnitNumberInput
+                min={1}
+                max={999}
                 disabled={endType !== 'count'}
-                className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                value={countValue}
-                onChange={(e) => setCountValue(e.target.value)}
+                style={{ width: 80 }}
+                value={countValue === '' ? null : Number(countValue)}
+                onChange={(value) => setCountValue(value == null ? '' : String(value))}
                 onFocus={() => setEndType('count')}
               />
               <span className="text-sm text-gray-700">occurrences</span>

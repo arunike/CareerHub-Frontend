@@ -11,17 +11,7 @@ import {
   TableOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Checkbox,
-  Collapse,
-  Dropdown,
-  InputNumber,
-  Segmented,
-  Tag,
-  message,
-  Tabs,
-} from 'antd';
+import { Button, Checkbox, Collapse, Dropdown, Segmented, Tag, message, Tabs } from 'antd';
 import Modal from '../../components/MobileModal';
 import dayjs from 'dayjs';
 import {
@@ -59,6 +49,7 @@ import EditableNumberInput from '../../components/EditableNumberInput';
 import FriendlyTimeInput from '../../components/FriendlyTimeInput';
 import { DEFAULT_TIMEZONE, TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
 import { getApiErrorMessage } from '../../utils/apiError';
+import UnitNumberInput from '../../components/UnitNumberInput';
 
 type Draft = {
   id?: number;
@@ -1150,7 +1141,6 @@ const GoogleSheetsSettings: React.FC = () => {
             <EditableNumberInput
               id="google-sheet-sync-header-row"
               min={1}
-              className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.header_row}
               fallbackValue={1}
               onCommit={(value) => updateDraft({ header_row: value })}
@@ -1243,16 +1233,16 @@ const GoogleSheetsSettings: React.FC = () => {
                   >
                     Delete after
                   </label>
-                  <InputNumber
+                  <UnitNumberInput
                     id="google-sheet-sync-removal-days"
+                    unit="days"
                     min={1}
                     max={365}
-                    className="min-h-11 w-full [&_.ant-input-number-input]:h-11"
-                    addonAfter="days"
+                    className="min-h-11 [&_.ant-input-number-input]:h-11"
                     disabled={draft.missing_row_strategy === 'IGNORE'}
                     value={draft.missing_row_delete_after_days}
                     onChange={(value) =>
-                      updateDraft({ missing_row_delete_after_days: Number(value) || 30 })
+                      updateDraft({ missing_row_delete_after_days: value ?? 30 })
                     }
                   />
                 </div>

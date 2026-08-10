@@ -1,5 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { Popover } from 'antd';
+import UnitNumberInput from './UnitNumberInput';
+import {
+  CONTROL_CLASS,
+  FIELD_HEADER_CLASS,
+  FIELD_HINT_CLASS,
+  FIELD_LABEL_CLASS,
+} from './formControls';
+
+// Small segmented control so each field's mode toggle reads as belonging to that field.
+const ModeToggle = ({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: string }[];
+  value: string;
+  onChange: (next: string) => void;
+}) => (
+  <div className="flex items-center gap-0.5 rounded-md bg-gray-100 p-0.5">
+    {options.map((option) => (
+      <button
+        key={option.value}
+        type="button"
+        onClick={() => onChange(option.value)}
+        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+          value === option.value
+            ? 'bg-white text-blue-600 shadow-sm'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+);
 
 export interface CompValue {
   base_salary: number | null;
@@ -17,12 +52,18 @@ interface Props {
   equityVestingSchedule?: number[];
   onEquityVestingScheduleChange?: (v: number[]) => void;
   defaultEquityMode?: EquityMode;
+  // Annual refresh lives in the equity popover so the grant and everything that
+  // modifies it stay in one place.
+  showEquityRefresh?: boolean;
+  annualRefreshValue?: number;
+  onAnnualRefreshValueChange?: (v: number) => void;
+  refreshStartsYear?: number;
+  onRefreshStartsYearChange?: (v: number) => void;
 }
 
 type BonusMode = '$' | '%';
 type EquityMode = 'annual' | 'total';
 
-const num = (v: number | null | undefined) => (v == null || v === 0 ? '' : String(v));
 const formatPct = (value: number) =>
   Number(value)
     .toFixed(2)
@@ -55,6 +96,11 @@ const CompensationFields: React.FC<Props> = ({
   equityVestingSchedule,
   onEquityVestingScheduleChange,
   defaultEquityMode = 'annual',
+  showEquityRefresh = false,
+  annualRefreshValue = 0,
+  onAnnualRefreshValueChange,
+  refreshStartsYear = 2,
+  onRefreshStartsYearChange,
 }) => {
   const base = value?.base_salary ?? null;
   const bonus = value?.bonus ?? null;
@@ -160,52 +206,92 @@ const CompensationFields: React.FC<Props> = ({
     emitEquityFromTotal(Number(equityTotal) || 0, next);
   };
 
-  const inputCls =
-    'min-h-11 w-full rounded-lg border border-gray-200 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition sm:text-sm';
   const vestingEditor = (
-    <div className="w-[320px] max-w-[calc(100vw-48px)]">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="w-[340px] max-w-[calc(100vw-48px)] space-y-4">
+      {equityMode === 'total' && (
         <div>
-          <div className="text-xs font-bold uppercase tracking-wide text-gray-500">
-            Vesting schedule
-          </div>
-          <div className="mt-0.5 text-xs text-gray-400">Total {formatPct(vestingTotalPct)}%</div>
-        </div>
-        {Math.round(vestingTotalPct * 100) !== 10000 && (
-          <button
-            type="button"
-            onClick={resetVestingToFull}
-            className="min-h-11 rounded-lg px-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-          >
-            Reset 100%
-          </button>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        {vestingSchedule.map((pct, index) => (
-          <label key={index} className="flex min-w-0 items-center gap-2">
-            <span className="w-7 shrink-0 text-xs font-bold uppercase tracking-wide text-gray-500">
-              Y{index + 1}
-            </span>
-            <div className="flex h-10 min-w-0 flex-1 items-center rounded-lg border border-gray-200 bg-white px-2 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={formatPct(pct)}
-                onChange={(e) => updateVestingSchedule(index, e.target.value)}
-                className="min-w-0 flex-1 border-0 bg-transparent text-right text-sm font-semibold tabular-nums text-gray-900 focus:outline-none"
-              />
-              <span className="shrink-0 pl-1 text-sm font-medium text-gray-400">%</span>
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <div className={FIELD_LABEL_CLASS}>Vesting schedule</div>
+              <div className="mt-0.5 text-[11px] text-gray-400">
+                Total {formatPct(vestingTotalPct)}% · Y1 ${yearOneEquity.toLocaleString()}
+              </div>
             </div>
-          </label>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
-        <span className="text-xs text-gray-400">Year 1: ${yearOneEquity.toLocaleString()}</span>
+            {Math.round(vestingTotalPct * 100) !== 10000 && (
+              <button
+                type="button"
+                onClick={resetVestingToFull}
+                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
+              >
+                Reset 100%
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {vestingSchedule.map((pct, index) => (
+              <label key={index} className="flex min-w-0 items-center gap-2">
+                <span className="w-6 shrink-0 text-[11px] font-bold uppercase text-gray-500">
+                  Y{index + 1}
+                </span>
+                <UnitNumberInput
+                  unit="%"
+                  min={0}
+                  max={100}
+                  value={pct || null}
+                  onChange={(next) => updateVestingSchedule(index, String(next ?? 0))}
+                  className="min-w-0 flex-1"
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showEquityRefresh && (
+        <div className={equityMode === 'total' ? 'border-t border-gray-100 pt-3' : undefined}>
+          <div className={FIELD_LABEL_CLASS}>Annual refresh</div>
+          <p className="mt-0.5 mb-2 text-[11px] leading-4 text-gray-400">
+            A new grant each year, vesting evenly over four years so they stack. Leave at 0 to model
+            the initial grant only.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="min-w-0">
+              <span className="mb-1 block text-[10px] font-semibold uppercase text-gray-400">
+                Grant value
+              </span>
+              <UnitNumberInput
+                unit="$"
+                min={0}
+                value={annualRefreshValue || null}
+                placeholder="0"
+                onChange={(next) => onAnnualRefreshValueChange?.(next ?? 0)}
+              />
+            </label>
+            <label className="min-w-0">
+              <span className="mb-1 block text-[10px] font-semibold uppercase text-gray-400">
+                Starts
+              </span>
+              <select
+                value={refreshStartsYear}
+                disabled={annualRefreshValue <= 0}
+                onChange={(event) => onRefreshStartsYearChange?.(Number(event.target.value) || 2)}
+                className={CONTROL_CLASS}
+              >
+                <option value={1}>Year 1</option>
+                <option value={2}>Year 2</option>
+                <option value={3}>Year 3</option>
+                <option value={4}>Year 4</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end border-t border-gray-100 pt-2">
         <button
           type="button"
           onClick={() => setIsVestingOpen(false)}
-          className="min-h-11 rounded-lg px-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 hover:bg-gray-50"
         >
           Done
         </button>
@@ -213,144 +299,114 @@ const CompensationFields: React.FC<Props> = ({
     </div>
   );
 
+  const equityHint =
+    equityMode === 'total'
+      ? `Schedule ${formatPct(vestingTotalPct)}% · Y1 $${yearOneEquity.toLocaleString()}`
+      : annualRefreshValue > 0
+        ? `Refresh $${Math.round(annualRefreshValue).toLocaleString()}/yr from Y${refreshStartsYear}`
+        : 'Vesting & refresh';
+
+  const showConfigure = equityMode === 'total' || showEquityRefresh;
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-3">
       {/* Base Salary */}
-      <div>
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-          Base Salary
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-          <input
-            type="number"
-            min={0}
-            step={1000}
-            value={num(base)}
-            onChange={(e) => handleBaseChange(e.target.value)}
-            placeholder="e.g. 150000"
-            className={`${inputCls} pl-6`}
-          />
+      <div className="min-w-0">
+        <div className={FIELD_HEADER_CLASS}>
+          <label className={FIELD_LABEL_CLASS}>Base Salary</label>
         </div>
+        <UnitNumberInput
+          unit="$"
+          min={0}
+          step={1000}
+          value={base ?? null}
+          onChange={(value) => handleBaseChange(value == null ? '' : String(value))}
+          placeholder="e.g. 150000"
+        />
+        <div className={FIELD_HINT_CLASS} />
       </div>
 
       {/* Bonus */}
-      <div>
-        <div className="flex justify-between items-center mb-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Bonus
-          </label>
-          <button
-            type="button"
-            onClick={handleBonusToggle}
-            className="min-h-11 rounded-lg px-2 text-[11px] font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 sm:min-h-0 sm:px-0 sm:text-[10px]"
-          >
-            {bonusMode === '$' ? '% of base' : '$ amount'}
-          </button>
+      <div className="min-w-0">
+        <div className={FIELD_HEADER_CLASS}>
+          <label className={FIELD_LABEL_CLASS}>Bonus</label>
+          <ModeToggle
+            value={bonusMode}
+            onChange={(next) => next !== bonusMode && handleBonusToggle()}
+            options={[
+              { label: '$', value: '$' },
+              { label: '% of base', value: '%' },
+            ]}
+          />
         </div>
         {bonusMode === '%' ? (
-          <div>
-            <div className="relative">
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                value={bonusPct}
-                onChange={(e) => {
-                  const pct = e.target.value;
-                  setBonusPct(pct);
-                  emit({ bonus: ((Number(pct) || 0) / 100) * (base ?? 0) });
-                }}
-                placeholder="e.g. 15"
-                className={`${inputCls} pr-7`}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                %
-              </span>
-            </div>
-            {bonus != null && (
-              <p className="text-[11px] text-gray-400 mt-1">
-                ≈ ${Math.round(bonus).toLocaleString()}
-              </p>
-            )}
-          </div>
+          <UnitNumberInput
+            unit="%"
+            min={0}
+            step={0.5}
+            value={bonusPct === '' ? null : Number(bonusPct)}
+            onChange={(value) => {
+              setBonusPct(value == null ? '' : String(value));
+              emit({ bonus: ((value ?? 0) / 100) * (base ?? 0) });
+            }}
+            placeholder="e.g. 15"
+          />
         ) : (
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              $
-            </span>
-            <input
-              type="number"
-              min={0}
-              step={1000}
-              value={num(bonus)}
-              onChange={(e) =>
-                emit({ bonus: e.target.value === '' ? null : Number(e.target.value) })
-              }
-              placeholder="e.g. 20000"
-              className={`${inputCls} pl-6`}
-            />
-          </div>
+          <UnitNumberInput
+            unit="$"
+            min={0}
+            step={1000}
+            value={bonus ?? null}
+            onChange={(value) => emit({ bonus: value })}
+            placeholder="e.g. 20000"
+          />
         )}
+        <div className={`${FIELD_HINT_CLASS} text-gray-400`}>
+          {bonusMode === '%' && bonus != null && (
+            <span className="truncate">= ${Math.round(bonus).toLocaleString()}/yr</span>
+          )}
+        </div>
       </div>
 
       {/* Equity / RSU */}
-      <div>
-        <div className="flex justify-between items-center mb-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Equity / RSU
-          </label>
-          <div className="flex items-center gap-1 text-[10px] font-medium">
-            <button
-              type="button"
-              onClick={() => handleEquityToggle('annual')}
-              className={`min-h-11 min-w-11 rounded-lg px-2 sm:min-h-0 sm:min-w-0 sm:px-0 ${
-                equityMode === 'annual'
-                  ? 'bg-blue-50 text-blue-600 sm:bg-transparent'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:hover:bg-transparent'
-              }`}
-            >
-              /yr
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              type="button"
-              onClick={() => handleEquityToggle('total')}
-              className={`min-h-11 min-w-11 rounded-lg px-2 sm:min-h-0 sm:min-w-0 sm:px-0 ${
-                equityMode === 'total'
-                  ? 'bg-blue-50 text-blue-600 sm:bg-transparent'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:hover:bg-transparent'
-              }`}
-            >
-              total
-            </button>
-          </div>
+      <div className="min-w-0">
+        <div className={FIELD_HEADER_CLASS}>
+          <label className={FIELD_LABEL_CLASS}>Equity / RSU</label>
+          <ModeToggle
+            value={equityMode}
+            onChange={(next) => handleEquityToggle(next as EquityMode)}
+            options={[
+              { label: '/yr', value: 'annual' },
+              { label: 'total', value: 'total' },
+            ]}
+          />
         </div>
         {equityMode === 'total' ? (
-          <div className="space-y-1.5">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                step={10000}
-                value={equityTotal}
-                onChange={(e) => {
-                  const total = e.target.value;
-                  setEquityTotal(total);
-                  emitEquityFromTotal(Number(total) || 0, vestingSchedule);
-                }}
-                placeholder="Total grant"
-                className={`${inputCls} pl-6`}
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <p className="min-w-0 truncate text-[11px] leading-5 text-gray-400">
-                Schedule totals {formatPct(vestingTotalPct)}% · Y1 ${yearOneEquity.toLocaleString()}
-              </p>
+          <UnitNumberInput
+            unit="$"
+            min={0}
+            step={10000}
+            value={equityTotal === '' ? null : Number(equityTotal)}
+            onChange={(value) => {
+              setEquityTotal(value == null ? '' : String(value));
+              emitEquityFromTotal(value ?? 0, vestingSchedule);
+            }}
+            placeholder="Total grant"
+          />
+        ) : (
+          <UnitNumberInput
+            unit="$"
+            min={0}
+            step={1000}
+            value={equity ?? null}
+            onChange={(value) => emit({ equity: value })}
+            placeholder="Annual value"
+          />
+        )}
+        <div className={`${FIELD_HINT_CLASS} text-gray-400`}>
+          {showConfigure ? (
+            <>
+              <span className="min-w-0 truncate">{equityHint}</span>
               <Popover
                 trigger="click"
                 placement="bottomRight"
@@ -360,31 +416,14 @@ const CompensationFields: React.FC<Props> = ({
               >
                 <button
                   type="button"
-                  className="min-h-11 shrink-0 rounded-lg px-2 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                  className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 hover:bg-blue-50"
                 >
                   Configure
                 </button>
               </Popover>
-            </div>
-          </div>
-        ) : (
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              $
-            </span>
-            <input
-              type="number"
-              min={0}
-              step={1000}
-              value={num(equity)}
-              onChange={(e) =>
-                emit({ equity: e.target.value === '' ? null : Number(e.target.value) })
-              }
-              placeholder="Annual value"
-              className={`${inputCls} pl-6`}
-            />
-          </div>
-        )}
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );

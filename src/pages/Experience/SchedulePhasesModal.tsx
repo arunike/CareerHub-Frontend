@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, DatePicker, Input, Switch, Popconfirm, Tooltip, InputNumber, message } from 'antd';
+import { Button, DatePicker, Input, Switch, Popconfirm, Tooltip, message } from 'antd';
 import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
@@ -11,6 +11,7 @@ import {
 import dayjs, { type Dayjs } from 'dayjs';
 import type { SchedulePhase } from '../../types';
 import { buildHourlyCompensationSnapshot } from './compensation';
+import UnitNumberInput from '../../components/UnitNumberInput';
 
 const { TextArea } = Input;
 
@@ -630,9 +631,8 @@ const SchedulePhasesModal: React.FC<Props> = ({
             <div className="grid grid-cols-1 gap-3 border-t border-emerald-100 pt-3 sm:grid-cols-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Hourly Rate</label>
-                <InputNumber
-                  className="w-full"
-                  prefix="$"
+                <UnitNumberInput
+                  unit="$"
                   placeholder="e.g. 45"
                   value={form.hourly_rate}
                   onChange={(v) => setForm((f) => ({ ...f, hourly_rate: v }))}
@@ -640,8 +640,8 @@ const SchedulePhasesModal: React.FC<Props> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Hours / Day</label>
-                <InputNumber
-                  className="w-full"
+                <UnitNumberInput
+                  unit="hrs"
                   placeholder="e.g. 8"
                   value={form.hours_per_day}
                   onChange={(v) => setForm((f) => ({ ...f, hours_per_day: v }))}
@@ -649,8 +649,8 @@ const SchedulePhasesModal: React.FC<Props> = ({
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Days / Week</label>
-                <InputNumber
-                  className="w-full"
+                <UnitNumberInput
+                  unit="days"
                   placeholder="e.g. 5"
                   value={form.working_days_per_week}
                   onChange={(v) => setForm((f) => ({ ...f, working_days_per_week: v }))}

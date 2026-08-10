@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Select, DatePicker, Input, Tag, Tooltip, Popconfirm } from 'antd';
 import Modal from '../../components/MobileModal';
+import UnitNumberInput from '../../components/UnitNumberInput';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TrophyOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { RaiseEntry } from '../../types';
@@ -186,13 +187,11 @@ const RaiseHistoryModal: React.FC<Props> = ({
   const beforeInput = (key: keyof Omit<RaiseEntry, 'id'>, label: string) => (
     <div>
       <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      <Input
-        prefix="$"
-        type="number"
+      <UnitNumberInput
+        unit="$"
         min={0}
-        value={(form[key] as number) || ''}
-        onChange={(e) => setF(key, Number(e.target.value))}
-        className="w-full"
+        value={(form[key] as number) || null}
+        onChange={(value) => setF(key, value ?? 0)}
       />
     </div>
   );
@@ -246,26 +245,21 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
         </div>
         {mode === '$' ? (
-          <Input
-            prefix="$"
-            type="number"
+          <UnitNumberInput
+            unit="$"
             min={0}
-            value={form.base_after || ''}
-            onChange={(e) => setF('base_after', Number(e.target.value))}
-            className="w-full"
+            value={form.base_after || null}
+            onChange={(value) => setF('base_after', value ?? 0)}
           />
         ) : (
-          <Input
-            suffix="%"
-            type="number"
-            value={pctInputs.base}
-            onChange={(e) => {
-              const raw = e.target.value;
-              setPctInputs((pi) => ({ ...pi, base: raw }));
-              const p = parseFloat(raw);
-              if (!isNaN(p)) setF('base_after', Math.round(form.base_before * (1 + p / 100)));
+          <UnitNumberInput
+            unit="%"
+            value={pctInputs.base === '' ? null : Number(pctInputs.base)}
+            onChange={(value) => {
+              setPctInputs((pi) => ({ ...pi, base: value == null ? '' : String(value) }));
+              if (value != null)
+                setF('base_after', Math.round(form.base_before * (1 + value / 100)));
             }}
-            className="w-full"
             placeholder="e.g. 4.2"
           />
         )}
@@ -295,32 +289,26 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
         </div>
         {mode === '$' ? (
-          <Input
-            prefix="$"
-            type="number"
+          <UnitNumberInput
+            unit="$"
             min={0}
-            value={form.bonus_after || ''}
-            onChange={(e) => setF('bonus_after', Number(e.target.value))}
-            className="w-full"
+            value={form.bonus_after || null}
+            onChange={(value) => setF('bonus_after', value ?? 0)}
           />
         ) : (
-          <Input
-            suffix="%"
-            type="number"
-            value={pctInputs.bonus}
-            onChange={(e) => {
-              const raw = e.target.value;
-              setPctInputs((pi) => ({ ...pi, bonus: raw }));
-              const p = parseFloat(raw);
-              if (!isNaN(p)) {
+          <UnitNumberInput
+            unit="%"
+            value={pctInputs.bonus === '' ? null : Number(pctInputs.bonus)}
+            onChange={(value) => {
+              setPctInputs((pi) => ({ ...pi, bonus: value == null ? '' : String(value) }));
+              if (value != null) {
                 if (mode === '%change') {
-                  setF('bonus_after', Math.round(form.bonus_before * (1 + p / 100)));
+                  setF('bonus_after', Math.round(form.bonus_before * (1 + value / 100)));
                 } else {
-                  setF('bonus_after', Math.round((form.base_after * p) / 100));
+                  setF('bonus_after', Math.round((form.base_after * value) / 100));
                 }
               }
             }}
-            className="w-full"
             placeholder={mode === '%ofbase' ? 'e.g. 20' : 'e.g. 5'}
           />
         )}
@@ -352,26 +340,21 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
         </div>
         {mode === '$' ? (
-          <Input
-            prefix="$"
-            type="number"
+          <UnitNumberInput
+            unit="$"
             min={0}
-            value={form.equity_after || ''}
-            onChange={(e) => setF('equity_after', Number(e.target.value))}
-            className="w-full"
+            value={form.equity_after || null}
+            onChange={(value) => setF('equity_after', value ?? 0)}
           />
         ) : (
-          <Input
-            suffix="%"
-            type="number"
-            value={pctInputs.equity}
-            onChange={(e) => {
-              const raw = e.target.value;
-              setPctInputs((pi) => ({ ...pi, equity: raw }));
-              const p = parseFloat(raw);
-              if (!isNaN(p)) setF('equity_after', Math.round(form.equity_before * (1 + p / 100)));
+          <UnitNumberInput
+            unit="%"
+            value={pctInputs.equity === '' ? null : Number(pctInputs.equity)}
+            onChange={(value) => {
+              setPctInputs((pi) => ({ ...pi, equity: value == null ? '' : String(value) }));
+              if (value != null)
+                setF('equity_after', Math.round(form.equity_before * (1 + value / 100)));
             }}
-            className="w-full"
             placeholder="e.g. 4.2"
           />
         )}

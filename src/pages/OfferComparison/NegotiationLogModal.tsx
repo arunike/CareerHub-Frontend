@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, DatePicker, Input, InputNumber, Popconfirm, Select, message } from 'antd';
+import { Button, DatePicker, Input, Popconfirm, Select, message } from 'antd';
+import UnitNumberInput from '../../components/UnitNumberInput';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -297,19 +298,17 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
               {COMPONENT_FIELDS.map((field) => (
                 <div key={field.label} className="grid grid-cols-[64px_1fr_1fr] items-center gap-2">
                   <span className="text-[12px] text-slate-600">{field.label}</span>
-                  <InputNumber
-                    className="w-full"
+                  <UnitNumberInput
+                    unit="$"
                     value={draft[field.asked] as number | null}
                     onChange={(value) => patchDraft({ [field.asked]: value } as Partial<Draft>)}
-                    prefix="$"
                     controls={false}
                     placeholder="—"
                   />
-                  <InputNumber
-                    className="w-full"
+                  <UnitNumberInput
+                    unit="$"
                     value={draft[field.received] as number | null}
                     onChange={(value) => patchDraft({ [field.received]: value } as Partial<Draft>)}
-                    prefix="$"
                     controls={false}
                     placeholder="—"
                   />

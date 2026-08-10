@@ -9,7 +9,7 @@ import {
   computeTaxableBenefitsTotal,
   computeNonTaxableBenefitsTotal,
 } from './calculations';
-import { Select, Popconfirm, Tooltip, InputNumber, Popover, Segmented } from 'antd';
+import { Select, Popconfirm, Tooltip, Popover, Segmented } from 'antd';
 import {
   PlusOutlined,
   DownOutlined,
@@ -39,6 +39,7 @@ import {
 } from './financialScore';
 import AccessibleStarRating from './AccessibleStarRating';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
+import UnitNumberInput from '../../components/UnitNumberInput';
 
 type Props = {
   filteredOffers: Offer[];
@@ -2499,24 +2500,21 @@ const OfferDecisionScorecard = ({
                                 </span>
                               )}
                             </div>
-                            <InputNumber
+                            <UnitNumberInput
+                              unit="%"
                               min={0}
                               max={100}
                               value={weight}
-                              onChange={(val) => {
-                                const nextValue =
-                                  typeof val === 'number' && Number.isFinite(val) ? val : 0;
-                                setWeights((prev) => ({ ...prev, [key]: clamp(nextValue) }));
-                              }}
+                              onChange={(val) =>
+                                setWeights((prev) => ({ ...prev, [key]: clamp(val ?? 0) }))
+                              }
                               className={clsx(
-                                'w-[72px] text-xs font-bold border-none rounded-md text-right [&_.ant-input-number-input]:!font-bold',
+                                'w-[92px] text-xs font-bold text-right [&_.ant-input-number-input]:!font-bold',
                                 isOver
-                                  ? 'bg-rose-50 text-rose-600 [&_.ant-input-number-input]:!text-rose-600'
-                                  : 'bg-sky-50 text-sky-700 [&_.ant-input-number-input]:!text-sky-700'
+                                  ? '[&_.ant-input-number]:!bg-rose-50 [&_.ant-input-number-input]:!text-rose-600'
+                                  : '[&_.ant-input-number]:!bg-sky-50 [&_.ant-input-number-input]:!text-sky-700'
                               )}
                               controls={false}
-                              formatter={(value) => `${value}%`}
-                              parser={(value) => Number(value?.replace('%', ''))}
                             />
                           </div>
                         );

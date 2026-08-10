@@ -2,6 +2,7 @@ import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
 import { useCompanyList } from '../../../hooks/useCompanyList';
 import ApplicationSelect from '../../../components/ApplicationSelect';
+import { CONTROL_CLASS } from '../../../components/formControls';
 
 type IdentitySectionProps = {
   showLinkApplication: boolean;
@@ -126,7 +127,7 @@ const IdentitySection = ({
                   type="text"
                   value={level}
                   onChange={(e) => onLevelChange(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className={CONTROL_CLASS}
                   placeholder="e.g. L5, Senior, Staff, E5, IC3"
                 />
               </div>

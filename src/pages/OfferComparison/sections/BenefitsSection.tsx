@@ -1,5 +1,8 @@
 import type { BenefitItem } from '../calculations';
 import { computeTaxableBenefitsTotal, computeNonTaxableBenefitsTotal } from '../calculations';
+import UnitNumberInput from '../../../components/UnitNumberInput';
+import { CloseOutlined } from '@ant-design/icons';
+import { CONTROL_CLASS } from '../../../components/formControls';
 
 type BenefitsSectionProps = {
   benefitItems: BenefitItem[];
@@ -73,6 +76,9 @@ type BenefitsSectionProps = {
   // Tax rate for after-tax benefit calculation
   taxRate?: number;
 };
+
+const toNum = (value: number | string | null | undefined) =>
+  value === '' || value == null ? null : Number(value);
 
 const BenefitsSection = ({
   benefitItems,
@@ -285,34 +291,23 @@ const BenefitsSection = ({
           <div className="flex flex-col">
             <div className="h-8 flex items-end mb-1">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                Medical Premium per Paycheck ($)
+                Medical Premium per Paycheck
               </label>
             </div>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                step="any"
-                value={
-                  medicalPaycheckVal === undefined || medicalPaycheckVal === null
-                    ? ''
-                    : medicalPaycheckVal
-                }
-                onChange={(e) => {
-                  const val = e.target.value === '' ? '' : Number(e.target.value);
-                  onHealthPremiumPaycheckChange?.(val);
-                  const numVal = val === '' ? 0 : Number(val);
-                  onHealthPremiumMonthlyChange?.(
-                    Math.round(((numVal * numPaychecks) / 12) * 100) / 100
-                  );
-                }}
-                placeholder="e.g. 54"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm font-medium focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              step={0.01}
+              value={toNum(medicalPaycheckVal)}
+              onChange={(value) => {
+                onHealthPremiumPaycheckChange?.(value ?? '');
+                const numVal = value ?? 0;
+                onHealthPremiumMonthlyChange?.(
+                  Math.round(((numVal * numPaychecks) / 12) * 100) / 100
+                );
+              }}
+              placeholder="e.g. 54"
+            />
             <p className="text-[11px] text-gray-400 mt-1">
               = ${Math.round(annualHealthPremium).toLocaleString()}/yr ($
               {Math.round(monthlyHealthEquiv).toLocaleString()}/mo equiv)
@@ -330,7 +325,7 @@ const BenefitsSection = ({
               value={healthPlanType || ''}
               onChange={(e) => onHealthPlanTypeChange?.(e.target.value)}
               placeholder="e.g. HealthSelect EPO, Kaiser HMO, HDHP"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
+              className={CONTROL_CLASS}
             />
           </div>
 
@@ -346,7 +341,7 @@ const BenefitsSection = ({
                 <select
                   value={dependentCoverageTier || 'EMPLOYEE_SPOUSE'}
                   onChange={(e) => onDependentCoverageTierChange?.(e.target.value)}
-                  className="w-full rounded-md border border-indigo-300 bg-white px-2 py-1.5 text-xs text-slate-800 focus:ring-1 focus:ring-indigo-500"
+                  className={`${CONTROL_CLASS} border-indigo-200 bg-indigo-50/30`}
                 >
                   <option value="EMPLOYEE_SPOUSE">Employee + Spouse</option>
                   <option value="EMPLOYEE_CHILDREN">Employee + Child(ren)</option>
@@ -357,32 +352,17 @@ const BenefitsSection = ({
               <div className="md:col-span-1 flex flex-col">
                 <div className="h-8 flex items-end mb-1">
                   <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide">
-                    Dependent Medical Premium Add-on per Paycheck ($)
+                    Dependent Medical Premium Add-on per Paycheck
                   </label>
                 </div>
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={
-                      dependentHealthPremiumPaycheck === undefined ||
-                      dependentHealthPremiumPaycheck === null
-                        ? ''
-                        : dependentHealthPremiumPaycheck
-                    }
-                    onChange={(e) =>
-                      onDependentHealthPremiumPaycheckChange?.(
-                        e.target.value === '' ? '' : Number(e.target.value)
-                      )
-                    }
-                    placeholder="e.g. 140"
-                    className="w-full rounded-md border border-indigo-300 bg-indigo-50/30 px-2 py-1.5 pl-5 text-sm focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
+                <UnitNumberInput
+                  unit="$"
+                  min={0}
+                  step={0.01}
+                  value={toNum(dependentHealthPremiumPaycheck)}
+                  onChange={(value) => onDependentHealthPremiumPaycheckChange?.(value ?? '')}
+                  placeholder="e.g. 140"
+                />
               </div>
             </>
           )}
@@ -390,51 +370,31 @@ const BenefitsSection = ({
           <div className="flex flex-col">
             <div className="h-8 flex items-end mb-1">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                Individual / Base Deductible ($)
+                Individual / Base Deductible
               </label>
             </div>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={
-                  healthDeductible === undefined || healthDeductible === null
-                    ? ''
-                    : healthDeductible
-                }
-                onChange={(e) =>
-                  onHealthDeductibleChange?.(e.target.value === '' ? '' : Number(e.target.value))
-                }
-                placeholder="e.g. 1500"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(healthDeductible)}
+              onChange={(value) => onHealthDeductibleChange?.(value ?? '')}
+              placeholder="e.g. 1500"
+            />
           </div>
 
           <div className="flex flex-col">
             <div className="h-8 flex items-end mb-1">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                Individual Out-of-Pocket Max ($)
+                Individual Out-of-Pocket Max
               </label>
             </div>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={healthOopMax === undefined || healthOopMax === null ? '' : healthOopMax}
-                onChange={(e) =>
-                  onHealthOopMaxChange?.(e.target.value === '' ? '' : Number(e.target.value))
-                }
-                placeholder="e.g. 3300"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(healthOopMax)}
+              onChange={(value) => onHealthOopMaxChange?.(value ?? '')}
+              placeholder="e.g. 3300"
+            />
           </div>
 
           {/* Conditional Family Deductible & Family OOP Max */}
@@ -443,59 +403,31 @@ const BenefitsSection = ({
               <div className="flex flex-col">
                 <div className="h-8 flex items-end mb-1">
                   <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide">
-                    Family Deductible ($)
+                    Family Deductible
                   </label>
                 </div>
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={
-                      healthFamilyDeductible === undefined || healthFamilyDeductible === null
-                        ? ''
-                        : healthFamilyDeductible
-                    }
-                    onChange={(e) =>
-                      onHealthFamilyDeductibleChange?.(
-                        e.target.value === '' ? '' : Number(e.target.value)
-                      )
-                    }
-                    placeholder="e.g. 3000"
-                    className="w-full rounded-md border border-indigo-200 bg-indigo-50/30 px-2 py-1.5 pl-5 text-sm"
-                  />
-                </div>
+                <UnitNumberInput
+                  unit="$"
+                  min={0}
+                  value={toNum(healthFamilyDeductible)}
+                  onChange={(value) => onHealthFamilyDeductibleChange?.(value ?? '')}
+                  placeholder="e.g. 3000"
+                />
               </div>
 
               <div className="flex flex-col">
                 <div className="h-8 flex items-end mb-1">
                   <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide">
-                    Family Out-of-Pocket Max ($)
+                    Family Out-of-Pocket Max
                   </label>
                 </div>
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={
-                      healthFamilyOopMax === undefined || healthFamilyOopMax === null
-                        ? ''
-                        : healthFamilyOopMax
-                    }
-                    onChange={(e) =>
-                      onHealthFamilyOopMaxChange?.(
-                        e.target.value === '' ? '' : Number(e.target.value)
-                      )
-                    }
-                    placeholder="e.g. 6600"
-                    className="w-full rounded-md border border-indigo-200 bg-indigo-50/30 px-2 py-1.5 pl-5 text-sm"
-                  />
-                </div>
+                <UnitNumberInput
+                  unit="$"
+                  min={0}
+                  value={toNum(healthFamilyOopMax)}
+                  onChange={(value) => onHealthFamilyOopMaxChange?.(value ?? '')}
+                  placeholder="e.g. 6600"
+                />
               </div>
             </>
           )}
@@ -503,84 +435,46 @@ const BenefitsSection = ({
           <div className="flex flex-col">
             <div className="h-8 flex items-end mb-1">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                HSA Employer Contribution ($/yr)
+                HSA Employer Contribution / yr
               </label>
             </div>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={
-                  hsaEmployerContribution === undefined || hsaEmployerContribution === null
-                    ? ''
-                    : hsaEmployerContribution
-                }
-                onChange={(e) =>
-                  onHsaEmployerContributionChange?.(
-                    e.target.value === '' ? '' : Number(e.target.value)
-                  )
-                }
-                placeholder="e.g. 1000"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(hsaEmployerContribution)}
+              onChange={(value) => onHsaEmployerContributionChange?.(value ?? '')}
+              placeholder="e.g. 1000"
+            />
           </div>
 
           <div className="flex flex-col">
             <div className="h-8 flex items-end mb-1">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                Primary Care Copay ($)
+                Primary Care Copay
               </label>
             </div>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={
-                  healthPcpCopay === undefined || healthPcpCopay === null ? '' : healthPcpCopay
-                }
-                onChange={(e) =>
-                  onHealthPcpCopayChange?.(e.target.value === '' ? '' : Number(e.target.value))
-                }
-                placeholder="e.g. 20"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(healthPcpCopay)}
+              onChange={(value) => onHealthPcpCopayChange?.(value ?? '')}
+              placeholder="e.g. 20"
+            />
           </div>
 
           <div className="flex flex-col">
             <div className="h-8 flex items-end mb-1">
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                Specialist Copay ($)
+                Specialist Copay
               </label>
             </div>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={
-                  healthSpecialistCopay === undefined || healthSpecialistCopay === null
-                    ? ''
-                    : healthSpecialistCopay
-                }
-                onChange={(e) =>
-                  onHealthSpecialistCopayChange?.(
-                    e.target.value === '' ? '' : Number(e.target.value)
-                  )
-                }
-                placeholder="e.g. 45"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(healthSpecialistCopay)}
+              onChange={(value) => onHealthSpecialistCopayChange?.(value ?? '')}
+              placeholder="e.g. 45"
+            />
           </div>
         </div>
       </div>
@@ -600,35 +494,23 @@ const BenefitsSection = ({
               value={dentalPlanName || ''}
               onChange={(e) => onDentalPlanNameChange?.(e.target.value)}
               placeholder="e.g. Delta Dental Plus"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+              className={CONTROL_CLASS}
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Dental Premium per Paycheck ($)
+              Dental Premium per Paycheck
             </label>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={
-                  dentalPaycheckVal === undefined || dentalPaycheckVal === null
-                    ? ''
-                    : dentalPaycheckVal
-                }
-                onChange={(e) => {
-                  const val = e.target.value === '' ? '' : Number(e.target.value);
-                  onDentalPremiumPaycheckChange?.(val);
-                  const numVal = val === '' ? 0 : Number(val);
-                  onDentalMonthlyPremiumChange?.((numVal * numPaychecks) / 12);
-                }}
-                placeholder="e.g. 10"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(dentalPaycheckVal)}
+              onChange={(value) => {
+                onDentalPremiumPaycheckChange?.(value ?? '');
+                onDentalMonthlyPremiumChange?.(((value ?? 0) * numPaychecks) / 12);
+              }}
+              placeholder="e.g. 10"
+            />
             <p className="text-[11px] text-gray-400 mt-1">
               = ${Math.round(annualDentalPremium).toLocaleString()}/yr
             </p>
@@ -636,64 +518,39 @@ const BenefitsSection = ({
           {hasDependents && (
             <div>
               <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">
-                Dependent Dental Add-on per Paycheck ($)
+                Dependent Dental Add-on per Paycheck
               </label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                  $
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  value={
-                    dependentDentalPremiumPaycheck === undefined ||
-                    dependentDentalPremiumPaycheck === null
-                      ? ''
-                      : dependentDentalPremiumPaycheck
-                  }
-                  onChange={(e) =>
-                    onDependentDentalPremiumPaycheckChange?.(
-                      e.target.value === '' ? '' : Number(e.target.value)
-                    )
-                  }
-                  placeholder="e.g. 15"
-                  className="w-full rounded-md border border-indigo-200 bg-indigo-50/40 px-2 py-1.5 pl-5 text-sm"
-                />
-              </div>
+              <UnitNumberInput
+                unit="$"
+                min={0}
+                value={toNum(dependentDentalPremiumPaycheck)}
+                onChange={(value) => onDependentDentalPremiumPaycheckChange?.(value ?? '')}
+                placeholder="e.g. 15"
+              />
             </div>
           )}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Annual Max Benefit ($)
+              Annual Max Benefit
             </label>
-            <input
-              type="number"
+            <UnitNumberInput
+              unit="$"
               min={0}
-              value={
-                dentalAnnualMax === undefined || dentalAnnualMax === null ? '' : dentalAnnualMax
-              }
-              onChange={(e) =>
-                onDentalAnnualMaxChange?.(e.target.value === '' ? '' : Number(e.target.value))
-              }
+              value={toNum(dentalAnnualMax)}
+              onChange={(value) => onDentalAnnualMaxChange?.(value ?? '')}
               placeholder="e.g. 2500"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Deductible ($)
+              Deductible
             </label>
-            <input
-              type="number"
+            <UnitNumberInput
+              unit="$"
               min={0}
-              value={
-                dentalDeductible === undefined || dentalDeductible === null ? '' : dentalDeductible
-              }
-              onChange={(e) =>
-                onDentalDeductibleChange?.(e.target.value === '' ? '' : Number(e.target.value))
-              }
+              value={toNum(dentalDeductible)}
+              onChange={(value) => onDentalDeductibleChange?.(value ?? '')}
               placeholder="e.g. 50"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
             />
           </div>
         </div>
@@ -714,35 +571,23 @@ const BenefitsSection = ({
               value={visionPlanName || ''}
               onChange={(e) => onVisionPlanNameChange?.(e.target.value)}
               placeholder="e.g. VSP Vision Plus"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+              className={CONTROL_CLASS}
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Vision Premium per Paycheck ($)
+              Vision Premium per Paycheck
             </label>
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                $
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={
-                  visionPaycheckVal === undefined || visionPaycheckVal === null
-                    ? ''
-                    : visionPaycheckVal
-                }
-                onChange={(e) => {
-                  const val = e.target.value === '' ? '' : Number(e.target.value);
-                  onVisionPremiumPaycheckChange?.(val);
-                  const numVal = val === '' ? 0 : Number(val);
-                  onVisionMonthlyPremiumChange?.((numVal * numPaychecks) / 12);
-                }}
-                placeholder="e.g. 4"
-                className="w-full rounded-md border border-gray-300 px-2 py-1.5 pl-5 text-sm"
-              />
-            </div>
+            <UnitNumberInput
+              unit="$"
+              min={0}
+              value={toNum(visionPaycheckVal)}
+              onChange={(value) => {
+                onVisionPremiumPaycheckChange?.(value ?? '');
+                onVisionMonthlyPremiumChange?.(((value ?? 0) * numPaychecks) / 12);
+              }}
+              placeholder="e.g. 4"
+            />
             <p className="text-[11px] text-gray-400 mt-1">
               = ${Math.round(annualVisionPremium).toLocaleString()}/yr
             </p>
@@ -750,70 +595,39 @@ const BenefitsSection = ({
           {hasDependents && (
             <div>
               <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">
-                Dependent Vision Add-on per Paycheck ($)
+                Dependent Vision Add-on per Paycheck
               </label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                  $
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  value={
-                    dependentVisionPremiumPaycheck === undefined ||
-                    dependentVisionPremiumPaycheck === null
-                      ? ''
-                      : dependentVisionPremiumPaycheck
-                  }
-                  onChange={(e) =>
-                    onDependentVisionPremiumPaycheckChange?.(
-                      e.target.value === '' ? '' : Number(e.target.value)
-                    )
-                  }
-                  placeholder="e.g. 5"
-                  className="w-full rounded-md border border-indigo-200 bg-indigo-50/40 px-2 py-1.5 pl-5 text-sm"
-                />
-              </div>
+              <UnitNumberInput
+                unit="$"
+                min={0}
+                value={toNum(dependentVisionPremiumPaycheck)}
+                onChange={(value) => onDependentVisionPremiumPaycheckChange?.(value ?? '')}
+                placeholder="e.g. 5"
+              />
             </div>
           )}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Frames Allowance ($)
+              Frames Allowance
             </label>
-            <input
-              type="number"
+            <UnitNumberInput
+              unit="$"
               min={0}
-              value={
-                visionFramesAllowance === undefined || visionFramesAllowance === null
-                  ? ''
-                  : visionFramesAllowance
-              }
-              onChange={(e) =>
-                onVisionFramesAllowanceChange?.(e.target.value === '' ? '' : Number(e.target.value))
-              }
+              value={toNum(visionFramesAllowance)}
+              onChange={(value) => onVisionFramesAllowanceChange?.(value ?? '')}
               placeholder="e.g. 250"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Contacts Allowance ($)
+              Contacts Allowance
             </label>
-            <input
-              type="number"
+            <UnitNumberInput
+              unit="$"
               min={0}
-              value={
-                visionContactsAllowance === undefined || visionContactsAllowance === null
-                  ? ''
-                  : visionContactsAllowance
-              }
-              onChange={(e) =>
-                onVisionContactsAllowanceChange?.(
-                  e.target.value === '' ? '' : Number(e.target.value)
-                )
-              }
+              value={toNum(visionContactsAllowance)}
+              onChange={(value) => onVisionContactsAllowanceChange?.(value ?? '')}
               placeholder="e.g. 250"
-              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"
             />
           </div>
         </div>
@@ -828,55 +642,29 @@ const BenefitsSection = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                Employer Match %
+                Employer Match
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={
-                    fortyOneKMatchPercent === undefined || fortyOneKMatchPercent === null
-                      ? ''
-                      : fortyOneKMatchPercent
-                  }
-                  onChange={(e) =>
-                    onFortyOneKMatchPercentChange?.(
-                      e.target.value === '' ? '' : Number(e.target.value)
-                    )
-                  }
-                  placeholder="e.g. 50% or 100%"
-                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 pr-6 text-sm"
-                />
-                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                  %
-                </span>
-              </div>
+              <UnitNumberInput
+                unit="%"
+                min={0}
+                max={100}
+                value={toNum(fortyOneKMatchPercent)}
+                onChange={(value) => onFortyOneKMatchPercentChange?.(value ?? '')}
+                placeholder="e.g. 50% or 100%"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 Max Employee Contribution Matched
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={
-                    fortyOneKMaxMatch === undefined || fortyOneKMaxMatch === null
-                      ? ''
-                      : fortyOneKMaxMatch
-                  }
-                  onChange={(e) =>
-                    onFortyOneKMaxMatchChange?.(e.target.value === '' ? '' : Number(e.target.value))
-                  }
-                  placeholder="e.g. 6% of salary"
-                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 pr-6 text-sm"
-                />
-                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                  %
-                </span>
-              </div>
+              <UnitNumberInput
+                unit="%"
+                min={0}
+                max={100}
+                value={toNum(fortyOneKMaxMatch)}
+                onChange={(value) => onFortyOneKMaxMatchChange?.(value ?? '')}
+                placeholder="e.g. 6% of salary"
+              />
             </div>
           </div>
         </div>
@@ -897,25 +685,23 @@ const BenefitsSection = ({
           </div>
           <div className="space-y-2">
             {benefitItems.map((item) => (
-              <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
+              <div
+                key={item.id}
+                className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_150px_118px_120px_32px]"
+              >
                 <input
                   type="text"
                   value={item.label}
                   onChange={(e) => onUpdateBenefitItem(item.id, { label: e.target.value })}
                   placeholder="e.g. Gym reimbursement"
-                  className="col-span-12 sm:col-span-4 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                  className={CONTROL_CLASS}
                 />
-                <input
-                  type="number"
+                <UnitNumberInput
+                  unit="$"
                   min={0}
-                  value={item.amount === 0 ? '' : item.amount}
+                  value={item.amount || null}
                   placeholder="0"
-                  onChange={(e) =>
-                    onUpdateBenefitItem(item.id, {
-                      amount: e.target.value === '' ? 0 : Number(e.target.value),
-                    })
-                  }
-                  className="col-span-5 sm:col-span-3 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                  onChange={(value) => onUpdateBenefitItem(item.id, { amount: value ?? 0 })}
                 />
                 <select
                   value={item.frequency}
@@ -924,7 +710,7 @@ const BenefitsSection = ({
                       frequency: e.target.value as BenefitItem['frequency'],
                     })
                   }
-                  className="col-span-3 sm:col-span-2 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                  className={CONTROL_CLASS}
                 >
                   <option value="MONTHLY">/month</option>
                   <option value="YEARLY">/year</option>
@@ -939,14 +725,14 @@ const BenefitsSection = ({
                       : 'Tax-free — click to mark as taxable'
                   }
                   onClick={() => onUpdateBenefitItem(item.id, { is_taxable: !item.is_taxable })}
-                  className={`col-span-3 sm:col-span-2 flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+                  className={`flex h-[38px] items-center justify-center gap-1.5 rounded-[9px] border text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                     item.is_taxable
-                      ? 'bg-amber-400/20 text-amber-800 ring-1 ring-amber-300 hover:bg-amber-400/30'
-                      : 'bg-slate-100 text-slate-400 ring-1 ring-slate-200 hover:bg-slate-200 hover:text-slate-600'
+                      ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
                   }`}
                 >
                   <span
-                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                    className={`h-1.5 w-1.5 rounded-full ${
                       item.is_taxable ? 'bg-amber-500' : 'bg-slate-300'
                     }`}
                   />
@@ -955,10 +741,10 @@ const BenefitsSection = ({
                 <button
                   type="button"
                   onClick={() => onRemoveBenefitItem(item.id)}
-                  className="col-span-1 text-red-500 text-sm font-bold flex items-center justify-center hover:bg-red-50 rounded-md py-1.5"
+                  className="flex h-[38px] items-center justify-center rounded-[9px] text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                   aria-label="Remove benefit item"
                 >
-                  ×
+                  <CloseOutlined className="text-xs" />
                 </button>
               </div>
             ))}

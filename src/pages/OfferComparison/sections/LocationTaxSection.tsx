@@ -1,6 +1,7 @@
 import { AutoComplete } from 'antd';
 import { useMemo } from 'react';
 import type { EditableTaxRates, TaxRatePreview } from './types';
+import UnitNumberInput from '../../../components/UnitNumberInput';
 
 type LocationTaxSectionProps = {
   location: string;
@@ -163,15 +164,12 @@ const LocationTaxSection = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Monthly Rent (for this offer)
           </label>
-          <input
-            type="number"
+          <UnitNumberInput
+            unit="$"
             min={0}
-            value={editableMonthlyRent === 0 ? '' : editableMonthlyRent}
+            value={editableMonthlyRent || null}
             placeholder="0"
-            onChange={(e) =>
-              onEditableMonthlyRentChange(e.target.value === '' ? 0 : Number(e.target.value))
-            }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            onChange={(value) => onEditableMonthlyRentChange(value ?? 0)}
           />
         </div>
       )}

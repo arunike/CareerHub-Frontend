@@ -11,12 +11,13 @@ import {
   StopOutlined,
   UnlockOutlined,
 } from '@ant-design/icons';
-import { Button, Tooltip, Form, Input, InputNumber, Select } from 'antd';
+import { Button, Tooltip, Form, Input, Select } from 'antd';
 import Modal from '../../../components/MobileModal';
 import type { PublicBooking, ShareLink } from '../../../types';
 import BulkActionHeader from '../../../components/BulkActionHeader';
 import SelectionCheckbox from '../../../components/SelectionCheckbox';
 import { SCROLL_TO_FIRST_ERROR } from '../../../constants/formDefaults';
+import UnitNumberInput from '../../../components/UnitNumberInput';
 
 type Props = {
   links: ShareLink[];
@@ -538,8 +539,8 @@ const PublicBookingManager = ({
             <Input placeholder="Leave empty to keep current" />
           </Form.Item>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Form.Item name="duration_days" label="Duration (Days)">
-              <InputNumber min={1} max={90} className="w-full" placeholder="Days" />
+            <Form.Item name="duration_days" label="Duration">
+              <UnitNumberInput unit="days" min={1} max={90} placeholder="Days" />
             </Form.Item>
             <Form.Item name="booking_block_minutes" label="Slot Duration">
               <Select
@@ -554,10 +555,10 @@ const PublicBookingManager = ({
             </Form.Item>
           </div>
           <Form.Item name="max_bookings_per_day" label="Daily Booking Limit (0 for no limit)">
-            <InputNumber min={0} max={20} className="w-full" />
+            <UnitNumberInput min={0} max={20} />
           </Form.Item>
-          <Form.Item name="reschedule_cancel_deadline_hours" label="Reschedule/Cancel Cutoff Hours">
-            <InputNumber min={0} max={168} className="w-full" />
+          <Form.Item name="reschedule_cancel_deadline_hours" label="Reschedule/Cancel Cutoff">
+            <UnitNumberInput unit="hrs" min={0} max={168} />
           </Form.Item>
         </Form>
       </Modal>

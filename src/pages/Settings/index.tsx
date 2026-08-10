@@ -70,6 +70,7 @@ import {
   getToneForPaletteColor,
 } from '../../utils/colorPalette';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
+import UnitNumberInput from '../../components/UnitNumberInput';
 
 dayjs.extend(customParseFormat);
 
@@ -1365,13 +1366,13 @@ const Settings: React.FC = () => {
                 htmlFor="settings-default-event-duration"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Default Event Duration (minutes)
+                Default Event Duration
               </label>
               <EditableNumberInput
                 id="settings-default-event-duration"
+                unit="min"
                 min={15}
                 step={15}
-                className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 value={settings.default_event_duration || 60}
                 fallbackValue={60}
                 onCommit={(value) =>
@@ -1416,14 +1417,14 @@ const Settings: React.FC = () => {
                 htmlFor="settings-buffer-time"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Buffer Time (minutes)
+                Buffer Time
               </label>
               <EditableNumberInput
                 id="settings-buffer-time"
+                unit="min"
                 min={0}
                 step={5}
                 ariaDescribedBy="settings-buffer-time-help"
-                className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 value={settings.buffer_time || 0}
                 fallbackValue={0}
                 onCommit={(value) =>
@@ -1474,16 +1475,15 @@ const Settings: React.FC = () => {
                   htmlFor="settings-reminder-start"
                   className="mb-1 block text-sm font-medium text-gray-700"
                 >
-                  Start reminding (days before)
+                  Start reminding, days before
                 </label>
-                <input
+                <UnitNumberInput
                   id="settings-reminder-start"
-                  type="number"
+                  unit="days"
                   min={1}
                   max={60}
                   value={reminderSettings.startDaysBefore}
-                  onChange={(e) => patchReminders({ startDaysBefore: Number(e.target.value) })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  onChange={(value) => patchReminders({ startDaysBefore: value ?? 1 })}
                 />
               </div>
               <div>
@@ -1491,16 +1491,15 @@ const Settings: React.FC = () => {
                   htmlFor="settings-reminder-repeat"
                   className="mb-1 block text-sm font-medium text-gray-700"
                 >
-                  Remind again after (days)
+                  Remind again after
                 </label>
-                <input
+                <UnitNumberInput
                   id="settings-reminder-repeat"
-                  type="number"
+                  unit="days"
                   min={1}
                   max={30}
                   value={reminderSettings.repeatEveryDays}
-                  onChange={(e) => patchReminders({ repeatEveryDays: Number(e.target.value) })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  onChange={(value) => patchReminders({ repeatEveryDays: value ?? 1 })}
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   How long a dismissed reminder stays hidden.
@@ -1511,16 +1510,15 @@ const Settings: React.FC = () => {
                   htmlFor="settings-reminder-duration"
                   className="mb-1 block text-sm font-medium text-gray-700"
                 >
-                  Popup stays for (seconds)
+                  Popup stays for
                 </label>
-                <input
+                <UnitNumberInput
                   id="settings-reminder-duration"
-                  type="number"
+                  unit="sec"
                   min={0}
                   max={120}
                   value={reminderSettings.toastDurationSeconds}
-                  onChange={(e) => patchReminders({ toastDurationSeconds: Number(e.target.value) })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  onChange={(value) => patchReminders({ toastDurationSeconds: value ?? 0 })}
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   Use 0 to keep it on screen until you close it.
@@ -1552,13 +1550,13 @@ const Settings: React.FC = () => {
                 htmlFor="settings-ghosting-threshold"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Ghosting Threshold (Days)
+                Ghosting Threshold
               </label>
               <EditableNumberInput
                 id="settings-ghosting-threshold"
+                unit="days"
                 min={1}
                 ariaDescribedBy="settings-ghosting-threshold-help"
-                className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 value={settings.ghosting_threshold_days || 30}
                 fallbackValue={30}
                 onCommit={(value) =>

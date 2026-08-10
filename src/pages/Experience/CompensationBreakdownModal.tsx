@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import Modal from '../../components/MobileModal';
 import { DollarCircleOutlined } from '@ant-design/icons';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
@@ -8,6 +8,7 @@ import {
   buildHourlyWorkSummary,
   type ExperienceCompensationSnapshot,
 } from './compensation';
+import UnitNumberInput, { type NumberUnit } from '../../components/UnitNumberInput';
 
 type HourlyInputUpdate = {
   hourly_rate: number | null;
@@ -620,7 +621,7 @@ const HourlyBreakdown = ({
                   <InlineNumberInput
                     value={draftTotalEarningsOverride}
                     onChange={setDraftTotalEarningsOverride}
-                    prefix="$"
+                    unit="$"
                     step={0.01}
                     placeholder="Custom total"
                     autoFocus
@@ -870,8 +871,7 @@ const HourlyBreakdown = ({
                     <InlineNumberInput
                       value={draftHourlyRate}
                       onChange={setDraftHourlyRate}
-                      prefix="$"
-                      suffix="/hr"
+                      unit="$/hr"
                       step={0.01}
                       autoFocus
                     />
@@ -899,7 +899,7 @@ const HourlyBreakdown = ({
                     <InlineNumberInput
                       value={draftHoursPerDay}
                       onChange={setDraftHoursPerDay}
-                      suffix="hrs"
+                      unit="hrs"
                       step={0.25}
                       autoFocus
                     />
@@ -916,7 +916,7 @@ const HourlyBreakdown = ({
                     <InlineNumberInput
                       value={draftWorkingDaysPerWeek}
                       onChange={setDraftWorkingDaysPerWeek}
-                      suffix="days"
+                      unit="days"
                       step={0.5}
                       autoFocus
                     />
@@ -938,7 +938,7 @@ const HourlyBreakdown = ({
                     <InlineNumberInput
                       value={draftTotalHoursWorked}
                       onChange={setDraftTotalHoursWorked}
-                      suffix="hrs"
+                      unit="hrs"
                       step={0.25}
                       autoFocus
                     />
@@ -971,7 +971,7 @@ const HourlyBreakdown = ({
                   <InlineNumberInput
                     value={draftOvertimeHours}
                     onChange={setDraftOvertimeHours}
-                    suffix="hrs"
+                    unit="hrs"
                     step={0.25}
                     autoFocus
                   />
@@ -993,8 +993,7 @@ const HourlyBreakdown = ({
                   <InlineNumberInput
                     value={draftOvertimeRate}
                     onChange={setDraftOvertimeRate}
-                    prefix="$"
-                    suffix="/hr"
+                    unit="$/hr"
                     step={0.01}
                     placeholder="Optional custom OT rate"
                     autoFocus
@@ -1012,7 +1011,7 @@ const HourlyBreakdown = ({
                   <InlineNumberInput
                     value={draftOvertimeMultiplier}
                     onChange={setDraftOvertimeMultiplier}
-                    suffix="x"
+                    unit="×"
                     step={0.05}
                     autoFocus
                   />
@@ -1068,28 +1067,25 @@ const EditNotice = ({
 const InlineNumberInput = ({
   value,
   onChange,
-  prefix,
-  suffix,
+  unit,
+  step,
   placeholder,
   autoFocus,
 }: {
   value: string;
   onChange: (value: string) => void;
-  prefix?: string;
-  suffix?: string;
+  unit?: NumberUnit;
   step?: number;
   placeholder?: string;
   autoFocus?: boolean;
 }) => (
-  <Input
-    value={value}
-    onChange={(event) => onChange(event.target.value)}
+  <UnitNumberInput
+    unit={unit}
+    step={step}
+    value={value === '' ? null : Number(value)}
+    onChange={(next) => onChange(next == null ? '' : String(next))}
     onClick={(event) => event.stopPropagation()}
     onFocus={(event) => event.currentTarget.select()}
-    prefix={prefix}
-    suffix={suffix}
-    type="text"
-    inputMode="decimal"
     placeholder={placeholder}
     autoFocus={autoFocus}
     size="large"

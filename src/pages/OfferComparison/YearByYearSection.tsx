@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Segmented, Select } from 'antd';
+import { Segmented } from 'antd';
 import { AimOutlined, SwapRightOutlined } from '@ant-design/icons';
 import YearByYearChart from './YearByYearChart';
+import ProjectionAssumptions from './ProjectionAssumptions';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
-import { getEquityGrowth, PROJECTION_YEARS, type EquityPreset } from './vestingSchedule';
+import { PROJECTION_YEARS } from './vestingSchedule';
 import {
   buildYearByYearProjections,
+  DEFAULT_BASE_GROWTH_PCT,
+  DEFAULT_EQUITY_GROWTH_PCT,
   findCrossover,
   findMatchGap,
   type OfferProjection,
@@ -20,12 +23,6 @@ const formatCurrency = (value: number) =>
   }).format(Number.isFinite(value) ? value : 0);
 
 const YEARS = Array.from({ length: PROJECTION_YEARS }, (_, index) => index + 1);
-
-const EQUITY_PRESETS: { label: string; value: EquityPreset }[] = [
-  { label: 'Downside −20%', value: 'downside' },
-  { label: 'Flat', value: 'base' },
-  { label: 'Upside +25%', value: 'upside' },
-];
 
 const valueFor = (projection: OfferProjection, year: number, basis: ProjectionBasis) => {
   const entry = projection.years[year - 1];
@@ -44,17 +41,19 @@ const YearByYearSection = ({
   display?: 'list' | 'chart';
 }) => {
   const [basis, setBasis] = useState<ProjectionBasis>('gross');
-  const [equityPreset, setEquityPreset] = useState<EquityPreset>('base');
-
-  const equityGrowthPct = getEquityGrowth(equityPreset, 0);
+  const [equityGrowthPct, setEquityGrowthPct] = useState(DEFAULT_EQUITY_GROWTH_PCT);
+  const [baseGrowthPct, setBaseGrowthPct] = useState(DEFAULT_BASE_GROWTH_PCT);
 
   const projections = useMemo(
-    () => buildYearByYearProjections(scenarioRows, equityGrowthPct),
-    [scenarioRows, equityGrowthPct]
+    () => buildYearByYearProjections(scenarioRows, equityGrowthPct, baseGrowthPct),
+    [scenarioRows, equityGrowthPct, baseGrowthPct]
   );
 
   const crossover = useMemo(() => findCrossover(projections, basis), [projections, basis]);
-  const matchGap = useMemo(() => findMatchGap(projections), [projections]);
+  const matchGap = useMemo(
+    () => findMatchGap(projections, baseGrowthPct),
+    [projections, baseGrowthPct]
+  );
 
   // Highest four-year total sets the bar scale, so every row is read against the best.
   const maxTotal = useMemo(
@@ -81,16 +80,15 @@ const YearByYearSection = ({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs leading-5 text-slate-500">
           Sign-on and relocation count in year 1 only. Equity follows each grant&apos;s vesting
-          schedule.
+          schedule. Base and bonus grow {baseGrowthPct}% a year — adjust both rates under{' '}
+          <span className="font-medium text-slate-600">Equity / Base</span>.
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <Select
-            size="small"
-            value={equityPreset}
-            onChange={setEquityPreset}
-            options={EQUITY_PRESETS}
-            className="min-w-[130px]"
-            aria-label="Equity market scenario"
+          <ProjectionAssumptions
+            equityGrowthPct={equityGrowthPct}
+            baseGrowthPct={baseGrowthPct}
+            onEquityGrowthChange={setEquityGrowthPct}
+            onBaseGrowthChange={setBaseGrowthPct}
           />
           <Segmented
             size="small"
@@ -125,7 +123,8 @@ const YearByYearSection = ({
             or <span className="font-semibold">+{formatCurrency(matchGap.extraGrant)} equity</span>{' '}
             — a {formatCurrency(matchGap.totalGap)} gap.
             <span className="mt-1 block text-[11px] text-emerald-700/80">
-              Gross figures, so they are ready to use as a counter-ask.
+              Gross figures, so they are ready to use as a counter-ask. The base ask is a year-1
+              raise that then compounds at {baseGrowthPct}% like the rest.
             </span>
           </p>
         </div>

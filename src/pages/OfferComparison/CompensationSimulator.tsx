@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { InputNumber, Select } from 'antd';
+import { Select } from 'antd';
 import {
   BankOutlined,
   CarOutlined,
@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { isPastRole } from './calculations';
 import { buildGrossVestingYears, getEquityGrowth, type EquityPreset } from './vestingSchedule';
+import UnitNumberInput from '../../components/UnitNumberInput';
 import CompensationSimulatorMobile from './CompensationSimulatorMobile';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
 
@@ -188,52 +189,48 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
               Custom growth
             </span>
-            <InputNumber
+            <UnitNumberInput
+              unit="%"
               value={customEquityGrowthPct}
-              onChange={(value) => setCustomEquityGrowthPct(Number(value ?? 0))}
+              onChange={(value) => setCustomEquityGrowthPct(value ?? 0)}
               min={-80}
               max={300}
-              addonAfter="%"
               disabled={equityPreset !== 'custom'}
-              className="w-full"
             />
           </label>
           <label className="min-w-0">
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
               Rent override
             </span>
-            <InputNumber
+            <UnitNumberInput
+              unit="$"
               value={rentOverride}
-              onChange={(value) => setRentOverride(value == null ? null : Number(value))}
+              onChange={setRentOverride}
               min={0}
-              prefix="$"
               placeholder="Saved"
-              className="w-full"
             />
           </label>
           <label className="min-w-0">
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
               Commute override
             </span>
-            <InputNumber
+            <UnitNumberInput
+              unit="$"
               value={commuteOverride}
-              onChange={(value) => setCommuteOverride(value == null ? null : Number(value))}
+              onChange={setCommuteOverride}
               min={0}
-              prefix="$"
               placeholder="Saved"
-              className="w-full"
             />
           </label>
           <label className="min-w-0">
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
               Food budget
             </span>
-            <InputNumber
+            <UnitNumberInput
+              unit="$"
               value={monthlyFoodBudget}
-              onChange={(value) => setMonthlyFoodBudget(Number(value ?? 0))}
+              onChange={(value) => setMonthlyFoodBudget(value ?? 0)}
               min={0}
-              prefix="$"
-              className="w-full"
             />
           </label>
         </div>

@@ -30,6 +30,7 @@ import { getMediaUrl } from '../../lib/runtimeConfig';
 import { LogoCropModal } from './LogoCropModal';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import { useCompanyList } from '../../hooks/useCompanyList';
+import UnitNumberInput from '../../components/UnitNumberInput';
 
 interface OfferOption {
   value: number;
@@ -752,14 +753,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                   { required: true, message: 'Please enter hourly rate for this internship' },
                 ]}
               >
-                <Input
-                  prefix="$"
-                  suffix="/hr"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  placeholder="e.g. 45.00"
-                />
+                <UnitNumberInput unit="$/hr" min={0} step={0.01} placeholder="e.g. 45.00" />
               </Form.Item>
 
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">

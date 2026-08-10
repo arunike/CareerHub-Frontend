@@ -62,21 +62,29 @@ export interface CrossoverInsight {
 
 export type ProjectionBasis = 'gross' | 'adjusted';
 
+// Merit/inflation raise assumed for every role, including the current one, so
+// the comparison stays apples-to-apples. Overridable from the assumptions panel.
+export const DEFAULT_BASE_GROWTH_PCT = 3;
+export const DEFAULT_EQUITY_GROWTH_PCT = 0;
+
 const num = (value: unknown) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+// Compounding factor for year N, where year 1 is always the offer letter as written.
+const growthFactor = (growthPct: number, year: number) => Math.pow(1 + growthPct / 100, year - 1);
+
 export const buildOfferProjection = (
   row: ScenarioRow,
-  equityGrowthPct: number
+  equityGrowthPct: number,
+  baseGrowthPct: number = DEFAULT_BASE_GROWTH_PCT
 ): OfferProjection => {
   const offer = row.offer as ProjectionOffer;
   const vesting = buildGrossVestingYears(offer, equityGrowthPct);
 
   const base = num(offer.base_salary);
   const bonus = num(offer.bonus);
-  const recurringCash = base + bonus;
   const signOn = num(offer.sign_on);
   // Per-year sign-on amounts. An empty schedule means the whole thing lands in year 1.
   const signOnByYear =
@@ -92,9 +100,15 @@ export const buildOfferProjection = (
     const signOnThisYear = signOnByYear[index] ?? 0;
     const oneTime = signOnThisYear + (year === 1 ? relocation : 0);
 
+    // Bonus is normally a fixed percentage of base, so it rides the same raise.
+    const raise = growthFactor(baseGrowthPct, year);
+    const yearBase = base * raise;
+    const yearBonus = bonus * raise;
+    const recurringCash = yearBase + yearBonus;
+
     const scenario = calculateScenarioValue({
-      base_salary: base,
-      bonus,
+      base_salary: yearBase,
+      bonus: yearBonus,
       // Relocation is always year 1; the sign-on follows its payout schedule.
       sign_on: signOnThisYear,
       relocation_bonus: year === 1 ? relocation : 0,
@@ -192,8 +206,10 @@ export const findCrossover = (
 
 export const buildYearByYearProjections = (
   rows: ScenarioRow[],
-  equityGrowthPct: number
-): OfferProjection[] => rows.map((row) => buildOfferProjection(row, equityGrowthPct));
+  equityGrowthPct: number,
+  baseGrowthPct: number = DEFAULT_BASE_GROWTH_PCT
+): OfferProjection[] =>
+  rows.map((row) => buildOfferProjection(row, equityGrowthPct, baseGrowthPct));
 
 export interface MatchGap {
   leader: string;
@@ -205,7 +221,10 @@ export interface MatchGap {
   extraGrant: number;
 }
 
-export const findMatchGap = (projections: OfferProjection[]): MatchGap | null => {
+export const findMatchGap = (
+  projections: OfferProjection[],
+  baseGrowthPct: number = DEFAULT_BASE_GROWTH_PCT
+): MatchGap | null => {
   const contenders = projections.filter((projection) => !projection.isCurrent);
   if (contenders.length < 2) return null;
 
@@ -215,11 +234,17 @@ export const findMatchGap = (projections: OfferProjection[]): MatchGap | null =>
   const totalGap = leader.grossTotal - candidate.grossTotal;
   if (totalGap <= 0) return null;
 
+  // A raise negotiated now compounds too, so $1 of year-1 base is worth more than
+  // $4 over four years. Divide by the compounded sum rather than the year count.
+  const compoundedYears = Array.from({ length: PROJECTION_YEARS }, (_, index) =>
+    growthFactor(baseGrowthPct, index + 1)
+  ).reduce((sum, factor) => sum + factor, 0);
+
   return {
     leader: leader.label,
     candidate: candidate.label,
     totalGap,
-    perYearBase: totalGap / PROJECTION_YEARS,
+    perYearBase: compoundedYears > 0 ? totalGap / compoundedYears : totalGap / PROJECTION_YEARS,
     extraGrant: totalGap,
   };
 };

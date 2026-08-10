@@ -22,7 +22,6 @@ import {
   PlusOutlined,
   SearchOutlined,
   FilterOutlined,
-  DollarOutlined,
   GlobalOutlined,
   InboxOutlined,
   LockOutlined,
@@ -92,6 +91,7 @@ import {
 import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import { useCompanyList } from '../../hooks/useCompanyList';
+import SalaryRangeInput from '../../components/SalaryRangeInput';
 
 const { Text, Link } = Typography;
 const { Option } = Select;
@@ -1053,7 +1053,7 @@ const Applications = () => {
         </Col>
         <Col span={12}>
           <Form.Item name="salary_range" label="Salary Range">
-            <Input prefix={<DollarOutlined />} placeholder="150k - 200k" />
+            <SalaryRangeInput />
           </Form.Item>
         </Col>
 
@@ -1640,7 +1640,7 @@ const Applications = () => {
                 </Col>
                 <Col xs={24} sm={12}>
                   <Form.Item name="salary_range" label="Salary">
-                    <Input placeholder="$150k - $180k" />
+                    <SalaryRangeInput />
                   </Form.Item>
                 </Col>
                 <Col span={24}>

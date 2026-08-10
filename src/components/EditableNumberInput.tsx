@@ -1,59 +1,59 @@
 import { useEffect, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import UnitNumberInput, { type NumberUnit } from './UnitNumberInput';
 
 type Props = {
   id?: string;
   value: number;
   onCommit: (value: number) => void;
   min?: number;
+  max?: number;
   step?: number;
   fallbackValue: number;
   ariaDescribedBy?: string;
   className?: string;
   placeholder?: string;
+  unit?: NumberUnit;
 };
 
+// Same unit chip and stepper as every other numeric field, but the value is only
+// pushed upward on blur/Enter so a half-typed number never hits the parent.
 const EditableNumberInput = ({
   id,
   value,
   onCommit,
   min,
+  max,
   step,
   fallbackValue,
   ariaDescribedBy,
   className,
   placeholder,
+  unit,
 }: Props) => {
-  const [draft, setDraft] = useState(String(value ?? fallbackValue));
+  const [draft, setDraft] = useState<number | null>(value ?? fallbackValue);
 
   useEffect(() => {
-    setDraft(String(value ?? fallbackValue));
+    setDraft(value ?? fallbackValue);
   }, [fallbackValue, value]);
 
   const commit = () => {
-    const parsed = Number(draft);
-    const nextValue = Number.isFinite(parsed) && draft.trim() !== '' ? parsed : fallbackValue;
-    const committedValue = min == null ? nextValue : Math.max(min, nextValue);
-    setDraft(String(committedValue));
-    onCommit(committedValue);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.currentTarget.blur();
-    }
+    const next = draft == null ? fallbackValue : draft;
+    const committed = min == null ? next : Math.max(min, next);
+    setDraft(committed);
+    onCommit(committed);
   };
 
   return (
-    <input
+    <UnitNumberInput
       id={id}
-      type="number"
+      unit={unit}
       min={min}
+      max={max}
       step={step}
       value={draft}
-      onChange={(event) => setDraft(event.target.value)}
+      onChange={setDraft}
       onBlur={commit}
-      onKeyDown={handleKeyDown}
+      onPressEnter={commit}
       aria-describedby={ariaDescribedBy}
       className={className}
       placeholder={placeholder}

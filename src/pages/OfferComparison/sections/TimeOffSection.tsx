@@ -1,3 +1,4 @@
+import UnitNumberInput from '../../../components/UnitNumberInput';
 type TimeOffSectionProps = {
   ptoDays?: number;
   onPtoDaysChange?: (value: number) => void;
@@ -72,20 +73,13 @@ const TimeOffSection = ({
       {typeof ptoDays === 'number' && onPtoDaysChange && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">PTO Days</label>
-          <input
-            type="number"
+          <UnitNumberInput
+            unit="days"
             min={0}
-            value={ptoDays === 0 ? '' : ptoDays}
+            value={ptoDays || null}
             placeholder="0"
-            onChange={(e) =>
-              onPtoDaysChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))
-            }
+            onChange={(value) => onPtoDaysChange(value ?? 0)}
             disabled={isUnlimitedPto}
-            className={`w-full rounded-lg border px-3 py-2 text-sm ${
-              isUnlimitedPto
-                ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                : 'border-gray-300'
-            }`}
           />
           {isUnlimitedPto && (
             <p className="mt-1 text-xs text-gray-500">Ignored while unlimited PTO is enabled.</p>
@@ -95,15 +89,12 @@ const TimeOffSection = ({
       {showSeparateSickLeave && typeof sickLeaveDays === 'number' && onSickLeaveDaysChange && (
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Sick Leave Days</label>
-          <input
-            type="number"
+          <UnitNumberInput
+            unit="days"
             min={0}
-            value={sickLeaveDays === 0 ? '' : sickLeaveDays}
+            value={sickLeaveDays || null}
             placeholder="0"
-            onChange={(e) =>
-              onSickLeaveDaysChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))
-            }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            onChange={(value) => onSickLeaveDaysChange(value ?? 0)}
           />
           <p className="mt-1 text-xs text-gray-500">Paid sick days, separate from PTO.</p>
         </div>
@@ -111,15 +102,12 @@ const TimeOffSection = ({
       {typeof holidayDays === 'number' && onHolidayDaysChange && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Holiday Days</label>
-          <input
-            type="number"
+          <UnitNumberInput
+            unit="days"
             min={0}
-            value={holidayDays === 0 ? '' : holidayDays}
+            value={holidayDays || null}
             placeholder="0"
-            onChange={(e) =>
-              onHolidayDaysChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))
-            }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            onChange={(value) => onHolidayDaysChange(value ?? 0)}
           />
         </div>
       )}

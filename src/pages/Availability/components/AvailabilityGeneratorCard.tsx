@@ -76,16 +76,17 @@ const AvailabilityGeneratorCard = ({
 
         <div className="min-w-0">
           <label htmlFor={rangeId} className="block text-sm font-medium text-gray-700 mb-1">
-            Range (weeks)
+            Range
           </label>
           <EditableNumberInput
             id={rangeId}
+            unit="wks"
             min={1}
             step={1}
             value={availabilityWeeks}
             fallbackValue={2}
             onCommit={onAvailabilityWeeksChange}
-            className="min-h-11 min-w-0 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            className="min-h-11 min-w-0"
           />
         </div>
 

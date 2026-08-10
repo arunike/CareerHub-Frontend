@@ -1,3 +1,5 @@
+import UnitNumberInput from '../../../components/UnitNumberInput';
+import { CONTROL_CLASS } from '../../../components/formControls';
 type WorkSetupSectionProps = {
   workMode: 'REMOTE' | 'HYBRID' | 'ONSITE';
   onWorkModeChange: (value: 'REMOTE' | 'HYBRID' | 'ONSITE') => void;
@@ -59,7 +61,7 @@ const WorkSetupSection = ({
         <select
           value={workMode}
           onChange={(e) => onWorkModeChange(e.target.value as 'REMOTE' | 'HYBRID' | 'ONSITE')}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className={CONTROL_CLASS}
         >
           <option value="REMOTE">Remote</option>
           <option value="HYBRID">Hybrid</option>
@@ -69,16 +71,13 @@ const WorkSetupSection = ({
       {showRtoDays && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">RTO Days / Week</label>
-          <input
-            type="number"
+          <UnitNumberInput
+            unit="days/wk"
             min={0}
             max={5}
-            value={rtoDaysPerWeek === 0 ? '' : rtoDaysPerWeek}
+            value={rtoDaysPerWeek || null}
             placeholder="0"
-            onChange={(e) =>
-              onRtoDaysPerWeekChange(e.target.value === '' ? 0 : Number(e.target.value))
-            }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            onChange={(value) => onRtoDaysPerWeekChange(value ?? 0)}
           />
         </div>
       )}
@@ -89,7 +88,7 @@ const WorkSetupSection = ({
         <select
           value={flexibleHoursPolicy || 'UNKNOWN'}
           onChange={(e) => onFlexibleHoursPolicyChange?.(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className={CONTROL_CLASS}
         >
           <option value="UNKNOWN">Not specified</option>
           <option value="FLEXIBLE">Flexible Hours (Asynchronous)</option>
@@ -104,7 +103,7 @@ const WorkSetupSection = ({
         <select
           value={travelFrequency || 'UNKNOWN'}
           onChange={(e) => onTravelFrequencyChange?.(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className={CONTROL_CLASS}
         >
           <option value="UNKNOWN">Not specified</option>
           <option value="NONE">No Travel (0%)</option>
@@ -117,22 +116,19 @@ const WorkSetupSection = ({
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700 mb-1">Commute Cost</label>
           <div className="grid grid-cols-[1fr_132px] gap-2">
-            <input
-              type="number"
+            <UnitNumberInput
+              unit="$"
               min={0}
-              value={commuteCostValue === 0 ? '' : commuteCostValue}
+              value={commuteCostValue || null}
               placeholder="0"
-              onChange={(e) =>
-                onCommuteCostValueChange(e.target.value === '' ? 0 : Number(e.target.value))
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              onChange={(value) => onCommuteCostValueChange(value ?? 0)}
             />
             <select
               value={commuteCostFrequency}
               onChange={(e) =>
                 onCommuteCostFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className={CONTROL_CLASS}
             >
               <option value="DAILY">/day</option>
               <option value="MONTHLY">/month</option>
@@ -150,22 +146,19 @@ const WorkSetupSection = ({
             Free Food Perk Value
           </label>
           <div className="grid grid-cols-[1fr_132px] gap-2">
-            <input
-              type="number"
+            <UnitNumberInput
+              unit="$"
               min={0}
-              value={freeFoodPerkValue === 0 ? '' : freeFoodPerkValue}
+              value={freeFoodPerkValue || null}
               placeholder="0"
-              onChange={(e) =>
-                onFreeFoodPerkValueChange(e.target.value === '' ? 0 : Number(e.target.value))
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              onChange={(value) => onFreeFoodPerkValueChange(value ?? 0)}
             />
             <select
               value={freeFoodPerkFrequency}
               onChange={(e) =>
                 onFreeFoodPerkFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className={CONTROL_CLASS}
             >
               <option value="DAILY">/day</option>
               <option value="MONTHLY">/month</option>
