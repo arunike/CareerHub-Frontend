@@ -147,6 +147,7 @@ export interface UserSettings {
     locked?: boolean;
   }>;
   hidden_nav_items?: string[];
+  nav_item_order?: string[];
   mobile_toolbar_items?: string[];
   is_locked?: boolean;
   ai_provider_adapter?: 'claude' | 'gemini' | 'openai' | 'openrouter' | 'custom';

@@ -59,7 +59,7 @@ import {
 } from '../../lib/llmSettings';
 import GoogleSheetsSettings from './GoogleSheetsSettings';
 import SecurityDashboard from './SecurityDashboard';
-import MobileToolbarSettings from './MobileToolbarSettings';
+import NavigationSettings from './NavigationSettings';
 import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
 import { DEFAULT_HOLIDAY_TAB_COLOR, getHolidayTabColor } from '../../utils/holidayTabColors';
 import { resolveSettings, type ReminderSettings } from '../../utils/eventReminders';
@@ -2325,160 +2325,22 @@ const Settings: React.FC = () => {
         )}
 
         {activeTab === 'navigation' && (
-          <MobileToolbarSettings
-            value={settings.mobile_toolbar_items}
-            onChange={(mobileToolbarItems) =>
+          <NavigationSettings
+            hiddenNavItems={settings.hidden_nav_items}
+            onHiddenNavItemsChange={(hiddenNavItems) =>
+              setSettings((prev) => (prev ? { ...prev, hidden_nav_items: hiddenNavItems } : prev))
+            }
+            navItemOrder={settings.nav_item_order}
+            onNavItemOrderChange={(navItemOrder) =>
+              setSettings((prev) => (prev ? { ...prev, nav_item_order: navItemOrder } : prev))
+            }
+            mobileToolbarItems={settings.mobile_toolbar_items}
+            onMobileToolbarItemsChange={(mobileToolbarItems) =>
               setSettings((prev) =>
                 prev ? { ...prev, mobile_toolbar_items: mobileToolbarItems } : prev
               )
             }
           />
-        )}
-
-        {/* Navigation Visibility */}
-        {activeTab === 'navigation' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="border-b pb-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Navigation Visibility</h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Toggle which pages appear in the sidebar
-              </p>
-            </div>
-            {(() => {
-              const groups = [
-                {
-                  label: 'Schedule',
-                  items: [
-                    { key: '/', label: 'Availability' },
-                    { key: '/events', label: 'Events' },
-                    { key: '/holidays', label: 'Holidays' },
-                  ],
-                },
-                {
-                  label: 'Career & Growth',
-                  items: [
-                    { key: '/applications', label: 'Applications' },
-                    { key: '/offers', label: 'Offers' },
-                    { key: '/documents', label: 'Documents' },
-                    { key: '/tasks', label: 'Action Items' },
-                    { key: '/experience', label: 'Experience' },
-                    { key: '/contacts', label: 'Contacts' },
-                    {
-                      key: 'intelligence',
-                      label: 'Intelligence',
-                      children: [
-                        { key: '/jd-reports', label: 'JD Reports' },
-                        { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
-                        {
-                          key: '/ai-tools?tab=negotiation-results',
-                          label: 'Negotiation Results',
-                        },
-                        { key: '/ai-tools?tab=promotion-reviews', label: 'Promotion Reviews' },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  label: 'Insights',
-                  items: [{ key: '/analytics', label: 'Analytics' }],
-                },
-              ];
-
-              const hiddenKeys = settings?.hidden_nav_items || [];
-              const toggleKey = (key: string) => {
-                setSettings((prev) => {
-                  if (!prev) return prev;
-                  const current = prev.hidden_nav_items || [];
-                  return {
-                    ...prev,
-                    hidden_nav_items: current.includes(key)
-                      ? current.filter((k) => k !== key)
-                      : [...current, key],
-                  };
-                });
-              };
-
-              const Toggle = ({ itemKey }: { itemKey: string }) => {
-                const visible = !hiddenKeys.includes(itemKey);
-                return (
-                  <button
-                    onClick={() => toggleKey(itemKey)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                      visible ? 'bg-sky-500' : 'bg-gray-200'
-                    }`}
-                    role="switch"
-                    aria-checked={visible}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
-                        visible ? 'translate-x-4' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                );
-              };
-
-              return (
-                <div className="space-y-6">
-                  {groups.map((group) => (
-                    <div key={group.label}>
-                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                        {group.label}
-                      </p>
-                      <div className="rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
-                        {group.items.map((item) => {
-                          const isParent = 'children' in item && item.children;
-                          const hidden = hiddenKeys.includes(item.key);
-                          return (
-                            <React.Fragment key={item.key}>
-                              <div
-                                className={`flex items-center justify-between px-4 py-3 transition-colors ${hidden ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60'}`}
-                              >
-                                <span
-                                  className={`text-sm font-medium ${hidden ? 'text-gray-400 line-through' : 'text-gray-700'}`}
-                                >
-                                  {item.label}
-                                </span>
-                                {!isParent && <Toggle itemKey={item.key} />}
-                                {isParent && (
-                                  <span className="text-[10px] text-gray-300 font-medium uppercase tracking-wide">
-                                    group
-                                  </span>
-                                )}
-                              </div>
-                              {isParent &&
-                                item.children?.map((child) => {
-                                  const childHidden = hiddenKeys.includes(child.key);
-                                  return (
-                                    <div
-                                      key={child.key}
-                                      className={`flex items-center justify-between pl-8 pr-4 py-2.5 transition-colors ${childHidden ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/60'}`}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-gray-200 text-xs">╰</span>
-                                        <span
-                                          className={`text-sm ${childHidden ? 'text-gray-400 line-through' : 'text-gray-600'}`}
-                                        >
-                                          {child.label}
-                                        </span>
-                                      </div>
-                                      <Toggle itemKey={child.key} />
-                                    </div>
-                                  );
-                                })}
-                            </React.Fragment>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                  <p className="text-xs text-gray-400">
-                    Settings and the current page are always visible.
-                  </p>
-                </div>
-              );
-            })()}
-          </div>
         )}
       </div>
     </div>

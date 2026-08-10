@@ -1,0 +1,408 @@
+import { AppstoreOutlined, HolderOutlined, PushpinFilled, UndoOutlined } from '@ant-design/icons';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Button, Tooltip } from 'antd';
+import {
+  DEFAULT_MOBILE_TOOLBAR_KEYS,
+  MOBILE_SMART_SLOT_KEY,
+  getMobileToolbarSlots,
+  normalizeMobileToolbarKeys,
+  type MobileToolbarSlot,
+} from '../../constants/mobileNavigation';
+import { NAV_GROUPS, applyNavOrder, type NavItem } from '../../constants/navigationItems';
+
+// The preview doubles as the editor: the tiles are the toolbar order, so dragging one is
+// the most direct way to say "put Offers second".
+const SortableToolbarSlot = ({ slot, index }: { slot: MobileToolbarSlot; index: number }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: slot.slotKey,
+  });
+  const Icon = slot.icon;
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
+      aria-label={`Drag ${slot.label} to reorder the mobile toolbar. Position ${index + 1}.`}
+      className={`flex min-h-[58px] min-w-0 cursor-grab touch-none flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-semibold transition active:cursor-grabbing ${
+        isDragging
+          ? 'z-10 bg-white opacity-90 shadow-lg ring-2 ring-blue-400'
+          : slot.isSmart
+            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            : 'text-slate-500 hover:bg-slate-100'
+      }`}
+    >
+      <Icon className="text-base" />
+      <span className="max-w-full truncate">{slot.shortLabel}</span>
+    </div>
+  );
+};
+
+const MAX_PINNED = 4;
+
+interface Props {
+  hiddenNavItems?: string[];
+  onHiddenNavItemsChange: (keys: string[]) => void;
+  navItemOrder?: string[];
+  onNavItemOrderChange: (keys: string[]) => void;
+  mobileToolbarItems?: string[];
+  onMobileToolbarItemsChange: (keys: string[]) => void;
+}
+
+const VisibilityToggle = ({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    aria-label={`${checked ? 'Hide' : 'Show'} ${label} in the sidebar`}
+    onClick={onChange}
+    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+      checked ? 'bg-sky-500' : 'bg-gray-200'
+    }`}
+  >
+    <span
+      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+        checked ? 'translate-x-4' : 'translate-x-0'
+      }`}
+    />
+  </button>
+);
+
+const PinButton = ({
+  pinned,
+  disabled,
+  onChange,
+  label,
+}: {
+  pinned: boolean;
+  disabled: boolean;
+  onChange: () => void;
+  label: string;
+}) => (
+  <Tooltip
+    title={
+      pinned
+        ? 'Pinned to the mobile toolbar'
+        : disabled
+          ? `Mobile toolbar is full (${MAX_PINNED})`
+          : 'Pin to the mobile toolbar'
+    }
+  >
+    <button
+      type="button"
+      role="switch"
+      aria-checked={pinned}
+      aria-label={`${pinned ? 'Unpin' : 'Pin'} ${label} on the mobile toolbar`}
+      disabled={disabled && !pinned}
+      onClick={onChange}
+      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+        pinned
+          ? 'bg-blue-50 text-blue-600'
+          : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300'
+      }`}
+    >
+      <PushpinFilled />
+    </button>
+  </Tooltip>
+);
+
+const SortableNavRow = ({
+  item,
+  hidden,
+  pinned,
+  pinDisabled,
+  pinnable,
+  onToggleHidden,
+  onTogglePinned,
+  children,
+}: {
+  item: NavItem;
+  hidden: boolean;
+  pinned: boolean;
+  pinDisabled: boolean;
+  pinnable: boolean;
+  onToggleHidden: () => void;
+  onTogglePinned: () => void;
+  children?: React.ReactNode;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.key,
+  });
+  const isGroup = !!item.children;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`rounded-xl border transition-shadow ${
+        isDragging
+          ? 'z-10 border-blue-300 bg-white shadow-xl shadow-blue-900/10'
+          : 'border-transparent'
+      }`}
+    >
+      <div className="flex items-center gap-2 border-b border-slate-100 py-1.5 pl-1 pr-2 last:border-b-0">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag ${item.label} to reorder`}
+          className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing"
+        >
+          <HolderOutlined />
+        </button>
+        <span
+          className={`min-w-0 flex-1 truncate text-sm ${
+            hidden ? 'text-slate-400 line-through' : 'text-slate-800'
+          }`}
+        >
+          {item.label}
+        </span>
+        {isGroup ? (
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+            Group
+          </span>
+        ) : (
+          <>
+            {pinnable && (
+              <PinButton
+                pinned={pinned}
+                disabled={pinDisabled}
+                onChange={onTogglePinned}
+                label={item.label}
+              />
+            )}
+            <VisibilityToggle checked={!hidden} onChange={onToggleHidden} label={item.label} />
+          </>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+};
+
+const NavigationSettings = ({
+  hiddenNavItems,
+  onHiddenNavItemsChange,
+  navItemOrder,
+  onNavItemOrderChange,
+  mobileToolbarItems,
+  onMobileToolbarItemsChange,
+}: Props) => {
+  const hidden = hiddenNavItems || [];
+  const pinnedKeys = normalizeMobileToolbarKeys(mobileToolbarItems);
+  const previewSlots = getMobileToolbarSlots(mobileToolbarItems);
+  const pinnedCount = pinnedKeys.length;
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const toggleHidden = (key: string) =>
+    onHiddenNavItemsChange(
+      hidden.includes(key) ? hidden.filter((item) => item !== key) : [...hidden, key]
+    );
+
+  const togglePinned = (key: string) => {
+    if (pinnedKeys.includes(key)) {
+      onMobileToolbarItemsChange(pinnedKeys.filter((item) => item !== key));
+      return;
+    }
+    if (pinnedKeys.length >= MAX_PINNED) return;
+    onMobileToolbarItemsChange([...pinnedKeys, key]);
+  };
+
+  const handleToolbarDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const from = pinnedKeys.indexOf(String(active.id));
+    const to = pinnedKeys.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+    onMobileToolbarItemsChange(arrayMove(pinnedKeys, from, to));
+  };
+
+  // Each group and each set of children sorts independently, and the saved order is the
+  // concatenation of every list, so one flat array covers the whole sidebar.
+  const orderedGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: applyNavOrder(group.items, navItemOrder).map((item) =>
+      item.children ? { ...item, children: applyNavOrder(item.children, navItemOrder) } : item
+    ),
+  }));
+
+  const currentOrder = orderedGroups.flatMap((group) =>
+    group.items.flatMap((item) => [item.key, ...(item.children?.map((child) => child.key) ?? [])])
+  );
+
+  const handleDragEnd = (keys: string[]) => (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = keys.indexOf(String(active.id));
+    const to = keys.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+    const reordered = arrayMove(keys, from, to);
+    // Replace just this list's slice of the overall order, leaving other groups alone.
+    const next = currentOrder.filter((key) => !keys.includes(key));
+    const anchor = currentOrder.findIndex((key) => keys.includes(key));
+    next.splice(anchor, 0, ...reordered);
+    onNavItemOrderChange(next);
+  };
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b pb-4">
+        <div className="max-w-2xl">
+          <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
+          <p className="mt-1 text-sm leading-5 text-slate-600">
+            Drag to reorder the sidebar, toggle what appears in it, and pin up to {MAX_PINNED}{' '}
+            shortcuts to the mobile toolbar. Items stay within their group.
+          </p>
+        </div>
+        <Button
+          type="text"
+          icon={<UndoOutlined />}
+          onClick={() => {
+            onNavItemOrderChange([]);
+            onHiddenNavItemsChange([]);
+            onMobileToolbarItemsChange([...DEFAULT_MOBILE_TOOLBAR_KEYS]);
+          }}
+        >
+          Reset default
+        </Button>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-bold text-slate-600">
+            Mobile toolbar <span className="font-normal text-slate-400">· drag to reorder</span>
+          </p>
+          <span className="text-xs text-slate-500">
+            {pinnedCount}/{MAX_PINNED} pinned
+          </span>
+        </div>
+        <div className="grid grid-cols-5 gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleToolbarDragEnd}
+          >
+            <SortableContext items={pinnedKeys} strategy={horizontalListSortingStrategy}>
+              {previewSlots.map((slot, index) => (
+                <SortableToolbarSlot key={slot.slotKey} slot={slot} index={index} />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {Array.from({ length: MAX_PINNED - previewSlots.length }).map((_, index) => (
+            <div
+              key={`empty-${index}`}
+              className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 px-1 text-[10px] font-semibold text-slate-400"
+            >
+              <span className="text-slate-300">+</span>
+              <span>Empty</span>
+            </div>
+          ))}
+          <div className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-slate-900 px-1 text-[10px] font-semibold text-white">
+            <AppstoreOutlined className="text-base" />
+            <span>More</span>
+          </div>
+        </div>
+        {pinnedKeys.includes(MOBILE_SMART_SLOT_KEY) && (
+          <p className="mt-2 text-[11px] text-slate-500">
+            The Smart Slot adapts to context and recent use.
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-5">
+        {orderedGroups.map((group) => {
+          const groupKeys = group.items.map((item) => item.key);
+          return (
+            <div key={group.key}>
+              <p className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {group.label}
+              </p>
+              <div className="rounded-xl border border-slate-200">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd(groupKeys)}
+                >
+                  <SortableContext items={groupKeys} strategy={verticalListSortingStrategy}>
+                    {group.items.map((item) => {
+                      const childKeys = item.children?.map((child) => child.key) ?? [];
+                      return (
+                        <SortableNavRow
+                          key={item.key}
+                          item={item}
+                          hidden={hidden.includes(item.key)}
+                          pinned={pinnedKeys.includes(item.key)}
+                          pinDisabled={pinnedCount >= MAX_PINNED}
+                          pinnable
+                          onToggleHidden={() => toggleHidden(item.key)}
+                          onTogglePinned={() => togglePinned(item.key)}
+                        >
+                          {item.children && (
+                            <div className="pl-8">
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd(childKeys)}
+                              >
+                                <SortableContext
+                                  items={childKeys}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  {item.children.map((child) => (
+                                    <SortableNavRow
+                                      key={child.key}
+                                      item={child}
+                                      hidden={hidden.includes(child.key)}
+                                      pinned={pinnedKeys.includes(child.key)}
+                                      pinDisabled={pinnedCount >= MAX_PINNED}
+                                      pinnable
+                                      onToggleHidden={() => toggleHidden(child.key)}
+                                      onTogglePinned={() => togglePinned(child.key)}
+                                    />
+                                  ))}
+                                </SortableContext>
+                              </DndContext>
+                            </div>
+                          )}
+                        </SortableNavRow>
+                      );
+                    })}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+export default NavigationSettings;

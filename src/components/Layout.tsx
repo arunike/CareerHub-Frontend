@@ -34,6 +34,7 @@ import {
   recordMobileNavigationUse,
 } from '../constants/mobileNavigation';
 import MobileQuickActions, { hasMobileQuickActionsForSource } from './MobileQuickActions';
+import { applyNavOrder } from '../constants/navigationItems';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -53,6 +54,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
+  const [navItemOrder, setNavItemOrder] = useState<string[]>([]);
   const [mobileToolbarKeys, setMobileToolbarKeys] = useState<string[]>([]);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [quickActionsSourceKey, setQuickActionsSourceKey] = useState<string>();
@@ -78,6 +80,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     getUserSettings()
       .then((res) => {
         setHiddenNavItems(res.data.hidden_nav_items || []);
+        setNavItemOrder(res.data.nav_item_order || []);
         setMobileToolbarKeys(res.data.mobile_toolbar_items || []);
         setProfilePic(res.data.profile_picture);
         setDisplayName(res.data.display_name || user?.full_name || '');
@@ -90,6 +93,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       const detail = (e as CustomEvent).detail;
       if (detail) {
         if (detail.hidden_nav_items !== undefined) setHiddenNavItems(detail.hidden_nav_items);
+        if (detail.nav_item_order !== undefined) setNavItemOrder(detail.nav_item_order);
         if (detail.mobile_toolbar_items !== undefined) {
           setMobileToolbarKeys(detail.mobile_toolbar_items);
         }
@@ -216,7 +220,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const visibleMenuItems = menuItems
     .map((group) => ({
       ...group,
-      children: filterChildren(group.children),
+      children: applyNavOrder(filterChildren(group.children) ?? [], navItemOrder).map((item) =>
+        'children' in item && item.children
+          ? { ...item, children: applyNavOrder(item.children, navItemOrder) }
+          : item
+      ),
     }))
     .filter((group) => (group.children?.length ?? 0) > 0);
 
