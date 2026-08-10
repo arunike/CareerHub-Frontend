@@ -201,7 +201,8 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### ⚙️ Settings (`/settings`)
 
 - **Availability & Job Hunt Settings**: work hours, work days, availability range, default event duration, buffer time, primary timezone, ghosting threshold, default event category
-- **Mobile Toolbar**: drag and preview up to four account-synced mobile navigation slots; an optional Smart Slot chooses an unpinned destination from current context and browser-local recent use, More stays fixed, and supported shortcuts open only actions owned by that page when long-pressed while More retains the cross-page global actions
+- **Navigation** (Settings → Navigation): one section for the whole sidebar, replacing the separate Mobile Toolbar and Navigation Visibility cards. Every page is a single row carrying a drag handle, a mobile pin, and a visibility toggle. Dragging reorders within a group — Schedule, Career & Growth, and Insights keep their headings and membership, and Intelligence's children reorder independently inside it. Order persists to `nav_item_order` and the sidebar picks it up immediately through the existing `settings-saved` event. A saved order lists only known keys, so a page added in a later release keeps its built-in position instead of disappearing for users who have reordered
+- **Mobile Toolbar**: the live preview at the top of Navigation *is* the editor — drag the tiles to reorder up to four account-synced slots, and pin or unpin from any row below. An optional Smart Slot chooses an unpinned destination from current context and browser-local recent use, More stays fixed, and supported shortcuts open only actions owned by that page when long-pressed while More retains the cross-page global actions
 - **AI Provider**: configure Claude, Gemini, OpenAI, OpenRouter, or Custom providers for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; paste a chat-completions curl command to fill endpoint/model/key; the key is stored encrypted on the backend and never re-shown after save
 - **Integrations**: connect/disconnect Google OAuth for private read-only Sheets access, pick from available Google spreadsheets and worksheet tabs, create Google Sheets syncs, select Applications or Events, auto-map sheet columns, configure the daily sync time/timezone, adjust/add/remove mapped fields when needed, preview rows, review detected application imports, compare possible duplicates side by side, resolve duplicates, inspect last-run change history, and run syncs immediately
 - **Security Dashboard**: review deployment posture, auth throttles, Google Sheets sync health, OAuth scope readiness, and Vercel edge/WAF setup status from one Settings tab
@@ -336,6 +337,7 @@ frontend/
 ├── src/
 │   ├── components/                  # Shared reusable components
 │   │   ├── Layout.tsx               # Sidebar navigation + customizable mobile toolbar
+│   │   └── (constants/navigationItems.ts holds the sidebar structure shared by Layout and Settings)
 │   │   ├── MobileQuickActions.tsx   # Mobile quick-create bottom sheet
 │   │   ├── PageActionToolbar.tsx    # Page header with title, year filter, export, import, primary action
 │   │   ├── BulkActionHeader.tsx     # Selection count + bulk actions bar
