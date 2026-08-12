@@ -1470,6 +1470,19 @@ textarea::placeholder {
     gap: 12px !important;
   }
 
+  /* Default OK/Cancel footer synthesised for drawers whose modal relied on antd's.
+     Cancel sits above so the primary action is the one nearest the thumb. */
+  .careerhub-mobile-drawer-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .careerhub-mobile-drawer-footer .ant-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
   /* Custom height and border transitions for mobile drawer expansion */
   .careerhub-mobile-drawer .ant-drawer-content {
     transition:

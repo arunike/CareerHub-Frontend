@@ -353,7 +353,8 @@ const Events = () => {
     federalHolidays.length === 0;
 
   const handleAdd = useCallback(
-    (date?: Date) => {
+    (dateArg?: Date) => {
+      const date = dateArg instanceof Date ? dateArg : undefined;
       setEditingId(null);
       setRecurrenceRule(null);
       setLocationType('virtual');

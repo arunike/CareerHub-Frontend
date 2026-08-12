@@ -128,7 +128,19 @@ const EventEditorModal = ({
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item name="date" label="Date" rules={[{ required: true }]}>
-              <DatePicker inputReadOnly style={{ width: '100%' }} />
+              <DatePicker
+                inputReadOnly
+                style={{ width: '100%' }}
+                onChange={(nextStart) => {
+                  // Pushing the start past the end leaves an impossible range, so drop the
+                  // end date instead of holding a value the user has to clear themselves.
+                  const end = form.getFieldValue('end_date');
+                  if (nextStart && end && end.isBefore(nextStart, 'day')) {
+                    form.setFieldValue('end_date', null);
+                    form.validateFields(['end_date']).catch(() => {});
+                  }
+                }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>
@@ -160,7 +172,20 @@ const EventEditorModal = ({
                   }),
                 ]}
               >
-                <DatePicker inputReadOnly style={{ width: '100%' }} />
+                <DatePicker
+                  inputReadOnly
+                  style={{ width: '100%' }}
+                  disabledDate={(current) => {
+                    const start = form.getFieldValue('date');
+                    return Boolean(start && current && current.isBefore(start, 'day'));
+                  }}
+                  onChange={(nextEnd) => {
+                    const start = form.getFieldValue('date');
+                    if (nextEnd && start && nextEnd.isBefore(start, 'day')) {
+                      form.setFieldValue('end_date', null);
+                    }
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>

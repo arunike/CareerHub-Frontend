@@ -100,7 +100,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         danger
         icon={<DeleteOutlined />}
         disabled={deleteAllDisabled}
-        onClick={onDeleteAll}
+        onClick={() => onDeleteAll?.()}
       >
         {deleteAllLabel}
       </Button>
@@ -117,7 +117,12 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   ) : null;
 
   const importNode = onImport ? (
-    <Button className="toolbar-btn" size="large" icon={<UploadOutlined />} onClick={onImport}>
+    <Button
+      className="toolbar-btn"
+      size="large"
+      icon={<UploadOutlined />}
+      onClick={() => onImport?.()}
+    >
       {importLabel}
     </Button>
   ) : null;
@@ -128,7 +133,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
       size="large"
       type="primary"
       icon={primaryActionIcon}
-      onClick={onPrimaryAction}
+      onClick={() => onPrimaryAction?.()}
       loading={primaryActionLoading}
     >
       {primaryActionLabel}

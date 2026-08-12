@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type MouseEvent as ReactMouseEvent } from 'react';
-import { Modal as AntModal, Drawer as AntDrawer, type ModalProps } from 'antd';
+import { Button, Modal as AntModal, Drawer as AntDrawer, type ModalProps } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 
 interface MobileModalProps extends ModalProps {
@@ -88,12 +88,42 @@ const MobileModalBase = ({
     </div>
   );
 
+  // antd Modal synthesises an OK/Cancel footer when none is given, but Drawer renders
+  // nothing — so a modal that relies on the default loses its Save button on mobile.
+  // `footer={null}` still means no footer; only an absent footer gets the default.
+  const drawerFooter =
+    props.footer === undefined ? (
+      <div className="careerhub-mobile-drawer-footer">
+        <Button
+          onClick={handleClose}
+          disabled={props.cancelButtonProps?.disabled}
+          {...props.cancelButtonProps}
+        >
+          {(props.cancelText as React.ReactNode) ?? 'Cancel'}
+        </Button>
+        <Button
+          // okType allows antd's legacy 'danger' value, which Button's type prop rejects.
+          type={props.okType === 'danger' ? 'primary' : (props.okType ?? 'primary')}
+          danger={props.okType === 'danger'}
+          loading={props.confirmLoading}
+          onClick={(clickEvent) =>
+            props.onOk?.(clickEvent as ReactMouseEvent<HTMLButtonElement, MouseEvent>)
+          }
+          {...props.okButtonProps}
+        >
+          {(props.okText as React.ReactNode) ?? 'OK'}
+        </Button>
+      </div>
+    ) : (
+      (props.footer as React.ReactNode)
+    );
+
   return (
     <AntDrawer
       open={isOpen}
       onClose={handleClose}
       title={drawerTitle}
-      footer={props.footer as React.ReactNode}
+      footer={drawerFooter}
       destroyOnClose={props.destroyOnClose}
       placement="bottom"
       height={isExpanded ? '100dvh' : undefined}
