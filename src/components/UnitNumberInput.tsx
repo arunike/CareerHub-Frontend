@@ -47,6 +47,10 @@ type Props = Omit<
 > & {
   // Omit for a plain count with no unit chip.
   unit?: NumberUnit;
+  // Opt-in escape hatch for fields where people naturally type something other than a
+  // bare number, e.g. "1h30" for a duration. It only ever converts input into the plain
+  // number that gets stored — no unit character survives into the value.
+  parseText?: (raw: string) => number | null;
   // Optional so antd Form.Item can inject them.
   value?: number | null;
   onChange?: (value: number | null) => void;
@@ -75,7 +79,17 @@ const GROUP = [
 // addon case escapes this because antd sets no flex rule for [&>*]:flex-1 to lose to.
 const setsOwnWidth = (className?: string) => /(?:^|\s)!?(?:w-|max-w-)/.test(className ?? '');
 
-const UnitNumberInput = ({ unit, value, onChange, min, max, className, style, ...rest }: Props) => {
+const UnitNumberInput = ({
+  unit,
+  value,
+  onChange,
+  min,
+  max,
+  className,
+  style,
+  parseText,
+  ...rest
+}: Props) => {
   const addon = unit ? ADDONS[unit] : undefined;
   const fillWidth = !addon && !setsOwnWidth(className);
   return (
@@ -85,6 +99,19 @@ const UnitNumberInput = ({ unit, value, onChange, min, max, className, style, ..
       max={max}
       value={value ?? null}
       onChange={(next) => onChange?.(next == null ? null : clamp(Number(next), min, max))}
+      {...(parseText
+        ? {
+            parser: ((raw?: string) => {
+              const text = (raw ?? '').trim();
+              // Empty means the user is clearing the field; gibberish means they slipped,
+              // so hold the last good value rather than silently zeroing it.
+              if (!text) return '' as unknown as number;
+              const parsed = parseText(text);
+              return (parsed == null ? (value ?? '') : parsed) as number;
+            }) as never,
+            formatter: ((val?: number | string) => (val == null ? '' : String(val))) as never,
+          }
+        : {})}
       addonBefore={addon?.before}
       addonAfter={addon?.after}
       // With an addon antd puts className on the inner .ant-input-number, so width

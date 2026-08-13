@@ -827,8 +827,7 @@ const Availability = () => {
       <PageActionToolbar
         title="Availability"
         subtitle="Generate shareable times and manage public booking links."
-        showExtraActionsOnMobile
-        extraActions={
+        viewSwitch={
           <AvailabilityViewToggle
             viewTab={viewTab}
             onChange={(next) => setSearchParams({ view: next })}

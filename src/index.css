@@ -352,6 +352,45 @@ textarea::placeholder {
 }
 
 /* Shared drag-to-fullscreen behavior for legacy Ant Design modals on mobile. */
+/* iOS paints a translucent grey box over any tapped element, clipped to its
+   border-radius, and it lingers after the tap. On the calendar day button that read as a
+   stray grey slab sitting under the selected day. Every interactive surface here already
+   has its own pressed/selected styling, so the platform default only gets in the way. */
+button,
+a,
+summary,
+[role='button'],
+.ant-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Shared action row for imperative Modal.confirm dialogs. antd spaces confirm buttons
+   with margin-inline-start, which in a stacked mobile layout shifts every button after
+   the first and leaves it narrower than its neighbours — hence the !important reset. */
+.careerhub-dialog-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+}
+
+.careerhub-dialog-actions .ant-btn {
+  margin-inline-start: 0 !important;
+  width: 100%;
+  min-height: 44px;
+}
+
+@media (min-width: 640px) {
+  .careerhub-dialog-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .careerhub-dialog-actions .ant-btn {
+    width: auto;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 767px) {
   .careerhub-mobile-modal-wrap {
     display: flex;
@@ -701,11 +740,11 @@ textarea::placeholder {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 24px;
+  gap: 14px 24px;
   /* Wraps so a growing action cluster drops to its own row instead of squeezing the
      title until it breaks one character per line. */
   flex-wrap: wrap;
-  padding: 0 0 18px;
+  padding: 0 0 14px;
   border-bottom: 1px solid rgba(203, 213, 225, 0.62);
 }
 
@@ -715,60 +754,62 @@ textarea::placeholder {
   flex: 1 1 auto;
 }
 
-/* Two rows: title + primary action, then filters and secondary actions beneath. */
-.page-toolbar-secondary {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
+/* Filters sit directly on the page under the title. A bordered, shadowed strip read as
+   a second card fighting the content below it, and its space-between pushed a lone
+   overflow button across a wide empty gap. */
+.page-toolbar-filters {
   order: 3;
-  padding: 6px;
-  border: 1px solid rgba(226, 232, 240, 0.86);
-  border-radius: 12px;
-  background: var(--careerhub-surface);
-  box-shadow: 0 14px 36px -32px rgba(15, 23, 42, 0.68);
-}
-
-.page-toolbar-secondary:empty {
-  display: none;
-}
-
-/* Filters left, data actions right: the row fills its width instead of packing left and
-   leaving a dead gap. */
-.page-toolbar-secondary {
-  justify-content: space-between;
-}
-
-.page-toolbar-group {
+  width: 100%;
   display: flex;
   align-items: center;
+  /* Right-aligned to share one edge with the action row above. Left-aligned filters under
+     right-aligned actions read as a zigzag. */
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
 }
 
-/* A hairline keeps destructive and export actions visually apart from the filters. */
-.page-toolbar-group-end {
-  margin-left: auto;
-  padding-left: 12px;
-  border-left: 1px solid rgba(226, 232, 240, 0.9);
+.page-toolbar-filters:empty {
+  display: none;
 }
 
-@media (max-width: 1100px) {
-  .page-toolbar-group-end {
-    margin-left: 0;
-    padding-left: 0;
-    border-left: 0;
-  }
+/* One height for every control in the row, whatever each page passed in, so a picker, a
+   segmented switch and a select stop looking like three unrelated widgets. */
+.page-toolbar-filters .ant-btn,
+.page-toolbar-filters .ant-segmented,
+.page-toolbar-filters .ant-picker,
+.page-toolbar-filters .ant-select-single .ant-select-selector {
+  height: 36px !important;
+  min-height: 36px !important;
 }
 
-/* The primary action needs no card of its own sitting next to the title. */
-.page-toolbar-actions-primary {
-  border: 0;
-  background: none;
-  box-shadow: none;
-  padding: 0;
+/* antd tints the segmented track the same grey as the page, which was invisible once the
+   white filter strip went away. Match the neighbouring controls instead: white body,
+   hairline border, tinted active segment. */
+.page-toolbar-filters .ant-segmented,
+.page-toolbar-mobile-filters .ant-segmented {
+  padding: 2px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+}
+
+.page-toolbar-filters .ant-segmented-item-selected,
+.page-toolbar-mobile-filters .ant-segmented-item-selected {
+  background: #eff6ff !important;
+}
+
+.page-toolbar-filters .ant-segmented-item-selected .ant-segmented-item-label,
+.page-toolbar-mobile-filters .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #2563eb !important;
+  font-weight: 600;
+}
+
+.page-toolbar-filters .ant-segmented-item,
+.page-toolbar-filters .ant-segmented-item-label,
+.page-toolbar-filters .ant-segmented-thumb {
+  height: 30px !important;
+  line-height: 30px !important;
 }
 
 .page-toolbar-actions {
@@ -778,11 +819,6 @@ textarea::placeholder {
   gap: 8px;
   margin-left: auto;
   flex: 0 1 auto;
-  padding: 6px;
-  border: 1px solid rgba(226, 232, 240, 0.86);
-  border-radius: 12px;
-  background: var(--careerhub-surface);
-  box-shadow: 0 14px 36px -32px rgba(15, 23, 42, 0.68);
 }
 
 .page-toolbar-actions:empty {
@@ -813,6 +849,109 @@ textarea::placeholder {
   padding: 7px 14px;
   border-radius: 8px;
   line-height: 1.1;
+}
+
+.page-toolbar-mobile-primary .ant-btn {
+  width: 100%;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  font-weight: 650;
+}
+
+/* Icon-only overflow on the title line. Discoverability is fine here because a dot menu
+   beside a page title is the standard mobile affordance; the desktop one stays labelled
+   because it has room for a word. */
+.page-toolbar-mobile-more.ant-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-toolbar-mobile-verbs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.page-toolbar-mobile-verbs .ant-btn {
+  width: 100%;
+  height: 38px !important;
+  min-height: 38px !important;
+  border-radius: 10px !important;
+  font-weight: 550;
+}
+
+.page-toolbar-mobile-verbs > *:only-child {
+  grid-column: span 1;
+}
+
+/* The view switch earns full width on a phone: it is the control you reach for most, and
+   a wide two-option toggle is far easier to hit than a narrow one. */
+.page-toolbar-mobile-view > * {
+  width: 100% !important;
+  display: flex !important;
+}
+
+.page-toolbar-mobile-view .page-toolbar-view-switch > button {
+  flex: 1 1 0;
+  justify-content: center;
+}
+
+/* Two quiet settings pair up nicely; one on its own must not sit stranded in half a row,
+   and three or more would be too cramped side by side. */
+.page-toolbar-mobile-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.page-toolbar-mobile-filters > *:only-child {
+  grid-column: 1 / -1;
+}
+
+.page-toolbar-mobile-filters:has(> *:nth-child(3)) {
+  grid-template-columns: 1fr;
+}
+
+.page-toolbar-mobile-filters > *,
+.page-toolbar-mobile-filters .ant-select,
+.page-toolbar-mobile-filters .ant-picker {
+  width: 100% !important;
+}
+
+.page-toolbar-mobile-filters .ant-picker,
+.page-toolbar-mobile-filters .ant-select-single .ant-select-selector {
+  height: 38px !important;
+}
+
+.page-toolbar-mobile-filters .ant-segmented {
+  width: 100% !important;
+  display: flex !important;
+}
+
+.page-toolbar-mobile-filters .ant-segmented-item {
+  flex: 1 1 0 !important;
+  text-align: center;
+}
+
+.page-toolbar-mobile-filters .ant-segmented-item,
+.page-toolbar-mobile-filters .ant-segmented-item-label,
+.page-toolbar-mobile-filters .ant-segmented-thumb {
+  height: 32px !important;
+  line-height: 32px !important;
+}
+
+/* Square trigger for the consolidated data-actions menu. */
+.toolbar-btn-icon.ant-btn {
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
 }
 
 .toolbar-btn.ant-btn,
@@ -876,7 +1015,18 @@ textarea::placeholder {
     width: 100%;
     margin-left: 0;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    /* Wrapped onto its own row, it has to keep the filters' right edge or the two rows
+       zigzag against each other. */
+    justify-content: flex-end;
+  }
+
+  /* Below this the header is too narrow for a right edge to read as intentional, so both
+   rows line up with the title instead. Declared after the 1200px rule so it wins. */
+  @media (max-width: 900px) {
+    .page-toolbar-actions,
+    .page-toolbar-filters {
+      justify-content: flex-start;
+    }
   }
 
   .page-toolbar-single-row .page-toolbar-actions {

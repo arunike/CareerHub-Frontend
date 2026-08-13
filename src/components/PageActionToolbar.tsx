@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { Button, Grid, Popconfirm, Typography } from 'antd';
+import React from 'react';
+import { Button, Dropdown, Grid, Modal, Typography } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   DeleteOutlined,
   DownOutlined,
+  DownloadOutlined,
+  MoreOutlined,
   PlusOutlined,
-  UpOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import YearFilter from './YearFilter';
-import ExportButton from './ExportButton';
+import { useExport } from './ExportButton';
 
 interface PageActionToolbarProps {
   title: React.ReactNode;
@@ -16,7 +18,17 @@ interface PageActionToolbarProps {
   selectedYear?: number | 'all';
   onYearChange?: (year: number | 'all') => void;
   availableYears?: number[];
+  // Controls that change what you are looking at (view switches, filters).
   extraActions?: React.ReactNode;
+  // Verbs. These belong with the primary action, not among the filters, so a button is
+  // never mistaken for a filter or the other way round.
+  secondaryActions?: React.ReactNode;
+  // The same verbs as menu entries. On a phone they fold into the More menu instead of
+  // spending a row each; a page supplies both and the layout picks.
+  secondaryMenuItems?: MenuProps['items'];
+  // The one control worth permanent space, e.g. a list/calendar switch. Kept out of
+  // extraActions so a phone can show it and demote the rest.
+  viewSwitch?: React.ReactNode;
   onDeleteAll?: () => void;
   deleteAllLabel?: string;
   deleteAllDisabled?: boolean;
@@ -32,7 +44,6 @@ interface PageActionToolbarProps {
   primaryActionIcon?: React.ReactNode;
   primaryActionLoading?: boolean;
   singleRowDesktop?: boolean;
-  showExtraActionsOnMobile?: boolean;
 }
 
 const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
@@ -42,6 +53,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   onYearChange,
   availableYears = [],
   extraActions,
+  secondaryActions,
+  secondaryMenuItems,
+  viewSwitch,
   onDeleteAll,
   deleteAllLabel = 'Delete All',
   deleteAllDisabled = false,
@@ -57,11 +71,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   primaryActionIcon = <PlusOutlined />,
   primaryActionLoading = false,
   singleRowDesktop = false,
-  showExtraActionsOnMobile = false,
 }) => {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
-  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
 
   const yearFilterNode =
     typeof selectedYear !== 'undefined' && onYearChange ? (
@@ -73,59 +85,6 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         size="large"
       />
     ) : null;
-
-  const deleteAllNode =
-    onDeleteAll && deleteAllConfirmTitle ? (
-      <Popconfirm
-        title={deleteAllConfirmTitle}
-        description={deleteAllConfirmDescription}
-        okText={deleteAllLabel}
-        okType="danger"
-        onConfirm={onDeleteAll}
-      >
-        <Button
-          className="toolbar-btn"
-          size="large"
-          danger
-          icon={<DeleteOutlined />}
-          disabled={deleteAllDisabled}
-        >
-          {deleteAllLabel}
-        </Button>
-      </Popconfirm>
-    ) : onDeleteAll ? (
-      <Button
-        className="toolbar-btn"
-        size="large"
-        danger
-        icon={<DeleteOutlined />}
-        disabled={deleteAllDisabled}
-        onClick={() => onDeleteAll?.()}
-      >
-        {deleteAllLabel}
-      </Button>
-    ) : null;
-
-  const exportNode = onExport ? (
-    <ExportButton
-      onExport={onExport}
-      filename={exportFilename}
-      label={exportLabel}
-      className="toolbar-btn"
-      size="large"
-    />
-  ) : null;
-
-  const importNode = onImport ? (
-    <Button
-      className="toolbar-btn"
-      size="large"
-      icon={<UploadOutlined />}
-      onClick={() => onImport?.()}
-    >
-      {importLabel}
-    </Button>
-  ) : null;
 
   const primaryActionNode = onPrimaryAction ? (
     <Button
@@ -140,17 +99,84 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
     </Button>
   ) : null;
 
-  const mobileHiddenActionCount = [
-    showExtraActionsOnMobile ? null : extraActions,
-    deleteAllNode,
-    exportNode,
-    importNode,
-  ].filter(Boolean).length;
+  const exportMenu = useExport(
+    onExport ?? (async () => ({ data: new Blob(), headers: {} })),
+    exportFilename
+  );
+
+  const confirmDeleteAll = () => {
+    if (!onDeleteAll) return;
+    if (!deleteAllConfirmTitle) {
+      onDeleteAll();
+      return;
+    }
+    Modal.confirm({
+      title: deleteAllConfirmTitle,
+      content: deleteAllConfirmDescription,
+      okText: deleteAllLabel,
+      okType: 'danger',
+      onOk: onDeleteAll,
+    });
+  };
+
+  const dataMenuItems: MenuProps['items'] = [
+    ...(isMobile && secondaryMenuItems?.length
+      ? [...secondaryMenuItems, { type: 'divider' as const, key: 'verbs-divider' }]
+      : []),
+    onImport
+      ? { key: 'import', icon: <UploadOutlined />, label: importLabel, onClick: () => onImport() }
+      : null,
+    onExport
+      ? {
+          key: 'export',
+          icon: <DownloadOutlined />,
+          label: exportLabel,
+          children: exportMenu.items,
+        }
+      : null,
+    (onImport || onExport) && onDeleteAll ? { type: 'divider' as const, key: 'divider' } : null,
+    onDeleteAll
+      ? {
+          key: 'delete',
+          icon: <DeleteOutlined />,
+          label: deleteAllLabel,
+          danger: true,
+          disabled: deleteAllDisabled,
+          onClick: confirmDeleteAll,
+        }
+      : null,
+  ].filter(Boolean) as MenuProps['items'];
+
+  const hasDataMenu = Boolean(dataMenuItems && dataMenuItems.length > 0);
+
+  // An unlabelled dot menu hides Import and Export completely. The word plus a caret
+  // says "there is more in here" without spending a button per action.
+  const dataMenuIconNode = hasDataMenu ? (
+    <Dropdown menu={{ items: dataMenuItems }} trigger={['click']} placement="bottomRight">
+      <Button
+        className="page-toolbar-mobile-more"
+        icon={<MoreOutlined />}
+        aria-label="Import, export and bulk actions"
+      />
+    </Dropdown>
+  ) : null;
+
+  const dataMenuNode = hasDataMenu ? (
+    <Dropdown menu={{ items: dataMenuItems }} trigger={['click']} placement="bottomRight">
+      <Button className="toolbar-btn" size="large" icon={<MoreOutlined />}>
+        More <DownOutlined className="text-[10px]" />
+      </Button>
+    </Dropdown>
+  ) : null;
+
+  const hasFilterRow = Boolean(yearFilterNode || extraActions || viewSwitch);
 
   if (isMobile) {
     return (
-      <>
-        <div className="space-y-4">
+      <div className="space-y-3">
+        {/* The overflow rides the title line. Given its own row it either stranded itself
+            at half width or added a bar of pure chrome to pages with no primary action. */}
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Typography.Title
               level={1}
@@ -168,61 +194,40 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
             {subtitle ? (
               <Typography.Text
                 type="secondary"
-                style={{ fontSize: '14px', display: 'block', marginTop: '6px' }}
+                style={{ fontSize: '13px', display: 'block', marginTop: '4px' }}
               >
                 {subtitle}
               </Typography.Text>
             ) : null}
           </div>
-
-          <div className="flex flex-col gap-3">
-            {primaryActionNode ? (
-              <div className="w-full [&_.ant-btn]:!h-11 [&_.ant-btn]:w-full [&_.ant-btn]:!rounded-xl [&_.ant-btn]:!font-semibold">
-                {primaryActionNode}
-              </div>
-            ) : null}
-
-            {yearFilterNode ? <div className="w-full">{yearFilterNode}</div> : null}
-
-            {showExtraActionsOnMobile && extraActions ? (
-              <div className="w-full">{extraActions}</div>
-            ) : null}
-
-            {mobileHiddenActionCount > 0 ? (
-              <Button
-                size="large"
-                className="toolbar-native-btn"
-                onClick={() => setMobileActionsOpen((current) => !current)}
-                icon={mobileActionsOpen ? <UpOutlined /> : <DownOutlined />}
-              >
-                {mobileActionsOpen ? 'Hide More Actions' : 'More Actions'}
-              </Button>
-            ) : null}
-
-            {mobileActionsOpen ? (
-              <div className="enterprise-filter-bar p-3">
-                <div className="grid grid-cols-1 gap-3">
-                  {!showExtraActionsOnMobile && extraActions ? (
-                    <div className="w-full">{extraActions}</div>
-                  ) : null}
-                  {deleteAllNode ? <div className="w-full">{deleteAllNode}</div> : null}
-                  {exportNode ? <div className="w-full">{exportNode}</div> : null}
-                  {importNode ? <div className="w-full">{importNode}</div> : null}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          {dataMenuIconNode}
         </div>
-      </>
+
+        {primaryActionNode ? (
+          <div className="page-toolbar-mobile-primary">{primaryActionNode}</div>
+        ) : null}
+
+        {/* Verbs only get a row of their own when the page has not given us menu entries
+            for them. */}
+        {secondaryActions && !secondaryMenuItems?.length ? (
+          <div className="page-toolbar-mobile-verbs">{secondaryActions}</div>
+        ) : null}
+
+        {viewSwitch ? <div className="page-toolbar-mobile-view">{viewSwitch}</div> : null}
+
+        {yearFilterNode || extraActions ? (
+          <div className="page-toolbar-mobile-filters">
+            {yearFilterNode}
+            {extraActions}
+          </div>
+        ) : null}
+      </div>
     );
   }
 
-  const hasSecondaryRow = Boolean(
-    yearFilterNode || extraActions || deleteAllNode || exportNode || importNode
-  );
-
   return (
     <div className={`page-toolbar ${singleRowDesktop ? 'page-toolbar-single-row' : ''}`.trim()}>
+      {exportMenu.contextHolder}
       <div className="page-toolbar-heading">
         <div className="flex items-center gap-4">
           <div className="min-w-0">
@@ -251,40 +256,27 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         </div>
       </div>
 
-      {/* Pages that opt into a single row keep one cluster. Everywhere else the primary
-          action rides with the title and the rest drops to its own row, so a long toolbar
-          does not wrap and leave the title line looking empty. */}
       {singleRowDesktop ? (
         <div className="page-toolbar-actions">
           {yearFilterNode}
           {extraActions}
-          {deleteAllNode}
-          {exportNode}
-          {importNode}
+          {dataMenuNode}
           {primaryActionNode}
         </div>
       ) : (
         <>
-          {primaryActionNode ? (
+          {primaryActionNode || dataMenuNode || secondaryActions ? (
             <div className="page-toolbar-actions page-toolbar-actions-primary">
+              {secondaryActions}
+              {dataMenuNode}
               {primaryActionNode}
             </div>
           ) : null}
-          {hasSecondaryRow ? (
-            <div className="page-toolbar-secondary">
-              {/* What you look at on the left, what you do to the data on the right, so a
-                  destructive action never sits next to a view filter. */}
-              <div className="page-toolbar-group">
-                {yearFilterNode}
-                {extraActions}
-              </div>
-              {(importNode || exportNode || deleteAllNode) && (
-                <div className="page-toolbar-group page-toolbar-group-end">
-                  {importNode}
-                  {exportNode}
-                  {deleteAllNode}
-                </div>
-              )}
+          {hasFilterRow ? (
+            <div className="page-toolbar-filters">
+              {viewSwitch}
+              {yearFilterNode}
+              {extraActions}
             </div>
           ) : null}
         </>

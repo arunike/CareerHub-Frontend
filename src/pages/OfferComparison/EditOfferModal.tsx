@@ -1,3 +1,4 @@
+import type { CommuteOption } from './commute';
 import { useState } from 'react';
 import { message } from 'antd';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -244,10 +245,8 @@ const EditOfferModal = ({
             commuteCostFrequency={
               (editingApp?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
             }
-            onCommuteCostValueChange={(value) => patchEditingApp({ commute_cost_value: value })}
-            onCommuteCostFrequencyChange={(value) =>
-              patchEditingApp({ commute_cost_frequency: value })
-            }
+            commuteOptions={editingApp?.commute_options as CommuteOption[] | undefined}
+            onCommuteOptionsChange={(value) => patchEditingApp({ commute_options: value })}
             freeFoodPerkValue={Number(editingApp?.free_food_perk_value) || 0}
             freeFoodPerkFrequency={
               (editingApp?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'

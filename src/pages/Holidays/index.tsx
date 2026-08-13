@@ -1554,7 +1554,6 @@ const Holidays = () => {
           <PageActionToolbar
             title="Holidays"
             subtitle="Manage personal time off and observed holidays."
-            showExtraActionsOnMobile
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}

@@ -30,7 +30,7 @@ export const askSpanEditScope = (
       </div>
     ),
     footer: () => (
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="careerhub-dialog-actions">
         <Button onClick={() => dialog.destroy()}>Cancel</Button>
         <Button
           onClick={() => {
@@ -71,7 +71,7 @@ export const askOverrideOverwrite = (
       </p>
     ),
     footer: () => (
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="careerhub-dialog-actions">
         <Button onClick={() => dialog.destroy()}>Cancel</Button>
         <Button
           onClick={() => {

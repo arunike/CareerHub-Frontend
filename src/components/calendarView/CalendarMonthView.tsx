@@ -155,12 +155,15 @@ const CalendarMonthView = ({
         <div
           key={cloneDay.toString()}
           className={clsx(
-            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
+            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all [@media(hover:hover)]:hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
             !isCurrentMonth && 'bg-gray-50/50 text-gray-400',
-            isTodayDate && 'bg-blue-50/30',
-            isSelected && 'ring-2 ring-blue-500 ring-inset z-10 rounded-lg',
+            // Both can be true; which class wins is stylesheet order, not this order.
+            isTodayDate && !isSelected && 'bg-blue-50/30',
+            // Square, grid-aligned: a rounded ring inside a hairline grid reads as a
+            // sticker pasted over the cell, with the cell's own corners peeking out.
+            isSelected && 'z-10 bg-blue-50 ring-1 ring-inset ring-blue-500',
             isDropCandidate && 'border-dashed border-blue-300',
-            dropTarget === dayKey && 'bg-blue-100/70 ring-2 ring-blue-500 ring-inset z-10'
+            dropTarget === dayKey && 'z-10 bg-blue-100/70 ring-1 ring-inset ring-blue-500'
           )}
           onClick={() => onDateSelect(cloneDay)}
           onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
@@ -189,12 +192,22 @@ const CalendarMonthView = ({
                 clickEvent.stopPropagation();
                 onDateSelect(cloneDay);
               }}
-              className={clsx(
-                'flex h-11 w-full min-w-11 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-slate-100 sm:h-7 sm:w-7 sm:min-w-0 sm:text-sm',
-                isTodayDate ? 'bg-blue-600 text-white' : 'text-gray-700'
-              )}
+              // The button stays a full-width tap target on mobile; the circle lives on
+              // the span inside, so `rounded-full` cannot stretch into a stadium.
+              className="flex h-11 w-full min-w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:h-7 sm:w-7 sm:min-w-0"
             >
-              {format(cloneDay, 'd')}
+              <span
+                className={clsx(
+                  'flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium sm:text-sm',
+                  isTodayDate
+                    ? 'bg-blue-600 text-white'
+                    : isSelected
+                      ? 'bg-blue-100 font-semibold text-blue-700'
+                      : 'text-gray-700'
+                )}
+              >
+                {format(cloneDay, 'd')}
+              </span>
             </button>
           </div>
 

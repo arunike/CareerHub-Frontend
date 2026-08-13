@@ -1054,7 +1054,6 @@ const ExperiencePage: React.FC = () => {
           onPrimaryAction={openAddModal}
           primaryActionLabel="Add Experience"
           primaryActionIcon={<PlusOutlined />}
-          showExtraActionsOnMobile
         />
       </div>
 

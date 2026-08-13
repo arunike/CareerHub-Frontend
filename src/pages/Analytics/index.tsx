@@ -207,7 +207,6 @@ const Analytics: React.FC = () => {
           subtitle="Review availability patterns and job search progress."
           extraActions={<div className="w-[180px] h-[38px] shimmer-bg rounded-lg" />}
           singleRowDesktop
-          showExtraActionsOnMobile
         />
         <SectionFallback />
       </div>
@@ -240,7 +239,6 @@ const Analytics: React.FC = () => {
           />
         }
         singleRowDesktop
-        showExtraActionsOnMobile
       />
 
       {activeTab === 'availability' && availabilityError ? (

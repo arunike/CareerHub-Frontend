@@ -1,3 +1,4 @@
+import { summariseCommute, type CommuteOption } from './commute';
 import { useEffect, useMemo, useState } from 'react';
 import {
   annualizeAmount,
@@ -493,20 +494,39 @@ const hasImmigrationSignal = (app?: Application) =>
 
 const scoreLocationWithBreakdown = (app?: Application) => {
   const workMode = getWorkMode(app);
-  const commuteAnnual = annualizeAmount(
-    asNumber(app?.commute_cost_value),
-    app?.commute_cost_frequency || 'MONTHLY'
-  );
   const rtoDays = clamp(
     asNumber(app?.rto_days_per_week, workMode === 'ONSITE' ? 5 : workMode === 'REMOTE' ? 0 : 3),
     0,
     5
   );
+  const commute = summariseCommute(
+    (app as { commute_options?: CommuteOption[] } | undefined)?.commute_options,
+    {
+      workMode,
+      rtoDaysPerWeek: rtoDays,
+      ptoDays: asNumber((app as { pto_days?: number } | undefined)?.pto_days, 15),
+      holidayDays: asNumber((app as { holiday_days?: number } | undefined)?.holiday_days, 11),
+    }
+  );
+  // Cost now rides the same office-day count as time, so a hybrid role is not charged
+  // for five days of travel.
+  const commuteAnnual = commute.primary
+    ? commute.annualCost
+    : (app?.commute_cost_frequency || 'MONTHLY') === 'DAILY'
+      ? asNumber(app?.commute_cost_value) * commute.officeDays
+      : annualizeAmount(
+          asNumber(app?.commute_cost_value),
+          app?.commute_cost_frequency || 'MONTHLY'
+        );
   const base =
     workMode === 'REMOTE' ? 90 : workMode === 'HYBRID' ? 76 : workMode === 'ONSITE' ? 62 : 66;
   const commutePenalty = clamp(commuteAnnual / 1000, 0, 18);
-  const rtoPenalty = workMode === 'REMOTE' ? 0 : Math.max(0, rtoDays - 2) * 2;
-  const score = clamp(base - commutePenalty - rtoPenalty);
+  // Measured travel time replaces the crude days-per-week proxy rather than stacking on
+  // top of it, so the two cannot punish the same commute twice.
+  const hasTime = !!commute.primary && commute.effectiveHours > 0;
+  const timePenalty = hasTime ? clamp(commute.effectiveHours / 15, 0, 20) : 0;
+  const rtoPenalty = hasTime || workMode === 'REMOTE' ? 0 : Math.max(0, rtoDays - 2) * 2;
+  const score = clamp(base - commutePenalty - rtoPenalty - timePenalty);
 
   return {
     score,
@@ -515,10 +535,13 @@ const scoreLocationWithBreakdown = (app?: Application) => {
       `Commute penalty: ${formatCurrency(commuteAnnual)} annual / 1000 = ${commutePenalty.toFixed(
         1
       )}, capped at 18`,
-      `RTO penalty: max(0, ${rtoDays} days - 2) x 2 = ${rtoPenalty.toFixed(1)}`,
-      `Location score: ${base} - ${commutePenalty.toFixed(1)} - ${rtoPenalty.toFixed(
-        1
-      )} = ${Math.round(score)}`,
+      hasTime
+        ? `Commute time penalty: ${Math.round(commute.effectiveHours)} effective hrs/yr / 15 = ${timePenalty.toFixed(1)}, capped at 20`
+        : `RTO penalty: max(0, ${rtoDays} days - 2) x 2 = ${rtoPenalty.toFixed(1)}`,
+      `Location score: ${base} - ${commutePenalty.toFixed(1)} - ${(hasTime
+        ? timePenalty
+        : rtoPenalty
+      ).toFixed(1)} = ${Math.round(score)}`,
     ],
   };
 };
@@ -692,6 +715,9 @@ const buildRows = (
       rto_days_per_week: offer.rto_days_per_week,
       commute_cost_value: offer.commute_cost_value,
       commute_cost_frequency: offer.commute_cost_frequency,
+      commute_options: offer.commute_options,
+      pto_days: offer.pto_days,
+      holiday_days: offer.holiday_days,
       office_location: offer.office_location,
       location: offer.location,
     } as unknown as Application;
@@ -1974,7 +2000,7 @@ const OfferDecisionScorecard = ({
                         const tooltips: Record<string, string> = {
                           financial: `Adjusted annual value after tax, cost of living, commute, and rent, mapped to an uncapped logarithmic score where $300k = 100. The bar is scaled against the highest visible Financial score (${Math.round(financialBarMax)}); the numeric score stays fixed.`,
                           location:
-                            'Score based on city cost-of-living index vs. your reference city. A higher-cost location reduces this score.',
+                            'Starts from the work mode, then subtracts the annual commute cost and the time the commute takes. Both are counted over the office days implied by the RTO policy and time off, so a hybrid role is not charged for a five-day commute. Where travel time is recorded it replaces the days-per-week estimate rather than stacking on top of it.',
                         };
                         return (
                           <div key={category.key} className="flex flex-col">

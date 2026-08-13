@@ -1,3 +1,4 @@
+import type { CommuteOption } from './commute';
 import type { ApplicationLike, BenefitItem, MaritalStatus, SimulatedOffer } from './calculations';
 import {
   computeBenefitsTotal,
@@ -92,6 +93,8 @@ export const buildScenarioFromLinkedApplication = ({
     tax_bonus_rate: estimatedTax.bonusTaxRate,
     tax_equity_rate: estimatedTax.equityTaxRate,
     monthly_rent: estimatedRent,
+    commute_options:
+      (linkedApp?.commute_options as CommuteOption[] | undefined) ?? prev.commute_options ?? [],
     commute_cost_value: Number(linkedApp?.commute_cost_value || prev.commute_cost_value || 0),
     commute_cost_frequency:
       (linkedApp?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') ||

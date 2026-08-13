@@ -1,3 +1,4 @@
+import type { CommuteOption } from './commute';
 import type React from 'react';
 import { message } from 'antd';
 import ModalShell from '../../components/ModalShell';
@@ -257,10 +258,8 @@ const ScenarioOfferModal = ({
               onRtoDaysPerWeekChange={(value) => setNewScenarioField('rto_days_per_week', value)}
               commuteCostValue={Number(newScenario.commute_cost_value) || 0}
               commuteCostFrequency={newScenario.commute_cost_frequency || 'MONTHLY'}
-              onCommuteCostValueChange={(value) => setNewScenarioField('commute_cost_value', value)}
-              onCommuteCostFrequencyChange={(value) =>
-                setNewScenarioField('commute_cost_frequency', value)
-              }
+              commuteOptions={newScenario.commute_options as CommuteOption[] | undefined}
+              onCommuteOptionsChange={(value) => setNewScenarioField('commute_options', value)}
               freeFoodPerkValue={Number(newScenario.free_food_perk_value) || 0}
               freeFoodPerkFrequency={newScenario.free_food_perk_frequency || 'YEARLY'}
               onFreeFoodPerkValueChange={(value) =>

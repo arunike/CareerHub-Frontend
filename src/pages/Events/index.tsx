@@ -830,41 +830,54 @@ const Events = () => {
           <PageActionToolbar
             title="Events"
             subtitle={`${eventsTotal.toLocaleString()} events`}
-            showExtraActionsOnMobile
             selectedYear={selectedYear}
             onYearChange={handleYearChange}
             availableYears={availableYears}
+            secondaryActions={
+              <Button
+                className="toolbar-btn"
+                size="large"
+                icon={<LinkOutlined />}
+                onClick={() => setIsLinkInterviewsOpen(true)}
+              >
+                Link interviews
+              </Button>
+            }
+            secondaryMenuItems={[
+              {
+                key: 'link-interviews',
+                icon: <LinkOutlined />,
+                label: 'Link interviews',
+                onClick: () => setIsLinkInterviewsOpen(true),
+              },
+            ]}
+            viewSwitch={
+              <SegmentedToggle
+                value={contentView}
+                onChange={setContentView}
+                wrapperClassName="page-toolbar-view-switch rounded-xl border border-gray-200 bg-white p-1"
+                buttonClassName="px-3 py-1.5"
+                options={[
+                  { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
+                  {
+                    value: 'calendar',
+                    label: 'Calendar',
+                    activeClassName: 'bg-blue-50 text-blue-700',
+                  },
+                ]}
+              />
+            }
             extraActions={
-              <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
-                <Button icon={<LinkOutlined />} onClick={() => setIsLinkInterviewsOpen(true)}>
-                  Link interviews
-                </Button>
-                <SegmentedToggle
-                  value={contentView}
-                  onChange={setContentView}
-                  wrapperClassName="rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
-                  buttonClassName="px-3 py-2"
-                  options={[
-                    { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
-                    {
-                      value: 'calendar',
-                      label: 'Calendar',
-                      activeClassName: 'bg-blue-50 text-blue-700',
-                    },
-                  ]}
-                />
-                <Select
-                  aria-label="Display timezone"
-                  value={normalizeTimeZone(userTimezone)}
-                  onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
-                  style={{ width: 260 }}
-                  className="toolbar-select max-w-full"
-                  size="large"
-                  showSearch
-                  optionFilterProp="label"
-                  options={TIMEZONE_OPTIONS}
-                />
-              </div>
+              <Select
+                aria-label="Display timezone"
+                value={normalizeTimeZone(userTimezone)}
+                onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
+                className="toolbar-select w-full md:w-[260px]"
+                size="large"
+                showSearch
+                optionFilterProp="label"
+                options={TIMEZONE_OPTIONS}
+              />
             }
             onDeleteAll={() => setIsDeleteAllOpen(true)}
             deleteAllDisabled={eventsUnlocked === 0}

@@ -49,6 +49,7 @@ import {
 import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../utils/apiError';
+import CommuteComparison from './CommuteComparison';
 
 const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
 const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
@@ -428,6 +429,7 @@ const OfferComparison = () => {
           rto_days_per_week: editingApp.rto_days_per_week ?? 0,
           commute_cost_value: editingApp.commute_cost_value ?? 0,
           commute_cost_frequency: editingApp.commute_cost_frequency ?? 'MONTHLY',
+          commute_options: editingApp.commute_options ?? [],
           free_food_perk_value: editingApp.free_food_perk_value ?? 0,
           free_food_perk_frequency: editingApp.free_food_perk_frequency ?? 'YEARLY',
           tax_base_rate: editingApp.tax_base_rate ?? null,
@@ -1450,6 +1452,19 @@ const OfferComparison = () => {
           </div>
         )}
       </section>
+
+      {/* Nothing to compare when every offer is remote, so skip the empty card. */}
+      {displayScenarioRows.some((row) => row.commute?.primary) && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-4 border-b border-slate-100 pb-3">
+            <h2 className="text-lg font-semibold text-slate-900">Commute</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Travel time and cost across offers, weighted by each one&apos;s RTO policy
+            </p>
+          </div>
+          <CommuteComparison scenarioRows={displayScenarioRows} />
+        </section>
+      )}
 
       <OfferDecisionScorecard
         extraHeaderNode={

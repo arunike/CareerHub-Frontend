@@ -1,3 +1,4 @@
+import type { CommuteOption } from './commute';
 export type MaritalStatus =
   | 'SINGLE'
   | 'MARRIED_FILING_JOINTLY'
@@ -52,6 +53,7 @@ export interface SimulatedOffer {
   work_mode: 'REMOTE' | 'HYBRID' | 'ONSITE';
   rto_days_per_week: number;
   commute_cost_value: number;
+  commute_options?: CommuteOption[];
   commute_cost_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   free_food_perk_value: number;
   free_food_perk_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
@@ -424,8 +426,10 @@ export interface ApplicationLike {
   is_locked?: boolean;
   rto_policy?: string;
   rto_days_per_week?: number;
+  work_mode?: string;
   commute_cost_value?: number;
   commute_cost_frequency?: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  commute_options?: CommuteOption[];
   free_food_perk_value?: number;
   free_food_perk_frequency?: 'DAILY' | 'MONTHLY' | 'YEARLY';
   tax_base_rate?: number;

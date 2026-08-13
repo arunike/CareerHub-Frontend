@@ -1,3 +1,4 @@
+import { seedFromLegacyCost, type CommuteOption } from './commute';
 import type { ReactNode } from 'react';
 import {
   BankOutlined,
@@ -91,8 +92,8 @@ interface OfferFormFieldsProps {
   onRtoDaysPerWeekChange: (value: number) => void;
   commuteCostValue: number;
   commuteCostFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
-  onCommuteCostValueChange: (value: number) => void;
-  onCommuteCostFrequencyChange: (value: 'DAILY' | 'MONTHLY' | 'YEARLY') => void;
+  commuteOptions?: CommuteOption[];
+  onCommuteOptionsChange?: (value: CommuteOption[]) => void;
   freeFoodPerkValue: number;
   freeFoodPerkFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   onFreeFoodPerkValueChange: (value: number) => void;
@@ -260,8 +261,8 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   onRtoDaysPerWeekChange,
   commuteCostValue,
   commuteCostFrequency,
-  onCommuteCostValueChange,
-  onCommuteCostFrequencyChange,
+  commuteOptions,
+  onCommuteOptionsChange,
   freeFoodPerkValue,
   freeFoodPerkFrequency,
   onFreeFoodPerkValueChange,
@@ -548,10 +549,14 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 rtoDaysPerWeek={rtoDaysPerWeek}
                 onRtoDaysPerWeekChange={onRtoDaysPerWeekChange}
                 showCommuteAndPerks={showCommuteAndPerks}
-                commuteCostValue={commuteCostValue}
-                commuteCostFrequency={commuteCostFrequency}
-                onCommuteCostValueChange={onCommuteCostValueChange}
-                onCommuteCostFrequencyChange={onCommuteCostFrequencyChange}
+                commuteOptions={
+                  commuteOptions?.length
+                    ? commuteOptions
+                    : seedFromLegacyCost(commuteCostValue, commuteCostFrequency)
+                }
+                onCommuteOptionsChange={onCommuteOptionsChange}
+                ptoDays={ptoDays}
+                holidayDays={holidayDays}
                 freeFoodPerkValue={freeFoodPerkValue}
                 freeFoodPerkFrequency={freeFoodPerkFrequency}
                 onFreeFoodPerkValueChange={onFreeFoodPerkValueChange}

@@ -1,3 +1,4 @@
+import type { CommuteSummary } from './commute';
 import type { LinkedExperience } from './calculations';
 import type {
   ApplicationLike,
@@ -66,6 +67,7 @@ export interface ScenarioRow {
   fortyOneKMatchValue?: number;
   afterTaxEquity: number;
   commuteAnnualCost: number;
+  commute?: CommuteSummary;
   freeFoodAnnualValue: number;
   usedBaseTaxRate: number;
   usedBonusTaxRate: number;

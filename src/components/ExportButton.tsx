@@ -17,13 +17,7 @@ interface ExportButtonProps {
   size?: 'large' | 'middle' | 'small';
 }
 
-const ExportButton: React.FC<ExportButtonProps> = ({
-  onExport,
-  label = 'Export',
-  filename = 'export',
-  className,
-  size = 'middle',
-}) => {
+export const useExport = (onExport: ExportButtonProps['onExport'], filename = 'export') => {
   const [messageApi, contextHolder] = message.useMessage();
   const [isExporting, setIsExporting] = useState(false);
 
@@ -83,6 +77,18 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       onClick: () => handleExport('json'),
     },
   ];
+
+  return { items, isExporting, contextHolder };
+};
+
+const ExportButton: React.FC<ExportButtonProps> = ({
+  onExport,
+  label = 'Export',
+  filename = 'export',
+  className,
+  size = 'middle',
+}) => {
+  const { items, isExporting, contextHolder } = useExport(onExport, filename);
 
   return (
     <>

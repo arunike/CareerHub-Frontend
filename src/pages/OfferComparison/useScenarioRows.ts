@@ -17,6 +17,7 @@ import {
 } from '../../utils/applicationLocation';
 import { getRealizableEquity } from './equityLiquidity';
 import { getCountedSickLeaveDays } from '../../utils/offerTimeOff';
+import { summariseCommute, type CommuteOption } from './commute';
 
 type Params = {
   filteredOffers: OfferLike[];
@@ -113,10 +114,22 @@ export const useScenarioRows = ({
         Number(app?.free_food_perk_value || 0),
         (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
       );
-      const commuteAnnualCost = annualizeAmount(
-        Number(app?.commute_cost_value || 0),
-        (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
-      );
+      // Time and cost share one office-day count, so a hybrid role is never charged a
+      // five-day commute. Falls back to the legacy single cost when no modes are set.
+      const commute = summariseCommute(app?.commute_options as CommuteOption[] | undefined, {
+        workMode: app?.work_mode,
+        rtoDaysPerWeek: app?.rto_days_per_week,
+        ptoDays: Number(offer.pto_days ?? 0),
+        holidayDays: Number(offer.holiday_days ?? 0),
+      });
+      const commuteAnnualCost = commute.primary
+        ? commute.annualCost
+        : (app?.commute_cost_frequency ?? 'MONTHLY') === 'DAILY'
+          ? Number(app?.commute_cost_value || 0) * commute.officeDays
+          : annualizeAmount(
+              Number(app?.commute_cost_value || 0),
+              (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
+            );
 
       const scenarioCalc = calculateScenarioValue({
         base_salary: Number(offer.base_salary),
@@ -180,6 +193,7 @@ export const useScenarioRows = ({
         fortyOneKMatchValue: scenarioCalc.breakdown.fortyOneKMatchValue,
         afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
         commuteAnnualCost,
+        commute,
         freeFoodAnnualValue,
         usedBaseTaxRate: rowTax.baseTaxRate,
         usedBonusTaxRate: rowTax.bonusTaxRate,
@@ -230,10 +244,23 @@ export const useScenarioRows = ({
         Number(offer.free_food_perk_value || 0),
         offer.free_food_perk_frequency || 'YEARLY'
       );
-      const commuteAnnualCost = annualizeAmount(
-        Number(offer.commute_cost_value || 0),
-        offer.commute_cost_frequency || 'MONTHLY'
+      const scenarioCommute = summariseCommute(
+        offer.commute_options as CommuteOption[] | undefined,
+        {
+          workMode: offer.work_mode,
+          rtoDaysPerWeek: offer.rto_days_per_week,
+          ptoDays: Number(offer.pto_days ?? 0),
+          holidayDays: Number(offer.holiday_days ?? 0),
+        }
       );
+      const commuteAnnualCost = scenarioCommute.primary
+        ? scenarioCommute.annualCost
+        : (offer.commute_cost_frequency || 'MONTHLY') === 'DAILY'
+          ? Number(offer.commute_cost_value || 0) * scenarioCommute.officeDays
+          : annualizeAmount(
+              Number(offer.commute_cost_value || 0),
+              offer.commute_cost_frequency || 'MONTHLY'
+            );
       const scenarioCalc = calculateScenarioValue({
         base_salary: Number(offer.base_salary),
         bonus: Number(offer.bonus),
@@ -301,6 +328,7 @@ export const useScenarioRows = ({
         fortyOneKMatchValue: scenarioCalc.breakdown.fortyOneKMatchValue,
         afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
         commuteAnnualCost,
+        commute: scenarioCommute,
         freeFoodAnnualValue,
         usedBaseTaxRate: rowTax.baseTaxRate,
         usedBonusTaxRate: rowTax.bonusTaxRate,

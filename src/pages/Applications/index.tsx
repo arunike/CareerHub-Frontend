@@ -1110,7 +1110,7 @@ const Applications = () => {
           selectedYear={selectedYear}
           onYearChange={handleYearChange}
           availableYears={availableYears}
-          extraActions={
+          secondaryActions={
             <Button
               className="toolbar-btn"
               size="large"
@@ -1120,6 +1120,14 @@ const Applications = () => {
               Import URL
             </Button>
           }
+          secondaryMenuItems={[
+            {
+              key: 'import-url',
+              icon: <GlobalOutlined />,
+              label: 'Import from URL',
+              onClick: () => setIsJobImportModalOpen(true),
+            },
+          ]}
           onDeleteAll={handleDeleteAll}
           deleteAllConfirmTitle="Delete All Applications?"
           deleteAllConfirmDescription="This will delete all unlocked applications. This cannot be undone."

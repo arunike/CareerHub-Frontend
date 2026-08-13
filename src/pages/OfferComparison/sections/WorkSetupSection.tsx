@@ -1,5 +1,7 @@
 import UnitNumberInput from '../../../components/UnitNumberInput';
 import { CONTROL_CLASS } from '../../../components/formControls';
+import CommuteOptionsEditor from './CommuteOptionsEditor';
+import { officeDaysPerYear, type CommuteOption } from '../commute';
 type WorkSetupSectionProps = {
   workMode: 'REMOTE' | 'HYBRID' | 'ONSITE';
   onWorkModeChange: (value: 'REMOTE' | 'HYBRID' | 'ONSITE') => void;
@@ -7,10 +9,10 @@ type WorkSetupSectionProps = {
   rtoDaysPerWeek: number;
   onRtoDaysPerWeekChange: (value: number) => void;
   showCommuteAndPerks: boolean;
-  commuteCostValue: number;
-  commuteCostFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
-  onCommuteCostValueChange: (value: number) => void;
-  onCommuteCostFrequencyChange: (value: 'DAILY' | 'MONTHLY' | 'YEARLY') => void;
+  commuteOptions?: CommuteOption[];
+  onCommuteOptionsChange?: (value: CommuteOption[]) => void;
+  ptoDays?: number;
+  holidayDays?: number;
   freeFoodPerkValue: number;
   freeFoodPerkFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   onFreeFoodPerkValueChange: (value: number) => void;
@@ -28,10 +30,10 @@ const WorkSetupSection = ({
   rtoDaysPerWeek,
   onRtoDaysPerWeekChange,
   showCommuteAndPerks,
-  commuteCostValue,
-  commuteCostFrequency,
-  onCommuteCostValueChange,
-  onCommuteCostFrequencyChange,
+  commuteOptions,
+  onCommuteOptionsChange,
+  ptoDays,
+  holidayDays,
   freeFoodPerkValue,
   freeFoodPerkFrequency,
   onFreeFoodPerkValueChange,
@@ -41,12 +43,6 @@ const WorkSetupSection = ({
   travelFrequency,
   onTravelFrequencyChange,
 }: WorkSetupSectionProps) => {
-  const annualizedCommute =
-    commuteCostFrequency === 'DAILY'
-      ? (Number(commuteCostValue) || 0) * 260
-      : commuteCostFrequency === 'MONTHLY'
-        ? (Number(commuteCostValue) || 0) * 12
-        : Number(commuteCostValue) || 0;
   const annualizedFoodPerk =
     freeFoodPerkFrequency === 'DAILY'
       ? (Number(freeFoodPerkValue) || 0) * 260
@@ -112,32 +108,20 @@ const WorkSetupSection = ({
           <option value="HIGH">{'High Travel (>25%)'}</option>
         </select>
       </div>
-      {showCommuteAndPerks && (
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Commute Cost</label>
-          <div className="grid grid-cols-[1fr_132px] gap-2">
-            <UnitNumberInput
-              unit="$"
-              min={0}
-              value={commuteCostValue || null}
-              placeholder="0"
-              onChange={(value) => onCommuteCostValueChange(value ?? 0)}
-            />
-            <select
-              value={commuteCostFrequency}
-              onChange={(e) =>
-                onCommuteCostFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')
-              }
-              className={CONTROL_CLASS}
-            >
-              <option value="DAILY">/day</option>
-              <option value="MONTHLY">/month</option>
-              <option value="YEARLY">/year</option>
-            </select>
-          </div>
-          <p className="text-xs text-gray-500">
-            Annualized total: ${Math.round(annualizedCommute).toLocaleString()}
-          </p>
+      {/* Remote means zero office days, so a commute editor would only ever compute
+          nothing. Existing entries are kept, just not counted or shown. */}
+      {showCommuteAndPerks && workMode !== 'REMOTE' && onCommuteOptionsChange && (
+        <div className="md:col-span-2">
+          <CommuteOptionsEditor
+            options={commuteOptions ?? []}
+            onChange={onCommuteOptionsChange}
+            officeDays={officeDaysPerYear({
+              workMode,
+              rtoDaysPerWeek,
+              ptoDays,
+              holidayDays,
+            })}
+          />
         </div>
       )}
       {showCommuteAndPerks && (
