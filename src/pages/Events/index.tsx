@@ -79,6 +79,7 @@ import {
   isSpanEvent,
   type SpanEditScope,
 } from '../../components/calendarView/confirmSpanEdit';
+import YearFilter from '../../components/YearFilter';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -181,7 +182,7 @@ const Events = () => {
   const [defaultCategory, setDefaultCategory] = useState<number | null>(null);
   const [contentView, setContentView] = usePersistedState<'list' | 'calendar'>(
     'eventsContentView',
-    'list',
+    'calendar',
     {
       serialize: (value) => value,
       deserialize: (raw) => (raw === 'calendar' ? 'calendar' : 'list'),
@@ -821,6 +822,38 @@ const Events = () => {
     });
   };
 
+  // Everything that only changes what you are looking at. It rides inside the calendar's
+  // own header, or sits above the list, instead of leaving an empty band under the title.
+  const viewControls = (
+    <>
+      <SegmentedToggle
+        value={contentView}
+        onChange={setContentView}
+        wrapperClassName="page-toolbar-view-switch w-max rounded-xl border border-gray-200 bg-white p-1"
+        buttonClassName="px-3 py-1.5"
+        options={[
+          { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
+          { value: 'calendar', label: 'Calendar', activeClassName: 'bg-blue-50 text-blue-700' },
+        ]}
+      />
+      <YearFilter
+        selectedYear={selectedYear}
+        onYearChange={handleYearChange}
+        availableYears={availableYears}
+        className="toolbar-select"
+      />
+      <Select
+        aria-label="Display timezone"
+        value={normalizeTimeZone(userTimezone)}
+        onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
+        className="toolbar-select w-full sm:w-[220px]"
+        showSearch
+        optionFilterProp="label"
+        options={TIMEZONE_OPTIONS}
+      />
+    </>
+  );
+
   return (
     <>
       {contextHolder}
@@ -830,9 +863,6 @@ const Events = () => {
           <PageActionToolbar
             title="Events"
             subtitle={`${eventsTotal.toLocaleString()} events`}
-            selectedYear={selectedYear}
-            onYearChange={handleYearChange}
-            availableYears={availableYears}
             secondaryActions={
               <Button
                 className="toolbar-btn"
@@ -851,34 +881,6 @@ const Events = () => {
                 onClick: () => setIsLinkInterviewsOpen(true),
               },
             ]}
-            viewSwitch={
-              <SegmentedToggle
-                value={contentView}
-                onChange={setContentView}
-                wrapperClassName="page-toolbar-view-switch rounded-xl border border-gray-200 bg-white p-1"
-                buttonClassName="px-3 py-1.5"
-                options={[
-                  { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
-                  {
-                    value: 'calendar',
-                    label: 'Calendar',
-                    activeClassName: 'bg-blue-50 text-blue-700',
-                  },
-                ]}
-              />
-            }
-            extraActions={
-              <Select
-                aria-label="Display timezone"
-                value={normalizeTimeZone(userTimezone)}
-                onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
-                className="toolbar-select w-full md:w-[260px]"
-                size="large"
-                showSearch
-                optionFilterProp="label"
-                options={TIMEZONE_OPTIONS}
-              />
-            }
             onDeleteAll={() => setIsDeleteAllOpen(true)}
             deleteAllDisabled={eventsUnlocked === 0}
             onExport={handleExportWrapper}
@@ -899,6 +901,7 @@ const Events = () => {
             />
           ) : contentView === 'list' ? (
             <>
+              <div className="mb-3 flex flex-wrap items-center gap-2">{viewControls}</div>
               <EventsFilterBar
                 categoryFilter={categoryFilter}
                 onCategoryFilterChange={setCategoryFilter}
@@ -1004,6 +1007,7 @@ const Events = () => {
             />
           ) : (
             <CalendarView
+              pageControls={viewControls}
               onItemDrop={handleCalendarItemDrop}
               events={calendarEvents}
               customHolidays={customHolidays}

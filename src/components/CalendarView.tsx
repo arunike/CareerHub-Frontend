@@ -35,6 +35,9 @@ interface CalendarViewProps {
   onHolidaySelect?: (holiday: Holiday) => void;
   onAddEvent?: (day: Date) => void;
   onAddHoliday?: (day: Date, target: CalendarHolidayTarget) => void;
+  // Page-level controls merged into the calendar's own header instead of leaving an empty
+  // band under the page title.
+  pageControls?: React.ReactNode;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
@@ -50,6 +53,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onHolidaySelect,
   onAddEvent,
   onAddHoliday,
+  pageControls,
 }) => {
   const today = new Date();
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
@@ -265,6 +269,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <div>
       <CalendarHeader
+        pageControls={pageControls}
         headerLabel={getHeaderLabel(viewMode, anchorDate)}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}

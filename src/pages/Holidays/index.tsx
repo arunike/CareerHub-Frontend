@@ -93,6 +93,7 @@ import {
 } from '../../components/calendarView/confirmCalendarMove';
 import type { CalendarDragItem } from '../../components/calendarView/CalendarDayContent';
 import { buildEventMovePatch } from '../../components/calendarView/utils';
+import YearFilter from '../../components/YearFilter';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -362,7 +363,7 @@ const Holidays = () => {
   );
   const [contentView, setContentView] = usePersistedState<'list' | 'calendar'>(
     'holidaysContentView',
-    'list',
+    'calendar',
     {
       serialize: (value) => value,
       deserialize: (raw) => (raw === 'calendar' ? 'calendar' : 'list'),
@@ -1546,6 +1547,29 @@ const Holidays = () => {
     },
   ];
 
+  // Rides inside the calendar's own header, or above the list, so the page title is not
+  // followed by a band of controls.
+  const viewControls = (
+    <>
+      <SegmentedToggle
+        value={contentView}
+        onChange={setContentView}
+        wrapperClassName="page-toolbar-view-switch w-max rounded-xl border border-gray-200 bg-white p-1"
+        buttonClassName="px-3 py-1.5"
+        options={[
+          { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
+          { value: 'calendar', label: 'Calendar', activeClassName: 'bg-blue-50 text-blue-700' },
+        ]}
+      />
+      <YearFilter
+        selectedYear={selectedYear}
+        onYearChange={handleYearChange}
+        availableYears={availableYears}
+        className="toolbar-select"
+      />
+    </>
+  );
+
   return (
     <>
       {contextHolder}
@@ -1554,25 +1578,6 @@ const Holidays = () => {
           <PageActionToolbar
             title="Holidays"
             subtitle="Manage personal time off and observed holidays."
-            selectedYear={selectedYear}
-            onYearChange={handleYearChange}
-            availableYears={availableYears}
-            extraActions={
-              <SegmentedToggle
-                value={contentView}
-                onChange={setContentView}
-                wrapperClassName="rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
-                buttonClassName="px-3 py-2"
-                options={[
-                  { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
-                  {
-                    value: 'calendar',
-                    label: 'Calendar',
-                    activeClassName: 'bg-blue-50 text-blue-700',
-                  },
-                ]}
-              />
-            }
             onExport={handleExportWrapper}
             exportFilename="holidays"
             onImport={() => setShowImport(true)}
@@ -1588,18 +1593,22 @@ const Holidays = () => {
             onAction={fetchData}
           />
         ) : contentView === 'list' ? (
-          <Tabs
-            className="holiday-manager-tabs"
-            activeKey={activeTab}
-            onChange={(key) => {
-              setActiveTab(key);
-              setSelectedIds([]);
-            }}
-            items={items}
-            type="card"
-          />
+          <>
+            <div className="mb-3 flex flex-wrap items-center gap-2">{viewControls}</div>
+            <Tabs
+              className="holiday-manager-tabs"
+              activeKey={activeTab}
+              onChange={(key) => {
+                setActiveTab(key);
+                setSelectedIds([]);
+              }}
+              items={items}
+              type="card"
+            />
+          </>
         ) : (
           <CalendarView
+            pageControls={viewControls}
             onItemDrop={handleCalendarItemDrop}
             events={events}
             customHolidays={holidaysForSelectedYear}

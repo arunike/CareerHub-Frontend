@@ -1,3 +1,4 @@
+import type React from 'react';
 import { CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { EventCategory, HolidayTab } from '../../types';
 import { getEventCategoryColor } from '../../utils/eventCategoryColors';
@@ -20,6 +21,9 @@ type Props = {
   onToggleEventCategory: (categoryId: number | 'uncategorized') => void;
   onToggleCustomHolidayTab: (tabId: string | 'default') => void;
   onToggleFederal: () => void;
+  // Page-level controls (view switch, year) merged in here rather than sitting in an
+  // otherwise empty band under the page title, so they live beside the content.
+  pageControls?: React.ReactNode;
 };
 
 const CalendarHeader = ({
@@ -36,6 +40,7 @@ const CalendarHeader = ({
   onToggleEventCategory,
   onToggleCustomHolidayTab,
   onToggleFederal,
+  pageControls,
 }: Props) => {
   const filterButtonClassName = (active: boolean) =>
     `inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1 md:text-sm ${
@@ -153,17 +158,22 @@ const CalendarHeader = ({
       </div>
 
       <div className="flex flex-col gap-2 sm:items-end">
-        <div className="scrollbar-none -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          <SegmentedToggle
-            value={viewMode}
-            onChange={onViewModeChange}
-            wrapperClassName="w-max rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
-            buttonClassName="px-3 py-2"
-            options={VIEW_OPTIONS.map((option) => ({
-              ...option,
-              activeClassName: 'bg-blue-50 text-blue-700',
-            }))}
-          />
+        {/* Page controls share the view-mode line rather than stacking above it; three
+            right-hand rows left a dead gap down the middle of the header. */}
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          {pageControls}
+          <div className="scrollbar-none -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            <SegmentedToggle
+              value={viewMode}
+              onChange={onViewModeChange}
+              wrapperClassName="w-max rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
+              buttonClassName="px-3 py-1.5"
+              options={VIEW_OPTIONS.map((option) => ({
+                ...option,
+                activeClassName: 'bg-blue-50 text-blue-700',
+              }))}
+            />
+          </div>
         </div>
 
         <div
