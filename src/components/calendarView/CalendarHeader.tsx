@@ -52,13 +52,55 @@ const CalendarHeader = ({
   const rangeButtonClassName =
     'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
 
+  const navCluster = (
+    <div
+      className="flex items-center justify-end gap-1.5"
+      role="group"
+      aria-label="Calendar navigation"
+    >
+      <button
+        type="button"
+        onClick={() => onShiftRange('prev')}
+        disabled={loading}
+        aria-label="Previous calendar period"
+        className={rangeButtonClassName}
+      >
+        <LeftOutlined className="text-sm" />
+      </button>
+
+      <button
+        type="button"
+        onClick={onGoToToday}
+        disabled={loading}
+        className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
+      >
+        Today
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onShiftRange('next')}
+        disabled={loading}
+        aria-label="Next calendar period"
+        className={rangeButtonClassName}
+      >
+        <RightOutlined className="text-sm" />
+      </button>
+    </div>
+  );
+
   return (
     <div className="mb-4 flex flex-col gap-4 sm:mb-6 xl:flex-row xl:items-start xl:justify-between">
       <div className="flex flex-col gap-3">
-        <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold text-slate-800 sm:text-xl">
-          <CalendarOutlined className="text-lg text-slate-500" />
-          {headerLabel}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold text-slate-800 sm:text-xl">
+            <CalendarOutlined className="text-lg text-slate-500" />
+            {headerLabel}
+          </h2>
+          {/* Beside the label on a phone, where a calendar's month arrows are expected;
+              the desktop copy stays with the other controls on the right. */}
+          <div className="shrink-0 xl:hidden">{navCluster}</div>
+        </div>
 
         <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           {categories.map((category) => {
@@ -160,7 +202,7 @@ const CalendarHeader = ({
       <div className="flex flex-col gap-2 sm:items-end">
         {/* Page controls share the view-mode line rather than stacking above it; three
             right-hand rows left a dead gap down the middle of the header. */}
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+        <div className="calendar-header-controls flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {pageControls}
           <div className="scrollbar-none -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
             <SegmentedToggle
@@ -176,40 +218,7 @@ const CalendarHeader = ({
           </div>
         </div>
 
-        <div
-          className="flex items-center justify-end gap-1.5"
-          role="group"
-          aria-label="Calendar navigation"
-        >
-          <button
-            type="button"
-            onClick={() => onShiftRange('prev')}
-            disabled={loading}
-            aria-label="Previous calendar period"
-            className={rangeButtonClassName}
-          >
-            <LeftOutlined className="text-sm" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onGoToToday}
-            disabled={loading}
-            className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
-          >
-            Today
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onShiftRange('next')}
-            disabled={loading}
-            aria-label="Next calendar period"
-            className={rangeButtonClassName}
-          >
-            <RightOutlined className="text-sm" />
-          </button>
-        </div>
+        <div className="hidden xl:flex">{navCluster}</div>
       </div>
     </div>
   );

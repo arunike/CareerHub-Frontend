@@ -859,6 +859,51 @@ summary,
   font-weight: 650;
 }
 
+/* Calendar header on a phone. The controls were each their natural width, which left
+   narrow switches stranded against the left edge and pushed the first date row far down
+   the screen. Full-width rows, and the two page controls paired, reads as deliberate. */
+@media (max-width: 640px) {
+  .calendar-header-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  /* The range switcher has five options, so it gets a row of its own. */
+  .calendar-header-controls > *:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .calendar-header-controls .page-toolbar-view-switch,
+  .calendar-header-controls .ant-picker,
+  .calendar-header-controls .ant-select {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .calendar-header-controls .page-toolbar-view-switch {
+    display: flex;
+  }
+
+  .calendar-header-controls .page-toolbar-view-switch > button {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  /* Range switcher spans the row and splits evenly instead of hugging the left. */
+  .calendar-header-controls > *:last-child > div[class*='rounded-xl'] {
+    display: flex;
+    width: 100%;
+  }
+
+  .calendar-header-controls > *:last-child > div[class*='rounded-xl'] > button {
+    flex: 1 1 0;
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 /* Icon-only overflow on the title line. Discoverability is fine here because a dot menu
    beside a page title is the standard mobile affordance; the desktop one stays labelled
    because it has room for a word. */
