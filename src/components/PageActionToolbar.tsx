@@ -169,7 +169,11 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
     </Dropdown>
   ) : null;
 
-  const hasFilterRow = Boolean(yearFilterNode || extraActions || viewSwitch);
+  const hasOtherFilters = Boolean(yearFilterNode || extraActions);
+  // A filter row holding nothing but the view switch is a full-width band of empty space.
+  // With nothing to sit beside, the switch belongs up on the title line.
+  const hoistViewSwitch = Boolean(viewSwitch) && !hasOtherFilters;
+  const hasFilterRow = hasOtherFilters || (Boolean(viewSwitch) && !hoistViewSwitch);
 
   if (isMobile) {
     return (
@@ -265,8 +269,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         </div>
       ) : (
         <>
-          {primaryActionNode || dataMenuNode || secondaryActions ? (
+          {primaryActionNode || dataMenuNode || secondaryActions || hoistViewSwitch ? (
             <div className="page-toolbar-actions page-toolbar-actions-primary">
+              {hoistViewSwitch ? viewSwitch : null}
               {secondaryActions}
               {dataMenuNode}
               {primaryActionNode}
@@ -274,7 +279,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
           ) : null}
           {hasFilterRow ? (
             <div className="page-toolbar-filters">
-              {viewSwitch}
+              {hoistViewSwitch ? null : viewSwitch}
               {yearFilterNode}
               {extraActions}
             </div>
