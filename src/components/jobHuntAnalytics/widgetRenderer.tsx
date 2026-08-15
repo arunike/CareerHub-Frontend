@@ -1,33 +1,29 @@
 import {
-  CheckCircleOutlined,
   ClockCircleOutlined,
-  CloseCircleOutlined,
   EnvironmentOutlined,
-  FileTextOutlined,
   NodeIndexOutlined,
-  QuestionCircleOutlined,
+  TrophyOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import Tooltip from 'antd/es/tooltip';
+import { format } from 'date-fns';
 import CustomWidgetCard from '../CustomWidgetCard';
 import CrispInfoIcon from '../CrispInfoIcon';
+import { parseDateOnlyLocal } from '../../utils/dateOnly';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { ApplicationTimelineAnalytics } from '../../types';
 
 export type JobHuntStats = {
   total: number;
-  rejections: number;
   offers: number;
   ghosted: number;
   activeInterviews: number;
   totalInterviews: number;
-  interviewRate: string;
   responseRate: string;
   respondedCount: number;
   offerRate: string;
   recentApplications30d: number;
   locations: { name: string; count: number }[];
-  statusBreakdown: { name: string; count: number }[];
   applicationAgeBreakdown: { name: string; count: number }[];
   timelineAnalytics?: ApplicationTimelineAnalytics | null;
   timelineAnalyticsLoading?: boolean;
@@ -57,6 +53,29 @@ const getStageColor = (key: string) => {
     default:
       return 'bg-slate-500';
   }
+};
+
+// Terminal results are reported as outcomes, not as a funnel step you can pass through.
+const TERMINAL_STAGE_KEYS = new Set([
+  'REJECTED',
+  'GHOSTED',
+  'REMOVED_FROM_SHEET',
+  'OFFER_REJECTED',
+  'ACCEPTED',
+]);
+
+const OUTCOME_CLASSES: Record<string, string> = {
+  OFFER: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  ACCEPTED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  REJECTED: 'border-rose-200 bg-rose-50 text-rose-700',
+  OFFER_REJECTED: 'border-amber-200 bg-amber-50 text-amber-700',
+  GHOSTED: 'border-slate-200 bg-slate-100 text-slate-600',
+};
+
+// yyyy-MM-dd from the API, rendered without a timezone shift dragging it back a day.
+const formatStageDate = (value: string) => {
+  const parsed = parseDateOnlyLocal(value);
+  return parsed ? format(parsed, 'MMM d, yyyy') : value;
 };
 
 const percentageColor = (index: number) => {
@@ -176,181 +195,80 @@ export const renderJobHuntWidget = (
   deleteCustomWidget: (id: string) => void
 ) => {
   switch (id) {
-    case 'total':
-      return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">
-              <TooltipLabel title="All applications currently saved in your tracker.">
-                Total Applications
-              </TooltipLabel>
-            </p>
-            <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-gray-400">
-            <FileTextOutlined className="mr-1.5 text-base text-gray-400" />
-            <span>Tracked</span>
-          </div>
-        </div>
+    // One card for the whole job hunt. Total / Active / Outcomes / No Response used to be
+    // four standalone tiles, the funnel and Timeline Analytics both drew stage conversion,
+    // and Pipeline Breakdown drew a third view of the same distribution. They are folded
+    // together here so each number appears exactly once: headline tiles, then the funnel,
+    // then the things the funnel cannot show.
+    case 'job_search': {
+      const analytics = stats.timelineAnalytics;
+      const isLoading = Boolean(stats.timelineAnalyticsLoading);
+      const hasError = Boolean(stats.timelineAnalyticsError);
+      const staleCount = analytics?.stale_in_stage.length || 0;
+      const topSource = analytics?.offer_rate_by_source[0];
+      const topCompany = analytics?.offer_rate_by_company[0];
+      // The funnel is the stages you pass through, so terminal results are excluded — they
+      // are reported as outcomes instead of pretending to be a step.
+      const pipeline = (analytics?.stage_conversion || []).filter(
+        (stage) => !TERMINAL_STAGE_KEYS.has(stage.key)
       );
-    case 'active':
+      const topReached = Math.max(...pipeline.map((stage) => stage.reached_count), 1);
+      // Prefer the server's offer count so the tile and the offer-rate breakdowns below it
+      // cannot disagree about what counts as an offer.
+      const offers = analytics?.offer_count ?? stats.offers;
+      const offerRate = analytics?.offer_rate ?? Number(stats.offerRate);
+
       return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">
-              <TooltipLabel title="Applications that are not applied-only, rejected, ghosted, accepted, or removed from a synced sheet.">
-                Active Pipeline
-              </TooltipLabel>
-            </p>
-            <p className="text-3xl font-bold text-gray-900">{stats.activeInterviews}</p>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-gray-400">
-            <ClockCircleOutlined className="mr-1.5 text-blue-600 text-base" />
-            <span>{stats.totalInterviews} reached interview stages</span>
-          </div>
-        </div>
-      );
-    case 'outcomes':
-      return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">
-              <TooltipLabel title="Final results currently marked as offers or rejections.">
-                Outcomes
-              </TooltipLabel>
-            </p>
-            <div className="flex gap-4">
-              <div>
-                <p className="text-2xl font-bold text-emerald-600">{stats.offers}</p>
-                <p className="text-xs text-gray-500">
-                  <TooltipLabel title="Applications whose current status is Offer.">
-                    Offers
-                  </TooltipLabel>
-                </p>
-              </div>
-              <div className="w-px bg-gray-200 h-10"></div>
-              <div>
-                <p className="text-2xl font-bold text-red-500">{stats.rejections}</p>
-                <p className="text-xs text-gray-500">
-                  <TooltipLabel title="Applications whose current status is Rejected.">
-                    Rejections
-                  </TooltipLabel>
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-2 flex items-center text-sm text-gray-400">
-            <CheckCircleOutlined className="mr-1.5 text-emerald-500 text-base" />
-            <span>vs</span>
-            <CloseCircleOutlined className="ml-1.5 text-red-500 text-base" />
-          </div>
-        </div>
-      );
-    case 'ghosted':
-      return (
-        <div className="enterprise-card p-5 flex flex-col justify-between h-full">
-          <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">
-              <TooltipLabel title="Applications currently marked as Ghosted.">
-                No Response
-              </TooltipLabel>
-            </p>
-            <p className="text-3xl font-bold text-gray-700">{stats.ghosted}</p>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-gray-400">
-            <QuestionCircleOutlined className="mr-1.5 text-gray-400 text-base" />
-            <span>Ghosted</span>
-          </div>
-        </div>
-      );
-    case 'pipeline_breakdown':
-      return (
-        <div className="enterprise-card p-6 h-full">
-          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+        <div className="enterprise-card h-full p-5 sm:p-6">
+          <div className="flex flex-col gap-5">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <NodeIndexOutlined className="text-lg text-gray-600" />
+                <NodeIndexOutlined className="text-lg text-blue-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
-                  <TooltipLabel title="A percentage view of where applications are concentrated across stage, location, and age.">
-                    Pipeline Breakdown
+                  <TooltipLabel title="Every job-hunt number in one place, built from your applications, their status history, and synced sheet provenance.">
+                    Job Search
                   </TooltipLabel>
                 </h3>
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                Current stage mix, location concentration, and application age
+                Headline numbers, the stages applications move through, and where they stall
               </p>
             </div>
-          </div>
-          <div className="grid gap-6 xl:grid-cols-3">
-            <section>
-              <div className="mb-4 flex items-center gap-2">
-                <NodeIndexOutlined className="text-gray-500" />
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <TooltipLabel title="Distribution of applications by current status, including the exact count and share.">
-                    Current Stage Mix
-                  </TooltipLabel>
-                </p>
-              </div>
-              {renderPercentageList(stats.statusBreakdown, stats.total, 'No status data')}
-            </section>
-            <section>
-              <div className="mb-4 flex items-center gap-2">
-                <EnvironmentOutlined className="text-gray-500" />
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <TooltipLabel title="Most common application locations, grouped by city or Remote, with exact counts and shares.">
-                    Top Locations
-                  </TooltipLabel>
-                </p>
-              </div>
-              {renderPercentageList(stats.locations, stats.total, 'No location data')}
-            </section>
-            <section>
-              <div className="mb-4 flex items-center gap-2">
-                <ClockCircleOutlined className="text-gray-500" />
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <TooltipLabel title="Application age using Date Applied when available and Created At as fallback, with exact counts and shares.">
-                    Application Age
-                  </TooltipLabel>
-                </p>
-              </div>
-              {renderPercentageList(
-                stats.applicationAgeBreakdown,
-                stats.total,
-                'No application age data',
-                5
-              )}
-            </section>
-          </div>
-        </div>
-      );
-    case 'timeline_analytics': {
-      const analytics = stats.timelineAnalytics;
-      const isLoading = Boolean(stats.timelineAnalyticsLoading);
-      const hasError = Boolean(stats.timelineAnalyticsError);
-      const topStages = analytics?.stage_conversion.slice(0, 6) || [];
-      const topSource = analytics?.offer_rate_by_source[0];
-      const staleCount = analytics?.stale_in_stage.length || 0;
 
-      return (
-        <div className="enterprise-card p-6 h-full">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <NodeIndexOutlined className="text-lg text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    <TooltipLabel title="Timeline-based metrics from application status history, synced sheet provenance, and saved timeline entries.">
-                      Timeline Analytics
-                    </TooltipLabel>
-                  </h3>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Synced status history, stage movement, and sheet outcomes
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <MetricTile
+                label="Total"
+                tooltip="All applications currently saved in your tracker, within the selected year. The detail counts those submitted in the last 30 days, using Date Applied when available and Created At as fallback."
+                value={stats.total}
+                detail={`${stats.recentApplications30d} in the last 30 days`}
+              />
+              <MetricTile
+                label="Active"
+                tooltip="Applications that are not applied-only, rejected, ghosted, accepted, or removed from a synced sheet."
+                value={stats.activeInterviews}
+                detail={`${stats.totalInterviews} reached interviews`}
+                tone="slate"
+              />
+              <MetricTile
+                label="Offers"
+                tooltip="Applications that produced an offer — offered, accepted, or offer declined."
+                value={offers}
+                detail={`${offerRate}% offer rate`}
+                tone="emerald"
+              />
+              <MetricTile
+                label="No Response"
+                tooltip="Applications currently marked as Ghosted, i.e. never answered."
+                value={stats.ghosted}
+                detail={analytics ? `${analytics.ghost_rate}% went silent` : 'Ghosted'}
+                tone="amber"
+              />
+              <MetricTile
+                label="Response Rate"
+                tooltip="Applications that moved beyond applied/ghosted/removed, divided by total applications."
+                value={`${stats.responseRate}%`}
+                detail={`${stats.respondedCount} responded`}
+              />
               <MetricTile
                 label="Avg to Interview"
                 tooltip="Average days from applying to the first interview-stage timeline entry. Applied, offer, rejected, and ghosted are not counted as interview stages."
@@ -389,26 +307,6 @@ export const renderJobHuntWidget = (
                 tone="purple"
               />
               <MetricTile
-                label="Response Rate"
-                tooltip="Applications that moved beyond applied/ghosted/removed, divided by total applications."
-                value={`${stats.responseRate}%`}
-                detail={`${stats.respondedCount} responded`}
-              />
-              <MetricTile
-                label="Offer Rate"
-                tooltip="Applications currently marked as Offer, divided by total applications."
-                value={`${stats.offerRate}%`}
-                detail={`${stats.offers} offer${stats.offers === 1 ? '' : 's'}`}
-                tone="emerald"
-              />
-              <MetricTile
-                label="Last 30 Days"
-                tooltip="Applications submitted in the last 30 days, using Date Applied when available and Created At as fallback."
-                value={stats.recentApplications30d}
-                detail="Recent applications"
-                tone="slate"
-              />
-              <MetricTile
                 label="Stale In Stage"
                 tooltip="Active applications sitting in their current stage for at least your ghosting threshold."
                 value={analytics ? staleCount : isLoading ? '...' : '-'}
@@ -438,109 +336,82 @@ export const renderJobHuntWidget = (
 
             {!analytics && !isLoading && !hasError && (
               <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-                Timeline analytics will appear after applications have timeline or sync history.
+                The funnel and stage timings appear once applications have timeline or sync history.
               </div>
             )}
 
             {analytics && (
               <>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="The synced Google Sheet source with the highest offer rate among tracked applications.">
-                        Best Sheet Source
-                      </TooltipLabel>
-                    </p>
-                    <p
-                      className="mt-2 truncate text-sm font-semibold text-gray-900"
-                      title={topSource?.name || 'No sheet source'}
-                    >
-                      {topSource?.name || 'No sheet source'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {topSource
-                        ? `${Math.round(topSource.offer_rate * 100)}% offer rate`
-                        : 'Connect a sheet to compare'}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="The company with the highest offer rate among companies represented in your applications.">
-                        Top Company Rate
-                      </TooltipLabel>
-                    </p>
-                    <p
-                      className="mt-2 truncate text-sm font-semibold text-gray-900"
-                      title={analytics.offer_rate_by_company[0]?.name || 'No company data'}
-                    >
-                      {analytics.offer_rate_by_company[0]?.name || 'No company data'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {analytics.offer_rate_by_company[0]
-                        ? `${Math.round(analytics.offer_rate_by_company[0].offer_rate * 100)}% offer rate`
-                        : 'Needs applications'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                <div className="grid min-w-0 gap-5 border-t border-gray-100 pt-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
                   <div className="min-w-0">
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="Share of total applications that reached each stage, with the exact count alongside each bar.">
-                        Stage Conversion
+                      <TooltipLabel title="Counted from your application timeline, so an application rejected after the 3rd round still counts as having reached the 3rd round. “Now” is how many currently sit at that stage. Stages follow Settings → Application Stages.">
+                        Funnel
                       </TooltipLabel>
                     </p>
-                    <div className="space-y-3">
-                      {topStages.map((stage) => (
-                        <div
-                          key={stage.key}
-                          className="group/row relative -mx-2 grid grid-cols-[minmax(0,84px)_minmax(28px,1fr)_56px] items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-150 hover:bg-slate-50/80 md:grid-cols-[92px_1fr_48px] md:gap-3"
-                        >
-                          <span className="truncate text-sm font-medium text-gray-700">
-                            {stage.label}
-                          </span>
-                          <div className="relative flex items-center h-4">
-                            <div className="w-full h-2 rounded-full bg-gray-100">
-                              <div
-                                className={`h-full rounded-full ${getStageColor(stage.key)} transition-all duration-300`}
-                                style={{
-                                  width: `${Math.max(stage.conversion_rate * 100, stage.reached_count > 0 ? 5 : 0)}%`,
-                                }}
-                              />
-                            </div>
-                            <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden origin-bottom -translate-x-1/2 scale-95 flex-col items-center whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-white opacity-0 shadow-xl backdrop-blur-sm transition-all duration-150 group-hover/row:scale-100 group-hover/row:opacity-100 md:flex">
-                              <span className="text-xs font-bold text-slate-100">
-                                {stage.label}
-                              </span>
-                              <span className="text-[11px] text-slate-300 mt-0.5">
-                                {stage.reached_count} application
-                                {stage.reached_count !== 1 ? 's' : ''} (
-                                {Math.round(stage.conversion_rate * 100)}%)
-                              </span>
-                              <div className="w-2 h-2 bg-slate-900 border-r border-b border-slate-800 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2 z-10" />
-                            </div>
+                    <div className="space-y-2.5">
+                      {pipeline.map((stage) => (
+                        <div key={stage.key}>
+                          <div className="mb-1 flex items-baseline justify-between gap-3 text-xs">
+                            <span className="truncate font-medium text-gray-700">
+                              {stage.label}
+                            </span>
+                            <span className="shrink-0 text-gray-500">
+                              <span className="font-semibold text-gray-900">
+                                {stage.reached_count.toLocaleString()}
+                              </span>{' '}
+                              reached · {Math.round(stage.conversion_rate * 100)}%
+                              {stage.current_count > 0 && (
+                                <span className="ml-2 text-gray-400">
+                                  {stage.current_count} now
+                                </span>
+                              )}
+                            </span>
                           </div>
-                          <div className="flex flex-col items-end justify-end text-right">
-                            <span className="text-xs font-semibold text-gray-600 transition-colors duration-150 group-hover/row:text-sky-600">
-                              {Math.round(stage.conversion_rate * 100)}%
-                            </span>
-                            <span className="mt-0.5 whitespace-nowrap text-xs font-medium text-slate-500 md:hidden">
-                              {stage.reached_count} apps
-                            </span>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${getStageColor(stage.key)}`}
+                              style={{
+                                width: `${Math.max(
+                                  (stage.reached_count / topReached) * 100,
+                                  stage.reached_count > 0 ? 1.5 : 0
+                                )}%`,
+                              }}
+                            />
                           </div>
                         </div>
                       ))}
+                      {pipeline.length === 0 && (
+                        <div className="py-6 text-center text-sm text-gray-400">No stage data</div>
+                      )}
                     </div>
+
+                    {analytics.biggest_drop && (
+                      <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[13px] leading-relaxed text-amber-900">
+                        Biggest drop-off is{' '}
+                        <span className="font-semibold">{analytics.biggest_drop.from_label}</span> →{' '}
+                        <span className="font-semibold">{analytics.biggest_drop.to_label}</span>,
+                        where {analytics.biggest_drop.lost.toLocaleString()} applications stop.
+                      </p>
+                    )}
                   </div>
 
                   <div className="min-w-0">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="Active applications that have stayed in the same stage longer than your ghosting threshold.">
+                    <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <TooltipLabel title="Active applications that have stayed in the same stage longer than your ghosting threshold, longest first.">
                         Watch List
                       </TooltipLabel>
+                      {staleCount > 0 && (
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700">
+                          {staleCount}
+                        </span>
+                      )}
                     </p>
-                    <div className="space-y-2">
-                      {analytics.stale_in_stage.slice(0, 3).map((item) => (
+                    {/* Every stale application, not the first few. This was capped at four,
+                        which hid 12 of 16 and made a run of same-day rows look like the
+                        whole list. Tall lists scroll rather than stretching the card. */}
+                    <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                      {analytics.stale_in_stage.map((item) => (
                         <div
                           key={item.application_id}
                           className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
@@ -555,7 +426,17 @@ export const renderJobHuntWidget = (
                                 {item.company} · {item.role_title}
                               </p>
                               <p className="text-xs text-amber-700">
-                                {item.days_in_stage}d in {item.status_label}
+                                {item.days_in_stage} day{item.days_in_stage === 1 ? '' : 's'} in{' '}
+                                {item.status_label}
+                                {/* The date the count is measured from. Several applications
+                                    synced on one day legitimately share a day count, which
+                                    reads like a bug until you can see where it starts. */}
+                                {item.last_stage_date && (
+                                  <span className="text-amber-600/70">
+                                    {' '}
+                                    · since {formatStageDate(item.last_stage_date)}
+                                  </span>
+                                )}
                               </p>
                             </div>
                           </div>
@@ -569,8 +450,104 @@ export const renderJobHuntWidget = (
                     </div>
                   </div>
                 </div>
+
+                {analytics.outcomes.length > 0 && (
+                  <div className="border-t border-gray-100 pt-5">
+                    <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <TooltipLabel title="Where applications finished. These are terminal results, so they are reported here rather than as a funnel step.">
+                        Outcomes
+                      </TooltipLabel>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {analytics.outcomes.map((outcome) => (
+                        <span
+                          key={outcome.key}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                            OUTCOME_CLASSES[outcome.key] ?? OUTCOME_CLASSES.GHOSTED
+                          }`}
+                        >
+                          {outcome.label}: {outcome.count.toLocaleString()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
+
+            <div className="grid gap-6 border-t border-gray-100 pt-5 xl:grid-cols-3">
+              <section>
+                <div className="mb-4 flex items-center gap-2">
+                  <EnvironmentOutlined className="text-gray-500" />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <TooltipLabel title="Most common application locations, grouped by city or Remote, with exact counts and shares.">
+                      Top Locations
+                    </TooltipLabel>
+                  </p>
+                </div>
+                {renderPercentageList(stats.locations, stats.total, 'No location data')}
+              </section>
+              <section>
+                <div className="mb-4 flex items-center gap-2">
+                  <ClockCircleOutlined className="text-gray-500" />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <TooltipLabel title="Application age using Date Applied when available and Created At as fallback, with exact counts and shares.">
+                      Application Age
+                    </TooltipLabel>
+                  </p>
+                </div>
+                {renderPercentageList(
+                  stats.applicationAgeBreakdown,
+                  stats.total,
+                  'No application age data',
+                  5
+                )}
+              </section>
+              <section>
+                <div className="mb-4 flex items-center gap-2">
+                  <TrophyOutlined className="text-gray-500" />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <TooltipLabel title="Where your offers actually come from: the synced sheet source and the company with the highest offer rate.">
+                      Best Odds
+                    </TooltipLabel>
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                      Sheet source
+                    </p>
+                    <p
+                      className="mt-1 truncate text-sm font-semibold text-gray-900"
+                      title={topSource?.name || 'No sheet source'}
+                    >
+                      {topSource?.name || 'No sheet source'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {topSource
+                        ? `${Math.round(topSource.offer_rate * 100)}% offer rate`
+                        : 'Connect a sheet to compare'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                      Company
+                    </p>
+                    <p
+                      className="mt-1 truncate text-sm font-semibold text-gray-900"
+                      title={topCompany?.name || 'No company data'}
+                    >
+                      {topCompany?.name || 'No company data'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {topCompany
+                        ? `${Math.round(topCompany.offer_rate * 100)}% offer rate`
+                        : 'Needs applications'}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       );
@@ -593,7 +570,7 @@ export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[
       : 'col-span-1';
   }
 
-  if (id === 'timeline_analytics' || id === 'pipeline_breakdown') {
+  if (id === 'job_search') {
     return 'col-span-1 md:col-span-2 lg:col-span-4';
   }
   return 'col-span-1';

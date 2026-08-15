@@ -439,6 +439,26 @@ export interface ContactRelationship {
   updated_at?: string;
 }
 
+// Dashboard aggregates from /career/application-stats/. The Analytics page reads these
+// instead of the applications list, which was ~1 MB of rows it only wanted counts from.
+export interface ApplicationStats {
+  total: number;
+  offers: number;
+  ghosted: number;
+  active_interviews: number;
+  total_interviews: number;
+  responded_count: number;
+  response_rate: string;
+  offer_rate: string;
+  recent_applications_30d: number;
+  locations: Array<{ name: string; count: number }>;
+  application_age_breakdown: Array<{ name: string; count: number }>;
+  // Applications per day applied, keyed yyyy-MM-dd.
+  daily_applied: Record<string, number>;
+  // Every year with applications, never narrowed by the year filter.
+  years: number[];
+}
+
 export interface ApplicationTimelineAnalytics {
   average_time_to_interview_days: number | null;
   time_to_interview_sample_size: number;
@@ -475,6 +495,8 @@ export interface ApplicationTimelineAnalytics {
     offer_rate: number;
   }>;
   total_applications: number;
+  offer_count?: number;
+  offer_rate?: number;
   // Terminal results (offer, rejected, ghosted), kept out of the pipeline steps.
   outcomes: Array<{ key: string; label: string; count: number }>;
   responded_count: number;

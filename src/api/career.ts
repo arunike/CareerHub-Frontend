@@ -1,5 +1,6 @@
 import type {
   ApplicationTimelineEntry,
+  ApplicationStats,
   ApplicationTimelineAnalytics,
   GoogleOAuthStatus,
   GoogleSpreadsheetFile,
@@ -218,8 +219,15 @@ export const updateInterviewDebrief = (id: number, data: Record<string, unknown>
 export const deleteInterviewDebrief = (id: number) =>
   api.delete(`/career/interview-debriefs/${id}/`);
 
-export const getApplicationTimelineAnalytics = () =>
-  api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/');
+export const getApplicationStats = (year?: number | 'all') =>
+  api.get<ApplicationStats>('/career/application-stats/', {
+    params: year && year !== 'all' ? { year } : undefined,
+  });
+
+export const getApplicationTimelineAnalytics = (year?: number | 'all') =>
+  api.get<ApplicationTimelineAnalytics>('/career/application-timeline-analytics/', {
+    params: year && year !== 'all' ? { year } : undefined,
+  });
 
 export interface ApplicationPrepWorkspace {
   application: Record<string, unknown>;

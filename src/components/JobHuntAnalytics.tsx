@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { HolderOutlined, SettingOutlined } from '@ant-design/icons';
 import { Grid, Typography, message } from 'antd';
-import { parseDateOnlyLocal } from '../utils/dateOnly';
 import {
   DndContext,
   closestCenter,
@@ -34,24 +33,16 @@ import {
 } from './jobHuntAnalytics/widgetRenderer';
 import { getApplicationTimelineAnalytics } from '../api/career';
 
-import type { ApplicationTimelineAnalytics } from '../types';
-import type { CareerApplication } from '../types/application';
+import type { ApplicationStats, ApplicationTimelineAnalytics } from '../types';
 const { Text } = Typography;
 
 interface AnalyticsProps {
-  applications: CareerApplication[];
+  applicationStats: ApplicationStats | null;
+  selectedYear?: number | 'all';
 }
 
 type ValidationResult = NonNullable<CustomWidget['cachedData']>;
 
-const INACTIVE_STATUSES = new Set([
-  'APPLIED',
-  'REJECTED',
-  'GHOSTED',
-  'ACCEPTED',
-  'REMOVED_FROM_SHEET',
-]);
-const RESPONDED_EXCLUDE_STATUSES = new Set(['APPLIED', 'GHOSTED', 'REMOVED_FROM_SHEET']);
 const RETIRED_WIDGET_IDS = new Set([
   'response_rate',
   'offer_rate',
@@ -60,7 +51,16 @@ const RETIRED_WIDGET_IDS = new Set([
   'top_companies',
   'work_modes',
 ]);
-const PIPELINE_BREAKDOWN_SOURCE_IDS = new Set(['locations']);
+// Six widgets showed the same numbers three different ways, so they were merged into
+// 'job_search'. Anyone who had any of them keeps the merged card rather than losing it.
+const JOB_SEARCH_SOURCE_IDS = new Set([
+  'total',
+  'active',
+  'outcomes',
+  'ghosted',
+  'pipeline_breakdown',
+  'timeline_analytics',
+]);
 const AVAILABLE_WIDGET_IDS = new Set(AVAILABLE_WIDGETS.map((widget) => widget.id));
 const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEnabled).map(
   (widget) => widget.id
@@ -70,44 +70,10 @@ const normalizeEnabledWidgets = (ids: string[]) => {
   const normalized = ids.filter(
     (id) => AVAILABLE_WIDGET_IDS.has(id) && !RETIRED_WIDGET_IDS.has(id)
   );
-  if (
-    ids.some((id) => PIPELINE_BREAKDOWN_SOURCE_IDS.has(id)) &&
-    !normalized.includes('pipeline_breakdown')
-  ) {
-    normalized.push('pipeline_breakdown');
+  if (ids.some((id) => JOB_SEARCH_SOURCE_IDS.has(id)) && !normalized.includes('job_search')) {
+    normalized.unshift('job_search');
   }
   return normalized.length > 0 ? normalized : DEFAULT_WIDGET_IDS;
-};
-
-const getApplicationRound = (application: CareerApplication) => {
-  const roundStatus = application.status.match(/^ROUND_(\d+)$/);
-  if (roundStatus) return Number(roundStatus[1]);
-  return application.current_round || 0;
-};
-
-const formatStatusLabel = (status: string) => {
-  const labels: Record<string, string> = {
-    APPLIED: 'Applied',
-    OA: 'Online Assessment',
-    SCREEN: 'Phone Screen',
-    ROUND_1: '1st Round',
-    ROUND_2: '2nd Round',
-    ROUND_3: '3rd Round',
-    ROUND_4: '4th Round',
-    ONSITE: 'Onsite',
-    OFFER: 'Offer',
-    ACCEPTED: 'Accepted',
-    REJECTED: 'Rejected',
-    GHOSTED: 'Ghosted',
-    REMOVED_FROM_SHEET: 'Removed',
-  };
-  return (
-    labels[status] ||
-    status
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-  );
 };
 
 const SortableItem = ({
@@ -146,7 +112,7 @@ const SortableItem = ({
   );
 };
 
-const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
+const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selectedYear = 'all' }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -206,25 +172,12 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
   }, [enabledWidgets]);
 
   useEffect(() => {
-    const migrationKey = 'job_hunt_analytics_timeline_widget_added';
-    if (localStorage.getItem(migrationKey)) return;
-
-    setEnabledWidgets((prev) => {
-      if (prev.includes('timeline_analytics')) return prev;
-      const updated = [...prev, 'timeline_analytics'];
-      localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(updated));
-      return updated;
-    });
-    localStorage.setItem(migrationKey, 'true');
-  }, []);
-
-  useEffect(() => {
-    if (!enabledWidgets.includes('timeline_analytics')) return;
+    if (!enabledWidgets.includes('job_search')) return;
 
     let mounted = true;
     setTimelineAnalyticsLoading(true);
     setTimelineAnalyticsError(false);
-    getApplicationTimelineAnalytics()
+    getApplicationTimelineAnalytics(selectedYear)
       .then((response) => {
         if (mounted) {
           setTimelineAnalytics(response.data);
@@ -244,7 +197,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     return () => {
       mounted = false;
     };
-  }, [enabledWidgets]);
+  }, [enabledWidgets, selectedYear]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -331,104 +284,27 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applications }) => {
     setEnabledWidgets((prev) => prev.filter((wId) => wId !== id));
   };
 
-  const stats: JobHuntStats = useMemo(() => {
-    const total = applications.length;
-    const rejections = applications.filter((a) => a.status === 'REJECTED').length;
-    const offers = applications.filter((a) => a.status === 'OFFER').length;
-    const ghosted = applications.filter((a) => a.status === 'GHOSTED').length;
-
-    const activeInterviews = applications.filter((a) => !INACTIVE_STATUSES.has(a.status)).length;
-
-    const totalInterviews = applications.filter(
-      (a) =>
-        (!RESPONDED_EXCLUDE_STATUSES.has(a.status) && a.status !== 'REJECTED') ||
-        (a.status === 'REJECTED' && getApplicationRound(a) > 0)
-    ).length;
-
-    const interviewRate = total > 0 ? ((totalInterviews / total) * 100).toFixed(1) : '0.0';
-    const respondedCount = applications.filter(
-      (a) => !RESPONDED_EXCLUDE_STATUSES.has(a.status)
-    ).length;
-    const responseRate = total > 0 ? ((respondedCount / total) * 100).toFixed(1) : '0.0';
-    const offerRate = total > 0 ? ((offers / total) * 100).toFixed(1) : '0.0';
-
-    const locationCounts: Record<string, number> = {};
-    const statusCounts: Record<string, number> = {};
-    const ageCounts: Record<string, number> = {
-      'Last 7 days': 0,
-      '8-30 days': 0,
-      '31-90 days': 0,
-      '90+ days': 0,
-      Undated: 0,
-    };
-    // eslint-disable-next-line react-hooks/purity
-    const now = Date.now();
-    const DAY_MS = 24 * 60 * 60 * 1000;
-
-    applications.forEach((a) => {
-      let loc = (a.office_location || a.location || '').trim();
-      if (!loc) loc = 'Unknown';
-      loc = loc.split(',')[0].trim();
-      if (loc.toLowerCase().includes('remote')) loc = 'Remote';
-      loc = loc.charAt(0).toUpperCase() + loc.slice(1);
-      locationCounts[loc] = (locationCounts[loc] || 0) + 1;
-
-      const statusLabel = formatStatusLabel(a.status);
-      statusCounts[statusLabel] = (statusCounts[statusLabel] || 0) + 1;
-
-      const sourceDate = a.date_applied || a.created_at;
-      const timestamp = sourceDate
-        ? (parseDateOnlyLocal(sourceDate)?.getTime() ?? new Date(sourceDate).getTime())
-        : Number.NaN;
-      if (Number.isNaN(timestamp)) {
-        ageCounts.Undated += 1;
-      } else {
-        const ageDays = Math.max(0, Math.floor((now - timestamp) / DAY_MS));
-        if (ageDays <= 7) ageCounts['Last 7 days'] += 1;
-        else if (ageDays <= 30) ageCounts['8-30 days'] += 1;
-        else if (ageDays <= 90) ageCounts['31-90 days'] += 1;
-        else ageCounts['90+ days'] += 1;
-      }
-    });
-
-    const locations = Object.entries(locationCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-    const statusBreakdown = Object.entries(statusCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-    const applicationAgeBreakdown = Object.entries(ageCounts)
-      .map(([name, count]) => ({ name, count }))
-      .filter((row) => row.count > 0);
-
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    const recentApplications30d = applications.filter((a) => {
-      const sourceDate = a.date_applied || a.created_at;
-      if (!sourceDate) return false;
-      const timestamp = parseDateOnlyLocal(sourceDate)?.getTime() ?? new Date(sourceDate).getTime();
-      return !Number.isNaN(timestamp) && now - timestamp <= THIRTY_DAYS_MS;
-    }).length;
-
-    return {
-      total,
-      rejections,
-      offers,
-      ghosted,
-      activeInterviews,
-      totalInterviews,
-      interviewRate,
-      responseRate,
-      respondedCount,
-      offerRate,
-      recentApplications30d,
-      locations,
-      statusBreakdown,
-      applicationAgeBreakdown,
+  // The server already counted all of this; the browser only renames the fields. It used
+  // to download every application to count them itself, which was the slow part of the page.
+  const stats: JobHuntStats = useMemo(
+    () => ({
+      total: applicationStats?.total ?? 0,
+      offers: applicationStats?.offers ?? 0,
+      ghosted: applicationStats?.ghosted ?? 0,
+      activeInterviews: applicationStats?.active_interviews ?? 0,
+      totalInterviews: applicationStats?.total_interviews ?? 0,
+      responseRate: applicationStats?.response_rate ?? '0.0',
+      respondedCount: applicationStats?.responded_count ?? 0,
+      offerRate: applicationStats?.offer_rate ?? '0.0',
+      recentApplications30d: applicationStats?.recent_applications_30d ?? 0,
+      locations: applicationStats?.locations ?? [],
+      applicationAgeBreakdown: applicationStats?.application_age_breakdown ?? [],
       timelineAnalytics,
       timelineAnalyticsLoading,
       timelineAnalyticsError,
-    };
-  }, [applications, timelineAnalytics, timelineAnalyticsLoading, timelineAnalyticsError]);
+    }),
+    [applicationStats, timelineAnalytics, timelineAnalyticsLoading, timelineAnalyticsError]
+  );
 
   return (
     <>

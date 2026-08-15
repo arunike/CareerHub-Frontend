@@ -1,6 +1,8 @@
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import type { Event } from '../../types';
-import { getEvents, getApplications } from '../../api';
+import { useSearchParams } from 'react-router-dom';
+import type { ApplicationStats, Event } from '../../types';
+import { getEvents } from '../../api';
+import { getApplicationStats } from '../../api/career';
 import {
   format,
   parseISO,
@@ -9,21 +11,17 @@ import {
   eachDayOfInterval,
   isSameDay,
   addDays,
-  subWeeks,
 } from 'date-fns';
-import type { CareerApplication } from '../../types/application';
 import { message } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { PageState } from '../../components/PageState';
-import { parseDateOnlyLocal } from '../../utils/dateOnly';
 
 import { MetricCardsSkeleton, SkeletonBlock } from '../../components/SkeletonLoader';
 
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
-const ApplicationFunnel = lazy(() => import('./ApplicationFunnel'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
-const WeeklyActivityChart = lazy(() => import('./WeeklyActivityChart'));
+const ActivityChart = lazy(() => import('./ActivityChart'));
 
 const SectionFallback = () => (
   <div className="w-full space-y-6">
@@ -45,14 +43,26 @@ const SectionFallback = () => (
 
 const Analytics: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
-  const [activeTab, setActiveTab] = useState<'availability' | 'career'>('availability');
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Driven by the URL rather than local state: a refresh, a back button, or a shared link
+  // all land on the tab you were actually looking at.
+  const activeTab: 'availability' | 'career' =
+    searchParams.get('tab') === 'career' ? 'career' : 'availability';
+  const setActiveTab = (next: 'availability' | 'career') => {
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', next);
+    // replace, so switching tabs does not stack history entries to click back through.
+    setSearchParams(params, { replace: true });
+  };
   const [loading, setLoading] = useState(true);
   const [availabilityError, setAvailabilityError] = useState(false);
   const [careerLoading, setCareerLoading] = useState(false);
   const [careerError, setCareerError] = useState(false);
-  const [hasLoadedCareer, setHasLoadedCareer] = useState(false);
 
-  const [applications, setApplications] = useState<CareerApplication[]>([]);
+  const [applicationStats, setApplicationStats] = useState<ApplicationStats | null>(null);
+  // Kept out of applicationStats so the picker keeps every year while a year is selected.
+  const [applicationYears, setApplicationYears] = useState<number[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(new Date().getFullYear());
 
   const [availabilityStats, setAvailabilityStats] = useState({
     totalEvents: 0,
@@ -60,10 +70,6 @@ const Analytics: React.FC = () => {
     avgDuration: 0,
     byCategory: [] as { name: string; value: number }[],
     dailyActivity: [] as { date: string; count: number; minutes: number }[],
-  });
-
-  const [careerStats, setCareerStats] = useState({
-    weeklyActivity: [] as { date: string; count: number }[],
   });
 
   const fetchAvailabilityAnalytics = useCallback(async () => {
@@ -83,16 +89,15 @@ const Analytics: React.FC = () => {
     }
   }, [messageApi]);
 
+  // Counts come pre-aggregated, so the year filter is a 3 KB refetch rather than a
+  // client-side filter over every application the page had to download first.
   const fetchCareerAnalytics = useCallback(async () => {
-    if (hasLoadedCareer || careerLoading) return;
     try {
       setCareerLoading(true);
       setCareerError(false);
-      const appsResp = await getApplications();
-      const appsData = appsResp.data;
-      setApplications(appsData);
-      processCareerData(appsData);
-      setHasLoadedCareer(true);
+      const { data } = await getApplicationStats(selectedYear);
+      setApplicationStats(data);
+      setApplicationYears(data.years);
     } catch (error) {
       setCareerError(true);
       messageApi.error('Error fetching job hunt analytics');
@@ -100,7 +105,7 @@ const Analytics: React.FC = () => {
     } finally {
       setCareerLoading(false);
     }
-  }, [careerLoading, hasLoadedCareer, messageApi]);
+  }, [selectedYear, messageApi]);
 
   useEffect(() => {
     fetchAvailabilityAnalytics();
@@ -172,32 +177,6 @@ const Analytics: React.FC = () => {
     });
   };
 
-  const processCareerData = (
-    data: Array<{ status: string; date_applied?: string; [key: string]: unknown }>
-  ) => {
-    const weeks = [];
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-      const d = subWeeks(now, i);
-      const start = startOfWeek(d, { weekStartsOn: 1 });
-      const end = endOfWeek(d, { weekStartsOn: 1 });
-
-      const count = data.filter((app) => {
-        if (!app.date_applied) return false; // If no date, skip
-        const appDate = parseDateOnlyLocal(app.date_applied);
-        if (!appDate) return false;
-        return appDate >= start && appDate <= end;
-      }).length;
-
-      weeks.push({
-        date: format(start, 'MMM dd'),
-        count,
-      });
-    }
-
-    setCareerStats({ weeklyActivity: weeks });
-  };
-
   if (loading) {
     return (
       <div className="space-y-6 w-full">
@@ -219,6 +198,13 @@ const Analytics: React.FC = () => {
       <PageActionToolbar
         title="Analytics"
         subtitle="Review availability patterns and job search progress."
+        {...(activeTab === 'career'
+          ? {
+              selectedYear,
+              onYearChange: setSelectedYear,
+              availableYears: applicationYears,
+            }
+          : {})}
         extraActions={
           <SegmentedToggle
             value={activeTab}
@@ -265,20 +251,22 @@ const Analytics: React.FC = () => {
               actionLabel="Retry job search analytics"
               onAction={() => void fetchCareerAnalytics()}
             />
-          ) : careerLoading ? (
+          ) : /* Only the first load replaces the page. Changing the year refetches in
+               place, so the report updates instead of collapsing to a skeleton. */
+          careerLoading && !applicationStats ? (
             <SectionFallback />
           ) : (
             <>
               <Suspense fallback={<SectionFallback />}>
-                <ApplicationFunnel />
+                <JobHuntAnalytics applicationStats={applicationStats} selectedYear={selectedYear} />
               </Suspense>
 
               <Suspense fallback={<SectionFallback />}>
-                <JobHuntAnalytics applications={applications} />
-              </Suspense>
-
-              <Suspense fallback={<SectionFallback />}>
-                <WeeklyActivityChart data={careerStats.weeklyActivity} />
+                <ActivityChart
+                  key={selectedYear}
+                  dailyApplied={applicationStats?.daily_applied ?? {}}
+                  selectedYear={selectedYear}
+                />
               </Suspense>
             </>
           )}
