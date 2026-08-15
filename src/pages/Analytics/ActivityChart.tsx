@@ -23,9 +23,13 @@ import {
 } from './activitySeries';
 
 type Props = {
-  // Applications per day applied, keyed yyyy-MM-dd, from /career/application-stats/.
+  // Count per day, keyed yyyy-MM-dd. Applications by date applied, or events by date.
   dailyApplied: Record<string, number>;
   selectedYear: number | 'all';
+  // What is being counted. Both analytics tabs use this chart, so the noun is a prop
+  // rather than the word "application" hardcoded through the copy.
+  noun?: { one: string; many: string };
+  title?: string;
 };
 
 // One step of the drill path: the bar that was opened, and the granularity it opened into.
@@ -39,9 +43,11 @@ type DrillStep = {
 const CustomTooltip = ({
   active,
   payload,
+  noun,
 }: {
   active?: boolean;
   payload?: Array<{ payload: ActivityBucket }>;
+  noun: { one: string; many: string };
 }) => {
   const bucket = payload?.[0]?.payload;
   if (!active || !bucket) return null;
@@ -51,7 +57,7 @@ const CustomTooltip = ({
         {bucket.fullLabel}
       </p>
       <p className="text-sm font-bold text-slate-900">
-        {bucket.count} Application{bucket.count !== 1 ? 's' : ''}
+        {bucket.count} {bucket.count === 1 ? noun.one : noun.many}
       </p>
       {bucket.partial && (
         <p className="mt-1 text-[11px] text-slate-400">Only the part inside this breakdown</p>
@@ -63,7 +69,12 @@ const CustomTooltip = ({
 
 const { RangePicker } = DatePicker;
 
-const ActivityChart = ({ dailyApplied, selectedYear }: Props) => {
+const ActivityChart = ({
+  dailyApplied,
+  selectedYear,
+  noun = { one: 'application', many: 'applications' },
+  title = 'Activity',
+}: Props) => {
   const [granularity, setGranularity] = useState<Granularity>('week');
   const [range, setRange] = useState<string>(DEFAULT_RANGE.week);
   const [customRange, setCustomRange] = useState<[Dayjs, Dayjs] | null>(null);
@@ -195,12 +206,12 @@ const ActivityChart = ({ dailyApplied, selectedYear }: Props) => {
           <div className="flex items-center gap-2">
             <RiseOutlined className="text-xl text-blue-600" />
             <h3 className="text-lg font-semibold text-gray-900">
-              {GRANULARITY_LABELS[series.granularity]} Activity
+              {GRANULARITY_LABELS[series.granularity]} {title}
             </h3>
           </div>
           <p className="mt-1 text-sm text-gray-500">
             {formatWindow(series.windowStart, series.windowEnd)} · {series.total.toLocaleString()}{' '}
-            application{series.total === 1 ? '' : 's'}
+            {series.total === 1 ? noun.one : noun.many}
             {series.capped && ' · range capped'}
           </p>
         </div>
@@ -345,7 +356,10 @@ const ActivityChart = ({ dailyApplied, selectedYear }: Props) => {
               tickMargin={8}
               allowDecimals={false}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(37, 99, 235, 0.035)' }} />
+            <Tooltip
+              content={<CustomTooltip noun={noun} />}
+              cursor={{ fill: 'rgba(37, 99, 235, 0.035)' }}
+            />
             <Bar
               dataKey="count"
               name="Applications"

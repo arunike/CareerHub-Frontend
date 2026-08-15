@@ -73,18 +73,38 @@ const SortableItem = ({
   );
 };
 
+// Average duration became Schedule Load, and the last-7-days chart was replaced by the
+// shared activity chart the page renders. Without normalising, a saved layout would keep
+// those ids and the grid would hold a card that renders nothing at all.
+const RETIRED_WIDGET_IDS = new Set(['duration', 'activity']);
+const AVAILABLE_WIDGET_IDS = new Set(AVAILABLE_WIDGETS.map((widget) => widget.id));
+const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEnabled).map(
+  (widget) => widget.id
+);
+
+const normalizeEnabledWidgets = (ids: string[]) => {
+  const normalized = ids.filter(
+    (id) => AVAILABLE_WIDGET_IDS.has(id) && !RETIRED_WIDGET_IDS.has(id)
+  );
+  // Anyone who had the duration tile keeps a tile in its place rather than silently losing one.
+  if (ids.includes('duration') && !normalized.includes('load')) normalized.push('load');
+  return normalized.length > 0 ? normalized : DEFAULT_WIDGET_IDS;
+};
+
 const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [enabledWidgets, setEnabledWidgets] = useState<string[]>(() => {
     const saved = localStorage.getItem('availability_analytics_enabled');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const normalized = normalizeEnabledWidgets(JSON.parse(saved));
+        localStorage.setItem('availability_analytics_enabled', JSON.stringify(normalized));
+        return normalized;
       } catch (error) {
         console.error('Failed to parse enabled widgets', error);
       }
     }
-    return AVAILABLE_WIDGETS.filter((w) => w.defaultEnabled).map((w) => w.id);
+    return DEFAULT_WIDGET_IDS;
   });
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -94,7 +114,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     const saved = localStorage.getItem('availability_analytics_order');
     if (saved) {
       try {
-        const order = JSON.parse(saved);
+        const order = normalizeEnabledWidgets(JSON.parse(saved));
         return order.filter((id: string) => enabledWidgets.includes(id));
       } catch (error) {
         console.error('Failed to parse widget order', error);

@@ -1,17 +1,9 @@
-import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ApplicationStats, Event } from '../../types';
 import { getEvents } from '../../api';
 import { getApplicationStats } from '../../api/career';
-import {
-  format,
-  parseISO,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isSameDay,
-  addDays,
-} from 'date-fns';
+import { buildEventStats, eventYears, scopeEventsToYear } from './eventLoad';
 import { message } from 'antd';
 import SegmentedToggle from '../../components/SegmentedToggle';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -64,22 +56,14 @@ const Analytics: React.FC = () => {
   const [applicationYears, setApplicationYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(new Date().getFullYear());
 
-  const [availabilityStats, setAvailabilityStats] = useState({
-    totalEvents: 0,
-    thisWeek: 0,
-    avgDuration: 0,
-    byCategory: [] as { name: string; value: number }[],
-    dailyActivity: [] as { date: string; count: number; minutes: number }[],
-  });
+  const [events, setEvents] = useState<Event[]>([]);
 
   const fetchAvailabilityAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setAvailabilityError(false);
       const eventsResp = await getEvents();
-      const eventsData = eventsResp.data;
-
-      processAvailabilityData(eventsData);
+      setEvents(eventsResp.data);
     } catch (error) {
       setAvailabilityError(true);
       messageApi.error('Error fetching analytics');
@@ -88,6 +72,18 @@ const Analytics: React.FC = () => {
       setLoading(false);
     }
   }, [messageApi]);
+
+  // Both tabs answer to the same year control now. Events were mixing 2024, 2025 and 2026
+  // into one "Total Events", which no amount of reading the number could reveal.
+  const eventYearOptions = useMemo(() => eventYears(events), [events]);
+  const scopedEvents = useMemo(
+    () => scopeEventsToYear(events, selectedYear),
+    [events, selectedYear]
+  );
+  const availabilityStats = useMemo(
+    () => buildEventStats(scopedEvents, new Date()),
+    [scopedEvents]
+  );
 
   // Counts come pre-aggregated, so the year filter is a 3 KB refetch rather than a
   // client-side filter over every application the page had to download first.
@@ -117,66 +113,6 @@ const Analytics: React.FC = () => {
     }
   }, [activeTab, fetchCareerAnalytics]);
 
-  const processAvailabilityData = (data: Event[]) => {
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
-    const thisWeekEvents = data.filter((e) => {
-      const eventDate = parseISO(e.date);
-      return eventDate >= weekStart && eventDate <= weekEnd;
-    });
-
-    let totalMinutes = 0;
-    data.forEach((e) => {
-      const start = new Date(`2000-01-01T${e.start_time}`);
-      const end = new Date(`2000-01-01T${e.end_time}`);
-      totalMinutes += (end.getTime() - start.getTime()) / 60000;
-    });
-
-    const categoryCount: Record<string, number> = {};
-    data.forEach((e) => {
-      const catName = e.category_details?.name || 'Uncategorized';
-      categoryCount[catName] = (categoryCount[catName] || 0) + 1;
-    });
-
-    const pieData = Object.entries(categoryCount)
-      .map(([name, value]) => ({
-        name,
-        value,
-      }))
-      .sort((a, b) => b.value - a.value);
-
-    const last7Days = eachDayOfInterval({
-      start: addDays(now, -6),
-      end: now,
-    });
-
-    const activityData = last7Days.map((day) => {
-      const dayEvents = data.filter((e) => isSameDay(parseISO(e.date), day));
-      let mins = 0;
-      dayEvents.forEach((e) => {
-        const s = new Date(`2000-01-01T${e.start_time}`);
-        const en = new Date(`2000-01-01T${e.end_time}`);
-        mins += (en.getTime() - s.getTime()) / 60000;
-      });
-
-      return {
-        date: format(day, 'MMM dd'),
-        count: dayEvents.length,
-        minutes: mins,
-      };
-    });
-
-    setAvailabilityStats({
-      totalEvents: data.length,
-      thisWeek: thisWeekEvents.length,
-      avgDuration: data.length > 0 ? Math.round(totalMinutes / data.length) : 0,
-      byCategory: pieData,
-      dailyActivity: activityData,
-    });
-  };
-
   if (loading) {
     return (
       <div className="space-y-6 w-full">
@@ -198,13 +134,9 @@ const Analytics: React.FC = () => {
       <PageActionToolbar
         title="Analytics"
         subtitle="Review availability patterns and job search progress."
-        {...(activeTab === 'career'
-          ? {
-              selectedYear,
-              onYearChange: setSelectedYear,
-              availableYears: applicationYears,
-            }
-          : {})}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+        availableYears={activeTab === 'career' ? applicationYears : eventYearOptions}
         extraActions={
           <SegmentedToggle
             value={activeTab}
@@ -236,9 +168,21 @@ const Analytics: React.FC = () => {
           onAction={() => void fetchAvailabilityAnalytics()}
         />
       ) : activeTab === 'availability' ? (
-        <Suspense fallback={<SectionFallback />}>
-          <AvailabilityAnalytics stats={availabilityStats} />
-        </Suspense>
+        <div className="space-y-6">
+          <Suspense fallback={<SectionFallback />}>
+            <AvailabilityAnalytics stats={availabilityStats} />
+          </Suspense>
+
+          <Suspense fallback={<SectionFallback />}>
+            <ActivityChart
+              key={`events-${selectedYear}`}
+              dailyApplied={availabilityStats.dailyCounts}
+              selectedYear={selectedYear}
+              noun={{ one: 'event', many: 'events' }}
+              title="Event Activity"
+            />
+          </Suspense>
+        </div>
       ) : null}
 
       {activeTab === 'career' && (
@@ -251,9 +195,7 @@ const Analytics: React.FC = () => {
               actionLabel="Retry job search analytics"
               onAction={() => void fetchCareerAnalytics()}
             />
-          ) : /* Only the first load replaces the page. Changing the year refetches in
-               place, so the report updates instead of collapsing to a skeleton. */
-          careerLoading && !applicationStats ? (
+          ) : careerLoading && !applicationStats ? (
             <SectionFallback />
           ) : (
             <>

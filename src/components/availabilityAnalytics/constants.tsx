@@ -1,9 +1,8 @@
 import {
-  BarChartOutlined,
   CalendarOutlined,
-  ClockCircleOutlined,
   PieChartOutlined,
   RiseOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { WidgetDefinition } from '../jobHuntAnalytics/types';
 
@@ -27,10 +26,10 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
     category: 'statistic',
   },
   {
-    id: 'duration',
-    name: 'Average Duration',
-    description: 'Average event duration in minutes',
-    icon: <ClockCircleOutlined />,
+    id: 'load',
+    name: 'Schedule Load',
+    description: 'Events per week, busiest day, doubled-up days, and when they usually land',
+    icon: <ThunderboltOutlined />,
     defaultEnabled: true,
     category: 'statistic',
   },
@@ -39,14 +38,6 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
     name: 'Events by Category',
     description: 'Breakdown of events by category',
     icon: <PieChartOutlined />,
-    defaultEnabled: true,
-    category: 'chart',
-  },
-  {
-    id: 'activity',
-    name: 'Daily Activity',
-    description: 'Daily event count and duration',
-    icon: <BarChartOutlined />,
     defaultEnabled: true,
     category: 'chart',
   },
