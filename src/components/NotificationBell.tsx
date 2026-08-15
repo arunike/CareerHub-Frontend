@@ -14,7 +14,6 @@ import {
   daysUntil,
   dismissUntil,
   dueReminders,
-  urgentReminders,
   pruneReminderState,
   readReminderState,
   reminderUrgency,
@@ -36,6 +35,7 @@ import {
 } from 'date-fns';
 import {
   BellOutlined,
+  CloseOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   AlertOutlined,
@@ -46,6 +46,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import EventViewModal from '../pages/Events/components/EventViewModal';
 import type { ConflictAlert, Event, Task } from '../types';
 import ConfirmModal from './ConfirmModal';
+import { getPaletteColor } from '../utils/colorPalette';
 import { Button, Spin, message, notification } from 'antd';
 import {
   getDeadlineStatus,
@@ -75,6 +76,12 @@ interface DeadlineItem {
 const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
 // Only surface deadlines inside this window.
 const MAX_DEADLINE_DAYS = 7;
+// An event three months out is not a notification. Anything past this stays on the
+// calendar and out of the bell.
+const MAX_EVENT_DAYS = 14;
+// Dismissals are per event and keyed by its date, so the entry cleans itself up once the
+// event is in the past rather than growing forever.
+const EVENT_DISMISS_KEY = 'notification_dismissed_events';
 
 // Colour carries the urgency, so the card reads before the text does.
 const URGENCY_TONE = {
@@ -124,6 +131,18 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const [dismissedEvents, setDismissedEvents] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem(EVENT_DISMISS_KEY);
+      const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+      const today = format(new Date(), 'yyyy-MM-dd');
+      // Drop anything whose event has already passed.
+      return Object.fromEntries(Object.entries(parsed).filter(([, date]) => date >= today));
+    } catch {
+      return {};
+    }
+  });
+
   const [snoozed, setSnoozed] = useState<Record<string, string>>(() => {
     const raw = localStorage.getItem(DEADLINE_SNOOZE_KEY);
     if (!raw) return {};
@@ -182,10 +201,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         const allEvents = cached.events;
         const now = new Date();
 
+        const horizon = addDays(now, MAX_EVENT_DAYS);
         const upcoming = allEvents
           .filter((e: Event) => {
             const eventStart = new Date(`${e.date}T${e.start_time}`);
-            return isAfter(eventStart, now);
+            return isAfter(eventStart, now) && !isAfter(eventStart, horizon);
           })
           .sort((a: Event, b: Event) => {
             const dateA = new Date(`${a.date}T${a.start_time}`);
@@ -247,12 +267,23 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       .finally(() => setSettingsLoaded(true));
   }, []);
 
-  const dueSoon = dueReminders(events, reminderSettings, reminderState);
-  // Dismissing today's popup must not calm the bell — the event is still days away.
-  const urgent = urgentReminders(events, reminderSettings, reminderState);
+  const visibleEvents = events.filter((event) => !dismissedEvents[String(event.id)]);
+
+  const dismissEvent = (event: Event, clickEvent: React.MouseEvent) => {
+    clickEvent.stopPropagation();
+    clickEvent.preventDefault();
+    setDismissedEvents((prev) => {
+      const next = { ...prev, [String(event.id)]: event.date };
+      localStorage.setItem(EVENT_DISMISS_KEY, JSON.stringify(next));
+      return next;
+    });
+    messageApi.success('Dismissed');
+  };
+
+  const dueSoon = dueReminders(visibleEvents, reminderSettings, reminderState);
   const dueSoonIds = new Set(dueSoon.map((event) => event.id));
   // Anything already shown under "Coming up" is not repeated under "Upcoming".
-  const otherUpcoming = events.filter((event) => !dueSoonIds.has(event.id));
+  const otherUpcoming = visibleEvents.filter((event) => !dueSoonIds.has(event.id));
 
   // Keyed on the ids themselves, so this fires as soon as the data lands rather than
   // depending on a re-render producing a new array.
@@ -380,10 +411,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     }
   };
 
-  const hasConflicts = conflicts.length > 0;
   const hasDeadlines = deadlines.length > 0;
-  const totalNotifications = events.length + conflicts.length + deadlines.length;
-  const needsAttention = urgent.length > 0 || hasConflicts || hasDeadlines;
+  const totalNotifications = visibleEvents.length + conflicts.length + deadlines.length;
+  // Now that the window is capped at 14 days and every row can be dismissed, ringing
+  // while anything is outstanding is honest rather than constant background motion.
+  const needsAttention = totalNotifications > 0;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -394,8 +426,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         aria-label="Open notifications"
         aria-expanded={isOpen}
       >
-        {/* Rings only when something actually needs attention, not merely because
-            future events exist — otherwise it would move almost all the time. */}
+        {/* Keeps ringing until the list is empty, so something outstanding cannot be
+            missed; every row has a Dismiss action to stop it. */}
         <BellOutlined className={`text-xl ${needsAttention ? 'careerhub-bell-alert' : ''}`} />
         {totalNotifications > 0 && (
           <span
@@ -484,7 +516,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                             <button
                               type="button"
                               className="text-xs font-semibold text-slate-500 hover:text-slate-700"
-                              onClick={() => setReminder(event.id, dismissUntil(reminderSettings))}
+                              onClick={(clickEvent) => {
+                                // Silence the popup and clear the bell entry: leaving it
+                                // listed meant the bell kept ringing after a "Dismiss".
+                                setReminder(event.id, dismissUntil(reminderSettings));
+                                dismissEvent(event, clickEvent);
+                              }}
                             >
                               Dismiss
                             </button>
@@ -617,43 +654,59 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                   if (isTomorrow(eventDate)) dayLabel = 'Tmrw';
 
                   return (
-                    <button
-                      type="button"
-                      key={event.id}
-                      onClick={() => setViewingEvent(event)}
-                      className="block w-full p-3 text-left transition-colors hover:bg-gray-50"
-                    >
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="font-medium text-sm text-gray-900 line-clamp-1">
-                          {event.name}
-                        </span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                            isToday(eventDate)
-                              ? 'bg-blue-50 text-blue-700 font-medium'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {dayLabel}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                        <ClockCircleOutlined className="text-xs" />
-                        <span>{timeLabel}</span>
-                        <span>•</span>
-                        <span className="font-medium text-slate-600">
-                          {countdownLabel(event.date)}
-                        </span>
-                        {event.category_details && (
-                          <>
-                            <span>•</span>
-                            <span style={{ color: event.category_details.color }}>
-                              {event.category_details.name}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </button>
+                    <div key={event.id} className="group relative">
+                      <button
+                        type="button"
+                        onClick={(clickEvent) => dismissEvent(event, clickEvent)}
+                        aria-label={`Dismiss ${event.name}`}
+                        title="Dismiss"
+                        // Always visible: a hover-only control is unreachable on a touch screen.
+                        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-600"
+                      >
+                        <CloseOutlined className="text-[11px]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewingEvent(event)}
+                        className="block w-full p-3 pr-10 text-left transition-colors hover:bg-gray-50"
+                      >
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="font-medium text-sm text-gray-900 line-clamp-1">
+                            {event.name}
+                          </span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                              isToday(eventDate)
+                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {dayLabel}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+                          <ClockCircleOutlined className="text-xs" />
+                          <span>{timeLabel}</span>
+                          <span>•</span>
+                          <span className="font-medium text-slate-600">
+                            {countdownLabel(event.date)}
+                          </span>
+                          {event.category_details && (
+                            <>
+                              <span>•</span>
+                              {/* The raw category colour is often too light to read here. */}
+                              <span
+                                style={{
+                                  color: getPaletteColor(event.category_details.color).text,
+                                }}
+                              >
+                                {event.category_details.name}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
