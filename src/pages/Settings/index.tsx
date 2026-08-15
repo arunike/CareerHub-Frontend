@@ -80,7 +80,9 @@ import {
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import UnitNumberInput from '../../components/UnitNumberInput';
 import {
+  describeClashes,
   describeConflict,
+  findClashesWith,
   findColorConflicts,
   suggestFreeColor,
   type ColorOwner,
@@ -1030,6 +1032,28 @@ const Settings: React.FC = () => {
     [categories, settings]
   );
   const colorConflicts = useMemo(() => findColorConflicts(colorOwners), [colorOwners]);
+
+  // Rendered directly under a colour picker so the clash is visible while choosing,
+  // not only after saving.
+  const renderClashNotice = (
+    color: string | null | undefined,
+    excluding?: { kind: 'category' | 'holiday'; label: string }
+  ) => {
+    const clashes = findClashesWith(colorOwners, color, excluding);
+    if (clashes.length === 0) return null;
+    return (
+      <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-amber-700">
+        <span
+          className="mt-1 h-2 w-2 shrink-0 rounded-full ring-1 ring-amber-300"
+          style={{ backgroundColor: getPaletteColor(color).dot }}
+        />
+        <span>
+          {describeClashes(clashes)}
+          {freeColorSuggestion ? ` Nothing is using ${freeColorSuggestion} yet.` : ''}
+        </span>
+      </p>
+    );
+  };
   const freeColorSuggestion = useMemo(() => suggestFreeColor(colorOwners), [colorOwners]);
 
   if (loading) {
@@ -1910,6 +1934,12 @@ const Settings: React.FC = () => {
                       mode="hex"
                       allowCustomHex
                     />
+                    {renderClashNotice(
+                      newCategoryColor,
+                      editingCategory
+                        ? { kind: 'category', label: editingCategory.name }
+                        : undefined
+                    )}
                   </div>
                 </div>
               </form>
@@ -2161,6 +2191,12 @@ const Settings: React.FC = () => {
                       onChange={setNewTabColor}
                       allowCustomHex
                     />
+                    {renderClashNotice(
+                      newTabColor,
+                      editingHolidayTab
+                        ? { kind: 'holiday', label: editingHolidayTab.name }
+                        : undefined
+                    )}
                   </div>
                 </div>
               </div>

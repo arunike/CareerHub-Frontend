@@ -58,3 +58,27 @@ export const describeConflict = (conflict: ColorConflict) => {
   const list = names.length ? `${names.join(', ')} and ${last}` : last;
   return `${list} share a colour, so they look identical on the calendar.`;
 };
+
+// A warning is only useful while you are choosing, so this compares a draft colour against
+// everything else rather than waiting for the value to be saved. `excluding` drops the
+// entry being edited so it never reports clashing with itself.
+export const findClashesWith = (
+  owners: ColorOwner[],
+  color: string | null | undefined,
+  excluding?: { kind: ColorOwnerKind; label: string }
+) => {
+  const target = resolve(color);
+  return owners.filter(
+    (owner) =>
+      owner.label.trim() &&
+      resolve(owner.color) === target &&
+      !(excluding && owner.kind === excluding.kind && owner.label === excluding.label)
+  );
+};
+
+export const describeClashes = (owners: ColorOwner[]) => {
+  const names = owners.map((owner) => `“${owner.label}”`);
+  const last = names.pop();
+  const list = names.length ? `${names.join(', ')} and ${last}` : last;
+  return `Already used by ${list} — they will look identical on the calendar.`;
+};

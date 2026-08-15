@@ -175,6 +175,25 @@ export const getReadableTextColor = (background: string) => {
     : lightText;
 };
 
+// A hand-picked hex is often far too light to read as text on a pale tint of itself —
+// #00ebe7 is 1.4:1 against white, well under the 4.5:1 AA threshold. Darkening the same
+// hue until it clears the bar keeps the badge's identity, where falling back to black
+// would throw the colour away.
+export const getReadableAccentColor = (
+  color?: string | null,
+  background = '#ffffff',
+  target = 4.5
+) => {
+  let hex = normalizeHexColor(color);
+  for (let step = 0; step < 12; step += 1) {
+    if (getContrastRatio(hex, background) >= target) return hex;
+    const { r, g, b } = hexToRgb(hex);
+    const darker = [r, g, b].map((channel) => Math.max(0, Math.round(channel * 0.82)));
+    hex = `#${darker.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+  }
+  return hex;
+};
+
 export const isHexColor = (color?: string | null) =>
   Boolean(color?.trim().match(/^#[0-9a-f]{3}([0-9a-f]{3})?$/i));
 
@@ -212,7 +231,7 @@ export const getPaletteColor = (color?: string | null): PaletteColor => {
       label: 'Custom',
       bg: rgb(hex, 0.13),
       border: rgb(hex, 0.28),
-      text: hex,
+      text: getReadableAccentColor(hex),
       dot: hex,
       tone: hex,
     };
