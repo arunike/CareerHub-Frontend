@@ -239,9 +239,14 @@ const CalendarMonthView = ({
         <div className="grid grid-cols-7">{days}</div>
         {spans.length > 0 && (
           <div
-            className="pointer-events-none absolute inset-x-0 hidden grid-cols-7 gap-y-0.5 px-px sm:grid"
-            // Clears the day-number row; bars then stack downwards lane by lane.
-            style={{ top: 34 }}
+            // z-20 keeps the bars above the day cells. A selected cell is z-10 with an
+            // opaque background, which otherwise paints over the start of the bar and
+            // hides its title, leaving what looks like a blank stripe.
+            className="pointer-events-none absolute inset-x-0 z-20 hidden grid-cols-7 gap-y-0.5 px-px sm:grid"
+            // The day number occupies 9-37px of the cell, so bars start below it with a
+            // small gap. 34 overlapped it by 3px, which only showed once the bars were
+            // raised above the cell background.
+            style={{ top: 40 }}
           >
             {spans.map((span) => (
               <SpanBar

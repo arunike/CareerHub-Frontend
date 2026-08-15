@@ -3,7 +3,11 @@ import { Tooltip } from 'antd';
 import type { CSSProperties, MouseEvent } from 'react';
 import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
-import { getHolidayTabColor } from '../../utils/holidayTabColors';
+import {
+  UNTABBED_HOLIDAY_LABEL,
+  getFederalHolidayColor,
+  getHolidayTabColor,
+} from '../../utils/holidayTabColors';
 import type { DayData } from './types';
 import { eventTimeLabel, eventTimeRangeLabel, hasDayItems } from './utils';
 
@@ -53,7 +57,7 @@ export const CalendarDayTooltipContent = ({ day, dayData }: DayTooltipProps) => 
       {dayData.customHolidays.map((holiday, index) => (
         // Same label as every other surface: the tab it belongs to, not a generic word.
         <div key={`cust-${index}`}>
-          {holiday.tab_name || 'My Time Off'}: {holiday.description}
+          {holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: {holiday.description}
         </div>
       ))}
       {dayData.events.map((event) => (
@@ -121,7 +125,7 @@ export const CalendarMobileDaySummary = ({ dayData }: Pick<DayDataProps, 'dayDat
             ? getEventColor(item.event).dot
             : item.kind === 'custom'
               ? getHolidayTabColor(item.holiday.tab_color).dot
-              : '#9ca3af';
+              : getFederalHolidayColor(item.holiday.tab_color).dot;
 
         return (
           <span
@@ -180,7 +184,7 @@ export const CalendarCompactDayEntries = ({
           return (
             <Tooltip
               key={item.key}
-              title={`${holiday.tab_name || 'My Time Off'}: ${holiday.description}`}
+              title={`${holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: ${holiday.description}`}
               mouseEnterDelay={0}
             >
               {onHolidaySelect ? (
@@ -311,7 +315,7 @@ export const CalendarDayAgendaEntries = ({
         const content = (
           <>
             <div className="text-xs font-semibold uppercase tracking-wide opacity-75">
-              {holiday.tab_name || 'My Time Off'}
+              {holiday.tab_name || UNTABBED_HOLIDAY_LABEL}
             </div>
             <div className="mt-1">
               {holiday.description}

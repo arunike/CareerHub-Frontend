@@ -3,7 +3,7 @@ import { ClockCircleOutlined } from '@ant-design/icons';
 import type { CSSProperties } from 'react';
 import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
-import { getHolidayTabColor } from '../../utils/holidayTabColors';
+import { UNTABBED_HOLIDAY_LABEL, getHolidayTabColor } from '../../utils/holidayTabColors';
 import { hasDayItems, eventTimeRangeLabel } from './utils';
 import type { DayData } from './types';
 
@@ -43,7 +43,7 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidayS
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: tabColor.dot }}
                   ></span>
-                  <span className="font-medium">{holiday.tab_name || 'My Time Off'}:</span>
+                  <span className="font-medium">{holiday.tab_name || UNTABBED_HOLIDAY_LABEL}:</span>
                   {holiday.description} {holiday.is_recurring && '(Yearly)'}
                 </>
               );

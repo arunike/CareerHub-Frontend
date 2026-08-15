@@ -2,7 +2,11 @@ import type React from 'react';
 import { CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { EventCategory, HolidayTab } from '../../types';
 import { getEventCategoryColor } from '../../utils/eventCategoryColors';
-import { getHolidayTabColor } from '../../utils/holidayTabColors';
+import {
+  UNTABBED_HOLIDAY_LABEL,
+  getFederalHolidayColor,
+  getHolidayTabColor,
+} from '../../utils/holidayTabColors';
 import SegmentedToggle from '../SegmentedToggle';
 import type { CalendarFilters, CalendarViewMode } from './types';
 import { VIEW_OPTIONS } from './types';
@@ -24,6 +28,8 @@ type Props = {
   // Page-level controls (view switch, year) merged in here rather than sitting in an
   // otherwise empty band under the page title, so they live beside the content.
   pageControls?: React.ReactNode;
+  defaultHolidayColor?: string;
+  federalHolidayColor?: string;
 };
 
 const CalendarHeader = ({
@@ -41,6 +47,8 @@ const CalendarHeader = ({
   onToggleCustomHolidayTab,
   onToggleFederal,
   pageControls,
+  defaultHolidayColor,
+  federalHolidayColor,
 }: Props) => {
   const filterButtonClassName = (active: boolean) =>
     `inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1 md:text-sm ${
@@ -155,10 +163,12 @@ const CalendarHeader = ({
             <span
               className="h-2.5 w-2.5 rounded-full"
               style={{
-                backgroundColor: filters.customHolidayTabs.has('default') ? '#22c55e' : '#d1d5db',
+                backgroundColor: filters.customHolidayTabs.has('default')
+                  ? getHolidayTabColor(defaultHolidayColor).dot
+                  : '#d1d5db',
               }}
             />
-            <span>My Time Off</span>
+            <span>{UNTABBED_HOLIDAY_LABEL}</span>
           </button>
 
           {holidayTabs.map((tab) => {
@@ -192,7 +202,11 @@ const CalendarHeader = ({
           >
             <span
               className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: filters.federal ? '#9ca3af' : '#d1d5db' }}
+              style={{
+                backgroundColor: filters.federal
+                  ? getFederalHolidayColor(federalHolidayColor).dot
+                  : '#d1d5db',
+              }}
             />
             <span>Federal</span>
           </button>

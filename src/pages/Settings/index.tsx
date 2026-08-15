@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   getUserSettings,
   updateUserSettings,
@@ -61,7 +61,15 @@ import GoogleSheetsSettings from './GoogleSheetsSettings';
 import SecurityDashboard from './SecurityDashboard';
 import NavigationSettings from './NavigationSettings';
 import { TIMEZONE_OPTIONS, normalizeTimeZone } from '../../lib/timezones';
-import { DEFAULT_HOLIDAY_TAB_COLOR, getHolidayTabColor } from '../../utils/holidayTabColors';
+import {
+  DEFAULT_HOLIDAY_TAB_COLOR,
+  FEDERAL_HOLIDAY_COLOR,
+  FEDERAL_HOLIDAY_LABEL,
+  UNTABBED_HOLIDAY_COLOR,
+  UNTABBED_HOLIDAY_LABEL,
+  getFederalHolidayColor,
+  getHolidayTabColor,
+} from '../../utils/holidayTabColors';
 import { resolveSettings, type ReminderSettings } from '../../utils/eventReminders';
 import {
   DEFAULT_PALETTE_COLOR,
@@ -71,6 +79,12 @@ import {
 } from '../../utils/colorPalette';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import UnitNumberInput from '../../components/UnitNumberInput';
+import {
+  describeConflict,
+  findColorConflicts,
+  suggestFreeColor,
+  type ColorOwner,
+} from '../../utils/colorConflicts';
 
 dayjs.extend(customParseFormat);
 
@@ -988,6 +1002,35 @@ const Settings: React.FC = () => {
       };
     });
   };
+
+  // Categories and time-off colours share the calendar, so a repeat makes it unreadable.
+  const colorOwners = useMemo<ColorOwner[]>(
+    () => [
+      ...categories.map((category) => ({
+        kind: 'category' as const,
+        label: category.name,
+        color: category.color,
+      })),
+      {
+        kind: 'holiday' as const,
+        label: UNTABBED_HOLIDAY_LABEL,
+        color: settings?.default_holiday_color ?? UNTABBED_HOLIDAY_COLOR,
+      },
+      {
+        kind: 'holiday' as const,
+        label: FEDERAL_HOLIDAY_LABEL,
+        color: settings?.federal_holiday_color ?? FEDERAL_HOLIDAY_COLOR,
+      },
+      ...(settings?.holiday_tabs ?? []).map((tab) => ({
+        kind: 'holiday' as const,
+        label: tab.name,
+        color: tab.color,
+      })),
+    ],
+    [categories, settings]
+  );
+  const colorConflicts = useMemo(() => findColorConflicts(colorOwners), [colorOwners]);
+  const freeColorSuggestion = useMemo(() => suggestFreeColor(colorOwners), [colorOwners]);
 
   if (loading) {
     return <SettingsSkeleton />;
@@ -2039,7 +2082,7 @@ const Settings: React.FC = () => {
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Time Off Tabs</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Time Off Colors</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Custom tabs in Holiday Manager — saved with Settings
                 </p>
@@ -2165,6 +2208,84 @@ const Settings: React.FC = () => {
             <p className="text-xs text-gray-400 mt-3">
               Deleting a tab moves its time off back to <em>My Time Off</em>.
             </p>
+
+            {/* Time off with no tab used a hardcoded colour, so it could silently match an
+                event category. It is a real setting now, and clashes are called out. */}
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: getHolidayTabColor(
+                        settings?.default_holiday_color ?? UNTABBED_HOLIDAY_COLOR
+                      ).dot,
+                    }}
+                  />
+                  <span className="text-sm font-medium text-gray-800">
+                    {UNTABBED_HOLIDAY_LABEL}
+                  </span>
+                  <span className="text-xs text-gray-400">time off with no tab</span>
+                </div>
+                <ColorSwatchPicker
+                  value={settings?.default_holiday_color ?? UNTABBED_HOLIDAY_COLOR}
+                  onChange={(color) =>
+                    setSettings((prev) => (prev ? { ...prev, default_holiday_color: color } : prev))
+                  }
+                  allowCustomHex
+                />
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: getFederalHolidayColor(
+                        settings?.federal_holiday_color ?? FEDERAL_HOLIDAY_COLOR
+                      ).dot,
+                    }}
+                  />
+                  <span className="text-sm font-medium text-gray-800">{FEDERAL_HOLIDAY_LABEL}</span>
+                  <span className="text-xs text-gray-400">public holidays</span>
+                </div>
+                <ColorSwatchPicker
+                  value={settings?.federal_holiday_color ?? FEDERAL_HOLIDAY_COLOR}
+                  onChange={(color) =>
+                    setSettings((prev) => (prev ? { ...prev, federal_holiday_color: color } : prev))
+                  }
+                  allowCustomHex
+                />
+              </div>
+            </div>
+
+            {colorConflicts.length > 0 && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                  Colour clash
+                </p>
+                <ul className="mt-1.5 space-y-1">
+                  {colorConflicts.map((conflict) => (
+                    <li
+                      key={conflict.dot}
+                      className="flex items-start gap-2 text-[13px] leading-5 text-amber-900"
+                    >
+                      <span
+                        className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-amber-300"
+                        style={{ backgroundColor: conflict.dot }}
+                      />
+                      <span>{describeConflict(conflict)}</span>
+                    </li>
+                  ))}
+                </ul>
+                {freeColorSuggestion && (
+                  <p className="mt-2 text-[11px] text-amber-700">
+                    Nothing is using <span className="font-semibold">{freeColorSuggestion}</span>{' '}
+                    yet.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 

@@ -139,6 +139,8 @@ export interface UserSettings {
   ignored_federal_holidays?: string[];
   employment_types?: EmploymentType[];
   holiday_tabs?: HolidayTab[];
+  default_holiday_color?: string;
+  federal_holiday_color?: string;
   application_stages?: Array<{
     key: string;
     label: string;

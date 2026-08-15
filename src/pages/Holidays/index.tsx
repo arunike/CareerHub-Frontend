@@ -70,7 +70,12 @@ import { ListSkeleton } from '../../components/SkeletonLoader';
 import RowActions from '../../components/RowActions';
 import { getAvailableYears, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import { getHolidayTabColor } from '../../utils/holidayTabColors';
+import {
+  FEDERAL_HOLIDAY_LABEL,
+  UNTABBED_HOLIDAY_LABEL,
+  getFederalHolidayColor,
+  getHolidayTabColor,
+} from '../../utils/holidayTabColors';
 import { getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 import EventEditorModal from '../Events/components/EventEditorModal';
 import EventViewModal from '../Events/components/EventViewModal';
@@ -1446,8 +1451,18 @@ const Holidays = () => {
   const items = [
     {
       key: 'custom',
-      label: 'My Time Off',
-      children: renderHolidayListTab('custom', 'My Time Off'),
+      label: (
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{
+              backgroundColor: getHolidayTabColor(userSettings?.default_holiday_color).dot,
+            }}
+          />
+          {UNTABBED_HOLIDAY_LABEL}
+        </span>
+      ),
+      children: renderHolidayListTab('custom', UNTABBED_HOLIDAY_LABEL),
     },
     ...customTabs.map((t) => ({
       key: t.id,
@@ -1464,7 +1479,17 @@ const Holidays = () => {
     })),
     {
       key: 'federal',
-      label: 'Observed Holidays',
+      label: (
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{
+              backgroundColor: getFederalHolidayColor(userSettings?.federal_holiday_color).dot,
+            }}
+          />
+          {FEDERAL_HOLIDAY_LABEL}
+        </span>
+      ),
       children: (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Card>
@@ -1615,6 +1640,8 @@ const Holidays = () => {
             federalHolidays={federalHolidays}
             categories={categories}
             holidayTabs={customTabs}
+            defaultHolidayColor={userSettings?.default_holiday_color}
+            federalHolidayColor={userSettings?.federal_holiday_color}
             addActionHighlight="holidays"
             loading={loading}
             onEventSelect={handleCalendarEventSelect}

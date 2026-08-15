@@ -122,6 +122,8 @@ const Events = () => {
   const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
   const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
+  const [defaultHolidayColor, setDefaultHolidayColor] = useState<string | undefined>();
+  const [federalHolidayColor, setFederalHolidayColor] = useState<string | undefined>();
   const [eventsTotal, setEventsTotal] = useState(0);
   const [eventsUnlocked, setEventsUnlocked] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -211,6 +213,8 @@ const Events = () => {
         setDefaultDuration(Number(settingsResp.data.default_event_duration) || 60);
         setDefaultCategory(settingsResp.data.default_event_category ?? null);
         setHolidayTabs(settingsResp.data.holiday_tabs || []);
+        setDefaultHolidayColor(settingsResp.data.default_holiday_color);
+        setFederalHolidayColor(settingsResp.data.federal_holiday_color);
         if (settingsResp.data.primary_timezone) {
           setUserTimezone((current) =>
             normalizeTimeZone(current || settingsResp.data.primary_timezone)
@@ -272,6 +276,7 @@ const Events = () => {
       setCustomHolidays(holidaysResp.data);
       setFederalHolidays(fedResp.data);
       setHolidayTabs(settingsResp.data.holiday_tabs || []);
+      setDefaultHolidayColor(settingsResp.data.default_holiday_color);
     } catch (error) {
       setCalendarLoadError(true);
       messageApi.error('Failed to load calendar data');
@@ -1014,6 +1019,8 @@ const Events = () => {
               federalHolidays={federalHolidays}
               categories={categories}
               holidayTabs={holidayTabs}
+              defaultHolidayColor={defaultHolidayColor}
+              federalHolidayColor={federalHolidayColor}
               addActionHighlight="events"
               loading={calendarLoading}
               onEventSelect={(event, day) => {

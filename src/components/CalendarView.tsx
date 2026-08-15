@@ -21,6 +21,7 @@ import type {
   DayData,
 } from './calendarView/types';
 import { getHeaderLabel, getVisibleRangeDates, shiftAnchorDate } from './calendarView/utils';
+import { FEDERAL_HOLIDAY_COLOR } from '../utils/holidayTabColors';
 
 interface CalendarViewProps {
   events: Event[];
@@ -38,6 +39,9 @@ interface CalendarViewProps {
   // Page-level controls merged into the calendar's own header instead of leaving an empty
   // band under the page title.
   pageControls?: React.ReactNode;
+  // Colour for time off with no tab. Configurable, so it cannot be hardcoded here.
+  defaultHolidayColor?: string;
+  federalHolidayColor?: string;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
@@ -54,6 +58,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onAddEvent,
   onAddHoliday,
   pageControls,
+  defaultHolidayColor,
+  federalHolidayColor,
 }) => {
   const today = new Date();
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
@@ -152,7 +158,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     const holidayTab = holiday.tab ? holidayTabsById[holiday.tab] : undefined;
     const displayHoliday = {
       ...holiday,
-      tab_color: holidayTab?.color,
+      tab_color: holidayTab?.color ?? defaultHolidayColor,
       tab_name: holidayTab?.name,
     };
 
@@ -163,7 +169,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   });
 
   const federalHolidaysByDate: Record<string, Holiday[]> = {};
-  federalHolidays.forEach((holiday) => {
+  federalHolidays.forEach((rawHoliday) => {
+    // Resolve the colour here, as custom holidays already do, so every consumer reads it
+    // off the holiday instead of each one hardcoding its own grey.
+    const holiday = {
+      ...rawHoliday,
+      tab_color: federalHolidayColor ?? FEDERAL_HOLIDAY_COLOR,
+    };
     if (!federalHolidaysByDate[holiday.date]) {
       federalHolidaysByDate[holiday.date] = [];
     }
@@ -270,6 +282,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     <div>
       <CalendarHeader
         pageControls={pageControls}
+        defaultHolidayColor={defaultHolidayColor}
+        federalHolidayColor={federalHolidayColor}
         headerLabel={getHeaderLabel(viewMode, anchorDate)}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
