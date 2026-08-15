@@ -1,5 +1,6 @@
 import {
   ClockCircleOutlined,
+  ExclamationCircleOutlined,
   EnvironmentOutlined,
   FilterOutlined,
   ThunderboltOutlined,
@@ -60,6 +61,14 @@ export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
     icon: <TrophyOutlined />,
     defaultEnabled: true,
     category: 'chart',
+  },
+  {
+    id: 'data_health',
+    name: 'Data Health',
+    description: 'Blank fields and unlinked interviews, and what filling them would unlock',
+    icon: <ExclamationCircleOutlined />,
+    defaultEnabled: true,
+    category: 'statistic',
   },
   {
     id: 'top_locations',

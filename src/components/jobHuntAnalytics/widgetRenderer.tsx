@@ -3,16 +3,18 @@ import {
   EnvironmentOutlined,
   FilterOutlined,
   ThunderboltOutlined,
+  ExclamationCircleOutlined,
   TrophyOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import Tooltip from 'antd/es/tooltip';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 import CustomWidgetCard from '../CustomWidgetCard';
 import CrispInfoIcon from '../CrispInfoIcon';
 import { parseDateOnlyLocal } from '../../utils/dateOnly';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
-import type { ApplicationTimelineAnalytics } from '../../types';
+import type { ApplicationStats, ApplicationTimelineAnalytics } from '../../types';
 
 export type JobHuntStats = {
   total: number;
@@ -180,12 +182,16 @@ const MetricTile = ({
   detail,
   tooltip,
   tone = 'blue',
+  trend,
 }: {
   label: string;
   value: string | number;
   detail: string;
   tooltip: string;
   tone?: 'blue' | 'purple' | 'emerald' | 'amber' | 'slate';
+  // Percentage points against the previous comparable period. Sign carries the meaning, so
+  // it is always rendered with one.
+  trend?: { delta: number; tooltip: string } | null;
 }) => {
   const tones = {
     blue: 'border-blue-100 bg-blue-50/60 text-blue-700',
@@ -200,7 +206,20 @@ const MetricTile = ({
       <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">
         <TooltipLabel title={tooltip}>{label}</TooltipLabel>
       </p>
-      <p className="mt-1 text-2xl font-bold leading-none">{value}</p>
+      <div className="mt-1 flex items-baseline gap-1.5">
+        <p className="text-2xl font-bold leading-none">{value}</p>
+        {trend && trend.delta !== 0 && (
+          <Tooltip title={trend.tooltip} placement="top">
+            <span
+              className={`cursor-help rounded px-1 py-0.5 text-[11px] font-bold tabular-nums ${
+                trend.delta > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+              }`}
+            >
+              {trend.delta > 0 ? '▲' : '▼'} {Math.abs(trend.delta)}
+            </span>
+          </Tooltip>
+        )}
+      </div>
       <p className="mt-1.5 text-xs opacity-75">{detail}</p>
     </div>
   );
@@ -299,6 +318,7 @@ const HeadlineNumbers = ({ stats }: { stats: JobHuntStats }) => {
   // counts as an offer.
   const offers = analytics?.offer_count ?? stats.offers;
   const offerRate = analytics?.offer_rate ?? Number(stats.offerRate);
+  const trend = analytics?.response_trend ?? null;
 
   return (
     <SectionCard
@@ -339,6 +359,14 @@ const HeadlineNumbers = ({ stats }: { stats: JobHuntStats }) => {
           tooltip="Applications that moved beyond applied/ghosted/removed, divided by total applications."
           value={`${stats.responseRate}%`}
           detail={`${stats.respondedCount} responded`}
+          trend={
+            trend
+              ? {
+                  delta: trend.delta,
+                  tooltip: `${trend.recent.response_rate}% for the ${trend.window_days} days to ${trend.matured_before} (${trend.recent.responded}/${trend.recent.applied}), against ${trend.previous.response_rate}% for the ${trend.window_days} days before that (${trend.previous.responded}/${trend.previous.applied}). Both windows are old enough to have had a full chance to reply, so a recent batch that has simply not answered yet does not show up as a drop.`,
+                }
+              : null
+          }
         />
         <MetricTile
           label="Avg to Interview"
@@ -473,7 +501,13 @@ const ApplicationFunnelSection = ({ stats }: { stats: JobHuntStats }) => (
   </AnalyticsSection>
 );
 
-const WatchListSection = ({ stats }: { stats: JobHuntStats }) => {
+const WatchListSection = ({
+  stats,
+  onGhost,
+}: {
+  stats: JobHuntStats;
+  onGhost?: (applicationId: number) => void;
+}) => {
   const staleCount = stats.timelineAnalytics?.stale_in_stage.length || 0;
   return (
     <AnalyticsSection
@@ -496,17 +530,20 @@ const WatchListSection = ({ stats }: { stats: JobHuntStats }) => {
           {analytics.stale_in_stage.map((item) => (
             <div
               key={item.application_id}
-              className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
+              className="group/stale rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
             >
               <div className="flex items-start gap-2">
-                <WarningOutlined className="mt-0.5 text-amber-600" />
-                <div className="min-w-0">
-                  <p
-                    className="truncate text-sm font-semibold text-gray-900"
-                    title={`${item.company} ${item.role_title}`}
+                <WarningOutlined className="mt-0.5 shrink-0 text-amber-600" />
+                <div className="min-w-0 flex-1">
+                  {/* A report you cannot act on sends you hunting through 800 rows for the
+                      row it just told you about. */}
+                  <Link
+                    to={`/applications?application=${item.application_id}`}
+                    className="block truncate text-sm font-semibold text-gray-900 hover:text-blue-700 hover:underline"
+                    title={`Open ${item.company} — ${item.role_title}`}
                   >
                     {item.company} · {item.role_title}
-                  </p>
+                  </Link>
                   <p className="text-xs text-amber-700">
                     {item.days_in_stage} day{item.days_in_stage === 1 ? '' : 's'} in{' '}
                     {item.status_label}
@@ -530,6 +567,18 @@ const WatchListSection = ({ stats }: { stats: JobHuntStats }) => {
                     </p>
                   )}
                 </div>
+                {onGhost && (
+                  <Tooltip title="Mark as ghosted, so it leaves the pipeline and this list">
+                    <button
+                      type="button"
+                      onClick={() => onGhost(item.application_id)}
+                      aria-label={`Mark ${item.company} as ghosted`}
+                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-white hover:text-rose-600"
+                    >
+                      Ghosted
+                    </button>
+                  </Tooltip>
+                )}
               </div>
             </div>
           ))}
@@ -718,11 +767,83 @@ const ResponseSegmentsSection = ({ stats }: { stats: JobHuntStats }) => (
   </AnalyticsSection>
 );
 
+const DataHealthSection = ({
+  stats,
+  fieldCompleteness,
+}: {
+  stats: JobHuntStats;
+  fieldCompleteness: ApplicationStats['field_completeness'];
+}) => (
+  // Reporting an empty breakdown is less useful than saying why it is empty. Level is blank
+  // on every row here, so response-rate-by-seniority cannot exist — that is worth stating
+  // rather than rendering a chart with nothing in it.
+  <AnalyticsSection
+    stats={stats}
+    icon={<ExclamationCircleOutlined />}
+    title="Data Health"
+    tooltip="Inputs the rest of this dashboard depends on. Each row is something currently blank or unlinked, and what filling it would let the analytics answer."
+    emptyText="Nothing to flag."
+  >
+    {(analytics) => {
+      const links = analytics.interview_links;
+      const rows = fieldCompleteness.slice(0, 5);
+      if (rows.length === 0 && links.unlinked_events === 0) {
+        return (
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-5 text-center text-sm text-emerald-700">
+            Everything the dashboard needs is filled in.
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-2">
+          {links.unlinked_events > 0 && (
+            <div className="rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-gray-900">Calendar not linked</span>
+                <span className="whitespace-nowrap text-xs font-semibold text-amber-700 tabular-nums">
+                  {links.unlinked_events} of {links.total_events}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
+                Link events to applications on the Events page to unlock interviews per offer and
+                time from last interview to decision.
+              </p>
+            </div>
+          )}
+          {rows.map((row) => (
+            <div
+              key={row.field}
+              className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-medium text-gray-900">{row.label}</span>
+                <span className="whitespace-nowrap text-xs text-gray-500 tabular-nums">
+                  blank on{' '}
+                  <span className="font-semibold text-gray-700">
+                    {row.missing.toLocaleString()}
+                  </span>{' '}
+                  of {row.total.toLocaleString()}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+                Fill it to {row.unlocks}.
+              </p>
+            </div>
+          ))}
+        </div>
+      );
+    }}
+  </AnalyticsSection>
+);
+
 export const renderJobHuntWidget = (
   id: string,
   stats: JobHuntStats,
   customWidgets: CustomWidget[],
-  deleteCustomWidget: (id: string) => void
+  deleteCustomWidget: (id: string) => void,
+  fieldCompleteness: ApplicationStats['field_completeness'] = [],
+  onGhost?: (applicationId: number) => void
 ) => {
   switch (id) {
     case 'headline':
@@ -730,13 +851,15 @@ export const renderJobHuntWidget = (
     case 'funnel':
       return <ApplicationFunnelSection stats={stats} />;
     case 'watch_list':
-      return <WatchListSection stats={stats} />;
+      return <WatchListSection stats={stats} onGhost={onGhost} />;
     case 'reply_timing':
       return <ReplyTimingSection stats={stats} />;
     case 'outcomes':
       return <OutcomesSection stats={stats} />;
     case 'response_segments':
       return <ResponseSegmentsSection stats={stats} />;
+    case 'data_health':
+      return <DataHealthSection stats={stats} fieldCompleteness={fieldCompleteness} />;
     case 'top_locations':
       return (
         <SectionCard
@@ -781,6 +904,7 @@ const WIDGET_COL_SPANS: Record<string, string> = {
   reply_timing: 'col-span-1 md:col-span-2 lg:col-span-2',
   outcomes: 'col-span-1 md:col-span-2 lg:col-span-2',
   response_segments: 'col-span-1 md:col-span-2 lg:col-span-2',
+  data_health: 'col-span-1 md:col-span-2 lg:col-span-2',
   top_locations: 'col-span-1',
   application_age: 'col-span-1',
 };

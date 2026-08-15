@@ -200,7 +200,11 @@ const Analytics: React.FC = () => {
           ) : (
             <>
               <Suspense fallback={<SectionFallback />}>
-                <JobHuntAnalytics applicationStats={applicationStats} selectedYear={selectedYear} />
+                <JobHuntAnalytics
+                  applicationStats={applicationStats}
+                  selectedYear={selectedYear}
+                  onDataChanged={() => void fetchCareerAnalytics()}
+                />
               </Suspense>
 
               <Suspense fallback={<SectionFallback />}>

@@ -34,8 +34,9 @@ import {
 import { MetricCardsSkeleton, TableSkeleton } from '../../components/SkeletonLoader';
 import dayjs from 'dayjs';
 import type { TableProps, UploadProps } from 'antd';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  getApplication,
   getApplications,
   createApplication,
   updateApplication,
@@ -600,6 +601,30 @@ const Applications = () => {
         .map((doc) => doc.id),
     });
   };
+
+  // /applications?application=<id> opens that application's drawer directly. The analytics
+  // watch list needs somewhere to send you: without this, acting on a flagged application
+  // meant finding it by hand among 800 rows. The param is cleared once consumed so a refresh
+  // or a back press does not reopen it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const requested = Number(searchParams.get('application'));
+    if (!requested) return;
+    const params = new URLSearchParams(searchParams);
+    params.delete('application');
+    setSearchParams(params, { replace: true });
+    void getApplication(requested)
+      .then((response) => {
+        setDetailApp(response.data);
+        setDetailDrawerMode('view');
+      })
+      .catch((error) => {
+        console.error('Failed to open the requested application', error);
+        messageApi.error('Could not open that application.');
+      });
+    // Runs for whatever id the URL carries; the drawer setters are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const openDetailDrawer = (app: CareerApplication) => {
     setDetailApp(app);

@@ -457,6 +457,14 @@ export interface ApplicationStats {
   daily_applied: Record<string, number>;
   // Every year with applications, never narrowed by the year filter.
   years: number[];
+  // Fields the dashboard depends on that are blank, worst first, with what filling them buys.
+  field_completeness: Array<{
+    field: string;
+    label: string;
+    missing: number;
+    total: number;
+    unlocks: string;
+  }>;
 }
 
 export interface ResponseRateSegment {
@@ -510,6 +518,23 @@ export interface ApplicationTimelineAnalytics {
   response_rate_by_source: Array<ResponseRateSegment>;
   response_rate_by_location: Array<ResponseRateSegment>;
   response_rate_by_level: Array<ResponseRateSegment>;
+  // Period-over-period response rate. Cohorts are matured to the p90 before comparing, so a
+  // recent batch that simply has not replied yet does not read as a collapse. null when
+  // either window is too small to mean anything.
+  response_trend: {
+    window_days: number;
+    matured_before: string;
+    recent: { applied: number; responded: number; response_rate: number };
+    previous: { applied: number; responded: number; response_rate: number };
+    delta: number;
+  } | null;
+  // How much of the calendar is connected to the pipeline.
+  interview_links: {
+    total_events: number;
+    linked_events: number;
+    unlinked_events: number;
+    interviews_per_offer: number | null;
+  };
   stage_durations: Array<{
     key: string;
     label: string;

@@ -31,7 +31,8 @@ import {
   renderJobHuntWidget,
   type JobHuntStats,
 } from './jobHuntAnalytics/widgetRenderer';
-import { getApplicationTimelineAnalytics } from '../api/career';
+import { getApplicationTimelineAnalytics, updateApplication } from '../api/career';
+import { getApiErrorMessage } from '../utils/apiError';
 
 import type { ApplicationStats, ApplicationTimelineAnalytics } from '../types';
 const { Text } = Typography;
@@ -39,6 +40,8 @@ const { Text } = Typography;
 interface AnalyticsProps {
   applicationStats: ApplicationStats | null;
   selectedYear?: number | 'all';
+  // Called after this component changes an application, so the page can refetch its stats.
+  onDataChanged?: () => void;
 }
 
 type ValidationResult = NonNullable<CustomWidget['cachedData']>;
@@ -74,6 +77,7 @@ const ANALYTICS_BACKED_WIDGETS = new Set([
   'reply_timing',
   'outcomes',
   'response_segments',
+  'data_health',
 ]);
 const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEnabled).map(
   (widget) => widget.id
@@ -127,7 +131,12 @@ const SortableItem = ({
   );
 };
 
-const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selectedYear = 'all' }) => {
+const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
+  applicationStats,
+  selectedYear = 'all',
+  onDataChanged,
+}) => {
+  const [timelineRefreshKey, setTimelineRefreshKey] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -169,6 +178,20 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selected
   );
   const [timelineAnalyticsLoading, setTimelineAnalyticsLoading] = useState(false);
   const [timelineAnalyticsError, setTimelineAnalyticsError] = useState(false);
+
+  // Marking one ghosted has to refresh the analytics, or the row stays on a list that says it
+  // is still waiting. The parent owns the applications payload, so it re-runs both.
+  const handleGhost = async (applicationId: number) => {
+    try {
+      await updateApplication(applicationId, { status: 'GHOSTED' });
+      messageApi.success('Marked as ghosted');
+      onDataChanged?.();
+      setTimelineRefreshKey((key) => key + 1);
+    } catch (error) {
+      console.error('Failed to mark the application as ghosted', error);
+      messageApi.error(getApiErrorMessage(error, 'Could not update that application'));
+    }
+  };
 
   const { customWidgets, addCustomWidget, deleteCustomWidget, testQuery } = useCustomWidgets(
     'job_hunt_analytics_custom',
@@ -212,7 +235,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selected
     return () => {
       mounted = false;
     };
-  }, [enabledWidgets, selectedYear]);
+  }, [enabledWidgets, selectedYear, timelineRefreshKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -349,7 +372,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selected
           <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
             {widgetOrder.map((id) => (
               <SortableItem key={id} id={id} className={getJobHuntWidgetColSpan(id, customWidgets)}>
-                {renderJobHuntWidget(id, stats, customWidgets, deleteCustomWidget)}
+                {renderJobHuntWidget(
+                  id,
+                  stats,
+                  customWidgets,
+                  deleteCustomWidget,
+                  applicationStats?.field_completeness ?? [],
+                  handleGhost
+                )}
               </SortableItem>
             ))}
           </div>
@@ -363,7 +393,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selected
                 activeSize ? { width: activeSize.width, height: activeSize.height } : undefined
               }
             >
-              {renderJobHuntWidget(activeId, stats, customWidgets, deleteCustomWidget)}
+              {renderJobHuntWidget(
+                activeId,
+                stats,
+                customWidgets,
+                deleteCustomWidget,
+                applicationStats?.field_completeness ?? [],
+                handleGhost
+              )}
             </div>
           ) : null}
         </DragOverlay>
