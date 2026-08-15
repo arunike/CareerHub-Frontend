@@ -47,32 +47,47 @@ const RETIRED_WIDGET_IDS = new Set([
   'response_rate',
   'offer_rate',
   'recent_applications',
+  // A different widget from today's Top Locations, which is deliberately 'top_locations':
+  // reusing this id would have had every saved selection silently drop the new section.
   'locations',
   'top_companies',
   'work_modes',
 ]);
-// Six widgets showed the same numbers three different ways, so they were merged into
-// 'job_search'. Anyone who had any of them keeps the merged card rather than losing it.
-const JOB_SEARCH_SOURCE_IDS = new Set([
+// Everything that ever rendered part of this report. Any saved selection containing one of
+// these predates the split into per-section widgets, so it is replaced with the full default
+// set rather than partially migrated — the sections do not map one-to-one onto the old ids,
+// and a half-migrated dashboard is worse than a fresh one.
+const PRE_SPLIT_WIDGET_IDS = new Set([
   'total',
   'active',
-  'outcomes',
   'ghosted',
   'pipeline_breakdown',
   'timeline_analytics',
+  'job_search',
 ]);
 const AVAILABLE_WIDGET_IDS = new Set(AVAILABLE_WIDGETS.map((widget) => widget.id));
+// Sections built from the timeline endpoint. If none of them is on, there is nothing to fetch.
+const ANALYTICS_BACKED_WIDGETS = new Set([
+  'headline',
+  'funnel',
+  'watch_list',
+  'reply_timing',
+  'outcomes',
+  'response_segments',
+]);
 const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEnabled).map(
   (widget) => widget.id
 );
 
 const normalizeEnabledWidgets = (ids: string[]) => {
+  if (ids.some((id) => PRE_SPLIT_WIDGET_IDS.has(id))) {
+    // 'outcomes' survives as a section id, so a pre-split list can look partly valid. Only
+    // the presence of a pre-split id is trusted to decide this, not the leftovers.
+    return DEFAULT_WIDGET_IDS;
+  }
   const normalized = ids.filter(
     (id) => AVAILABLE_WIDGET_IDS.has(id) && !RETIRED_WIDGET_IDS.has(id)
   );
-  if (ids.some((id) => JOB_SEARCH_SOURCE_IDS.has(id)) && !normalized.includes('job_search')) {
-    normalized.unshift('job_search');
-  }
   return normalized.length > 0 ? normalized : DEFAULT_WIDGET_IDS;
 };
 
@@ -172,7 +187,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({ applicationStats, selected
   }, [enabledWidgets]);
 
   useEffect(() => {
-    if (!enabledWidgets.includes('job_search')) return;
+    if (!enabledWidgets.some((id) => ANALYTICS_BACKED_WIDGETS.has(id))) return;
 
     let mounted = true;
     setTimelineAnalyticsLoading(true);

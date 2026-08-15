@@ -1,7 +1,8 @@
 import {
   ClockCircleOutlined,
   EnvironmentOutlined,
-  NodeIndexOutlined,
+  FilterOutlined,
+  ThunderboltOutlined,
   TrophyOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
@@ -71,6 +72,10 @@ const OUTCOME_CLASSES: Record<string, string> = {
   OFFER_REJECTED: 'border-amber-200 bg-amber-50 text-amber-700',
   GHOSTED: 'border-slate-200 bg-slate-100 text-slate-600',
 };
+
+// Segments need a real sample before a rate means anything: a 50% response rate off four
+// applications says nothing, and presenting it as a finding is worse than omitting it.
+const MIN_SEGMENT_SAMPLE = 20;
 
 // A share that rounds to zero but is not zero gets a decimal instead. 2 offers out of 806
 // is 0.2%, and showing that as a flat 0% next to "2 reached" reads as though the funnel
@@ -201,6 +206,518 @@ const MetricTile = ({
   );
 };
 
+// Each section is its own draggable card now, so the shell and heading that used to be
+// written once for the whole report are shared instead of repeated eight times.
+const SectionCard = ({
+  icon,
+  title,
+  tooltip,
+  badge,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  tooltip: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <div className="enterprise-card h-full p-4 sm:p-5">
+    <div className="mb-4 flex items-center gap-2">
+      <span className="text-base text-gray-500">{icon}</span>
+      <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
+        <TooltipLabel title={tooltip}>{title}</TooltipLabel>
+        {badge}
+      </h3>
+    </div>
+    {children}
+  </div>
+);
+
+// Sections built from the timeline endpoint each need their own loading, error and empty
+// state now that they no longer sit inside one card that handled it for all of them.
+const AnalyticsSection = ({
+  stats,
+  icon,
+  title,
+  tooltip,
+  badge,
+  emptyText = 'Appears once applications have timeline or sync history.',
+  children,
+}: {
+  stats: JobHuntStats;
+  icon: React.ReactNode;
+  title: string;
+  tooltip: string;
+  badge?: React.ReactNode;
+  emptyText?: string;
+  children: (analytics: ApplicationTimelineAnalytics) => React.ReactNode;
+}) => {
+  const analytics = stats.timelineAnalytics;
+  let body: React.ReactNode;
+
+  if (!analytics && stats.timelineAnalyticsLoading) {
+    body = (
+      <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-6">
+        <div className="flex items-center gap-3 text-sm font-medium text-blue-700">
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
+          Loading…
+        </div>
+        <div className="mt-4 space-y-2">
+          <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-blue-100" />
+          <div className="h-2.5 w-1/2 animate-pulse rounded-full bg-blue-100" />
+        </div>
+      </div>
+    );
+  } else if (!analytics && stats.timelineAnalyticsError) {
+    body = (
+      <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-6 text-center text-sm text-rose-600">
+        Could not load. Try refreshing the dashboard.
+      </div>
+    );
+  } else if (!analytics) {
+    body = (
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+        {emptyText}
+      </div>
+    );
+  } else {
+    body = children(analytics);
+  }
+
+  return (
+    <SectionCard icon={icon} title={title} tooltip={tooltip} badge={badge}>
+      {body}
+    </SectionCard>
+  );
+};
+
+const HeadlineNumbers = ({ stats }: { stats: JobHuntStats }) => {
+  const analytics = stats.timelineAnalytics;
+  const isLoading = Boolean(stats.timelineAnalyticsLoading);
+  const staleCount = analytics?.stale_in_stage.length || 0;
+  // Prefer the server's offer count so this and the funnel cannot disagree about what
+  // counts as an offer.
+  const offers = analytics?.offer_count ?? stats.offers;
+  const offerRate = analytics?.offer_rate ?? Number(stats.offerRate);
+
+  return (
+    <SectionCard
+      icon={<ThunderboltOutlined />}
+      title="Headline Numbers"
+      tooltip="The figures worth seeing before anything else, from your applications and their status history."
+    >
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <MetricTile
+          label="Total"
+          tooltip="All applications currently saved in your tracker, within the selected year. The detail counts those submitted in the last 30 days, using Date Applied when available and Created At as fallback."
+          value={stats.total}
+          detail={`${stats.recentApplications30d} in the last 30 days`}
+        />
+        <MetricTile
+          label="Active"
+          tooltip="Applications that are not applied-only, rejected, ghosted, accepted, or removed from a synced sheet."
+          value={stats.activeInterviews}
+          detail={`${stats.totalInterviews} reached interviews`}
+          tone="slate"
+        />
+        <MetricTile
+          label="Offers"
+          tooltip="Applications that produced an offer — offered, accepted, or offer declined."
+          value={offers}
+          detail={`${offerRate}% offer rate`}
+          tone="emerald"
+        />
+        <MetricTile
+          label="No Response"
+          tooltip="Applications currently marked as Ghosted, i.e. never answered."
+          value={stats.ghosted}
+          detail={analytics ? `${analytics.ghost_rate}% went silent` : 'Ghosted'}
+          tone="amber"
+        />
+        <MetricTile
+          label="Response Rate"
+          tooltip="Applications that moved beyond applied/ghosted/removed, divided by total applications."
+          value={`${stats.responseRate}%`}
+          detail={`${stats.respondedCount} responded`}
+        />
+        <MetricTile
+          label="Avg to Interview"
+          tooltip="Average days from applying to the first interview-stage timeline entry. Applied, offer, rejected, and ghosted are not counted as interview stages."
+          value={
+            isLoading
+              ? '...'
+              : analytics?.average_time_to_interview_days != null
+                ? `${analytics.average_time_to_interview_days}d`
+                : '-'
+          }
+          detail={
+            isLoading
+              ? 'Loading'
+              : `${analytics?.time_to_interview_sample_size || 0} sample${
+                  analytics?.time_to_interview_sample_size === 1 ? '' : 's'
+                }`
+          }
+        />
+        <MetricTile
+          label="Avg to Offer"
+          tooltip="Average days from applying to the offer arriving, read from the timeline rather than from when the offer was recorded."
+          value={
+            isLoading
+              ? '...'
+              : analytics?.average_days_to_offer != null
+                ? `${analytics.average_days_to_offer}d`
+                : '-'
+          }
+          detail={
+            isLoading
+              ? 'Loading'
+              : `${analytics?.days_to_offer_sample_size || 0} offer${
+                  analytics?.days_to_offer_sample_size === 1 ? '' : 's'
+                }`
+          }
+          tone="purple"
+        />
+        <MetricTile
+          label="Stale In Stage"
+          tooltip="Active applications sitting in their current stage for at least your ghosting threshold."
+          value={analytics ? staleCount : isLoading ? '...' : '-'}
+          detail={analytics ? `Over ${analytics.stale_threshold_days}d` : 'Timeline signal'}
+          tone={staleCount > 0 ? 'amber' : 'slate'}
+        />
+      </div>
+    </SectionCard>
+  );
+};
+
+const ApplicationFunnelSection = ({ stats }: { stats: JobHuntStats }) => (
+  <AnalyticsSection
+    stats={stats}
+    icon={<FilterOutlined />}
+    title="Application Funnel"
+    tooltip="Counted from your application timeline, so an application rejected after the 3rd round still counts as having reached the 3rd round. “Now” is how many currently sit at that stage. Stages follow Settings → Application Stages."
+  >
+    {(analytics) => {
+      // The funnel is the stages you pass through, so terminal results are excluded — they
+      // are reported as outcomes instead of pretending to be a step.
+      const pipeline = analytics.stage_conversion.filter(
+        (stage) => !TERMINAL_STAGE_KEYS.has(stage.key)
+      );
+      const topReached = Math.max(...pipeline.map((stage) => stage.reached_count), 1);
+      const typicalStages = analytics.stage_durations.filter(
+        (row) => row.sample_size >= analytics.min_duration_sample
+      );
+
+      return (
+        <>
+          <div className="space-y-2.5">
+            {pipeline.map((stage) => (
+              <div key={stage.key}>
+                <div className="mb-1 flex items-baseline justify-between gap-3 text-xs">
+                  <span className="truncate font-medium text-gray-700">{stage.label}</span>
+                  <span className="shrink-0 text-gray-500">
+                    <span className="font-semibold text-gray-900">
+                      {stage.reached_count.toLocaleString()}
+                    </span>{' '}
+                    reached · {formatShare(stage.conversion_rate, stage.reached_count)}
+                    {stage.current_count > 0 && (
+                      <span className="ml-2 text-gray-400">{stage.current_count} now</span>
+                    )}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${getStageColor(stage.key)}`}
+                    style={{
+                      width: `${Math.max(
+                        (stage.reached_count / topReached) * 100,
+                        stage.reached_count > 0 ? 1.5 : 0
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+            {pipeline.length === 0 && (
+              <div className="py-6 text-center text-sm text-gray-400">No stage data</div>
+            )}
+          </div>
+
+          {typicalStages.length > 0 && (
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              <TooltipLabel
+                title={`Median days each stage takes before moving on, from your own timeline. Stages with fewer than ${analytics.min_duration_sample} recorded moves are left out — one transition is an anecdote, not a typical duration.`}
+              >
+                Typically
+              </TooltipLabel>{' '}
+              {typicalStages.map((row, index) => (
+                <span key={row.key}>
+                  {index > 0 && ' · '}
+                  <span className="font-semibold text-slate-600">{row.label}</span>{' '}
+                  {row.median_days}d
+                </span>
+              ))}
+            </p>
+          )}
+
+          {analytics.biggest_drop && (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[13px] leading-relaxed text-amber-900">
+              Biggest drop-off is{' '}
+              <span className="font-semibold">{analytics.biggest_drop.from_label}</span> →{' '}
+              <span className="font-semibold">{analytics.biggest_drop.to_label}</span>, where{' '}
+              {analytics.biggest_drop.lost.toLocaleString()} applications stop.
+            </p>
+          )}
+        </>
+      );
+    }}
+  </AnalyticsSection>
+);
+
+const WatchListSection = ({ stats }: { stats: JobHuntStats }) => {
+  const staleCount = stats.timelineAnalytics?.stale_in_stage.length || 0;
+  return (
+    <AnalyticsSection
+      stats={stats}
+      icon={<WarningOutlined />}
+      title="Watch List"
+      tooltip="Active applications that have stayed in the same stage longer than your ghosting threshold, longest first."
+      badge={
+        staleCount > 0 ? (
+          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700">
+            {staleCount}
+          </span>
+        ) : undefined
+      }
+    >
+      {(analytics) => (
+        // Every stale application, not the first few. Tall lists scroll rather than
+        // stretching this card past its neighbours.
+        <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+          {analytics.stale_in_stage.map((item) => (
+            <div
+              key={item.application_id}
+              className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
+            >
+              <div className="flex items-start gap-2">
+                <WarningOutlined className="mt-0.5 text-amber-600" />
+                <div className="min-w-0">
+                  <p
+                    className="truncate text-sm font-semibold text-gray-900"
+                    title={`${item.company} ${item.role_title}`}
+                  >
+                    {item.company} · {item.role_title}
+                  </p>
+                  <p className="text-xs text-amber-700">
+                    {item.days_in_stage} day{item.days_in_stage === 1 ? '' : 's'} in{' '}
+                    {item.status_label}
+                    {/* The date the count is measured from. Several applications synced on
+                        one day legitimately share a day count, which reads like a bug until
+                        you can see where it starts. */}
+                    {item.last_stage_date && (
+                      <span className="text-amber-600/70">
+                        {' '}
+                        · since {formatStageDate(item.last_stage_date)}
+                      </span>
+                    )}
+                  </p>
+                  {/* A flat threshold treats a phone screen like an onsite. This says how far
+                      past normal for its own stage it actually is, which is the difference
+                      between slow and dead. */}
+                  {typeof item.days_over_typical === 'number' && item.days_over_typical > 0 && (
+                    <p className="mt-0.5 text-[11px] font-semibold text-rose-600">
+                      {item.days_over_typical.toLocaleString()} days past the {item.typical_days}d
+                      typical for this stage
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          {analytics.stale_in_stage.length === 0 && (
+            <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
+              No stale active stages
+            </div>
+          )}
+        </div>
+      )}
+    </AnalyticsSection>
+  );
+};
+
+const OutcomesSection = ({ stats }: { stats: JobHuntStats }) => (
+  <AnalyticsSection
+    stats={stats}
+    icon={<TrophyOutlined />}
+    title="Outcomes"
+    tooltip="Where applications finished. These are terminal results, so they are reported here rather than as a funnel step."
+  >
+    {(analytics) =>
+      analytics.outcomes.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {analytics.outcomes.map((outcome) => (
+            <span
+              key={outcome.key}
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                OUTCOME_CLASSES[outcome.key] ?? OUTCOME_CLASSES.GHOSTED
+              }`}
+            >
+              {outcome.label}: {outcome.count.toLocaleString()}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
+          Nothing has finished yet
+        </div>
+      )
+    }
+  </AnalyticsSection>
+);
+
+const ReplyTimingSection = ({ stats }: { stats: JobHuntStats }) => (
+  <AnalyticsSection
+    stats={stats}
+    icon={<ClockCircleOutlined />}
+    title="Reply Timing"
+    tooltip="How long replies took to arrive, measured from the date you applied to the first movement past Applied. Only counts applications that were answered."
+    emptyText="Appears once some applications have been answered."
+  >
+    {(analytics) => {
+      if (analytics.response_time_sample_size === 0) {
+        return (
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
+            No replies recorded yet
+          </div>
+        );
+      }
+      // Bars are scaled to the busiest bucket, not to the total. Against the total the
+      // largest bar filled 63% and the rest were slivers in a wide empty track, which is
+      // the opposite of what a distribution should show. The share is already spelled out
+      // in the label beside each row.
+      const busiest = Math.max(...analytics.response_time_buckets.map((b) => b.count), 1);
+
+      return (
+        <>
+          {/* The headline reads across the full width. In a side column it wrapped every
+              other word and left the bars stranded in the space it was not using. */}
+          <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 rounded-lg border border-sky-100 bg-sky-50/60 px-3 py-2.5">
+            <span className="text-sm text-gray-700">
+              Half arrived within{' '}
+              <span className="font-bold text-sky-700">{analytics.median_days_to_response}d</span>,
+              90% within{' '}
+              <span className="font-bold text-sky-700">{analytics.p90_days_to_response}d</span>
+            </span>
+            <span className="text-xs text-gray-400">
+              {analytics.response_time_sample_size} answered
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {analytics.response_time_buckets.map((bucket) => (
+              <div
+                key={bucket.label}
+                // auto, not a fixed width: "31-60 days" was being clipped to "31-60 d…".
+                // The widest label sets the column, so the rows still line up.
+                className="grid grid-cols-[auto_minmax(28px,1fr)_auto] items-center gap-3"
+              >
+                <span className="whitespace-nowrap text-xs font-medium text-gray-700">
+                  {bucket.label}
+                </span>
+                <div className="h-2.5 rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-sky-500 transition-all duration-300"
+                    style={{
+                      width: `${Math.max((bucket.count / busiest) * 100, bucket.count > 0 ? 3 : 0)}%`,
+                    }}
+                  />
+                </div>
+                <span className="whitespace-nowrap text-right text-xs tabular-nums">
+                  <span className="font-semibold text-gray-700">{bucket.count}</span>
+                  <span className="text-gray-400">
+                    {' '}
+                    · {Math.round(bucket.cumulative_share * 100)}%
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {analytics.suggested_followup_days != null && (
+            <p className="mt-3 text-xs leading-relaxed text-gray-600">
+              Past <span className="font-semibold">{analytics.suggested_followup_days} days</span>{' '}
+              silence is more likely dead than slow — a better ghosting threshold than a round
+              number. Yours is{' '}
+              <span className="font-semibold">{analytics.stale_threshold_days}d</span>
+              {analytics.open_without_response_count > 0 && (
+                <>
+                  , and{' '}
+                  <span className="font-semibold text-gray-900">
+                    {analytics.silent_past_followup_count}
+                  </span>{' '}
+                  of {analytics.open_without_response_count} still-silent applications are past it
+                </>
+              )}
+              .
+            </p>
+          )}
+        </>
+      );
+    }}
+  </AnalyticsSection>
+);
+
+const ResponseSegmentsSection = ({ stats }: { stats: JobHuntStats }) => (
+  // This used to rank sheet sources and companies by offer rate. With a handful of offers
+  // that is noise dressed as insight — one company at 2 applications and 1 offer outranked
+  // everything at "50%". Response rate has the sample size to mean something.
+  <AnalyticsSection
+    stats={stats}
+    icon={<TrophyOutlined />}
+    title="Best Response Rate"
+    tooltip={`Share of applications that got any reply, by location, best first. Ranked on replies rather than offers because offers are too rare to compare, and locations with fewer than ${MIN_SEGMENT_SAMPLE} applications are left out rather than shown as a rate the sample cannot support.`}
+  >
+    {(analytics) => {
+      const segments = analytics.response_rate_by_location
+        .filter((row) => row.total >= MIN_SEGMENT_SAMPLE && row.name !== 'Unknown')
+        .slice(0, 6);
+      const topSource = analytics.offer_rate_by_source[0];
+
+      if (segments.length === 0) {
+        return (
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-6 text-center text-sm text-gray-500">
+            Needs {MIN_SEGMENT_SAMPLE}+ applications in one location to compare
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-2">
+          {segments.map((row) => (
+            <div
+              key={row.name}
+              className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+            >
+              <span className="min-w-0 truncate text-sm font-medium text-gray-900">{row.name}</span>
+              <span className="whitespace-nowrap text-xs text-gray-500 tabular-nums">
+                <span className="font-bold text-emerald-600">
+                  {formatShare(row.response_rate, row.responded)}
+                </span>{' '}
+                of {row.total}
+              </span>
+            </div>
+          ))}
+          {topSource && (
+            <p className="pt-1 text-[11px] leading-relaxed text-gray-400">
+              Overall {formatShare(topSource.offer_rate, topSource.offers)} of {topSource.name}{' '}
+              applications became offers.
+            </p>
+          )}
+        </div>
+      );
+    }}
+  </AnalyticsSection>
+);
+
 export const renderJobHuntWidget = (
   id: string,
   stats: JobHuntStats,
@@ -208,363 +725,43 @@ export const renderJobHuntWidget = (
   deleteCustomWidget: (id: string) => void
 ) => {
   switch (id) {
-    // One card for the whole job hunt. Total / Active / Outcomes / No Response used to be
-    // four standalone tiles, the funnel and Timeline Analytics both drew stage conversion,
-    // and Pipeline Breakdown drew a third view of the same distribution. They are folded
-    // together here so each number appears exactly once: headline tiles, then the funnel,
-    // then the things the funnel cannot show.
-    case 'job_search': {
-      const analytics = stats.timelineAnalytics;
-      const isLoading = Boolean(stats.timelineAnalyticsLoading);
-      const hasError = Boolean(stats.timelineAnalyticsError);
-      const staleCount = analytics?.stale_in_stage.length || 0;
-      const topSource = analytics?.offer_rate_by_source[0];
-      const topCompany = analytics?.offer_rate_by_company[0];
-      // The funnel is the stages you pass through, so terminal results are excluded — they
-      // are reported as outcomes instead of pretending to be a step.
-      const pipeline = (analytics?.stage_conversion || []).filter(
-        (stage) => !TERMINAL_STAGE_KEYS.has(stage.key)
-      );
-      const topReached = Math.max(...pipeline.map((stage) => stage.reached_count), 1);
-      // Prefer the server's offer count so the tile and the offer-rate breakdowns below it
-      // cannot disagree about what counts as an offer.
-      const offers = analytics?.offer_count ?? stats.offers;
-      const offerRate = analytics?.offer_rate ?? Number(stats.offerRate);
-
+    case 'headline':
+      return <HeadlineNumbers stats={stats} />;
+    case 'funnel':
+      return <ApplicationFunnelSection stats={stats} />;
+    case 'watch_list':
+      return <WatchListSection stats={stats} />;
+    case 'reply_timing':
+      return <ReplyTimingSection stats={stats} />;
+    case 'outcomes':
+      return <OutcomesSection stats={stats} />;
+    case 'response_segments':
+      return <ResponseSegmentsSection stats={stats} />;
+    case 'top_locations':
       return (
-        <div className="enterprise-card h-full p-5 sm:p-6">
-          <div className="flex flex-col gap-5">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <NodeIndexOutlined className="text-lg text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  <TooltipLabel title="Every job-hunt number in one place, built from your applications, their status history, and synced sheet provenance.">
-                    Job Search
-                  </TooltipLabel>
-                </h3>
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                Headline numbers, the stages applications move through, and where they stall
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <MetricTile
-                label="Total"
-                tooltip="All applications currently saved in your tracker, within the selected year. The detail counts those submitted in the last 30 days, using Date Applied when available and Created At as fallback."
-                value={stats.total}
-                detail={`${stats.recentApplications30d} in the last 30 days`}
-              />
-              <MetricTile
-                label="Active"
-                tooltip="Applications that are not applied-only, rejected, ghosted, accepted, or removed from a synced sheet."
-                value={stats.activeInterviews}
-                detail={`${stats.totalInterviews} reached interviews`}
-                tone="slate"
-              />
-              <MetricTile
-                label="Offers"
-                tooltip="Applications that produced an offer — offered, accepted, or offer declined."
-                value={offers}
-                detail={`${offerRate}% offer rate`}
-                tone="emerald"
-              />
-              <MetricTile
-                label="No Response"
-                tooltip="Applications currently marked as Ghosted, i.e. never answered."
-                value={stats.ghosted}
-                detail={analytics ? `${analytics.ghost_rate}% went silent` : 'Ghosted'}
-                tone="amber"
-              />
-              <MetricTile
-                label="Response Rate"
-                tooltip="Applications that moved beyond applied/ghosted/removed, divided by total applications."
-                value={`${stats.responseRate}%`}
-                detail={`${stats.respondedCount} responded`}
-              />
-              <MetricTile
-                label="Avg to Interview"
-                tooltip="Average days from applying to the first interview-stage timeline entry. Applied, offer, rejected, and ghosted are not counted as interview stages."
-                value={
-                  isLoading
-                    ? '...'
-                    : analytics?.average_time_to_interview_days != null
-                      ? `${analytics.average_time_to_interview_days}d`
-                      : '-'
-                }
-                detail={
-                  isLoading
-                    ? 'Loading'
-                    : `${analytics?.time_to_interview_sample_size || 0} sample${
-                        analytics?.time_to_interview_sample_size === 1 ? '' : 's'
-                      }`
-                }
-              />
-              <MetricTile
-                label="Avg to Offer"
-                tooltip="Average days from Date Applied to the offer creation date for applications with offers."
-                value={
-                  isLoading
-                    ? '...'
-                    : analytics?.average_days_to_offer != null
-                      ? `${analytics.average_days_to_offer}d`
-                      : '-'
-                }
-                detail={
-                  isLoading
-                    ? 'Loading'
-                    : `${analytics?.days_to_offer_sample_size || 0} offer${
-                        analytics?.days_to_offer_sample_size === 1 ? '' : 's'
-                      }`
-                }
-                tone="purple"
-              />
-              <MetricTile
-                label="Stale In Stage"
-                tooltip="Active applications sitting in their current stage for at least your ghosting threshold."
-                value={analytics ? staleCount : isLoading ? '...' : '-'}
-                detail={analytics ? `Over ${analytics.stale_threshold_days}d` : 'Timeline signal'}
-                tone={staleCount > 0 ? 'amber' : 'slate'}
-              />
-            </div>
-
-            {isLoading && !analytics && (
-              <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-6">
-                <div className="flex items-center gap-3 text-sm font-medium text-blue-700">
-                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
-                  Loading timeline analytics...
-                </div>
-                <div className="mt-4 space-y-2">
-                  <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-blue-100" />
-                  <div className="h-2.5 w-1/2 animate-pulse rounded-full bg-blue-100" />
-                </div>
-              </div>
-            )}
-
-            {hasError && !isLoading && (
-              <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-6 text-center text-sm text-rose-600">
-                Timeline analytics could not load. Try refreshing the dashboard.
-              </div>
-            )}
-
-            {!analytics && !isLoading && !hasError && (
-              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-                The funnel and stage timings appear once applications have timeline or sync history.
-              </div>
-            )}
-
-            {analytics && (
-              <>
-                <div className="grid min-w-0 gap-5 border-t border-gray-100 pt-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                  <div className="min-w-0">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="Counted from your application timeline, so an application rejected after the 3rd round still counts as having reached the 3rd round. “Now” is how many currently sit at that stage. Stages follow Settings → Application Stages.">
-                        Funnel
-                      </TooltipLabel>
-                    </p>
-                    <div className="space-y-2.5">
-                      {pipeline.map((stage) => (
-                        <div key={stage.key}>
-                          <div className="mb-1 flex items-baseline justify-between gap-3 text-xs">
-                            <span className="truncate font-medium text-gray-700">
-                              {stage.label}
-                            </span>
-                            <span className="shrink-0 text-gray-500">
-                              <span className="font-semibold text-gray-900">
-                                {stage.reached_count.toLocaleString()}
-                              </span>{' '}
-                              reached · {formatShare(stage.conversion_rate, stage.reached_count)}
-                              {stage.current_count > 0 && (
-                                <span className="ml-2 text-gray-400">
-                                  {stage.current_count} now
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                            <div
-                              className={`h-full rounded-full transition-all duration-300 ${getStageColor(stage.key)}`}
-                              style={{
-                                width: `${Math.max(
-                                  (stage.reached_count / topReached) * 100,
-                                  stage.reached_count > 0 ? 1.5 : 0
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      {pipeline.length === 0 && (
-                        <div className="py-6 text-center text-sm text-gray-400">No stage data</div>
-                      )}
-                    </div>
-
-                    {analytics.biggest_drop && (
-                      <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[13px] leading-relaxed text-amber-900">
-                        Biggest drop-off is{' '}
-                        <span className="font-semibold">{analytics.biggest_drop.from_label}</span> →{' '}
-                        <span className="font-semibold">{analytics.biggest_drop.to_label}</span>,
-                        where {analytics.biggest_drop.lost.toLocaleString()} applications stop.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="Active applications that have stayed in the same stage longer than your ghosting threshold, longest first.">
-                        Watch List
-                      </TooltipLabel>
-                      {staleCount > 0 && (
-                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700">
-                          {staleCount}
-                        </span>
-                      )}
-                    </p>
-                    {/* Every stale application, not the first few. This was capped at four,
-                        which hid 12 of 16 and made a run of same-day rows look like the
-                        whole list. Tall lists scroll rather than stretching the card. */}
-                    <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-                      {analytics.stale_in_stage.map((item) => (
-                        <div
-                          key={item.application_id}
-                          className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
-                        >
-                          <div className="flex items-start gap-2">
-                            <WarningOutlined className="mt-0.5 text-amber-600" />
-                            <div className="min-w-0">
-                              <p
-                                className="truncate text-sm font-semibold text-gray-900"
-                                title={`${item.company} ${item.role_title}`}
-                              >
-                                {item.company} · {item.role_title}
-                              </p>
-                              <p className="text-xs text-amber-700">
-                                {item.days_in_stage} day{item.days_in_stage === 1 ? '' : 's'} in{' '}
-                                {item.status_label}
-                                {/* The date the count is measured from. Several applications
-                                    synced on one day legitimately share a day count, which
-                                    reads like a bug until you can see where it starts. */}
-                                {item.last_stage_date && (
-                                  <span className="text-amber-600/70">
-                                    {' '}
-                                    · since {formatStageDate(item.last_stage_date)}
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {analytics.stale_in_stage.length === 0 && (
-                        <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
-                          No stale active stages
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {analytics.outcomes.length > 0 && (
-                  <div className="border-t border-gray-100 pt-5">
-                    <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <TooltipLabel title="Where applications finished. These are terminal results, so they are reported here rather than as a funnel step.">
-                        Outcomes
-                      </TooltipLabel>
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {analytics.outcomes.map((outcome) => (
-                        <span
-                          key={outcome.key}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                            OUTCOME_CLASSES[outcome.key] ?? OUTCOME_CLASSES.GHOSTED
-                          }`}
-                        >
-                          {outcome.label}: {outcome.count.toLocaleString()}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            <div className="grid gap-6 border-t border-gray-100 pt-5 xl:grid-cols-3">
-              <section>
-                <div className="mb-4 flex items-center gap-2">
-                  <EnvironmentOutlined className="text-gray-500" />
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <TooltipLabel title="Most common application locations, grouped by city or Remote, with exact counts and shares.">
-                      Top Locations
-                    </TooltipLabel>
-                  </p>
-                </div>
-                {renderPercentageList(stats.locations, stats.total, 'No location data')}
-              </section>
-              <section>
-                <div className="mb-4 flex items-center gap-2">
-                  <ClockCircleOutlined className="text-gray-500" />
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <TooltipLabel title="Application age using Date Applied when available and Created At as fallback, with exact counts and shares.">
-                      Application Age
-                    </TooltipLabel>
-                  </p>
-                </div>
-                {renderPercentageList(
-                  stats.applicationAgeBreakdown,
-                  stats.total,
-                  'No application age data',
-                  5
-                )}
-              </section>
-              <section>
-                <div className="mb-4 flex items-center gap-2">
-                  <TrophyOutlined className="text-gray-500" />
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <TooltipLabel title="Where your offers actually come from: the synced sheet source and the company with the highest offer rate.">
-                      Best Odds
-                    </TooltipLabel>
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Sheet source
-                    </p>
-                    <p
-                      className="mt-1 truncate text-sm font-semibold text-gray-900"
-                      title={topSource?.name || 'No sheet source'}
-                    >
-                      {topSource?.name || 'No sheet source'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {topSource
-                        ? `${formatShare(topSource.offer_rate, topSource.offers)} offer rate`
-                        : 'Connect a sheet to compare'}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      Company
-                    </p>
-                    <p
-                      className="mt-1 truncate text-sm font-semibold text-gray-900"
-                      title={topCompany?.name || 'No company data'}
-                    >
-                      {topCompany?.name || 'No company data'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {topCompany
-                        ? `${formatShare(topCompany.offer_rate, topCompany.offers)} offer rate`
-                        : 'Needs applications'}
-                    </p>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </div>
-        </div>
+        <SectionCard
+          icon={<EnvironmentOutlined />}
+          title="Top Locations"
+          tooltip="Most common application locations, grouped by city or Remote, with exact counts and shares."
+        >
+          {renderPercentageList(stats.locations, stats.total, 'No location data')}
+        </SectionCard>
       );
-    }
+    case 'application_age':
+      return (
+        <SectionCard
+          icon={<ClockCircleOutlined />}
+          title="Application Age"
+          tooltip="Application age using Date Applied when available and Created At as fallback, with exact counts and shares."
+        >
+          {renderPercentageList(
+            stats.applicationAgeBreakdown,
+            stats.total,
+            'No application age data',
+            5
+          )}
+        </SectionCard>
+      );
     default: {
       const customWidget = customWidgets.find((w) => w.id === id);
       if (customWidget) {
@@ -575,6 +772,19 @@ export const renderJobHuntWidget = (
   }
 };
 
+// Widths that keep the default order tidy on the 4-column grid: a full-width headline row,
+// then two pairs, then a row of narrow cards. Anything unlisted takes a single column.
+const WIDGET_COL_SPANS: Record<string, string> = {
+  headline: 'col-span-1 md:col-span-2 lg:col-span-4',
+  funnel: 'col-span-1 md:col-span-2 lg:col-span-2',
+  watch_list: 'col-span-1 md:col-span-2 lg:col-span-2',
+  reply_timing: 'col-span-1 md:col-span-2 lg:col-span-2',
+  outcomes: 'col-span-1 md:col-span-2 lg:col-span-2',
+  response_segments: 'col-span-1 md:col-span-2 lg:col-span-2',
+  top_locations: 'col-span-1',
+  application_age: 'col-span-1',
+};
+
 export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[]) => {
   const customWidget = customWidgets.find((w) => w.id === id);
   if (customWidget) {
@@ -582,9 +792,5 @@ export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[
       ? 'col-span-1 md:col-span-2 lg:col-span-2'
       : 'col-span-1';
   }
-
-  if (id === 'job_search') {
-    return 'col-span-1 md:col-span-2 lg:col-span-4';
-  }
-  return 'col-span-1';
+  return WIDGET_COL_SPANS[id] ?? 'col-span-1';
 };

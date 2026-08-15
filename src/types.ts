@@ -459,6 +459,13 @@ export interface ApplicationStats {
   years: number[];
 }
 
+export interface ResponseRateSegment {
+  name: string;
+  total: number;
+  responded: number;
+  response_rate: number;
+}
+
 export interface ApplicationTimelineAnalytics {
   average_time_to_interview_days: number | null;
   time_to_interview_sample_size: number;
@@ -481,7 +488,36 @@ export interface ApplicationTimelineAnalytics {
     days_in_stage: number;
     last_stage_date?: string | null;
     source: string;
+    // Median days this stage normally takes. null when the stage has too little history.
+    typical_days?: number | null;
+    days_over_typical?: number | null;
   }>;
+  // How long replies took to arrive, for applications that got one.
+  response_time_buckets: Array<{
+    label: string;
+    max_days: number | null;
+    count: number;
+    cumulative_share: number;
+  }>;
+  response_time_sample_size: number;
+  median_days_to_response: number | null;
+  p90_days_to_response: number | null;
+  // The p90: past this, silence is far more likely dead than slow.
+  suggested_followup_days: number | null;
+  silent_past_followup_count: number;
+  open_without_response_count: number;
+  // Response rate, not offer rate — with a handful of offers the segments would be noise.
+  response_rate_by_source: Array<ResponseRateSegment>;
+  response_rate_by_location: Array<ResponseRateSegment>;
+  response_rate_by_level: Array<ResponseRateSegment>;
+  stage_durations: Array<{
+    key: string;
+    label: string;
+    median_days: number;
+    p90_days: number | null;
+    sample_size: number;
+  }>;
+  min_duration_sample: number;
   offer_rate_by_source: Array<{
     name: string;
     total: number;
