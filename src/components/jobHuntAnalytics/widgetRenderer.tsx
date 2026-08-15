@@ -72,6 +72,19 @@ const OUTCOME_CLASSES: Record<string, string> = {
   GHOSTED: 'border-slate-200 bg-slate-100 text-slate-600',
 };
 
+// A share that rounds to zero but is not zero gets a decimal instead. 2 offers out of 806
+// is 0.2%, and showing that as a flat 0% next to "2 reached" reads as though the funnel
+// never got there. Below a tenth of a percent the digit stops being meaningful, so it
+// becomes an explicit "less than" rather than a stack of zeroes.
+const formatShare = (rate: number, count: number) => {
+  const percent = rate * 100;
+  if (count === 0) return '0%';
+  // Anything that rounds up to a whole percent keeps the whole-number style.
+  if (percent >= 0.95) return `${Math.round(percent)}%`;
+  if (percent < 0.1) return '<0.1%';
+  return `${percent.toFixed(1)}%`;
+};
+
 // yyyy-MM-dd from the API, rendered without a timezone shift dragging it back a day.
 const formatStageDate = (value: string) => {
   const parsed = parseDateOnlyLocal(value);
@@ -119,7 +132,7 @@ const renderPercentageList = (
   <div className="space-y-3">
     {items.slice(0, maxItems).map((item, index) => {
       const percent = total > 0 ? (item.count / total) * 100 : 0;
-      const roundedPercent = Math.round(percent);
+      const shownPercent = formatShare(percent / 100, item.count);
       return (
         <div
           key={item.name}
@@ -136,13 +149,13 @@ const renderPercentageList = (
             <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 scale-95 whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-center text-xs text-white opacity-0 shadow-xl transition-all duration-150 group-hover/metric:scale-100 group-hover/metric:opacity-100 md:block">
               <span className="block font-bold text-slate-100">{item.name}</span>
               <span className="mt-0.5 block text-[11px] text-slate-300">
-                {item.count} application{item.count === 1 ? '' : 's'} ({roundedPercent}%)
+                {item.count} application{item.count === 1 ? '' : 's'} ({shownPercent})
               </span>
               <span className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-800 bg-slate-900" />
             </div>
           </div>
           <span className="flex flex-col items-end text-right text-xs font-semibold text-blue-600">
-            <span>{roundedPercent}%</span>
+            <span>{shownPercent}</span>
             <span className="mt-0.5 whitespace-nowrap font-medium text-slate-500 md:hidden">
               {item.count} apps
             </span>
@@ -360,7 +373,7 @@ export const renderJobHuntWidget = (
                               <span className="font-semibold text-gray-900">
                                 {stage.reached_count.toLocaleString()}
                               </span>{' '}
-                              reached · {Math.round(stage.conversion_rate * 100)}%
+                              reached · {formatShare(stage.conversion_rate, stage.reached_count)}
                               {stage.current_count > 0 && (
                                 <span className="ml-2 text-gray-400">
                                   {stage.current_count} now
@@ -525,7 +538,7 @@ export const renderJobHuntWidget = (
                     </p>
                     <p className="text-xs text-gray-500">
                       {topSource
-                        ? `${Math.round(topSource.offer_rate * 100)}% offer rate`
+                        ? `${formatShare(topSource.offer_rate, topSource.offers)} offer rate`
                         : 'Connect a sheet to compare'}
                     </p>
                   </div>
@@ -541,7 +554,7 @@ export const renderJobHuntWidget = (
                     </p>
                     <p className="text-xs text-gray-500">
                       {topCompany
-                        ? `${Math.round(topCompany.offer_rate * 100)}% offer rate`
+                        ? `${formatShare(topCompany.offer_rate, topCompany.offers)} offer rate`
                         : 'Needs applications'}
                     </p>
                   </div>
