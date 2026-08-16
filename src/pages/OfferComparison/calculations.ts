@@ -57,6 +57,8 @@ export interface SimulatedOffer {
   commute_cost_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   free_food_perk_value: number;
   free_food_perk_frequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  free_food_meals?: unknown[];
+  free_food_value_per_meal?: number | null;
   pto_days: number;
   is_unlimited_pto?: boolean;
   sick_leave_days: number;
@@ -432,6 +434,8 @@ export interface ApplicationLike {
   commute_options?: CommuteOption[];
   free_food_perk_value?: number;
   free_food_perk_frequency?: 'DAILY' | 'MONTHLY' | 'YEARLY';
+  free_food_meals?: unknown[];
+  free_food_value_per_meal?: number | null;
   tax_base_rate?: number;
   tax_bonus_rate?: number;
   tax_equity_rate?: number;

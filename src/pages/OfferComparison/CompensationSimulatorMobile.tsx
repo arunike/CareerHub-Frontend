@@ -113,7 +113,7 @@ const CompensationSimulatorMobile = ({ rows, equityGrowthPct }: Props) => (
             </dd>
             {item.monthlyFoodPerk > 0 ? (
               <p className="mt-0.5 text-xs text-emerald-700">
-                {formatCurrency(item.monthlyFoodPerk)} perk
+                {formatCurrency(item.monthlyFoodPerk)} provided
               </p>
             ) : null}
           </div>

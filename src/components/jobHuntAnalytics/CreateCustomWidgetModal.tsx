@@ -917,7 +917,7 @@ const CreateCustomWidgetModal = ({
               ) : currentPreviewData ? (
                 <div className="w-full">
                   {currentWidgetType === 'metric' ? (
-                    <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-6 relative">
+                    <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-4 sm:p-6 relative">
                       <div className="flex items-center gap-4">
                         <div
                           className={`flex items-center justify-center w-12 h-12 ${activeColorTheme.bg} rounded-lg`}
@@ -938,7 +938,7 @@ const CreateCustomWidgetModal = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-5 w-full">
+                    <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-4 sm:p-6 w-full">
                       <div className="flex items-center gap-2 mb-4">
                         <IconComponent className={`w-5 h-5 ${activeColorTheme.text}`} />
                         <h3 className="text-sm font-semibold text-gray-900 truncate leading-none">

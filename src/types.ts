@@ -135,6 +135,9 @@ export interface UserSettings {
   notification_preferences: NotificationPreferences;
   global_availability: GlobalAvailability;
   ghosting_threshold_days: number;
+  // Your car and your pump price, shared by every offer's commute cost estimate.
+  default_mpg?: number | string;
+  default_gas_price_per_gallon?: number | string;
   default_event_category?: number | null;
   ignored_federal_holidays?: string[];
   employment_types?: EmploymentType[];

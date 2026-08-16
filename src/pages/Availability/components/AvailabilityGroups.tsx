@@ -116,7 +116,7 @@ const AvailabilityItem = ({
   };
 
   return (
-    <div className="group relative rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-md sm:p-5">
+    <div className="group relative rounded-xl border border-gray-200 bg-white p-4 sm:p-6 transition-all duration-300 hover:border-blue-300 hover:shadow-md">
       {contextHolder}
       <div className="flex min-w-0 items-start justify-between gap-4 md:items-center">
         <div className="min-w-0 flex-1">

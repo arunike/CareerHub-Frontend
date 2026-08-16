@@ -1,4 +1,4 @@
-import type { CommuteOption } from './commute';
+import type { CommuteOption, DrivingDefaults } from './commute';
 import type React from 'react';
 import { message } from 'antd';
 import ModalShell from '../../components/ModalShell';
@@ -43,9 +43,11 @@ type Props = {
   updateScenarioBenefitItem: (id: string, patch: Partial<BenefitItem>) => void;
   removeScenarioBenefitItem: (id: string) => void;
   onAddLoadedApplication?: (app: ApplicationLike) => void;
+  drivingDefaults?: Partial<DrivingDefaults> | null;
 };
 
 const ScenarioOfferModal = ({
+  drivingDefaults,
   isOpen,
   scenarioModalMode,
   editingScenarioId,
@@ -142,6 +144,7 @@ const ScenarioOfferModal = ({
           <fieldset disabled={scenarioModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
             <OfferFormFields
               key={`${editingScenarioId ?? 'new'}-${newScenario.application ?? 'custom'}`}
+              drivingDefaults={drivingDefaults}
               showLinkApplication
               linkedApplicationId={newScenario.application ?? null}
               onLinkedApplicationChange={async (nextAppId) => {
@@ -262,12 +265,9 @@ const ScenarioOfferModal = ({
               onCommuteOptionsChange={(value) => setNewScenarioField('commute_options', value)}
               freeFoodPerkValue={Number(newScenario.free_food_perk_value) || 0}
               freeFoodPerkFrequency={newScenario.free_food_perk_frequency || 'YEARLY'}
-              onFreeFoodPerkValueChange={(value) =>
-                setNewScenarioField('free_food_perk_value', value)
-              }
-              onFreeFoodPerkFrequencyChange={(value) =>
-                setNewScenarioField('free_food_perk_frequency', value)
-              }
+              freeFoodMeals={newScenario.free_food_meals}
+              onFreeFoodMealsChange={(meals) => setNewScenarioField('free_food_meals', meals)}
+              freeFoodValuePerMeal={newScenario.free_food_value_per_meal ?? ''}
               enableCompModeToggles
               ptoDays={Number(newScenario.pto_days) || 0}
               onPtoDaysChange={(value) => setNewScenarioField('pto_days', value)}

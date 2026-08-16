@@ -9,6 +9,7 @@ import {
   type OfferLike,
   type SimulatedOffer,
 } from './calculations';
+import { annualFreeFoodValue } from './freeFood';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import type { AdjustedOfferMetrics } from './types';
 import {
@@ -17,7 +18,7 @@ import {
 } from '../../utils/applicationLocation';
 import { getRealizableEquity } from './equityLiquidity';
 import { getCountedSickLeaveDays } from '../../utils/offerTimeOff';
-import { summariseCommute, type CommuteOption } from './commute';
+import { summariseCommute, type CommuteOption, type DrivingDefaults } from './commute';
 
 type Params = {
   filteredOffers: OfferLike[];
@@ -32,6 +33,8 @@ type Params = {
   stateNameToAbbr: Record<string, string>;
   maritalStatus: MaritalStatus;
   stateTaxRate: Record<string, number>;
+  // Shared MPG and gas price, so every row prices fuel off the same assumptions.
+  drivingDefaults?: Partial<DrivingDefaults> | null;
 };
 
 export const useScenarioRows = ({
@@ -47,6 +50,7 @@ export const useScenarioRows = ({
   stateNameToAbbr,
   maritalStatus,
   stateTaxRate,
+  drivingDefaults,
 }: Params) => {
   const scenarioRows = useMemo<ScenarioRow[]>(() => {
     const baselineColIndex = Math.max(1, referenceColIndex);
@@ -110,17 +114,29 @@ export const useScenarioRows = ({
         equityTaxRate: Number(app?.tax_equity_rate ?? estimatedTax.equityTaxRate),
       };
 
-      const freeFoodAnnualValue = annualizeAmount(
-        Number(app?.free_food_perk_value || 0),
-        (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
-      );
       // Time and cost share one office-day count, so a hybrid role is never charged a
       // five-day commute. Falls back to the legacy single cost when no modes are set.
-      const commute = summariseCommute(app?.commute_options as CommuteOption[] | undefined, {
-        workMode: app?.work_mode,
-        rtoDaysPerWeek: app?.rto_days_per_week,
-        ptoDays: Number(offer.pto_days ?? 0),
-        holidayDays: Number(offer.holiday_days ?? 0),
+      const commute = summariseCommute(
+        app?.commute_options as CommuteOption[] | undefined,
+        {
+          workMode: app?.work_mode,
+          rtoDaysPerWeek: app?.rto_days_per_week,
+          ptoDays: Number(offer.pto_days ?? 0),
+          holidayDays: Number(offer.holiday_days ?? 0),
+        },
+        drivingDefaults
+      );
+      // Free meals are worth what they save on the days you are in, so they share the same
+      // office-day count as the commute. Falls back to the legacy flat amount when no meals
+      // are set, so an offer saved before per-meal valuing keeps its figure.
+      const freeFoodAnnualValue = annualFreeFoodValue({
+        meals: app?.free_food_meals,
+        legacyValuePerMeal: Number(app?.free_food_value_per_meal) || 0,
+        officeDays: commute.officeDays,
+        legacyAnnualValue: annualizeAmount(
+          Number(app?.free_food_perk_value || 0),
+          (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
+        ),
       });
       const commuteAnnualCost = commute.primary
         ? commute.annualCost
@@ -240,10 +256,6 @@ export const useScenarioRows = ({
         bonusTaxRate: Number(offer.tax_bonus_rate ?? estimatedTax.bonusTaxRate),
         equityTaxRate: Number(offer.tax_equity_rate ?? estimatedTax.equityTaxRate),
       };
-      const freeFoodAnnualValue = annualizeAmount(
-        Number(offer.free_food_perk_value || 0),
-        offer.free_food_perk_frequency || 'YEARLY'
-      );
       const scenarioCommute = summariseCommute(
         offer.commute_options as CommuteOption[] | undefined,
         {
@@ -251,8 +263,18 @@ export const useScenarioRows = ({
           rtoDaysPerWeek: offer.rto_days_per_week,
           ptoDays: Number(offer.pto_days ?? 0),
           holidayDays: Number(offer.holiday_days ?? 0),
-        }
+        },
+        drivingDefaults
       );
+      const freeFoodAnnualValue = annualFreeFoodValue({
+        meals: offer.free_food_meals,
+        legacyValuePerMeal: Number(offer.free_food_value_per_meal) || 0,
+        officeDays: scenarioCommute.officeDays,
+        legacyAnnualValue: annualizeAmount(
+          Number(offer.free_food_perk_value || 0),
+          offer.free_food_perk_frequency || 'YEARLY'
+        ),
+      });
       const commuteAnnualCost = scenarioCommute.primary
         ? scenarioCommute.annualCost
         : (offer.commute_cost_frequency || 'MONTHLY') === 'DAILY'
@@ -376,6 +398,7 @@ export const useScenarioRows = ({
     stateNameToAbbr,
     maritalStatus,
     stateTaxRate,
+    drivingDefaults,
   ]);
 
   const realAdjustedByOfferId = useMemo(() => {

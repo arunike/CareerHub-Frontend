@@ -12,6 +12,14 @@ import {
   type OfferDecisionSnapshot,
   type OfferDecisionSnapshotPayload,
 } from '../../api';
+import { getUserSettings, updateUserSettings } from '../../api/availability';
+import {
+  clearFuelOverrides,
+  DEFAULT_GAS_PRICE,
+  DEFAULT_MPG,
+  fuelOverridesIn,
+  type CommuteOption,
+} from './commute';
 import {
   BarChartOutlined,
   UnorderedListOutlined,
@@ -50,6 +58,8 @@ import { getRealizableEquity, normalizeEquityLiquidity } from './equityLiquidity
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../utils/apiError';
 import CommuteComparison from './CommuteComparison';
+import DrivingAssumptions from './DrivingAssumptions';
+import type { FuelOverrideTarget } from './DrivingAssumptions';
 
 const OfferComparisonChart = lazy(() => import('./OfferComparisonChart'));
 const ScenarioOfferModal = lazy(() => import('./ScenarioOfferModal'));
@@ -122,6 +132,12 @@ const OfferComparison = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
+  // Shared driving assumptions live on the user, not on any one offer, so they are loaded
+  // once here and every commute estimate on the page reads them.
+  const [drivingDefaults, setDrivingDefaults] = useState<{
+    mpg: number;
+    gasPricePerGallon: number;
+  } | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,6 +290,42 @@ const OfferComparison = () => {
   const [visibleOfferIds, setVisibleOfferIds] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
+
+  const loadDrivingDefaults = useCallback(async () => {
+    try {
+      const { data } = await getUserSettings();
+      setDrivingDefaults({
+        mpg: Number(data?.default_mpg) || DEFAULT_MPG,
+        gasPricePerGallon: Number(data?.default_gas_price_per_gallon) || DEFAULT_GAS_PRICE,
+      });
+    } catch (error) {
+      // Falling back to the built-in figures keeps every estimate working rather than
+      // blanking the commute cost because one request failed.
+      console.error('Failed to load driving defaults', error);
+      setDrivingDefaults({ mpg: DEFAULT_MPG, gasPricePerGallon: DEFAULT_GAS_PRICE });
+    }
+  }, []);
+
+  const saveDrivingDefaults = useCallback(
+    async (next: { mpg: number; gasPricePerGallon: number }) => {
+      setDrivingDefaults(next);
+      try {
+        await updateUserSettings({
+          default_mpg: next.mpg,
+          default_gas_price_per_gallon: next.gasPricePerGallon,
+        });
+      } catch (error) {
+        console.error('Failed to save driving defaults', error);
+        messageApi.error(getApiErrorMessage(error, 'Could not save driving assumptions'));
+        void loadDrivingDefaults();
+      }
+    },
+    [loadDrivingDefaults, messageApi]
+  );
+
+  useEffect(() => {
+    void loadDrivingDefaults();
+  }, [loadDrivingDefaults]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -432,6 +484,11 @@ const OfferComparison = () => {
           commute_options: editingApp.commute_options ?? [],
           free_food_perk_value: editingApp.free_food_perk_value ?? 0,
           free_food_perk_frequency: editingApp.free_food_perk_frequency ?? 'YEARLY',
+          // This payload is an explicit whitelist, so a new field is silently dropped unless
+          // it is listed here — the editor and serializer both accepted meals while nothing
+          // ever reached the API.
+          free_food_meals: editingApp.free_food_meals ?? [],
+          free_food_value_per_meal: editingApp.free_food_value_per_meal ?? null,
           tax_base_rate: editingApp.tax_base_rate ?? null,
           tax_bonus_rate: editingApp.tax_bonus_rate ?? null,
           tax_equity_rate: editingApp.tax_equity_rate ?? null,
@@ -854,7 +911,83 @@ const OfferComparison = () => {
     stateNameToAbbr,
     maritalStatus,
     stateTaxRate,
+    drivingDefaults,
   });
+
+  // Which offers currently keep their own mpg or pump price. Listed so a change to the shared
+  // figures can be pushed onto the ones that should follow it, instead of the user reopening
+  // each offer to find out which are out of step.
+  const fuelOverrideTargets = useMemo<FuelOverrideTarget[]>(() => {
+    const targets: FuelOverrideTarget[] = [];
+    // Every offer, not just the ones the year filter is showing: a shared figure is meant to be
+    // universal, and the checkboxes already say exactly which offers a change would touch.
+    offers.forEach((offer) => {
+      const app = applications.find((candidate) => candidate.id === offer.application);
+      if (!app) return;
+      const found = fuelOverridesIn(app.commute_options as CommuteOption[] | undefined);
+      if (!found) return;
+      targets.push({ key: `app:${app.id}`, name: getApplicationName(app.id as number), ...found });
+    });
+    simulatedOffers.forEach((scenario) => {
+      const found = fuelOverridesIn(scenario.commute_options);
+      if (!found) return;
+      const name =
+        typeof scenario.application === 'number'
+          ? `${getApplicationName(scenario.application)} (Scenario)`
+          : `${scenario.custom_company_name || 'Custom scenario'} (Custom)`;
+      targets.push({ key: `scenario:${scenario.id}`, name, ...found });
+    });
+    return targets;
+    // getApplicationName reads applications, which is already a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offers, applications, simulatedOffers]);
+
+  const applySharedDrivingToOffers = useCallback(
+    async (keys: string[]) => {
+      const appIds = keys
+        .filter((key) => key.startsWith('app:'))
+        .map((key) => Number(key.slice(4)))
+        .filter((id) => Number.isFinite(id));
+      const scenarioIds = keys
+        .filter((key) => key.startsWith('scenario:'))
+        .map((key) => key.slice('scenario:'.length));
+
+      try {
+        for (const id of appIds) {
+          const app = applications.find((candidate) => candidate.id === id);
+          if (!app) continue;
+          const nextOptions = clearFuelOverrides(
+            app.commute_options as CommuteOption[] | undefined
+          );
+          await updateApplication(id, { commute_options: nextOptions });
+          setApplications((prev) =>
+            prev.map((candidate) =>
+              candidate.id === id ? { ...candidate, commute_options: nextOptions } : candidate
+            )
+          );
+        }
+
+        if (scenarioIds.length > 0) {
+          // Scenarios live in saved settings rather than their own rows, so the whole list is
+          // written back — passed explicitly because the save helper reads a ref that has not
+          // caught up with this render yet.
+          const nextScenarios = simulatedOffers.map((scenario) =>
+            scenarioIds.includes(String(scenario.id))
+              ? { ...scenario, commute_options: clearFuelOverrides(scenario.commute_options) }
+              : scenario
+          );
+          setSimulatedOffers(nextScenarios);
+          await saveAdjustments({ simulatedOffers: nextScenarios });
+        }
+
+        messageApi.success(`Applied to ${keys.length} offer${keys.length === 1 ? '' : 's'}`);
+      } catch (error) {
+        console.error('Failed to apply shared driving assumptions', error);
+        messageApi.error(getApiErrorMessage(error, 'Could not update those offers'));
+      }
+    },
+    [applications, simulatedOffers, setSimulatedOffers, saveAdjustments, messageApi]
+  );
 
   const buildDecisionSnapshotPayload = useCallback(
     (offer: Offer, row: DecisionRow): Partial<OfferDecisionSnapshotPayload> | null => {
@@ -1456,13 +1589,21 @@ const OfferComparison = () => {
       {/* Nothing to compare when every offer is remote, so skip the empty card. */}
       {displayScenarioRows.some((row) => row.commute?.primary) && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <div className="mb-4 border-b border-slate-100 pb-3">
-            <h2 className="text-lg font-semibold text-slate-900">Commute</h2>
-            <p className="mt-0.5 text-xs text-slate-400">
-              Travel time and cost across offers, weighted by each one&apos;s RTO policy
-            </p>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-slate-900">Commute</h2>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Travel time and cost across offers, weighted by each one&apos;s RTO policy
+              </p>
+            </div>
+            <DrivingAssumptions
+              value={drivingDefaults}
+              onChange={saveDrivingDefaults}
+              overrides={fuelOverrideTargets}
+              onApplyToOffers={applySharedDrivingToOffers}
+            />
           </div>
-          <CommuteComparison scenarioRows={displayScenarioRows} />
+          <CommuteComparison scenarioRows={displayScenarioRows} drivingDefaults={drivingDefaults} />
         </section>
       )}
 
@@ -1796,7 +1937,7 @@ const OfferComparison = () => {
 
                     {/* Comparative Sections */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm space-y-2.5">
+                      <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm space-y-2.5">
                         <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b pb-1.5 flex items-center gap-1.5">
                           💰 Financial Evaluation
                         </h5>
@@ -1805,7 +1946,7 @@ const OfferComparison = () => {
                         </div>
                       </div>
 
-                      <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm space-y-2.5">
+                      <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm space-y-2.5">
                         <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider border-b pb-1.5 flex items-center gap-1.5">
                           ⚖️ WLB & Career Growth
                         </h5>
@@ -1961,6 +2102,7 @@ const OfferComparison = () => {
       {editingOffer ? (
         <Suspense fallback={null}>
           <EditOfferModal
+            drivingDefaults={drivingDefaults}
             editingOffer={editingOffer}
             editingApp={editingApp}
             offerModalMode={offerModalMode}
@@ -2012,6 +2154,7 @@ const OfferComparison = () => {
       {isAddScenarioOpen ? (
         <Suspense fallback={null}>
           <ScenarioOfferModal
+            drivingDefaults={drivingDefaults}
             isOpen={isAddScenarioOpen}
             scenarioModalMode={scenarioModalMode}
             editingScenarioId={editingScenarioId}

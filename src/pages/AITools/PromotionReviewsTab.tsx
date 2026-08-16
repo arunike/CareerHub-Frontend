@@ -275,7 +275,7 @@ const PromotionReviewsTab: React.FC = () => {
             return (
               <article
                 key={item.id}
-                className={`rounded-2xl border bg-white p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-colors sm:p-5 ${ratingToneClass(
+                className={`rounded-2xl border bg-white p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-colors sm:p-6 ${ratingToneClass(
                   verdict?.label
                 )}`}
               >

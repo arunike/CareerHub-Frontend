@@ -949,8 +949,8 @@ const GoogleSheetsSettings: React.FC = () => {
   return (
     <div className="space-y-6">
       {contextHolder}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
-        <div className="flex items-start justify-between gap-4 border-b pb-4">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+        <div className="flex items-start justify-between gap-4 border-b pb-3">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Google Sheets</h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -1533,7 +1533,7 @@ const GoogleSheetsSettings: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Saved Syncs</h3>
         {loading ? (
           <div className="text-sm text-gray-500">Loading syncs...</div>
@@ -2123,7 +2123,7 @@ const GoogleSheetsSettings: React.FC = () => {
       </Modal>
 
       {preview && (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-3">
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm space-y-3">
           <h3 className="text-lg font-semibold text-gray-900">Sheet Preview</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">

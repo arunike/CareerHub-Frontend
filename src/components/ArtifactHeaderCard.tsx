@@ -53,7 +53,7 @@ const ArtifactHeaderCard: React.FC<ArtifactHeaderCardProps> = ({
   const config = themeConfigs[themeColor] || themeConfigs.blue;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.62)] sm:px-6 md:px-8 md:py-6">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.62)] sm:p-6">
       <div>
         <div
           className={`mb-4 inline-flex min-h-8 items-center gap-2 rounded-lg border ${config.border} ${config.bg} px-2.5`}

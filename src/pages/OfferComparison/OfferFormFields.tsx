@@ -1,8 +1,15 @@
-import { seedFromLegacyCost, type CommuteOption } from './commute';
+import {
+  officeDaysPerYear,
+  seedFromLegacyCost,
+  type CommuteOption,
+  type DrivingDefaults,
+} from './commute';
+import type { MealEntry } from './freeFood';
 import type { ReactNode } from 'react';
 import {
   BankOutlined,
   CalendarOutlined,
+  CarOutlined,
   DollarOutlined,
   EnvironmentOutlined,
   SafetyCertificateOutlined,
@@ -94,10 +101,13 @@ interface OfferFormFieldsProps {
   commuteCostFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
   commuteOptions?: CommuteOption[];
   onCommuteOptionsChange?: (value: CommuteOption[]) => void;
+  freeFoodMeals?: unknown;
+  onFreeFoodMealsChange?: (meals: MealEntry[]) => void;
+  freeFoodValuePerMeal?: number | string;
   freeFoodPerkValue: number;
   freeFoodPerkFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
-  onFreeFoodPerkValueChange: (value: number) => void;
-  onFreeFoodPerkFrequencyChange: (value: 'DAILY' | 'MONTHLY' | 'YEARLY') => void;
+  // Read-only now: the flat amount is kept as a fallback for offers saved before per-meal
+  // valuing, but nothing edits it any more.
   showCommuteAndPerks?: boolean;
   enableCompModeToggles?: boolean;
 
@@ -196,6 +206,8 @@ interface OfferFormFieldsProps {
   onTravelFrequencyChange?: (value: string) => void;
   // Tax rate for after-tax custom benefit display
   taxRate?: number;
+  // Shared MPG and gas price from user settings; each offer only stores overrides.
+  drivingDefaults?: Partial<DrivingDefaults> | null;
 }
 
 const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
@@ -263,10 +275,11 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   commuteCostFrequency,
   commuteOptions,
   onCommuteOptionsChange,
+  freeFoodMeals,
+  onFreeFoodMealsChange,
+  freeFoodValuePerMeal,
   freeFoodPerkValue,
   freeFoodPerkFrequency,
-  onFreeFoodPerkValueChange,
-  onFreeFoodPerkFrequencyChange,
   showCommuteAndPerks = true,
   showDecisionSignals = false,
   visaSponsorship = '',
@@ -359,6 +372,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
   travelFrequency = 'UNKNOWN',
   onTravelFrequencyChange,
   taxRate = 0,
+  drivingDefaults,
 }) => {
   const formId = useId().replace(/:/g, '');
   const shouldShowCompanyRole = !(hideCompanyRoleWhenLinked && linkedApplicationId);
@@ -391,12 +405,14 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
     basics: `${formId}-basics`,
     location: `${formId}-location`,
     compensation: `${formId}-compensation`,
+    workSetup: `${formId}-work-setup`,
     benefits: `${formId}-benefits`,
     timeOff: `${formId}-time-off`,
     signals: `${formId}-signals`,
   };
   const navigationItems = [
-    { id: sectionIds.basics, label: 'Offer details', meta: 'Role and work setup' },
+    { id: sectionIds.basics, label: 'Offer details', meta: 'Role, level, deadline' },
+    { id: sectionIds.workSetup, label: 'Work & commute', meta: 'Mode, RTO, travel, commute' },
     { id: sectionIds.location, label: 'Location & tax', meta: 'Home, office, assumptions' },
     { id: sectionIds.compensation, label: 'Compensation', meta: 'Cash and equity' },
     { id: sectionIds.benefits, label: 'Benefits', meta: 'Health and retirement' },
@@ -405,7 +421,25 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
       ? [{ id: sectionIds.signals, label: 'Decision signals', meta: 'Optional quality inputs' }]
       : []),
   ];
+  // Same office-day figure the commute uses, so free meals and travel cost can never
+  // disagree about how often you are in.
+  const foodOfficeDaysValue = officeDaysPerYear({
+    workMode,
+    rtoDaysPerWeek,
+    ptoDays: Number(ptoDays) || 0,
+    holidayDays: Number(holidayDays) || 0,
+  });
+  const legacyFoodAnnual =
+    freeFoodPerkFrequency === 'DAILY'
+      ? (Number(freeFoodPerkValue) || 0) * 260
+      : freeFoodPerkFrequency === 'MONTHLY'
+        ? (Number(freeFoodPerkValue) || 0) * 12
+        : Number(freeFoodPerkValue) || 0;
+
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  // Panels used to hard-code their index, so inserting a section showed the wrong one and
+  // nothing failed loudly. Resolved from the id, which cannot drift from navigationItems.
+  const isActiveSection = (id: string) => navigationItems[activeSectionIndex]?.id === id;
 
   const showSection = (index: number) => {
     setActiveSectionIndex(index);
@@ -515,12 +549,12 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
           <div
             role="tabpanel"
             aria-labelledby={`${sectionIds.basics}-tab`}
-            hidden={activeSectionIndex !== 0}
+            hidden={!isActiveSection(sectionIds.basics)}
           >
             <OfferFormSection
               id={sectionIds.basics}
               title="Offer details"
-              description="Identify the role and capture the working conditions that affect your day-to-day experience."
+              description="Identify the role this offer is for. Working conditions and the commute have their own section."
               icon={<UserOutlined />}
             >
               <IdentitySection
@@ -542,6 +576,21 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 rolePlaceholder={rolePlaceholder}
               />
 
+              {documentsSlot}
+            </OfferFormSection>
+          </div>
+
+          <div
+            role="tabpanel"
+            aria-labelledby={`${sectionIds.workSetup}-tab`}
+            hidden={!isActiveSection(sectionIds.workSetup)}
+          >
+            <OfferFormSection
+              id={sectionIds.workSetup}
+              title="Work & commute"
+              description="How often you are in the office, and what getting there costs in time and money. Both feed the Location score and the commute comparison."
+              icon={<CarOutlined />}
+            >
               <WorkSetupSection
                 workMode={workMode}
                 onWorkModeChange={onWorkModeChange}
@@ -557,23 +606,19 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
                 onCommuteOptionsChange={onCommuteOptionsChange}
                 ptoDays={ptoDays}
                 holidayDays={holidayDays}
-                freeFoodPerkValue={freeFoodPerkValue}
-                freeFoodPerkFrequency={freeFoodPerkFrequency}
-                onFreeFoodPerkValueChange={onFreeFoodPerkValueChange}
-                onFreeFoodPerkFrequencyChange={onFreeFoodPerkFrequencyChange}
                 flexibleHoursPolicy={flexibleHoursPolicy}
                 onFlexibleHoursPolicyChange={onFlexibleHoursPolicyChange}
                 travelFrequency={travelFrequency}
                 onTravelFrequencyChange={onTravelFrequencyChange}
+                drivingDefaults={drivingDefaults}
               />
-              {documentsSlot}
             </OfferFormSection>
           </div>
 
           <div
             role="tabpanel"
             aria-labelledby={`${sectionIds.location}-tab`}
-            hidden={activeSectionIndex !== 1}
+            hidden={!isActiveSection(sectionIds.location)}
           >
             <OfferFormSection
               id={sectionIds.location}
@@ -601,7 +646,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
           <div
             role="tabpanel"
             aria-labelledby={`${sectionIds.compensation}-tab`}
-            hidden={activeSectionIndex !== 2}
+            hidden={!isActiveSection(sectionIds.compensation)}
           >
             <OfferFormSection
               id={sectionIds.compensation}
@@ -645,7 +690,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
           <div
             role="tabpanel"
             aria-labelledby={`${sectionIds.benefits}-tab`}
-            hidden={activeSectionIndex !== 3}
+            hidden={!isActiveSection(sectionIds.benefits)}
           >
             <OfferFormSection
               id={sectionIds.benefits}
@@ -654,6 +699,11 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
               icon={<SafetyCertificateOutlined />}
             >
               <BenefitsSection
+                freeFoodMeals={freeFoodMeals}
+                onFreeFoodMealsChange={onFreeFoodMealsChange}
+                freeFoodValuePerMeal={freeFoodValuePerMeal}
+                officeDays={foodOfficeDaysValue}
+                legacyFreeFoodAnnual={legacyFoodAnnual}
                 benefitItems={benefitItems}
                 onAddBenefitItem={onAddBenefitItem}
                 onUpdateBenefitItem={onUpdateBenefitItem}
@@ -724,7 +774,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
           <div
             role="tabpanel"
             aria-labelledby={`${sectionIds.timeOff}-tab`}
-            hidden={activeSectionIndex !== 4}
+            hidden={!isActiveSection(sectionIds.timeOff)}
           >
             <OfferFormSection
               id={sectionIds.timeOff}
@@ -751,7 +801,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
             <div
               role="tabpanel"
               aria-labelledby={`${sectionIds.signals}-tab`}
-              hidden={activeSectionIndex !== 5}
+              hidden={!isActiveSection(sectionIds.signals)}
             >
               <OfferFormSection
                 id={sectionIds.signals}

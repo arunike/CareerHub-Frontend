@@ -19,11 +19,11 @@ const SectionFallback = () => (
   <div className="w-full space-y-6">
     <MetricCardsSkeleton count={3} />
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 enterprise-card p-6 min-h-[360px] flex flex-col justify-between">
+      <div className="lg:col-span-2 enterprise-card p-4 sm:p-6 min-h-[360px] flex flex-col justify-between">
         <SkeletonBlock width="150px" height="1.25rem" />
         <SkeletonBlock width="100%" height="240px" className="opacity-80" />
       </div>
-      <div className="enterprise-card p-6 min-h-[360px] flex flex-col justify-between">
+      <div className="enterprise-card p-4 sm:p-6 min-h-[360px] flex flex-col justify-between">
         <SkeletonBlock width="120px" height="1.25rem" />
         <div className="flex items-center justify-center h-full">
           <SkeletonBlock width="180px" height="180px" circle className="opacity-80" />

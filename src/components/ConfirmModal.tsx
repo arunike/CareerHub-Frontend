@@ -32,7 +32,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       title={title}
       onClose={onCancel}
       maxWidthClass="max-w-sm"
-      bodyClassName="overflow-y-auto px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6"
+      bodyClassName="overflow-y-auto px-4 py-5 sm:px-6"
       titleClassName="text-lg font-bold text-gray-900"
       footer={
         <>

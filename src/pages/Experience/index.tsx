@@ -1059,7 +1059,7 @@ const ExperiencePage: React.FC = () => {
 
       {/* Analytics Dashboard */}
       {experiences.length > 0 && (
-        <div className="mb-7 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
+        <div className="mb-7 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs">
           <Row gutter={[0, 20]} align="stretch">
             {/* 1. Total Experience */}
             <Col xs={24} md={12} xl={6}>
@@ -1367,7 +1367,7 @@ const ExperiencePage: React.FC = () => {
             <div className="relative pl-0 md:pl-8">
               <div className="space-y-10 relative z-10">
                 {filteredExperiences.length === 0 && selectedSkill && (
-                  <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
+                  <div className="text-center px-4 py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
                     <Text className="text-gray-500">
                       No timeline events match the selected skill filter.
                     </Text>

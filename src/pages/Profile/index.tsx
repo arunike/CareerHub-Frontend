@@ -777,7 +777,7 @@ const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
                 <div className="flex items-start gap-3">
                   <UploadOutlined className="text-lg text-slate-700 mt-0.5" />
                   <div>

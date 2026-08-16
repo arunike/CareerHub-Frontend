@@ -260,7 +260,7 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
                 <SkeletonBlock width="85%" height="0.85rem" className="opacity-80" />
               </div>
             </div>
-            <div className="pt-3.5 border-t border-slate-100 flex justify-between items-center">
+            <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
               <div className={`h-5.5 rounded-md ${tag.bg} flex items-center px-2 gap-1.5`}>
                 <div className={`w-1.2 h-1.2 rounded-full ${tag.dot}`} />
                 <SkeletonBlock width="45px" height="0.45rem" className="opacity-75" />
@@ -427,7 +427,7 @@ export const SettingsSkeleton: React.FC = () => {
       </div>
 
       {/* Settings general layout (Form) */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+      <div className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
         <div className="border-b pb-2">
           <SkeletonBlock width="120px" height="1.25rem" />
         </div>
@@ -481,7 +481,7 @@ export const OfferComparisonSkeleton: React.FC = () => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {Array.from({ length: 3 }).map((_, idx) => (
         <div key={idx} className="enterprise-card p-6 space-y-5 bg-white">
-          <div className="space-y-2.5 text-center pb-4.5 border-b border-slate-100">
+          <div className="space-y-2.5 text-center pb-4 border-b border-slate-100">
             <SkeletonBlock width="65%" height="1.35rem" className="mx-auto font-semibold" />
             <SkeletonBlock width="45%" height="0.85rem" className="mx-auto opacity-60" />
           </div>
@@ -493,7 +493,7 @@ export const OfferComparisonSkeleton: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="pt-4.5 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100">
             <SkeletonBlock width="100%" height="2.5rem" className="rounded-xl" />
           </div>
         </div>

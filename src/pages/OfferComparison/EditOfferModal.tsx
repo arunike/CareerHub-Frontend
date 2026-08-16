@@ -1,4 +1,4 @@
-import type { CommuteOption } from './commute';
+import type { CommuteOption, DrivingDefaults } from './commute';
 import { useState } from 'react';
 import { message } from 'antd';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -31,6 +31,7 @@ type Props = {
   removeEditingBenefitItem: (id: string) => void;
   onClose: () => void;
   onSave: () => void;
+  drivingDefaults?: Partial<DrivingDefaults> | null;
 };
 
 const EditOfferModal = ({
@@ -47,6 +48,7 @@ const EditOfferModal = ({
   removeEditingBenefitItem,
   onClose,
   onSave,
+  drivingDefaults,
 }: Props) => {
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const draftSnapshot = JSON.stringify({
@@ -144,6 +146,7 @@ const EditOfferModal = ({
         <fieldset disabled={offerModalMode === 'view'} className="m-0 min-w-0 border-0 p-0">
           <OfferFormFields
             key={editingOffer.id ?? 'unsaved-offer'}
+            drivingDefaults={drivingDefaults}
             companyName={editingApp?.company_name || ''}
             onCompanyNameChange={(value) => patchEditingApp({ company_name: value })}
             roleTitle={editingApp?.role_title || ''}
@@ -251,10 +254,9 @@ const EditOfferModal = ({
             freeFoodPerkFrequency={
               (editingApp?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
             }
-            onFreeFoodPerkValueChange={(value) => patchEditingApp({ free_food_perk_value: value })}
-            onFreeFoodPerkFrequencyChange={(value) =>
-              patchEditingApp({ free_food_perk_frequency: value })
-            }
+            freeFoodMeals={editingApp?.free_food_meals}
+            onFreeFoodMealsChange={(meals) => patchEditingApp({ free_food_meals: meals })}
+            freeFoodValuePerMeal={editingApp?.free_food_value_per_meal ?? ''}
             showCommuteAndPerks
             showDecisionSignals
             visaSponsorship={

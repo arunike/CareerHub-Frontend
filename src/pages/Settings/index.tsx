@@ -38,7 +38,7 @@ import {
   DownOutlined,
   RightOutlined,
 } from '@ant-design/icons';
-import { Button, message } from 'antd';
+import { Button, Tooltip, message } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import IconPicker from '../../components/IconPicker';
@@ -52,6 +52,14 @@ import { PageState } from '../../components/PageState';
 import LockableListItem from '../../components/LockableListItem';
 import ConfirmModal from '../../components/ConfirmModal';
 import MobileSectionPicker from '../../components/MobileSectionPicker';
+import SettingsSearch from './SettingsSearch';
+import {
+  SECTION_ICONS,
+  SETTINGS_TABS,
+  SettingsSection,
+  findDirtyTabs,
+  type SettingsTab,
+} from './settingsChrome';
 import {
   buildAIProviderSettingsPatch,
   getAIProviderSettingsFromUserSettings,
@@ -158,17 +166,6 @@ const WORK_DAY_OPTIONS = [
   { val: 5, label: 'Sat' },
   { val: 6, label: 'Sun' },
 ];
-
-const SETTINGS_TABS = [
-  { key: 'general', label: 'General' },
-  { key: 'ai', label: 'AI Provider' },
-  { key: 'integrations', label: 'Integrations' },
-  { key: 'security', label: 'Security' },
-  { key: 'organize', label: 'Organize' },
-  { key: 'navigation', label: 'Navigation' },
-] as const;
-
-type SettingsTab = (typeof SETTINGS_TABS)[number]['key'];
 
 const summarizeSelectedDays = (days: number[]) => {
   const sortedDays = [...new Set(days)].sort((a, b) => a - b);
@@ -320,9 +317,26 @@ const Settings: React.FC = () => {
   };
   const [loading, setLoading] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
+  const [dirtyTabs, setDirtyTabs] = useState<SettingsTab[]>([]);
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+
+  // Below the activeTab declaration on purpose: reading it above threw a temporal dead zone
+  // ReferenceError on every render, which the error boundary turned into "could not finish
+  // loading this view" for the whole page.
+  const activeTabMeta = SETTINGS_TABS.find((tab) => tab.key === activeTab);
+
+  // A search result has to both switch tab and land on the card. The panel only mounts after
+  // the tab changes, so the scroll waits a frame for the section to exist.
+  const jumpToSection = (tab: SettingsTab, sectionId: string) => {
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`settings-section-${sectionId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
   const [expandedAvailabilityRange, setExpandedAvailabilityRange] = useState<number | null>(null);
   const [isCategoriesLocked, setIsCategoriesLocked] = useState(false);
   const [isEmpTypesLocked, setIsEmpTypesLocked] = useState(false);
@@ -675,6 +689,7 @@ const Settings: React.FC = () => {
   useEffect(() => {
     if (!settings || !originalSettingsRef.current) return;
     setIsDirty(JSON.stringify(settings) !== originalSettingsRef.current);
+    setDirtyTabs(findDirtyTabs(settings, originalSettingsRef.current));
   }, [settings]);
 
   const handleSave = async () => {
@@ -1099,6 +1114,7 @@ const Settings: React.FC = () => {
         singleRowDesktop
         extraActions={
           <>
+            <SettingsSearch onJump={jumpToSection} />
             <Button
               size="large"
               icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
@@ -1148,16 +1164,27 @@ const Settings: React.FC = () => {
               aria-selected={activeTab === tab.key}
               aria-controls={`settings-panel-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
-              className={`min-h-11 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors ${
+              className={`flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors ${
                 activeTab === tab.key
                   ? 'bg-white text-slate-950 shadow-sm'
                   : 'text-slate-600 hover:bg-white/60 hover:text-slate-900'
               }`}
             >
+              <span className={activeTab === tab.key ? 'text-blue-600' : 'text-slate-400'}>
+                {tab.icon}
+              </span>
               {tab.label}
+              {/* The Save button is global, so a pending edit two tabs away is otherwise
+                  invisible: the button lights up with no clue what it would write. */}
+              {dirtyTabs.includes(tab.key) && (
+                <Tooltip title="Unsaved changes in this section">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                </Tooltip>
+              )}
             </button>
           ))}
         </div>
+        <p className="mt-2 px-1 text-xs text-slate-500">{activeTabMeta?.description}</p>
       </div>
 
       <div
@@ -1167,11 +1194,12 @@ const Settings: React.FC = () => {
         className={`space-y-6 ${isLocked ? 'pointer-events-none select-none opacity-60' : ''}`}
       >
         {activeTab === 'general' && (
-          <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-            <h2 className="border-b border-slate-200 pb-3 text-lg font-semibold text-slate-950">
-              Availability
-            </h2>
-
+          <SettingsSection
+            id="availability"
+            icon={SECTION_ICONS.availability}
+            title="Availability"
+            description="The working window bookings and events are offered inside."
+          >
             {/* Work Days */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Work Days</label>
@@ -1527,15 +1555,16 @@ const Settings: React.FC = () => {
                 ))}
               </select>
             </div>
+          </SettingsSection>
+        )}
 
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 pt-4">
-              Event Reminders
-            </h2>
-
-            <p className="-mt-1 text-xs text-gray-500">
-              How the notification bell nudges you about upcoming events.
-            </p>
-
+        {activeTab === 'general' && (
+          <SettingsSection
+            id="event-reminders"
+            icon={SECTION_ICONS.reminders}
+            title="Event Reminders"
+            description="How the notification bell nudges you about upcoming events."
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label
@@ -1607,11 +1636,16 @@ const Settings: React.FC = () => {
                 </span>
               </span>
             </label>
+          </SettingsSection>
+        )}
 
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 pt-4">
-              Job Hunt Settings
-            </h2>
-
+        {activeTab === 'general' && (
+          <SettingsSection
+            id="job-hunt"
+            icon={SECTION_ICONS.jobHunt}
+            title="Job Hunt Settings"
+            description="Thresholds the pipeline and analytics judge applications against."
+          >
             <div>
               <label
                 htmlFor="settings-ghosting-threshold"
@@ -1635,13 +1669,16 @@ const Settings: React.FC = () => {
                 automatically be marked as "Ghosted".
               </p>
             </div>
-          </div>
+          </SettingsSection>
         )}
 
         {activeTab === 'ai' && (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
-            <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">AI Provider</h2>
-
+          <SettingsSection
+            id="ai-provider"
+            icon={SECTION_ICONS.aiProvider}
+            title="AI Provider"
+            description="Your own provider powers cover letters, JD matching and custom widgets. The key is stored encrypted and never shown again after saving."
+          >
             <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-sky-50 p-5 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
@@ -1848,18 +1885,34 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
+          </SettingsSection>
+        )}
+
+        {/* These two own their own cards and save inline, so they are wrapped only with an
+            anchor the search can scroll to. */}
+        {activeTab === 'integrations' && (
+          <div id="settings-section-integrations" className="scroll-mt-24">
+            <GoogleSheetsSettings />
           </div>
         )}
 
-        {activeTab === 'integrations' && <GoogleSheetsSettings />}
-
-        {activeTab === 'security' && <SecurityDashboard />}
+        {activeTab === 'security' && (
+          <div id="settings-section-security" className="scroll-mt-24">
+            <SecurityDashboard />
+          </div>
+        )}
 
         {/* Category Manager */}
         {activeTab === 'organize' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Manage Categories</h2>
+          <div
+            id="settings-section-categories"
+            className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+          >
+            <div className="mb-4 flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
+                <span className="text-slate-400">{SECTION_ICONS.categories}</span>
+                Manage Categories
+              </h2>
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
@@ -1985,11 +2038,17 @@ const Settings: React.FC = () => {
 
         {/* Employment Types Manager */}
         {activeTab === 'organize' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            id="settings-section-employment-types"
+            className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+          >
+            <div className="mb-4 flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Employment Types</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
+                  <span className="text-slate-400">{SECTION_ICONS.employment}</span>
+                  Employment Types
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
                   Used in Experience & Applications — saved with Settings
                 </p>
               </div>
@@ -2109,11 +2168,17 @@ const Settings: React.FC = () => {
 
         {/* Holiday Tabs Manager */}
         {activeTab === 'organize' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            id="settings-section-holiday-colors"
+            className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+          >
+            <div className="mb-4 flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Time Off Colors</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
+                  <span className="text-slate-400">{SECTION_ICONS.holiday}</span>
+                  Time Off Colors
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
                   Custom tabs in Holiday Manager — saved with Settings
                 </p>
               </div>
@@ -2247,7 +2312,7 @@ const Settings: React.FC = () => {
 
             {/* Time off with no tab used a hardcoded colour, so it could silently match an
                 event category. It is a real setting now, and clashes are called out. */}
-            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-3.5">
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span
@@ -2296,7 +2361,7 @@ const Settings: React.FC = () => {
             </div>
 
             {colorConflicts.length > 0 && (
-              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
                   Colour clash
                 </p>
@@ -2327,11 +2392,17 @@ const Settings: React.FC = () => {
 
         {/* Application Timeline Stages Manager */}
         {activeTab === 'organize' && (
-          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            id="settings-section-application-stages"
+            className="mt-6 scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+          >
+            <div className="mb-4 flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Application Timeline Stages</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
+                  <span className="text-slate-400">{SECTION_ICONS.stages}</span>
+                  Application Timeline Stages
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
                   Custom stages for your job applications pipeline
                 </p>
               </div>
@@ -2482,22 +2553,24 @@ const Settings: React.FC = () => {
         )}
 
         {activeTab === 'navigation' && (
-          <NavigationSettings
-            hiddenNavItems={settings.hidden_nav_items}
-            onHiddenNavItemsChange={(hiddenNavItems) =>
-              setSettings((prev) => (prev ? { ...prev, hidden_nav_items: hiddenNavItems } : prev))
-            }
-            navItemOrder={settings.nav_item_order}
-            onNavItemOrderChange={(navItemOrder) =>
-              setSettings((prev) => (prev ? { ...prev, nav_item_order: navItemOrder } : prev))
-            }
-            mobileToolbarItems={settings.mobile_toolbar_items}
-            onMobileToolbarItemsChange={(mobileToolbarItems) =>
-              setSettings((prev) =>
-                prev ? { ...prev, mobile_toolbar_items: mobileToolbarItems } : prev
-              )
-            }
-          />
+          <div id="settings-section-navigation" className="scroll-mt-24">
+            <NavigationSettings
+              hiddenNavItems={settings.hidden_nav_items}
+              onHiddenNavItemsChange={(hiddenNavItems) =>
+                setSettings((prev) => (prev ? { ...prev, hidden_nav_items: hiddenNavItems } : prev))
+              }
+              navItemOrder={settings.nav_item_order}
+              onNavItemOrderChange={(navItemOrder) =>
+                setSettings((prev) => (prev ? { ...prev, nav_item_order: navItemOrder } : prev))
+              }
+              mobileToolbarItems={settings.mobile_toolbar_items}
+              onMobileToolbarItemsChange={(mobileToolbarItems) =>
+                setSettings((prev) =>
+                  prev ? { ...prev, mobile_toolbar_items: mobileToolbarItems } : prev
+                )
+              }
+            />
+          </div>
         )}
       </div>
     </div>

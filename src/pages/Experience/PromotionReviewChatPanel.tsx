@@ -320,7 +320,7 @@ const PromotionReviewChatPanel: React.FC<{
         )}
         {sending && (
           <div className="flex justify-start">
-            <div className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />

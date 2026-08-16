@@ -1,4 +1,10 @@
-import { AppstoreOutlined, HolderOutlined, PushpinFilled, UndoOutlined } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  HolderOutlined,
+  MenuOutlined,
+  PushpinFilled,
+  ReloadOutlined,
+} from '@ant-design/icons';
 import {
   DndContext,
   KeyboardSensor,
@@ -17,7 +23,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Tooltip } from 'antd';
+import { Popconfirm, Tooltip } from 'antd';
 import {
   DEFAULT_MOBILE_TOOLBAR_KEYS,
   MOBILE_SMART_SLOT_KEY,
@@ -272,26 +278,49 @@ const NavigationSettings = ({
   };
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b pb-4">
+    // Shell and heading match SettingsSection, so this reads as one of the section cards
+    // rather than the odd one out. It keeps its own markup because the reset button sits in
+    // the header alongside a longer description.
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="max-w-2xl">
-          <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
-          <p className="mt-1 text-sm leading-5 text-slate-600">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
+            <span className="text-slate-400">
+              <MenuOutlined />
+            </span>
+            Navigation
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
             Drag to reorder the sidebar, toggle what appears in it, and pin up to {MAX_PINNED}{' '}
             shortcuts to the mobile toolbar. Items stay within their group.
           </p>
         </div>
-        <Button
-          type="text"
-          icon={<UndoOutlined />}
-          onClick={() => {
+        {/* Was an antd text button with UndoOutlined: a bare label with no affordance, and
+            that icon's open arc reads as a clipped circle at this size. Now a compact
+            bordered button sized like the other section-header actions, so it sits on the
+            header baseline instead of floating. Confirmed because one click discards the
+            order, the hidden items and the pinned shortcuts all at once. */}
+        <Popconfirm
+          title="Reset navigation to default?"
+          description="Your sidebar order, hidden items and pinned mobile shortcuts will all go back to the defaults."
+          okText="Reset"
+          okButtonProps={{ danger: true }}
+          cancelText="Cancel"
+          placement="bottomRight"
+          onConfirm={() => {
             onNavItemOrderChange([]);
             onHiddenNavItemsChange([]);
             onMobileToolbarItemsChange([...DEFAULT_MOBILE_TOOLBAR_KEYS]);
           }}
         >
-          Reset default
-        </Button>
+          <button
+            type="button"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:h-9"
+          >
+            <ReloadOutlined className="text-xs" />
+            Reset to default
+          </button>
+        </Popconfirm>
       </div>
 
       <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-3">

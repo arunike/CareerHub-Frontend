@@ -156,7 +156,7 @@ const GroupedHolidayItem = ({
 
   return (
     <List.Item key={`group-item-${item.id}`} className="holiday-list-item">
-      <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-3.5 sm:px-6 sm:py-4 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
+      <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-4 sm:px-6 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <SelectionCheckbox
@@ -1351,7 +1351,7 @@ const Holidays = () => {
 
               return (
                 <List.Item key={`item-${item.id}`} className="holiday-list-item">
-                  <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-3.5 sm:px-6 sm:py-4 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
+                  <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-4 sm:px-6 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4 min-w-0 flex-1">
                         <SelectionCheckbox

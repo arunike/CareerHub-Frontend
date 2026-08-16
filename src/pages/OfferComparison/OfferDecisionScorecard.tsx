@@ -353,6 +353,12 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(value));
 
+// Always carries a sign, so a contribution reads the same way whether it adds or subtracts.
+const signedCurrency = (value: number) => {
+  const rounded = Math.round(value);
+  return `${rounded >= 0 ? '+' : '−'}${formatCurrency(Math.abs(rounded))}`;
+};
+
 const buildFinancialCalculationLines = ({
   offer,
   metrics,
@@ -447,9 +453,14 @@ const buildFinancialCalculationLines = ({
     `COL adjustment: ${formatCurrency(afterTaxTotal)} x 100 / ${colIndex} = ${formatCurrency(
       purchasingPowerAdjusted
     )}`,
-    `Cash adjustments: ${formatCurrency(cashAdjustment)} total; free food ${formatCurrency(
+    // Signed contributions rather than a subtraction chain: food can now be negative when you
+    // buy your own meals, and "free food -$2,115 - commute cost $638" read as subtracting a
+    // negative while calling a cost "free food".
+    `Cash adjustments: ${formatCurrency(cashAdjustment)} total; food ${signedCurrency(
       freeFoodAnnual
-    )} - commute cost ${formatCurrency(commuteAnnual)}. Remote/RTO preferences are scored in Location and WLB, not Financial`,
+    )} (meals provided on office days, less any you pay for), commute ${signedCurrency(
+      -commuteAnnual
+    )}. Remote/RTO preferences are scored in Location and WLB, not Financial`,
     `Rent subtraction: ${formatCurrency(monthlyRent)} x 12 = ${formatCurrency(rentAnnual)}`,
     `Adjusted value: ${formatCurrency(purchasingPowerAdjusted)} + ${formatCurrency(
       cashAdjustment
@@ -523,8 +534,8 @@ const scoreLocationWithBreakdown = (app?: Application) => {
   const commutePenalty = clamp(commuteAnnual / 1000, 0, 18);
   // Measured travel time replaces the crude days-per-week proxy rather than stacking on
   // top of it, so the two cannot punish the same commute twice.
-  const hasTime = !!commute.primary && commute.effectiveHours > 0;
-  const timePenalty = hasTime ? clamp(commute.effectiveHours / 15, 0, 20) : 0;
+  const hasTime = !!commute.primary && commute.annualHours > 0;
+  const timePenalty = hasTime ? clamp(commute.annualHours / 15, 0, 20) : 0;
   const rtoPenalty = hasTime || workMode === 'REMOTE' ? 0 : Math.max(0, rtoDays - 2) * 2;
   const score = clamp(base - commutePenalty - rtoPenalty - timePenalty);
 
@@ -536,7 +547,7 @@ const scoreLocationWithBreakdown = (app?: Application) => {
         1
       )}, capped at 18`,
       hasTime
-        ? `Commute time penalty: ${Math.round(commute.effectiveHours)} effective hrs/yr / 15 = ${timePenalty.toFixed(1)}, capped at 20`
+        ? `Commute time penalty: ${Math.round(commute.annualHours)} hrs/yr / 15 = ${timePenalty.toFixed(1)}, capped at 20`
         : `RTO penalty: max(0, ${rtoDays} days - 2) x 2 = ${rtoPenalty.toFixed(1)}`,
       `Location score: ${base} - ${commutePenalty.toFixed(1)} - ${(hasTime
         ? timePenalty
@@ -884,18 +895,49 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
                     <span className="font-bold text-slate-800">{rawPts.toFixed(2)} pts</span>
                   </span>
                 </div>
-                <div className="text-[10px] text-slate-400">{c.detail}</div>
+                <div className="text-[11px] leading-4 text-slate-400">{c.detail}</div>
                 {c.calculationLines && c.calculationLines.length > 0 && (
-                  <div className="mt-1 space-y-0.5 rounded-lg bg-slate-50 px-2 py-1.5">
-                    {c.calculationLines.map((line) => (
-                      <div
-                        key={line}
-                        className="whitespace-normal break-words text-[10px] leading-4 text-slate-500"
-                      >
-                        {line}
-                      </div>
-                    ))}
-                  </div>
+                  // Nearly every line is "Label: value", so it is set as a definition list
+                  // rather than a paragraph: a scannable column of labels, hairlines between
+                  // steps, and room to breathe. At 10px with a 16px line-height and 2px gaps
+                  // the derivation was a single grey mass.
+                  <dl className="mt-1.5 divide-y divide-slate-200/70 overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50">
+                    {c.calculationLines.map((line, index) => {
+                      const split = line.indexOf(': ');
+                      const label = split > 0 ? line.slice(0, split) : null;
+                      const value = split > 0 ? line.slice(split + 2) : line;
+                      // The derivation ends on its result, which is worth picking out.
+                      const isResult = index === c.calculationLines!.length - 1;
+                      return (
+                        <div
+                          key={`${index}-${line}`}
+                          // Always stacked. The popover is capped at 360px whatever the
+                          // viewport, so a `sm:` two-column split squeezed the value into
+                          // 186px on desktop — the same cramping, just moved.
+                          className={`px-2.5 py-1.5 ${isResult ? 'bg-white/80' : ''}`}
+                        >
+                          {label ? (
+                            <dt
+                              className={`text-[11px] leading-5 ${
+                                isResult
+                                  ? 'font-bold text-slate-700'
+                                  : 'font-semibold text-slate-500'
+                              }`}
+                            >
+                              {label}
+                            </dt>
+                          ) : null}
+                          <dd
+                            className={`m-0 whitespace-normal break-words text-[11px] leading-5 tabular-nums ${
+                              isResult ? 'font-semibold text-slate-800' : 'text-slate-600'
+                            }`}
+                          >
+                            {value}
+                          </dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
                 )}
               </div>
             );

@@ -1,7 +1,7 @@
 import UnitNumberInput from '../../../components/UnitNumberInput';
 import { CONTROL_CLASS } from '../../../components/formControls';
 import CommuteOptionsEditor from './CommuteOptionsEditor';
-import { officeDaysPerYear, type CommuteOption } from '../commute';
+import { officeDaysPerYear, type CommuteOption, type DrivingDefaults } from '../commute';
 type WorkSetupSectionProps = {
   workMode: 'REMOTE' | 'HYBRID' | 'ONSITE';
   onWorkModeChange: (value: 'REMOTE' | 'HYBRID' | 'ONSITE') => void;
@@ -13,14 +13,11 @@ type WorkSetupSectionProps = {
   onCommuteOptionsChange?: (value: CommuteOption[]) => void;
   ptoDays?: number;
   holidayDays?: number;
-  freeFoodPerkValue: number;
-  freeFoodPerkFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
-  onFreeFoodPerkValueChange: (value: number) => void;
-  onFreeFoodPerkFrequencyChange: (value: 'DAILY' | 'MONTHLY' | 'YEARLY') => void;
   flexibleHoursPolicy?: string;
   onFlexibleHoursPolicyChange?: (value: string) => void;
   travelFrequency?: string;
   onTravelFrequencyChange?: (value: string) => void;
+  drivingDefaults?: Partial<DrivingDefaults> | null;
 };
 
 const WorkSetupSection = ({
@@ -34,22 +31,12 @@ const WorkSetupSection = ({
   onCommuteOptionsChange,
   ptoDays,
   holidayDays,
-  freeFoodPerkValue,
-  freeFoodPerkFrequency,
-  onFreeFoodPerkValueChange,
-  onFreeFoodPerkFrequencyChange,
   flexibleHoursPolicy,
   onFlexibleHoursPolicyChange,
   travelFrequency,
   onTravelFrequencyChange,
+  drivingDefaults,
 }: WorkSetupSectionProps) => {
-  const annualizedFoodPerk =
-    freeFoodPerkFrequency === 'DAILY'
-      ? (Number(freeFoodPerkValue) || 0) * 260
-      : freeFoodPerkFrequency === 'MONTHLY'
-        ? (Number(freeFoodPerkValue) || 0) * 12
-        : Number(freeFoodPerkValue) || 0;
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
@@ -121,37 +108,8 @@ const WorkSetupSection = ({
               ptoDays,
               holidayDays,
             })}
+            drivingDefaults={drivingDefaults}
           />
-        </div>
-      )}
-      {showCommuteAndPerks && (
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Free Food Perk Value
-          </label>
-          <div className="grid grid-cols-[1fr_132px] gap-2">
-            <UnitNumberInput
-              unit="$"
-              min={0}
-              value={freeFoodPerkValue || null}
-              placeholder="0"
-              onChange={(value) => onFreeFoodPerkValueChange(value ?? 0)}
-            />
-            <select
-              value={freeFoodPerkFrequency}
-              onChange={(e) =>
-                onFreeFoodPerkFrequencyChange(e.target.value as 'DAILY' | 'MONTHLY' | 'YEARLY')
-              }
-              className={CONTROL_CLASS}
-            >
-              <option value="DAILY">/day</option>
-              <option value="MONTHLY">/month</option>
-              <option value="YEARLY">/year</option>
-            </select>
-          </div>
-          <p className="text-xs text-gray-500">
-            Annualized total: ${Math.round(annualizedFoodPerk).toLocaleString()}
-          </p>
         </div>
       )}
     </div>

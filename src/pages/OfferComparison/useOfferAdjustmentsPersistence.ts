@@ -51,18 +51,24 @@ export const useOfferAdjustmentsPersistence = ({ normalizeSimulatedOffers }: Par
     };
   }, [normalizeSimulatedOffers]);
 
-  const saveAdjustments = useCallback(async () => {
-    const nowIso = new Date().toISOString();
-    const payload: SavedOfferAdjustmentSettings = {
-      maritalStatus: latest.current.maritalStatus,
-      simulatedOffers: latest.current.simulatedOffers,
-      savedAt: nowIso,
-    };
+  // `overrides` exists for callers that have just computed a new scenario list and cannot wait a
+  // render for the ref to catch up — a setState followed immediately by a save would otherwise
+  // persist the previous list.
+  const saveAdjustments = useCallback(
+    async (overrides?: { simulatedOffers?: SimulatedOffer[]; maritalStatus?: MaritalStatus }) => {
+      const nowIso = new Date().toISOString();
+      const payload: SavedOfferAdjustmentSettings = {
+        maritalStatus: overrides?.maritalStatus ?? latest.current.maritalStatus,
+        simulatedOffers: overrides?.simulatedOffers ?? latest.current.simulatedOffers,
+        savedAt: nowIso,
+      };
 
-    await updateUserSettings({ offer_adjustment_settings: payload } as Record<string, unknown>);
-    setLastSavedAt(nowIso);
-    return nowIso;
-  }, []);
+      await updateUserSettings({ offer_adjustment_settings: payload } as Record<string, unknown>);
+      setLastSavedAt(nowIso);
+      return nowIso;
+    },
+    []
+  );
 
   return {
     maritalStatus,

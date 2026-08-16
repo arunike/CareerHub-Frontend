@@ -1207,7 +1207,7 @@ const Applications = () => {
               key={metric.label}
               onClick={metric.onClick}
               aria-label={metric.label}
-              className={`enterprise-card text-left transition-all duration-200 ease-in-out px-4 py-3.5 md:px-5 md:py-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 active:scale-[0.98] ${
+              className={`enterprise-card text-left transition-all duration-200 ease-in-out p-4 md:px-5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 active:scale-[0.98] ${
                 metric.isActive
                   ? metric.tone === 'blue'
                     ? 'border-blue-400 bg-blue-50/40 shadow-inner'
@@ -1735,7 +1735,7 @@ const Applications = () => {
         }
       >
         {applicationImportPreviewing ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-10">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-10">
             <div className="mx-auto flex max-w-md flex-col items-center text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <Spin />

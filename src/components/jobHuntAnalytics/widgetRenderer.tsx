@@ -240,7 +240,7 @@ const SectionCard = ({
   badge?: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <div className="enterprise-card h-full p-4 sm:p-5">
+  <div className="enterprise-card h-full p-4 sm:p-6">
     <div className="mb-4 flex items-center gap-2">
       <span className="text-base text-gray-500">{icon}</span>
       <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
@@ -583,7 +583,7 @@ const WatchListSection = ({
             </div>
           ))}
           {analytics.stale_in_stage.length === 0 && (
-            <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
+            <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
               No stale active stages
             </div>
           )}
@@ -615,7 +615,7 @@ const OutcomesSection = ({ stats }: { stats: JobHuntStats }) => (
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
+        <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
           Nothing has finished yet
         </div>
       )
@@ -634,7 +634,7 @@ const ReplyTimingSection = ({ stats }: { stats: JobHuntStats }) => (
     {(analytics) => {
       if (analytics.response_time_sample_size === 0) {
         return (
-          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-5 text-center text-sm text-gray-500">
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
             No replies recorded yet
           </div>
         );
@@ -733,7 +733,7 @@ const ResponseSegmentsSection = ({ stats }: { stats: JobHuntStats }) => (
 
       if (segments.length === 0) {
         return (
-          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-6 text-center text-sm text-gray-500">
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
             Needs {MIN_SEGMENT_SAMPLE}+ applications in one location to compare
           </div>
         );
@@ -744,7 +744,7 @@ const ResponseSegmentsSection = ({ stats }: { stats: JobHuntStats }) => (
           {segments.map((row) => (
             <div
               key={row.name}
-              className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+              className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
             >
               <span className="min-w-0 truncate text-sm font-medium text-gray-900">{row.name}</span>
               <span className="whitespace-nowrap text-xs text-gray-500 tabular-nums">

@@ -190,8 +190,8 @@ const SecurityDashboard: React.FC = () => {
   return (
     <div className="space-y-5">
       {contextHolder}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 border-b border-gray-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <SafetyCertificateOutlined className="text-sky-600" />
@@ -333,7 +333,7 @@ const Panel = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+  <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
     <div className="mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
       <span className="text-sky-600">{icon}</span>
       <h4 className="text-sm font-semibold text-gray-900">{title}</h4>

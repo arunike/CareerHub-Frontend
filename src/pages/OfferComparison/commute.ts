@@ -4,14 +4,37 @@
 
 export type CommuteMode = 'TRAIN' | 'BUS' | 'CAR' | 'BIKE' | 'WALK' | 'OTHER';
 export type CostFrequency = 'DAILY' | 'MONTHLY' | 'YEARLY';
+// FIXED is a figure you already know, such as a transit pass. FUEL derives the cost from
+// distance and pump price, because nobody knows their annual driving cost off the top of
+// their head — but everyone knows roughly how far they would drive and what gas costs.
+export type CostMode = 'FIXED' | 'FUEL';
+// Whether a distance covers the trip out or the trip there and back. Left implicit, the
+// annual mileage silently doubled a figure that was already a round trip, and the cost with
+// it — the arithmetic was right and the answer was still wrong.
+export type DistanceBasis = 'ONE_WAY' | 'ROUND_TRIP';
 
 export interface CommuteOption {
   mode: CommuteMode;
   minutes_each_way: number;
   cost_value: number;
   cost_frequency: CostFrequency;
-  // Time you can read or work through, so it is not a total write-off.
-  is_usable_time?: boolean;
+  // Absent on rows saved before fuel costing existed, which are all FIXED by definition.
+  cost_mode?: CostMode;
+  // Distance is kept separate from minutes: the same 15 minutes is 5 miles in traffic or 15
+  // on a motorway, so deriving one from the other would need a speed nobody has entered.
+  miles_each_way?: number;
+  // Absent on rows saved before this existed, which were all read as one way.
+  distance_basis?: DistanceBasis;
+  // Overrides only. Your car and your pump price belong to you, not to one offer, so these
+  // are normally blank and the shared defaults are used; a value here means this offer
+  // deliberately differs.
+  mpg?: number | null;
+  gas_price_per_gallon?: number | null;
+  // Parking and tolls, per day in the office. Fuel alone badly understates driving — a
+  // 16-mile round trip is a few hundred dollars of gas a year but garage parking can be
+  // thousands — so without this the derived total would not be a fair replacement for the
+  // fixed figure it is meant to supersede.
+  parking_tolls_per_day?: number;
   is_primary?: boolean;
 }
 
@@ -26,10 +49,49 @@ export const COMMUTE_MODE_LABELS: Record<CommuteMode, string> = {
 
 export const COMMUTE_MODES = Object.keys(COMMUTE_MODE_LABELS) as CommuteMode[];
 
+// Fallbacks for when no shared default has been saved yet. Shown as editable values rather
+// than applied invisibly — a commute cost built on assumptions you cannot see is worse than
+// no estimate.
+export const DEFAULT_MPG = 28;
+export const DEFAULT_GAS_PRICE = 4;
+
+/** Your car and your local pump price, shared by every offer. */
+export interface DrivingDefaults {
+  mpg: number;
+  gasPricePerGallon: number;
+}
+
+export const resolveDrivingDefaults = (
+  defaults?: Partial<DrivingDefaults> | null
+): DrivingDefaults => ({
+  mpg: Number(defaults?.mpg) || DEFAULT_MPG,
+  gasPricePerGallon: Number(defaults?.gasPricePerGallon) || DEFAULT_GAS_PRICE,
+});
+
+/** The figures actually used for one offer: its overrides where set, the shared values
+ *  otherwise. `overridden` drives the UI so a deviation is visible rather than implied. */
+export const effectiveFuelInputs = (
+  option: CommuteOption,
+  defaults?: Partial<DrivingDefaults> | null
+) => {
+  const shared = resolveDrivingDefaults(defaults);
+  const mpgOverride = Number(option.mpg) || 0;
+  const priceOverride = Number(option.gas_price_per_gallon) || 0;
+  return {
+    mpg: mpgOverride > 0 ? mpgOverride : shared.mpg,
+    gasPricePerGallon: priceOverride > 0 ? priceOverride : shared.gasPricePerGallon,
+    mpgOverridden: mpgOverride > 0,
+    priceOverridden: priceOverride > 0,
+    shared,
+  };
+};
+
+// Driving is the only mode where distance and pump price beat a flat figure; a transit pass
+// is already a number you know.
+export const supportsFuelCosting = (mode: CommuteMode) => mode === 'CAR' || mode === 'OTHER';
+
 const WEEKS_PER_YEAR = 52;
 const FULL_TIME_DAYS_PER_YEAR = 260;
-// Usable transit time still costs you the trip; half of it is a fair discount.
-const USABLE_TIME_DISCOUNT = 0.5;
 
 export interface OfficeDayInputs {
   workMode?: 'REMOTE' | 'HYBRID' | 'ONSITE' | string | null;
@@ -56,7 +118,88 @@ export const officeDaysPerYear = ({
   return daysPerWeek * WEEKS_PER_YEAR * attendance;
 };
 
-export const annualCostFor = (option: CommuteOption, officeDays: number) => {
+export const isRoundTrip = (option: CommuteOption) => option.distance_basis === 'ROUND_TRIP';
+
+// Miles per office day: doubled only when the figure describes one direction.
+export const dailyMilesFor = (option: CommuteOption) => {
+  const entered = Number(option.miles_each_way) || 0;
+  return isRoundTrip(option) ? entered : entered * 2;
+};
+
+export const annualMilesFor = (option: CommuteOption, officeDays: number) =>
+  dailyMilesFor(option) * officeDays;
+
+export const isFuelCosted = (option: CommuteOption) => option.cost_mode === 'FUEL';
+
+/** The figures an offer keeps for itself, if any. Reported per offer rather than per row: an
+ *  offer with three commute rows is still one decision about whose numbers to trust. */
+export interface FuelOverrides {
+  mpg: number | null;
+  gasPricePerGallon: number | null;
+}
+
+export const fuelOverridesIn = (
+  options: CommuteOption[] | null | undefined
+): FuelOverrides | null => {
+  const list = Array.isArray(options) ? options : [];
+  // The first row that overrides each figure wins the display; clearing clears them all, so
+  // there is never a second, hidden override left behind on another row.
+  const mpg = list.map((option) => Number(option.mpg)).find((value) => value > 0) ?? null;
+  const gasPricePerGallon =
+    list.map((option) => Number(option.gas_price_per_gallon)).find((value) => value > 0) ?? null;
+  if (mpg === null && gasPricePerGallon === null) return null;
+  return { mpg, gasPricePerGallon };
+};
+
+/** Hands every row back to the shared figures. */
+export const clearFuelOverrides = (options: CommuteOption[] | null | undefined): CommuteOption[] =>
+  (Array.isArray(options) ? options : []).map((option) => ({
+    ...option,
+    mpg: null,
+    gas_price_per_gallon: null,
+  }));
+
+export interface FuelBreakdown {
+  annualMiles: number;
+  gallons: number;
+  fuelCost: number;
+  parkingCost: number;
+  annualCost: number;
+  costPerMile: number;
+}
+
+export const fuelBreakdownFor = (
+  option: CommuteOption,
+  officeDays: number,
+  defaults?: Partial<DrivingDefaults> | null
+): FuelBreakdown | null => {
+  const miles = annualMilesFor(option, officeDays);
+  const { mpg, gasPricePerGallon: price } = effectiveFuelInputs(option, defaults);
+  // Without an efficiency figure there is nothing to divide by, so this reports no estimate
+  // rather than dividing by zero and rendering Infinity.
+  if (miles <= 0 || mpg <= 0 || price <= 0) return null;
+  const gallons = miles / mpg;
+  const fuelCost = gallons * price;
+  const parkingCost = (Number(option.parking_tolls_per_day) || 0) * officeDays;
+  const annualCost = fuelCost + parkingCost;
+  return {
+    annualMiles: miles,
+    gallons,
+    fuelCost,
+    parkingCost,
+    annualCost,
+    costPerMile: annualCost / miles,
+  };
+};
+
+export const annualCostFor = (
+  option: CommuteOption,
+  officeDays: number,
+  defaults?: Partial<DrivingDefaults> | null
+) => {
+  if (isFuelCosted(option)) {
+    return fuelBreakdownFor(option, officeDays, defaults)?.annualCost ?? 0;
+  }
   const value = Number(option.cost_value) || 0;
   if (option.cost_frequency === 'DAILY') return value * officeDays;
   if (option.cost_frequency === 'MONTHLY') return value * 12;
@@ -65,12 +208,6 @@ export const annualCostFor = (option: CommuteOption, officeDays: number) => {
 
 export const annualHoursFor = (option: CommuteOption, officeDays: number) =>
   ((Number(option.minutes_each_way) || 0) * 2 * officeDays) / 60;
-
-// What the commute actually costs you in time once usable transit time is discounted.
-export const effectiveHoursFor = (option: CommuteOption, officeDays: number) => {
-  const hours = annualHoursFor(option, officeDays);
-  return option.is_usable_time ? hours * (1 - USABLE_TIME_DISCOUNT) : hours;
-};
 
 export const primaryCommute = (options?: CommuteOption[] | null) => {
   if (!Array.isArray(options) || options.length === 0) return null;
@@ -81,7 +218,6 @@ export interface CommuteSummary {
   officeDays: number;
   primary: CommuteOption | null;
   annualHours: number;
-  effectiveHours: number;
   annualCost: number;
   // Every mode costed the same way, so alternatives can be compared side by side.
   alternatives: Array<CommuteOption & { annualHours: number; annualCost: number }>;
@@ -89,21 +225,23 @@ export interface CommuteSummary {
 
 export const summariseCommute = (
   options: CommuteOption[] | null | undefined,
-  dayInputs: OfficeDayInputs
+  dayInputs: OfficeDayInputs,
+  defaults?: Partial<DrivingDefaults> | null
 ): CommuteSummary => {
   const officeDays = officeDaysPerYear(dayInputs);
-  const list = Array.isArray(options) ? options : [];
+  // A remote offer has no commute to report. Rows saved before the mode changed are kept in
+  // the record but excluded here, so a remote offer never shows a 0 hr / $0 commute line.
+  const list = dayInputs.workMode === 'REMOTE' ? [] : Array.isArray(options) ? options : [];
   const primary = primaryCommute(list);
   return {
     officeDays,
     primary,
     annualHours: primary ? annualHoursFor(primary, officeDays) : 0,
-    effectiveHours: primary ? effectiveHoursFor(primary, officeDays) : 0,
-    annualCost: primary ? annualCostFor(primary, officeDays) : 0,
+    annualCost: primary ? annualCostFor(primary, officeDays, defaults) : 0,
     alternatives: list.map((option) => ({
       ...option,
       annualHours: annualHoursFor(option, officeDays),
-      annualCost: annualCostFor(option, officeDays),
+      annualCost: annualCostFor(option, officeDays, defaults),
     })),
   };
 };
@@ -112,9 +250,9 @@ export const summariseCommute = (
 // difference between a 60 and a 120 hour commute still moves the number.
 const COMMUTE_HOURS_FLOOR = 300;
 
-export const commuteBurdenScore = (effectiveHours: number) => {
-  if (!Number.isFinite(effectiveHours) || effectiveHours <= 0) return 100;
-  const ratio = Math.min(1, effectiveHours / COMMUTE_HOURS_FLOOR);
+export const commuteBurdenScore = (annualHours: number) => {
+  if (!Number.isFinite(annualHours) || annualHours <= 0) return 100;
+  const ratio = Math.min(1, annualHours / COMMUTE_HOURS_FLOOR);
   return Math.round((1 - ratio) * 100);
 };
 
@@ -135,7 +273,6 @@ export const seedFromLegacyCost = (
       minutes_each_way: 0,
       cost_value: value,
       cost_frequency: costFrequency || 'MONTHLY',
-      is_usable_time: false,
       is_primary: true,
     },
   ];

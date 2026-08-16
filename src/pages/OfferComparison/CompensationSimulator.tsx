@@ -73,7 +73,10 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
       const equityMonthly = vestingYears[0] / 12;
       const monthlyRent = rentOverride ?? row.monthlyRent;
       const monthlyCommute = commuteOverride ?? row.commuteAnnualCost / 12;
-      const monthlyFoodPerk = row.freeFoodAnnualValue / 12;
+      // Only the provided half reduces a food budget. The out-of-pocket half is money you
+      // were already budgeting to spend on food, so adding it here would count it twice —
+      // it is carried in the offer's score instead.
+      const monthlyFoodPerk = Math.max(0, row.freeFoodAnnualValue / 12);
       const monthlyFoodNet = Math.max(0, monthlyFoodBudget - monthlyFoodPerk);
       const monthlyFixedCosts = monthlyRent + monthlyCommute + monthlyFoodNet;
       const monthlyTakeHome = afterTaxCashMonthly + equityMonthly;
@@ -163,8 +166,8 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             Monthly take-home and vesting scenarios
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Uses the same tax, rent, commute, food perk, PTO, and realizable-equity assumptions as
-            the comparison rows.
+            Uses the same tax, rent, commute, food, PTO, and realizable-equity assumptions as the
+            comparison rows.
           </p>
         </div>
 
@@ -264,7 +267,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             icon: <CoffeeOutlined />,
             label: 'Food budget',
             value: formatCurrency(monthlyFoodBudget),
-            help: 'Monthly food budget before subtracting any saved company food perk.',
+            help: 'Monthly food budget before subtracting whatever the office provides.',
           },
         ].map((item) => (
           <div key={item.label} className="px-5 py-4 border-r border-slate-100 last:border-r-0">
@@ -315,7 +318,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                 Food
                 <Explain
                   label="monthly food cost"
-                  title="Monthly food budget minus the monthly value of any saved company food perk. Never drops below $0."
+                  title="Monthly food budget minus the value of the meals the office provides. Meals you pay for yourself are already inside this budget, so they are counted in the offer score rather than added here. Never drops below $0."
                 />
               </th>
               <th className="text-right font-bold px-4 py-3">
@@ -385,7 +388,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                   <div>{formatCurrency(item.monthlyFoodNet)}</div>
                   {item.monthlyFoodPerk > 0 && (
                     <div className="text-[10px] text-emerald-600">
-                      {formatCurrency(item.monthlyFoodPerk)} perk
+                      {formatCurrency(item.monthlyFoodPerk)} provided
                     </div>
                   )}
                 </td>

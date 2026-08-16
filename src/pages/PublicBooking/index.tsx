@@ -413,7 +413,7 @@ const PublicBookingPage = () => {
               </p>
             </div>
             <div className="min-w-0 shrink-0 md:w-[260px]">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="mb-3 text-xs font-medium text-slate-500">Hosted by</div>
                 <div className="flex items-center gap-3">
                   <IdentityAvatar
@@ -453,7 +453,7 @@ const PublicBookingPage = () => {
             </div>
           )}
           {managedBooking && (
-            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
               Current booking:{' '}
               <span className="font-bold text-slate-900">{managedBooking.date}</span>{' '}
               {managedBooking.start_time.slice(0, 5)}-{managedBooking.end_time.slice(0, 5)}{' '}
@@ -688,7 +688,7 @@ const PublicBookingPage = () => {
                 ) : (
                   <div className="space-y-4">
                     {!selectedDay || selectedDay.slots.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center">
+                      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
                         <p className="text-sm font-medium text-slate-600">
                           No available slots for this date
                         </p>

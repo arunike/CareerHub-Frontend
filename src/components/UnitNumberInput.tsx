@@ -10,6 +10,7 @@ export type NumberUnit =
   | '$'
   | '%'
   | '$/hr'
+  | '$/day'
   | '$/mo'
   | '$/yr'
   | 'days'
@@ -17,6 +18,9 @@ export type NumberUnit =
   | 'hrs'
   | 'hrs/day'
   | 'min'
+  | 'mi'
+  | 'mpg'
+  | '$/gal'
   | 'sec'
   | 'wks'
   | 'mo'
@@ -27,9 +31,13 @@ const ADDONS: Record<NumberUnit, { before?: string; after?: string }> = {
   $: { before: '$' },
   '%': { after: '%' },
   '$/hr': { before: '$', after: '/hr' },
+  '$/day': { before: '$', after: '/day' },
   '$/mo': { before: '$', after: '/mo' },
   '$/yr': { before: '$', after: '/yr' },
   days: { after: 'days' },
+  mi: { after: 'mi' },
+  mpg: { after: 'mpg' },
+  '$/gal': { before: '$', after: '/gal' },
   'days/wk': { after: 'days/wk' },
   hrs: { after: 'hrs' },
   'hrs/day': { after: 'hrs/day' },

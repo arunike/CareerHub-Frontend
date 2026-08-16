@@ -1,21 +1,36 @@
-import { COMMUTE_MODE_LABELS, formatDuration, formatHours } from './commute';
+import {
+  COMMUTE_MODE_LABELS,
+  effectiveFuelInputs,
+  formatDuration,
+  formatHours,
+  fuelBreakdownFor,
+  isFuelCosted,
+  isRoundTrip,
+  type DrivingDefaults,
+} from './commute';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 
 const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
 // Cost alone understates a commute: $2,400 a year is noise next to a salary, but 200
 // hours is not. Both are shown against the same office-day count.
-const CommuteComparison = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }) => {
+const CommuteComparison = ({
+  scenarioRows,
+  drivingDefaults,
+}: {
+  scenarioRows: ScenarioRow[];
+  drivingDefaults?: Partial<DrivingDefaults> | null;
+}) => {
   const rows = scenarioRows.filter((row) => row.commute?.primary);
   if (rows.length === 0) return null;
 
-  const worstHours = Math.max(...rows.map((row) => row.commute?.effectiveHours ?? 0), 0);
+  const worstHours = Math.max(...rows.map((row) => row.commute?.annualHours ?? 0), 0);
 
   return (
     <div className="space-y-3">
       <p className="text-xs leading-5 text-slate-500">
         Travel time counted over the office days each offer actually requires, from its RTO policy
-        and time off. Time you marked as usable counts at half.
+        and time off.
       </p>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
@@ -32,10 +47,14 @@ const CommuteComparison = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }) =>
             {rows.map((row) => {
               const commute = row.commute!;
               const primary = commute.primary!;
-              const share = worstHours > 0 ? (commute.effectiveHours / worstHours) * 100 : 0;
+              const fuel = isFuelCosted(primary)
+                ? fuelBreakdownFor(primary, commute.officeDays, drivingDefaults)
+                : null;
+              const fuelInputs = effectiveFuelInputs(primary, drivingDefaults);
+              const share = worstHours > 0 ? (commute.annualHours / worstHours) * 100 : 0;
               const isBest =
-                commute.effectiveHours ===
-                Math.min(...rows.map((other) => other.commute?.effectiveHours ?? 0));
+                commute.annualHours ===
+                Math.min(...rows.map((other) => other.commute?.annualHours ?? 0));
               return (
                 <tr key={row.appName} className="border-t border-slate-100 align-top">
                   <td className="py-3 pr-4">
@@ -51,7 +70,6 @@ const CommuteComparison = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }) =>
                     <div className="text-slate-900">{COMMUTE_MODE_LABELS[primary.mode]}</div>
                     <div className="text-[11px] text-slate-400">
                       {formatDuration(primary.minutes_each_way)} each way
-                      {primary.is_usable_time && ' · usable'}
                     </div>
                     {commute.alternatives.length > 1 && (
                       <div className="mt-1 text-[11px] text-slate-400">
@@ -73,16 +91,24 @@ const CommuteComparison = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }) =>
                     <div
                       className={`tabular-nums ${isBest ? 'font-semibold text-emerald-600' : 'text-slate-900'}`}
                     >
-                      {formatHours(commute.effectiveHours)}
+                      {formatHours(commute.annualHours)}
                     </div>
-                    {primary.is_usable_time && (
-                      <div className="text-[11px] text-slate-400">
-                        {formatHours(commute.annualHours)} raw
+                  </td>
+                  <td className="py-3 pl-3 text-right">
+                    <div className="font-bold tabular-nums text-slate-950">
+                      {money(commute.annualCost)}
+                    </div>
+                    {/* A derived figure should show its working where it is read, not only in
+                        the form that produced it. */}
+                    {fuel && (
+                      <div className="text-[11px] text-slate-400 tabular-nums">
+                        {Math.round(fuel.annualMiles).toLocaleString()} mi (
+                        {primary.miles_each_way ?? 0}{' '}
+                        {isRoundTrip(primary) ? 'round trip' : 'each way'}) @ {fuelInputs.mpg} mpg ·
+                        ${fuelInputs.gasPricePerGallon}/gal
+                        {fuel.parkingCost > 0 && <> + {money(fuel.parkingCost)} parking</>}
                       </div>
                     )}
-                  </td>
-                  <td className="py-3 pl-3 text-right font-bold tabular-nums text-slate-950">
-                    {money(commute.annualCost)}
                   </td>
                 </tr>
               );

@@ -28,7 +28,7 @@ export const renderAvailabilityWidget = (
   switch (id) {
     case 'total':
       return (
-        <div className="enterprise-card h-full p-6">
+        <div className="enterprise-card h-full p-4 sm:p-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
               <CalendarOutlined className="text-2xl text-blue-600" />
@@ -42,7 +42,7 @@ export const renderAvailabilityWidget = (
       );
     case 'weekly':
       return (
-        <div className="enterprise-card h-full p-6">
+        <div className="enterprise-card h-full p-4 sm:p-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
               <RiseOutlined className="text-2xl text-green-600" />
@@ -59,7 +59,7 @@ export const renderAvailabilityWidget = (
     // the weeks are, and whether they pile onto single days, does.
     case 'load':
       return (
-        <div className="enterprise-card h-full p-6">
+        <div className="enterprise-card h-full p-4 sm:p-6">
           <div className="mb-5 flex items-center gap-2">
             <ThunderboltOutlined className="h-5 w-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">Schedule Load</h3>
@@ -114,7 +114,7 @@ export const renderAvailabilityWidget = (
       );
     case 'category':
       return (
-        <div className="enterprise-card h-full p-6">
+        <div className="enterprise-card h-full p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-6">
             <PieChartOutlined className="w-5 h-5 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">Events by Category</h3>

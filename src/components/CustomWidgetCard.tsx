@@ -88,7 +88,7 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
     const unit = cachedData?.unit || '';
 
     return (
-      <div className="enterprise-card group relative h-full p-6">
+      <div className="enterprise-card group relative h-full p-4 sm:p-6">
         <div className="flex items-center gap-4">
           <div className={`flex items-center justify-center w-12 h-12 ${colors.bg} rounded-lg`}>
             <IconComponent className={`text-2xl ${colors.text}`} />
@@ -108,7 +108,7 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
     const chartType = cachedData.chartType || 'bar';
 
     return (
-      <div className="enterprise-card group relative h-full p-6">
+      <div className="enterprise-card group relative h-full p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-6">
           <IconComponent className={`w-5 h-5 ${colors.text}`} />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>

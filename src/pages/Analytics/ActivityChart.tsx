@@ -52,7 +52,7 @@ const CustomTooltip = ({
   const bucket = payload?.[0]?.payload;
   if (!active || !bucket) return null;
   return (
-    <div className="rounded-xl border border-slate-100 bg-white/95 p-3.5 shadow-[0_8px_30px_rgba(49,88,183,0.055)] backdrop-blur-md">
+    <div className="rounded-xl border border-slate-100 bg-white/95 p-3 shadow-[0_8px_30px_rgba(49,88,183,0.055)] backdrop-blur-md">
       <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
         {bucket.fullLabel}
       </p>

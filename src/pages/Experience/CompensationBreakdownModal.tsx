@@ -1101,7 +1101,7 @@ const MetricSection = ({
   hint?: string;
   children: React.ReactNode;
 }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+  <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
     <div className="pb-2">
       <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
         {title}

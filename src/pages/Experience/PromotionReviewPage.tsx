@@ -324,7 +324,7 @@ const PromotionReviewPage: React.FC = () => {
                 />
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                   {hasItems(review.general_calibration.heuristics) && (
-                    <div className="rounded-2xl border border-blue-100 bg-white p-5">
+                    <div className="rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
                       <h3 className="m-0 mb-4 text-sm font-semibold text-blue-900">
                         General heuristics
                       </h3>
@@ -332,7 +332,7 @@ const PromotionReviewPage: React.FC = () => {
                     </div>
                   )}
                   {hasItems(review.general_calibration.questions_to_validate) && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
                       <h3 className="m-0 mb-4 text-sm font-semibold text-slate-800">
                         Validate with manager
                       </h3>
@@ -351,7 +351,7 @@ const PromotionReviewPage: React.FC = () => {
                 description="A compact view of whether your evidence is ready to become a promotion packet and whether the manager conversation is calibrated."
               />
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[190px_240px_minmax(0,1fr)]">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                     Packet readiness
                   </div>
@@ -370,7 +370,7 @@ const PromotionReviewPage: React.FC = () => {
                     {review.readiness_dashboard.manager_conversation_readiness}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
                   <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
                     Confidence explanation
                   </div>
@@ -502,7 +502,7 @@ const PromotionReviewPage: React.FC = () => {
                       </div>
                     )}
                     {score.how_to_strengthen && (
-                      <div className="mt-4 rounded-xl border border-slate-200 bg-white/75 px-4 py-3 text-[13px] leading-6 text-slate-700">
+                      <div className="mt-4 rounded-xl border border-slate-200 bg-white/75 p-4 text-[13px] leading-6 text-slate-700">
                         <BulbOutlined className="mr-1.5 inline-block align-middle text-sm text-amber-500" />
                         <span className="inline align-middle">
                           <strong className="text-slate-950">Next action:</strong>{' '}

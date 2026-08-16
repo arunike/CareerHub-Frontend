@@ -236,7 +236,7 @@ const ContactEditorModal = ({
           </Form.Item>
         </div>
         {canPickApplication && (
-          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400">
               Linked application
             </p>
