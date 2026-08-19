@@ -484,9 +484,7 @@ const OfferComparison = () => {
           commute_options: editingApp.commute_options ?? [],
           free_food_perk_value: editingApp.free_food_perk_value ?? 0,
           free_food_perk_frequency: editingApp.free_food_perk_frequency ?? 'YEARLY',
-          // This payload is an explicit whitelist, so a new field is silently dropped unless
-          // it is listed here — the editor and serializer both accepted meals while nothing
-          // ever reached the API.
+          // Explicit whitelist: a new field is silently dropped unless listed here.
           free_food_meals: editingApp.free_food_meals ?? [],
           free_food_value_per_meal: editingApp.free_food_value_per_meal ?? null,
           tax_base_rate: editingApp.tax_base_rate ?? null,
@@ -869,9 +867,7 @@ const OfferComparison = () => {
   }, [filteredByYear, applicationsById, statusFilter, isOfferRejected, isPastRole]);
 
   const referenceLocation = useMemo(() => {
-    // Resolved from every offer, not the visible ones: the baseline is a property of the
-    // user's career, not of the tab they happen to be on. Reading it off the filtered
-    // list let a tab that excluded the current role silently re-baseline the whole page.
+    // Resolved from every offer, not the filtered list, or a tab could re-baseline the page.
     const current = offers.find((offer) => offer.is_current) || filteredOffers[0];
     if (current) {
       const currentApp = applications.find((app) => app.id === current.application);
@@ -914,9 +910,7 @@ const OfferComparison = () => {
     drivingDefaults,
   });
 
-  // Which offers currently keep their own mpg or pump price. Listed so a change to the shared
-  // figures can be pushed onto the ones that should follow it, instead of the user reopening
-  // each offer to find out which are out of step.
+  // Offers that keep their own mpg or pump price.
   const fuelOverrideTargets = useMemo<FuelOverrideTarget[]>(() => {
     const targets: FuelOverrideTarget[] = [];
     // Every offer, not just the ones the year filter is showing: a shared figure is meant to be
@@ -968,9 +962,7 @@ const OfferComparison = () => {
         }
 
         if (scenarioIds.length > 0) {
-          // Scenarios live in saved settings rather than their own rows, so the whole list is
-          // written back — passed explicitly because the save helper reads a ref that has not
-          // caught up with this render yet.
+          // Passed explicitly: the save helper's ref has not caught up with this render.
           const nextScenarios = simulatedOffers.map((scenario) =>
             scenarioIds.includes(String(scenario.id))
               ? { ...scenario, commute_options: clearFuelOverrides(scenario.commute_options) }

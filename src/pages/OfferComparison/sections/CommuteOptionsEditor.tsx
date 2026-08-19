@@ -40,9 +40,6 @@ const newOption = (used: CommuteMode[]): CommuteOption => ({
   is_primary: used.length === 0,
 });
 
-// Every input carries a visible label. They were previously packed into one six-column row
-// with only unit chips to distinguish them, which is how a distance ended up ambiguous
-// enough to be counted twice.
 const Field = ({
   label,
   hint,
@@ -224,9 +221,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                       onChange={(event) => {
                         const next = event.target.value;
                         if (next === 'FUEL') {
-                          // No need to copy efficiency or price onto the offer: they are
-                          // shared, and writing them here would turn every offer into an
-                          // override that stops tracking the shared figure.
+                          // Do not copy the shared figures onto the offer or it becomes an override.
                           patch(index, {
                             cost_mode: 'FUEL',
                             distance_basis: option.distance_basis || 'ONE_WAY',

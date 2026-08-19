@@ -88,9 +88,7 @@ const MobileModalBase = ({
     </div>
   );
 
-  // antd Modal synthesises an OK/Cancel footer when none is given, but Drawer renders
-  // nothing — so a modal that relies on the default loses its Save button on mobile.
-  // `footer={null}` still means no footer; only an absent footer gets the default.
+  // antd defaults a footer when none is given; Drawer does not, so pass it explicitly.
   const drawerFooter =
     props.footer === undefined ? (
       <div className="careerhub-mobile-drawer-footer">

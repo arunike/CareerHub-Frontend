@@ -71,7 +71,7 @@ const SpanBar = ({
           onSelect?.(event);
         }}
         className={clsx(
-          'pointer-events-auto mx-0.5 h-[18px] truncate px-1.5 text-left text-[11px] leading-[18px] transition-opacity hover:opacity-85',
+          'pointer-events-auto mx-0.5 h-[18px] truncate px-1.5 text-left text-[11px] font-medium leading-[18px] transition-opacity hover:opacity-85',
           continuesLeft ? 'rounded-l-none' : 'rounded-l',
           continuesRight ? 'rounded-r-none' : 'rounded-r'
         )}
@@ -239,13 +239,9 @@ const CalendarMonthView = ({
         <div className="grid grid-cols-7">{days}</div>
         {spans.length > 0 && (
           <div
-            // z-20 keeps the bars above the day cells. A selected cell is z-10 with an
-            // opaque background, which otherwise paints over the start of the bar and
-            // hides its title, leaving what looks like a blank stripe.
+            // Above the day cells: a selected cell is z-10 and opaque, so it would paint over the bar.
             className="pointer-events-none absolute inset-x-0 z-20 hidden grid-cols-7 gap-y-0.5 px-px sm:grid"
-            // The day number occupies 9-37px of the cell, so bars start below it with a
-            // small gap. 34 overlapped it by 3px, which only showed once the bars were
-            // raised above the cell background.
+            // The day number occupies 9-37px, so bars start below it.
             style={{ top: 40 }}
           >
             {spans.map((span) => (

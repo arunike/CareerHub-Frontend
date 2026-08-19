@@ -515,7 +515,7 @@ const CreateCustomWidgetModal = ({
           </div>
 
           {queryType === 'visual' ? (
-            /* VISUAL CUSTOM BUILDER */
+            // VISUAL CUSTOM BUILDER
             <div className="space-y-5 pt-3 border-t border-slate-100">
               {/* Display Component & Data Source */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -844,7 +844,7 @@ const CreateCustomWidgetModal = ({
               </div>
             </div>
           ) : (
-            /* AI BUILDER INPUT FIELD */
+            // AI BUILDER INPUT FIELD
             <div className="space-y-4 pt-2 border-t border-slate-100">
               <div>
                 <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">

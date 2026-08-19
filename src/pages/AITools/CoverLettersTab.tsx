@@ -60,7 +60,7 @@ const CoverLettersTab: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
-  /* ── Selection ── */
+  // ── Selection ──
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
@@ -81,7 +81,7 @@ const CoverLettersTab: React.FC = () => {
     [selectedLetters]
   );
 
-  /* ── Single-item actions ── */
+  // ── Single-item actions ──
   const handleDelete = useCallback(
     async (id: string) => {
       if (usingBackendArtifacts) {
@@ -127,7 +127,7 @@ const CoverLettersTab: React.FC = () => {
     });
   }, [editingLetter, refresh, usingBackendArtifacts]);
 
-  /* ── Bulk actions ── */
+  // ── Bulk actions ──
   const handleBulkDelete = useCallback(() => {
     const deletableIds = selectedIds.filter((id) => {
       const l = letters.find((x) => x.id === id);
@@ -180,7 +180,7 @@ const CoverLettersTab: React.FC = () => {
     setSelectedIds([]);
   }, [refresh, usingBackendArtifacts]);
 
-  /* ── Export ── */
+  // ── Export ──
   const handleExport = useCallback(
     async (format: string): Promise<{ data: Blob; headers: Record<string, string> }> => {
       if (format === 'json') {
@@ -206,7 +206,7 @@ const CoverLettersTab: React.FC = () => {
     [letters]
   );
 
-  /* ── Copy helper ── */
+  // ── Copy helper ──
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     messageApi.success('Copied to clipboard');

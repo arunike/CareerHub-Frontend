@@ -73,9 +73,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
       const equityMonthly = vestingYears[0] / 12;
       const monthlyRent = rentOverride ?? row.monthlyRent;
       const monthlyCommute = commuteOverride ?? row.commuteAnnualCost / 12;
-      // Only the provided half reduces a food budget. The out-of-pocket half is money you
-      // were already budgeting to spend on food, so adding it here would count it twice —
-      // it is carried in the offer's score instead.
+      // Only the provided half reduces the budget; the out-of-pocket half is already in the score.
       const monthlyFoodPerk = Math.max(0, row.freeFoodAnnualValue / 12);
       const monthlyFoodNet = Math.max(0, monthlyFoodBudget - monthlyFoodPerk);
       const monthlyFixedCosts = monthlyRent + monthlyCommute + monthlyFoodNet;

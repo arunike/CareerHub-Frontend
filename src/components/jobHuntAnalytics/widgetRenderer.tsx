@@ -79,10 +79,7 @@ const OUTCOME_CLASSES: Record<string, string> = {
 // applications says nothing, and presenting it as a finding is worse than omitting it.
 const MIN_SEGMENT_SAMPLE = 20;
 
-// A share that rounds to zero but is not zero gets a decimal instead. 2 offers out of 806
-// is 0.2%, and showing that as a flat 0% next to "2 reached" reads as though the funnel
-// never got there. Below a tenth of a percent the digit stops being meaningful, so it
-// becomes an explicit "less than" rather than a stack of zeroes.
+// A non-zero share under 0.1% reads "<0.1%" instead of a misleading 0%.
 const formatShare = (rate: number, count: number) => {
   const percent = rate * 100;
   if (count === 0) return '0%';
@@ -639,10 +636,7 @@ const ReplyTimingSection = ({ stats }: { stats: JobHuntStats }) => (
           </div>
         );
       }
-      // Bars are scaled to the busiest bucket, not to the total. Against the total the
-      // largest bar filled 63% and the rest were slivers in a wide empty track, which is
-      // the opposite of what a distribution should show. The share is already spelled out
-      // in the label beside each row.
+      // Bars scale to the busiest bucket, not the total.
       const busiest = Math.max(...analytics.response_time_buckets.map((b) => b.count), 1);
 
       return (
@@ -716,9 +710,6 @@ const ReplyTimingSection = ({ stats }: { stats: JobHuntStats }) => (
 );
 
 const ResponseSegmentsSection = ({ stats }: { stats: JobHuntStats }) => (
-  // This used to rank sheet sources and companies by offer rate. With a handful of offers
-  // that is noise dressed as insight — one company at 2 applications and 1 offer outranked
-  // everything at "50%". Response rate has the sample size to mean something.
   <AnalyticsSection
     stats={stats}
     icon={<TrophyOutlined />}
@@ -774,9 +765,6 @@ const DataHealthSection = ({
   stats: JobHuntStats;
   fieldCompleteness: ApplicationStats['field_completeness'];
 }) => (
-  // Reporting an empty breakdown is less useful than saying why it is empty. Level is blank
-  // on every row here, so response-rate-by-seniority cannot exist — that is worth stating
-  // rather than rendering a chart with nothing in it.
   <AnalyticsSection
     stats={stats}
     icon={<ExclamationCircleOutlined />}

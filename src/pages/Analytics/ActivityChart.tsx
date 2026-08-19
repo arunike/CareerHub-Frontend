@@ -150,9 +150,7 @@ const ActivityChart = ({
     setDrill([]);
   };
 
-  // The picker is always on screen, so it doubles as a readout of the window you are
-  // looking at — a preset, a drilled bar, or dates you typed. Derived rather than stored,
-  // so it cannot drift from the chart.
+  // Derived, not stored, so the readout cannot drift from the chart.
   const shownRange: [Dayjs, Dayjs] = [dayjs(series.windowStart), dayjs(series.windowEnd)];
 
   const pickRange = (next: [Dayjs, Dayjs]) => {
@@ -183,18 +181,14 @@ const ActivityChart = ({
   const openBucket = (bucket: ActivityBucket) => {
     const finer = FINER_GRANULARITY[series.granularity];
     if (!finer || !bucket.drillable) return;
-    // Intersect with the level above. The week of Dec 29 shows up under both December and
-    // January; opening it must keep the month you came from, or it would break down more
-    // applications than the bar you clicked.
+    // Intersect with the level above: the week of Dec 29 sits in both December and January.
     const start =
       activeWindow && activeWindow.start > bucket.start ? activeWindow.start : bucket.start;
     const end = activeWindow && activeWindow.end < bucket.end ? activeWindow.end : bucket.end;
     setDrill((prev) => [...prev, { label: bucket.fullLabel, start, end, granularity: finer }]);
   };
 
-  // Long ranges cannot label every bar, so thin the ticks instead of overlapping them.
-  // A phone fits far fewer labels than a desktop, and 12 weekly dates at 500px ran into
-  // each other, so the budget follows the breakpoint rather than being a fixed number.
+  // Thin the ticks on long ranges; the budget follows the breakpoint.
   const labelBudget = stackPickers ? 6 : 14;
   const tickInterval = Math.max(0, Math.ceil(series.buckets.length / labelBudget) - 1);
   const canDrill = FINER_GRANULARITY[series.granularity] !== null;

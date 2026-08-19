@@ -602,10 +602,7 @@ const Applications = () => {
     });
   };
 
-  // /applications?application=<id> opens that application's drawer directly. The analytics
-  // watch list needs somewhere to send you: without this, acting on a flagged application
-  // meant finding it by hand among 800 rows. The param is cleared once consumed so a refresh
-  // or a back press does not reopen it.
+  // ?application=<id> opens that drawer once, then clears the param.
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     const requested = Number(searchParams.get('application'));

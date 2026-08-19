@@ -73,9 +73,7 @@ const SortableItem = ({
   );
 };
 
-// Average duration became Schedule Load, and the last-7-days chart was replaced by the
-// shared activity chart the page renders. Without normalising, a saved layout would keep
-// those ids and the grid would hold a card that renders nothing at all.
+// Saved layouts can hold retired widget ids, which would render an empty card.
 const RETIRED_WIDGET_IDS = new Set(['duration', 'activity']);
 const AVAILABLE_WIDGET_IDS = new Set(AVAILABLE_WIDGETS.map((widget) => widget.id));
 const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEnabled).map(

@@ -1,11 +1,3 @@
-// Food on an office day is money either way: a meal the office provides is money you keep, and
-// one it does not is money you spend. A single "free food perk value" could only express the
-// first half, so an offer with no canteen looked identical to one where you never eat out.
-//
-// Each meal carries its own amount because they are not interchangeable — a $6 breakfast and a
-// $20 dinner should not average into one figure — and its own provided/you-pay state, so the
-// same list expresses both the saving and the cost.
-
 import { officeDaysPerYear, type OfficeDayInputs } from './commute';
 
 export type MealKey = 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACKS';
@@ -29,9 +21,9 @@ export const DEFAULT_MEAL_VALUES: Record<MealKey, number> = {
 
 export interface MealEntry {
   meal: MealKey;
-  /** What that meal costs you if you buy it. */
+  // What that meal costs you if you buy it.
   value: number;
-  /** True when the office provides it, so you keep the money instead of spending it. */
+  // True when the office provides it, so you keep the money instead of spending it.
   provided: boolean;
 }
 
@@ -66,11 +58,11 @@ export const normalizeMealEntries = (raw: unknown, legacyValuePerMeal = 0): Meal
 export interface FreeFoodBreakdown {
   entries: MealEntry[];
   officeDays: number;
-  /** Annual value of the meals the office provides. */
+  // Annual value of the meals the office provides.
   savedAnnual: number;
-  /** Annual spend on the meals it does not. */
+  // Annual spend on the meals it does not.
   outOfPocketAnnual: number;
-  /** Saved minus spent: positive when the office feeds you, negative when it does not. */
+  // Saved minus spent: positive when the office feeds you, negative when it does not.
   netAnnual: number;
 }
 

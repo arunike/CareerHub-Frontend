@@ -80,7 +80,7 @@ export const resolveSettings = (raw: unknown): ReminderSettings => {
   };
 };
 
-/** Events close enough to remind about, minus anything dismissed or muted. */
+// Events close enough to remind about, minus anything dismissed or muted.
 export const dueReminders = (
   events: Event[],
   settings: ReminderSettings,
@@ -113,14 +113,14 @@ export const urgentReminders = (
     return state[String(event.id)] !== 'forever';
   });
 
-/** Dismissing hides an event until the repeat interval has elapsed. */
+// Dismissing hides an event until the repeat interval has elapsed.
 export const dismissUntil = (settings: ReminderSettings, today: Date = new Date()) => {
   const next = new Date(today.getTime());
   next.setDate(next.getDate() + Math.max(1, settings.repeatEveryDays));
   return toDay(next);
 };
 
-/** Drops entries for events that are gone or long past, so the store cannot grow forever. */
+// Drops entries for events that are gone or long past, so the store cannot grow forever.
 export const pruneReminderState = (state: ReminderState, events: Event[]): ReminderState => {
   const live = new Set(events.map((event) => String(event.id)));
   return Object.fromEntries(Object.entries(state).filter(([id]) => live.has(id)));
@@ -128,7 +128,7 @@ export const pruneReminderState = (state: ReminderState, events: Event[]): Remin
 
 export type ReminderUrgency = 'today' | 'tomorrow' | 'soon';
 
-/** How loudly a reminder should present itself. */
+// How loudly a reminder should present itself.
 export const reminderUrgency = (eventDate: string, today: Date = new Date()): ReminderUrgency => {
   const away = daysUntil(eventDate, today);
   if (away <= 0) return 'today';

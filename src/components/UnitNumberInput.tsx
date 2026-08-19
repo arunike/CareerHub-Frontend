@@ -2,10 +2,6 @@ import { InputNumber } from 'antd';
 import type { InputNumberProps } from 'antd';
 import { twMerge } from 'tailwind-merge';
 
-// Every numeric field in the app goes through this component so the stepper and
-// the unit chip stay identical everywhere. Currency reads before the number,
-// everything else after — but the stored value is always a plain number, so the
-// unit is display only and never round-trips into saved data.
 export type NumberUnit =
   | '$'
   | '%'
@@ -55,9 +51,7 @@ type Props = Omit<
 > & {
   // Omit for a plain count with no unit chip.
   unit?: NumberUnit;
-  // Opt-in escape hatch for fields where people naturally type something other than a
-  // bare number, e.g. "1h30" for a duration. It only ever converts input into the plain
-  // number that gets stored — no unit character survives into the value.
+  // Opt-in parser for input like "1h30"; only the plain number is stored.
   parseText?: (raw: string) => number | null;
   // Optional so antd Form.Item can inject them.
   value?: number | null;
@@ -71,20 +65,14 @@ const clamp = (value: number, min?: number, max?: number) => {
   return next;
 };
 
-// antd v6 renders addons as a flex `ant-space-compact` row: the addon chips size to
-// content but the number box keeps its default 90px, so the group has to be told to
-// grow or it collapses inside a wider container. Padding is trimmed from antd's
-// default so a one character unit reads as a chip rather than a slab.
+// antd sizes the number box to 90px, so the compact row must be told to grow.
 const GROUP = [
   '[&_.ant-input-number-addon]:px-1.5',
   '[&>.ant-input-number]:flex-1',
   '[&>.ant-input-number]:min-w-0',
 ].join(' ');
 
-// Tailwind utilities live in @layer utilities and antd injects its runtime CSS
-// unlayered, so an unlayered antd rule wins no matter the specificity. Nothing in a
-// class can beat `.ant-input-number { width: 90px }` — only an inline style can. The
-// addon case escapes this because antd sets no flex rule for [&>*]:flex-1 to lose to.
+// antd's CSS is unlayered, so only an inline style can beat .ant-input-number's width.
 const setsOwnWidth = (className?: string) => /(?:^|\s)!?(?:w-|max-w-)/.test(className ?? '');
 
 const UnitNumberInput = ({

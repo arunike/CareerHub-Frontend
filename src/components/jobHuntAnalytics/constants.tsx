@@ -9,10 +9,6 @@ import {
 } from '@ant-design/icons';
 import type { WidgetDefinition } from './types';
 
-// One widget per section, so each can be toggled, reordered and sized on its own. These were
-// briefly a single "Job Search" card, which fixed the real problem — the same numbers being
-// reported three times — but grew into one tall block you could not rearrange. Splitting it
-// keeps that fix: every figure still appears in exactly one of these.
 export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
   {
     id: 'headline',

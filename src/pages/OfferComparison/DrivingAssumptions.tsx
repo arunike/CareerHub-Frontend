@@ -1,15 +1,3 @@
-// Your car's mileage and the price you pay at the pump do not change per offer, but they were
-// stored on every commute option, so a gas-price change meant editing each offer in turn — and
-// offers silently disagreed about the same two numbers.
-//
-// They live on the user now. This is the one place they are edited; each offer shows them
-// read-only and can still record an override when a particular commute really is different
-// (a rental for the long drive, a cheaper station near that office).
-//
-// Saving is explicit, because an override is data the user entered on purpose: an offer keeping
-// its own figures is listed with what it would become, and only the ones ticked are handed back
-// to the shared values. Closing the popover discards, so nothing changes by accident.
-
 import { useEffect, useState } from 'react';
 import { Popover } from 'antd';
 import { CarOutlined, EditOutlined } from '@ant-design/icons';
@@ -17,7 +5,7 @@ import UnitNumberInput from '../../components/UnitNumberInput';
 import { DEFAULT_GAS_PRICE, DEFAULT_MPG, type DrivingDefaults } from './commute';
 
 export interface FuelOverrideTarget {
-  /** Stable per offer, and the key the apply callback receives back. */
+  // Stable per offer, and the key the apply callback receives back.
   key: string;
   name: string;
   mpg: number | null;

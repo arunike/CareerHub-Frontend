@@ -72,9 +72,6 @@ const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, size = 'md' }) 
     <span
       className={`inline-flex items-center rounded-full font-medium ${sizeClasses[size]}`}
       style={{
-        // The raw swatch was used as the text colour, so a light pick like #00ebe7 sat at
-        // 1.5:1 on its own tint. getPaletteColor supplies the designed text for palette
-        // colours and a darkened, still-on-hue accent for custom hex.
         backgroundColor: badgeColor.bg,
         color: badgeColor.text,
         border: `1px solid ${badgeColor.border}`,

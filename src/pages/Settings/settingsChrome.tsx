@@ -1,11 +1,3 @@
-// The Settings page's shared furniture: the section card and the tab metadata.
-//
-// Every section used to hand-roll its own heading, which drifted — the General tab alone had
-// two competing <h2> styles — and three unrelated concerns shared one bordered box. A single
-// card component keeps them consistent and gives each section an anchor, which is what the
-// search needs to jump to one. The matching and dirty-field logic lives in ./settingsIndex
-// so it stays free of JSX.
-
 import type { ReactNode } from 'react';
 import {
   ApiOutlined,

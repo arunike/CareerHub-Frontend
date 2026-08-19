@@ -11,9 +11,6 @@ export const HOLIDAY_TAB_COLOR_OPTIONS = USER_COLOR_PALETTE;
 
 export const DEFAULT_HOLIDAY_TAB_COLOR = DEFAULT_PALETTE_COLOR;
 
-// A holiday with no tab belongs to the "My Time Off" bucket. Defined once because the
-// legend chip hardcoded green while the calendar entries fell through to the palette
-// default of blue — so time off was drawn the same colour as Work events.
 export const UNTABBED_HOLIDAY_COLOR = 'green';
 export const UNTABBED_HOLIDAY_LABEL = 'My Time Off';
 

@@ -521,9 +521,7 @@ export interface ApplicationTimelineAnalytics {
   response_rate_by_source: Array<ResponseRateSegment>;
   response_rate_by_location: Array<ResponseRateSegment>;
   response_rate_by_level: Array<ResponseRateSegment>;
-  // Period-over-period response rate. Cohorts are matured to the p90 before comparing, so a
-  // recent batch that simply has not replied yet does not read as a collapse. null when
-  // either window is too small to mean anything.
+  // Cohorts mature to the p90 before comparing; null when either window is too small.
   response_trend: {
     window_days: number;
     matured_before: string;

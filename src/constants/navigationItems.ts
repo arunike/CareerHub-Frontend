@@ -1,6 +1,3 @@
-// The sidebar's own structure, shared by Layout and the navigation settings screen so
-// the two can never drift. Order inside a group is user-reorderable; group membership
-// is not, so an item always stays under the heading it ships with.
 export interface NavChild {
   key: string;
   label: string;

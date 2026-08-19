@@ -1,7 +1,3 @@
-// Application activity bucketed by day, week or month. The chart used to be a fixed
-// "last 12 weeks", so there was no way to ask a different question of it. Bucketing lives
-// here rather than in the page so changing granularity or range is a re-render, not a refetch.
-
 import {
   differenceInCalendarDays,
   differenceInCalendarMonths,
@@ -75,9 +71,7 @@ export const DEFAULT_RANGE: Record<Granularity, string> = {
   month: '12',
 };
 
-// "All time" on a decade of applications would draw thousands of bars, so each granularity
-// has a ceiling. The resolved window is always reported back, so a capped range still says
-// exactly which dates it covers rather than implying it covered everything.
+// Each granularity has a bar ceiling; the resolved window is reported back.
 const MAX_BUCKETS: Record<Granularity, number> = { day: 366, week: 260, month: 120 };
 
 const bucketStart = (granularity: Granularity, date: Date) =>
@@ -205,13 +199,7 @@ export const buildActivitySeries = ({
 
   if (lastStart < firstStart) lastStart = firstStart;
 
-  // Every bucket is counted against the window the header advertises, never against the
-  // whole calendar period it happens to sit in. That keeps two promises: a range ending
-  // today does not quietly count next week's dated applications, and opening a bar always
-  // breaks down exactly the number that bar showed — a calendar week straddling the month
-  // you opened contributes only its in-month days.
-  // The week containing Jan 1 starts in December, so a year-filtered weekly view keeps that
-  // bucket but counts only its in-year days rather than leaking the previous year into it.
+  // Buckets count only days inside the requested window, so a straddling week cannot leak.
   let countStart = firstStart;
   if (bounds.start && bounds.start > countStart) countStart = bounds.start;
   if (window && window.start > countStart) countStart = window.start;

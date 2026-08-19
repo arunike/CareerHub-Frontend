@@ -453,9 +453,7 @@ const buildFinancialCalculationLines = ({
     `COL adjustment: ${formatCurrency(afterTaxTotal)} x 100 / ${colIndex} = ${formatCurrency(
       purchasingPowerAdjusted
     )}`,
-    // Signed contributions rather than a subtraction chain: food can now be negative when you
-    // buy your own meals, and "free food -$2,115 - commute cost $638" read as subtracting a
-    // negative while calling a cost "free food".
+    // Signed contributions, not a subtraction chain: food can be negative.
     `Cash adjustments: ${formatCurrency(cashAdjustment)} total; food ${signedCurrency(
       freeFoodAnnual
     )} (meals provided on office days, less any you pay for), commute ${signedCurrency(
@@ -897,10 +895,6 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
                 </div>
                 <div className="text-[11px] leading-4 text-slate-400">{c.detail}</div>
                 {c.calculationLines && c.calculationLines.length > 0 && (
-                  // Nearly every line is "Label: value", so it is set as a definition list
-                  // rather than a paragraph: a scannable column of labels, hairlines between
-                  // steps, and room to breathe. At 10px with a 16px line-height and 2px gaps
-                  // the derivation was a single grey mass.
                   <dl className="mt-1.5 divide-y divide-slate-200/70 overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50">
                     {c.calculationLines.map((line, index) => {
                       const split = line.indexOf(': ');
@@ -911,9 +905,6 @@ const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
                       return (
                         <div
                           key={`${index}-${line}`}
-                          // Always stacked. The popover is capped at 360px whatever the
-                          // viewport, so a `sm:` two-column split squeezed the value into
-                          // 186px on desktop — the same cramping, just moved.
                           className={`px-2.5 py-1.5 ${isResult ? 'bg-white/80' : ''}`}
                         >
                           {label ? (
@@ -1124,11 +1115,7 @@ const OfferDecisionScorecard = ({
     )
   );
 
-  // Offers whose linked role is still held — the defensible places for the baseline to
-  // move to. More than one is normal (overlapping roles), so the user picks rather than
-  // the app guessing and silently rewriting every Diff vs Current.
-  // The linked experience carries the company for exactly the offers that have one,
-  // which is every baseline candidate by definition.
+  // Baseline candidates are offers whose linked role is still held; more than one is normal.
   const offerLabel = (offer: Offer) =>
     offer.linked_experience?.company || offer.application_details?.company || 'this role';
 

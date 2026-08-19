@@ -3,10 +3,7 @@ import { Input } from 'antd';
 import UnitNumberInput from './UnitNumberInput';
 import { FIELD_HINT_CLASS } from './formControls';
 
-// salary_range is a free-text column that Google Sheets sync writes straight into, and
-// its exact string is part of the sheet row identity hash. So this editor parses what is
-// already stored but never rewrites it on its own — a value only changes when the user
-// edits a number, which keeps previously synced rows matching their sheet row.
+// Never rewrite salary_range on its own: its exact string is part of the sheet row hash.
 
 const SEPARATOR = /\s*(?:-|–|—|to)\s*/i;
 const AMOUNT = /^\$?\s*([\d,]+(?:\.\d+)?)\s*([km])?$/i;
@@ -56,10 +53,7 @@ interface Props {
 
 const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
   const parsed = useMemo(() => parseSalaryRange(value), [value]);
-  // 'auto' follows the stored value, so an import that drops 'Competitive' in here shows
-  // as text instead of being crushed into two numbers. Once the user picks a mode their
-  // choice sticks, which is what stops the two from fighting each other. Switching mode
-  // never touches the value — only editing a field does.
+  // 'auto' follows the stored value so imported text is not crushed into two numbers.
   const [mode, setMode] = useState<'auto' | 'range' | 'text'>('auto');
   const freeform = mode === 'text' || (mode === 'auto' && parsed === null);
 

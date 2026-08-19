@@ -1,36 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  Typography,
-  message,
-  Popconfirm,
-  Avatar,
-  Tooltip,
-  Tag,
-  Row,
-  Col,
-  Upload,
-} from 'antd';
+import { Button, Typography, message, Avatar, Tag, Row, Col, Upload } from 'antd';
 import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
-  DeleteOutlined,
-  EnvironmentOutlined,
-  CalendarOutlined,
   BankOutlined,
   ClockCircleOutlined,
   CodeOutlined,
   RobotOutlined,
   RiseOutlined,
-  TrophyOutlined,
   LinkOutlined,
   DollarOutlined,
   TeamOutlined,
   UserOutlined,
-  PushpinOutlined,
-  PushpinFilled,
-  LockOutlined,
-  UnlockOutlined,
   InboxOutlined,
   HolderOutlined,
 } from '@ant-design/icons';
@@ -90,6 +71,20 @@ import { getMediaUrl } from '../../lib/runtimeConfig';
 import { refineExperienceSkillsWithBrowserAI } from '../../lib/browserAi';
 import { isLLMConfigurationError } from '../../lib/llmClient';
 import { EmploymentBadge } from './ExperienceBadges';
+import RoleMetaRow from './RoleMetaRow';
+import {
+  gapLabelBetween,
+  groupSpan,
+  humanizeDaySpan,
+  roleDateLabel,
+  type RoleDateLabel,
+} from './roleTimeline';
+import {
+  TimelineGapLabel,
+  TimelineRailDesktop,
+  TimelineRailMobile,
+} from './ExperienceTimelineRail';
+import RoleActionRow from './RoleActionRow';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   BADGE_CLASSES,
@@ -105,9 +100,15 @@ import {
 } from './experienceUtils';
 import { getApiErrorMessage } from '../../utils/apiError';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Dragger } = Upload;
-const GROUP_ICON_ACTION_CLASS = '!h-11 !w-11 !min-w-11 lg:!h-8 lg:!w-8 lg:!min-w-8';
+
+// Small status labels: one size, one radius, one weight. The level sits in slate rather than
+// purple because pay is the card's only accent now.
+const LEVEL_BADGE_CLASS =
+  'inline-flex shrink-0 items-center rounded-md border border-slate-200 bg-slate-50/80 px-1.5 py-[1px] text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500 tabular-nums';
+const STATUS_BADGE_CLASS =
+  'inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-[1px] text-[11px] font-semibold tracking-[0.01em]';
 
 interface SortableGroupCardProps {
   id: number;
@@ -132,7 +133,7 @@ const SortableGroupCard: React.FC<SortableGroupCardProps> = ({ id, children }) =
       <div
         {...attributes}
         {...listeners}
-        className="absolute -left-7 top-6 hidden sm:flex items-center justify-center p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors z-20 touch-none"
+        className="absolute -left-7 top-6 hidden md:flex items-center justify-center p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors z-20 touch-none"
         title="Drag to reorder career timeline"
       >
         <HolderOutlined style={{ fontSize: 18 }} />
@@ -252,7 +253,7 @@ const ExperiencePage: React.FC = () => {
       const res = await getOffers();
       setAllOffers(res.data as Offer[]);
     } catch {
-      /* no offer data */
+      // no offer data
     }
   };
 
@@ -265,7 +266,7 @@ const ExperiencePage: React.FC = () => {
         setAiProviderConfigured(Boolean(res.data.ai_provider_api_key_configured));
       })
       .catch(() => {
-        /* use defaults */
+        // use defaults
       });
     fetchOffersData();
   }, []);
@@ -689,37 +690,12 @@ const ExperiencePage: React.FC = () => {
     message.success('Internship earnings inputs updated');
   };
 
-  const formatDuration = (exp: Experience) => {
-    const start = parseExperienceDate(exp.start_date);
-    const end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
-
-    const startStr = start ? start.format('MMM D, YYYY') : 'Unknown';
-    const endStr = exp.is_current ? 'Present' : end ? end.format('MMM D, YYYY') : 'Unknown';
-
-    let durationStr = '';
-    if (start && end) {
-      const years = end.diff(start, 'year');
-      const dateAfterYears = start.add(years, 'year');
-
-      const months = end.diff(dateAfterYears, 'month');
-      const dateAfterMonths = dateAfterYears.add(months, 'month');
-
-      const days = end.diff(dateAfterMonths, 'day');
-      const totalDays = end.diff(start, 'day');
-
-      const parts = [];
-      if (years > 0) parts.push(`${years} yr${years !== 1 ? 's' : ''}`);
-      if (months > 0) parts.push(`${months} mo${months !== 1 ? 's' : ''}`);
-      if (days > 0 || (years === 0 && months === 0))
-        parts.push(`${days} day${days !== 1 ? 's' : ''}`);
-
-      if (parts.length > 0) {
-        durationStr = ` · ${parts.join(' ')} (${totalDays} day${totalDays !== 1 ? 's' : ''})`;
-      }
-    }
-
-    return `${startStr} - ${endStr}${durationStr}`;
-  };
+  const formatDuration = (exp: Experience): RoleDateLabel =>
+    roleDateLabel({
+      startDate: parseExperienceDate(exp.start_date),
+      endDate: parseExperienceDate(exp.end_date),
+      isCurrent: exp.is_current,
+    });
 
   const renderDescription = (text: string) => {
     const lines = text.split('\n');
@@ -843,16 +819,8 @@ const ExperiencePage: React.FC = () => {
     return result;
   }, [experiences]);
 
-  const fmtDays = (totalDays: number, showDaysCount = false): string => {
-    const yrs = Math.floor(totalDays / 365);
-    const mos = Math.floor((totalDays % 365) / 30);
-    const parts: string[] = [];
-    if (yrs > 0) parts.push(`${yrs} yr${yrs !== 1 ? 's' : ''}`);
-    if (mos > 0) parts.push(`${mos} mo${mos !== 1 ? 's' : ''}`);
-    if (parts.length === 0) parts.push(`${totalDays} day${totalDays !== 1 ? 's' : ''}`);
-    const base = parts.join(' ');
-    return showDaysCount ? `${base} (${totalDays} days)` : base;
-  };
+  const fmtDays = (totalDays: number, showDaysCount = false): string =>
+    humanizeDaySpan(totalDays, { withTotal: showDaysCount });
 
   const fmtMonths = fmtDays;
 
@@ -873,16 +841,15 @@ const ExperiencePage: React.FC = () => {
     return [...teams].sort((a, b) => (b.start_date ?? '').localeCompare(a.start_date ?? ''))[0];
   };
 
-  const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): string => {
-    const start = parseExperienceDate(exp.start_date);
-    const explicitEnd = parseExperienceDate(exp.end_date);
-    const fallbackEnd = parseExperienceDate(overrideEndDate ?? null);
-    const end = exp.is_current ? dayjs() : (explicitEnd ?? fallbackEnd);
-    const startStr = start ? start.format('MMM YYYY') : '—';
-    const endStr = exp.is_current ? 'Present' : end ? end.format('MMM YYYY') : '—';
-    const dur = start && end ? ` · ${fmtDays(end.diff(start, 'day'), true)}` : '';
-    return `${startStr} – ${endStr}${dur}`;
-  };
+  const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): RoleDateLabel =>
+    roleDateLabel({
+      startDate: parseExperienceDate(exp.start_date),
+      endDate: parseExperienceDate(exp.end_date),
+      fallbackEndDate: parseExperienceDate(overrideEndDate ?? null),
+      isCurrent: exp.is_current,
+      format: 'MMM YYYY',
+      precision: 'rounded',
+    });
 
   const getGroupTenure = (group: Experience[]): string => {
     const oldest = group[group.length - 1];
@@ -1364,7 +1331,7 @@ const ExperiencePage: React.FC = () => {
             items={groupedExperiences.map((g) => g[0].id!)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="relative pl-0 md:pl-8">
+            <div className="relative pl-6 md:pl-8">
               <div className="space-y-10 relative z-10">
                 {filteredExperiences.length === 0 && selectedSkill && (
                   <div className="text-center px-4 py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
@@ -1382,6 +1349,12 @@ const ExperiencePage: React.FC = () => {
                   const primary = group[0];
                   const isMulti = group.length > 1;
                   const logoSrc = getMediaUrl(primary.logo);
+                  const span = groupSpan(group, parseExperienceDate);
+                  // Groups run newest first, so the company below this one is the earlier stint.
+                  const olderGroup = groupedExperiences[groupIdx + 1];
+                  const gapBelow = olderGroup
+                    ? gapLabelBetween(span, groupSpan(olderGroup, parseExperienceDate))
+                    : null;
 
                   const groupAvatar = logoSrc ? (
                     <Avatar
@@ -1402,13 +1375,11 @@ const ExperiencePage: React.FC = () => {
                   const renderSingleRole = (exp: Experience) => {
                     const skills = exp.skills || [];
                     const comp = getCompensationSnapshot(exp);
-                    const internshipComp = comp?.kind === 'hourly' ? comp : null;
-                    const salaryComp = comp?.kind === 'salary' ? comp : null;
                     return (
-                      <div className="p-4 sm:p-6 lg:p-7">
-                        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-5">
+                      <div className="p-4 sm:p-6">
+                        <div className="mb-5 flex flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-start">
                           <div className="min-w-0 flex-1">
-                            <div className="flex md:hidden items-center gap-3 mb-3">
+                            <div className="mb-3 flex min-w-0 items-center gap-3 pr-24 md:hidden">
                               {logoSrc ? (
                                 <Avatar size={40} src={logoSrc} className="shadow-sm" />
                               ) : (
@@ -1420,215 +1391,62 @@ const ExperiencePage: React.FC = () => {
                                   {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
                                 </Avatar>
                               )}
-                              <div className="text-lg font-bold text-gray-800 tracking-tight">
+                              <div className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-900">
                                 {exp.company}
                               </div>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <Title
-                                level={3}
-                                className="!mb-0 min-w-0 break-words text-gray-900 group-hover:text-blue-600 transition-colors font-bold tracking-tight"
-                              >
+                              <h3 className="m-0 min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-blue-700 sm:text-[21px]">
                                 {exp.title}
-                              </Title>
+                              </h3>
                               <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-                              {exp.level && (
-                                <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
-                                  {exp.level}
-                                </span>
-                              )}
+                              {exp.level && <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>}
                               {exp.is_return_offer && (
-                                <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
-                                  <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
+                                <span
+                                  className={`${STATUS_BADGE_CLASS} border-blue-100 bg-blue-50/80 text-blue-700`}
+                                >
+                                  <LinkOutlined style={{ fontSize: 9 }} /> Return offer
                                 </span>
-                              )}
-                              {exp.is_pinned && (
-                                <Tooltip title="Click to unpin">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleTogglePin(exp)}
-                                    aria-label={`Unpin ${exp.title} at ${exp.company}`}
-                                    className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
-                                  >
-                                    <PushpinFilled style={{ fontSize: 10 }} /> Pinned
-                                  </button>
-                                </Tooltip>
                               )}
                             </div>
-                            <div className="hidden md:block text-lg font-semibold text-gray-800 mb-3 tracking-tight">
+                            <div className="mt-0.5 hidden text-[15px] font-medium tracking-[-0.01em] text-slate-500 md:block">
                               {exp.company}
                             </div>
-                            <div className="flex flex-wrap items-center gap-2 max-w-full">
-                              <div className="flex items-center gap-1.5 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                <CalendarOutlined style={{ fontSize: 11 }} />
-                                <span className="font-semibold">{formatDuration(exp)}</span>
-                              </div>
-                              {exp.location && (
-                                <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                  <EnvironmentOutlined
-                                    className="text-gray-400"
-                                    style={{ fontSize: 11 }}
-                                  />
-                                  <span>{exp.location}</span>
-                                </div>
-                              )}
-                              {exp.employment_type === 'internship' &&
-                                (() => {
-                                  const team = getLatestTeam(exp);
-                                  return team ? (
-                                    <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                      <TeamOutlined
-                                        className="text-gray-400"
-                                        style={{ fontSize: 11 }}
-                                      />
-                                      <span>{team.name}</span>
-                                    </div>
-                                  ) : null;
-                                })()}
-                              {exp.employment_type === 'internship' && internshipComp && (
-                                <button
-                                  type="button"
-                                  onClick={() => setCompBreakdownExp(exp)}
-                                  title="View internship earnings breakdown"
-                                  aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
-                                  className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                >
-                                  <DollarOutlined style={{ fontSize: 11 }} />
-                                  <span>
-                                    $
-                                    {internshipComp.total.toLocaleString(undefined, {
-                                      maximumFractionDigits: 2,
-                                    })}{' '}
-                                    total earnings
-                                  </span>
-                                </button>
-                              )}
-                              {exp.employment_type === 'internship' &&
-                                !internshipComp &&
-                                exp.hourly_rate != null && (
-                                  <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                    <DollarOutlined style={{ fontSize: 11 }} />
-                                    <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
-                                  </div>
-                                )}
-                              {exp.employment_type !== 'internship' &&
-                                (() => {
-                                  return salaryComp ? (
-                                    <div className="flex items-center shrink-0">
-                                      {exp.employment_type === 'full_time' ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => setCompBreakdownExp(exp)}
-                                          title="View pay structure breakdown"
-                                          aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
-                                          className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                        >
-                                          <DollarOutlined style={{ fontSize: 11 }} />
-                                          <span>
-                                            ${salaryComp.total.toLocaleString()} total earnings
-                                          </span>
-                                        </button>
-                                      ) : (
-                                        <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
-                                          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
-                                            <DollarOutlined style={{ fontSize: 11 }} />
-                                            <span>${salaryComp.base.toLocaleString()} base</span>
-                                          </div>
-                                          {salaryComp.bonus > 0 && (
-                                            <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                              + ${salaryComp.bonus.toLocaleString()} bonus
-                                            </span>
-                                          )}
-                                          {salaryComp.equity > 0 && (
-                                            <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                              + ${salaryComp.equity.toLocaleString()} RSU/yr
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : null;
-                                })()}
-                            </div>
+                            <RoleMetaRow
+                              dates={formatDuration(exp)}
+                              location={exp.location}
+                              teamChip={
+                                exp.employment_type === 'internship'
+                                  ? getLatestTeam(exp)?.name
+                                  : null
+                              }
+                              comp={comp}
+                              employmentType={exp.employment_type}
+                              hourlyRate={exp.hourly_rate}
+                              onOpenBreakdown={() => setCompBreakdownExp(exp)}
+                              describedRole={`${exp.title} at ${exp.company}`}
+                            />
                             {exp.employment_type !== 'internship' &&
                               (() => {
                                 const team = getLatestTeam(exp);
                                 return team ? (
-                                  <div className="flex items-center gap-1.5 text-sm text-gray-500 font-medium mt-2">
-                                    <TeamOutlined className="text-gray-400" />
-                                    <span>{team.name}</span>
+                                  <div className="mt-2 flex items-start gap-1.5 text-sm font-medium text-gray-500">
+                                    <TeamOutlined className="mt-[3px] shrink-0 text-gray-400" />
+                                    <span className="min-w-0">{team.name}</span>
                                   </div>
                                 ) : null;
                               })()}
                           </div>
-                          <div className="experience-card-actions flex w-full min-w-0 flex-wrap items-center justify-start gap-2 lg:w-auto lg:max-w-[55%] lg:justify-end">
-                            <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 flex flex-wrap items-center gap-2 opacity-100">
-                              <Tooltip title="Evaluate promotion readiness for this role">
-                                <Button
-                                  size="small"
-                                  icon={<RiseOutlined />}
-                                  onClick={() => setPromotionReviewExp(exp)}
-                                  className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
-                                >
-                                  Promotion
-                                </Button>
-                              </Tooltip>
-                              <Tooltip title="View / edit team norms for this role">
-                                <Button
-                                  size="small"
-                                  icon={<TeamOutlined />}
-                                  onClick={() => setTeamHistoryExp(exp)}
-                                  className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
-                                >
-                                  Team Norms
-                                </Button>
-                              </Tooltip>
-                              <Tooltip title="People you worked with, plus anyone from the application that led here">
-                                <Button
-                                  size="small"
-                                  icon={<UserOutlined />}
-                                  onClick={() => setContactsExp(exp)}
-                                  className="text-slate-600 border-slate-200 bg-slate-50 hover:!bg-slate-100 hover:!border-slate-300 hover:!text-slate-700 whitespace-nowrap"
-                                >
-                                  Contacts
-                                </Button>
-                              </Tooltip>
-                              {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
-                            </div>
-                            {getLinkedOffer(exp) && (
-                              <div className="lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 opacity-100">
-                                <Tooltip title="View / edit raise history for this role">
-                                  <Button
-                                    size="small"
-                                    icon={<TrophyOutlined />}
-                                    onClick={() => handleRaiseHistoryClick(exp)}
-                                    className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
-                                  >
-                                    Raise History
-                                  </Button>
-                                </Tooltip>
-                              </div>
-                            )}
-                            <div
-                              className={`transition-all duration-200 ${
-                                exp.is_locked
-                                  ? 'opacity-100'
-                                  : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
-                              }`}
-                            >
+                          <RoleActionRow
+                            className="lg:mt-9"
+                            onPromotion={() => setPromotionReviewExp(exp)}
+                            onTeamNorms={() => setTeamHistoryExp(exp)}
+                            onContacts={() => setContactsExp(exp)}
+                            onRaiseHistory={
+                              getLinkedOffer(exp) ? () => handleRaiseHistoryClick(exp) : undefined
+                            }
+                            trailing={
                               <RowActions
-                                isLocked={exp.is_locked}
-                                onToggleLock={() => handleToggleLock(exp)}
-                                disableLock={group.length > 1 && group.every((e) => e.is_locked)}
-                                lockTitle={
-                                  group.length > 1 && group.every((e) => e.is_locked)
-                                    ? 'Company is locked. Unlock company header to modify individual roles.'
-                                    : exp.is_locked
-                                      ? 'Unlock role'
-                                      : 'Lock role'
-                                }
-                                isPinned={exp.is_pinned}
-                                onTogglePin={() => handleTogglePin(exp)}
                                 onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
                                 onDuplicate={
                                   exp.is_locked ? undefined : () => handleDuplicateExperience(exp)
@@ -1641,11 +1459,35 @@ const ExperiencePage: React.FC = () => {
                                 disableEdit={exp.is_locked}
                                 disableDelete={exp.is_locked}
                               />
-                            </div>
-                          </div>
+                            }
+                          />
+                        </div>
+                        {/* Card chrome, not a fifth action: the lock, pin and edit cluster sits in
+                            the corner at every width instead of trailing the action buttons. */}
+                        <div
+                          className={`absolute right-3 top-3 z-20 transition-opacity duration-200 sm:right-4 sm:top-4 ${
+                            exp.is_locked
+                              ? 'opacity-100'
+                              : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
+                          }`}
+                        >
+                          <RowActions
+                            isLocked={exp.is_locked}
+                            onToggleLock={() => handleToggleLock(exp)}
+                            disableLock={group.length > 1 && group.every((e) => e.is_locked)}
+                            lockTitle={
+                              group.length > 1 && group.every((e) => e.is_locked)
+                                ? 'Company is locked. Unlock company header to modify individual roles.'
+                                : exp.is_locked
+                                  ? 'Unlock role'
+                                  : 'Lock role'
+                            }
+                            isPinned={exp.is_pinned}
+                            onTogglePin={() => handleTogglePin(exp)}
+                          />
                         </div>
                         {exp.description && (
-                          <div className="mt-6 text-[15px]">
+                          <div className="mt-5 text-[15px] sm:mt-6">
                             {renderDescription(exp.description)}
                           </div>
                         )}
@@ -1668,16 +1510,20 @@ const ExperiencePage: React.FC = () => {
                   const renderMultiRoles = () => {
                     const tenure = getGroupTenure(group);
                     return (
-                      <div className="p-4 sm:p-6 lg:p-7">
-                        {/* Company header — LinkedIn style */}
-                        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex md:hidden shrink-0">
+                      <div className="p-4 sm:p-6">
+                        {/* Company header. The group's own pin / lock-all / delete-unlocked live in
+                            the card's corner, like the single-role card, instead of on a floating
+                            strip of their own between the header and the first role. */}
+                        <div className="mb-5">
+                          {/* Only the name line has to clear the corner cluster; the meta line sits
+                              below it and gets the full width, so the tenure never wraps. */}
+                          <div className="flex items-center gap-3 pr-36 md:pr-28">
+                            <div className="flex shrink-0 md:hidden">
                               {logoSrc ? (
-                                <Avatar size={44} src={logoSrc} className="shadow-sm" />
+                                <Avatar size={40} src={logoSrc} className="shadow-sm" />
                               ) : (
                                 <Avatar
-                                  size={44}
+                                  size={40}
                                   style={getAvatarStyle(primary.company)}
                                   className="font-bold shadow-sm"
                                 >
@@ -1685,108 +1531,46 @@ const ExperiencePage: React.FC = () => {
                                 </Avatar>
                               )}
                             </div>
-                            <div>
-                              <div className="text-xl font-bold text-gray-900 tracking-tight">
-                                {primary.company}
-                              </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[15px] text-gray-500">
-                                  {group.length} roles
-                                </span>
-                                {tenure && (
-                                  <>
-                                    <span className="text-gray-300">·</span>
-                                    <span className="text-[15px] font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                                      {tenure} total
-                                    </span>
-                                  </>
-                                )}
-                              </div>
+                            <div className="min-w-0 truncate text-[17px] font-semibold tracking-[-0.015em] text-slate-950 sm:text-[19px]">
+                              {primary.company}
                             </div>
                           </div>
-                          {/* Group-level actions: pin + delete */}
-                          <div className="experience-card-actions flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto">
-                            {primary.is_pinned ? (
-                              <Tooltip title="Click to unpin">
-                                <button
-                                  type="button"
-                                  onClick={() => handleTogglePin(primary)}
-                                  className="flex min-h-11 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-600 transition-colors hover:bg-amber-100 sm:min-h-8 sm:px-2"
-                                  aria-label={`Unpin ${primary.company} roles`}
-                                >
-                                  <PushpinFilled style={{ fontSize: 10 }} /> Pinned
-                                </button>
-                              </Tooltip>
-                            ) : (
-                              <div className="opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-                                <Tooltip title="Pin to top">
-                                  <Button
-                                    type="text"
-                                    size="small"
-                                    icon={<PushpinOutlined />}
-                                    onClick={() => handleTogglePin(primary)}
-                                    className={`${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-amber-500`}
-                                    aria-label="Pin company roles to top"
-                                  />
-                                </Tooltip>
-                              </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[12.5px] leading-5">
+                            <span className="text-slate-500">{group.length} roles</span>
+                            {tenure && (
+                              <>
+                                <span className="text-slate-300">·</span>
+                                <span className="tabular-nums text-slate-400">{tenure} total</span>
+                              </>
                             )}
-                            <div className="flex items-center gap-1 opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-                              <Tooltip
-                                title={
-                                  group.some((e) => !e.is_locked)
-                                    ? 'Lock all roles'
-                                    : 'Unlock all roles'
-                                }
-                              >
-                                <Button
-                                  type="text"
-                                  size="small"
-                                  icon={
-                                    group.some((e) => !e.is_locked) ? (
-                                      <UnlockOutlined />
-                                    ) : (
-                                      <LockOutlined />
-                                    )
-                                  }
-                                  onClick={() => handleToggleGroupLock(group)}
-                                  aria-label={
-                                    group.some((e) => !e.is_locked)
-                                      ? 'Lock all company roles'
-                                      : 'Unlock all company roles'
-                                  }
-                                  className={
-                                    group.some((e) => !e.is_locked)
-                                      ? `${GROUP_ICON_ACTION_CLASS} text-gray-400 hover:text-gray-600`
-                                      : `${GROUP_ICON_ACTION_CLASS} text-amber-500 hover:text-amber-600`
-                                  }
-                                />
-                              </Tooltip>
-
-                              {group.some((e) => !e.is_locked) && (
-                                <Tooltip
-                                  title={`Delete ${group.filter((e) => !e.is_locked).length} unlocked role(s) at ${primary.company}`}
-                                >
-                                  <Popconfirm
-                                    title={`Delete unlocked ${primary.company} roles?`}
-                                    description={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s). Locked roles are kept.`}
-                                    onConfirm={() => handleDeleteGroup(group)}
-                                    okText="Delete"
-                                    okButtonProps={{ danger: true }}
-                                  >
-                                    <Button
-                                      type="text"
-                                      danger
-                                      size="small"
-                                      icon={<DeleteOutlined />}
-                                      aria-label={`Delete unlocked roles at ${primary.company}`}
-                                      className={GROUP_ICON_ACTION_CLASS}
-                                    />
-                                  </Popconfirm>
-                                </Tooltip>
-                              )}
-                            </div>
                           </div>
+                        </div>
+                        <div
+                          className={`absolute right-3 top-3 z-20 transition-opacity duration-200 sm:right-4 sm:top-4 ${
+                            primary.is_pinned || group.every((e) => e.is_locked)
+                              ? 'opacity-100'
+                              : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
+                          }`}
+                        >
+                          <RowActions
+                            isPinned={primary.is_pinned}
+                            onTogglePin={() => handleTogglePin(primary)}
+                            isLocked={group.every((e) => e.is_locked)}
+                            onToggleLock={() => handleToggleGroupLock(group)}
+                            lockTitle={
+                              group.some((e) => !e.is_locked)
+                                ? 'Lock all roles'
+                                : 'Unlock all roles'
+                            }
+                            onDelete={
+                              group.some((e) => !e.is_locked)
+                                ? () => handleDeleteGroup(group)
+                                : undefined
+                            }
+                            deleteTitle={`Delete unlocked ${primary.company} roles?`}
+                            deleteDescription={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s). Locked roles are kept.`}
+                            deleteButtonTooltip={`Delete ${group.filter((e) => !e.is_locked).length} unlocked role(s) at ${primary.company}`}
+                          />
                         </div>
 
                         {/* Roles — left-border timeline with dots */}
@@ -1797,8 +1581,6 @@ const ExperiencePage: React.FC = () => {
                           {group.map((exp, roleIdx) => {
                             const skills = exp.skills || [];
                             const comp = getCompensationSnapshot(exp);
-                            const internshipComp = comp?.kind === 'hourly' ? comp : null;
-                            const salaryComp = comp?.kind === 'salary' ? comp : null;
                             return (
                               <div
                                 key={exp.id}
@@ -1808,15 +1590,46 @@ const ExperiencePage: React.FC = () => {
                                 <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
                                   <div className="w-2 h-2 rounded-full bg-gray-400" />
                                 </div>
+                                {(() => {
+                                  const compGroup = experiences.filter(
+                                    (e) => e.company === exp.company
+                                  );
+                                  const isGroupLocked =
+                                    compGroup.length > 1 && compGroup.every((e) => e.is_locked);
+                                  return (
+                                    <div
+                                      className={`absolute right-0 top-0 z-20 transition-opacity duration-200 ${
+                                        exp.is_locked
+                                          ? 'opacity-100'
+                                          : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
+                                      }`}
+                                    >
+                                      <RowActions
+                                        isLocked={exp.is_locked}
+                                        onToggleLock={() => handleToggleLock(exp)}
+                                        disableLock={isGroupLocked}
+                                        lockTitle={
+                                          isGroupLocked
+                                            ? 'Company is locked. Unlock company to modify individual roles.'
+                                            : exp.is_locked
+                                              ? 'Unlock role'
+                                              : 'Lock role'
+                                        }
+                                      />
+                                    </div>
+                                  );
+                                })()}
 
-                                <div className="flex flex-col lg:flex-row justify-between items-start gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-semibold text-[17px] text-gray-900 leading-snug">
+                                <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-start">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2 pr-12 md:pr-9 lg:pr-0">
+                                      <span className="min-w-0 text-[15px] font-semibold leading-snug tracking-[-0.01em] text-slate-950 sm:text-[17px]">
                                         {exp.title}
                                       </span>
                                       {exp.is_promotion && (
-                                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap">
+                                        <span
+                                          className={`${STATUS_BADGE_CLASS} border-emerald-100 bg-emerald-50/80 text-emerald-700`}
+                                        >
                                           <RiseOutlined style={{ fontSize: 9 }} /> Promoted
                                         </span>
                                       )}
@@ -1825,222 +1638,83 @@ const ExperiencePage: React.FC = () => {
                                         empTypes={empTypes}
                                       />
                                       {exp.level && (
-                                        <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200/80 whitespace-nowrap">
-                                          {exp.level}
-                                        </span>
+                                        <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>
                                       )}
                                       {exp.is_return_offer && (
-                                        <span className="flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 whitespace-nowrap">
-                                          <LinkOutlined style={{ fontSize: 9 }} /> Return Offer
+                                        <span
+                                          className={`${STATUS_BADGE_CLASS} border-blue-100 bg-blue-50/80 text-blue-700`}
+                                        >
+                                          <LinkOutlined style={{ fontSize: 9 }} /> Return offer
                                         </span>
                                       )}
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 mt-1 max-w-full">
-                                      <div className="flex items-center gap-2 text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                        <CalendarOutlined style={{ fontSize: 11 }} />
-                                        <span className="font-semibold">
-                                          {formatRoleDateRange(
-                                            exp,
-                                            roleIdx > 0 ? group[roleIdx - 1].start_date : null
-                                          )}
-                                        </span>
-                                      </div>
-                                      {exp.location && (
-                                        <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-md">
-                                          <EnvironmentOutlined
-                                            className="text-gray-400"
-                                            style={{ fontSize: 11 }}
-                                          />
-                                          <span>{exp.location}</span>
-                                        </div>
-                                      )}
-                                      {exp.employment_type === 'internship' &&
-                                        (() => {
-                                          const team = getLatestTeam(exp);
-                                          return team ? (
-                                            <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap text-xs text-slate-600 bg-slate-50 border border-slate-100 px-2.5 py-0.5 rounded-md">
-                                              <TeamOutlined
-                                                className="text-gray-400"
-                                                style={{ fontSize: 11 }}
-                                              />
-                                              <span>{team.name}</span>
-                                            </div>
-                                          ) : null;
-                                        })()}
-                                      {exp.employment_type === 'internship' && internshipComp && (
-                                        <button
-                                          type="button"
-                                          onClick={() => setCompBreakdownExp(exp)}
-                                          title="View internship earnings breakdown"
-                                          aria-label={`View internship earnings breakdown for ${exp.title} at ${exp.company}`}
-                                          className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                        >
-                                          <DollarOutlined style={{ fontSize: 11 }} />
-                                          <span>
-                                            $
-                                            {internshipComp.total.toLocaleString(undefined, {
-                                              maximumFractionDigits: 2,
-                                            })}{' '}
-                                            total earnings
-                                          </span>
-                                        </button>
-                                      )}
-                                      {exp.employment_type === 'internship' &&
-                                        !internshipComp &&
-                                        exp.hourly_rate != null && (
-                                          <div className="flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md shrink-0 whitespace-nowrap text-xs">
-                                            <DollarOutlined style={{ fontSize: 11 }} />
-                                            <span>${Number(exp.hourly_rate).toFixed(2)}/hr</span>
-                                          </div>
+                                    <div className="mt-1">
+                                      <RoleMetaRow
+                                        dates={formatRoleDateRange(
+                                          exp,
+                                          roleIdx > 0 ? group[roleIdx - 1].start_date : null
                                         )}
-                                      {exp.employment_type !== 'internship' &&
-                                        (() => {
-                                          return salaryComp ? (
-                                            <>
-                                              {exp.employment_type === 'full_time' ? (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => setCompBreakdownExp(exp)}
-                                                  title="View pay structure breakdown"
-                                                  aria-label={`View pay structure breakdown for ${exp.title} at ${exp.company}`}
-                                                  className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-100 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 sm:min-h-8 sm:px-2.5"
-                                                >
-                                                  <DollarOutlined style={{ fontSize: 11 }} />
-                                                  <span>
-                                                    ${salaryComp.total.toLocaleString()} total
-                                                    earnings
-                                                  </span>
-                                                </button>
-                                              ) : (
-                                                <div className="flex flex-wrap items-center gap-1 text-emerald-600 font-semibold shrink-0">
-                                                  <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs">
-                                                    <DollarOutlined style={{ fontSize: 11 }} />
-                                                    <span>
-                                                      ${salaryComp.base.toLocaleString()} base
-                                                    </span>
-                                                  </div>
-                                                  {salaryComp.bonus > 0 && (
-                                                    <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                                      + ${salaryComp.bonus.toLocaleString()} bonus
-                                                    </span>
-                                                  )}
-                                                  {salaryComp.equity > 0 && (
-                                                    <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-md whitespace-nowrap text-xs font-semibold">
-                                                      + ${salaryComp.equity.toLocaleString()} RSU/yr
-                                                    </span>
-                                                  )}
-                                                </div>
-                                              )}
-                                            </>
-                                          ) : null;
-                                        })()}
+                                        location={exp.location}
+                                        teamChip={
+                                          exp.employment_type === 'internship'
+                                            ? getLatestTeam(exp)?.name
+                                            : null
+                                        }
+                                        comp={comp}
+                                        employmentType={exp.employment_type}
+                                        hourlyRate={exp.hourly_rate}
+                                        onOpenBreakdown={() => setCompBreakdownExp(exp)}
+                                        describedRole={`${exp.title} at ${exp.company}`}
+                                      />
                                     </div>
                                     {exp.employment_type !== 'internship' &&
                                       (() => {
                                         const team = getLatestTeam(exp);
                                         return team ? (
-                                          <div className="flex items-center gap-1.5 mt-1 text-[15px] text-gray-500">
+                                          <div className="mt-1 flex items-start gap-1.5 text-[15px] text-gray-500">
                                             <TeamOutlined
+                                              className="mt-[4px] shrink-0"
                                               style={{ fontSize: 12, color: '#9ca3af' }}
                                             />
-                                            <span>{team.name}</span>
+                                            <span className="min-w-0">{team.name}</span>
                                           </div>
                                         ) : null;
                                       })()}
                                   </div>
-                                  <div className="experience-card-actions flex w-full min-w-0 flex-wrap items-center justify-start gap-2 opacity-100 transition-all duration-200 lg:ml-2 lg:w-auto lg:max-w-[55%] lg:justify-end lg:opacity-0 lg:group-hover:opacity-100">
-                                    <Tooltip title="Evaluate promotion readiness for this role">
-                                      <Button
-                                        size="small"
-                                        icon={<RiseOutlined />}
-                                        onClick={() => setPromotionReviewExp(exp)}
-                                        className="text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700 whitespace-nowrap"
-                                      >
-                                        Promotion
-                                      </Button>
-                                    </Tooltip>
-                                    <Tooltip title="View / edit team norms for this role">
-                                      <Button
-                                        size="small"
-                                        icon={<TeamOutlined />}
-                                        onClick={() => setTeamHistoryExp(exp)}
-                                        className="text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700 whitespace-nowrap"
-                                      >
-                                        Team Norms
-                                      </Button>
-                                    </Tooltip>
-                                    {/* Schedule Phases entry moved purely to internal Compensation Breakdown Modal */}
-                                    {getLinkedOffer(exp) ? (
-                                      <Tooltip title="View / edit raise history for this role">
-                                        <Button
-                                          size="small"
-                                          icon={<TrophyOutlined />}
-                                          onClick={() => handleRaiseHistoryClick(exp)}
-                                          className="text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700 whitespace-nowrap"
-                                        >
-                                          Raise History
-                                        </Button>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip title="Open Edit to link an offer and track raises">
-                                        <Button
-                                          size="small"
-                                          icon={<LinkOutlined />}
-                                          onClick={() => openEditModal(exp)}
-                                          className="text-gray-400 border-gray-200 hover:!text-blue-600 hover:!border-blue-300 whitespace-nowrap"
-                                        >
-                                          Link Offer
-                                        </Button>
-                                      </Tooltip>
-                                    )}
-                                    <div
-                                      className={`transition-all duration-200 ${
-                                        exp.is_locked
-                                          ? 'opacity-100'
-                                          : 'lg:opacity-0 lg:group-hover:opacity-100 opacity-100'
-                                      }`}
-                                    >
-                                      {(() => {
-                                        const compGroup = experiences.filter(
-                                          (e) => e.company === exp.company
-                                        );
-                                        const isGroupLocked =
-                                          compGroup.length > 1 &&
-                                          compGroup.every((e) => e.is_locked);
-                                        return (
-                                          <RowActions
-                                            isLocked={exp.is_locked}
-                                            onToggleLock={() => handleToggleLock(exp)}
-                                            disableLock={isGroupLocked}
-                                            lockTitle={
-                                              isGroupLocked
-                                                ? 'Company is locked. Unlock company to modify individual roles.'
-                                                : exp.is_locked
-                                                  ? 'Unlock role'
-                                                  : 'Lock role'
-                                            }
-                                            onEdit={
-                                              exp.is_locked ? undefined : () => openEditModal(exp)
-                                            }
-                                            onDuplicate={
-                                              exp.is_locked
-                                                ? undefined
-                                                : () => handleDuplicateExperience(exp)
-                                            }
-                                            onDelete={
-                                              exp.is_locked
-                                                ? undefined
-                                                : () => exp.id && handleDelete(exp.id)
-                                            }
-                                            deleteTitle="Delete Role"
-                                            deleteDescription="Are you sure you want to remove this role?"
-                                            disableEdit={exp.is_locked}
-                                            disableDelete={exp.is_locked}
-                                          />
-                                        );
-                                      })()}
-                                    </div>
-                                  </div>
+                                  <RoleActionRow
+                                    className="lg:ml-2 lg:mt-8"
+                                    onPromotion={() => setPromotionReviewExp(exp)}
+                                    onTeamNorms={() => setTeamHistoryExp(exp)}
+                                    onRaiseHistory={
+                                      getLinkedOffer(exp)
+                                        ? () => handleRaiseHistoryClick(exp)
+                                        : undefined
+                                    }
+                                    onLinkOffer={
+                                      getLinkedOffer(exp) ? undefined : () => openEditModal(exp)
+                                    }
+                                    trailing={
+                                      <RowActions
+                                        onEdit={
+                                          exp.is_locked ? undefined : () => openEditModal(exp)
+                                        }
+                                        onDuplicate={
+                                          exp.is_locked
+                                            ? undefined
+                                            : () => handleDuplicateExperience(exp)
+                                        }
+                                        onDelete={
+                                          exp.is_locked
+                                            ? undefined
+                                            : () => exp.id && handleDelete(exp.id)
+                                        }
+                                        deleteTitle="Delete Role"
+                                        deleteDescription="Are you sure you want to remove this role?"
+                                        disableEdit={exp.is_locked}
+                                        disableDelete={exp.is_locked}
+                                      />
+                                    }
+                                  />
                                 </div>
 
                                 {exp.description && (
@@ -2072,17 +1746,21 @@ const ExperiencePage: React.FC = () => {
                     <SortableGroupCard key={primary.id || `group-${groupIdx}`} id={primary.id!}>
                       <div
                         key={`group-${groupIdx}`}
-                        className="group flex flex-col md:flex-row gap-6 w-full"
+                        className="group relative flex w-full flex-col gap-6 md:flex-row"
                       >
-                        <div className="flex-shrink-0 relative z-10 hidden md:flex w-[52px] justify-center">
-                          {groupIdx < groupedExperiences.length - 1 && (
-                            <div
-                              className="absolute left-1/2 w-0.5 -translate-x-1/2 bg-gradient-to-b from-blue-100 via-gray-100 to-gray-200"
-                              style={{ top: 26, bottom: 'calc(-2.5rem - 26px)' }}
-                            />
-                          )}
-                          <div className="relative z-10">{groupAvatar}</div>
-                        </div>
+                        <TimelineRailMobile
+                          isFirst={groupIdx === 0}
+                          isLast={groupIdx === groupedExperiences.length - 1}
+                          isCurrent={span.isCurrent}
+                        />
+                        <TimelineRailDesktop
+                          avatar={groupAvatar}
+                          year={span.start ? span.start.format('YYYY') : undefined}
+                          isFirst={groupIdx === 0}
+                          isLast={groupIdx === groupedExperiences.length - 1}
+                          isCurrent={span.isCurrent}
+                        />
+                        {gapBelow && <TimelineGapLabel label={gapBelow} />}
                         <div
                           className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
                             primary.is_pinned

@@ -1,8 +1,3 @@
-// Pure Settings logic: which tab owns which saved field, and the searchable index of
-// sections. Kept free of JSX and icon imports so it can be exercised directly. Named
-// settingsIndex rather than settingsSearch so it cannot collide with the SettingsSearch
-// component on a case-insensitive filesystem.
-
 import type { UserSettings } from '../../types';
 
 export const SETTINGS_TAB_KEYS = [
@@ -25,11 +20,7 @@ export const TAB_LABELS: Record<SettingsTab, string> = {
   navigation: 'Navigation',
 };
 
-// Which saved fields each tab owns. The Save button is global, so without this a pending edit
-// in General looks identical to no changes at all while you are standing on Navigation.
-// Derived from what each panel actually writes. Event categories are their own API resource
-// saved on edit, not a field on UserSettings, so they are not tracked here — the dot only
-// claims a change when the Save button would actually write one.
+// Which saved fields each tab owns, so the Save dot only lights for a real change.
 const TAB_FIELDS: Partial<Record<SettingsTab, Array<keyof UserSettings>>> = {
   general: [
     'work_days',

@@ -2,13 +2,6 @@ import { useId, useState } from 'react';
 import { DownOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 
-// Benefits is five multi-field groups stacked into one panel, which meant scrolling past
-// dozens of inputs to reach the one you wanted. Each group collapses, and starts collapsed:
-// most offers only ever fill in one or two of them, so an expanded default made the common
-// case the worst case.
-//
-// A group that already holds a value opens itself, so collapsing never hides data you have
-// entered — and `summary` keeps the headline figure readable while closed.
 const CollapsibleGroup = ({
   title,
   summary,

@@ -1,16 +1,6 @@
-// Commute time and cost are derived from the same office-day count so the two can never
-// disagree. That count comes from the RTO policy and the offer's time off, not a flat
-// 260 working days — a 2-day hybrid should not be charged a 5-day commute.
-
 export type CommuteMode = 'TRAIN' | 'BUS' | 'CAR' | 'BIKE' | 'WALK' | 'OTHER';
 export type CostFrequency = 'DAILY' | 'MONTHLY' | 'YEARLY';
-// FIXED is a figure you already know, such as a transit pass. FUEL derives the cost from
-// distance and pump price, because nobody knows their annual driving cost off the top of
-// their head — but everyone knows roughly how far they would drive and what gas costs.
 export type CostMode = 'FIXED' | 'FUEL';
-// Whether a distance covers the trip out or the trip there and back. Left implicit, the
-// annual mileage silently doubled a figure that was already a round trip, and the cost with
-// it — the arithmetic was right and the answer was still wrong.
 export type DistanceBasis = 'ONE_WAY' | 'ROUND_TRIP';
 
 export interface CommuteOption {
@@ -25,15 +15,8 @@ export interface CommuteOption {
   miles_each_way?: number;
   // Absent on rows saved before this existed, which were all read as one way.
   distance_basis?: DistanceBasis;
-  // Overrides only. Your car and your pump price belong to you, not to one offer, so these
-  // are normally blank and the shared defaults are used; a value here means this offer
-  // deliberately differs.
   mpg?: number | null;
   gas_price_per_gallon?: number | null;
-  // Parking and tolls, per day in the office. Fuel alone badly understates driving — a
-  // 16-mile round trip is a few hundred dollars of gas a year but garage parking can be
-  // thousands — so without this the derived total would not be a fair replacement for the
-  // fixed figure it is meant to supersede.
   parking_tolls_per_day?: number;
   is_primary?: boolean;
 }
@@ -49,13 +32,9 @@ export const COMMUTE_MODE_LABELS: Record<CommuteMode, string> = {
 
 export const COMMUTE_MODES = Object.keys(COMMUTE_MODE_LABELS) as CommuteMode[];
 
-// Fallbacks for when no shared default has been saved yet. Shown as editable values rather
-// than applied invisibly — a commute cost built on assumptions you cannot see is worse than
-// no estimate.
 export const DEFAULT_MPG = 28;
 export const DEFAULT_GAS_PRICE = 4;
 
-/** Your car and your local pump price, shared by every offer. */
 export interface DrivingDefaults {
   mpg: number;
   gasPricePerGallon: number;
@@ -68,8 +47,6 @@ export const resolveDrivingDefaults = (
   gasPricePerGallon: Number(defaults?.gasPricePerGallon) || DEFAULT_GAS_PRICE,
 });
 
-/** The figures actually used for one offer: its overrides where set, the shared values
- *  otherwise. `overridden` drives the UI so a deviation is visible rather than implied. */
 export const effectiveFuelInputs = (
   option: CommuteOption,
   defaults?: Partial<DrivingDefaults> | null
@@ -151,7 +128,7 @@ export const fuelOverridesIn = (
   return { mpg, gasPricePerGallon };
 };
 
-/** Hands every row back to the shared figures. */
+// Hands every row back to the shared figures.
 export const clearFuelOverrides = (options: CommuteOption[] | null | undefined): CommuteOption[] =>
   (Array.isArray(options) ? options : []).map((option) => ({
     ...option,

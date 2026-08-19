@@ -54,9 +54,6 @@ export const renderAvailabilityWidget = (
           </div>
         </div>
       );
-    // Average duration used to live here. On a calendar that is almost all interviews they
-    // are all about an hour, so the number never moved and never meant anything. How heavy
-    // the weeks are, and whether they pile onto single days, does.
     case 'load':
       return (
         <div className="enterprise-card h-full p-4 sm:p-6">
@@ -175,9 +172,6 @@ export const getAvailabilityWidgetClass = (id: string, customWidgets: CustomWidg
       : 'col-span-1 md:col-span-2 lg:col-span-2';
   }
 
-  // Total + This Week + Schedule Load fill one row of the six-column grid; the pie takes
-  // half the next. The daily bar chart that used to sit beside it is now the shared activity
-  // chart, rendered full width below the grid.
   if (['total', 'weekly', 'load'].includes(id)) {
     return 'col-span-1 md:col-span-2 lg:col-span-2';
   }

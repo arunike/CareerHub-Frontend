@@ -61,7 +61,7 @@ const NegotiationResultsTab: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
-  /* ── Selection ── */
+  // ── Selection ──
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
@@ -82,7 +82,7 @@ const NegotiationResultsTab: React.FC = () => {
     [selectedResults]
   );
 
-  /* ── Single-item actions ── */
+  // ── Single-item actions ──
   const handleDelete = useCallback(
     async (id: string) => {
       if (usingBackendArtifacts) {
@@ -128,7 +128,7 @@ const NegotiationResultsTab: React.FC = () => {
     });
   }, [editingResult, refresh, usingBackendArtifacts]);
 
-  /* ── Bulk actions ── */
+  // ── Bulk actions ──
   const handleBulkDelete = useCallback(() => {
     const deletableIds = selectedIds.filter((id) => {
       const r = results.find((x) => x.id === id);
@@ -181,7 +181,7 @@ const NegotiationResultsTab: React.FC = () => {
     setSelectedIds([]);
   }, [refresh, usingBackendArtifacts]);
 
-  /* ── Export ── */
+  // ── Export ──
   const handleExport = useCallback(
     async (format: string): Promise<{ data: Blob; headers: Record<string, string> }> => {
       if (format === 'json') {

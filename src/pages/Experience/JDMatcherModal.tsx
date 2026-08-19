@@ -133,7 +133,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
       styles={{ body: { padding: '16px 24px 24px' } }}
     >
       {!savedReport ? (
-        /* ── Input State ── */
+        // ── Input State ──
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {errorMsg && (
             <Alert
@@ -180,7 +180,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
           </Button>
         </div>
       ) : (
-        /* ── Result State ── */
+        // ── Result State ──
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Score hero */}
           <div

@@ -1,7 +1,3 @@
-// Six tabs and dozens of controls, with no way to find one except remembering which tab it
-// lives on. This searches section titles plus keywords, and selecting a result switches tab
-// and scrolls the card into view.
-
 import { useEffect, useRef, useState } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import { CONTROL_CLASS } from '../../components/formControls';

@@ -51,9 +51,7 @@ export const useOfferAdjustmentsPersistence = ({ normalizeSimulatedOffers }: Par
     };
   }, [normalizeSimulatedOffers]);
 
-  // `overrides` exists for callers that have just computed a new scenario list and cannot wait a
-  // render for the ref to catch up — a setState followed immediately by a save would otherwise
-  // persist the previous list.
+  // `overrides` covers callers whose new list has not reached the ref yet.
   const saveAdjustments = useCallback(
     async (overrides?: { simulatedOffers?: SimulatedOffer[]; maritalStatus?: MaritalStatus }) => {
       const nowIso = new Date().toISOString();

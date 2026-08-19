@@ -1,6 +1,4 @@
-// Raw <select> and <input> elements that sit next to a UnitNumberInput have to match
-// the antd theme exactly or the row looks ragged. These mirror CareerHubThemeProvider:
-// controlHeight 38, borderRadius 9, colorBorder #e2e8f0, colorPrimary #2563eb.
+// Mirrors CareerHubThemeProvider: height 38, radius 9, border #e2e8f0, primary #2563eb.
 export const CONTROL_CLASS =
   'h-[38px] w-full rounded-[9px] border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400';
 

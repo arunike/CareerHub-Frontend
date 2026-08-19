@@ -278,9 +278,6 @@ const NavigationSettings = ({
   };
 
   return (
-    // Shell and heading match SettingsSection, so this reads as one of the section cards
-    // rather than the odd one out. It keeps its own markup because the reset button sits in
-    // the header alongside a longer description.
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="max-w-2xl">

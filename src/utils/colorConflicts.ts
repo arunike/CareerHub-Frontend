@@ -1,9 +1,5 @@
 import { USER_COLOR_PALETTE, getPaletteColor } from './colorPalette';
 
-// Event categories and holiday colours are drawn side by side on the calendar, so two of
-// them sharing a shade makes the calendar lie: Work events and time off both rendered
-// blue is indistinguishable at a glance. This finds those collisions so the UI can say so.
-
 export type ColorOwnerKind = 'category' | 'holiday';
 
 export interface ColorOwner {
@@ -59,9 +55,7 @@ export const describeConflict = (conflict: ColorConflict) => {
   return `${list} share a colour, so they look identical on the calendar.`;
 };
 
-// A warning is only useful while you are choosing, so this compares a draft colour against
-// everything else rather than waiting for the value to be saved. `excluding` drops the
-// entry being edited so it never reports clashing with itself.
+// `excluding` skips the entry being edited so it never clashes with itself.
 export const findClashesWith = (
   owners: ColorOwner[],
   color: string | null | undefined,

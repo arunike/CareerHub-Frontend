@@ -229,7 +229,7 @@ const parseAIProviderCurl = (curlText: string) => {
         model = payload.model;
       }
     } catch {
-      /* ignore malformed curl body */
+      // ignore malformed curl body
     }
   }
 
@@ -322,9 +322,7 @@ const Settings: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
-  // Below the activeTab declaration on purpose: reading it above threw a temporal dead zone
-  // ReferenceError on every render, which the error boundary turned into "could not finish
-  // loading this view" for the whole page.
+  // Must stay below activeTab: reading it above throws a TDZ ReferenceError.
   const activeTabMeta = SETTINGS_TABS.find((tab) => tab.key === activeTab);
 
   // A search result has to both switch tab and land on the card. The panel only mounts after

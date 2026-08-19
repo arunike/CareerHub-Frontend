@@ -126,9 +126,7 @@ export const useScenarioRows = ({
         },
         drivingDefaults
       );
-      // Free meals are worth what they save on the days you are in, so they share the same
-      // office-day count as the commute. Falls back to the legacy flat amount when no meals
-      // are set, so an offer saved before per-meal valuing keeps its figure.
+      // Meals share the commute's office-day count; falls back to the legacy flat amount.
       const freeFoodAnnualValue = annualFreeFoodValue({
         meals: app?.free_food_meals,
         legacyValuePerMeal: Number(app?.free_food_value_per_meal) || 0,

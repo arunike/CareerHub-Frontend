@@ -35,7 +35,7 @@ const CoverLetters: React.FC = () => {
 
   const refresh = useCallback(() => setLetters(getAllCoverLetters()), []);
 
-  /* ── Selection ── */
+  // ── Selection ──
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
@@ -56,7 +56,7 @@ const CoverLetters: React.FC = () => {
     [selectedLetters]
   );
 
-  /* ── Single-item actions ── */
+  // ── Single-item actions ──
   const handleDelete = useCallback(
     (id: string) => {
       deleteCoverLetter(id);
@@ -81,7 +81,7 @@ const CoverLetters: React.FC = () => {
     setEditingLetter(null);
   }, [editingLetter, refresh]);
 
-  /* ── Bulk actions ── */
+  // ── Bulk actions ──
   const handleBulkDelete = useCallback(() => {
     const deletableIds = selectedIds.filter((id) => {
       const l = letters.find((x) => x.id === id);
@@ -119,7 +119,7 @@ const CoverLetters: React.FC = () => {
     refresh();
   }, [refresh]);
 
-  /* ── Export ── */
+  // ── Export ──
   const handleExport = useCallback(
     async (format: string): Promise<{ data: Blob; headers: Record<string, string> }> => {
       if (format === 'json') {
@@ -146,7 +146,7 @@ const CoverLetters: React.FC = () => {
     [letters]
   );
 
-  /* ── Copy helper ── */
+  // ── Copy helper ──
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     messageApi.success('Copied to clipboard');

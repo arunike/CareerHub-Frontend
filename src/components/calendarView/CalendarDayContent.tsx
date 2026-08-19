@@ -200,7 +200,7 @@ export const CalendarCompactDayEntries = ({
                   onClick={(clickEvent) =>
                     handleHolidayEntryClick(holiday, onHolidaySelect, clickEvent)
                   }
-                  className="block w-full rounded px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+                  className="block w-full rounded px-1.5 py-0.5 text-left font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                   style={
                     {
                       backgroundColor: holidayColor.bg,
@@ -246,7 +246,7 @@ export const CalendarCompactDayEntries = ({
               }}
               onDragEnd={() => onItemDragEnd?.()}
               onClick={(clickEvent) => handleEventEntryClick(event, onEventSelect, clickEvent, day)}
-              className="block w-full rounded border px-1.5 py-0.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
+              className="block w-full rounded border px-1.5 py-0.5 text-left font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
               style={
                 {
                   backgroundColor: eventColor.bg,

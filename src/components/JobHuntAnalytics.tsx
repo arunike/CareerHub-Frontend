@@ -56,10 +56,7 @@ const RETIRED_WIDGET_IDS = new Set([
   'top_companies',
   'work_modes',
 ]);
-// Everything that ever rendered part of this report. Any saved selection containing one of
-// these predates the split into per-section widgets, so it is replaced with the full default
-// set rather than partially migrated — the sections do not map one-to-one onto the old ids,
-// and a half-migrated dashboard is worse than a fresh one.
+// Legacy widget ids; any saved selection holding one is replaced with the defaults.
 const PRE_SPLIT_WIDGET_IDS = new Set([
   'total',
   'active',
