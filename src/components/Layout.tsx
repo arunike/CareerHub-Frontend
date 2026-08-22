@@ -35,7 +35,7 @@ import {
   recordMobileNavigationUse,
 } from '../constants/mobileNavigation';
 import MobileQuickActions, { hasMobileQuickActionsForSource } from './MobileQuickActions';
-import { applyNavOrder } from '../constants/navigationItems';
+import { applyNavOrder, navLabel } from '../constants/navigationItems';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -57,6 +57,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [hiddenNavItems, setHiddenNavItems] = useState<string[]>([]);
   const [navItemOrder, setNavItemOrder] = useState<string[]>([]);
   const [mobileToolbarKeys, setMobileToolbarKeys] = useState<string[]>([]);
+  const [navItemLabels, setNavItemLabels] = useState<Record<string, string>>({});
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [quickActionsSourceKey, setQuickActionsSourceKey] = useState<string>();
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -83,6 +84,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         setHiddenNavItems(res.data.hidden_nav_items || []);
         setNavItemOrder(res.data.nav_item_order || []);
         setMobileToolbarKeys(res.data.mobile_toolbar_items || []);
+        setNavItemLabels(res.data.nav_item_labels || {});
         setProfilePic(res.data.profile_picture);
         setDisplayName(res.data.display_name || user?.full_name || '');
       })
@@ -98,6 +100,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         if (detail.mobile_toolbar_items !== undefined) {
           setMobileToolbarKeys(detail.mobile_toolbar_items);
         }
+        if (detail.nav_item_labels !== undefined) setNavItemLabels(detail.nav_item_labels);
         if (detail.profile_picture !== undefined) setProfilePic(detail.profile_picture);
         if (detail.display_name !== undefined) setDisplayName(detail.display_name);
       }
@@ -219,14 +222,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           : item
       );
 
+  // A renamed entry keeps its route; only the text the user reads changes.
+  const rename = <T extends { key: string; label?: React.ReactNode }>(item: T): T =>
+    typeof item.label === 'string'
+      ? { ...item, label: navLabel(item.key, item.label, navItemLabels) }
+      : item;
+
   const visibleMenuItems = menuItems
     .map((group) => ({
-      ...group,
-      children: applyNavOrder(filterChildren(group.children) ?? [], navItemOrder).map((item) =>
-        'children' in item && item.children
-          ? { ...item, children: applyNavOrder(item.children, navItemOrder) }
-          : item
-      ),
+      ...rename(group),
+      children: applyNavOrder(filterChildren(group.children) ?? [], navItemOrder)
+        .map((item) =>
+          'children' in item && item.children
+            ? { ...item, children: applyNavOrder(item.children, navItemOrder).map(rename) }
+            : item
+        )
+        .map(rename),
     }))
     .filter((group) => (group.children?.length ?? 0) > 0);
 

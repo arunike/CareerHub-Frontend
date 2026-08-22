@@ -69,3 +69,8 @@ export const applyNavOrder = <T extends { key: string }>(items: T[], order?: str
     return aRank - bRank;
   });
 };
+
+// A renamed entry only overrides its own name; anything the user has not renamed keeps the
+// built-in one, so shipping a new entry later needs no migration of saved settings.
+export const navLabel = (key: string, fallback: string, labels?: Record<string, string>) =>
+  labels?.[key]?.trim() || fallback;

@@ -12,6 +12,13 @@ interface Props {
   onSelectYear: (year: number) => void;
 }
 
+const SEGMENTS = [
+  { key: 'takeHome', label: 'Take-home', tone: 'bg-emerald-500' },
+  { key: 'taxWithheld', label: 'Tax', tone: 'bg-rose-400' },
+  { key: 'deductions', label: 'Deductions', tone: 'bg-amber-400' },
+  { key: 'employerMatch', label: '401(k) match', tone: 'bg-sky-500' },
+] as const;
+
 const Figure = ({
   label,
   value,
@@ -54,6 +61,11 @@ export const YearEarningsCard = ({
   if (summary.roles.length === 0) return null;
 
   const peak = Math.max(...history.map((year) => year.totalComp), 1);
+  // Take-home, tax, deductions and the match are what total comp is made of. Summing them
+  // rather than reusing totalComp keeps the segments filling the bar exactly even when a
+  // tax-free allowance lands in take-home without ever passing through gross.
+  const segmentTotal = (year: YearEarnings) =>
+    year.takeHome + year.taxWithheld + year.deductions + year.employerMatch;
 
   return (
     <div className="enterprise-card overflow-hidden">
@@ -86,13 +98,19 @@ export const YearEarningsCard = ({
         </button>
 
         {collapsed ? null : (
-          <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
             <Figure
               label="Gross"
               value={summary.gross}
               hint="Everything payroll reported as wages, which already includes any bonus and any equity that vested."
             />
             <Figure label="Tax withheld" value={summary.taxWithheld} tone="text-rose-600" />
+            <Figure
+              label="Deductions"
+              value={summary.deductions}
+              hint="Withheld but not tax: 401(k), insurance, HSA and anything post-tax."
+              tone="text-amber-600"
+            />
             <Figure label="Take-home" value={summary.takeHome} tone="text-emerald-600" />
             <Figure
               label="401(k) match"
@@ -142,9 +160,22 @@ export const YearEarningsCard = ({
 
       {!collapsed && history.length > 1 ? (
         <div className="border-t border-slate-100 px-6 py-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            By year
-          </span>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              By year
+            </span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {SEGMENTS.map((segment) => (
+                <span
+                  key={segment.key}
+                  className="flex items-center gap-1.5 text-[11px] text-slate-500"
+                >
+                  <span className={`h-2 w-2 rounded-full ${segment.tone}`} />
+                  {segment.label}
+                </span>
+              ))}
+            </div>
+          </div>
           <div className="mt-2 space-y-1">
             {history.map((year) => (
               <button
@@ -161,11 +192,25 @@ export const YearEarningsCard = ({
                 <span className="w-16 shrink-0 text-xs text-slate-400">
                   {year.roles.length === 1 ? '1 role' : `${year.roles.length} roles`}
                 </span>
-                <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
                   <span
-                    className="block h-full rounded-full bg-slate-300"
-                    style={{ width: `${Math.max(2, (year.totalComp / peak) * 100)}%` }}
-                  />
+                    className="flex h-full overflow-hidden rounded-full"
+                    style={{ width: `${(year.totalComp / peak) * 100}%` }}
+                  >
+                    {SEGMENTS.map((segment) => {
+                      const amount = year[segment.key];
+                      if (amount <= 0) return null;
+                      const share = segmentTotal(year) > 0 ? amount / segmentTotal(year) : 0;
+                      return (
+                        <Tooltip key={segment.key} title={`${segment.label} ${money(amount)}`}>
+                          <span
+                            className={`h-full ${segment.tone}`}
+                            style={{ width: `${share * 100}%`, minWidth: 2 }}
+                          />
+                        </Tooltip>
+                      );
+                    })}
+                  </span>
                 </span>
                 <span className="w-28 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-900">
                   {money(year.totalComp)}

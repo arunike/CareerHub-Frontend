@@ -2567,6 +2567,10 @@ const Settings: React.FC = () => {
                   prev ? { ...prev, mobile_toolbar_items: mobileToolbarItems } : prev
                 )
               }
+              navItemLabels={settings.nav_item_labels}
+              onNavItemLabelsChange={(navItemLabels) =>
+                setSettings((prev) => (prev ? { ...prev, nav_item_labels: navItemLabels } : prev))
+              }
             />
           </div>
         )}

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import {
   AppstoreOutlined,
   HolderOutlined,
@@ -23,7 +24,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Popconfirm, Tooltip } from 'antd';
+import { Input, Popconfirm, Tooltip } from 'antd';
 import {
   DEFAULT_MOBILE_TOOLBAR_KEYS,
   MOBILE_SMART_SLOT_KEY,
@@ -31,7 +32,7 @@ import {
   normalizeMobileToolbarKeys,
   type MobileToolbarSlot,
 } from '../../constants/mobileNavigation';
-import { NAV_GROUPS, applyNavOrder, type NavItem } from '../../constants/navigationItems';
+import { NAV_GROUPS, applyNavOrder, navLabel, type NavItem } from '../../constants/navigationItems';
 
 // The preview doubles as the editor: the tiles are the toolbar order, so dragging one is
 // the most direct way to say "put Offers second".
@@ -63,6 +64,8 @@ const SortableToolbarSlot = ({ slot, index }: { slot: MobileToolbarSlot; index: 
 
 const MAX_PINNED = 4;
 
+const NAME_MAX_LENGTH = 40;
+
 interface Props {
   hiddenNavItems?: string[];
   onHiddenNavItemsChange: (keys: string[]) => void;
@@ -70,7 +73,68 @@ interface Props {
   onNavItemOrderChange: (keys: string[]) => void;
   mobileToolbarItems?: string[];
   onMobileToolbarItemsChange: (keys: string[]) => void;
+  navItemLabels?: Record<string, string>;
+  onNavItemLabelsChange: (labels: Record<string, string>) => void;
 }
+
+// The field shows the built-in name as its placeholder, so emptying it reads as "go back to
+// the default" rather than leaving the entry nameless.
+const NameField = ({
+  itemKey,
+  defaultLabel,
+  labels,
+  onChange,
+  className = '',
+}: {
+  itemKey: string;
+  defaultLabel: string;
+  labels: Record<string, string>;
+  onChange: (labels: Record<string, string>) => void;
+  className?: string;
+}) => {
+  const stored = labels[itemKey];
+  // The field carries the current name as its value, not as a placeholder: placeholder grey
+  // made every unrenamed entry look disabled.
+  const [draft, setDraft] = useState(stored ?? defaultLabel);
+  const focused = useRef(false);
+
+  // Pick up an outside change, e.g. Reset to default, but never while it is being typed in.
+  useEffect(() => {
+    if (!focused.current) setDraft(stored ?? defaultLabel);
+  }, [stored, defaultLabel]);
+
+  const commit = (value: string) => {
+    setDraft(value);
+    const next = { ...labels };
+    const trimmed = value.trim();
+    // Storing only a real difference keeps the saved map sparse, so an entry renamed back to
+    // its default stops being an override.
+    if (trimmed && trimmed !== defaultLabel) next[itemKey] = trimmed;
+    else delete next[itemKey];
+    onChange(next);
+  };
+
+  return (
+    <Input
+      variant="borderless"
+      size="small"
+      maxLength={NAME_MAX_LENGTH}
+      value={draft}
+      placeholder={defaultLabel}
+      aria-label={`Rename ${defaultLabel}`}
+      className={`!px-1.5 !rounded-md transition-colors hover:!bg-slate-100 focus:!bg-white focus:!ring-2 focus:!ring-blue-500/40 ${className}`}
+      onFocus={() => {
+        focused.current = true;
+      }}
+      onBlur={() => {
+        focused.current = false;
+        // An emptied field means "use the built-in name", so show it again.
+        if (!draft.trim()) setDraft(defaultLabel);
+      }}
+      onChange={(event) => commit(event.target.value)}
+    />
+  );
+};
 
 const VisibilityToggle = ({
   checked,
@@ -145,6 +209,8 @@ const SortableNavRow = ({
   pinnable,
   onToggleHidden,
   onTogglePinned,
+  labels,
+  onLabelsChange,
   children,
 }: {
   item: NavItem;
@@ -154,6 +220,8 @@ const SortableNavRow = ({
   pinnable: boolean;
   onToggleHidden: () => void;
   onTogglePinned: () => void;
+  labels: Record<string, string>;
+  onLabelsChange: (labels: Record<string, string>) => void;
   children?: React.ReactNode;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -176,18 +244,20 @@ const SortableNavRow = ({
           type="button"
           {...attributes}
           {...listeners}
-          aria-label={`Drag ${item.label} to reorder`}
+          aria-label={`Drag ${navLabel(item.key, item.label, labels)} to reorder`}
           className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing"
         >
           <HolderOutlined />
         </button>
-        <span
-          className={`min-w-0 flex-1 truncate text-sm ${
-            hidden ? 'text-slate-400 line-through' : 'text-slate-800'
+        <NameField
+          itemKey={item.key}
+          defaultLabel={item.label}
+          labels={labels}
+          onChange={onLabelsChange}
+          className={`min-w-0 flex-1 !text-sm ${
+            hidden ? '!text-slate-400 line-through' : '!text-slate-800'
           }`}
-        >
-          {item.label}
-        </span>
+        />
         {isGroup ? (
           <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
             Group
@@ -199,10 +269,14 @@ const SortableNavRow = ({
                 pinned={pinned}
                 disabled={pinDisabled}
                 onChange={onTogglePinned}
-                label={item.label}
+                label={navLabel(item.key, item.label, labels)}
               />
             )}
-            <VisibilityToggle checked={!hidden} onChange={onToggleHidden} label={item.label} />
+            <VisibilityToggle
+              checked={!hidden}
+              onChange={onToggleHidden}
+              label={navLabel(item.key, item.label, labels)}
+            />
           </>
         )}
       </div>
@@ -218,8 +292,11 @@ const NavigationSettings = ({
   onNavItemOrderChange,
   mobileToolbarItems,
   onMobileToolbarItemsChange,
+  navItemLabels,
+  onNavItemLabelsChange,
 }: Props) => {
   const hidden = hiddenNavItems || [];
+  const labels = navItemLabels || {};
   const pinnedKeys = normalizeMobileToolbarKeys(mobileToolbarItems);
   const previewSlots = getMobileToolbarSlots(mobileToolbarItems);
   const pinnedCount = pinnedKeys.length;
@@ -288,8 +365,9 @@ const NavigationSettings = ({
             Navigation
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">
-            Drag to reorder the sidebar, toggle what appears in it, and pin up to {MAX_PINNED}{' '}
-            shortcuts to the mobile toolbar. Items stay within their group.
+            Drag to reorder the sidebar, rename anything by typing over its name, toggle what
+            appears in it, and pin up to {MAX_PINNED} shortcuts to the mobile toolbar. Items stay
+            within their group.
           </p>
         </div>
         {/* Was an antd text button with UndoOutlined: a bare label with no affordance, and
@@ -299,7 +377,7 @@ const NavigationSettings = ({
             order, the hidden items and the pinned shortcuts all at once. */}
         <Popconfirm
           title="Reset navigation to default?"
-          description="Your sidebar order, hidden items and pinned mobile shortcuts will all go back to the defaults."
+          description="Your sidebar order, custom names, hidden items and pinned mobile shortcuts will all go back to the defaults."
           okText="Reset"
           okButtonProps={{ danger: true }}
           cancelText="Cancel"
@@ -308,6 +386,7 @@ const NavigationSettings = ({
             onNavItemOrderChange([]);
             onHiddenNavItemsChange([]);
             onMobileToolbarItemsChange([...DEFAULT_MOBILE_TOOLBAR_KEYS]);
+            onNavItemLabelsChange({});
           }}
         >
           <button
@@ -367,9 +446,15 @@ const NavigationSettings = ({
           const groupKeys = group.items.map((item) => item.key);
           return (
             <div key={group.key}>
-              <p className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                {group.label}
-              </p>
+              <div className="mb-1 px-1">
+                <NameField
+                  itemKey={group.key}
+                  defaultLabel={group.label}
+                  labels={labels}
+                  onChange={onNavItemLabelsChange}
+                  className="!text-[11px] !font-semibold !uppercase !tracking-wide !text-slate-400"
+                />
+              </div>
               <div className="rounded-xl border border-slate-200">
                 <DndContext
                   sensors={sensors}
@@ -389,6 +474,8 @@ const NavigationSettings = ({
                           pinnable
                           onToggleHidden={() => toggleHidden(item.key)}
                           onTogglePinned={() => togglePinned(item.key)}
+                          labels={labels}
+                          onLabelsChange={onNavItemLabelsChange}
                         >
                           {item.children && (
                             <div className="pl-8">
@@ -411,6 +498,8 @@ const NavigationSettings = ({
                                       pinnable
                                       onToggleHidden={() => toggleHidden(child.key)}
                                       onTogglePinned={() => togglePinned(child.key)}
+                                      labels={labels}
+                                      onLabelsChange={onNavItemLabelsChange}
                                     />
                                   ))}
                                 </SortableContext>

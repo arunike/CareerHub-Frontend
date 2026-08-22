@@ -181,3 +181,63 @@ describe('calculated figures shown in fields', () => {
     expect(String(periodDefaults.regularGross).split('.')[1]?.length ?? 0).toBeLessThanOrEqual(2);
   });
 });
+
+describe('the composition the year bar draws', () => {
+  const segmentTotal = (e: {
+    takeHome: number;
+    taxWithheld: number;
+    deductions: number;
+    employerMatch: number;
+  }) => e.takeHome + e.taxWithheld + e.deductions + e.employerMatch;
+
+  it('splits gross into take-home, tax and deductions with nothing left over', () => {
+    const summary = summarizeYear(
+      2025,
+      [source()],
+      resolver({
+        elections: { ...DEFAULT_SETTINGS.elections, pretax401kPercent: 6, postTaxPerPeriod: 25 },
+      }),
+      context
+    );
+    expect(summary.deductions).toBeGreaterThan(0);
+    expect(summary.takeHome + summary.taxWithheld + summary.deductions).toBeCloseTo(
+      summary.gross,
+      2
+    );
+  });
+
+  it('fills the bar exactly, so no segment is padded or clipped', () => {
+    const summary = summarizeYear(
+      2025,
+      [source()],
+      resolver({
+        elections: { ...DEFAULT_SETTINGS.elections, pretax401kPercent: 4 },
+      }),
+      context
+    );
+    expect(segmentTotal(summary)).toBeCloseTo(summary.totalComp, 2);
+  });
+
+  it('reports no deductions when nothing is withheld beyond tax', () => {
+    const summary = summarizeYear(2025, [source()], resolver(), context);
+    expect(summary.deductions).toBeCloseTo(0, 2);
+    expect(summary.takeHome + summary.taxWithheld).toBeCloseTo(summary.gross, 2);
+  });
+
+  it('adds up across several roles', () => {
+    const summary = summarizeYear(
+      2025,
+      [
+        source({ key: 'experience-1', company: 'Google' }),
+        source({ key: 'experience-2', company: 'Netflix', annualSalary: 80000 }),
+      ],
+      resolver({ elections: { ...DEFAULT_SETTINGS.elections, pretax401kPercent: 5 } }),
+      context
+    );
+    expect(summary.deductions).toBeCloseTo(
+      summary.roles.reduce((total, role) => total + role.deductions, 0),
+      2
+    );
+    expect(segmentTotal(summary)).toBeCloseTo(summary.totalComp, 2);
+  });
+});

@@ -95,6 +95,6 @@ export const SettingsSection = ({
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </div>
-    {children}
+    <div className="space-y-5">{children}</div>
   </section>
 );

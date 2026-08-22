@@ -8,6 +8,8 @@ export interface Earnings {
   bonus: number;
   equityVested: number;
   taxWithheld: number;
+  // Everything withheld that was not tax: 401(k), insurance, HSA, and anything post-tax.
+  deductions: number;
   takeHome: number;
   // Employer money, so this is the only line that adds on top of gross.
   employerMatch: number;
@@ -31,6 +33,7 @@ const EMPTY: Earnings = {
   bonus: 0,
   equityVested: 0,
   taxWithheld: 0,
+  deductions: 0,
   takeHome: 0,
   employerMatch: 0,
   totalComp: 0,
@@ -56,6 +59,12 @@ const earningsFor = (
   const gross = effectiveRows.reduce((total, row) => total + row.gross, 0);
   const taxWithheld = effectiveRows.reduce((total, row) => total + row.taxTotal, 0);
   const takeHome = effectiveRows.reduce((total, row) => total + row.net, 0);
+  // Taken as the residual of the ledger's own identity, so it stays correct whatever
+  // deduction lines a paycheck happens to carry.
+  const deductions = effectiveRows.reduce(
+    (total, row) => total + (row.gross + row.taxFreeAllowance - row.taxTotal - row.net),
+    0
+  );
   const employerMatch = ledger.totals.employerMatch401k;
 
   return {
@@ -67,6 +76,7 @@ const earningsFor = (
     bonus: bonusEvents.reduce((total, event) => total + event.amount, 0),
     equityVested: vestEvents.reduce((total, event) => total + event.amount, 0),
     taxWithheld,
+    deductions,
     takeHome,
     employerMatch,
     totalComp: gross + employerMatch,
@@ -78,6 +88,7 @@ const add = (a: Earnings, b: Earnings): Earnings => ({
   bonus: a.bonus + b.bonus,
   equityVested: a.equityVested + b.equityVested,
   taxWithheld: a.taxWithheld + b.taxWithheld,
+  deductions: a.deductions + b.deductions,
   takeHome: a.takeHome + b.takeHome,
   employerMatch: a.employerMatch + b.employerMatch,
   totalComp: a.totalComp + b.totalComp,

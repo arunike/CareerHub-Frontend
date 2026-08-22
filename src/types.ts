@@ -153,6 +153,7 @@ export interface UserSettings {
   }>;
   hidden_nav_items?: string[];
   nav_item_order?: string[];
+  nav_item_labels?: Record<string, string>;
   mobile_toolbar_items?: string[];
   is_locked?: boolean;
   ai_provider_adapter?: 'claude' | 'gemini' | 'openai' | 'openrouter' | 'custom';
@@ -442,8 +443,6 @@ export interface ContactRelationship {
   updated_at?: string;
 }
 
-// Dashboard aggregates from /career/application-stats/. The Analytics page reads these
-// instead of the applications list, which was ~1 MB of rows it only wanted counts from.
 export interface ApplicationStats {
   total: number;
   offers: number;
