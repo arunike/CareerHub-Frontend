@@ -26,6 +26,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Applications = lazy(() => import('./pages/Applications'));
 const OfferComparison = lazy(() => import('./pages/OfferComparison'));
+const IncomePage = lazy(() => import('./pages/Income'));
 const Documents = lazy(() => import('./pages/Documents'));
 const Tasks = lazy(() => import('./pages/Tasks'));
 const ExperiencePage = lazy(() => import('./pages/Experience'));
@@ -53,6 +54,7 @@ const getRouteTitle = (pathname: string, isAuthenticated: boolean) => {
   if (pathname === '/settings') return 'Settings | CareerHub';
   if (pathname === '/applications') return 'Applications | CareerHub';
   if (pathname === '/offers') return 'Offers | CareerHub';
+  if (pathname === '/income') return 'Income | CareerHub';
   if (pathname === '/documents') return 'Documents | CareerHub';
   if (pathname === '/tasks') return 'Tasks | CareerHub';
   if (pathname === '/experience') return 'Experience | CareerHub';
@@ -377,6 +379,7 @@ function AppRoutes() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/applications" element={<Applications />} />
               <Route path="/offers" element={<OfferComparison />} />
+              <Route path="/income" element={<IncomePage />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/experience" element={<ExperiencePage />} />

@@ -9,6 +9,7 @@ export interface VestingOfferFields {
   equity_total_grant?: number | null;
   equity_vesting_percent?: number | null;
   equity_vesting_schedule?: number[];
+  equity_vesting_years?: number | null;
   equity_liquidity?: string | null;
   equity_buyback_value?: number | null;
   // Optional annual refresh grant. 0 or absent disables refresh modelling.
@@ -85,7 +86,8 @@ export const buildGrossVestingYears = (
     explicitSchedule.length > 0
       ? Array.from({ length: PROJECTION_YEARS }, (_, index) => explicitSchedule[index] ?? 0)
       : null;
-  const vestingYears = clamp(Math.round(100 / vestPct), 1, 6);
+  const statedVestingYears = Math.round(Number(offer.equity_vesting_years) || 0);
+  const vestingYears = clamp(statedVestingYears || Math.round(100 / vestPct), 1, 6);
   const annualGrantSlice = totalGrant / vestingYears;
   const growthMultiplier = equityGrowthPct / 100;
 

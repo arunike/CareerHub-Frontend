@@ -585,3 +585,94 @@ export interface NegotiationAdvice {
     notes: string;
   };
 }
+
+export interface TaxProfilePayload {
+  id?: number;
+  tax_year: number;
+  filing_status: string;
+  state?: string;
+  locality?: string;
+  w4_dependents_credit?: number | string;
+  w4_other_income?: number | string;
+  w4_deductions?: number | string;
+  w4_extra_withholding_per_period?: number | string;
+  state_flat_rate_override?: number | string | null;
+}
+
+export interface PaycheckActualPayload {
+  id?: number;
+  income_year?: number;
+  period_index: number;
+  pay_date?: string | null;
+  actual_gross?: number | string | null;
+  actual_federal_tax?: number | string | null;
+  actual_state_tax?: number | string | null;
+  actual_social_security?: number | string | null;
+  actual_medicare?: number | string | null;
+  actual_net?: number | string | null;
+  note?: string;
+}
+
+export interface IncomeYearPayload {
+  id?: number;
+  tax_year: number;
+  source_key?: string;
+  offer?: number | null;
+  experience?: number | null;
+  first_pay_date?: string | null;
+  salary_override?: number | string | null;
+  paychecks_per_year_override?: number | null;
+  pretax_401k_percent?: number | string;
+  roth_401k_percent?: number | string;
+  hsa_per_period?: number | string;
+  fsa_per_period?: number | string;
+  post_tax_deductions_per_period?: number | string;
+  hsa_family_coverage?: boolean;
+  age_50_plus?: boolean;
+  include_bonus?: boolean;
+  bonus_override?: number | string | null;
+  bonus_payouts?: Array<Record<string, unknown>>;
+  bonus_multiplier_percent?: number | string;
+  bonus_extras?: Array<Record<string, unknown>>;
+  bonus_prorated?: boolean;
+  bonus_performance_year?: number | null;
+  include_vest_events?: boolean;
+  total_grant_override?: number | string | null;
+  vests_per_year_override?: number | null;
+  cliff_months_override?: number | null;
+  vesting_years_override?: number | null;
+  first_vest_date?: string | null;
+  medical_premium_override?: number | string | null;
+  dental_premium_override?: number | string | null;
+  vision_premium_override?: number | string | null;
+  dependent_premium_override?: number | string | null;
+  custom_deductions?: Array<Record<string, unknown>>;
+  period_deductions?: Array<Record<string, unknown>>;
+  exclude_allowances_from_deferral_base?: boolean;
+  match_tiers?: Array<Record<string, unknown>>;
+  match_non_elective_percent?: number | string;
+  match_annual_cap?: number | string;
+  allowances?: Array<Record<string, unknown>>;
+  retirement_starting_balance?: number | string | null;
+  retirement_current_value?: number | string | null;
+  income_events?: Array<Record<string, unknown>>;
+  actuals?: PaycheckActualPayload[];
+}
+
+export const getTaxProfiles = () => api.get<TaxProfilePayload[]>('/career/tax-profiles/');
+export const createTaxProfile = (data: TaxProfilePayload) =>
+  api.post<TaxProfilePayload>('/career/tax-profiles/', data);
+export const updateTaxProfile = (id: number, data: Partial<TaxProfilePayload>) =>
+  api.patch<TaxProfilePayload>(`/career/tax-profiles/${id}/`, data);
+
+export const getIncomeYears = () => api.get<IncomeYearPayload[]>('/career/income-years/');
+export const createIncomeYear = (data: IncomeYearPayload) =>
+  api.post<IncomeYearPayload>('/career/income-years/', data);
+export const updateIncomeYear = (id: number, data: Partial<IncomeYearPayload>) =>
+  api.patch<IncomeYearPayload>(`/career/income-years/${id}/`, data);
+
+export const createPaycheckActual = (data: PaycheckActualPayload) =>
+  api.post<PaycheckActualPayload>('/career/paycheck-actuals/', data);
+export const updatePaycheckActual = (id: number, data: Partial<PaycheckActualPayload>) =>
+  api.patch<PaycheckActualPayload>(`/career/paycheck-actuals/${id}/`, data);
+export const deletePaycheckActual = (id: number) => api.delete(`/career/paycheck-actuals/${id}/`);

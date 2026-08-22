@@ -11,6 +11,8 @@ interface YearFilterProps {
   className?: string;
   size?: 'large' | 'middle' | 'small';
   width?: number;
+  // Off for views that are inherently one year, e.g. a single year's paycheck ledger.
+  allowAllYears?: boolean;
 }
 
 const YearFilter: React.FC<YearFilterProps> = ({
@@ -22,6 +24,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
   className,
   size = 'middle',
   width,
+  allowAllYears = true,
 }) => {
   const normalizedYears = Array.from(
     new Set([
@@ -32,10 +35,7 @@ const YearFilter: React.FC<YearFilterProps> = ({
   ).sort((a, b) => b - a);
 
   const options = [
-    {
-      value: 'all',
-      label: 'All Years',
-    },
+    ...(allowAllYears ? [{ value: 'all', label: 'All Years' }] : []),
     ...normalizedYears.map((year) => ({
       value: year,
       label: year === currentYear ? `${year} (Current)` : `${year}`,

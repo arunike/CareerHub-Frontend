@@ -473,8 +473,8 @@ const formatSchedulePhases = (experience: Experience) => {
 const PROMOTION_REVIEW_UNSAFE_PATTERNS = [
   /\bpublic\s+(data|benchmark|comp|compensation|salary)\b/i,
   /\b(glassdoor|levels\.fyi|salary\.com|market\s+comp|compensation\s+benchmark)\b/i,
-  /\bTikTok'?s?\s+(formal\s+)?(promotion\s+)?cycles?\b/i,
-  /\bpromotion\s+timelines?\s+at\s+TikTok\b/i,
+  /\b(formal\s+)?promotion\s+cycles?\b/i,
+  /\bpromotion\s+timelines?\s+at\b/i,
   /\b(company|promotion)\s+policy\b/i,
   /\btenure-locked\b/i,
   /\byears?-at-level\b/i,

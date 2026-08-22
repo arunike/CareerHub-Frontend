@@ -18,6 +18,7 @@ interface PageActionToolbarProps {
   selectedYear?: number | 'all';
   onYearChange?: (year: number | 'all') => void;
   availableYears?: number[];
+  allowAllYears?: boolean;
   // Controls that change what you are looking at (view switches, filters).
   extraActions?: React.ReactNode;
   // Verbs. These belong with the primary action, not among the filters, so a button is
@@ -52,6 +53,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   selectedYear,
   onYearChange,
   availableYears = [],
+  allowAllYears = true,
   extraActions,
   secondaryActions,
   secondaryMenuItems,
@@ -81,6 +83,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
         selectedYear={selectedYear}
         onYearChange={onYearChange}
         availableYears={availableYears}
+        allowAllYears={allowAllYears}
         className="toolbar-select"
         size="large"
       />
@@ -261,9 +264,13 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
       </div>
 
       {singleRowDesktop ? (
+        // View controls first, then filters, then verbs, so the row reads left to right from
+        // "what am I looking at" to "what can I do".
         <div className="page-toolbar-actions">
+          {viewSwitch}
           {yearFilterNode}
           {extraActions}
+          {secondaryActions}
           {dataMenuNode}
           {primaryActionNode}
         </div>

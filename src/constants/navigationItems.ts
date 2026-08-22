@@ -31,6 +31,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: '/applications', label: 'Applications' },
       { key: '/offers', label: 'Offers' },
+      { key: '/income', label: 'Income' },
       { key: '/documents', label: 'Documents' },
       { key: '/tasks', label: 'Action Items' },
       { key: '/experience', label: 'Experience' },

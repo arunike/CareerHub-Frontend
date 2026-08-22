@@ -33,7 +33,6 @@ const RoleMetaRow = ({
   employmentType?: string;
   hourlyRate?: number | string | null;
   onOpenBreakdown: () => void;
-  // Only used for the button's accessible name, e.g. "Software Engineer at TikTok".
   describedRole: string;
 }) => {
   const isInternship = employmentType === 'internship';

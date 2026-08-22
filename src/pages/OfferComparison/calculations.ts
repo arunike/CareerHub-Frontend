@@ -1,9 +1,9 @@
 import type { CommuteOption } from './commute';
-export type MaritalStatus =
-  | 'SINGLE'
-  | 'MARRIED_FILING_JOINTLY'
-  | 'MARRIED_FILING_SEPARATELY'
-  | 'HEAD_OF_HOUSEHOLD';
+import type { FilingStatus } from '../../types/tax';
+import { calculateProgressiveTax, extractStateAbbr } from '../../utils/taxMath';
+
+export type MaritalStatus = FilingStatus;
+export { calculateProgressiveTax, extractStateAbbr };
 
 export type VisaSponsorshipStatus =
   | ''
@@ -778,13 +778,6 @@ export const computeNonTaxableBenefitsTotal = (items: BenefitItem[]) =>
     return sum + (item.frequency === 'MONTHLY' ? normalized * 12 : normalized);
   }, 0);
 
-export const extractStateAbbr = (city: string, stateNameToAbbr: Record<string, string>) => {
-  const abbrMatch = city.match(/,\s*([A-Z]{2})(?:\b|$)/);
-  if (abbrMatch?.[1]) return abbrMatch[1];
-  const stateName = Object.keys(stateNameToAbbr).find((name) => city.includes(name));
-  return stateName ? stateNameToAbbr[stateName] : '';
-};
-
 export const estimateColIndexFromCity = (
   city: string,
   cityCostOfLiving: Record<string, number>,
@@ -796,21 +789,6 @@ export const estimateColIndexFromCity = (
   if (cityCostOfLiving[city]) return cityCostOfLiving[city];
   const stateAbbr = extractStateAbbr(normalizedCity || city, stateNameToAbbr);
   return stateColBase[stateAbbr] || 100;
-};
-
-export const calculateProgressiveTax = (
-  income: number,
-  brackets: Array<{ cap: number; rate: number }>
-) => {
-  let tax = 0;
-  let previousCap = 0;
-  for (const bracket of brackets) {
-    if (income <= previousCap) break;
-    const taxableAmount = Math.min(income, bracket.cap) - previousCap;
-    tax += taxableAmount * bracket.rate;
-    previousCap = bracket.cap;
-  }
-  return tax;
 };
 
 export const estimateEffectiveTaxRate = (
