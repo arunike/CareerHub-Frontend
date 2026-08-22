@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   Button,
@@ -82,8 +82,11 @@ const EventEditorModal = ({
   const linkedApplication = Form.useWatch('application', form);
   const eventDate = Form.useWatch('date', form);
   const [linkHint, setLinkHint] = useState<EventLinkHint | null>(null);
+  const [autoLinked, setAutoLinked] = useState<EventLinkHint | null>(null);
+  // Applications the user took off this event, so a suggestion never reinstates one they
+  // just removed.
+  const declined = useRef<Set<number>>(new Set());
 
-  // Offered, never applied automatically: a wrong silent link is worse than none.
   useEffect(() => {
     if (linkedApplication || !eventName || eventName.trim().length < 3) {
       setLinkHint(null);
@@ -105,6 +108,23 @@ const EventEditorModal = ({
       window.clearTimeout(timer);
     };
   }, [eventName, eventDate, linkedApplication]);
+
+  // Applied by default rather than offered. It is visible and reversible, so a wrong guess
+  // costs one click instead of going unnoticed.
+  useEffect(() => {
+    if (!linkHint || linkedApplication) return;
+    if (declined.current.has(linkHint.application)) return;
+    form.setFieldValue('application', linkHint.application);
+    setAutoLinked(linkHint);
+    setLinkHint(null);
+  }, [form, linkHint, linkedApplication]);
+
+  // The user cleared or changed what we applied, so stop proposing it.
+  useEffect(() => {
+    if (!autoLinked || linkedApplication === autoLinked.application) return;
+    declined.current.add(autoLinked.application);
+    setAutoLinked(null);
+  }, [autoLinked, linkedApplication]);
 
   return (
     <Modal
@@ -345,6 +365,29 @@ const EventEditorModal = ({
                       }
                     />
                   </Form.Item>
+                  {autoLinked && (
+                    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-50/70 px-3 py-2 text-xs text-slate-600">
+                      <span className="min-w-0">
+                        Linked to{' '}
+                        <strong className="font-semibold text-slate-800">
+                          {autoLinked.company_name} · {autoLinked.role_title}
+                        </strong>{' '}
+                        automatically
+                        {autoLinked.other_applications > 0 &&
+                          ` — ${autoLinked.other_applications} other application${
+                            autoLinked.other_applications === 1 ? '' : 's'
+                          } at this company, so check it is the right one`}
+                      </span>
+                      <Button
+                        size="small"
+                        type="link"
+                        className="!h-auto !px-0 !text-xs"
+                        onClick={() => form.setFieldValue('application', undefined)}
+                      >
+                        Unlink
+                      </Button>
+                    </div>
+                  )}
                   {linkHint && (
                     <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-blue-50/70 px-3 py-2 text-xs text-slate-600">
                       <span className="min-w-0">
