@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import dayjs, { type Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -348,176 +349,182 @@ const FriendlyTimeInput = ({
         </div>
       )}
 
-      {sheetOpen && !disabled && (
-        <div className="fixed inset-0 z-[2000] sm:hidden">
-          <button
-            type="button"
-            aria-label="Close time picker"
-            className="absolute inset-0 bg-black/35"
-            onClick={() => setSheetOpen(false)}
-          />
-          <div
-            className={clsx(
-              'absolute bottom-0 left-0 right-0 flex max-h-[92dvh] flex-col overflow-hidden bg-white shadow-[0_-18px_50px_rgba(15,23,42,0.18)]',
-              mobileSheet.isExpanded
-                ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] rounded-none'
-                : 'rounded-t-2xl'
-            )}
-            style={mobileSheet.sheetStyle}
-          >
+      {/* Portaled to the body. An antd Drawer ancestor is transformed for its slide
+          animation, which makes it the containing block for position:fixed and would trap
+          this sheet inside the drawer's body box. */}
+      {sheetOpen &&
+        !disabled &&
+        createPortal(
+          <div className="fixed inset-0 z-[2000] sm:hidden">
             <button
               type="button"
-              className={clsx(
-                'group flex min-h-11 w-full shrink-0 touch-none items-center justify-center px-4',
-                mobileSheet.isDragging ? 'cursor-grabbing' : 'cursor-grab'
-              )}
-              style={{
-                paddingTop: mobileSheet.isExpanded
-                  ? 'max(env(safe-area-inset-top), 0.25rem)'
-                  : undefined,
-              }}
-              aria-label={
-                mobileSheet.isExpanded
-                  ? 'Restore time picker to compact size'
-                  : 'Expand time picker to full screen'
-              }
-              aria-pressed={mobileSheet.isExpanded}
-              {...mobileSheet.handleProps}
-            >
-              <span
-                className={clsx(
-                  'h-1 w-11 rounded-full transition-colors',
-                  mobileSheet.isDragging ? 'bg-blue-400' : 'bg-gray-300 group-active:bg-blue-400'
-                )}
-                aria-hidden="true"
-              />
-            </button>
-            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-              <button
-                type="button"
-                className="min-h-11 rounded-md px-2 text-sm font-medium text-gray-500"
-                onClick={() => setSheetOpen(false)}
-              >
-                Cancel
-              </button>
-              <div className="text-lg font-semibold tracking-wide text-gray-950">
-                {sheetValue.format(DISPLAY_FORMAT)}
-              </div>
-              <button
-                type="button"
-                className="min-h-11 rounded-md px-2 text-sm font-semibold text-gray-950"
-                onClick={() => {
-                  onChange?.(sheetValue);
-                  setDraft(formatDisplay(sheetValue));
-                  setSheetOpen(false);
-                }}
-              >
-                OK
-              </button>
-            </div>
-
+              aria-label="Close time picker"
+              className="absolute inset-0 bg-black/35"
+              onClick={() => setSheetOpen(false)}
+            />
             <div
               className={clsx(
-                'grid grid-cols-[1fr_1fr_0.8fr] gap-2 px-4 py-4',
-                mobileSheet.isExpanded && 'min-h-0 flex-1'
+                'absolute bottom-0 left-0 right-0 flex max-h-[92dvh] flex-col overflow-hidden bg-white shadow-[0_-18px_50px_rgba(15,23,42,0.18)]',
+                mobileSheet.isExpanded
+                  ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] rounded-none'
+                  : 'rounded-t-2xl'
               )}
+              style={mobileSheet.sheetStyle}
             >
-              <div
-                className={clsx(
-                  columnClass,
-                  mobileSheet.isExpanded ? 'h-full max-h-none' : 'max-h-64'
-                )}
-              >
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((hour) => {
-                  const active = sheetParts.hour === hour;
-                  return (
-                    <button
-                      key={hour}
-                      type="button"
-                      onClick={() => updateSheetValue({ hour })}
-                      className={clsx(
-                        optionBaseClass,
-                        mobileOptionClass,
-                        active ? activeOptionClass : inactiveOptionClass
-                      )}
-                    >
-                      {String(hour).padStart(2, '0')}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div
-                className={clsx(
-                  columnClass,
-                  mobileSheet.isExpanded ? 'h-full max-h-none' : 'max-h-64'
-                )}
-              >
-                {minuteOptions.map((minute) => {
-                  const active = sheetParts.minute === minute;
-                  return (
-                    <button
-                      key={minute}
-                      type="button"
-                      onClick={() => updateSheetValue({ minute })}
-                      className={clsx(
-                        optionBaseClass,
-                        mobileOptionClass,
-                        active ? activeOptionClass : inactiveOptionClass
-                      )}
-                    >
-                      {String(minute).padStart(2, '0')}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className={clsx(columnClass, mobileSheet.isExpanded && 'h-full')}>
-                {(['AM', 'PM'] as const).map((period) => {
-                  const active = sheetParts.period === period;
-                  return (
-                    <button
-                      key={period}
-                      type="button"
-                      onClick={() => updateSheetValue({ period })}
-                      className={clsx(
-                        optionBaseClass,
-                        mobileOptionClass,
-                        active ? activeOptionClass : inactiveOptionClass
-                      )}
-                    >
-                      {period}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-gray-100 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3">
               <button
                 type="button"
-                className="min-h-11 rounded-md px-3 text-sm font-semibold text-gray-700"
-                onClick={() => setSheetValue(roundTime(dayjs(), minuteStep))}
+                className={clsx(
+                  'group flex min-h-11 w-full shrink-0 touch-none items-center justify-center px-4',
+                  mobileSheet.isDragging ? 'cursor-grabbing' : 'cursor-grab'
+                )}
+                style={{
+                  paddingTop: mobileSheet.isExpanded
+                    ? 'max(env(safe-area-inset-top), 0.25rem)'
+                    : undefined,
+                }}
+                aria-label={
+                  mobileSheet.isExpanded
+                    ? 'Restore time picker to compact size'
+                    : 'Expand time picker to full screen'
+                }
+                aria-pressed={mobileSheet.isExpanded}
+                {...mobileSheet.handleProps}
               >
-                Now
+                <span
+                  className={clsx(
+                    'h-1 w-11 rounded-full transition-colors',
+                    mobileSheet.isDragging ? 'bg-blue-400' : 'bg-gray-300 group-active:bg-blue-400'
+                  )}
+                  aria-hidden="true"
+                />
               </button>
-              {allowClear && (
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <button
                   type="button"
-                  className="min-h-11 rounded-md px-3 text-sm font-medium text-gray-500"
+                  className="min-h-11 rounded-md px-2 text-sm font-medium text-gray-500"
+                  onClick={() => setSheetOpen(false)}
+                >
+                  Cancel
+                </button>
+                <div className="text-lg font-semibold tracking-wide text-gray-950">
+                  {sheetValue.format(DISPLAY_FORMAT)}
+                </div>
+                <button
+                  type="button"
+                  className="min-h-11 rounded-md px-2 text-sm font-semibold text-gray-950"
                   onClick={() => {
-                    onChange?.(null);
-                    setDraft('');
+                    onChange?.(sheetValue);
+                    setDraft(formatDisplay(sheetValue));
                     setSheetOpen(false);
                   }}
                 >
-                  Clear
+                  OK
                 </button>
-              )}
+              </div>
+
+              <div
+                className={clsx(
+                  'grid grid-cols-[1fr_1fr_0.8fr] gap-2 px-4 py-4',
+                  mobileSheet.isExpanded && 'min-h-0 flex-1'
+                )}
+              >
+                <div
+                  className={clsx(
+                    columnClass,
+                    mobileSheet.isExpanded ? 'h-full max-h-none' : 'max-h-64'
+                  )}
+                >
+                  {Array.from({ length: 12 }, (_, index) => index + 1).map((hour) => {
+                    const active = sheetParts.hour === hour;
+                    return (
+                      <button
+                        key={hour}
+                        type="button"
+                        onClick={() => updateSheetValue({ hour })}
+                        className={clsx(
+                          optionBaseClass,
+                          mobileOptionClass,
+                          active ? activeOptionClass : inactiveOptionClass
+                        )}
+                      >
+                        {String(hour).padStart(2, '0')}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div
+                  className={clsx(
+                    columnClass,
+                    mobileSheet.isExpanded ? 'h-full max-h-none' : 'max-h-64'
+                  )}
+                >
+                  {minuteOptions.map((minute) => {
+                    const active = sheetParts.minute === minute;
+                    return (
+                      <button
+                        key={minute}
+                        type="button"
+                        onClick={() => updateSheetValue({ minute })}
+                        className={clsx(
+                          optionBaseClass,
+                          mobileOptionClass,
+                          active ? activeOptionClass : inactiveOptionClass
+                        )}
+                      >
+                        {String(minute).padStart(2, '0')}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className={clsx(columnClass, mobileSheet.isExpanded && 'h-full')}>
+                  {(['AM', 'PM'] as const).map((period) => {
+                    const active = sheetParts.period === period;
+                    return (
+                      <button
+                        key={period}
+                        type="button"
+                        onClick={() => updateSheetValue({ period })}
+                        className={clsx(
+                          optionBaseClass,
+                          mobileOptionClass,
+                          active ? activeOptionClass : inactiveOptionClass
+                        )}
+                      >
+                        {period}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-gray-100 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3">
+                <button
+                  type="button"
+                  className="min-h-11 rounded-md px-3 text-sm font-semibold text-gray-700"
+                  onClick={() => setSheetValue(roundTime(dayjs(), minuteStep))}
+                >
+                  Now
+                </button>
+                {allowClear && (
+                  <button
+                    type="button"
+                    className="min-h-11 rounded-md px-3 text-sm font-medium text-gray-500"
+                    onClick={() => {
+                      onChange?.(null);
+                      setDraft('');
+                      setSheetOpen(false);
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
