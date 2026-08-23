@@ -1,9 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs';
 
 export interface RoleDateLabel {
-  // "Sep 14, 2026 – Present" — an en dash, not a hyphen.
+  // "Sep 14, 2026 – Present"
   range: string;
-  // "1 yr 8 mos (616 days)", "starts in 28 days", or '' when there is nothing to say.
+  // "1 yr 8 mos (616 days)", "starts in 28 days", or ''.
   detail: string;
 }
 
@@ -17,8 +17,6 @@ export const humanizeDaySpan = (totalDays: number, { withTotal = false } = {}): 
   if (years > 0) parts.push(plural(years, 'yr').replace('yrs', 'yrs'));
   if (months > 0) parts.push(`${months} mo${months === 1 ? '' : 's'}`);
   const base = parts.length > 0 ? parts.join(' ') : plural(days, 'day');
-  // "28 days (28 days)" says the same thing twice; the total only earns its place once the
-  // headline figure is rounded into years and months.
   return withTotal && parts.length > 0 ? `${base} (${plural(days, 'day')})` : base;
 };
 
@@ -34,8 +32,6 @@ const exactSpan = (start: Dayjs, end: Dayjs) => {
   if (months > 0) parts.push(`${months} mo${months === 1 ? '' : 's'}`);
   if (days > 0 || parts.length === 0) parts.push(plural(days, 'day'));
   const base = parts.join(' ');
-  // The total earns its place as soon as the headline rounds into months or years; after a bare
-  // "28 days" it would only repeat itself.
   return years > 0 || months > 0 ? `${base} (${plural(totalDays, 'day')})` : base;
 };
 
@@ -51,10 +47,10 @@ export const roleDateLabel = ({
   startDate: Dayjs | null;
   endDate: Dayjs | null;
   isCurrent?: boolean;
-  // The next role's start, used when a past role has no end date recorded.
+  // The next role's start, when a past role has no end date.
   fallbackEndDate?: Dayjs | null;
   format?: string;
-  // Injected so the label is testable; defaults to today.
+  // Injected for tests; defaults to today.
   now?: Dayjs;
   // 'exact' spells out days; 'rounded' stops at years and months.
   precision?: 'exact' | 'rounded';
@@ -69,7 +65,6 @@ export const roleDateLabel = ({
 
   if (!start) return { range, detail: '' };
 
-  // A role that starts later this month is not "-28 days" long; it has not begun.
   if (start.isAfter(today, 'day')) {
     const untilStart = start.diff(today, 'day');
     return { range, detail: `starts in ${plural(untilStart, 'day')}` };
@@ -113,14 +108,14 @@ export const groupSpan = (
   return { start, end, isCurrent };
 };
 
-// A month of daylight between two jobs is a normal notice period, not a gap worth labelling.
+// A month between jobs is a notice period, not a gap.
 const GAP_FLOOR_DAYS = 32;
 
 export const gapLabelBetween = (newer: GroupSpan, older: GroupSpan): string | null => {
   if (!newer.start) return null;
   // A custom or pinned order means the space between cards is not a real gap.
   if (older.start && newer.start.isBefore(older.start)) return null;
-  // A company you are still at has no end, so anything below it overlaps rather than precedes.
+  // A company you are still at cannot precede anything.
   const olderEnd = older.isCurrent ? null : older.end;
   if (!olderEnd) return null;
   const days = newer.start.diff(olderEnd, 'day');

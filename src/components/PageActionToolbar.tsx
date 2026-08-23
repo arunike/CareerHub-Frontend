@@ -21,14 +21,11 @@ interface PageActionToolbarProps {
   allowAllYears?: boolean;
   // Controls that change what you are looking at (view switches, filters).
   extraActions?: React.ReactNode;
-  // Verbs. These belong with the primary action, not among the filters, so a button is
-  // never mistaken for a filter or the other way round.
+  // Verbs, kept away from the filters so neither is mistaken for the other.
   secondaryActions?: React.ReactNode;
-  // The same verbs as menu entries. On a phone they fold into the More menu instead of
-  // spending a row each; a page supplies both and the layout picks.
+  // The same verbs as menu entries; a phone folds them into More.
   secondaryMenuItems?: MenuProps['items'];
-  // The one control worth permanent space, e.g. a list/calendar switch. Kept out of
-  // extraActions so a phone can show it and demote the rest.
+  // The one control worth permanent space, e.g. a list/calendar switch.
   viewSwitch?: React.ReactNode;
   onDeleteAll?: () => void;
   deleteAllLabel?: string;
@@ -152,8 +149,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
 
   const hasDataMenu = Boolean(dataMenuItems && dataMenuItems.length > 0);
 
-  // An unlabelled dot menu hides Import and Export completely. The word plus a caret
-  // says "there is more in here" without spending a button per action.
+  // Labelled: an unlabelled dot menu hid Import and Export completely.
   const dataMenuIconNode = hasDataMenu ? (
     <Dropdown menu={{ items: dataMenuItems }} trigger={['click']} placement="bottomRight">
       <Button
@@ -173,8 +169,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   ) : null;
 
   const hasOtherFilters = Boolean(yearFilterNode || extraActions);
-  // A filter row holding nothing but the view switch is a full-width band of empty space.
-  // With nothing to sit beside, the switch belongs up on the title line.
+  // Alone, the view switch belongs on the title line rather than in an empty filter band.
   const hoistViewSwitch = Boolean(viewSwitch) && !hasOtherFilters;
   const hasFilterRow = hasOtherFilters || (Boolean(viewSwitch) && !hoistViewSwitch);
 
@@ -264,8 +259,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
       </div>
 
       {singleRowDesktop ? (
-        // View controls first, then filters, then verbs, so the row reads left to right from
-        // "what am I looking at" to "what can I do".
+        // View, then filters, then verbs: "what am I looking at" before "what can I do".
         <div className="page-toolbar-actions">
           {viewSwitch}
           {yearFilterNode}

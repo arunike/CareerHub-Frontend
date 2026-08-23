@@ -50,8 +50,7 @@ const RETIRED_WIDGET_IDS = new Set([
   'response_rate',
   'offer_rate',
   'recent_applications',
-  // A different widget from today's Top Locations, which is deliberately 'top_locations':
-  // reusing this id would have had every saved selection silently drop the new section.
+  // Not today's 'top_locations': reusing the id would drop the new section from saved layouts.
   'locations',
   'top_companies',
   'work_modes',
@@ -82,8 +81,7 @@ const DEFAULT_WIDGET_IDS = AVAILABLE_WIDGETS.filter((widget) => widget.defaultEn
 
 const normalizeEnabledWidgets = (ids: string[]) => {
   if (ids.some((id) => PRE_SPLIT_WIDGET_IDS.has(id))) {
-    // 'outcomes' survives as a section id, so a pre-split list can look partly valid. Only
-    // the presence of a pre-split id is trusted to decide this, not the leftovers.
+    // 'outcomes' survives as a section id, so only a pre-split id decides this.
     return DEFAULT_WIDGET_IDS;
   }
   const normalized = ids.filter(
@@ -176,8 +174,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
   const [timelineAnalyticsLoading, setTimelineAnalyticsLoading] = useState(false);
   const [timelineAnalyticsError, setTimelineAnalyticsError] = useState(false);
 
-  // Marking one ghosted has to refresh the analytics, or the row stays on a list that says it
-  // is still waiting. The parent owns the applications payload, so it re-runs both.
+  // Ghosting one has to refresh the analytics too, or the row stays on a "still waiting" list.
   const handleGhost = async (applicationId: number) => {
     try {
       await updateApplication(applicationId, { status: 'GHOSTED' });
@@ -319,8 +316,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     setEnabledWidgets((prev) => prev.filter((wId) => wId !== id));
   };
 
-  // The server already counted all of this; the browser only renames the fields. It used
-  // to download every application to count them itself, which was the slow part of the page.
+  // The server counted these; the browser only renames the fields.
   const stats: JobHuntStats = useMemo(
     () => ({
       total: applicationStats?.total ?? 0,

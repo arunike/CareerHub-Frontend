@@ -34,8 +34,7 @@ import {
 } from '../../constants/mobileNavigation';
 import { NAV_GROUPS, applyNavOrder, navLabel, type NavItem } from '../../constants/navigationItems';
 
-// The preview doubles as the editor: the tiles are the toolbar order, so dragging one is
-// the most direct way to say "put Offers second".
+// The preview is the editor: the tiles are the toolbar order.
 const SortableToolbarSlot = ({ slot, index }: { slot: MobileToolbarSlot; index: number }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: slot.slotKey,
@@ -77,8 +76,7 @@ interface Props {
   onNavItemLabelsChange: (labels: Record<string, string>) => void;
 }
 
-// The field shows the built-in name as its placeholder, so emptying it reads as "go back to
-// the default" rather than leaving the entry nameless.
+// The built-in name is the placeholder, so emptying the field restores the default.
 const NameField = ({
   itemKey,
   defaultLabel,
@@ -93,8 +91,7 @@ const NameField = ({
   className?: string;
 }) => {
   const stored = labels[itemKey];
-  // The field carries the current name as its value, not as a placeholder: placeholder grey
-  // made every unrenamed entry look disabled.
+  // Value, not placeholder: placeholder grey made unrenamed entries look disabled.
   const [draft, setDraft] = useState(stored ?? defaultLabel);
   const focused = useRef(false);
 
@@ -107,8 +104,7 @@ const NameField = ({
     setDraft(value);
     const next = { ...labels };
     const trimmed = value.trim();
-    // Storing only a real difference keeps the saved map sparse, so an entry renamed back to
-    // its default stops being an override.
+    // Only real differences are stored, so renaming back to the default clears the override.
     if (trimmed && trimmed !== defaultLabel) next[itemKey] = trimmed;
     else delete next[itemKey];
     onChange(next);
@@ -327,8 +323,7 @@ const NavigationSettings = ({
     onMobileToolbarItemsChange(arrayMove(pinnedKeys, from, to));
   };
 
-  // Each group and each set of children sorts independently, and the saved order is the
-  // concatenation of every list, so one flat array covers the whole sidebar.
+  // Groups sort independently; the saved order is every list concatenated.
   const orderedGroups = NAV_GROUPS.map((group) => ({
     ...group,
     items: applyNavOrder(group.items, navItemOrder).map((item) =>

@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 
-// Both variants share one line treatment: strongest at the node, fading as it travels down.
 const LINE_CLASS = 'absolute left-1/2 w-0.5 -translate-x-1/2 rounded-full';
 const LINE_TINT = 'bg-slate-200';
-// Reaches past the card into the 40px space before the next one, so the line never breaks.
+// Reaches into the space-y-10 gap so the line never breaks between cards.
 const LINE_SPAN = { top: 26, bottom: 'calc(-2.5rem - 26px)' } as const;
 
 export const TimelineRailDesktop = ({

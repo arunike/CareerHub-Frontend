@@ -26,7 +26,6 @@ interface Props {
   options: CommuteOption[];
   onChange: (options: CommuteOption[]) => void;
   officeDays: number;
-  // Shared across every offer, edited once on the Offers page.
   drivingDefaults?: Partial<DrivingDefaults> | null;
 }
 
@@ -49,8 +48,6 @@ const Field = ({
 }: {
   label: string;
   hint?: string;
-  // Makes the hint the undo for an override, keeping it beside the value it describes
-  // instead of adding a second control to an already dense row.
   onHintClick?: () => void;
   children: ReactNode;
   className?: string;
@@ -74,8 +71,6 @@ const Field = ({
   </div>
 );
 
-// A shared figure, shown as a value rather than an input so it is clear it is not per-offer,
-// with one click to take it over for this offer only.
 const SharedValue = ({
   text,
   onOverride,
@@ -103,7 +98,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
   const patch = (index: number, changes: Partial<CommuteOption>) =>
     onChange(options.map((option, i) => (i === index ? { ...option, ...changes } : option)));
 
-  // Exactly one primary, and never zero once a row exists.
+  // Exactly one primary, never zero once a row exists.
   const setPrimary = (index: number) =>
     onChange(options.map((option, i) => ({ ...option, is_primary: i === index })));
 
@@ -221,7 +216,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                       onChange={(event) => {
                         const next = event.target.value;
                         if (next === 'FUEL') {
-                          // Do not copy the shared figures onto the offer or it becomes an override.
+                          // Copying the shared figures here would turn the offer into an override.
                           patch(index, {
                             cost_mode: 'FUEL',
                             distance_basis: option.distance_basis || 'ONE_WAY',

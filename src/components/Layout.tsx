@@ -1,8 +1,7 @@
 import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Grid, ConfigProvider, Tooltip } from 'antd';
+import { Layout as AntLayout, Menu, Grid, ConfigProvider } from 'antd';
 import {
-  AppstoreOutlined,
   DashboardOutlined,
   CalendarOutlined,
   ScheduleOutlined,
@@ -11,20 +10,13 @@ import {
   SolutionOutlined,
   DollarOutlined,
   WalletOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  CloseOutlined,
   FileTextOutlined,
   CheckSquareOutlined,
   TrophyOutlined,
   RobotOutlined,
-  LogoutOutlined,
   ThunderboltOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-import IdentityAvatar from './IdentityAvatar';
-import logo from '../assets/logo.png';
-import logoWithText from '../assets/logo_with_text.png';
 import { getUserSettings } from '../api/availability';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -36,6 +28,9 @@ import {
 } from '../constants/mobileNavigation';
 import MobileQuickActions, { hasMobileQuickActionsForSource } from './MobileQuickActions';
 import { applyNavOrder, navLabel } from '../constants/navigationItems';
+import MobileBottomNav from './MobileBottomNav';
+import SidebarHeader from './SidebarHeader';
+import SidebarFooter from './SidebarFooter';
 
 const { Sider, Content } = AntLayout;
 const { useBreakpoint } = Grid;
@@ -334,60 +329,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const SidebarContent = (
     <div className="enterprise-shell flex h-full flex-col">
-      <div
-        className={`relative shrink-0 border-b border-slate-200/70 transition-all duration-200 ${
-          isDesktopSidebarCollapsed
-            ? 'h-[72px] px-0 flex items-center justify-center'
-            : 'h-[72px] px-5 py-3 flex items-center justify-between gap-3'
-        }`}
-      >
-        {isDesktopSidebarCollapsed ? (
-          screens.lg ? (
-            <Tooltip title="Expand sidebar" placement="right">
-              <button
-                type="button"
-                onClick={toggleDesktopSidebar}
-                aria-label="Expand sidebar"
-                className="group relative flex h-11 w-12 items-center justify-center rounded-xl border border-transparent transition-all duration-200 hover:border-slate-200/90 hover:bg-white hover:shadow-xs"
-              >
-                <img
-                  src={logo}
-                  alt="CareerHub"
-                  className="h-7 w-7 object-contain block mx-auto transition-transform duration-200 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-blue-600/90 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <MenuUnfoldOutlined style={{ fontSize: 16 }} />
-                </div>
-              </button>
-            </Tooltip>
-          ) : (
-            <img src={logo} alt="CareerHub" className="h-7 w-7 object-contain block mx-auto" />
-          )
-        ) : (
-          <>
-            <img src={logoWithText} alt="CareerHub" className="h-10 object-contain" />
-            {screens.lg ? (
-              <Tooltip title="Collapse sidebar" placement="right">
-                <Button
-                  type="text"
-                  icon={<MenuFoldOutlined />}
-                  onClick={toggleDesktopSidebar}
-                  aria-label="Collapse sidebar"
-                  className="!h-9 !w-9 !shrink-0 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50"
-                />
-              </Tooltip>
-            ) : (
-              <Button
-                type="text"
-                icon={<CloseOutlined />}
-                onClick={() => setCollapsed(true)}
-                aria-label="Close navigation"
-                className="!h-11 !w-11 !text-gray-500 hover:!text-gray-700"
-              />
-            )}
-          </>
-        )}
-      </div>
+      <SidebarHeader
+        isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
+        screens={screens}
+        setCollapsed={setCollapsed}
+        toggleDesktopSidebar={toggleDesktopSidebar}
+      />
 
       <div className="flex-1 overflow-y-auto py-3">
         {!screens.lg && currentQuickActionSourceKey && (
@@ -434,102 +381,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </ConfigProvider>
       </div>
 
-      <div
-        className={
-          isDesktopSidebarCollapsed
-            ? 'border-t border-slate-200/70 py-4 px-0'
-            : 'border-t border-slate-200/70 p-4'
-        }
-      >
-        {isDesktopSidebarCollapsed ? (
-          <div className="flex flex-col items-center justify-center gap-3 w-full">
-            {notificationBell}
-            <Tooltip title={displayName || user?.full_name || 'Profile'} placement="right">
-              <button
-                type="button"
-                onClick={() => navigate('/profile')}
-                aria-label="Open profile"
-                className="flex h-10 w-12 items-center justify-center rounded-xl border border-slate-200/80 bg-white/75 shadow-sm transition-all hover:border-blue-200 hover:bg-white hover:shadow-lg hover:shadow-blue-900/5"
-              >
-                <IdentityAvatar
-                  imageUrl={profilePic}
-                  name={displayName || user?.full_name}
-                  email={user?.email}
-                  size="sm"
-                />
-              </button>
-            </Tooltip>
-            <Tooltip title="Sign out" placement="right">
-              <Button
-                type="text"
-                icon={<LogoutOutlined />}
-                loading={isLoggingOut}
-                onClick={async () => {
-                  setIsLoggingOut(true);
-                  try {
-                    await logout();
-                    navigate('/login', { replace: true });
-                  } finally {
-                    setIsLoggingOut(false);
-                  }
-                }}
-                aria-label="Sign out"
-                className="!h-10 !w-12 !rounded-xl !text-slate-400 hover:!text-rose-500 hover:!bg-rose-50"
-              />
-            </Tooltip>
-          </div>
-        ) : (
-          <>
-            <div className="mb-2 flex items-center justify-between px-2">
-              <span className="enterprise-data-label">Notifications</span>
-              {notificationBell}
-            </div>
-            <div className="mb-4 rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm">
-              <button
-                type="button"
-                onClick={() => navigate('/profile')}
-                className="group mb-3 flex min-h-11 w-full items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-              >
-                <IdentityAvatar
-                  imageUrl={profilePic}
-                  name={displayName || user?.full_name}
-                  email={user?.email}
-                  size="sm"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-[10px] font-black uppercase leading-none tracking-widest text-slate-400">
-                    Account
-                  </p>
-                  <p className="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-blue-600">
-                    {displayName || 'CareerHub User'}
-                  </p>
-                </div>
-              </button>
-              <Button
-                type="text"
-                icon={<LogoutOutlined />}
-                loading={isLoggingOut}
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  setIsLoggingOut(true);
-                  try {
-                    await logout();
-                    navigate('/login', { replace: true });
-                  } finally {
-                    setIsLoggingOut(false);
-                  }
-                }}
-                className="w-full !flex !h-11 !items-center !justify-center !rounded-xl !border !border-slate-200/80 !bg-white !text-xs !font-bold !text-slate-500 transition-all hover:!border-rose-100 hover:!bg-rose-50/30 hover:!text-rose-500"
-              >
-                Sign Out
-              </Button>
-            </div>
-            <p className="mt-2 text-center text-[10px] font-medium text-slate-300">
-              © 2026 CareerHub
-            </p>
-          </>
-        )}
-      </div>
+      <SidebarFooter
+        displayName={displayName}
+        isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
+        isLoggingOut={isLoggingOut}
+        logout={logout}
+        navigate={navigate}
+        notificationBell={notificationBell}
+        profilePic={profilePic}
+        setIsLoggingOut={setIsLoggingOut}
+        user={user}
+      />
     </div>
   );
 
@@ -582,104 +444,20 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </AntLayout>
 
       {!screens.lg ? (
-        <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 bg-white shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)]">
-          <div
-            className="mx-auto grid max-w-3xl gap-1 px-2 pt-2"
-            style={{
-              gridTemplateColumns: `repeat(${mobilePrimaryNavItems.length + 1}, minmax(0, 1fr))`,
-            }}
-          >
-            {mobilePrimaryNavItems.map((item) => {
-              const isActive = matchesNavKey(item.key);
-              const Icon = item.icon;
-              const hasQuickActions = hasMobileQuickActionsForSource(item.key);
-              return (
-                <button
-                  key={item.slotKey}
-                  type="button"
-                  onPointerDown={
-                    hasQuickActions ? () => startLongPress(item.slotKey, item.key) : undefined
-                  }
-                  onPointerUp={cancelLongPress}
-                  onPointerCancel={cancelLongPress}
-                  onPointerLeave={cancelLongPress}
-                  onContextMenu={
-                    hasQuickActions
-                      ? (event) => {
-                          event.preventDefault();
-                          cancelLongPress();
-                          openQuickActions(item.key);
-                        }
-                      : undefined
-                  }
-                  onClick={() => {
-                    if (consumeSuppressedLongPressClick(item.slotKey)) return;
-                    recordMobileNavigationUse(item.key);
-                    navigate(item.key);
-                  }}
-                  className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                  }`}
-                  aria-label={item.label}
-                  aria-current={isActive ? 'page' : undefined}
-                  aria-description={
-                    hasQuickActions ? `Press and hold for ${item.label} actions` : undefined
-                  }
-                >
-                  <span className="text-lg">
-                    <Icon />
-                  </span>
-                  <span className="flex max-w-full items-center gap-1 truncate">
-                    {item.isSmart && (
-                      <ThunderboltOutlined className="text-[9px]" aria-hidden="true" />
-                    )}
-                    <span className="truncate">{item.shortLabel}</span>
-                  </span>
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onPointerDown={
-                currentQuickActionSourceKey ? () => startLongPress('__more__') : undefined
-              }
-              onPointerUp={cancelLongPress}
-              onPointerCancel={cancelLongPress}
-              onPointerLeave={cancelLongPress}
-              onContextMenu={
-                currentQuickActionSourceKey
-                  ? (event) => {
-                      event.preventDefault();
-                      cancelLongPress();
-                      openQuickActions();
-                    }
-                  : undefined
-              }
-              onClick={() => {
-                if (consumeSuppressedLongPressClick('__more__')) return;
-                setCollapsed(false);
-              }}
-              className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
-                isMoreActive || !collapsed
-                  ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-              }`}
-              aria-label="Open more navigation"
-              aria-description={
-                currentQuickActionSourceKey
-                  ? `Press and hold for ${currentMobileNavigationItem?.label} actions`
-                  : undefined
-              }
-            >
-              <span className="text-lg">
-                <AppstoreOutlined />
-              </span>
-              <span>More</span>
-            </button>
-          </div>
-        </div>
+        <MobileBottomNav
+          currentQuickActionSourceKey={currentQuickActionSourceKey}
+          isMoreActive={isMoreActive}
+          cancelLongPress={cancelLongPress}
+          collapsed={collapsed}
+          consumeSuppressedLongPressClick={consumeSuppressedLongPressClick}
+          currentMobileNavigationItem={currentMobileNavigationItem}
+          matchesNavKey={matchesNavKey}
+          mobilePrimaryNavItems={mobilePrimaryNavItems}
+          navigate={navigate}
+          openQuickActions={openQuickActions}
+          setCollapsed={setCollapsed}
+          startLongPress={startLongPress}
+        />
       ) : null}
       {!screens.lg && (
         <MobileQuickActions

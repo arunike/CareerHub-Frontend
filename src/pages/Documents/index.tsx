@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, Form, Grid, Input, Pagination, Select, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Grid, Input, Select, Table, Tag, message } from 'antd';
 import Modal from '../../components/MobileModal';
 import {
   PlusOutlined,
@@ -29,6 +29,8 @@ import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import ApplicationSelect from '../../components/ApplicationSelect';
 import { openDocumentInNewTab } from '../../utils/openDocument';
+import DocumentMobileList from './DocumentMobileList';
+import DocumentPreviewBody from './DocumentPreviewBody';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };
@@ -412,93 +414,22 @@ const Documents: React.FC = () => {
           icon={<FileOutlined />}
         />
       ) : isMobile ? (
-        <div className="space-y-3">
-          {loading ? (
-            <Card className="enterprise-card">
-              <div className="space-y-3 py-3">
-                <div className="h-4 w-6/12 rounded-full bg-slate-100" />
-                <div className="h-3 w-9/12 rounded-full bg-slate-100" />
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <div className="h-10 rounded-xl bg-slate-100" />
-                  <div className="h-10 rounded-xl bg-slate-100" />
-                </div>
-              </div>
-            </Card>
-          ) : filteredDocuments.length === 0 ? (
-            documentEmptyState
-          ) : (
-            <>
-              {filteredDocuments.map((record) => (
-                <Card key={record.id} className="enterprise-card">
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 shrink-0">{getFileIcon(record.file_name)}</div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <button
-                            type="button"
-                            onClick={() => openDocument(record)}
-                            className="min-w-0 text-left text-base font-semibold text-blue-600"
-                          >
-                            <span className="line-clamp-2">{record.title}</span>
-                          </button>
-                          {record.is_locked ? (
-                            <LockOutlined className="mt-1 shrink-0 text-amber-500" />
-                          ) : null}
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Tag color={getTypeColor(record.document_type)}>
-                            {record.document_type.replace('_', ' ')}
-                          </Tag>
-                          <Tag color="geekblue">v{record.version_number || 1}</Tag>
-                          <Tag>{new Date(record.created_at).toLocaleDateString()}</Tag>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">
-                          {record.application_details
-                            ? `${record.application_details.role} @ ${record.application_details.company}`
-                            : 'Not linked to an application'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button size="large" onClick={() => openDocument(record)}>
-                        Open
-                      </Button>
-                      <Button size="large" onClick={() => openVersionsModal(record)}>
-                        History
-                      </Button>
-                    </div>
-                    <div className="flex justify-end border-t border-slate-100 pt-2">
-                      <RowActions
-                        size="middle"
-                        isLocked={record.is_locked}
-                        onToggleLock={() => handleToggleLock(record)}
-                        onEdit={() => openEditModal(record)}
-                        disableEdit={Boolean(record.is_locked)}
-                        onDelete={() => handleDelete(record.id)}
-                        disableDelete={Boolean(record.is_locked)}
-                        deleteTitle="Delete document?"
-                        deleteDescription="This document will be permanently removed."
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-              {documentsTotal > DOCUMENT_PAGE_SIZE ? (
-                <div className="flex justify-center pt-2">
-                  <Pagination
-                    current={currentPage}
-                    pageSize={DOCUMENT_PAGE_SIZE}
-                    total={documentsTotal}
-                    showSizeChanger={false}
-                    onChange={setCurrentPage}
-                  />
-                </div>
-              ) : null}
-            </>
-          )}
-        </div>
+        <DocumentMobileList
+          loading={loading}
+          openDocument={openDocument}
+          DOCUMENT_PAGE_SIZE={DOCUMENT_PAGE_SIZE}
+          currentPage={currentPage}
+          documentEmptyState={documentEmptyState}
+          documentsTotal={documentsTotal}
+          filteredDocuments={filteredDocuments}
+          getFileIcon={getFileIcon}
+          getTypeColor={getTypeColor}
+          handleDelete={handleDelete}
+          handleToggleLock={handleToggleLock}
+          openEditModal={openEditModal}
+          openVersionsModal={openVersionsModal}
+          setCurrentPage={setCurrentPage}
+        />
       ) : filteredDocuments.length === 0 && !loading ? (
         documentEmptyState
       ) : (
@@ -586,106 +517,17 @@ const Documents: React.FC = () => {
         footer={null}
         width={760}
       >
-        <div className="space-y-4">
-          <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
-            <div className="text-sm font-medium text-gray-800 mb-2">Upload New Version</div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                type="file"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  if (file && file.size > MAX_DOCUMENT_FILE_BYTES) {
-                    message.error('Document must be smaller than 4 MB.');
-                    e.target.value = '';
-                    setNewVersionFile(null);
-                    return;
-                  }
-                  setNewVersionFile(file);
-                }}
-              />
-              <Button type="primary" loading={uploadingVersion} onClick={handleUploadNewVersion}>
-                Upload Version
-              </Button>
-            </div>
-          </div>
-
-          {isMobile ? (
-            <div className="space-y-2" aria-busy={versionsLoading}>
-              {versionsLoading ? (
-                <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
-                  Loading version history…
-                </div>
-              ) : versionList.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500">
-                  No versions available.
-                </div>
-              ) : (
-                versionList.map((row) => (
-                  <button
-                    key={row.id}
-                    type="button"
-                    onClick={() => openDocument(row)}
-                    className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-slate-900">
-                        {row.file_name || row.title}
-                      </span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        Uploaded {new Date(row.created_at).toLocaleDateString()}
-                      </span>
-                    </span>
-                    <Tag color={row.is_current ? 'success' : 'default'} className="shrink-0">
-                      v{row.version_number || 1}
-                      {row.is_current ? ' · Current' : ''}
-                    </Tag>
-                  </button>
-                ))
-              )}
-            </div>
-          ) : (
-            <Table
-              loading={versionsLoading}
-              dataSource={versionList}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              columns={[
-                {
-                  title: 'Version',
-                  key: 'version_number',
-                  width: 110,
-                  render: (_: unknown, row: Document) => (
-                    <Tag color={row.is_current ? 'success' : 'default'}>
-                      v{row.version_number || 1}
-                      {row.is_current ? ' (current)' : ''}
-                    </Tag>
-                  ),
-                },
-                {
-                  title: 'File',
-                  key: 'file',
-                  render: (_: unknown, row: Document) => (
-                    <button
-                      type="button"
-                      onClick={() => openDocument(row)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {row.file_name || row.title}
-                    </button>
-                  ),
-                },
-                {
-                  title: 'Uploaded',
-                  dataIndex: 'created_at',
-                  key: 'created_at',
-                  width: 140,
-                  render: (value: string) => new Date(value).toLocaleDateString(),
-                },
-              ]}
-            />
-          )}
-        </div>
+        <DocumentPreviewBody
+          isMobile={isMobile}
+          MAX_DOCUMENT_FILE_BYTES={MAX_DOCUMENT_FILE_BYTES}
+          handleUploadNewVersion={handleUploadNewVersion}
+          loading={loading}
+          openDocument={openDocument}
+          setNewVersionFile={setNewVersionFile}
+          uploadingVersion={uploadingVersion}
+          versionList={versionList}
+          versionsLoading={versionsLoading}
+        />
       </Modal>
     </div>
   );

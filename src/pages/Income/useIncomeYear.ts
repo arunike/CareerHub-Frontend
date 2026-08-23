@@ -189,8 +189,7 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
 
 export const useIncomeYear = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  // Driven by the URL rather than local state, so a refresh or a shared link lands on the
-  // same year. Anything unparseable falls back to the latest year the tables cover.
+  // URL-driven, so a refresh or a shared link lands on the same year.
   const taxYear = parseYearParam(searchParams.get(YEAR_PARAM));
 
   const setTaxYear = useCallback(
@@ -213,7 +212,6 @@ export const useIncomeYear = () => {
     }
   });
   const [incomeRecords, setIncomeRecords] = useState<IncomeYearPayload[] | null>(null);
-  // Unsaved edits are held per role and year, so switching away and back keeps them.
   const draftsRef = useRef<Map<string, IncomeSettings>>(new Map());
   const [dirtyKeys, setDirtyKeys] = useState<string[]>([]);
   const [settings, setSettings] = useState<IncomeSettings>(DEFAULT_SETTINGS);
@@ -286,7 +284,6 @@ export const useIncomeYear = () => {
     return sourcesInYear[0]?.key ?? '';
   }, [sourceKey, sourcesInYear]);
 
-  // Elections reload whenever the role or the year changes, so nothing carries across roles.
   useEffect(() => {
     if (incomeRecords === null) return;
     if (!resolvedSourceKey) {
@@ -357,7 +354,6 @@ export const useIncomeYear = () => {
         const existing = previous.actuals.find((actual) => actual.periodIndex === periodIndex);
         const merged: PeriodActual = { ...(existing ?? { periodIndex }), ...changes };
         const others = previous.actuals.filter((actual) => actual.periodIndex !== periodIndex);
-        // A record with every line cleared is dropped rather than kept as an empty shell.
         const keeps = Object.entries(merged).some(
           ([key, value]) =>
             key !== 'periodIndex' && value !== null && value !== undefined && value !== ''
@@ -373,8 +369,7 @@ export const useIncomeYear = () => {
     [resolvedSourceKey, sourcesInYear]
   );
 
-  // Every year any role covers, so switching year re-filters the roles rather than the
-  // other way round.
+  // Every year any role covers, so the year re-filters the roles.
   const availableYears = useMemo(() => yearsForSources(sources, LATEST_TAX_YEAR), [sources]);
 
   const taxContext = useMemo(

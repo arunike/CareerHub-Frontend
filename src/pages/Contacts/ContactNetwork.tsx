@@ -3,7 +3,8 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Button } from 'antd';
 import { AimOutlined, CompressOutlined, ExpandOutlined, UndoOutlined } from '@ant-design/icons';
 import type { ApplicationContact, ContactRelationship } from '../../types';
-import { contactInitials, withoutGenericContact } from '../../components/contacts/contactOptions';
+import { withoutGenericContact } from '../../components/contacts/contactOptions';
+import ContactNetworkGraph from './ContactNetworkGraph';
 
 // Where along each edge the user parked its label, as a 0-1 ratio keyed by edge.
 const LABEL_POSITION_KEY = 'careerhub.contacts.network.labelPositions';
@@ -23,7 +24,7 @@ interface Props {
   onBackToMe: () => void;
 }
 
-const SELF_ID = 0;
+export const SELF_ID = 0;
 const SELF_POINT = { x: 530, y: 375 };
 
 const relationshipEnds = (relationship: ContactRelationship) => [
@@ -260,8 +261,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
     window.localStorage.setItem(NODE_POSITION_KEY, JSON.stringify(nodeOffsets));
   }, [nodeOffsets]);
 
-  // Focusing someone lays the graph out completely differently, so a drag is remembered
-  // against the view it happened in rather than leaking across views.
+  // Drags are remembered per focused view, since each lays the graph out differently.
   const viewKey = focusId ? String(focusId) : 'me';
   const nodeKey = (id: number) => `${viewKey}:${id}`;
 
@@ -372,8 +372,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
     action();
   };
 
-  // An in-app full-page view rather than the Fullscreen API: it keeps the app's own chrome
-  // and works on iOS Safari, which refuses element fullscreen outright.
+  // In-app, not the Fullscreen API: iOS Safari refuses element fullscreen.
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
@@ -403,8 +402,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
     };
   }, [positions]);
 
-  // Once the canvas has grown past its base size, hold it at 1:1 and let the container
-  // scroll, rather than scaling everything back down to fit the width.
+  // Past its base size the canvas holds 1:1 and the container scrolls.
   const svgStyle = canvas.width > BASE_WIDTH ? { minWidth: canvas.width } : undefined;
 
   const draggedHere = Object.keys(nodeOffsets).filter((key) => key.startsWith(`${viewKey}:`));
@@ -423,8 +421,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
     .map((id) => contactsById.get(id))
     .filter((contact): contact is ApplicationContact => Boolean(contact));
 
-  // Centres the view on whoever is in focus. Deliberately keyed on focusId alone: `positions`
-  // changes on every drag frame, and re-running this mid-drag would scroll against the pointer.
+  // Keyed on focusId alone: `positions` changes every drag frame and would scroll against the pointer.
   useEffect(() => {
     const container = containerRef.current;
     const svg = svgRef.current;
@@ -447,8 +444,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
   }, [focusId]);
 
   return (
-    // Controls live outside the scroller so they stay put while the canvas scrolls, and
-    // inside the wrapper so they come along when it takes over the page.
+    // Outside the scroller so they stay put, inside the wrapper so they follow it full-page.
     <div
       className={isExpanded ? 'fixed inset-0 z-40 flex flex-col bg-white p-3 sm:p-4' : 'relative'}
     >
@@ -484,201 +480,24 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
           isExpanded ? 'min-h-0 flex-1' : 'max-h-[80vh] min-h-[560px]'
         }`}
       >
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${canvas.width} ${canvas.height}`}
-          className="h-auto w-full min-w-[900px] touch-pan-x touch-pan-y lg:min-w-0"
-          style={svgStyle}
-          aria-label="Contact relationship network"
-          onPointerMove={handleDrag}
-          onPointerUp={endDrag}
-          onPointerLeave={endDrag}
-        >
-          <defs>
-            <filter id="node-shadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow
-                dx="0"
-                dy="5"
-                stdDeviation="8"
-                floodColor="#0f172a"
-                floodOpacity="0.1"
-              />
-            </filter>
-            {[
-              ['edge-arrow', '#cbd5e1'],
-              ['edge-arrow-path', '#2563eb'],
-            ].map(([id, color]) => (
-              <marker
-                key={id}
-                id={id}
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
-              </marker>
-            ))}
-          </defs>
-
-          {edges.map((edge) => {
-            const marker = `url(#${edge.isPath ? 'edge-arrow-path' : 'edge-arrow'})`;
-            return (
-              <line
-                key={edge.key}
-                x1={edge.from.x}
-                y1={edge.from.y}
-                x2={edge.to.x}
-                y2={edge.to.y}
-                stroke={edge.isPath ? '#2563eb' : '#cbd5e1'}
-                strokeWidth={edge.isPath ? 2.5 : 1.5}
-                markerEnd={edge.pointsAtTarget ? marker : undefined}
-                markerStart={edge.pointsAtSource ? marker : undefined}
-              />
-            );
-          })}
-
-          <g
-            role="button"
-            tabIndex={0}
-            aria-label="Return to my network"
-            onPointerDown={startNodeDrag(SELF_ID)}
-            onClick={clickAfterDrag(onBackToMe)}
-            onKeyDown={(event) => event.key === 'Enter' && onBackToMe()}
-            className="cursor-grab touch-none outline-none active:cursor-grabbing"
-          >
-            <circle
-              cx={selfPoint.x}
-              cy={selfPoint.y}
-              r="52"
-              fill="#0f172a"
-              filter="url(#node-shadow)"
-            />
-            <text
-              x={selfPoint.x}
-              y={selfPoint.y + 5}
-              textAnchor="middle"
-              fontSize="16"
-              fontWeight="700"
-              fill="#fff"
-            >
-              Me
-            </text>
-            <text
-              x={selfPoint.x}
-              y={selfPoint.y + 78}
-              textAnchor="middle"
-              fontSize="13"
-              fontWeight="600"
-              fill="#334155"
-            >
-              My network
-            </text>
-          </g>
-
-          {visibleContacts.map((contact) => {
-            const point = positions.get(contact.id);
-            if (!point) return null;
-            const isFocused = contact.id === focusId;
-            return (
-              <g
-                key={contact.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`Open ${contact.name}`}
-                onPointerDown={startNodeDrag(contact.id)}
-                onClick={clickAfterDrag(() => onSelect(contact))}
-                onKeyDown={(event) => event.key === 'Enter' && onSelect(contact)}
-                className="cursor-grab touch-none outline-none active:cursor-grabbing"
-              >
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={isFocused ? 47 : 42}
-                  fill={isFocused ? '#dbeafe' : '#ffffff'}
-                  stroke={isFocused ? '#2563eb' : '#cbd5e1'}
-                  strokeWidth={isFocused ? 3 : 2}
-                  filter="url(#node-shadow)"
-                />
-                <text
-                  x={point.x}
-                  y={point.y + 5}
-                  textAnchor="middle"
-                  fontSize="15"
-                  fontWeight="700"
-                  fill="#334155"
-                >
-                  {contactInitials(contact.name)}
-                </text>
-                <text
-                  x={point.x}
-                  y={point.y + 64}
-                  textAnchor="middle"
-                  fontSize="13"
-                  fontWeight="600"
-                  fill="#0f172a"
-                >
-                  {contact.name.length > 20 ? `${contact.name.slice(0, 18)}…` : contact.name}
-                </text>
-                {(contact.job_title || contact.company) && (
-                  <text
-                    x={point.x}
-                    y={point.y + 81}
-                    textAnchor="middle"
-                    fontSize="11"
-                    fill="#64748b"
-                  >
-                    {(contact.job_title || contact.company || '').slice(0, 24)}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-
-          {edges.map((edge) => {
-            if (!edge.text) return null;
-            const ratio = labelPositions[edge.key] ?? 0.5;
-            const anchor = {
-              x: edge.from.x + (edge.to.x - edge.from.x) * ratio,
-              y: edge.from.y + (edge.to.y - edge.from.y) * ratio,
-            };
-            const width = Math.min(190, edge.text.length * 6.4 + 20);
-            return (
-              <g
-                key={edge.key}
-                className="cursor-grab touch-none active:cursor-grabbing"
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  draggingKey.current = edge.key;
-                  event.currentTarget.setPointerCapture(event.pointerId);
-                }}
-              >
-                <title>{`${edge.text} — drag to move along the line`}</title>
-                <rect
-                  x={anchor.x - width / 2}
-                  y={anchor.y - 11}
-                  width={width}
-                  height={22}
-                  rx={11}
-                  fill="#ffffff"
-                  stroke="#e2e8f0"
-                />
-                <text
-                  x={anchor.x}
-                  y={anchor.y + 4}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fill="#64748b"
-                  className="select-none"
-                >
-                  {edge.text.length > 28 ? `${edge.text.slice(0, 27)}…` : edge.text}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+        <ContactNetworkGraph
+          focusId={focusId}
+          labelPositions={labelPositions}
+          onBackToMe={onBackToMe}
+          onSelect={onSelect}
+          selfPoint={selfPoint}
+          canvas={canvas}
+          clickAfterDrag={clickAfterDrag}
+          draggingKey={draggingKey}
+          edges={edges}
+          endDrag={endDrag}
+          handleDrag={handleDrag}
+          positions={positions}
+          startNodeDrag={startNodeDrag}
+          svgRef={svgRef}
+          svgStyle={svgStyle}
+          visibleContacts={visibleContacts}
+        />
       </div>
 
       {visibleContacts.length === 0 && (

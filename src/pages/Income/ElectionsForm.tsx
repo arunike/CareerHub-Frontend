@@ -1,6 +1,5 @@
-import { Button, Collapse, DatePicker, Input, Select, Switch, Tooltip } from 'antd';
-import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import { Button, Input, Select, Tooltip } from 'antd';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { FilingStatus } from '../../types/tax';
 import type { Elections } from './tax/ledger';
 import type { W4Inputs } from './tax/withholding';
@@ -25,7 +24,8 @@ import {
 } from './allowances';
 import CountInput from './CountInput';
 import MoneyInput from './MoneyInput';
-import PercentInput from './PercentInput';
+import { Field, SectionLabel } from './electionsFormPrimitives';
+import ElectionsAdvancedPanel from './ElectionsAdvancedPanel';
 import { useMoney } from './amountPrivacy';
 
 interface Props {
@@ -58,14 +58,6 @@ const FILING_OPTIONS: Array<{ value: FilingStatus; label: string }> = [
   { value: 'MARRIED_FILING_JOINTLY', label: 'Married filing jointly' },
   { value: 'MARRIED_FILING_SEPARATELY', label: 'Married filing separately' },
   { value: 'HEAD_OF_HOUSEHOLD', label: 'Head of household' },
-];
-
-const CADENCE_OPTIONS = [
-  { value: 52, label: 'Weekly (52)' },
-  { value: 26, label: 'Biweekly (26)' },
-  { value: 27, label: 'Biweekly, 27-cheque year' },
-  { value: 24, label: 'Semi-monthly (24)' },
-  { value: 12, label: 'Monthly (12)' },
 ];
 
 const ALLOWANCE_OPTIONS: Array<{ value: AllowanceTreatment; label: string }> = (
@@ -129,43 +121,6 @@ const US_STATES = [
   'WI',
   'WY',
 ];
-
-const SectionLabel = ({
-  children,
-  trailing,
-}: {
-  children: React.ReactNode;
-  trailing?: React.ReactNode;
-}) => (
-  <div className="flex items-baseline justify-between gap-3">
-    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-      {children}
-    </span>
-    {trailing}
-  </div>
-);
-
-const Field = ({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) => (
-  <label className="block">
-    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-      {label}
-      {hint ? (
-        <Tooltip title={hint}>
-          <InfoCircleOutlined className="text-slate-400" />
-        </Tooltip>
-      ) : null}
-    </span>
-    <div className="mt-1.5">{children}</div>
-  </label>
-);
 
 const Dollars = ({ value, onChange }: { value: number; onChange: (value: number) => void }) => (
   <MoneyInput value={value} onChange={(next) => onChange(Number(next ?? 0))} />
@@ -497,145 +452,21 @@ export const ElectionsForm = ({
         )}
       </div>
 
-      <Collapse
-        ghost
-        size="small"
-        expandIconPosition="end"
-        className="mt-6 border-t border-slate-100 !bg-transparent pt-1 [&_.ant-collapse-content-box]:!px-0 [&_.ant-collapse-content-box]:!pb-4 [&_.ant-collapse-content-box]:!pt-1 [&_.ant-collapse-header]:!px-0 [&_.ant-collapse-header]:!py-3 [&_.ant-collapse-item]:!border-b [&_.ant-collapse-item]:!border-slate-100"
-        items={[
-          {
-            key: 'schedule',
-            label: <span className="text-sm font-medium text-slate-700">Pay schedule</span>,
-            children: (
-              <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
-                <Field
-                  label="Pay cadence"
-                  hint="How many paychecks a full year of this role would have."
-                >
-                  <Select
-                    className="w-full"
-                    value={paychecksPerYear}
-                    options={CADENCE_OPTIONS}
-                    onChange={(value) => onPaychecksPerYearChange(Number(value))}
-                  />
-                </Field>
-                <Field
-                  label="First pay date of the year"
-                  hint="Two employers on the same biweekly cadence rarely pay on the same day, so this anchors every pay date."
-                >
-                  <DatePicker
-                    className="w-full"
-                    allowClear={false}
-                    value={dayjs(firstPayDate)}
-                    onChange={(value) =>
-                      onFirstPayDateChange(value ? value.format('YYYY-MM-DD') : null)
-                    }
-                  />
-                </Field>
-              </div>
-            ),
-          },
-          {
-            key: 'advanced',
-            label: <span className="text-sm font-medium text-slate-700">Advanced options</span>,
-            children: (
-              <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
-                <Field
-                  label="HSA per paycheck"
-                  hint={`Pre-tax and FICA-exempt. Remaining room this year is ${money(hsaLimit)}.`}
-                >
-                  <Dollars
-                    value={elections.hsaPerPeriod}
-                    onChange={(value) => onElectionsChange({ hsaPerPeriod: value })}
-                  />
-                </Field>
-                <Field label="FSA per paycheck" hint="Pre-tax and FICA-exempt, capped annually.">
-                  <Dollars
-                    value={elections.fsaPerPeriod}
-                    onChange={(value) => onElectionsChange({ fsaPerPeriod: value })}
-                  />
-                </Field>
-                <Field label="Other post-tax per paycheck">
-                  <Dollars
-                    value={elections.postTaxPerPeriod}
-                    onChange={(value) => onElectionsChange({ postTaxPerPeriod: value })}
-                  />
-                </Field>
-                <Field label="Extra withholding per paycheck" hint="W-4 Step 4c.">
-                  <Dollars
-                    value={w4.extraPerPeriod}
-                    onChange={(value) => onW4Change({ extraPerPeriod: value })}
-                  />
-                </Field>
-                <Field label="Dependents credit" hint="W-4 Step 3, as an annual dollar amount.">
-                  <Dollars
-                    value={w4.dependentsCredit}
-                    onChange={(value) => onW4Change({ dependentsCredit: value })}
-                  />
-                </Field>
-                <Field
-                  label="Dependents claimed"
-                  hint="A head count, not a dollar amount. Only affects years before 2018, when each person claimed a personal exemption."
-                >
-                  <PercentInput
-                    max={20}
-                    minChars={2}
-                    value={w4.dependents}
-                    onChange={(value) => onW4Change({ dependents: Number(value ?? 0) })}
-                  />
-                </Field>
-                <div className="flex items-end gap-6 pb-1">
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                    <Switch
-                      size="small"
-                      checked={elections.hsaFamilyCoverage}
-                      onChange={(checked) => onElectionsChange({ hsaFamilyCoverage: checked })}
-                    />
-                    Family HSA
-                  </label>
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                    <Switch
-                      size="small"
-                      checked={elections.age50Plus}
-                      onChange={(checked) => onElectionsChange({ age50Plus: checked })}
-                    />
-                    Catch-up (50+)
-                  </label>
-                </div>
-              </div>
-            ),
-          },
-          {
-            key: 'role',
-            label: <span className="text-sm font-medium text-slate-700">From this role</span>,
-            children: (
-              <div>
-                <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-                  <span className="text-slate-500">Base salary</span>
-                  <span className="tabular-nums text-slate-800">{money(annualSalary)}</span>
-                </div>
-                <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-                  <span className="text-slate-500">Paychecks this year</span>
-                  <span className="tabular-nums text-slate-800">
-                    {paidPeriodCount} of {paychecksPerYear}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-                  <span className="text-slate-500">Employer HSA contribution</span>
-                  <span className="tabular-nums text-slate-800">
-                    {source?.hasBenefitData ? money(source.employer.hsaAnnual) : 'Unknown'}
-                  </span>
-                </div>
-                {source && !source.hasBenefitData ? (
-                  <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                    This role has no linked offer, so premiums and match started at zero. Link an
-                    offer on the Experience page, or just type the amounts above.
-                  </p>
-                ) : null}
-              </div>
-            ),
-          },
-        ]}
+      <ElectionsAdvancedPanel
+        money={money}
+        Dollars={Dollars}
+        annualSalary={annualSalary}
+        elections={elections}
+        firstPayDate={firstPayDate}
+        hsaLimit={hsaLimit}
+        onElectionsChange={onElectionsChange}
+        onFirstPayDateChange={onFirstPayDateChange}
+        onPaychecksPerYearChange={onPaychecksPerYearChange}
+        onW4Change={onW4Change}
+        paidPeriodCount={paidPeriodCount}
+        paychecksPerYear={paychecksPerYear}
+        source={source}
+        w4={w4}
       />
     </div>
   );

@@ -116,8 +116,7 @@ export const buildIncomeSources = (
     };
   });
 
-  // Only the offer you are actually on can be income. An offer you declined or are still
-  // weighing is a hypothetical, and it has no experience row to give it dates either.
+  // Only the offer you are on is income; the rest are hypotheticals with no dates.
   const fromOffers = offers
     .filter((offer) => !usedOfferIds.has(offer.id) && Boolean(offer.is_current))
     .map((offer) => {
@@ -148,8 +147,7 @@ export const buildIncomeSources = (
   });
 };
 
-// A role belongs to a tax year only if its employment window overlaps it. A source with
-// no dates at all — an offer that has not become a role yet — always qualifies.
+// Overlap decides the tax year; a source with no dates always qualifies.
 export const activeInYear = (source: IncomeSource, taxYear: number) => {
   const start = parseIsoDate(source.startDate);
   const end = parseIsoDate(source.endDate);
@@ -158,8 +156,7 @@ export const activeInYear = (source: IncomeSource, taxYear: number) => {
   return true;
 };
 
-// Years to offer in the selector: every year any role covers, so you can browse a year
-// and see only the roles you actually held then.
+// Every year any role covers, so a year shows only the roles held then.
 export const yearsForSources = (sources: IncomeSource[], latestYear: number): number[] => {
   const years = new Set<number>([latestYear]);
   for (const source of sources) {

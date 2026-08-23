@@ -3,8 +3,7 @@ import type { NamedAmount, PeriodRow } from './tax/ledger';
 export const SOCIAL_SECURITY = 'Social Security';
 export const MEDICARE = 'Medicare';
 
-// A recorded paycheck. Every line is optional: whatever you enter wins, the rest stays
-// modelled, so a partly-entered payslip is still usable.
+// Every line is optional: what you enter wins, the rest stays modelled.
 export interface PeriodActual {
   periodIndex: number;
   gross?: number | null;
@@ -78,11 +77,8 @@ const provided = (value: number | null | undefined): value is number =>
 export const hasAnyActual = (actual?: PeriodActual) =>
   actual !== undefined && ACTUAL_FIELDS.some((field) => provided(actual[field]));
 
-// A recorded take-home implies a total withholding. FICA is statutory and cannot be off,
-// so any difference is attributed to the income tax lines that were not recorded. Tax can
-// never come out negative: if the recorded take-home is more than gross less deductions
-// can support, the income tax lines go to zero and the remainder is reported as a residual
-// rather than as a negative tax.
+// A recorded take-home implies a total withholding. FICA is statutory, so the difference
+// lands on the unrecorded income tax lines; those floor at zero and the rest is a residual.
 const balanceTaxes = (input: {
   recordedNet: boolean;
   requiredTax: number;
@@ -127,8 +123,7 @@ const balanceTaxes = (input: {
         if (input.stateTax > 0) balancedFields.push('stateTax');
       }
     } else {
-      // Either there is nothing to scale, or the recorded take-home leaves no room for
-      // income tax at all.
+      // Nothing to scale, or no room left for income tax at all.
       if (!input.federalRecorded) {
         if (input.federalTax > 0) balancedFields.push('federalTax');
         federalTax = 0;
@@ -140,8 +135,7 @@ const balanceTaxes = (input: {
     }
   }
 
-  // Derived from the lines actually shown, so the column always adds up and the rate is
-  // never negative.
+  // Derived from the lines shown, so the column always adds up.
   const taxTotal = Math.max(0, input.payrollTotal + federalTax + stateTax);
   return {
     federalTax,
@@ -178,8 +172,7 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
 
   const deductions = row.section125 + row.hsa + row.pretax401k + row.pretaxIncomeOnly + row.postTax;
 
-  // Net follows from the lines unless it was recorded outright, in which case what landed
-  // in the account wins.
+  // A recorded net wins: what landed in the account beats what the lines imply.
   const derivedNet = gross - deductions - taxTotal + row.taxFreeAllowance;
   const net = provided(actual?.net) ? actual.net : derivedNet;
 

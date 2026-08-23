@@ -45,8 +45,7 @@ const TAB_FIELDS: Partial<Record<SettingsTab, Array<keyof UserSettings>>> = {
   navigation: ['hidden_nav_items', 'mobile_toolbar_items', 'nav_item_order'],
 };
 
-/** Tabs whose fields differ from the last saved copy. AI, Integrations and Security save
- *  inline and own no fields here, so they never appear. */
+// AI, Integrations and Security save inline and own no fields, so they never appear.
 export const findDirtyTabs = (
   settings: UserSettings | null,
   originalJson: string

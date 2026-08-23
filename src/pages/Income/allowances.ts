@@ -13,8 +13,7 @@ export interface Allowance {
   // Times paid per unit, e.g. 1 per MONTH, or 10 per MONTH.
   timesPer: number;
   unit: AllowanceUnit;
-  // Which paycheck of the month or year carries it. A monthly allowance lands on one
-  // paycheck rather than being spread across them.
+  // Which paycheck carries it; monthly lands on one, not spread across them.
   payOn: 'FIRST' | 'LAST';
 }
 
@@ -62,8 +61,7 @@ export const annualAmount = (allowance: Allowance, paychecksPerYear: number) => 
   return amount * times;
 };
 
-// What a single payment is worth. A monthly allowance pays this once a month rather than
-// a fraction of it every paycheck.
+// What one payment is worth, not a per-paycheck fraction of it.
 export const paymentAmount = (allowance: Allowance) => {
   const amount = Math.max(0, Number(allowance.amount) || 0);
   const times = Math.max(0, Number(allowance.timesPer) || 0);
@@ -88,8 +86,7 @@ export const splitAllowances = (allowances: Allowance[], paychecksPerYear: numbe
   return totals;
 };
 
-// Per-paycheck overrides are stored as the amount for that paycheck, so they bypass the
-// frequency entirely: the figure is what that cheque paid.
+// An override is what that cheque paid, so it bypasses the frequency.
 export const resolveAllowances = (
   allowances: Allowance[],
   scheduledForPeriod: Record<string, number>,
@@ -125,8 +122,7 @@ export interface AllowancePeriodTotals {
 const chosenPeriod = (candidates: PayPeriod[], payOn: Allowance['payOn']) =>
   payOn === 'LAST' ? candidates.at(-1) : candidates[0];
 
-// Builds the per-paycheck allowance schedule. A monthly allowance lands on one paycheck of
-// each month; an annual one on a single paycheck of the year.
+// Monthly lands on one paycheck a month, annual on one a year.
 export const allowanceSchedule = (
   allowances: Allowance[],
   periods: PayPeriod[]

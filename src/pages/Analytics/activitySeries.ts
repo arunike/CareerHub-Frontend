@@ -19,10 +19,9 @@ import {
 
 export type Granularity = 'day' | 'week' | 'month';
 
-// Weeks start on Monday, matching the rest of the app's calendars.
+// Monday, like the rest of the app's calendars.
 const WEEK = { weekStartsOn: 1 } as const;
 
-// What you get by opening a bar. Days are the floor — there is nothing finer to show.
 export const FINER_GRANULARITY: Record<Granularity, Granularity | null> = {
   month: 'week',
   week: 'day',
@@ -35,13 +34,10 @@ export const GRANULARITY_LABELS: Record<Granularity, string> = {
   month: 'Monthly',
 };
 
-// Picked with the date picker rather than counted back from today. Not a number, so the
-// bucket-count branch falls through to the explicit window instead.
 export const CUSTOM_RANGE = 'custom';
 export const CUSTOM_RANGE_LABEL = 'Custom range';
 
-// Ranges are expressed in the unit you are looking at, so "Last 12 weeks" is literally
-// 12 bars. Expressing every range in days instead produced fractional bar counts.
+// Counted in the unit on screen: "Last 12 weeks" is 12 bars.
 export const RANGE_OPTIONS: Record<Granularity, Array<{ value: string; label: string }>> = {
   day: [
     { value: '14', label: 'Last 14 days' },
@@ -71,7 +67,6 @@ export const DEFAULT_RANGE: Record<Granularity, string> = {
   month: '12',
 };
 
-// Each granularity has a bar ceiling; the resolved window is reported back.
 const MAX_BUCKETS: Record<Granularity, number> = { day: 366, week: 260, month: 120 };
 
 const bucketStart = (granularity: Granularity, date: Date) =>
@@ -110,17 +105,15 @@ const eachBucketStart = (granularity: Granularity, interval: { start: Date; end:
       : eachMonthOfInterval(interval);
 
 export interface ActivityBucket {
-  // Bucket start as yyyy-MM-dd, stable across re-renders so recharts keys hold.
+  // Bucket start as yyyy-MM-dd; recharts keys off it.
   key: string;
   label: string;
   fullLabel: string;
   count: number;
   start: Date;
   end: Date;
-  // Only worth opening when there is a finer granularity and something inside it.
   drillable: boolean;
-  // A calendar week can straddle the month you drilled into, so its bar only covers the
-  // part inside that month. Flagged so the tooltip can say so.
+  // A week can straddle the drilled month, so the bar covers only the part inside it.
   partial: boolean;
 }
 
@@ -130,19 +123,16 @@ export interface ActivitySeries {
   windowStart: Date;
   windowEnd: Date;
   total: number;
-  // True when MAX_BUCKETS clipped an "all time" request.
   capped: boolean;
 }
 
-// One day that had applications, with how many. The server sends a date histogram rather
-// than the applications themselves, so this is what the chart buckets.
 export interface ActivityPoint {
   date: Date;
   count: number;
 }
 
 export interface SeriesBounds {
-  // null means "no lower bound", i.e. the year filter is on All years.
+  // null means the year filter is on All years.
   start: Date | null;
   end: Date;
 }
@@ -158,10 +148,8 @@ export const buildActivitySeries = ({
 }: {
   points: ActivityPoint[];
   granularity: Granularity;
-  // A bucket count, or 'all'. Ignored when `window` is given.
   range: string;
   bounds: SeriesBounds;
-  // An explicit interval, used when drilled into a specific bar.
   window?: { start: Date; end: Date };
 }): ActivitySeries => {
   let firstStart: Date;
@@ -171,8 +159,6 @@ export const buildActivitySeries = ({
   if (window) {
     firstStart = bucketStart(granularity, window.start);
     lastStart = bucketStart(granularity, clampEnd(window.end, bounds.end));
-    // A hand-picked range can span years, so the ceiling applies here too. The most recent
-    // buckets are the ones kept, and `capped` makes the truncation visible.
     const span = bucketsBetween(granularity, firstStart, lastStart) + 1;
     if (span > MAX_BUCKETS[granularity]) {
       firstStart = stepBack(granularity, lastStart, MAX_BUCKETS[granularity] - 1);
@@ -191,15 +177,13 @@ export const buildActivitySeries = ({
       capped = needed > MAX_BUCKETS[granularity];
     }
     firstStart = stepBack(granularity, lastStart, count - 1);
-    // A past year must not be padded with buckets from outside it, which is what made a
-    // fixed "last 12 weeks" useless the moment you filtered to an earlier year.
+    // Never pad a past year with buckets from outside it.
     const lowerBound = bounds.start ? bucketStart(granularity, bounds.start) : null;
     if (lowerBound && firstStart < lowerBound) firstStart = lowerBound;
   }
 
   if (lastStart < firstStart) lastStart = firstStart;
 
-  // Buckets count only days inside the requested window, so a straddling week cannot leak.
   let countStart = firstStart;
   if (bounds.start && bounds.start > countStart) countStart = bounds.start;
   if (window && window.start > countStart) countStart = window.start;
@@ -221,8 +205,7 @@ export const buildActivitySeries = ({
     const end = bucketEnd(granularity, start);
     const key = format(start, 'yyyy-MM-dd');
     const count = counts.get(key) ?? 0;
-    // The week of Jul 27 shown inside August covers Aug 1–2, so it is labelled Aug 1. The
-    // true period stays in the tooltip, where the partial note explains the difference.
+    // Labelled by the part inside the month; the tooltip carries the true period.
     const labelStart = start < countStart ? countStart : start;
     return {
       key,

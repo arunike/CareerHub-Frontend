@@ -15,8 +15,7 @@ export interface DeductionLines {
   dependent: number;
 }
 
-// Everything that can differ on a single paycheck: the premium lines plus the deferral
-// rates, since people change contributions for one cheque and then change back.
+// Everything that can differ on one paycheck: premium lines plus deferral rates.
 export interface PeriodDefaults extends DeductionLines {
   pretax401kPercent: number;
   roth401kPercent: number;
@@ -26,8 +25,7 @@ export interface PeriodDefaults extends DeductionLines {
 export interface PeriodPatch extends Partial<PeriodDefaults> {
   // Keyed by custom deduction id, so a renamed or deleted line resolves cleanly.
   customAmounts?: Record<string, number>;
-  // Keyed by allowance id. An override is the amount that paycheck paid, so it bypasses
-  // the allowance's frequency entirely.
+  // Keyed by allowance id; an override bypasses the allowance's frequency.
   allowanceAmounts?: Record<string, number>;
   // The employer contribution for this paycheck, when the formula does not describe it.
   employerMatch?: number;
@@ -111,8 +109,7 @@ export const isRedundant = (
     // An amount for a deleted line is dead weight, so it counts as redundant too.
     ([id, amount]) => !standing.has(id) || standing.get(id) === amount
   );
-  // An allowance or match override always carries information: those standing figures are
-  // derived per paycheck, so an equal value still pins it.
+  // Standing allowance and match figures are derived, so an equal value still pins them.
   return (
     customMatches &&
     Object.keys(override.allowanceAmounts ?? {}).length === 0 &&
@@ -154,8 +151,7 @@ export const upsertOverride = (
 export const removeOverride = (overrides: PeriodDeductionOverride[], periodIndex: number) =>
   overrides.filter((override) => override.periodIndex !== periodIndex);
 
-// Applying the same change to many paychecks expands to one override each, so a single
-// paycheck can still be edited afterwards without unpicking a rule.
+// Expands to one override per paycheck, so a single cheque can still be edited after.
 export const applyOverrideToPeriods = (
   overrides: PeriodDeductionOverride[],
   defaults: PeriodDefaults,
@@ -180,8 +176,7 @@ export const clearOverridesFor = (
 const byPeriod = (a: PeriodDeductionOverride, b: PeriodDeductionOverride) =>
   a.periodIndex - b.periodIndex;
 
-// Which paychecks pin a given field, so a change to the standing value can say what it
-// will not reach. The key is either a PeriodDefaults field or a custom deduction id.
+// Which paychecks pin a field, keyed by PeriodDefaults field or custom deduction id.
 export const periodsOverriding = (overrides: PeriodDeductionOverride[], key: string): number[] =>
   overrides
     .filter(
@@ -241,8 +236,7 @@ export const buildPeriodOverrides = (
   return result;
 };
 
-// Shared by both editors: the value in force for a field across the chosen paychecks, or
-// null when they disagree.
+// The value in force across the chosen paychecks, or null when they disagree.
 export const uniformValue = <T>(values: T[]): T | null => {
   if (values.length === 0) return null;
   const [first] = values;

@@ -11,7 +11,7 @@ export const MEAL_LABELS: Record<MealKey, string> = {
 
 export const MEALS = Object.keys(MEAL_LABELS) as MealKey[];
 
-// Rough starting points, shown as editable values rather than applied invisibly.
+// Starting points; always shown as editable values.
 export const DEFAULT_MEAL_VALUES: Record<MealKey, number> = {
   BREAKFAST: 8,
   LUNCH: 15,
@@ -21,23 +21,20 @@ export const DEFAULT_MEAL_VALUES: Record<MealKey, number> = {
 
 export interface MealEntry {
   meal: MealKey;
-  // What that meal costs you if you buy it.
   value: number;
-  // True when the office provides it, so you keep the money instead of spending it.
   provided: boolean;
 }
 
 const isMealKey = (value: unknown): value is MealKey =>
   typeof value === 'string' && (MEALS as string[]).includes(value);
 
-/** Accepts the current shape and the earlier one — a plain list of meal keys plus a single
- *  shared per-meal value — so rows saved before per-meal amounts keep working. */
+// Also accepts the earlier shape: a list of meal keys at one shared value.
 export const normalizeMealEntries = (raw: unknown, legacyValuePerMeal = 0): MealEntry[] => {
   if (!Array.isArray(raw)) return [];
   const byMeal = new Map<MealKey, MealEntry>();
   raw.forEach((item) => {
     if (isMealKey(item)) {
-      // Old shape: every listed meal was provided, all at one shared value.
+      // Old shape: every listed meal was provided, at one shared value.
       byMeal.set(item, { meal: item, value: Number(legacyValuePerMeal) || 0, provided: true });
       return;
     }
@@ -51,18 +48,14 @@ export const normalizeMealEntries = (raw: unknown, legacyValuePerMeal = 0): Meal
       provided: record.provided !== false,
     });
   });
-  // Fixed order, so the rows do not shuffle as they are edited.
   return MEALS.filter((meal) => byMeal.has(meal)).map((meal) => byMeal.get(meal)!);
 };
 
 export interface FreeFoodBreakdown {
   entries: MealEntry[];
   officeDays: number;
-  // Annual value of the meals the office provides.
   savedAnnual: number;
-  // Annual spend on the meals it does not.
   outOfPocketAnnual: number;
-  // Saved minus spent: positive when the office feeds you, negative when it does not.
   netAnnual: number;
 }
 
@@ -78,7 +71,6 @@ export const freeFoodBreakdown = ({
   const entries = normalizeMealEntries(meals, legacyValuePerMeal).filter(
     (entry) => entry.value > 0
   );
-  // No priced meals or no office days means there is nothing to weigh either way.
   if (entries.length === 0 || officeDays <= 0) return null;
 
   const perDay = (provided: boolean) =>
@@ -95,8 +87,6 @@ export const freeFoodBreakdown = ({
   };
 };
 
-/** The food line for an offer's value: positive when meals are provided, negative when you
- *  pay for them yourself. Falls back to the legacy flat perk when no meals are recorded. */
 export const annualFreeFoodValue = ({
   meals,
   officeDays,
@@ -109,6 +99,4 @@ export const annualFreeFoodValue = ({
   legacyAnnualValue?: number;
 }) => freeFoodBreakdown({ meals, officeDays, legacyValuePerMeal })?.netAnnual ?? legacyAnnualValue;
 
-/** Office days for the food estimate, from the same RTO and time-off inputs the commute uses,
- *  so the two can never disagree about how often you are in. */
 export const foodOfficeDays = (inputs: OfficeDayInputs) => officeDaysPerYear(inputs);

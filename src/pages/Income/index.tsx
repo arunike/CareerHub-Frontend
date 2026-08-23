@@ -1,41 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Segmented, Tabs, Tooltip, message } from 'antd';
-import {
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  SaveOutlined,
-  SlidersOutlined,
-} from '@ant-design/icons';
+import { Button, Tooltip, message } from 'antd';
+import { EyeInvisibleOutlined, EyeOutlined, SaveOutlined } from '@ant-design/icons';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import PageActionToolbar from '../../components/PageActionToolbar';
-import { PageState } from '../../components/PageState';
 import { SkeletonBlock } from '../../components/SkeletonLoader';
 import type { FilingStatus } from '../../types/tax';
-import BatchOverrideModal from './BatchOverrideModal';
 import BonusForm from './BonusForm';
 import ElectionsForm from './ElectionsForm';
-import IncomeSummary from './IncomeSummary';
-import YearEarningsCard from './YearEarningsCard';
-import PaycheckWaterfall from './PaycheckWaterfall';
 import OverrideConflictModal, { type OverrideConflict } from './OverrideConflictModal';
-import ReconciliationCards from './ReconciliationCards';
 import RetirementForm from './RetirementForm';
 import VestingForm from './VestingForm';
-import YearLedgerTable from './YearLedgerTable';
-import {
-  applyOverrideToPeriods,
-  clearFieldFromOverrides,
-  clearOverridesFor,
-  periodsOverriding,
-  findOverride,
-  removeOverride,
-  upsertOverride,
-} from './periodDeductions';
-import { describeFormula } from './matchTiers';
+import { clearFieldFromOverrides, periodsOverriding } from './periodDeductions';
 import { compareRates } from './taxRates';
 import { useIncomeYear } from './useIncomeYear';
 import { money as plainMoney } from './format';
 import { AmountPrivacyProvider } from './amountPrivacy';
+import IncomeSourceTabs from './IncomeSourceTabs';
 
 const Notice = ({ tone, children }: { tone: 'info' | 'warn'; children: React.ReactNode }) => (
   <div
@@ -410,229 +390,45 @@ const IncomePage = () => {
           }}
         />
 
-        {sources.length === 0 ? (
-          <PageState
-            title="No roles to model"
-            description="Add a role on the Experience page, or mark an offer as your current role, and this page will model its paychecks."
-          />
-        ) : (
-          <>
-            <IncomeSummary
-              source={source}
-              totals={ledger.totals}
-              paidPeriodCount={ledger.rows.length}
-              paychecksPerYear={paychecksPerYear}
-              stateAbbr={stateAbbr}
-              stateLabel={stateLabel}
-              taxYear={taxYear}
-              rates={rates}
-              roleOptions={roleOptions}
-              onSelectRole={(key) => {
-                selectSource(key);
-                setSelectedPeriod(null);
-              }}
-            />
-
-            <YearEarningsCard
-              summary={yearSummary}
-              history={yearHistory}
-              taxYear={taxYear}
-              onSelectRole={(key) => {
-                selectSource(key);
-                setSelectedPeriod(null);
-              }}
-              onSelectYear={setTaxYear}
-            />
-
-            {sourcesInYear.length === 0 ? (
-              <Notice tone="warn">
-                You held no role during {taxYear}, so there is nothing to model. Pick another year.
-              </Notice>
-            ) : ledger.rows.length === 0 ? (
-              <Notice tone="warn">
-                This role was not paid during {taxYear}, so there are no paychecks to show.
-              </Notice>
-            ) : null}
-
-            {yearResolution.kind !== 'exact' ? (
-              <Notice tone="warn">
-                {yearResolution.kind === 'later'
-                  ? `${taxYear} figures are not published yet, so ${yearResolution.year} brackets and limits are used.`
-                  : `Tax tables run from ${modelledYears.at(-1)} to ${modelledYears[0]}, so ${taxYear} uses the nearest published year, ${yearResolution.year}.`}{' '}
-                Treat the figures as indicative.
-              </Notice>
-            ) : null}
-
-            {effectiveRows.some((candidate) => candidate.residual < -0.005) ? (
-              <Notice tone="warn">
-                Some paychecks record a take-home larger than their gross pay can support, so no tax
-                is left to withhold on them. That usually means the gross is wrong: record the gross
-                from your payslip on those paychecks, or check the salary on this role.
-              </Notice>
-            ) : null}
-
-            {!stateAbbr ? (
-              <Notice tone="warn">
-                No residence state was detected from this role&rsquo;s location, so state tax is not
-                included. Set one under Elections.
-              </Notice>
-            ) : null}
-
-            {ledger.rows.length > 0 ? (
-              <>
-                <ReconciliationCards
-                  reconciliation={reconciliation}
-                  drift={drift}
-                  netPerPeriod={row?.net ?? 0}
-                />
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <Segmented
-                    value={view}
-                    onChange={(value) => setView(value as 'paycheck' | 'year')}
-                    options={[
-                      { label: 'One paycheck', value: 'paycheck' },
-                      { label: 'Whole year', value: 'year' },
-                    ]}
-                  />
-                  <div className="text-xs text-slate-500">
-                    {amount(ledger.totals.gross)} gross · {amount(ledger.totals.taxTotal)} tax ·{' '}
-                    {amount(ledger.totals.net)} take-home
-                  </div>
-                </div>
-
-                {view === 'paycheck' ? (
-                  <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-                    {row ? (
-                      <PaycheckWaterfall
-                        row={row}
-                        rows={effectiveRows}
-                        periodsPerYear={paychecksPerYear}
-                        actual={rowActual}
-                        onActualChange={setActual}
-                        matchFormulaLabel={describeFormula(matchFormula)}
-                        onSelectPeriod={setSelectedPeriod}
-                        deductionDefaults={periodDefaults}
-                        customDeductions={settings.customDeductions}
-                        allowances={settings.allowances}
-                        scheduledAllowances={allowanceSchedule[row.periodIndex]?.byAllowance ?? {}}
-                        override={findOverride(settings.periodDeductions, row.periodIndex)}
-                        onOverrideChange={(periodIndex, patch) =>
-                          update({
-                            periodDeductions: upsertOverride(
-                              settings.periodDeductions,
-                              periodDefaults,
-                              settings.customDeductions,
-                              periodIndex,
-                              patch
-                            ),
-                          })
-                        }
-                        onOverrideClear={(periodIndex) =>
-                          update({
-                            periodDeductions: removeOverride(
-                              settings.periodDeductions,
-                              periodIndex
-                            ),
-                          })
-                        }
-                      />
-                    ) : null}
-
-                    <div className="enterprise-card px-6 pb-6 pt-2">
-                      <Tabs
-                        items={settingsTabs}
-                        className="[&_.ant-tabs-nav]:!mb-5 [&_.ant-tabs-tab]:!px-0 [&_.ant-tabs-tab+.ant-tabs-tab]:!ml-6"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="enterprise-card p-2 sm:p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-3 px-2 pb-2 pt-1">
-                        <span className="text-xs text-slate-500">
-                          {selectedKeys.length > 0
-                            ? `${selectedKeys.length} paycheck${selectedKeys.length === 1 ? '' : 's'} selected`
-                            : 'Select paychecks to edit deductions or 401(k) in bulk'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {selectedKeys.length > 0 ? (
-                            <Button size="small" type="text" onClick={() => setSelectedKeys([])}>
-                              Clear selection
-                            </Button>
-                          ) : null}
-                          <Button
-                            size="small"
-                            icon={<SlidersOutlined />}
-                            disabled={selectedKeys.length === 0}
-                            onClick={() => setBatchOpen(true)}
-                          >
-                            Batch edit
-                          </Button>
-                        </div>
-                      </div>
-
-                      <YearLedgerTable
-                        rows={effectiveRows}
-                        actuals={settings.actuals}
-                        selectedPeriod={row?.periodIndex ?? 0}
-                        selectedKeys={selectedKeys}
-                        onSelectionChange={setSelectedKeys}
-                        onSelectPeriod={(period) => {
-                          setSelectedPeriod(period);
-                          setView('paycheck');
-                        }}
-                        onActualChange={setActual}
-                      />
-                    </div>
-
-                    <BatchOverrideModal
-                      open={batchOpen}
-                      selectedKeys={selectedKeys}
-                      defaults={periodDefaults}
-                      customDeductions={settings.customDeductions}
-                      allowances={settings.allowances}
-                      allowanceSchedule={allowanceSchedule}
-                      matchByPeriod={Object.fromEntries(
-                        effectiveRows.map((candidate) => [
-                          candidate.periodIndex,
-                          candidate.employerMatch401k,
-                        ])
-                      )}
-                      overrides={settings.periodDeductions}
-                      onCancel={() => setBatchOpen(false)}
-                      onApply={(patch) => {
-                        update({
-                          periodDeductions: applyOverrideToPeriods(
-                            settings.periodDeductions,
-                            periodDefaults,
-                            settings.customDeductions,
-                            selectedKeys,
-                            patch
-                          ),
-                        });
-                        setBatchOpen(false);
-                        message.success(
-                          `Applied to ${selectedKeys.length} paycheck${selectedKeys.length === 1 ? '' : 's'}`
-                        );
-                      }}
-                      onClear={() => {
-                        update({
-                          periodDeductions: clearOverridesFor(
-                            settings.periodDeductions,
-                            selectedKeys
-                          ),
-                        });
-                        setBatchOpen(false);
-                        message.success('Overrides cleared');
-                      }}
-                    />
-                  </>
-                )}
-              </>
-            ) : null}
-          </>
-        )}
+        <IncomeSourceTabs
+          Notice={Notice}
+          allowanceSchedule={allowanceSchedule}
+          drift={drift}
+          effectiveRows={effectiveRows}
+          ledger={ledger}
+          matchFormula={matchFormula}
+          modelledYears={modelledYears}
+          paychecksPerYear={paychecksPerYear}
+          periodDefaults={periodDefaults}
+          reconciliation={reconciliation}
+          selectSource={selectSource}
+          setActual={setActual}
+          setTaxYear={setTaxYear}
+          settings={settings}
+          source={source}
+          sources={sources}
+          sourcesInYear={sourcesInYear}
+          stateAbbr={stateAbbr}
+          taxYear={taxYear}
+          update={update}
+          yearHistory={yearHistory}
+          yearResolution={yearResolution}
+          yearSummary={yearSummary}
+          amount={amount}
+          batchOpen={batchOpen}
+          rates={rates}
+          roleOptions={roleOptions}
+          row={row}
+          rowActual={rowActual}
+          selectedKeys={selectedKeys}
+          setBatchOpen={setBatchOpen}
+          setSelectedKeys={setSelectedKeys}
+          setSelectedPeriod={setSelectedPeriod}
+          setView={setView}
+          settingsTabs={settingsTabs}
+          stateLabel={stateLabel}
+          view={view}
+        />
       </div>
     </AmountPrivacyProvider>
   );

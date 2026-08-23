@@ -11,7 +11,6 @@ import { getOffers } from '../api/career';
 import { getUserSettings } from '../api/availability';
 import {
   DEFAULT_REMINDER_SETTINGS,
-  daysUntil,
   dismissUntil,
   dueReminders,
   pruneReminderState,
@@ -22,68 +21,35 @@ import {
   type ReminderSettings,
   type ReminderState,
 } from '../utils/eventReminders';
-import {
-  format,
-  parseISO,
-  isAfter,
-  isToday,
-  isTomorrow,
-  compareAsc,
-  differenceInCalendarDays,
-  startOfDay,
-  addDays,
-} from 'date-fns';
-import {
-  BellOutlined,
-  CloseOutlined,
-  CalendarOutlined,
-  ClockCircleOutlined,
-  AlertOutlined,
-  CheckOutlined,
-  FlagOutlined,
-} from '@ant-design/icons';
+import { format, isAfter, compareAsc, addDays } from 'date-fns';
+import { BellOutlined, CalendarOutlined, AlertOutlined, CheckOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import EventViewModal from '../pages/Events/components/EventViewModal';
 import type { ConflictAlert, Event, Task } from '../types';
 import ConfirmModal from './ConfirmModal';
-import { getPaletteColor } from '../utils/colorPalette';
-import { Button, Spin, message, notification } from 'antd';
 import {
-  getDeadlineStatus,
-  isDecisionSettled,
-  type OfferDeadlineSource,
-} from '../utils/offerDeadline';
+  DEADLINE_SNOOZE_KEY,
+  buildOfferDeadlines,
+  countdownLabel,
+  buildTaskDeadlines,
+  mergeDeadlines,
+  type DeadlineItem,
+} from './notificationDeadlines';
+import { Button, Spin, message, notification } from 'antd';
+import { type OfferDeadlineSource } from '../utils/offerDeadline';
+import DueSoonSection from './DueSoonSection';
+import DeadlineRadarSection from './DeadlineRadarSection';
+import UpcomingEventRows from './UpcomingEventRows';
 
 interface NotificationBellProps {
   placement?: 'bottom-right' | 'top-left';
 }
 
-type DeadlinePriority = 'P0' | 'P1' | 'P2';
-
-interface DeadlineItem {
-  id: string;
-  kind: 'task' | 'offer';
-  // Only present for tasks, which are the only kind that can be marked done.
-  taskId?: number;
-  title: string;
-  subtitle: string;
-  linkTo: string;
-  priority: DeadlinePriority;
-  dueLabel: string;
-  dueDate: Date;
-}
-
-const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
-// Only surface deadlines inside this window.
-const MAX_DEADLINE_DAYS = 7;
-// An event three months out is not a notification. Anything past this stays on the
-// calendar and out of the bell.
+// Beyond this an event is calendar business, not a notification.
 const MAX_EVENT_DAYS = 14;
-// Dismissals are per event and keyed by its date, so the entry cleans itself up once the
-// event is in the past rather than growing forever.
+// Keyed by event date so dismissals clean themselves up instead of growing forever.
 const EVENT_DISMISS_KEY = 'notification_dismissed_events';
 
-// Colour carries the urgency, so the card reads before the text does.
 const URGENCY_TONE = {
   today: {
     card: 'border-l-4 border-l-rose-500 !bg-rose-50',
@@ -102,17 +68,8 @@ const URGENCY_TONE = {
   },
 } as const;
 
-const countdownLabel = (date: string) => {
-  const away = daysUntil(date, new Date());
-  if (away < 0) return 'Past';
-  if (away === 0) return 'Today';
-  if (away === 1) return 'Tomorrow';
-  return `In ${away} days`;
-};
-
-type RankedDeadline = DeadlineItem & { rank: number };
 const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
-// Survives dropdown open/close and remounts; reopening the bell should not refetch.
+// Reopening the bell should not refetch.
 const CACHE_TTL_MS = 3 * 60 * 1000;
 let notificationCache: {
   at: number;
@@ -136,7 +93,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       const raw = localStorage.getItem(EVENT_DISMISS_KEY);
       const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : {};
       const today = format(new Date(), 'yyyy-MM-dd');
-      // Drop anything whose event has already passed.
       return Object.fromEntries(Object.entries(parsed).filter(([, date]) => date >= today));
     } catch {
       return {};
@@ -155,13 +111,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
   const [reminderSettings, setReminderSettings] =
     useState<ReminderSettings>(DEFAULT_REMINDER_SETTINGS);
   const [reminderState, setReminderState] = useState<ReminderState>(() => readReminderState());
-  // Toasts wait for this, otherwise the first one uses the default duration and window.
+  // Toasts wait for this, or the first uses the default duration.
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const toastedRef = useRef<Set<number>>(new Set());
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  // Mirrors `snoozed` so fetchData can read it without depending on it.
+  // So fetchData can read it without depending on it.
   const snoozedRef = useRef(snoozed);
   useEffect(() => {
     snoozedRef.current = snoozed;
@@ -176,7 +132,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
         if (!fresh) {
           try {
-            // A write, so it only runs when actually refreshing rather than on every open.
             await detectConflicts();
           } catch (error) {
             console.error('Detection failed', error);
@@ -228,7 +183,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       } finally {
         setLoading(false);
       }
-      // Snooze is read through a ref so dismissing something cannot retrigger a fetch.
+      // Snooze is read through a ref so a dismissal cannot retrigger a fetch.
     },
     [messageApi]
   );
@@ -251,7 +206,6 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
     return () => window.removeEventListener(TASKS_UPDATED_EVENT, refreshOnTaskUpdate);
   }, [fetchData, isOpen]);
 
-  // Loaded up front so the badge is accurate before the bell is ever clicked.
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
@@ -282,11 +236,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
   const dueSoon = dueReminders(visibleEvents, reminderSettings, reminderState);
   const dueSoonIds = new Set(dueSoon.map((event) => event.id));
-  // Anything already shown under "Coming up" is not repeated under "Upcoming".
   const otherUpcoming = visibleEvents.filter((event) => !dueSoonIds.has(event.id));
 
-  // Keyed on the ids themselves, so this fires as soon as the data lands rather than
-  // depending on a re-render producing a new array.
+  // Keyed on the ids, so this fires when the data lands, not on a new array.
   const dueSoonKey = dueSoon
     .map((event) => event.id)
     .sort((a, b) => a - b)
@@ -413,8 +365,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
   const hasDeadlines = deadlines.length > 0;
   const totalNotifications = visibleEvents.length + conflicts.length + deadlines.length;
-  // Now that the window is capped at 14 days and every row can be dismissed, ringing
-  // while anything is outstanding is honest rather than constant background motion.
+  // Honest now the window is 14 days and every row can be dismissed.
   const needsAttention = totalNotifications > 0;
 
   return (
@@ -489,56 +440,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             ) : (
               <div className="divide-y divide-gray-50">
                 {dueSoon.length > 0 && (
-                  <div className="bg-amber-50/50">
-                    <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
-                      Coming up
-                    </p>
-                    {dueSoon.map((event) => {
-                      const away = daysUntil(event.date, new Date());
-                      return (
-                        <div key={`due-${event.id}`} className="px-4 py-2.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <button
-                              type="button"
-                              className="min-w-0 text-left"
-                              onClick={() => setViewingEvent(event)}
-                            >
-                              <p className="truncate text-sm font-medium text-slate-900 hover:text-blue-700">
-                                {event.name}
-                              </p>
-                              <p className="mt-0.5 text-xs text-amber-700">
-                                {away === 0 ? 'Today' : away === 1 ? 'Tomorrow' : `In ${away} days`}
-                                {!event.is_all_day && ` · ${event.start_time.substring(0, 5)}`}
-                              </p>
-                            </button>
-                          </div>
-                          <div className="mt-1.5 flex items-center gap-3">
-                            <button
-                              type="button"
-                              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
-                              onClick={(clickEvent) => {
-                                // Silence the popup and clear the bell entry: leaving it
-                                // listed meant the bell kept ringing after a "Dismiss".
-                                setReminder(event.id, dismissUntil(reminderSettings));
-                                dismissEvent(event, clickEvent);
-                              }}
-                            >
-                              Dismiss
-                            </button>
-                            {reminderSettings.allowForeverIgnore && (
-                              <button
-                                type="button"
-                                className="text-xs text-slate-400 hover:text-slate-600"
-                                onClick={() => setReminder(event.id, 'forever')}
-                              >
-                                Never remind me
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <DueSoonSection
+                    reminderSettings={reminderSettings}
+                    dismissEvent={dismissEvent}
+                    dueSoon={dueSoon}
+                    setReminder={setReminder}
+                    setViewingEvent={setViewingEvent}
+                  />
                 )}
 
                 {conflicts.length > 0 && (
@@ -580,64 +488,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                 )}
 
                 {hasDeadlines && (
-                  <div className="bg-amber-50/40">
-                    <div className="px-3 py-2 text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-2">
-                      <FlagOutlined className="text-xs" />
-                      Deadline Radar
-                    </div>
-                    {deadlines.map((deadline) => (
-                      <div key={deadline.id} className="p-3 hover:bg-amber-50 transition-colors">
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="min-w-0">
-                            <div className="text-xs font-medium text-gray-900 truncate">
-                              {deadline.title}
-                            </div>
-                            <div className="text-[11px] text-gray-600 mt-1">
-                              {deadline.subtitle}
-                            </div>
-                          </div>
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap font-medium ${
-                              deadline.priority === 'P0'
-                                ? 'bg-red-100 text-red-700'
-                                : deadline.priority === 'P1'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-blue-100 text-blue-700'
-                            }`}
-                          >
-                            {deadline.dueLabel}
-                          </span>
-                        </div>
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                          <Link
-                            to={deadline.linkTo}
-                            className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-600 hover:text-blue-700"
-                            onClick={() => setIsOpen(false)}
-                          >
-                            Open
-                          </Link>
-                          <div className="flex items-center gap-2">
-                            {deadline.kind === 'task' && deadline.taskId != null && (
-                              <button
-                                type="button"
-                                onClick={(e) => markTaskDone(deadline.taskId!, deadline.id, e)}
-                                className="min-h-11 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
-                              >
-                                Done
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(e) => snoozeDeadline(deadline.id, e)}
-                              className="min-h-11 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100"
-                            >
-                              Dismiss 1d
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <DeadlineRadarSection
+                    deadlines={deadlines}
+                    markTaskDone={markTaskDone}
+                    setIsOpen={setIsOpen}
+                    snoozeDeadline={snoozeDeadline}
+                  />
                 )}
 
                 {otherUpcoming.length > 0 && (
@@ -645,70 +501,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                     Upcoming
                   </div>
                 )}
-                {otherUpcoming.map((event) => {
-                  const eventDate = parseISO(event.date);
-                  const timeLabel = format(new Date(`2000-01-01T${event.start_time}`), 'h:mm a');
-                  let dayLabel = format(eventDate, 'MMM d');
-
-                  if (isToday(eventDate)) dayLabel = 'Today';
-                  if (isTomorrow(eventDate)) dayLabel = 'Tmrw';
-
-                  return (
-                    <div key={event.id} className="group relative">
-                      <button
-                        type="button"
-                        onClick={(clickEvent) => dismissEvent(event, clickEvent)}
-                        aria-label={`Dismiss ${event.name}`}
-                        title="Dismiss"
-                        // Always visible: a hover-only control is unreachable on a touch screen.
-                        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-600"
-                      >
-                        <CloseOutlined className="text-[11px]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setViewingEvent(event)}
-                        className="block w-full p-3 pr-10 text-left transition-colors hover:bg-gray-50"
-                      >
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="font-medium text-sm text-gray-900 line-clamp-1">
-                            {event.name}
-                          </span>
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                              isToday(eventDate)
-                                ? 'bg-blue-50 text-blue-700 font-medium'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {dayLabel}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                          <ClockCircleOutlined className="text-xs" />
-                          <span>{timeLabel}</span>
-                          <span>•</span>
-                          <span className="font-medium text-slate-600">
-                            {countdownLabel(event.date)}
-                          </span>
-                          {event.category_details && (
-                            <>
-                              <span>•</span>
-                              {/* The raw category colour is often too light to read here. */}
-                              <span
-                                style={{
-                                  color: getPaletteColor(event.category_details.color).text,
-                                }}
-                              >
-                                {event.category_details.name}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </button>
-                    </div>
-                  );
-                })}
+                <UpcomingEventRows
+                  dismissEvent={dismissEvent}
+                  otherUpcoming={otherUpcoming}
+                  setViewingEvent={setViewingEvent}
+                />
               </div>
             )}
           </div>
@@ -728,99 +525,3 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 };
 
 export default NotificationBell;
-
-const buildTaskDeadlines = (tasks: Task[], snoozed: Record<string, string>): RankedDeadline[] => {
-  const now = new Date();
-  const maxDays = MAX_DEADLINE_DAYS;
-  const items: RankedDeadline[] = [];
-
-  const isVisible = (id: string) => {
-    const until = snoozed[id];
-    if (!until) return true;
-    return new Date(until).getTime() <= now.getTime();
-  };
-
-  tasks.forEach((task) => {
-    if (!task.due_date || task.status === 'DONE') return;
-    const dueDate = parseISO(task.due_date);
-    const diff = differenceInCalendarDays(startOfDay(dueDate), startOfDay(now));
-    if (diff > maxDays) return;
-
-    let priority: DeadlinePriority = 'P2';
-    let rank = 2;
-    let dueLabel = `${diff}d left`;
-
-    if (diff <= 0) {
-      priority = 'P0';
-      rank = 0;
-      dueLabel = diff < 0 ? 'Overdue' : 'Today';
-    } else if (diff <= 3) {
-      priority = 'P1';
-      rank = 1;
-      dueLabel = `${diff}d left`;
-    }
-
-    const id = `task-${task.id}`;
-    if (!isVisible(id)) return;
-
-    items.push({
-      id,
-      kind: 'task',
-      taskId: task.id,
-      title: task.title,
-      subtitle: 'Action Item',
-      linkTo: `/tasks?taskId=${task.id}&mode=view`,
-      priority,
-      dueLabel,
-      dueDate,
-      rank,
-    });
-  });
-
-  return items;
-};
-
-const buildOfferDeadlines = (
-  offers: OfferDeadlineSource[],
-  snoozed: Record<string, string>
-): RankedDeadline[] => {
-  const now = new Date();
-  const items: RankedDeadline[] = [];
-
-  offers.forEach((offer) => {
-    if (offer.id == null) return;
-    if (isDecisionSettled(offer.final_decision_status)) return;
-
-    const status = getDeadlineStatus(offer.deadline);
-    if (!status || status.isExpired) return;
-    if (status.daysRemaining > MAX_DEADLINE_DAYS) return;
-
-    const id = `offer-${offer.id}`;
-    const until = snoozed[id];
-    if (until && new Date(until).getTime() > now.getTime()) return;
-
-    const priority: DeadlinePriority =
-      status.daysRemaining <= 0 ? 'P0' : status.daysRemaining <= 3 ? 'P1' : 'P2';
-
-    items.push({
-      id,
-      kind: 'offer',
-      title: offer.application_details?.company || `Offer #${offer.id}`,
-      subtitle: 'Offer decision',
-      linkTo: '/offers',
-      priority,
-      dueLabel: status.daysRemaining === 0 ? 'Today' : `${status.daysRemaining}d left`,
-      dueDate: parseISO(status.date),
-      rank: status.daysRemaining <= 0 ? 0 : status.daysRemaining <= 3 ? 1 : 2,
-    });
-  });
-
-  return items;
-};
-
-const mergeDeadlines = (...groups: RankedDeadline[][]): DeadlineItem[] =>
-  groups
-    .flat()
-    .sort((a, b) => a.rank - b.rank || compareAsc(a.dueDate, b.dueDate))
-    .slice(0, 10)
-    .map(({ rank: _rank, ...rest }) => rest);

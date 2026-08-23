@@ -14,7 +14,7 @@ export type IncomeEventKind = 'bonus' | 'vest' | 'other';
 export interface IncomeEvent {
   id: string;
   kind: IncomeEventKind;
-  // 1-based pay period the event is paid in.
+  // 1-based.
   periodIndex: number;
   amount: number;
   label?: string;
@@ -36,8 +36,7 @@ export interface Elections {
   postTaxPerPeriod: number;
   hsaFamilyCoverage: boolean;
   age50Plus: boolean;
-  // Many plans compute the deferral and the match on base pay, excluding stipends and
-  // allowances. Leaving this off computes them on the whole gross.
+  // Off means the deferral and match compute on the whole gross, not base pay alone.
   excludeAllowancesFromDeferralBase: boolean;
 }
 
@@ -61,8 +60,7 @@ export interface EmployerContributions {
   match401kPercent: number;
   // Deferral percent that is eligible for match, e.g. 6 for the first 6% of pay.
   match401kLimitPercent: number;
-  // A banded formula such as 100% of the first 3% then 50% of the next 2%. When present it
-  // replaces the flat pair above, which can only express one band.
+  // Banded formula, e.g. 100% of the first 3% then 50% of the next 2%; replaces the flat pair.
   matchTiers?: MatchTier[];
   // Paid whether or not you defer, as a safe-harbor contribution is.
   nonElectivePercent?: number;
@@ -77,8 +75,7 @@ export const NO_EMPLOYER_CONTRIBUTIONS: EmployerContributions = {
   hsaAnnual: 0,
 };
 
-// A paycheck where something differs from the standing election, e.g. after open
-// enrollment or a month a premium was skipped.
+// A paycheck where something differs from the standing election.
 export interface PeriodOverride {
   section125PerPeriod?: number;
   pretaxIncomeOnlyPerPeriod?: number;
@@ -86,26 +83,21 @@ export interface PeriodOverride {
   hsaPerPeriod?: number;
   pretax401kPercent?: number;
   roth401kPercent?: number;
-  // Regular pay for this period, when it differs from the usual amount.
   regularGross?: number;
   taxableAllowancePerPeriod?: number;
   taxFreeAllowancePerPeriod?: number;
-  // What the employer actually contributed on this paycheck, when it differs from the
-  // formula, e.g. a true-up or a bonus matched on a different base.
   employerMatch?: number;
 }
 
 export interface LedgerInput {
   filingStatus: FilingStatus;
-  // Stays the full-year cadence even for a part year: payroll annualizes every paycheck as
-  // if you worked all twelve months, which is why a part year over-withholds.
+  // Full-year cadence even for a part year: payroll annualizes every paycheck.
   periodsPerYear: number;
-  // The paychecks actually paid. Defaults to every period in the year.
+  // Defaults to every period in the year.
   periods?: PayPeriod[];
   // Keyed by period index; anything absent falls back to the standing election.
   periodOverrides?: Record<number, PeriodOverride>;
-  // Which paycheck each allowance lands on. A monthly allowance is paid once a month
-  // rather than as a fraction of every paycheck, so this is not a flat rate.
+  // Which paycheck each allowance lands on; monthly means once a month, not a flat rate.
   allowanceByPeriod?: Record<number, { taxable: number; taxFree: number }>;
   annualSalary: number;
   incomeEvents: IncomeEvent[];
@@ -149,17 +141,14 @@ export interface PeriodRow {
   postTax: number;
   net: number;
   employerMatch401k: number;
-  // What you deferred this period, and how much of it the formula matched. Kept so the
-  // match can be explained rather than just stated.
   deferralPercent: number;
   matchedDeferralPercent: number;
-  // True when this paycheck used a per-paycheck deduction override.
+  // A per-paycheck deduction override was used.
   isAdjusted: boolean;
-  // True for a payment made on its own date rather than with a paycheck.
   isOffCycle: boolean;
-  // True when the pay date was moved by hand.
+  // The pay date was moved by hand.
   isAdjustedDate: boolean;
-  // True when the employer contribution was recorded rather than derived from the formula.
+  // The employer contribution was recorded, not derived.
   isMatchAdjusted: boolean;
   events: IncomeEvent[];
   notes: string[];
@@ -260,8 +249,7 @@ export const buildLedger = (input: LedgerInput): Ledger => {
         scheduledAllowance?.taxFree ??
         elections.taxFreeAllowancePerPeriod);
 
-    // A taxable allowance is wages, so it joins regular pay before anything is withheld.
-    // An off-cycle payment carries no salary, so only supplemental pay is withheld on it.
+    // Taxable allowances are wages; an off-cycle payment withholds supplemental only.
     const regularGross =
       recurringForPay * (override?.regularGross ?? salaryPerPeriod) + taxableAllowance;
     const supplementalGross = sumBy(events, (event) => event.amount);
@@ -273,12 +261,10 @@ export const buildLedger = (input: LedgerInput): Ledger => {
     const hsaElected = recurring * (override?.hsaPerPeriod ?? elections.hsaPerPeriod);
     const hsa = Math.min(hsaElected, Math.max(0, hsaLimit - ytdHsa));
 
-    // Deferral rates can be overridden for a single paycheck.
     const pretaxPercent = override?.pretax401kPercent ?? elections.pretax401kPercent;
     const rothPercent = override?.roth401kPercent ?? elections.roth401kPercent;
     const deferralPercent = pretaxPercent + rothPercent;
 
-    // Pay the plan actually counts when computing deferrals and the match.
     const deferralBase = elections.excludeAllowancesFromDeferralBase
       ? Math.max(0, gross - taxableAllowance)
       : gross;

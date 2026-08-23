@@ -1,57 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Typography, message, Avatar, Tag, Row, Col, Upload } from 'antd';
+import { Button, Typography, Upload } from 'antd';
 import Modal from '../../components/MobileModal';
-import {
-  PlusOutlined,
-  BankOutlined,
-  ClockCircleOutlined,
-  CodeOutlined,
-  RobotOutlined,
-  RiseOutlined,
-  LinkOutlined,
-  DollarOutlined,
-  TeamOutlined,
-  UserOutlined,
-  InboxOutlined,
-  HolderOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, RobotOutlined, UserOutlined, InboxOutlined } from '@ant-design/icons';
 import { MetricCardsSkeleton, ListSkeleton } from '../../components/SkeletonLoader';
-import dayjs from 'dayjs';
-import type { UploadProps } from 'antd';
-import {
-  getExperiences,
-  reorderExperiences,
-  createExperience,
-  updateExperience,
-  deleteExperience,
-  deleteAllExperiences,
-  importExperiences,
-  exportExperiences,
-  uploadExperienceLogo,
-  removeExperienceLogo,
-  getOffers,
-  updateOffer,
-} from '../../api/career';
-import { getUserSettings } from '../../api/availability';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import RowActions from '../../components/RowActions';
-import type { Experience, EmploymentType } from '../../types';
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import type { Experience } from '../../types';
 import ExperienceModal from './ExperienceModal';
 import JDMatcherModal from './JDMatcherModal';
 import PageActionToolbar from '../../components/PageActionToolbar';
@@ -61,100 +15,66 @@ import TeamHistoryModal from './TeamHistoryModal';
 import ContactsPanel from '../../components/ContactsPanel';
 import SchedulePhasesModal from './SchedulePhasesModal';
 import CompensationBreakdownModal from './CompensationBreakdownModal';
-import PayGrowthModal, { PayGrowthArrow } from './PayGrowthModal';
-import { buildPayGrowthSummary, formatDeltaAmount, formatDeltaPercent } from './payGrowth';
+import PayGrowthModal from './PayGrowthModal';
 import PromotionReviewModal from './PromotionReviewModal';
 import type { OfferLike as Offer } from '../OfferComparison/calculations';
-import type { RaiseEntry, TeamEntry } from '../../types';
-import { buildHourlyCompensationSnapshot, getExperienceCompensationSnapshot } from './compensation';
-import { getMediaUrl } from '../../lib/runtimeConfig';
-import { refineExperienceSkillsWithBrowserAI } from '../../lib/browserAi';
-import { isLLMConfigurationError } from '../../lib/llmClient';
-import { EmploymentBadge } from './ExperienceBadges';
-import RoleMetaRow from './RoleMetaRow';
+import { getExperienceCompensationSnapshot } from './compensation';
+import ExperienceAnalyticsPanels from './ExperienceAnalyticsPanels';
+import ExperienceGroupCard from './ExperienceGroupCard';
+import { useExperienceData } from './useExperienceData';
+import { buildOfferSelectOptions } from './offerSelectOptions';
+import { renderExperienceDescription as renderDescription } from './renderExperienceDescription';
 import {
-  gapLabelBetween,
-  groupSpan,
-  humanizeDaySpan,
-  roleDateLabel,
-  type RoleDateLabel,
-} from './roleTimeline';
+  formatDuration,
+  formatRoleDateRange,
+  getGroupTenure,
+  getLatestTeam,
+  getTypeDisplay,
+} from './experienceDisplay';
 import {
-  TimelineGapLabel,
-  TimelineRailDesktop,
-  TimelineRailMobile,
-} from './ExperienceTimelineRail';
-import RoleActionRow from './RoleActionRow';
+  companiesByEmploymentType,
+  companyCount,
+  durationByEmploymentType,
+  fmtDays,
+  skillFrequency,
+  topSkillsByFrequency,
+  totalCareerDuration,
+} from './experienceSummaries';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  BADGE_CLASSES,
-  DEFAULT_EMP_TYPES,
-  DOT_CLASSES,
-  getAvatarStyle,
-  groupExperiencesByCompany,
-  nearlyEqual,
-  parseExperienceDate,
-  roundCompNumber,
-  sortExperiencesForDisplay,
-  toNullableNumber,
-} from './experienceUtils';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { groupExperiencesByCompany, sortExperiencesForDisplay } from './experienceUtils';
+import { useExperienceCompSummaries } from './useExperienceCompSummaries';
+import { useExperienceMutations } from './useExperienceMutations';
+import { useExperienceDragOrder } from './useExperienceDragOrder';
 
 const { Text } = Typography;
 const { Dragger } = Upload;
 
-// Small status labels: one size, one radius, one weight. The level sits in slate rather than
-// purple because pay is the card's only accent now.
-const LEVEL_BADGE_CLASS =
-  'inline-flex shrink-0 items-center rounded-md border border-slate-200 bg-slate-50/80 px-1.5 py-[1px] text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500 tabular-nums';
-const STATUS_BADGE_CLASS =
-  'inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-[1px] text-[11px] font-semibold tracking-[0.01em]';
-
-interface SortableGroupCardProps {
-  id: number;
-  children: React.ReactNode;
-}
-
-const SortableGroupCard: React.FC<SortableGroupCardProps> = ({ id, children }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-  });
-
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-    position: 'relative',
-    zIndex: isDragging ? 30 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="group/sortable relative">
-      <div
-        {...attributes}
-        {...listeners}
-        className="absolute -left-7 top-6 hidden md:flex items-center justify-center p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors z-20 touch-none"
-        title="Drag to reorder career timeline"
-      >
-        <HolderOutlined style={{ fontSize: 18 }} />
-      </div>
-      {children}
-    </div>
-  );
-};
-
 const ExperiencePage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const {
+    experiences,
+    setExperiences,
+    loading,
+    loadError,
+    empTypes,
+    allOffers,
+    fetchExperiences,
+    fetchOffersData,
+    setAllOffers,
+    maybeRefineSkillsWithAI,
+    handleDelete,
+    handleDeleteAll,
+    handleDeleteGroup,
+    handleToggleLock,
+    handleToggleGroupLock,
+    handleTogglePin,
+  } = useExperienceData();
   const [modalOpen, setModalOpen] = useState(false);
+
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
   const [jdModalOpen, setJdModalOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
-  const [empTypes, setEmpTypes] = useState<EmploymentType[]>(DEFAULT_EMP_TYPES);
-  const [allOffers, setAllOffers] = useState<Offer[]>([]);
   const [raiseHistoryExp, setRaiseHistoryExp] = useState<Experience | null>(null);
   const [teamHistoryExp, setTeamHistoryExp] = useState<Experience | null>(null);
   const [contactsExp, setContactsExp] = useState<Experience | null>(null);
@@ -164,353 +84,7 @@ const ExperiencePage: React.FC = () => {
   const [overallInternshipBreakdownOpen, setOverallInternshipBreakdownOpen] = useState(false);
   const [payGrowthOpen, setPayGrowthOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [aiProviderConfigured, setAiProviderConfigured] = useState(false);
   const [promotionReviewExp, setPromotionReviewExp] = useState<Experience | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = groupedExperiences.findIndex((g) => g[0].id === active.id);
-    const newIndex = groupedExperiences.findIndex((g) => g[0].id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const draggedGroup = groupedExperiences[oldIndex];
-    const targetGroup = groupedExperiences[newIndex];
-    const draggedTitle = `${draggedGroup[0].title} @ ${draggedGroup[0].company}`;
-    const targetTitle = `${targetGroup[0].title} @ ${targetGroup[0].company}`;
-
-    Modal.confirm({
-      title: 'Confirm Timeline Order Change',
-      icon: <HolderOutlined className="text-blue-500" />,
-      content: (
-        <div className="py-2">
-          <p className="text-sm text-gray-600 mb-2">
-            Are you sure you want to update the order of your work experiences on the timeline?
-          </p>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs space-y-1">
-            <div>
-              <span className="font-semibold text-gray-700">Moving:</span> {draggedTitle}
-            </div>
-            <div>
-              <span className="font-semibold text-gray-700">New position:</span> Position #
-              {newIndex + 1} (near {targetTitle})
-            </div>
-          </div>
-        </div>
-      ),
-      okText: 'Save Order',
-      cancelText: 'Cancel',
-      okButtonProps: { className: 'bg-blue-600 hover:bg-blue-700' },
-      onOk: async () => {
-        try {
-          const reorderedGroups = arrayMove(groupedExperiences, oldIndex, newIndex);
-          const newOrderPayload: { id: number; position: number }[] = [];
-          let currentPos = 0;
-
-          reorderedGroups.forEach((group) => {
-            group.forEach((exp) => {
-              if (exp.id) {
-                newOrderPayload.push({ id: exp.id, position: currentPos });
-                currentPos++;
-              }
-            });
-          });
-
-          // Optimistically update local experiences
-          setExperiences((prevExps) => {
-            const posMap = new Map(newOrderPayload.map((item) => [item.id, item.position]));
-            return prevExps.map((e) => ({
-              ...e,
-              position: e.id && posMap.has(e.id) ? posMap.get(e.id) : e.position,
-            }));
-          });
-
-          await reorderExperiences(newOrderPayload);
-          message.success('Timeline order updated and saved successfully!');
-        } catch {
-          message.error('Failed to save timeline order. Please try again.');
-          await fetchExperiences();
-        }
-      },
-    });
-  };
-
-  const fetchOffersData = async () => {
-    try {
-      const res = await getOffers();
-      setAllOffers(res.data as Offer[]);
-    } catch {
-      // no offer data
-    }
-  };
-
-  useEffect(() => {
-    fetchExperiences();
-    getUserSettings()
-      .then((res) => {
-        const types = res.data.employment_types;
-        if (types && types.length > 0) setEmpTypes(types);
-        setAiProviderConfigured(Boolean(res.data.ai_provider_api_key_configured));
-      })
-      .catch(() => {
-        // use defaults
-      });
-    fetchOffersData();
-  }, []);
-
-  const fetchExperiences = async () => {
-    try {
-      setLoading(true);
-      setLoadError(false);
-      const res = await getExperiences();
-
-      const sorted = res.data.sort((a, b) => {
-        const dateA = parseExperienceDate(a.start_date)?.valueOf() ?? 0;
-        const dateB = parseExperienceDate(b.start_date)?.valueOf() ?? 0;
-        if (dateB !== dateA) return dateB - dateA;
-        return (b.id || 0) - (a.id || 0);
-      });
-      setExperiences(sorted);
-    } catch (err: any) {
-      setLoadError(true);
-      message.error('Failed to load experiences');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const maybeRefineSkillsWithAI = async (experience: Experience, skillsManuallyEdited: boolean) => {
-    if (
-      !aiProviderConfigured ||
-      skillsManuallyEdited ||
-      !experience.id ||
-      !experience.description?.trim()
-    ) {
-      return;
-    }
-
-    try {
-      const refinedSkills = await refineExperienceSkillsWithBrowserAI({ experience });
-      if (refinedSkills.length === 0) return;
-
-      const currentSkills = experience.skills || [];
-      const unchanged =
-        refinedSkills.length === currentSkills.length &&
-        refinedSkills.every((skill, index) => skill === currentSkills[index]);
-      if (unchanged) return;
-
-      const response = await updateExperience(experience.id, { skills: refinedSkills });
-      setExperiences((prev) => prev.map((exp) => (exp.id === experience.id ? response.data : exp)));
-    } catch (error) {
-      if (!isLLMConfigurationError(error)) {
-        console.debug('AI skill refinement skipped:', error);
-      }
-    }
-  };
-
-  const handleCreateOrUpdate = async (
-    data: Partial<Experience>,
-    logoFile?: File | null,
-    removeLogo?: boolean
-  ) => {
-    try {
-      let expId: number | undefined;
-      let savedExperience: Experience | null = null;
-      const skillsManuallyEdited = Object.prototype.hasOwnProperty.call(data, 'skills');
-      if (editingExp && editingExp.id) {
-        const response = await updateExperience(editingExp.id, data);
-        savedExperience = response.data;
-        expId = editingExp.id;
-        message.success('Experience updated successfully');
-      } else {
-        const res = await createExperience(data);
-        savedExperience = res.data;
-        expId = res.data.id;
-      }
-
-      if (expId) {
-        if (logoFile) {
-          const fd = new FormData();
-          fd.append('logo', logoFile);
-          const response = await uploadExperienceLogo(expId, fd);
-          savedExperience = response.data;
-        } else if (removeLogo) {
-          const response = await removeExperienceLogo(expId);
-          savedExperience = response.data;
-        }
-      }
-
-      if (data.offer && (data.base_salary != null || data.bonus != null || data.equity != null)) {
-        const linkedOffer = allOffers.find((o) => o.id === data.offer);
-        if (linkedOffer) {
-          const patch: Record<string, unknown> = { ...(linkedOffer as Record<string, unknown>) };
-          if (data.base_salary != null) patch.base_salary = data.base_salary;
-          if (data.bonus != null) patch.bonus = data.bonus;
-          if (data.equity != null) patch.equity = data.equity;
-          await updateOffer(linkedOffer.id!, patch);
-          setAllOffers((prev) =>
-            prev.map((o) => (o.id === linkedOffer.id ? { ...o, ...patch } : o))
-          );
-        }
-      }
-
-      await fetchExperiences();
-      if (savedExperience) {
-        void maybeRefineSkillsWithAI(savedExperience, skillsManuallyEdited);
-        if (!editingExp) {
-          const createdExperience = savedExperience;
-          message.success({
-            duration: 7,
-            content: (
-              <span>
-                {data.offer
-                  ? 'Experience added. Its application remains in Applications as Accepted.'
-                  : 'Historical experience added.'}
-                <Button
-                  type="link"
-                  size="small"
-                  className="!px-2"
-                  onClick={() => setContactsExp(createdExperience)}
-                >
-                  Review contacts
-                </Button>
-              </span>
-            ),
-          });
-        }
-      }
-    } catch (err: any) {
-      message.error(getApiErrorMessage(err, 'Failed to save experience'));
-      throw err;
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteExperience(id);
-      message.success('Experience deleted');
-      fetchExperiences();
-    } catch (err: any) {
-      message.error(getApiErrorMessage(err, 'Failed to delete experience'));
-    }
-  };
-
-  const handleDuplicateExperience = (exp: Experience) => {
-    setEditingExp({
-      ...exp,
-      id: undefined,
-      title: `${exp.title} (Copy)`,
-    });
-    setModalOpen(true);
-  };
-
-  const handleDeleteAll = async () => {
-    try {
-      await deleteAllExperiences();
-      message.success('All experiences deleted');
-      fetchExperiences();
-    } catch (err) {
-      message.error('Failed to delete all experiences');
-    }
-  };
-
-  const handleExportWrapper = async (format: string) => {
-    const response = await exportExperiences(format);
-    return {
-      data: response.data,
-      headers: response.headers as unknown as Record<string, string>,
-    };
-  };
-
-  const importProps: UploadProps = {
-    name: 'file',
-    multiple: false,
-    accept: '.json,.csv,.xlsx',
-    beforeUpload: (file) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      importExperiences(formData)
-        .then(async (response) => {
-          message.success(response.data?.message || 'Import successful');
-          setIsImportModalOpen(false);
-          await Promise.all([fetchExperiences(), fetchOffersData()]);
-        })
-        .catch((err) => {
-          message.error(getApiErrorMessage(err, 'Import failed'));
-        });
-      return false;
-    },
-  };
-
-  const handleDeleteGroup = async (group: Experience[]) => {
-    try {
-      await Promise.all(
-        group.filter((e) => !e.is_locked && e.id).map((e) => deleteExperience(e.id!))
-      );
-      message.success(
-        `Deleted ${group.filter((e) => !e.is_locked).length} role(s) at ${group[0].company}`
-      );
-      fetchExperiences();
-    } catch (err: any) {
-      message.error(getApiErrorMessage(err, 'Failed to delete company experiences'));
-    }
-  };
-
-  const handleToggleLock = async (exp: Experience) => {
-    if (!exp.id) return;
-    const group = experiences.filter((e) => e.company === exp.company);
-    const isGroupLocked = group.length > 1 && group.every((e) => e.is_locked);
-    if (isGroupLocked && exp.is_locked) {
-      message.info('Company is locked. Unlock all roles at the company header first.');
-      return;
-    }
-    try {
-      await updateExperience(exp.id, { is_locked: !exp.is_locked });
-      setExperiences((prev) =>
-        prev.map((e) => (e.id === exp.id ? { ...e, is_locked: !exp.is_locked } : e))
-      );
-    } catch (err) {
-      message.error('Failed to update lock status');
-    }
-  };
-
-  const handleToggleGroupLock = async (group: Experience[]) => {
-    const isAnyUnlocked = group.some((e) => !e.is_locked);
-    const targetState = isAnyUnlocked;
-    try {
-      await Promise.all(group.map((e) => updateExperience(e.id!, { is_locked: targetState })));
-      setExperiences((prev) =>
-        prev.map((e) => (group.some((g) => g.id === e.id) ? { ...e, is_locked: targetState } : e))
-      );
-    } catch {
-      message.error('Failed to update group lock status');
-    }
-  };
-
-  const handleTogglePin = async (exp: Experience) => {
-    if (!exp.id) return;
-    try {
-      await updateExperience(exp.id, { is_pinned: !exp.is_pinned });
-      setExperiences((prev) =>
-        prev.map((e) => (e.id === exp.id ? { ...e, is_pinned: !exp.is_pinned } : e))
-      );
-    } catch {
-      message.error('Failed to update pin status');
-    }
-  };
 
   const getLinkedOffer = (exp: Experience): Offer | undefined =>
     exp.offer ? allOffers.find((o) => o.id === exp.offer) : undefined;
@@ -523,43 +97,38 @@ const ExperiencePage: React.FC = () => {
     [allOffers]
   );
 
-  const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
-    if (!raiseHistoryExp) return;
-    const offer = getLinkedOffer(raiseHistoryExp);
-    if (!offer?.id) return;
-    await updateOffer(offer.id, { ...(offer as Record<string, unknown>), raise_history: entries });
-    setAllOffers((prev) =>
-      prev.map((o) => (o.id === offer.id ? { ...o, raise_history: entries } : o))
-    );
-  };
-
-  const handleRaiseHistoryClick = (exp: Experience) => {
-    setRaiseHistoryExp(exp);
-  };
-
-  const handleSaveTeamHistory = async (entries: TeamEntry[]) => {
-    if (!teamHistoryExp?.id) return;
-    await updateExperience(teamHistoryExp.id, { team_history: entries } as Partial<Experience>);
-    setExperiences((prev) =>
-      prev.map((e) => (e.id === teamHistoryExp.id ? { ...e, team_history: entries } : e))
-    );
-    setTeamHistoryExp((prev) => (prev ? { ...prev, team_history: entries } : null));
-  };
-
-  const handleSaveSchedulePhases = async (phases: any[]) => {
-    if (!schedulePhasesExp?.id) return;
-    await updateExperience(schedulePhasesExp.id, {
-      schedule_phases: phases,
-    } as Partial<Experience>);
-    setExperiences((prev) =>
-      prev.map((e) => (e.id === schedulePhasesExp.id ? { ...e, schedule_phases: phases } : e))
-    );
-    setSchedulePhasesExp((prev) => (prev ? { ...prev, schedule_phases: phases } : null));
-
-    if (compBreakdownExp?.id === schedulePhasesExp.id) {
-      setCompBreakdownExp((prev) => (prev ? { ...prev, schedule_phases: phases } : null));
-    }
-  };
+  const {
+    handleCreateOrUpdate,
+    handleExportWrapper,
+    importProps,
+    handleSaveRaiseHistory,
+    handleRaiseHistoryClick,
+    handleSaveTeamHistory,
+    handleSaveSchedulePhases,
+    handleSaveInternshipCompInputs,
+  } = useExperienceMutations({
+    experiences,
+    allOffers,
+    setAllOffers,
+    setExperiences,
+    fetchExperiences,
+    fetchOffersData,
+    maybeRefineSkillsWithAI,
+    getLinkedOffer,
+    setIsImportModalOpen,
+    setModalOpen,
+    setEditingExp,
+    setRaiseHistoryExp,
+    setTeamHistoryExp,
+    setSchedulePhasesExp,
+    setCompBreakdownExp,
+    raiseHistoryExp,
+    teamHistoryExp,
+    schedulePhasesExp,
+    compBreakdownExp,
+    editingExp,
+    setContactsExp,
+  });
 
   const openAddModal = useCallback(() => {
     setEditingExp(null);
@@ -584,6 +153,15 @@ const ExperiencePage: React.FC = () => {
     setModalOpen(true);
   };
 
+  const handleDuplicateExperience = (exp: Experience) => {
+    setEditingExp({
+      ...exp,
+      id: undefined,
+      title: `${exp.title} (Copy)`,
+    });
+    setModalOpen(true);
+  };
+
   const handleEditFromCompBreakdown = () => {
     if (!compBreakdownExp || compBreakdownExp.is_locked) return;
     const exp = compBreakdownExp;
@@ -591,408 +169,38 @@ const ExperiencePage: React.FC = () => {
     openEditModal(exp);
   };
 
-  const handleSaveInternshipCompInputs = async (updates: {
-    hourly_rate: number | null;
-    hours_per_day: number | null;
-    working_days_per_week: number | null;
-    total_hours_worked: number | null;
-    overtime_hours: number | null;
-    overtime_rate: number | null;
-    overtime_multiplier: number | null;
-    total_earnings_override: number | null;
-  }) => {
-    if (!compBreakdownExp) return;
-    const experienceId = compBreakdownExp?.id;
-    if (experienceId == null) return;
-    const currentExp = compBreakdownExp;
+  const offerSelectOptions = useMemo(() => buildOfferSelectOptions(allOffers), [allOffers]);
 
-    const normalizedHourlyRate = roundCompNumber(toNullableNumber(updates.hourly_rate));
-    const normalizedHoursPerDay = roundCompNumber(toNullableNumber(updates.hours_per_day));
-    const normalizedWorkingDaysPerWeek = roundCompNumber(
-      toNullableNumber(updates.working_days_per_week)
-    );
-    const rawTotalHoursWorked = roundCompNumber(toNullableNumber(updates.total_hours_worked));
-    const normalizedOvertimeHours =
-      roundCompNumber(Math.max(0, toNullableNumber(updates.overtime_hours) ?? 0)) || null;
-    const normalizedOvertimeRate = (() => {
-      const value = roundCompNumber(toNullableNumber(updates.overtime_rate));
-      return value != null && value > 0 ? value : null;
-    })();
-    const normalizedOvertimeMultiplier = (() => {
-      const value = roundCompNumber(toNullableNumber(updates.overtime_multiplier));
-      return value != null && value > 0 && !nearlyEqual(value, 1.5) ? value : null;
-    })();
-    const rawTotalEarningsOverride = roundCompNumber(
-      toNullableNumber(updates.total_earnings_override)
-    );
-
-    const autoSnapshot = buildHourlyCompensationSnapshot({
-      startDate: currentExp.start_date,
-      endDate: currentExp.end_date,
-      isCurrent: currentExp.is_current,
-      hourlyRate: normalizedHourlyRate,
-      hoursPerDay: normalizedHoursPerDay,
-      workingDaysPerWeek: normalizedWorkingDaysPerWeek,
-      totalHoursWorked: null,
-      overtimeHours: null,
-      overtimeRate: normalizedOvertimeRate,
-      overtimeMultiplier: normalizedOvertimeMultiplier,
-      totalEarningsOverride: null,
-    });
-
-    const normalizedTotalHoursWorked =
-      rawTotalHoursWorked != null &&
-      autoSnapshot &&
-      nearlyEqual(rawTotalHoursWorked, autoSnapshot.autoCalculatedHours)
-        ? null
-        : rawTotalHoursWorked;
-
-    const calculatedTotal =
-      buildHourlyCompensationSnapshot({
-        startDate: currentExp.start_date,
-        endDate: currentExp.end_date,
-        isCurrent: currentExp.is_current,
-        hourlyRate: normalizedHourlyRate,
-        hoursPerDay: normalizedHoursPerDay,
-        workingDaysPerWeek: normalizedWorkingDaysPerWeek,
-        totalHoursWorked: normalizedTotalHoursWorked,
-        overtimeHours: normalizedOvertimeHours,
-        overtimeRate: normalizedOvertimeRate,
-        overtimeMultiplier: normalizedOvertimeMultiplier,
-        totalEarningsOverride: null,
-      })?.total ?? null;
-
-    const normalizedTotalEarningsOverride =
-      rawTotalEarningsOverride != null &&
-      calculatedTotal != null &&
-      nearlyEqual(rawTotalEarningsOverride, calculatedTotal)
-        ? null
-        : rawTotalEarningsOverride;
-
-    const patch: Partial<Experience> = {
-      hourly_rate: normalizedHourlyRate,
-      hours_per_day: normalizedHoursPerDay,
-      working_days_per_week: normalizedWorkingDaysPerWeek,
-      total_hours_worked: normalizedTotalHoursWorked,
-      overtime_hours: normalizedOvertimeHours,
-      overtime_rate: normalizedOvertimeRate,
-      overtime_multiplier: normalizedOvertimeMultiplier,
-      total_earnings_override: normalizedTotalEarningsOverride,
-    };
-
-    await updateExperience(experienceId, patch);
-    setExperiences((prev) =>
-      prev.map((exp) => (exp.id === experienceId ? { ...exp, ...patch } : exp))
-    );
-    setCompBreakdownExp((prev) =>
-      prev && prev.id === experienceId ? { ...prev, ...patch } : prev
-    );
-    message.success('Internship earnings inputs updated');
-  };
-
-  const formatDuration = (exp: Experience): RoleDateLabel =>
-    roleDateLabel({
-      startDate: parseExperienceDate(exp.start_date),
-      endDate: parseExperienceDate(exp.end_date),
-      isCurrent: exp.is_current,
-    });
-
-  const renderDescription = (text: string) => {
-    const lines = text.split('\n');
-    let inList = false;
-    const elements: React.ReactNode[] = [];
-    let currentList: React.ReactNode[] = [];
-
-    lines.forEach((line, index) => {
-      const isBullet =
-        line.trim().startsWith('-') || line.trim().startsWith('•') || line.trim().startsWith('*');
-      if (isBullet) {
-        inList = true;
-        const pureText = line.replace(/^[-•*]\s*/, '').trim();
-        currentList.push(
-          <li key={`li-${index}`} className="mb-2.5 pl-1 leading-relaxed text-gray-700 relative">
-            {pureText}
-          </li>
-        );
-      } else {
-        if (inList) {
-          elements.push(
-            <ul key={`ul-${index}`} className="list-none pl-1 mb-5 space-y-2">
-              {currentList.map((item: any, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 shrink-0 shadow-sm" />
-                  <div>{item}</div>
-                </div>
-              ))}
-            </ul>
-          );
-          inList = false;
-          currentList = [];
-        }
-        if (line.trim().length > 0) {
-          elements.push(
-            <div key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed font-medium">
-              {line}
-            </div>
-          );
-        }
-      }
-    });
-
-    if (inList && currentList.length > 0) {
-      elements.push(
-        <ul key={`ul-end`} className="list-none pl-1 mb-2 space-y-2">
-          {currentList.map((item: any, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 shrink-0 shadow-sm" />
-              <div>{item}</div>
-            </div>
-          ))}
-        </ul>
-      );
-    }
-
-    return elements;
-  };
-
-  const mergedDays = (intervals: [number, number][]): number => {
-    if (intervals.length === 0) return 0;
-    const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
-    let total = 0;
-    let curStart = sorted[0][0];
-    let curEnd = sorted[0][1];
-    for (let i = 1; i < sorted.length; i++) {
-      const [s, e] = sorted[i];
-      if (s <= curEnd) {
-        curEnd = Math.max(curEnd, e);
-      } else {
-        total += curEnd - curStart;
-        curStart = s;
-        curEnd = e;
-      }
-    }
-    total += curEnd - curStart;
-    return total;
-  };
-
-  const calculateTotalCareerDuration = () => {
-    if (experiences.length === 0) return '0 yrs';
-    const intervals: [number, number][] = [];
-    for (const exp of experiences) {
-      const start = parseExperienceDate(exp.start_date);
-      const end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
-      if (start && end) intervals.push([start.valueOf(), end.valueOf()]);
-    }
-    const totalDays = Math.round(mergedDays(intervals) / 86400000);
-    return fmtDays(totalDays, true);
-  };
-
-  const totalCompanies = new Set(experiences.map((e) => e.company)).size;
-
-  const durationByType = useMemo(() => {
-    const byType: Record<string, [number, number][]> = {};
-    for (const exp of experiences) {
-      const type = exp.employment_type || 'full_time';
-      const start = parseExperienceDate(exp.start_date);
-      const end = exp.is_current ? dayjs() : parseExperienceDate(exp.end_date);
-      if (!start || !end) continue;
-      if (!byType[type]) byType[type] = [];
-      byType[type].push([start.valueOf(), end.valueOf()]);
-    }
-    const result: Record<string, number> = {};
-    for (const [type, intervals] of Object.entries(byType)) {
-      result[type] = Math.round(mergedDays(intervals) / 86400000);
-    }
-    return result;
-  }, [experiences]);
-
-  const companiesByType = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const exp of [...experiences].sort((a, b) =>
-      (b.start_date ?? '').localeCompare(a.start_date ?? '')
-    )) {
-      const key = exp.company.toLowerCase();
-      if (!seen.has(key)) seen.set(key, exp.employment_type || 'full_time');
-    }
-    const result: Record<string, number> = {};
-    for (const type of seen.values()) result[type] = (result[type] || 0) + 1;
-    return result;
-  }, [experiences]);
-
-  const fmtDays = (totalDays: number, showDaysCount = false): string =>
-    humanizeDaySpan(totalDays, { withTotal: showDaysCount });
-
+  const calculateTotalCareerDuration = () => totalCareerDuration(experiences);
+  const totalCompanies = companyCount(experiences);
+  const durationByType = useMemo(() => durationByEmploymentType(experiences), [experiences]);
+  const companiesByType = useMemo(() => companiesByEmploymentType(experiences), [experiences]);
   const fmtMonths = fmtDays;
-
-  const getTypeDisplay = (value: string) => {
-    const t = empTypes.find((t) => t.value === value);
-    return {
-      label: t?.label ?? value,
-      dot: DOT_CLASSES[t?.color ?? 'gray'] ?? 'bg-gray-400',
-      badge: BADGE_CLASSES[t?.color ?? 'gray'] ?? 'bg-gray-50 text-gray-700 border-gray-200',
-    };
-  };
-
-  const getLatestTeam = (exp: Experience) => {
-    const teams = exp.team_history;
-    if (!teams || teams.length === 0) return null;
-    const current = teams.find((t) => t.is_current);
-    if (current) return current;
-    return [...teams].sort((a, b) => (b.start_date ?? '').localeCompare(a.start_date ?? ''))[0];
-  };
-
-  const formatRoleDateRange = (exp: Experience, overrideEndDate?: string | null): RoleDateLabel =>
-    roleDateLabel({
-      startDate: parseExperienceDate(exp.start_date),
-      endDate: parseExperienceDate(exp.end_date),
-      fallbackEndDate: parseExperienceDate(overrideEndDate ?? null),
-      isCurrent: exp.is_current,
-      format: 'MMM YYYY',
-      precision: 'rounded',
-    });
-
-  const getGroupTenure = (group: Experience[]): string => {
-    const oldest = group[group.length - 1];
-    const newest = group[0];
-    const start = parseExperienceDate(oldest.start_date);
-    const end = newest.is_current ? dayjs() : parseExperienceDate(newest.end_date);
-    if (!start || !end) return '';
-    return fmtDays(end.diff(start, 'day'), true);
-  };
-
-  const offerSelectOptions = useMemo(() => {
-    return allOffers.map((o) => {
-      const details = o.application_details || (o.application as any) || {};
-      const company =
-        typeof details.company === 'string'
-          ? details.company
-          : details.company?.name || (o as any).company_name || (o as any).custom_company_name;
-      const role =
-        details.role_title ||
-        details.title ||
-        (o as any).role_title ||
-        (o as any).custom_role_title;
-      const level = details.level || (o as any).level || '';
-      const location =
-        details.office_location ||
-        (o as any).office_location ||
-        details.location ||
-        (o as any).location ||
-        '';
-      const empType = details.employment_type || (o as any).employment_type || 'full_time';
-
-      const label =
-        company && role
-          ? `${company} — ${role}${level ? ` (${level})` : ''}${o.is_current ? ' (current)' : ''}`
-          : `Offer #${o.id} — $${Number(o.base_salary).toLocaleString()} base${o.is_current ? ' (current)' : ''}`;
-
-      return {
-        value: o.id as number,
-        label,
-        base_salary: Number(o.base_salary),
-        bonus: Number(o.bonus),
-        equity: Number(o.equity),
-        company,
-        title: role,
-        level,
-        location,
-        employment_type: empType,
-      };
-    });
-  }, [allOffers]);
-
-  const allSkills = experiences.flatMap((e) => e.skills || []);
-  const skillCounts = allSkills.reduce(
-    (acc, skill) => {
-      acc[skill] = (acc[skill] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  const topSkills = Object.entries(skillCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
-    .map((entry) => entry[0]);
+  const skillCounts = useMemo(() => skillFrequency(experiences), [experiences]);
+  const topSkills = useMemo(() => topSkillsByFrequency(skillCounts), [skillCounts]);
 
   const filteredExperiences = selectedSkill
     ? experiences.filter((exp) => exp.skills?.includes(selectedSkill))
     : experiences;
 
   const compBreakdownSnapshot = compBreakdownExp ? getCompensationSnapshot(compBreakdownExp) : null;
-  const fullTimeCompSummary = useMemo(() => {
-    const fullTimeRoles = experiences.filter((exp) => exp.employment_type === 'full_time');
-    const trackedComp = fullTimeRoles
-      .map((exp) => getCompensationSnapshot(exp))
-      .filter(
-        (
-          comp
-        ): comp is Extract<
-          NonNullable<ReturnType<typeof getCompensationSnapshot>>,
-          { kind: 'salary' }
-        > => comp !== null && comp.kind === 'salary'
-      );
+  const {
+    fullTimeCompSummary,
+    internshipCompSnapshots,
+    internshipCompSummary,
+    payGrowth,
+    payGrowthHeadline,
+  } = useExperienceCompSummaries({ experiences, getCompensationSnapshot });
 
-    return {
-      roleCount: fullTimeRoles.length,
-      trackedRoleCount: trackedComp.length,
-      base: trackedComp.reduce((sum, comp) => sum + comp.base, 0),
-      bonus: trackedComp.reduce((sum, comp) => sum + comp.bonus, 0),
-      equity: trackedComp.reduce((sum, comp) => sum + comp.equity, 0),
-      total: trackedComp.reduce((sum, comp) => sum + comp.total, 0),
-    };
-  }, [experiences, getCompensationSnapshot]);
-
-  const internshipCompSnapshots = useMemo(() => {
-    return experiences
-      .filter((exp) => exp.employment_type === 'internship')
-      .map((exp) => getCompensationSnapshot(exp))
-      .filter(
-        (
-          comp
-        ): comp is Extract<
-          NonNullable<ReturnType<typeof getCompensationSnapshot>>,
-          { kind: 'hourly' }
-        > => comp !== null && comp.kind === 'hourly'
-      );
-  }, [experiences, getCompensationSnapshot]);
-
-  const internshipCompSummary = useMemo(() => {
-    const internshipRoles = experiences.filter((exp) => exp.employment_type === 'internship');
-    const trackedComp = internshipCompSnapshots;
-
-    const estimatedHours = trackedComp.reduce(
-      (sum, comp) => sum + (comp.calculationMode === 'manual_total' ? 0 : comp.estimatedHours),
-      0
-    );
-    const regularPay = trackedComp.reduce((sum, comp) => sum + comp.regularPay, 0);
-    const overtimePay = trackedComp.reduce((sum, comp) => sum + comp.overtimePay, 0);
-
-    return {
-      roleCount: internshipRoles.length,
-      trackedRoleCount: trackedComp.length,
-      estimatedHours,
-      regularPay,
-      overtimePay,
-      total: trackedComp.reduce((sum, comp) => sum + comp.total, 0),
-      manualHoursRoleCount: trackedComp.filter((comp) => comp.calculationMode === 'manual_hours')
-        .length,
-      customTotalRoleCount: trackedComp.filter((comp) => comp.calculationMode === 'manual_total')
-        .length,
-    };
-  }, [experiences, internshipCompSnapshots]);
-
-  const payGrowth = useMemo(
-    () => buildPayGrowthSummary(experiences, getCompensationSnapshot),
-    [experiences, getCompensationSnapshot]
+  const groupedExperiences: Experience[][] = groupExperiencesByCompany(
+    sortExperiencesForDisplay(filteredExperiences)
   );
 
-  const payGrowthHeadline = payGrowth.defaultComparison?.headline ?? null;
-
-  const groupedExperiences = useMemo(
-    (): Experience[][] => groupExperiencesByCompany(sortExperiencesForDisplay(filteredExperiences)),
-    [filteredExperiences]
-  );
+  const { sensors, handleDragEnd } = useExperienceDragOrder({
+    groupedExperiences,
+    setExperiences,
+    fetchExperiences,
+  });
 
   return (
     <div style={{ padding: 0, width: '100%' }}>
@@ -1026,281 +234,25 @@ const ExperiencePage: React.FC = () => {
 
       {/* Analytics Dashboard */}
       {experiences.length > 0 && (
-        <div className="mb-7 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs">
-          <Row gutter={[0, 20]} align="stretch">
-            {/* 1. Total Experience */}
-            <Col xs={24} md={12} xl={6}>
-              <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:pr-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
-                      <ClockCircleOutlined className="text-sm" />
-                    </div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Total Experience
-                    </div>
-                  </div>
-                  <div className="mt-3.5 min-w-0">
-                    <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900">
-                      {calculateTotalCareerDuration()}
-                    </div>
-                    <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-                      {Object.entries(durationByType)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([type, months]) => (
-                          <span
-                            key={type}
-                            className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500"
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${getTypeDisplay(type).dot}`}
-                            />
-                            <span className="font-semibold text-slate-700">
-                              {fmtMonths(months, true)}
-                            </span>
-                            <span>{getTypeDisplay(type).label}</span>
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-
-            {/* 2. Companies */}
-            <Col xs={24} md={12} xl={5}>
-              <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:px-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500">
-                      <BankOutlined className="text-sm" />
-                    </div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Companies
-                    </div>
-                  </div>
-                  <div className="mt-3.5 min-w-0">
-                    <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900">
-                      {totalCompanies}
-                    </div>
-                    <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-                      {Object.entries(companiesByType)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([type, count]) => (
-                          <span
-                            key={type}
-                            className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500"
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${getTypeDisplay(type).dot}`}
-                            />
-                            <span className="font-semibold text-slate-700">{count}</span>
-                            <span>{getTypeDisplay(type).label}</span>
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-
-            {/* 3. Earnings */}
-            <Col xs={24} md={12} xl={7}>
-              <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:px-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
-                      <DollarOutlined className="text-sm" />
-                    </div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Earnings
-                    </div>
-                  </div>
-                  <div className="mt-3.5 min-w-0">
-                    <div className="space-y-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                                Full-Time
-                              </span>
-                              <span className="text-[16px] font-bold leading-none text-slate-900">
-                                {fullTimeCompSummary.trackedRoleCount > 0
-                                  ? `$${fullTimeCompSummary.total.toLocaleString()}`
-                                  : 'No pay data'}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-[11px] leading-tight text-slate-500">
-                              {fullTimeCompSummary.trackedRoleCount > 0 ? (
-                                <>
-                                  {fullTimeCompSummary.trackedRoleCount} tracked
-                                  {fullTimeCompSummary.base > 0 &&
-                                    ` • Base $${fullTimeCompSummary.base.toLocaleString()}`}
-                                  {fullTimeCompSummary.roleCount >
-                                    fullTimeCompSummary.trackedRoleCount &&
-                                    ` • ${fullTimeCompSummary.roleCount - fullTimeCompSummary.trackedRoleCount} missing`}
-                                </>
-                              ) : (
-                                'Add pay to calculate earnings.'
-                              )}
-                            </div>
-                          </div>
-                          {fullTimeCompSummary.trackedRoleCount > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setOverallCompBreakdownOpen(true)}
-                              title="View overall pay structure breakdown"
-                              aria-label="View full-time earnings breakdown"
-                              className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
-                            >
-                              Breakdown
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="border-t border-slate-100 pt-2.5 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
-                                Internship
-                              </span>
-                              <span className="text-[16px] font-bold leading-none text-slate-900">
-                                {internshipCompSummary.trackedRoleCount > 0
-                                  ? `$${internshipCompSummary.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                                  : 'No estimate yet'}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-[11px] leading-tight text-slate-500">
-                              {internshipCompSummary.trackedRoleCount > 0 ? (
-                                <>
-                                  {internshipCompSummary.trackedRoleCount} tracked
-                                  {internshipCompSummary.estimatedHours > 0 &&
-                                    ` • ${internshipCompSummary.estimatedHours.toLocaleString(undefined, { maximumFractionDigits: 2 })} hrs`}
-                                  {internshipCompSummary.roleCount >
-                                  internshipCompSummary.trackedRoleCount
-                                    ? ` • ${internshipCompSummary.roleCount - internshipCompSummary.trackedRoleCount} missing`
-                                    : internshipCompSummary.customTotalRoleCount > 0
-                                      ? ` • ${internshipCompSummary.customTotalRoleCount} custom total`
-                                      : internshipCompSummary.manualHoursRoleCount > 0
-                                        ? ` • ${internshipCompSummary.manualHoursRoleCount} manual hrs`
-                                        : ' • Auto estimated'}
-                                </>
-                              ) : (
-                                'Add hourly rate to calculate earnings.'
-                              )}
-                            </div>
-                          </div>
-                          {internshipCompSummary.trackedRoleCount > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setOverallInternshipBreakdownOpen(true)}
-                              title="View internship earnings breakdown"
-                              aria-label="View internship earnings breakdown"
-                              className="shrink-0 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
-                            >
-                              Breakdown
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {payGrowthHeadline && (
-                        <div className="border-t border-slate-100 pt-2.5 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">
-                                  Growth
-                                </span>
-                                <span
-                                  className={`flex items-center gap-1 text-[16px] font-bold leading-none ${
-                                    payGrowthHeadline.amount > 0
-                                      ? 'text-emerald-600'
-                                      : payGrowthHeadline.amount < 0
-                                        ? 'text-rose-600'
-                                        : 'text-slate-500'
-                                  }`}
-                                >
-                                  <PayGrowthArrow delta={payGrowthHeadline} />
-                                  {formatDeltaPercent(payGrowthHeadline)}
-                                </span>
-                              </div>
-                              <div className="mt-1 text-[11px] leading-tight text-slate-500">
-                                {formatDeltaAmount(payGrowthHeadline)} vs{' '}
-                                {payGrowth.defaultComparison?.previousExp.company ??
-                                  'previous role'}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setPayGrowthOpen(true)}
-                              title="View pay growth breakdown"
-                              aria-label="View pay growth breakdown"
-                              className="shrink-0 rounded-full border border-sky-200 bg-sky-50/80 px-2.5 py-1 text-[10px] font-semibold text-sky-700 transition-colors hover:bg-sky-100"
-                            >
-                              Growth
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-
-            {/* 4. Top Skills */}
-            <Col xs={24} md={12} xl={6}>
-              <div className="flex h-full flex-col justify-between xl:pl-6">
-                <div>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                        <CodeOutlined className="text-sm" />
-                      </div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                        Top Skills
-                      </div>
-                    </div>
-                    {selectedSkill && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSkill(null)}
-                        className="text-[11px] font-medium text-blue-600 transition-colors hover:text-blue-700"
-                      >
-                        Clear filter
-                      </button>
-                    )}
-                  </div>
-                  <div className="mt-3.5 min-w-0">
-                    <div className="flex flex-wrap gap-1.5">
-                      {topSkills.map((skill) => {
-                        const isSelected = selectedSkill === skill;
-                        return (
-                          <Tag.CheckableTag
-                            key={skill}
-                            checked={isSelected}
-                            onChange={(checked) => setSelectedSkill(checked ? skill : null)}
-                            className={`m-0 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-4 transition-all ${
-                              isSelected
-                                ? 'border-blue-600 bg-blue-600 text-white'
-                                : 'border-slate-200/80 bg-slate-50/60 text-slate-600 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600'
-                            }`}
-                          >
-                            {skill} <span className="ml-1 opacity-50">{skillCounts[skill]}</span>
-                          </Tag.CheckableTag>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </div>
+        <ExperienceAnalyticsPanels
+          calculateTotalCareerDuration={calculateTotalCareerDuration}
+          companiesByType={companiesByType}
+          durationByType={durationByType}
+          fmtMonths={fmtMonths}
+          fullTimeCompSummary={fullTimeCompSummary}
+          getTypeDisplay={(value: string) => getTypeDisplay(value, empTypes)}
+          internshipCompSummary={internshipCompSummary}
+          payGrowth={payGrowth}
+          payGrowthHeadline={payGrowthHeadline}
+          selectedSkill={selectedSkill}
+          setOverallCompBreakdownOpen={setOverallCompBreakdownOpen}
+          setOverallInternshipBreakdownOpen={setOverallInternshipBreakdownOpen}
+          setPayGrowthOpen={setPayGrowthOpen}
+          setSelectedSkill={setSelectedSkill}
+          skillCounts={skillCounts}
+          topSkills={topSkills}
+          totalCompanies={totalCompanies}
+        />
       )}
 
       {loading ? (
@@ -1345,442 +297,35 @@ const ExperiencePage: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {groupedExperiences.map((group, groupIdx) => {
-                  const primary = group[0];
-                  const isMulti = group.length > 1;
-                  const logoSrc = getMediaUrl(primary.logo);
-                  const span = groupSpan(group, parseExperienceDate);
-                  // Groups run newest first, so the company below this one is the earlier stint.
-                  const olderGroup = groupedExperiences[groupIdx + 1];
-                  const gapBelow = olderGroup
-                    ? gapLabelBetween(span, groupSpan(olderGroup, parseExperienceDate))
-                    : null;
-
-                  const groupAvatar = logoSrc ? (
-                    <Avatar
-                      size={52}
-                      src={logoSrc}
-                      className="shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
-                    />
-                  ) : (
-                    <Avatar
-                      size={52}
-                      style={getAvatarStyle(primary.company)}
-                      className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
-                    >
-                      {primary.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
-                    </Avatar>
-                  );
-
-                  const renderSingleRole = (exp: Experience) => {
-                    const skills = exp.skills || [];
-                    const comp = getCompensationSnapshot(exp);
-                    return (
-                      <div className="p-4 sm:p-6">
-                        <div className="mb-5 flex flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-start">
-                          <div className="min-w-0 flex-1">
-                            <div className="mb-3 flex min-w-0 items-center gap-3 pr-24 md:hidden">
-                              {logoSrc ? (
-                                <Avatar size={40} src={logoSrc} className="shadow-sm" />
-                              ) : (
-                                <Avatar
-                                  size={40}
-                                  style={getAvatarStyle(exp.company)}
-                                  className="font-bold shadow-sm"
-                                >
-                                  {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
-                                </Avatar>
-                              )}
-                              <div className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-900">
-                                {exp.company}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <h3 className="m-0 min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-blue-700 sm:text-[21px]">
-                                {exp.title}
-                              </h3>
-                              <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-                              {exp.level && <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>}
-                              {exp.is_return_offer && (
-                                <span
-                                  className={`${STATUS_BADGE_CLASS} border-blue-100 bg-blue-50/80 text-blue-700`}
-                                >
-                                  <LinkOutlined style={{ fontSize: 9 }} /> Return offer
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-0.5 hidden text-[15px] font-medium tracking-[-0.01em] text-slate-500 md:block">
-                              {exp.company}
-                            </div>
-                            <RoleMetaRow
-                              dates={formatDuration(exp)}
-                              location={exp.location}
-                              teamChip={
-                                exp.employment_type === 'internship'
-                                  ? getLatestTeam(exp)?.name
-                                  : null
-                              }
-                              comp={comp}
-                              employmentType={exp.employment_type}
-                              hourlyRate={exp.hourly_rate}
-                              onOpenBreakdown={() => setCompBreakdownExp(exp)}
-                              describedRole={`${exp.title} at ${exp.company}`}
-                            />
-                            {exp.employment_type !== 'internship' &&
-                              (() => {
-                                const team = getLatestTeam(exp);
-                                return team ? (
-                                  <div className="mt-2 flex items-start gap-1.5 text-sm font-medium text-gray-500">
-                                    <TeamOutlined className="mt-[3px] shrink-0 text-gray-400" />
-                                    <span className="min-w-0">{team.name}</span>
-                                  </div>
-                                ) : null;
-                              })()}
-                          </div>
-                          <RoleActionRow
-                            className="lg:mt-9"
-                            onPromotion={() => setPromotionReviewExp(exp)}
-                            onTeamNorms={() => setTeamHistoryExp(exp)}
-                            onContacts={() => setContactsExp(exp)}
-                            onRaiseHistory={
-                              getLinkedOffer(exp) ? () => handleRaiseHistoryClick(exp) : undefined
-                            }
-                            trailing={
-                              <RowActions
-                                onEdit={exp.is_locked ? undefined : () => openEditModal(exp)}
-                                onDuplicate={
-                                  exp.is_locked ? undefined : () => handleDuplicateExperience(exp)
-                                }
-                                onDelete={
-                                  exp.is_locked ? undefined : () => exp.id && handleDelete(exp.id)
-                                }
-                                deleteTitle="Delete Experience"
-                                deleteDescription="Are you sure you want to remove this role?"
-                                disableEdit={exp.is_locked}
-                                disableDelete={exp.is_locked}
-                              />
-                            }
-                          />
-                        </div>
-                        {/* Card chrome, not a fifth action: the lock, pin and edit cluster sits in
-                            the corner at every width instead of trailing the action buttons. */}
-                        <div
-                          className={`absolute right-3 top-3 z-20 transition-opacity duration-200 sm:right-4 sm:top-4 ${
-                            exp.is_locked
-                              ? 'opacity-100'
-                              : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
-                          }`}
-                        >
-                          <RowActions
-                            isLocked={exp.is_locked}
-                            onToggleLock={() => handleToggleLock(exp)}
-                            disableLock={group.length > 1 && group.every((e) => e.is_locked)}
-                            lockTitle={
-                              group.length > 1 && group.every((e) => e.is_locked)
-                                ? 'Company is locked. Unlock company header to modify individual roles.'
-                                : exp.is_locked
-                                  ? 'Unlock role'
-                                  : 'Lock role'
-                            }
-                            isPinned={exp.is_pinned}
-                            onTogglePin={() => handleTogglePin(exp)}
-                          />
-                        </div>
-                        {exp.description && (
-                          <div className="mt-5 text-[15px] sm:mt-6">
-                            {renderDescription(exp.description)}
-                          </div>
-                        )}
-                        {skills.length > 0 && (
-                          <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
-                            {skills.map((skill) => (
-                              <Tag
-                                key={skill}
-                                className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium hover:bg-blue-50 transition-colors"
-                              >
-                                {skill}
-                              </Tag>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  };
-
-                  const renderMultiRoles = () => {
-                    const tenure = getGroupTenure(group);
-                    return (
-                      <div className="p-4 sm:p-6">
-                        {/* Company header. The group's own pin / lock-all / delete-unlocked live in
-                            the card's corner, like the single-role card, instead of on a floating
-                            strip of their own between the header and the first role. */}
-                        <div className="mb-5">
-                          {/* Only the name line has to clear the corner cluster; the meta line sits
-                              below it and gets the full width, so the tenure never wraps. */}
-                          <div className="flex items-center gap-3 pr-36 md:pr-28">
-                            <div className="flex shrink-0 md:hidden">
-                              {logoSrc ? (
-                                <Avatar size={40} src={logoSrc} className="shadow-sm" />
-                              ) : (
-                                <Avatar
-                                  size={40}
-                                  style={getAvatarStyle(primary.company)}
-                                  className="font-bold shadow-sm"
-                                >
-                                  {primary.company?.charAt(0)?.toUpperCase()}
-                                </Avatar>
-                              )}
-                            </div>
-                            <div className="min-w-0 truncate text-[17px] font-semibold tracking-[-0.015em] text-slate-950 sm:text-[19px]">
-                              {primary.company}
-                            </div>
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[12.5px] leading-5">
-                            <span className="text-slate-500">{group.length} roles</span>
-                            {tenure && (
-                              <>
-                                <span className="text-slate-300">·</span>
-                                <span className="tabular-nums text-slate-400">{tenure} total</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div
-                          className={`absolute right-3 top-3 z-20 transition-opacity duration-200 sm:right-4 sm:top-4 ${
-                            primary.is_pinned || group.every((e) => e.is_locked)
-                              ? 'opacity-100'
-                              : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
-                          }`}
-                        >
-                          <RowActions
-                            isPinned={primary.is_pinned}
-                            onTogglePin={() => handleTogglePin(primary)}
-                            isLocked={group.every((e) => e.is_locked)}
-                            onToggleLock={() => handleToggleGroupLock(group)}
-                            lockTitle={
-                              group.some((e) => !e.is_locked)
-                                ? 'Lock all roles'
-                                : 'Unlock all roles'
-                            }
-                            onDelete={
-                              group.some((e) => !e.is_locked)
-                                ? () => handleDeleteGroup(group)
-                                : undefined
-                            }
-                            deleteTitle={`Delete unlocked ${primary.company} roles?`}
-                            deleteDescription={`This will delete ${group.filter((e) => !e.is_locked).length} unlocked role(s). Locked roles are kept.`}
-                            deleteButtonTooltip={`Delete ${group.filter((e) => !e.is_locked).length} unlocked role(s) at ${primary.company}`}
-                          />
-                        </div>
-
-                        {/* Roles — left-border timeline with dots */}
-                        <div
-                          className="relative pl-5 sm:pl-6"
-                          style={{ borderLeft: '2px solid #e5e7eb' }}
-                        >
-                          {group.map((exp, roleIdx) => {
-                            const skills = exp.skills || [];
-                            const comp = getCompensationSnapshot(exp);
-                            return (
-                              <div
-                                key={exp.id}
-                                className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}
-                              >
-                                {/* Timeline dot */}
-                                <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                                  <div className="w-2 h-2 rounded-full bg-gray-400" />
-                                </div>
-                                {(() => {
-                                  const compGroup = experiences.filter(
-                                    (e) => e.company === exp.company
-                                  );
-                                  const isGroupLocked =
-                                    compGroup.length > 1 && compGroup.every((e) => e.is_locked);
-                                  return (
-                                    <div
-                                      className={`absolute right-0 top-0 z-20 transition-opacity duration-200 ${
-                                        exp.is_locked
-                                          ? 'opacity-100'
-                                          : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
-                                      }`}
-                                    >
-                                      <RowActions
-                                        isLocked={exp.is_locked}
-                                        onToggleLock={() => handleToggleLock(exp)}
-                                        disableLock={isGroupLocked}
-                                        lockTitle={
-                                          isGroupLocked
-                                            ? 'Company is locked. Unlock company to modify individual roles.'
-                                            : exp.is_locked
-                                              ? 'Unlock role'
-                                              : 'Lock role'
-                                        }
-                                      />
-                                    </div>
-                                  );
-                                })()}
-
-                                <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-start">
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2 pr-12 md:pr-9 lg:pr-0">
-                                      <span className="min-w-0 text-[15px] font-semibold leading-snug tracking-[-0.01em] text-slate-950 sm:text-[17px]">
-                                        {exp.title}
-                                      </span>
-                                      {exp.is_promotion && (
-                                        <span
-                                          className={`${STATUS_BADGE_CLASS} border-emerald-100 bg-emerald-50/80 text-emerald-700`}
-                                        >
-                                          <RiseOutlined style={{ fontSize: 9 }} /> Promoted
-                                        </span>
-                                      )}
-                                      <EmploymentBadge
-                                        type={exp.employment_type}
-                                        empTypes={empTypes}
-                                      />
-                                      {exp.level && (
-                                        <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>
-                                      )}
-                                      {exp.is_return_offer && (
-                                        <span
-                                          className={`${STATUS_BADGE_CLASS} border-blue-100 bg-blue-50/80 text-blue-700`}
-                                        >
-                                          <LinkOutlined style={{ fontSize: 9 }} /> Return offer
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="mt-1">
-                                      <RoleMetaRow
-                                        dates={formatRoleDateRange(
-                                          exp,
-                                          roleIdx > 0 ? group[roleIdx - 1].start_date : null
-                                        )}
-                                        location={exp.location}
-                                        teamChip={
-                                          exp.employment_type === 'internship'
-                                            ? getLatestTeam(exp)?.name
-                                            : null
-                                        }
-                                        comp={comp}
-                                        employmentType={exp.employment_type}
-                                        hourlyRate={exp.hourly_rate}
-                                        onOpenBreakdown={() => setCompBreakdownExp(exp)}
-                                        describedRole={`${exp.title} at ${exp.company}`}
-                                      />
-                                    </div>
-                                    {exp.employment_type !== 'internship' &&
-                                      (() => {
-                                        const team = getLatestTeam(exp);
-                                        return team ? (
-                                          <div className="mt-1 flex items-start gap-1.5 text-[15px] text-gray-500">
-                                            <TeamOutlined
-                                              className="mt-[4px] shrink-0"
-                                              style={{ fontSize: 12, color: '#9ca3af' }}
-                                            />
-                                            <span className="min-w-0">{team.name}</span>
-                                          </div>
-                                        ) : null;
-                                      })()}
-                                  </div>
-                                  <RoleActionRow
-                                    className="lg:ml-2 lg:mt-8"
-                                    onPromotion={() => setPromotionReviewExp(exp)}
-                                    onTeamNorms={() => setTeamHistoryExp(exp)}
-                                    onRaiseHistory={
-                                      getLinkedOffer(exp)
-                                        ? () => handleRaiseHistoryClick(exp)
-                                        : undefined
-                                    }
-                                    onLinkOffer={
-                                      getLinkedOffer(exp) ? undefined : () => openEditModal(exp)
-                                    }
-                                    trailing={
-                                      <RowActions
-                                        onEdit={
-                                          exp.is_locked ? undefined : () => openEditModal(exp)
-                                        }
-                                        onDuplicate={
-                                          exp.is_locked
-                                            ? undefined
-                                            : () => handleDuplicateExperience(exp)
-                                        }
-                                        onDelete={
-                                          exp.is_locked
-                                            ? undefined
-                                            : () => exp.id && handleDelete(exp.id)
-                                        }
-                                        deleteTitle="Delete Role"
-                                        deleteDescription="Are you sure you want to remove this role?"
-                                        disableEdit={exp.is_locked}
-                                        disableDelete={exp.is_locked}
-                                      />
-                                    }
-                                  />
-                                </div>
-
-                                {exp.description && (
-                                  <div className="mt-4 text-[15px]">
-                                    {renderDescription(exp.description)}
-                                  </div>
-                                )}
-                                {skills.length > 0 && (
-                                  <div className="mt-4 flex flex-wrap gap-1.5">
-                                    {skills.map((skill) => (
-                                      <Tag
-                                        key={skill}
-                                        className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-sm hover:bg-blue-50 transition-colors"
-                                      >
-                                        {skill}
-                                      </Tag>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  };
-
-                  return (
-                    <SortableGroupCard key={primary.id || `group-${groupIdx}`} id={primary.id!}>
-                      <div
-                        key={`group-${groupIdx}`}
-                        className="group relative flex w-full flex-col gap-6 md:flex-row"
-                      >
-                        <TimelineRailMobile
-                          isFirst={groupIdx === 0}
-                          isLast={groupIdx === groupedExperiences.length - 1}
-                          isCurrent={span.isCurrent}
-                        />
-                        <TimelineRailDesktop
-                          avatar={groupAvatar}
-                          year={span.start ? span.start.format('YYYY') : undefined}
-                          isFirst={groupIdx === 0}
-                          isLast={groupIdx === groupedExperiences.length - 1}
-                          isCurrent={span.isCurrent}
-                        />
-                        {gapBelow && <TimelineGapLabel label={gapBelow} />}
-                        <div
-                          className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
-                            primary.is_pinned
-                              ? 'border-amber-200 ring-1 ring-amber-100 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
-                              : 'border-gray-100 hover:border-blue-100 hover:shadow-md'
-                          }`}
-                        >
-                          <div
-                            className={`absolute top-0 left-0 w-2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                              primary.is_pinned
-                                ? 'bg-gradient-to-b from-amber-300 to-orange-400'
-                                : 'bg-gradient-to-b from-blue-300 to-sky-400'
-                            }`}
-                          />
-                          {isMulti ? renderMultiRoles() : renderSingleRole(group[0])}
-                        </div>
-                      </div>
-                    </SortableGroupCard>
-                  );
-                })}
+                {groupedExperiences.map((group, groupIdx) => (
+                  <ExperienceGroupCard
+                    key={group[0].id ?? `group-${groupIdx}`}
+                    group={group}
+                    groupIdx={groupIdx}
+                    groupedExperiences={groupedExperiences}
+                    experiences={experiences}
+                    empTypes={empTypes}
+                    formatDuration={formatDuration}
+                    formatRoleDateRange={formatRoleDateRange}
+                    getCompensationSnapshot={getCompensationSnapshot}
+                    getGroupTenure={getGroupTenure}
+                    getLatestTeam={(exp) => getLatestTeam(exp) ?? null}
+                    getLinkedOffer={getLinkedOffer}
+                    handleDelete={handleDelete}
+                    handleDeleteGroup={handleDeleteGroup}
+                    handleDuplicateExperience={handleDuplicateExperience}
+                    handleRaiseHistoryClick={handleRaiseHistoryClick}
+                    handleToggleGroupLock={handleToggleGroupLock}
+                    handleToggleLock={handleToggleLock}
+                    handleTogglePin={handleTogglePin}
+                    openEditModal={openEditModal}
+                    renderDescription={renderDescription}
+                    setCompBreakdownExp={setCompBreakdownExp}
+                    setContactsExp={setContactsExp}
+                    setPromotionReviewExp={setPromotionReviewExp}
+                    setTeamHistoryExp={setTeamHistoryExp}
+                  />
+                ))}
               </div>
             </div>
           </SortableContext>

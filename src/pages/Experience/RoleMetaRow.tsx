@@ -27,7 +27,7 @@ const RoleMetaRow = ({
 }: {
   dates: RoleDateLabel;
   location?: string | null;
-  // Internships show the team here; longer-term roles show it on its own line under this one.
+  // Internships only; other roles show the team on its own line.
   teamChip?: string | null;
   comp: ExperienceCompensationSnapshot | null;
   employmentType?: string;

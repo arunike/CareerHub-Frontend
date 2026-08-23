@@ -10,19 +10,13 @@ import {
   BankOutlined,
   CalendarOutlined,
   CarOutlined,
-  DollarOutlined,
   EnvironmentOutlined,
-  SafetyCertificateOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import React, { useId, useState } from 'react';
 import type { BenefitItem, DayOneGcStatus, VisaSponsorshipStatus } from './calculations';
 import type { EquityLiquidity } from './equityLiquidity';
 import {
-  BenefitsSection,
-  CompensationSection,
   DecisionSignalsSection,
-  IdentitySection,
   LocationTaxSection,
   TimeOffSection,
   WorkSetupSection,
@@ -30,8 +24,12 @@ import {
   type TaxRatePreview,
 } from './sections';
 import OfferFormSection from './components/OfferFormSection';
+import OfferFormSidebar from './OfferFormSidebar';
+import OfferBenefitsPanel from './OfferBenefitsPanel';
+import OfferCompensationPanel from './OfferCompensationPanel';
+import OfferBasicsPanel from './OfferBasicsPanel';
 
-interface OfferFormFieldsProps {
+export interface OfferFormFieldsProps {
   showLinkApplication?: boolean;
   linkedApplicationId?: number | null;
   onLinkedApplicationChange?: (value: number | null) => void;
@@ -106,8 +104,7 @@ interface OfferFormFieldsProps {
   freeFoodValuePerMeal?: number | string;
   freeFoodPerkValue: number;
   freeFoodPerkFrequency: 'DAILY' | 'MONTHLY' | 'YEARLY';
-  // Read-only now: the flat amount is kept as a fallback for offers saved before per-meal
-  // valuing, but nothing edits it any more.
+  // Read-only: kept as a fallback for offers saved before per-meal valuing.
   showCommuteAndPerks?: boolean;
   enableCompModeToggles?: boolean;
 
@@ -210,170 +207,62 @@ interface OfferFormFieldsProps {
   drivingDefaults?: Partial<DrivingDefaults> | null;
 }
 
-const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
-  showLinkApplication = false,
-  linkedApplicationId = null,
-  onLinkedApplicationChange,
-  hideCompanyRoleWhenLinked = false,
-  companyName,
-  onCompanyNameChange,
-  roleTitle,
-  onRoleTitleChange,
-  level,
-  onLevelChange,
-  invalidCompanyName,
-  invalidRoleTitle,
-  deadline,
-  onDeadlineChange,
-  location,
-  onLocationChange,
-  officeLocation,
-  onOfficeLocationChange,
-  locationOptions = [],
-  taxRatePreview,
-  editableTaxRates,
-  onEditableTaxRatesChange,
-  editableMonthlyRent,
-  onEditableMonthlyRentChange,
-  baseSalary,
-  onBaseSalaryChange,
-  bonus,
-  onBonusChange,
-  equity,
-  onEquityChange,
-  equityLiquidity,
-  onEquityLiquidityChange,
-  equityBuybackValue,
-  onEquityBuybackValueChange,
-  equityTotalGrant,
-  annualRefreshValue,
-  onAnnualRefreshValueChange,
-  refreshStartsYear,
-  onRefreshStartsYearChange,
-  onEquityTotalGrantChange,
-  equityVestingPercent,
-  onEquityVestingPercentChange,
-  equityVestingSchedule,
-  onEquityVestingScheduleChange,
-  defaultEquityMode,
-  signOn,
-  onSignOnChange,
-  documentsSlot,
-  signOnSchedule = [],
-  onSignOnScheduleChange,
-  benefitsValue,
-  benefitItems,
-  onAddBenefitItem,
-  onUpdateBenefitItem,
-  onRemoveBenefitItem,
-  computeBenefitsTotal,
-  workMode,
-  onWorkModeChange,
-  rtoDaysPerWeek,
-  onRtoDaysPerWeekChange,
-  commuteCostValue,
-  commuteCostFrequency,
-  commuteOptions,
-  onCommuteOptionsChange,
-  freeFoodMeals,
-  onFreeFoodMealsChange,
-  freeFoodValuePerMeal,
-  freeFoodPerkValue,
-  freeFoodPerkFrequency,
-  showCommuteAndPerks = true,
-  showDecisionSignals = false,
-  visaSponsorship = '',
-  onVisaSponsorshipChange,
-  dayOneGc = '',
-  onDayOneGcChange,
-  growthScore,
-  onGrowthScoreChange,
-  workLifeScore,
-  onWorkLifeScoreChange,
-  brandScore,
-  onBrandScoreChange,
-  teamScore,
-  onTeamScoreChange,
-  ptoDays,
-  onPtoDaysChange,
-  isUnlimitedPto,
-  onIsUnlimitedPtoChange,
-  sickLeaveDays,
-  onSickLeaveDaysChange,
-  sickLeaveIncludedInUnlimitedPto,
-  onSickLeaveIncludedInUnlimitedPtoChange,
-  holidayDays,
-  onHolidayDaysChange,
-  companyPlaceholder = 'e.g. Google',
-  rolePlaceholder = 'e.g. Software Engineer',
-  locationPlaceholder = 'e.g. San Jose, CA, United States',
-
-  // New Fields
-  paychecksPerYear = 26,
-  onPaychecksPerYearChange,
-  healthPremiumPaycheck = 0,
-  onHealthPremiumPaycheckChange,
-  healthPremiumMonthly = 0,
-  onHealthPremiumMonthlyChange,
-  hsaEmployerContribution = 0,
-  onHsaEmployerContributionChange,
-  healthPlanType = '',
-  onHealthPlanTypeChange,
-  healthOopMax = 0,
-  onHealthOopMaxChange,
-  healthDeductible = 0,
-  onHealthDeductibleChange,
-  healthFamilyOopMax = 0,
-  onHealthFamilyOopMaxChange,
-  healthPcpCopay = 0,
-  onHealthPcpCopayChange,
-  healthSpecialistCopay = 0,
-  onHealthSpecialistCopayChange,
-  dentalPlanName = '',
-  onDentalPlanNameChange,
-  dentalPremiumPaycheck = 0,
-  onDentalPremiumPaycheckChange,
-  dentalMonthlyPremium = 0,
-  onDentalMonthlyPremiumChange,
-  dentalAnnualMax = 0,
-  onDentalAnnualMaxChange,
-  dentalDeductible = 0,
-  onDentalDeductibleChange,
-  visionPlanName = '',
-  onVisionPlanNameChange,
-  visionPremiumPaycheck = 0,
-  onVisionPremiumPaycheckChange,
-  visionMonthlyPremium = 0,
-  onVisionMonthlyPremiumChange,
-  visionFramesAllowance = 0,
-  onVisionFramesAllowanceChange,
-  visionContactsAllowance = 0,
-  onVisionContactsAllowanceChange,
-  hasDependents = false,
-  onHasDependentsChange,
-  dependentCoverageTier = 'EMPLOYEE_SPOUSE',
-  onDependentCoverageTierChange,
-  healthFamilyDeductible = 0,
-  onHealthFamilyDeductibleChange,
-  dependentHealthPremiumPaycheck = 0,
-  onDependentHealthPremiumPaycheckChange,
-  dependentDentalPremiumPaycheck = 0,
-  onDependentDentalPremiumPaycheckChange,
-  dependentVisionPremiumPaycheck = 0,
-  onDependentVisionPremiumPaycheckChange,
-  fortyOneKMatchPercent = 0,
-  onFortyOneKMatchPercentChange,
-  fortyOneKMaxMatch = 0,
-  onFortyOneKMaxMatchChange,
-  relocationBonus = 0,
-  onRelocationBonusChange,
-  flexibleHoursPolicy = 'UNKNOWN',
-  onFlexibleHoursPolicyChange,
-  travelFrequency = 'UNKNOWN',
-  onTravelFrequencyChange,
-  taxRate = 0,
-  drivingDefaults,
-}) => {
+const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
+  const {
+    linkedApplicationId = null,
+    hideCompanyRoleWhenLinked = false,
+    location,
+    onLocationChange,
+    officeLocation,
+    onOfficeLocationChange,
+    locationOptions = [],
+    taxRatePreview,
+    editableTaxRates,
+    onEditableTaxRatesChange,
+    editableMonthlyRent,
+    onEditableMonthlyRentChange,
+    equityVestingPercent,
+    workMode,
+    onWorkModeChange,
+    rtoDaysPerWeek,
+    onRtoDaysPerWeekChange,
+    commuteCostValue,
+    commuteCostFrequency,
+    commuteOptions,
+    onCommuteOptionsChange,
+    freeFoodPerkValue,
+    freeFoodPerkFrequency,
+    showCommuteAndPerks = true,
+    showDecisionSignals = false,
+    visaSponsorship = '',
+    onVisaSponsorshipChange,
+    dayOneGc = '',
+    onDayOneGcChange,
+    growthScore,
+    onGrowthScoreChange,
+    workLifeScore,
+    onWorkLifeScoreChange,
+    brandScore,
+    onBrandScoreChange,
+    teamScore,
+    onTeamScoreChange,
+    ptoDays,
+    onPtoDaysChange,
+    isUnlimitedPto,
+    onIsUnlimitedPtoChange,
+    sickLeaveDays,
+    onSickLeaveDaysChange,
+    sickLeaveIncludedInUnlimitedPto,
+    onSickLeaveIncludedInUnlimitedPtoChange,
+    holidayDays,
+    onHolidayDaysChange,
+    locationPlaceholder = 'e.g. San Jose, CA, United States',
+    flexibleHoursPolicy = 'UNKNOWN',
+    onFlexibleHoursPolicyChange,
+    travelFrequency = 'UNKNOWN',
+    onTravelFrequencyChange,
+    drivingDefaults,
+  } = props;
   const formId = useId().replace(/:/g, '');
   const shouldShowCompanyRole = !(hideCompanyRoleWhenLinked && linkedApplicationId);
   const showRtoDays = workMode === 'HYBRID' || workMode === 'ONSITE';
@@ -421,8 +310,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
       ? [{ id: sectionIds.signals, label: 'Decision signals', meta: 'Optional quality inputs' }]
       : []),
   ];
-  // Same office-day figure the commute uses, so free meals and travel cost can never
-  // disagree about how often you are in.
+  // Same office-day count as the commute, so the two cannot disagree.
   const foodOfficeDaysValue = officeDaysPerYear({
     workMode,
     rtoDaysPerWeek,
@@ -437,8 +325,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
         : Number(freeFoodPerkValue) || 0;
 
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  // Panels used to hard-code their index, so inserting a section showed the wrong one and
-  // nothing failed loudly. Resolved from the id, which cannot drift from navigationItems.
+  // Resolved from the id: hard-coded indices showed the wrong panel when a section was added.
   const isActiveSection = (id: string) => navigationItems[activeSectionIndex]?.id === id;
 
   const showSection = (index: number) => {
@@ -450,57 +337,11 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
 
   return (
     <div className="offer-form-workspace grid min-h-full min-w-0 w-full overflow-x-hidden bg-slate-50/80 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <aside className="min-w-0 border-b border-slate-200 bg-white px-4 py-3 lg:border-b-0 lg:border-r lg:px-3 lg:py-5">
-        <div className="lg:sticky lg:top-0">
-          <p className="hidden px-3 text-xs font-semibold text-slate-950 lg:block">Offer record</p>
-          <p className="mt-1 hidden px-3 text-xs leading-5 text-slate-500 lg:block">
-            Enter only what you can verify. Blank optional signals are excluded from scoring.
-          </p>
-          <nav
-            aria-label="Offer form sections"
-            role="tablist"
-            className="mt-0 flex gap-2 overflow-x-auto lg:mt-5 lg:flex-col lg:overflow-visible"
-          >
-            {navigationItems.map((item, index) => (
-              <a
-                key={item.id}
-                id={`${item.id}-tab`}
-                href={`#${item.id}`}
-                role="tab"
-                aria-selected={activeSectionIndex === index}
-                aria-controls={item.id}
-                onClick={(event) => {
-                  event.preventDefault();
-                  showSection(index);
-                }}
-                className={`group flex min-w-max items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:min-w-0 ${
-                  activeSectionIndex === index
-                    ? 'bg-blue-50 text-blue-800 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.8)]'
-                    : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <span
-                  className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-white text-[11px] font-semibold ${
-                    activeSectionIndex === index
-                      ? 'border-blue-200 text-blue-700'
-                      : 'border-slate-200 text-slate-500 group-hover:border-blue-200 group-hover:text-blue-700'
-                  }`}
-                >
-                  {index + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-xs font-semibold group-hover:text-slate-950">
-                    {item.label}
-                  </span>
-                  <span className="mt-0.5 hidden truncate text-[11px] text-slate-500 lg:block">
-                    {item.meta}
-                  </span>
-                </span>
-              </a>
-            ))}
-          </nav>
-        </div>
-      </aside>
+      <OfferFormSidebar
+        activeSectionIndex={activeSectionIndex}
+        navigationItems={navigationItems}
+        showSection={showSection}
+      />
 
       <div className="min-w-0 p-3 sm:p-5 lg:p-6">
         <div className="mx-auto mb-3 flex w-full max-w-3xl items-center justify-end gap-2">
@@ -546,39 +387,12 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
           </a>
         </div>
         <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-38px_rgba(15,23,42,0.45)]">
-          <div
-            role="tabpanel"
-            aria-labelledby={`${sectionIds.basics}-tab`}
-            hidden={!isActiveSection(sectionIds.basics)}
-          >
-            <OfferFormSection
-              id={sectionIds.basics}
-              title="Offer details"
-              description="Identify the role this offer is for. Working conditions and the commute have their own section."
-              icon={<UserOutlined />}
-            >
-              <IdentitySection
-                showLinkApplication={showLinkApplication}
-                linkedApplicationId={linkedApplicationId}
-                onLinkedApplicationChange={onLinkedApplicationChange}
-                shouldShowCompanyRole={shouldShowCompanyRole}
-                companyName={companyName}
-                onCompanyNameChange={onCompanyNameChange}
-                roleTitle={roleTitle}
-                onRoleTitleChange={onRoleTitleChange}
-                level={level}
-                invalidCompanyName={invalidCompanyName}
-                invalidRoleTitle={invalidRoleTitle}
-                deadline={deadline}
-                onDeadlineChange={onDeadlineChange}
-                onLevelChange={onLevelChange}
-                companyPlaceholder={companyPlaceholder}
-                rolePlaceholder={rolePlaceholder}
-              />
-
-              {documentsSlot}
-            </OfferFormSection>
-          </div>
+          <OfferBasicsPanel
+            {...props}
+            isActiveSection={isActiveSection}
+            sectionIds={sectionIds}
+            shouldShowCompanyRole={shouldShowCompanyRole}
+          />
 
           <div
             role="tabpanel"
@@ -643,133 +457,21 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = ({
             </OfferFormSection>
           </div>
 
-          <div
-            role="tabpanel"
-            aria-labelledby={`${sectionIds.compensation}-tab`}
-            hidden={!isActiveSection(sectionIds.compensation)}
-          >
-            <OfferFormSection
-              id={sectionIds.compensation}
-              title="Compensation"
-              description="Separate guaranteed cash from equity you can actually realize. The score uses these values differently."
-              icon={<DollarOutlined />}
-            >
-              <CompensationSection
-                baseSalary={baseSalary}
-                onBaseSalaryChange={onBaseSalaryChange}
-                bonus={bonus}
-                onBonusChange={onBonusChange}
-                equity={equity}
-                onEquityChange={onEquityChange}
-                equityLiquidity={equityLiquidity}
-                onEquityLiquidityChange={onEquityLiquidityChange}
-                equityBuybackValue={equityBuybackValue}
-                onEquityBuybackValueChange={onEquityBuybackValueChange}
-                equityTotalGrant={equityTotalGrant}
-                annualRefreshValue={annualRefreshValue}
-                onAnnualRefreshValueChange={onAnnualRefreshValueChange}
-                refreshStartsYear={refreshStartsYear}
-                onRefreshStartsYearChange={onRefreshStartsYearChange}
-                onEquityTotalGrantChange={onEquityTotalGrantChange}
-                effectiveEquityVestingPercent={effectiveEquityVestingPercent}
-                setEquityVestingPercentInternal={setEquityVestingPercentInternal}
-                onEquityVestingPercentChange={onEquityVestingPercentChange}
-                equityVestingSchedule={equityVestingSchedule}
-                onEquityVestingScheduleChange={onEquityVestingScheduleChange}
-                defaultEquityMode={defaultEquityMode}
-                signOn={signOn}
-                onSignOnChange={onSignOnChange}
-                signOnSchedule={signOnSchedule}
-                onSignOnScheduleChange={onSignOnScheduleChange ?? (() => {})}
-                relocationBonus={relocationBonus}
-                onRelocationBonusChange={onRelocationBonusChange}
-              />
-            </OfferFormSection>
-          </div>
+          <OfferCompensationPanel
+            {...props}
+            effectiveEquityVestingPercent={effectiveEquityVestingPercent}
+            isActiveSection={isActiveSection}
+            sectionIds={sectionIds}
+            setEquityVestingPercentInternal={setEquityVestingPercentInternal}
+          />
 
-          <div
-            role="tabpanel"
-            aria-labelledby={`${sectionIds.benefits}-tab`}
-            hidden={!isActiveSection(sectionIds.benefits)}
-          >
-            <OfferFormSection
-              id={sectionIds.benefits}
-              title="Benefits"
-              description="Add recurring benefits, health costs, and employer retirement contributions."
-              icon={<SafetyCertificateOutlined />}
-            >
-              <BenefitsSection
-                freeFoodMeals={freeFoodMeals}
-                onFreeFoodMealsChange={onFreeFoodMealsChange}
-                freeFoodValuePerMeal={freeFoodValuePerMeal}
-                officeDays={foodOfficeDaysValue}
-                legacyFreeFoodAnnual={legacyFoodAnnual}
-                benefitItems={benefitItems}
-                onAddBenefitItem={onAddBenefitItem}
-                onUpdateBenefitItem={onUpdateBenefitItem}
-                onRemoveBenefitItem={onRemoveBenefitItem}
-                computeBenefitsTotal={computeBenefitsTotal}
-                benefitsValue={benefitsValue}
-                paychecksPerYear={paychecksPerYear}
-                onPaychecksPerYearChange={onPaychecksPerYearChange}
-                healthPremiumPaycheck={healthPremiumPaycheck}
-                onHealthPremiumPaycheckChange={onHealthPremiumPaycheckChange}
-                healthPremiumMonthly={healthPremiumMonthly}
-                onHealthPremiumMonthlyChange={onHealthPremiumMonthlyChange}
-                hsaEmployerContribution={hsaEmployerContribution}
-                onHsaEmployerContributionChange={onHsaEmployerContributionChange}
-                healthPlanType={healthPlanType}
-                onHealthPlanTypeChange={onHealthPlanTypeChange}
-                healthOopMax={healthOopMax}
-                onHealthOopMaxChange={onHealthOopMaxChange}
-                healthDeductible={healthDeductible}
-                onHealthDeductibleChange={onHealthDeductibleChange}
-                healthFamilyOopMax={healthFamilyOopMax}
-                onHealthFamilyOopMaxChange={onHealthFamilyOopMaxChange}
-                healthPcpCopay={healthPcpCopay}
-                onHealthPcpCopayChange={onHealthPcpCopayChange}
-                healthSpecialistCopay={healthSpecialistCopay}
-                onHealthSpecialistCopayChange={onHealthSpecialistCopayChange}
-                dentalPlanName={dentalPlanName}
-                onDentalPlanNameChange={onDentalPlanNameChange}
-                dentalPremiumPaycheck={dentalPremiumPaycheck}
-                onDentalPremiumPaycheckChange={onDentalPremiumPaycheckChange}
-                dentalMonthlyPremium={dentalMonthlyPremium}
-                onDentalMonthlyPremiumChange={onDentalMonthlyPremiumChange}
-                dentalAnnualMax={dentalAnnualMax}
-                onDentalAnnualMaxChange={onDentalAnnualMaxChange}
-                dentalDeductible={dentalDeductible}
-                onDentalDeductibleChange={onDentalDeductibleChange}
-                visionPlanName={visionPlanName}
-                onVisionPlanNameChange={onVisionPlanNameChange}
-                visionPremiumPaycheck={visionPremiumPaycheck}
-                onVisionPremiumPaycheckChange={onVisionPremiumPaycheckChange}
-                visionMonthlyPremium={visionMonthlyPremium}
-                onVisionMonthlyPremiumChange={onVisionMonthlyPremiumChange}
-                visionFramesAllowance={visionFramesAllowance}
-                onVisionFramesAllowanceChange={onVisionFramesAllowanceChange}
-                visionContactsAllowance={visionContactsAllowance}
-                onVisionContactsAllowanceChange={onVisionContactsAllowanceChange}
-                hasDependents={hasDependents}
-                onHasDependentsChange={onHasDependentsChange}
-                dependentCoverageTier={dependentCoverageTier}
-                onDependentCoverageTierChange={onDependentCoverageTierChange}
-                healthFamilyDeductible={healthFamilyDeductible}
-                onHealthFamilyDeductibleChange={onHealthFamilyDeductibleChange}
-                dependentHealthPremiumPaycheck={dependentHealthPremiumPaycheck}
-                onDependentHealthPremiumPaycheckChange={onDependentHealthPremiumPaycheckChange}
-                dependentDentalPremiumPaycheck={dependentDentalPremiumPaycheck}
-                onDependentDentalPremiumPaycheckChange={onDependentDentalPremiumPaycheckChange}
-                dependentVisionPremiumPaycheck={dependentVisionPremiumPaycheck}
-                onDependentVisionPremiumPaycheckChange={onDependentVisionPremiumPaycheckChange}
-                fortyOneKMatchPercent={fortyOneKMatchPercent}
-                onFortyOneKMatchPercentChange={onFortyOneKMatchPercentChange}
-                fortyOneKMaxMatch={fortyOneKMaxMatch}
-                onFortyOneKMaxMatchChange={onFortyOneKMaxMatchChange}
-                taxRate={taxRate}
-              />
-            </OfferFormSection>
-          </div>
+          <OfferBenefitsPanel
+            {...props}
+            legacyFoodAnnual={legacyFoodAnnual}
+            foodOfficeDaysValue={foodOfficeDaysValue}
+            isActiveSection={isActiveSection}
+            sectionIds={sectionIds}
+          />
 
           <div
             role="tabpanel"

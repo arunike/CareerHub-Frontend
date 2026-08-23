@@ -1,6 +1,5 @@
 export interface PayPeriod {
-  // 1-based position within the tax year. Off-cycle payments are numbered above the
-  // regular run so their indexes cannot collide.
+  // 1-based in the tax year; off-cycle payments are numbered above the regular run.
   periodIndex: number;
   payDate: string;
   // A payment on its own date, carrying no regular salary.
@@ -64,8 +63,7 @@ const monthlyDates = (taxYear: number, anchor: Date) => {
   });
 };
 
-// Biweekly and weekly schedules step from the anchor, which is why the anchor has to be
-// adjustable: two employers on the same cadence rarely pay on the same day.
+// Weekly and biweekly step from the anchor, so the anchor has to be adjustable.
 const steppedDates = (taxYear: number, anchor: Date, stepDays: number) => {
   const dates: Date[] = [];
   const cursor = new Date(anchor);
@@ -126,8 +124,7 @@ export const buildPayPeriods = (
     .map(({ periodIndex, payDate }) => ({ periodIndex, payDate }));
 };
 
-// An adjusted date can move a paycheck past its neighbour, so the run is re-sorted to
-// keep year-to-date totals in date order.
+// Re-sorted: an adjusted date can move a paycheck past its neighbour.
 export const applyPayDateOverrides = (
   periods: PayPeriod[],
   overrides: Array<{ periodIndex: number; payDate?: string | null }>

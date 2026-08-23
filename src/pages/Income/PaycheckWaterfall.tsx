@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Button, DatePicker, Tag, Tooltip } from 'antd';
-import dayjs from 'dayjs';
+import { Button, Tag, Tooltip } from 'antd';
 import {
   EditOutlined,
   InfoCircleOutlined,
@@ -25,11 +24,9 @@ import {
 import type { CustomDeduction } from './deductions';
 import { resolveAllowances, type Allowance } from './allowances';
 import { formatPayDate } from './paySchedule';
-import MoneyInput from './MoneyInput';
-import { roundCents } from './numberField';
-import Modal from '../../components/MobileModal';
-import PercentInput from './PercentInput';
 import { useMoney } from './amountPrivacy';
+import PaycheckAdjustModal from './PaycheckAdjustModal';
+import PaycheckRecordModal from './PaycheckRecordModal';
 
 interface Props {
   row: EffectiveRow;
@@ -466,218 +463,32 @@ export const PaycheckWaterfall = ({
         </Button>
       </div>
 
-      <Modal
-        open={recording}
-        width={560}
-        destroyOnClose
-        onCancel={() => setRecording(false)}
-        title="What your payslip says"
-        footer={
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-slate-500">Recording {payDateLabel}</span>
-            <Button type="primary" onClick={() => setRecording(false)}>
-              Done
-            </Button>
-          </div>
-        }
-      >
-        <p className="text-xs leading-relaxed text-slate-500">
-          Anything you enter replaces the modelled figure for this paycheck. Leave a line blank to
-          keep the model&rsquo;s number.
-        </p>
-        <label className="mt-3 block">
-          <span className="text-xs font-medium text-slate-600">Pay date</span>
-          <div className="mt-1">
-            <DatePicker
-              size="small"
-              allowClear={false}
-              className="w-full"
-              value={row.payDate ? dayjs(row.payDate) : null}
-              onChange={(next) =>
-                onActualChange(row.periodIndex, {
-                  payDate: next ? next.format('YYYY-MM-DD') : null,
-                })
-              }
-            />
-          </div>
-          <span className="mt-1 block text-[11px] text-slate-400">
-            Move it when payday shifts, e.g. a federal holiday paying you a day early.
-          </span>
-        </label>
+      <PaycheckRecordModal
+        row={row}
+        ACTUAL_INPUTS={ACTUAL_INPUTS}
+        actual={actual}
+        onActualChange={onActualChange}
+        isRecorded={isRecorded}
+        money={money}
+        moneyCents={moneyCents}
+        payDateLabel={payDateLabel}
+        recording={recording}
+        setRecording={setRecording}
+      />
 
-        <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
-          {ACTUAL_INPUTS.map((field) => (
-            <label key={field.key} className="block">
-              <span className="text-xs font-medium text-slate-600">{field.label}</span>
-              <div className="mt-1">
-                <MoneyInput
-                  size="small"
-                  placeholder="Modelled"
-                  value={actual?.[field.key] ?? null}
-                  onChange={(value) => onActualChange(row.periodIndex, { [field.key]: value })}
-                />
-              </div>
-            </label>
-          ))}
-        </div>
-        {isRecorded ? (
-          <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-slate-200/70 pt-2 text-xs">
-            <span className="text-slate-500">Model said</span>
-            <span className="tabular-nums text-slate-600">
-              {moneyCents(row.modelledNet)}{' '}
-              <span className={row.net < row.modelledNet ? 'text-rose-600' : 'text-emerald-600'}>
-                ({row.net < row.modelledNet ? '−' : '+'}
-                {money(Math.abs(row.net - row.modelledNet))})
-              </span>
-            </span>
-          </div>
-        ) : null}
-      </Modal>
-
-      <Modal
-        open={editing}
-        width={560}
-        destroyOnClose
-        onCancel={() => setEditing(false)}
-        title="This paycheck only"
-        footer={
-          <div className="flex items-center justify-between gap-3">
-            {row.isAdjusted ? (
-              <Button danger type="text" onClick={() => onOverrideClear(row.periodIndex)}>
-                Reset to the standing amounts
-              </Button>
-            ) : (
-              <span className="text-xs text-slate-500">Nothing overridden yet</span>
-            )}
-            <Button type="primary" onClick={() => setEditing(false)}>
-              Done
-            </Button>
-          </div>
-        }
-      >
-        <p className="text-xs leading-relaxed text-slate-500">
-          Changes here apply to {payDateLabel} and leave every other paycheck alone.
-        </p>
-        <label className="mt-3 block">
-          <span className="text-xs font-medium text-slate-600">Gross pay</span>
-          <div className="mt-1">
-            <MoneyInput
-              size="small"
-              value={roundCents(effective.regularGross)}
-              onChange={(value) =>
-                onOverrideChange(row.periodIndex, { regularGross: Number(value ?? 0) })
-              }
-            />
-          </div>
-          <span className="mt-1 block text-[11px] text-slate-400">
-            Regular pay only. A bonus or vest on this paycheck is unaffected.
-          </span>
-        </label>
-
-        <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
-          {DEDUCTION_FIELDS.map((field) => (
-            <label key={field.key} className="block">
-              <span className="text-xs font-medium text-slate-600">{field.label}</span>
-              <div className="mt-1">
-                <MoneyInput
-                  size="small"
-                  value={effective[field.key]}
-                  onChange={(value) =>
-                    onOverrideChange(row.periodIndex, { [field.key]: Number(value ?? 0) })
-                  }
-                />
-              </div>
-            </label>
-          ))}
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
-          {RATE_FIELDS.map((field) => (
-            <label key={field.key} className="block">
-              <span className="text-xs font-medium text-slate-600">{field.label}</span>
-              <div className="mt-1">
-                <PercentInput
-                  size="small"
-                  value={effective[field.key]}
-                  onChange={(value) =>
-                    onOverrideChange(row.periodIndex, { [field.key]: Number(value ?? 0) })
-                  }
-                />
-              </div>
-            </label>
-          ))}
-        </div>
-
-        {effectiveCustom.length > 0 ? (
-          <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
-            {effectiveCustom.map((deduction) => (
-              <label key={deduction.id} className="block">
-                <span className="truncate text-xs font-medium text-slate-600">
-                  {deduction.label || 'Untitled deduction'}
-                </span>
-                <div className="mt-1">
-                  <MoneyInput
-                    size="small"
-                    value={deduction.amount}
-                    onChange={(value) =>
-                      onOverrideChange(row.periodIndex, {
-                        customAmounts: { [deduction.id]: Number(value ?? 0) },
-                      })
-                    }
-                  />
-                </div>
-              </label>
-            ))}
-          </div>
-        ) : null}
-
-        {effectiveAllowances.length > 0 ? (
-          <div className="mt-3 border-t border-slate-100 pt-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              Allowances this paycheck
-            </span>
-            <p className="mt-1 text-[11px] text-slate-400">
-              Set one to zero for a paycheck it was not paid on.
-            </p>
-            <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-              {effectiveAllowances.map((allowance) => (
-                <label key={allowance.id} className="block">
-                  <span className="truncate text-xs font-medium text-slate-600">
-                    {allowance.label || 'Untitled allowance'}
-                  </span>
-                  <div className="mt-1">
-                    <MoneyInput
-                      size="small"
-                      value={roundCents(allowance.perPeriod)}
-                      onChange={(value) =>
-                        onOverrideChange(row.periodIndex, {
-                          allowanceAmounts: { [allowance.id]: Number(value ?? 0) },
-                        })
-                      }
-                    />
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <label className="mt-3 block border-t border-slate-100 pt-3">
-          <span className="text-xs font-medium text-slate-600">Match on this paycheck</span>
-          <div className="mt-1">
-            <MoneyInput
-              size="small"
-              value={roundCents(row.employerMatch401k)}
-              onChange={(value) =>
-                onOverrideChange(row.periodIndex, { employerMatch: Number(value ?? 0) })
-              }
-            />
-          </div>
-          <span className="mt-1 block text-[11px] text-slate-400">
-            Set it when the employer paid something other than the formula, such as a true-up.
-          </span>
-        </label>
-      </Modal>
+      <PaycheckAdjustModal
+        row={row}
+        DEDUCTION_FIELDS={DEDUCTION_FIELDS}
+        RATE_FIELDS={RATE_FIELDS}
+        onOverrideChange={onOverrideChange}
+        onOverrideClear={onOverrideClear}
+        editing={editing}
+        effective={effective}
+        effectiveAllowances={effectiveAllowances}
+        effectiveCustom={effectiveCustom}
+        payDateLabel={payDateLabel}
+        setEditing={setEditing}
+      />
 
       {row.employerMatch401k > 0 ? (
         <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">

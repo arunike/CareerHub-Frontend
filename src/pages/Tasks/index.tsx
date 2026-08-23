@@ -1,18 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  Card,
-  DatePicker,
-  Empty,
-  Form,
-  Grid,
-  Input,
-  Select,
-  Tag,
-  Tooltip,
-  message,
-} from 'antd';
-import { BellOutlined, CheckCircleOutlined, InboxOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Empty, Form, Grid, Tag, message } from 'antd';
+import { CheckCircleOutlined, InboxOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Task, WeeklyReview } from '../../types';
@@ -30,22 +18,11 @@ import ModalShell from '../../components/ModalShell';
 import { PageState } from '../../components/PageState';
 import { parseSmartReminder } from '../../utils/smartReminder';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
-
-type TaskStatus = Task['status'];
-const TASKS_UPDATED_EVENT = 'careerhub:tasks-updated';
-
-const STATUS_META: Array<{ key: TaskStatus; label: string; color: string }> = [
-  { key: 'TODO', label: 'To Do', color: 'default' },
-  { key: 'IN_PROGRESS', label: 'In Progress', color: 'processing' },
-  { key: 'DONE', label: 'Done', color: 'success' },
-];
-
-const PRIORITY_COLOR: Record<Task['priority'], string> = {
-  LOW: 'green',
-  MEDIUM: 'gold',
-  HIGH: 'red',
-};
+import { PRIORITY_COLOR, STATUS_META, TASKS_UPDATED_EVENT, type TaskStatus } from './taskMeta';
+import TaskFormFields from './TaskFormFields';
+import TaskKanbanBoard from './TaskKanbanBoard';
+import WeeklyReviewCard from './WeeklyReviewCard';
+import TaskFilterBar from './TaskFilterBar';
 
 type ApiError = { errorFields?: unknown; response?: { data?: { error?: string } } };
 
@@ -425,146 +402,24 @@ const Tasks: React.FC = () => {
       />
 
       <Card className="enterprise-section overflow-hidden">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="flex items-start gap-3 lg:w-[280px]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
-              <BellOutlined />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-slate-900">Smart reminders</h2>
-              <div className="text-xs text-slate-500">Type a reminder in natural language.</div>
-            </div>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <Input
-              size="large"
-              value={smartReminderText}
-              onChange={(event) => setSmartReminderText(event.target.value)}
-              onPressEnter={() => handleCreateSmartReminder()}
-              placeholder="e.g. Follow up after 7 days"
-              aria-label="Reminder description"
-              aria-describedby="smart-reminder-help"
-              disabled={smartReminderSaving}
-              className="min-h-11 text-base sm:text-sm"
-            />
-            <div
-              id="smart-reminder-help"
-              className="mt-2 min-h-5 text-xs text-slate-500"
-              aria-live="polite"
-            >
-              {smartReminderDraft ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
-                  <CheckCircleOutlined />
-                  {smartReminderDraft.dueDate.format('MMM D, YYYY')} · {smartReminderDraft.priority}
-                </span>
-              ) : (
-                <span>Understands tomorrow, after 7 days, in 3 days, next Friday.</span>
-              )}
-            </div>
-            <div
-              className="scrollbar-none -mx-1 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
-              role="group"
-              aria-label="Reminder examples"
-            >
-              {[
-                'Follow up after 7 days',
-                'Prepare for interview tomorrow',
-                'Offer deadline in 3 days',
-              ].map((example) => (
-                <Tooltip key={example} title="Use example">
-                  <button
-                    type="button"
-                    onClick={() => setSmartReminderText(example)}
-                    className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
-                  >
-                    {example}
-                  </button>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-
-          <Button
-            type="primary"
-            size="large"
-            icon={<PlusOutlined />}
-            loading={smartReminderSaving}
-            disabled={!smartReminderText.trim()}
-            onClick={() => handleCreateSmartReminder()}
-            className="w-full lg:w-auto lg:self-start"
-          >
-            Set Reminder
-          </Button>
-        </div>
+        <TaskFilterBar
+          handleCreateSmartReminder={handleCreateSmartReminder}
+          loading={loading}
+          setSmartReminderText={setSmartReminderText}
+          smartReminderDraft={smartReminderDraft}
+          smartReminderSaving={smartReminderSaving}
+          smartReminderText={smartReminderText}
+        />
       </Card>
 
       <div>
-        <Card title="Weekly Review" loading={weeklyReviewLoading} className="enterprise-section">
-          {weeklyReviewLoadFailed ? (
-            <PageState
-              tone="error"
-              title="Weekly review could not be loaded"
-              description="Your action items were not changed. Check your connection and try again."
-              actionLabel="Retry weekly review"
-              onAction={() => void fetchWeeklyReview()}
-              icon={<InboxOutlined />}
-              className="my-1"
-            />
-          ) : weeklyReview ? (
-            <div className="space-y-3">
-              <div className="text-sm text-gray-600">
-                {dayjs(weeklyReview.start_date).format('MMM D')} -{' '}
-                {dayjs(weeklyReview.end_date).format('MMM D, YYYY')}
-              </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                <div className="enterprise-kpi min-w-0 px-2 py-2 sm:px-3">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">
-                    Applications Sent
-                  </div>
-                  <div className="text-2xl font-semibold">{weeklyReview.applications_sent}</div>
-                </div>
-                <div className="enterprise-kpi min-w-0 px-2 py-2 sm:px-3">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">
-                    Interviews Done
-                  </div>
-                  <div className="text-2xl font-semibold">{weeklyReview.interviews_done}</div>
-                </div>
-                <div className="enterprise-kpi min-w-0 px-2 py-2 sm:px-3">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">Next Actions</div>
-                  <div className="text-2xl font-semibold">{weeklyReview.next_actions_count}</div>
-                </div>
-              </div>
-              <div className="enterprise-card-list-item px-3 py-2 text-sm text-gray-700">
-                {weeklyReview.summary_text}
-              </div>
-              {weeklyReview.next_actions.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Top Next Actions</div>
-                  <div className="space-y-1">
-                    {weeklyReview.next_actions.slice(0, 5).map((item) => (
-                      <div
-                        key={item.id}
-                        className="enterprise-card-list-item flex items-center justify-between px-2 py-1 text-sm"
-                      >
-                        <span className="truncate pr-3">{item.title}</span>
-                        <span
-                          className={`text-xs ${item.is_overdue ? 'text-red-500' : 'text-gray-500'}`}
-                        >
-                          {item.due_date
-                            ? dayjs(item.due_date).format('YYYY-MM-DD')
-                            : 'No due date'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <Empty description="No weekly review available" />
-          )}
-        </Card>
+        <WeeklyReviewCard
+          fetchWeeklyReview={fetchWeeklyReview}
+          loading={loading}
+          weeklyReview={weeklyReview}
+          weeklyReviewLoadFailed={weeklyReviewLoadFailed}
+          weeklyReviewLoading={weeklyReviewLoading}
+        />
       </div>
 
       {tasksLoadFailed ? (
@@ -585,71 +440,17 @@ const Tasks: React.FC = () => {
           icon={<CheckCircleOutlined />}
         />
       ) : viewMode === 'kanban' ? (
-        <div className="-mx-4 grid snap-x snap-mandatory grid-flow-col auto-cols-[minmax(280px,85vw)] gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid-flow-row md:grid-cols-3 md:px-0">
-          {STATUS_META.map((column) => (
-            <Card
-              key={column.key}
-              className="enterprise-section snap-start"
-              title={
-                <div className="flex items-center justify-between">
-                  <span>{column.label}</span>
-                  <Tag color={column.color}>{groupedTasks[column.key].length}</Tag>
-                </div>
-              }
-              loading={loading}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => handleDropStatus(column.key)}
-              bodyStyle={{ minHeight: 280 }}
-            >
-              {groupedTasks[column.key].length === 0 ? (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No items" />
-              ) : (
-                <div className="flex flex-col gap-3 py-1">
-                  {groupedTasks[column.key].map((task) => (
-                    <Card
-                      key={task.id}
-                      className="enterprise-card overflow-hidden"
-                      size="small"
-                      hoverable
-                      draggable={!isMobile}
-                      onDragStart={() => setDraggingId(task.id)}
-                      onDragEnd={() => setDraggingId(null)}
-                      title={
-                        <div className="pr-2">
-                          <span className="font-medium">{task.title}</span>
-                        </div>
-                      }
-                      extra={
-                        <RowActions
-                          size="small"
-                          onView={() => openViewModal(task)}
-                          onEdit={() => openEditModal(task)}
-                          onDuplicate={() => handleDuplicateTask(task)}
-                          onDelete={() => handleDelete(task)}
-                          deleteTitle="Delete action item?"
-                        />
-                      }
-                    >
-                      <div className="space-y-2">
-                        {task.description ? (
-                          <p className="text-sm text-gray-600 m-0">{task.description}</p>
-                        ) : null}
-                        <div className="flex items-center justify-between">
-                          <Tag color={PRIORITY_COLOR[task.priority]}>{task.priority}</Tag>
-                          {task.due_date ? (
-                            <span className="text-xs text-gray-500">
-                              Due {dayjs(task.due_date).format('MMM D')}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+        <TaskKanbanBoard
+          groupedTasks={groupedTasks}
+          handleDelete={handleDelete}
+          handleDropStatus={handleDropStatus}
+          handleDuplicateTask={handleDuplicateTask}
+          isMobile={isMobile}
+          loading={loading}
+          openEditModal={openEditModal}
+          openViewModal={openViewModal}
+          setDraggingId={setDraggingId}
+        />
       ) : (
         <Card loading={loading} className="enterprise-section">
           {checklistTasks.length === 0 ? (
@@ -734,57 +535,7 @@ const Tasks: React.FC = () => {
           )
         }
       >
-        <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={form} layout="vertical">
-          <Form.Item
-            name="title"
-            label="Title"
-            rules={[{ required: true, message: 'Please enter a title' }]}
-          >
-            <Input
-              size="large"
-              placeholder="e.g. Follow up with recruiter"
-              disabled={modalMode === 'view'}
-            />
-          </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea
-              rows={3}
-              placeholder="Optional details"
-              disabled={modalMode === 'view'}
-            />
-          </Form.Item>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-              <Select
-                size="large"
-                disabled={modalMode === 'view'}
-                options={STATUS_META.map((status) => ({
-                  label: status.label,
-                  value: status.key,
-                }))}
-              />
-            </Form.Item>
-            <Form.Item name="priority" label="Priority" rules={[{ required: true }]}>
-              <Select
-                size="large"
-                disabled={modalMode === 'view'}
-                options={[
-                  { label: 'Low', value: 'LOW' },
-                  { label: 'Medium', value: 'MEDIUM' },
-                  { label: 'High', value: 'HIGH' },
-                ]}
-              />
-            </Form.Item>
-          </div>
-          <Form.Item name="due_date" label="Due Date">
-            <DatePicker
-              inputReadOnly
-              size="large"
-              style={{ width: '100%' }}
-              disabled={modalMode === 'view'}
-            />
-          </Form.Item>
-        </Form>
+        <TaskFormFields form={form} modalMode={modalMode} />
       </ModalShell>
     </div>
   );

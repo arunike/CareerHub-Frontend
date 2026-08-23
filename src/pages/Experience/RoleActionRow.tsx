@@ -8,11 +8,8 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 
-// Two per row at 8px gap. `basis` rather than a grid, so the icon cluster can sit in the same
-// wrap container and still claim a whole line.
+// Two per row at 8px gap.
 const HALF = 'basis-[calc(50%-0.25rem)] sm:basis-auto';
-// Secondary actions stay out of the way until the card is hovered, but only where there is a
-// pointer to hover with.
 const REVEAL = 'opacity-100 transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100';
 
 const ACTION_BUTTON = 'w-full justify-center whitespace-nowrap sm:w-auto';
@@ -28,14 +25,11 @@ const RoleActionRow = ({
 }: {
   onPromotion: () => void;
   onTeamNorms: () => void;
-  // The single-role card offers Contacts; a role nested in a company group does not.
   onContacts?: () => void;
-  // Absent when the role has no linked offer, so there is no raise history to show.
   onRaiseHistory?: () => void;
   // Shown in Raise History's place when there is no offer to read raises from.
   onLinkOffer?: () => void;
-  // Edit / duplicate / delete. They live with the actions rather than in the corner, which holds
-  // only the two state toggles.
+  // Edit / duplicate / delete.
   trailing?: ReactNode;
   className?: string;
 }) => (

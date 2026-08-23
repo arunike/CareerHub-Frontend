@@ -5,7 +5,6 @@ import UnitNumberInput from '../../components/UnitNumberInput';
 import { DEFAULT_GAS_PRICE, DEFAULT_MPG, type DrivingDefaults } from './commute';
 
 export interface FuelOverrideTarget {
-  // Stable per offer, and the key the apply callback receives back.
   key: string;
   name: string;
   mpg: number | null;
@@ -29,12 +28,10 @@ const DrivingAssumptions = ({
   const [saving, setSaving] = useState(false);
   const mpg = Number(value?.mpg) || DEFAULT_MPG;
   const gasPrice = Number(value?.gasPricePerGallon) || DEFAULT_GAS_PRICE;
-  // Drafts, so a half-typed "2" in a 28 mpg field does not reprice every offer mid-keystroke.
+  // Drafts, so typing does not reprice every offer mid-keystroke.
   const [draftMpg, setDraftMpg] = useState<number | null>(mpg);
   const [draftPrice, setDraftPrice] = useState<number | null>(gasPrice);
 
-  // The saved figures arrive after the first render, and can change under us if the save fails
-  // and reverts, so the draft follows them whenever the popover is shut.
   useEffect(() => {
     if (open) return;
     setDraftMpg(mpg);
@@ -114,7 +111,6 @@ const DrivingAssumptions = ({
           type="button"
           disabled={saving}
           onClick={() => {
-            // With no overrides there is nothing to choose between, so save straight away.
             if (overrides.length === 0 || !onApplyToOffers) void commit([]);
             else setStep('review');
           }}

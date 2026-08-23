@@ -14,11 +14,11 @@ import { getAllNegotiationResults } from './negotiationStorage';
 import type { StoredReport } from './reportStorage';
 import { getAllReports } from './reportStorage';
 import {
-  sanitizePromotionReviewResult,
   type PromotionReviewChatMessage,
   type PromotionReviewContext,
   type PromotionReviewResult,
 } from '../lib/browserAi';
+import { sanitizePromotionReviewResult } from '../lib/promotionSanitizer';
 
 export interface StoredPromotionReview {
   id: string;

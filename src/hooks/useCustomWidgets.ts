@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
-import { loadAnalyticsSourceData, runAnalyticsWidgetQuery } from '../lib/browserAi';
+import { runAnalyticsWidgetQuery } from '../lib/browserAi';
+import { loadAnalyticsSourceData } from '../lib/analyticsQuery';
 import { runVisualWidgetQuery } from '../lib/visualWidgetQuery';
 import type { VisualConfig } from '../lib/visualWidgetQuery';
 

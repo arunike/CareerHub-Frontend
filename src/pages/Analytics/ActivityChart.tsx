@@ -23,16 +23,13 @@ import {
 } from './activitySeries';
 
 type Props = {
-  // Count per day, keyed yyyy-MM-dd. Applications by date applied, or events by date.
+  // Keyed yyyy-MM-dd.
   dailyApplied: Record<string, number>;
   selectedYear: number | 'all';
-  // What is being counted. Both analytics tabs use this chart, so the noun is a prop
-  // rather than the word "application" hardcoded through the copy.
   noun?: { one: string; many: string };
   title?: string;
 };
 
-// One step of the drill path: the bar that was opened, and the granularity it opened into.
 type DrillStep = {
   label: string;
   start: Date;
@@ -69,6 +66,8 @@ const CustomTooltip = ({
 
 const { RangePicker } = DatePicker;
 
+const ANIMATE_UP_TO_BUCKETS = 60;
+
 const ActivityChart = ({
   dailyApplied,
   selectedYear,
@@ -79,8 +78,7 @@ const ActivityChart = ({
   const [range, setRange] = useState<string>(DEFAULT_RANGE.week);
   const [customRange, setCustomRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [drill, setDrill] = useState<DrillStep[]>([]);
-  // antd's range dropdown shows two month panels side by side — 576px, wider than a phone,
-  // so it gets clipped. Two single-panel pickers fit and are easier to tap besides.
+  // antd's range dropdown is 576px, wider than a phone, so mobile gets two single pickers.
   const screens = Grid.useBreakpoint();
   const stackPickers = !screens.sm;
 
@@ -92,8 +90,6 @@ const ActivityChart = ({
     [dailyApplied]
   );
 
-  // A specific year anchors the window to that year rather than to today, so filtering to
-  // 2024 shows the end of 2024 instead of twelve empty weeks around today.
   const bounds = useMemo(() => {
     const today = endOfDay(new Date());
     if (selectedYear === 'all') return { start: null, end: today };
@@ -106,7 +102,6 @@ const ActivityChart = ({
 
   const active = drill.length > 0 ? drill[drill.length - 1] : null;
 
-  // An exact range is just an explicit window, which is the same mechanism drilling uses.
   const picked = useMemo(
     () =>
       range === CUSTOM_RANGE && customRange
@@ -114,14 +109,11 @@ const ActivityChart = ({
         : null,
     [range, customRange]
   );
-  // Drilling into a picked range narrows it further, so the deepest level wins. Memoised
-  // because a fresh object each render would recompute the series every render.
   const activeWindow = useMemo(
     () => (active ? { start: active.start, end: active.end } : picked),
     [active, picked]
   );
-  // 'custom' only means anything next to a picked window. On its own it is not a bucket
-  // count, so it would otherwise fall through and quietly render all time.
+  // 'custom' needs a picked window; alone it would quietly render all time.
   const effectiveRange = range === CUSTOM_RANGE && !picked ? DEFAULT_RANGE[granularity] : range;
 
   const series = useMemo(
@@ -138,30 +130,24 @@ const ActivityChart = ({
 
   const changeGranularity = (next: Granularity) => {
     setGranularity(next);
-    // A picked range survives a granularity change — the same dates, bucketed differently.
     if (range !== CUSTOM_RANGE) setRange(DEFAULT_RANGE[next]);
     setDrill([]);
   };
 
   const changeRange = (next: string) => {
     setRange(next);
-    // A preset supersedes hand-picked dates; the picker then mirrors the preset's window.
     setCustomRange(null);
     setDrill([]);
   };
 
-  // Derived, not stored, so the readout cannot drift from the chart.
   const shownRange: [Dayjs, Dayjs] = [dayjs(series.windowStart), dayjs(series.windowEnd)];
 
   const pickRange = (next: [Dayjs, Dayjs]) => {
     setCustomRange(next);
     setRange(CUSTOM_RANGE);
-    // Typed dates replace the drill path rather than being read inside it.
     setDrill([]);
   };
 
-  // Used by the stacked mobile pickers, where each end moves on its own. The other end
-  // comes from what is displayed, so moving one does not discard the other.
   const setEdge = (edge: 'from' | 'to', value: Dayjs | null) => {
     if (!value) return;
     const [start, end] = shownRange;
@@ -172,8 +158,6 @@ const ActivityChart = ({
     );
   };
 
-  // The year filter scopes the data, so offering dates outside it would only ever draw
-  // zeroes. Disabling them says why instead of leaving the user to guess.
   const disabledDate = (current: Dayjs) =>
     current.isAfter(dayjs(bounds.end), 'day') ||
     (bounds.start ? current.isBefore(dayjs(bounds.start), 'day') : false);
@@ -188,7 +172,6 @@ const ActivityChart = ({
     setDrill((prev) => [...prev, { label: bucket.fullLabel, start, end, granularity: finer }]);
   };
 
-  // Thin the ticks on long ranges; the budget follows the breakpoint.
   const labelBudget = stackPickers ? 6 : 14;
   const tickInterval = Math.max(0, Math.ceil(series.buckets.length / labelBudget) - 1);
   const canDrill = FINER_GRANULARITY[series.granularity] !== null;
@@ -243,7 +226,6 @@ const ActivityChart = ({
                   key={edge}
                   value={shownRange[edge === 'from' ? 0 : 1]}
                   onChange={(value) => setEdge(edge, value)}
-                  // Each end is bounded by the other, so an inverted range is unpickable.
                   disabledDate={(current) =>
                     disabledDate(current) ||
                     (edge === 'from'
@@ -265,12 +247,9 @@ const ActivityChart = ({
                 if (value && value[0] && value[1]) pickRange([value[0], value[1]]);
               }}
               disabledDate={disabledDate}
-              // Nothing to clear back to: the picker always shows the active window, so an
-              // empty state would only ever be a moment of the chart contradicting itself.
               allowClear={false}
               format="MM/DD/YYYY"
-              // Inline, not a Tailwind class: antd's own width rule is unlayered and beats
-              // Tailwind utilities, so `w-[248px]` alone would not apply.
+              // Inline width: antd's own rule is unlayered and beats Tailwind.
               style={{ width: 248 }}
             />
           )}
@@ -359,8 +338,7 @@ const ActivityChart = ({
               name="Applications"
               fill="url(#activityBarGradient)"
               radius={[4, 4, 0, 0]}
-              // A year of daily bars is not worth animating on every range change.
-              isAnimationActive={series.buckets.length <= 60}
+              isAnimationActive={series.buckets.length <= ANIMATE_UP_TO_BUCKETS}
               className={canDrill ? 'cursor-pointer' : undefined}
               onClick={(entry: unknown) => {
                 // Recharts hands back either the datum or a wrapper holding it.

@@ -1,72 +1,35 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Table,
-  Button,
-  Input,
-  Select,
-  Spin,
-  Form,
-  Space,
-  Upload,
-  message,
-  Typography,
-  Row,
-  Col,
-  DatePicker,
-  Tooltip,
-  Grid,
-  Pagination,
-  AutoComplete,
-} from 'antd';
-import {
-  PlusOutlined,
-  SearchOutlined,
-  FilterOutlined,
-  GlobalOutlined,
-  InboxOutlined,
-  LockOutlined,
-  UnlockOutlined,
-  DeleteOutlined,
-  ThunderboltOutlined,
-  DownOutlined,
-  UpOutlined,
-} from '@ant-design/icons';
+import { Form, message, Grid } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
 import { MetricCardsSkeleton, TableSkeleton } from '../../components/SkeletonLoader';
-import dayjs from 'dayjs';
-import type { TableProps, UploadProps } from 'antd';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  getApplication,
-  getApplications,
-  createApplication,
-  updateApplication,
-  deleteApplication,
-  applyImportApplications,
-  extractJobBoardPosting,
-  previewImportApplications,
-  deleteAllApplications,
-  exportApplications,
-  getDocuments,
-  patchDocument,
-} from '../../api';
-import type { ApplicationFileImportPreview, JobBoardImportResult } from '../../api';
+import type { TableProps } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getApplications, getDocuments } from '../../api';
 import { getUserSettings } from '../../api/availability';
 import type { Document, EmploymentType } from '../../types';
 import type { CareerApplication } from '../../types/application';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import BulkActionHeader from '../../components/BulkActionHeader';
-import RowActions from '../../components/RowActions';
-import Modal from '../../components/MobileModal';
-import ModalShell from '../../components/ModalShell';
 import { PageState } from '../../components/PageState';
 import CoverLetterModal from './CoverLetterModal';
 import ApplicationDetailDrawer from './ApplicationDetailDrawer';
-import MobileApplicationCard from './MobileApplicationCard';
-import { getCurrentYear } from '../../utils/yearFilter';
-import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
-import { usePersistedState } from '../../hooks/usePersistedState';
-import LocationSelect from '../../components/LocationSelect';
-import { EmploymentTypeBadge, StatusBadge } from './ApplicationBadges';
+import ApplicationFilterBar from './ApplicationFilterBar';
+import ApplicationBulkBar from './ApplicationBulkBar';
+import ApplicationsToolbar from './ApplicationsToolbar';
+import ApplicationTable from './ApplicationTable';
+import ApplicationEmptyState from './ApplicationEmptyState';
+import { orderingFromSorter } from './applicationSorting';
+import ApplicationAddModal from './ApplicationAddModal';
+import ApplicationMobileList from './ApplicationMobileList';
+import ApplicationMetricCards from './ApplicationMetricCards';
+import { useApplicationFilters } from './useApplicationFilters';
+import { useApplicationImport } from './useApplicationImport';
+import { useJobBoardImport } from './useJobBoardImport';
+import { useApplicationActions } from './useApplicationActions';
+import { useApplicationEditor } from './useApplicationEditor';
+import ApplicationImportModal from './ApplicationImportModal';
+import JobBoardImportModal from './JobBoardImportModal';
+import ApplicationFormFields from './ApplicationFormFields';
+import { buildApplicationColumns } from './applicationColumns';
+import { buildApplicationMetrics } from './applicationMetrics';
 import {
   getApplicationStatusEditOptions,
   getApplicationStatusFilterOptions,
@@ -75,35 +38,18 @@ import {
   APPLICATION_PAGE_SIZE,
   DEFAULT_APPLICATION_STAGES,
   DEFAULT_APPLICATION_SUMMARY,
-  type ApplicationFormValues,
   type ApplicationOrdering,
-  getRoundNumberFromStatus,
   isPaginatedApplicationsResponse,
   type PaginatedApplicationsResponse,
   summarizeApplications,
 } from './applicationTypes';
-import {
-  APPLICATION_IMPORT_REVIEW_FIELDS,
-  type ApplicationImportReviewFieldKey,
-  buildEditableImportReview,
-  getCoreImportMapping,
-  getImportFieldValue as readImportFieldValue,
-} from './applicationImportReview';
-import { getApiErrorMessage } from '../../utils/apiError';
-import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import { useCompanyList } from '../../hooks/useCompanyList';
-import SalaryRangeInput from '../../components/SalaryRangeInput';
-
-const { Text, Link } = Typography;
-const { Option } = Select;
-const { Dragger } = Upload;
 
 const Applications = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
-  const [jobImportForm] = Form.useForm();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const { options: companyListOptions, loading: companyListLoading } = useCompanyList();
@@ -132,67 +78,33 @@ const Applications = () => {
     [appStages]
   );
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [applicationImportPreview, setApplicationImportPreview] =
-    useState<ApplicationFileImportPreview | null>(null);
-  const [applicationImportRows, setApplicationImportRows] = useState<Array<Record<string, string>>>(
-    []
-  );
-  const [applicationImportFileName, setApplicationImportFileName] = useState('');
-  const [applicationImportMapping, setApplicationImportMapping] = useState<Record<string, string>>(
-    {}
-  );
-  const [applicationImportPreviewing, setApplicationImportPreviewing] = useState(false);
-  const [applicationImportApplying, setApplicationImportApplying] = useState(false);
-  const [isJobImportModalOpen, setIsJobImportModalOpen] = useState(false);
-  const [jobImportUrl, setJobImportUrl] = useState('');
-  const [jobImportPreview, setJobImportPreview] = useState<JobBoardImportResult | null>(null);
-  const [jobImportLoading, setJobImportLoading] = useState(false);
-  const [jobImportSaving, setJobImportSaving] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [detailApp, setDetailApp] = useState<CareerApplication | null>(null);
-  const [detailDrawerMode, setDetailDrawerMode] = useState<'view' | 'edit'>('view');
   const [coverLetterApp, setCoverLetterApp] = useState<CareerApplication | null>(null);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchText, setSearchText] = useState('');
-  const [debouncedSearchText, setDebouncedSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [empTypeFilter, setEmpTypeFilter] = useState('ALL');
-  const [locationFilter, setLocationFilter] = useState('ALL');
-  const [isLockedFilter, setIsLockedFilter] = useState<boolean | undefined>(undefined);
-  const [selectedYear, setSelectedYear] = usePersistedState<number | 'all'>(
-    'applicationsSelectedYear',
-    getCurrentYear(),
-    {
-      serialize: (value) => value.toString(),
-      deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
-    }
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-    setSelectedRowKeys([]);
-  }, [
+  const {
+    currentPage,
+    setCurrentPage,
+    searchText,
+    setSearchText,
     debouncedSearchText,
     statusFilter,
+    setStatusFilter,
     empTypeFilter,
+    setEmpTypeFilter,
     locationFilter,
+    setLocationFilter,
     isLockedFilter,
+    setIsLockedFilter,
     selectedYear,
-  ]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedSearchText(searchText.trim());
-    }, 300);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [searchText]);
+    availableYears,
+    handleYearChange,
+    activeFilterCount,
+    hasActiveSearchFilters,
+    isYearFiltered,
+    clearApplicationFilters,
+  } = useApplicationFilters({ applications, setSelectedRowKeys });
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -238,6 +150,51 @@ const Applications = () => {
     statusFilter,
   ]);
 
+  const {
+    isImportModalOpen,
+    setIsImportModalOpen,
+    applicationImportPreview,
+    applicationImportFileName,
+    applicationImportMapping,
+    applicationImportPreviewing,
+    applicationImportApplying,
+    importProps,
+    closeImportModal,
+    updateImportMapping,
+    getImportFieldValue,
+    updateImportRowValue,
+    editableImportReview,
+    visibleImportReviewFields,
+    applyApplicationImport,
+  } = useApplicationImport({
+    applications,
+    messageApi,
+    onImported: () => fetchApplications(),
+  });
+
+  const {
+    jobImportForm,
+    isJobImportModalOpen,
+    setIsJobImportModalOpen,
+    jobImportUrl,
+    setJobImportUrl,
+    jobImportPreview,
+    jobImportLoading,
+    jobImportSaving,
+    closeJobImportModal,
+    handleExtractJobPosting,
+    handleCreateFromJobImport,
+  } = useJobBoardImport({ messageApi, onCreated: () => fetchApplications() });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const jobUrl = params.get('jobUrl');
+    if (!jobUrl) return;
+    setJobImportUrl(jobUrl);
+    setIsJobImportModalOpen(true);
+    navigate('/applications', { replace: true });
+  }, [location.search, navigate, setIsJobImportModalOpen, setJobImportUrl]);
+
   const fetchDocuments = useCallback(async () => {
     try {
       const docsResp = await getDocuments();
@@ -257,7 +214,7 @@ const Applications = () => {
     if (currentPage > maxPage) {
       setCurrentPage(maxPage);
     }
-  }, [applicationsTotal, currentPage]);
+  }, [applicationsTotal, currentPage, setCurrentPage]);
 
   useEffect(() => {
     fetchDocuments();
@@ -271,222 +228,46 @@ const Applications = () => {
       .catch(() => {});
   }, [fetchDocuments]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const jobUrl = params.get('jobUrl');
-    if (!jobUrl) return;
-    setJobImportUrl(jobUrl);
-    setIsJobImportModalOpen(true);
-    navigate('/applications', { replace: true });
-  }, [location.search, navigate]);
-
-  const handleExportWrapper = async (format: string) => {
-    const response = await exportApplications(format);
-    return {
-      data: response.data,
-      headers: response.headers as unknown as Record<string, string>,
-    };
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteApplication(id);
-      messageApi.success('Application deleted');
-      fetchApplications();
-    } catch (error) {
-      messageApi.error('Failed to delete application');
-      console.error(error);
-    }
-  };
-
-  const handleDuplicateApplication = (app: CareerApplication) => {
-    populateApplicationForm(app);
-    setEditingId(null);
-    form.setFieldValue('role_title', `${app.role_title} (Copy)`);
-    setDetailApp(null);
-    setDetailDrawerMode('view');
-    setIsAddModalOpen(true);
-  };
-
-  const requestDeleteApplication = (application: CareerApplication) => {
-    const companyName = application.company_details?.name || 'this application';
-    Modal.confirm({
-      title: 'Delete application?',
-      content: `Delete ${application.role_title} at ${companyName}? This cannot be undone.`,
-      okText: 'Delete application',
-      okType: 'danger',
-      cancelText: 'Keep application',
-      onOk: () => handleDelete(application.id),
-    });
-  };
-
-  const handleDeleteAll = async () => {
-    try {
-      await deleteAllApplications();
-      messageApi.success('All applications deleted');
-      fetchApplications();
-    } catch (error) {
-      messageApi.error('Failed to delete all applications');
-      console.error(error);
-    }
-  };
-
-  const toggleLock = async (app: CareerApplication) => {
-    try {
-      await updateApplication(app.id, { is_locked: !app.is_locked });
-      messageApi.success(app.is_locked ? 'Application unlocked' : 'Application locked');
-      setApplications((prev) =>
-        prev.map((a) => (a.id === app.id ? { ...a, is_locked: !app.is_locked } : a))
-      );
-      setApplicationSummary((prev) => ({
-        ...prev,
-        locked: Math.max(0, prev.locked + (app.is_locked ? -1 : 1)),
-      }));
-    } catch (error) {
-      messageApi.error('Failed to toggle lock');
-      console.error(error);
-    }
-  };
-
-  const handleBulkDelete = () => {
-    Modal.confirm({
-      title: 'Delete Selected Applications',
-      content: `Are you sure you want to delete ${selectedRowKeys.length} applications?`,
-      okText: 'Yes',
-      okType: 'danger',
-      cancelText: 'No',
-      onOk: async () => {
-        try {
-          await Promise.all(selectedRowKeys.map((id) => deleteApplication(id as number)));
-          messageApi.success(`${selectedRowKeys.length} applications deleted`);
-          setSelectedRowKeys([]);
-          fetchApplications();
-        } catch {
-          messageApi.error('Failed to delete some applications');
-          fetchApplications();
-        }
-      },
-    });
-  };
-
-  const handleBulkToggleLock = async (lock: boolean) => {
-    try {
-      await Promise.all(
-        selectedRowKeys.map((id) => updateApplication(id as number, { is_locked: lock }))
-      );
-      messageApi.success(`${selectedRowKeys.length} applications ${lock ? 'locked' : 'unlocked'}`);
-      setSelectedRowKeys([]);
-      fetchApplications();
-    } catch {
-      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some applications`);
-      fetchApplications();
-    }
-  };
-
-  const isAnySelectedLocked = selectedRowKeys.some((id) => {
-    const app = applications.find((a) => a.id === id);
-    return app?.is_locked;
+  const {
+    handleExportWrapper,
+    handleDelete,
+    requestDeleteApplication,
+    handleDeleteAll,
+    toggleLock,
+    handleBulkDelete,
+    handleBulkToggleLock,
+    isAnySelectedLocked,
+  } = useApplicationActions({
+    applications,
+    selectedRowKeys,
+    setSelectedRowKeys,
+    setApplications,
+    setApplicationSummary,
+    messageApi,
+    refresh: fetchApplications,
   });
 
-  const handleAddEdit = async (values: ApplicationFormValues) => {
-    try {
-      const selectedDocumentIds: number[] = values.linked_document_ids || [];
-      const payload: Record<string, unknown> = {
-        ...values,
-        company_name: values.company,
-        job_link: values.site_link,
-        job_description: values.job_description || '',
-        date_applied: values.date_applied ? values.date_applied.format('YYYY-MM-DD') : undefined,
-      };
-      payload.current_round = getRoundNumberFromStatus(values.status);
-      ['growth_score', 'work_life_score', 'brand_score', 'team_score'].forEach((field) => {
-        if (payload[field] === undefined) payload[field] = null;
-      });
-      payload.visa_sponsorship =
-        values.visa_sponsorship && values.visa_sponsorship !== 'UNKNOWN'
-          ? values.visa_sponsorship
-          : '';
-      payload.day_one_gc =
-        values.day_one_gc && values.day_one_gc !== 'UNKNOWN' ? values.day_one_gc : '';
-      delete payload.company;
-      delete payload.site_link;
-      delete payload.linked_document_ids;
-      delete payload.notes;
-
-      if (editingId) {
-        const isDrawerEdit = detailDrawerMode === 'edit' && detailApp?.id === editingId;
-        const response = await updateApplication(editingId, payload);
-
-        const currentlyLinkedDocIds = documents
-          .filter((doc) => doc.application === editingId)
-          .map((doc) => doc.id);
-
-        const docsToLink = selectedDocumentIds.filter((id) => !currentlyLinkedDocIds.includes(id));
-        const docsToUnlink = currentlyLinkedDocIds.filter(
-          (id) => !selectedDocumentIds.includes(id)
-        );
-
-        await Promise.all([
-          ...docsToLink.map((docId) => patchDocument(docId, { application: editingId })),
-          ...docsToUnlink.map((docId) => patchDocument(docId, { application: null })),
-        ]);
-        messageApi.success('Application updated');
-
-        const updatedApplication = response.data as CareerApplication;
-        setApplications((prev) =>
-          prev.map((app) => (app.id === editingId ? updatedApplication : app))
-        );
-        setDocuments((prev) =>
-          prev.map((doc) => {
-            if (docsToLink.includes(doc.id)) return { ...doc, application: editingId };
-            if (docsToUnlink.includes(doc.id)) return { ...doc, application: null };
-            return doc;
-          })
-        );
-
-        if (isDrawerEdit) {
-          setDetailApp(updatedApplication);
-          setDetailDrawerMode('view');
-        } else {
-          setIsAddModalOpen(false);
-        }
-      } else {
-        const response = await createApplication(payload);
-        const applicationId = response.data.id;
-
-        if (selectedDocumentIds.length > 0) {
-          await Promise.all(
-            selectedDocumentIds.map((docId) => patchDocument(docId, { application: applicationId }))
-          );
-        }
-        messageApi.success('Application created');
-        setIsAddModalOpen(false);
-        fetchApplications();
-      }
-      form.resetFields();
-      setEditingId(null);
-    } catch (error) {
-      messageApi.error('Failed to save application');
-      console.error(error);
-    }
-  };
-
-  const openAddModal = useCallback(() => {
-    setEditingId(null);
-    setDetailApp(null);
-    setDetailDrawerMode('view');
-    form.resetFields();
-    form.setFieldsValue({
-      status: 'APPLIED',
-      employment_type: 'full_time',
-      date_applied: dayjs(),
-      rto_policy: 'UNKNOWN',
-      visa_sponsorship: undefined,
-      day_one_gc: undefined,
-      linked_document_ids: [],
-    });
-    setIsAddModalOpen(true);
-  }, [form]);
+  const {
+    isAddModalOpen,
+    setIsAddModalOpen,
+    detailApp,
+    setDetailApp,
+    detailDrawerMode,
+    openAddModal,
+    handleAddEdit,
+    handleDuplicateApplication,
+    openDetailDrawer,
+    openEditDrawer,
+    closeDetailDrawer,
+    cancelDrawerEdit,
+  } = useApplicationEditor({
+    form,
+    documents,
+    setDocuments,
+    setApplications,
+    messageApi,
+    refresh: fetchApplications,
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -499,326 +280,21 @@ const Applications = () => {
       return;
     }
     navigate('/applications', { replace: true });
-  }, [location.search, navigate, openAddModal]);
-
-  const closeJobImportModal = () => {
-    setIsJobImportModalOpen(false);
-    setJobImportUrl('');
-    setJobImportPreview(null);
-    jobImportForm.resetFields();
-  };
-
-  const handleExtractJobPosting = async () => {
-    if (!jobImportUrl.trim()) {
-      messageApi.warning('Paste a public HTTPS job posting URL first');
-      return;
-    }
-
-    try {
-      setJobImportLoading(true);
-      const response = await extractJobBoardPosting(jobImportUrl.trim());
-      setJobImportPreview(response.data);
-      jobImportForm.setFieldsValue({
-        company: response.data.company,
-        role_title: response.data.role_title,
-        office_location: response.data.location,
-        employment_type: response.data.employment_type || 'full_time',
-        salary_range: response.data.salary_range,
-        job_description: response.data.job_description,
-      });
-      messageApi.success('Job details extracted');
-    } catch (error: unknown) {
-      const apiError = error as { response?: { data?: { error?: string } } };
-      messageApi.error(getApiErrorMessage(apiError, 'Failed to extract this job posting'));
-      console.error(error);
-    } finally {
-      setJobImportLoading(false);
-    }
-  };
-
-  const handleCreateFromJobImport = async () => {
-    if (!jobImportPreview) return;
-
-    try {
-      const values = await jobImportForm.validateFields();
-      setJobImportSaving(true);
-      await createApplication({
-        company_name: values.company,
-        role_title: values.role_title,
-        status: 'APPLIED',
-        employment_type: values.employment_type || 'full_time',
-        job_link: jobImportPreview.source_url,
-        salary_range: values.salary_range || '',
-        office_location: values.office_location || '',
-        location: values.office_location || '',
-        // Stored in its own column now, so it stays queryable and out of your notes.
-        job_description: values.job_description || '',
-        notes: '',
-        date_applied: dayjs().format('YYYY-MM-DD'),
-      });
-      messageApi.success('Application imported');
-      closeJobImportModal();
-      fetchApplications();
-    } catch (error: unknown) {
-      const formError = error as {
-        errorFields?: unknown;
-        response?: { data?: { error?: string } };
-      };
-      if (formError?.errorFields) return;
-      messageApi.error(getApiErrorMessage(formError, 'Failed to create imported application'));
-      console.error(error);
-    } finally {
-      setJobImportSaving(false);
-    }
-  };
-
-  const populateApplicationForm = (app: CareerApplication) => {
-    setEditingId(app.id);
-    form.setFieldsValue({
-      company: app.company_details?.name,
-      role_title: app.role_title,
-      status: app.status,
-      employment_type: app.employment_type || 'full_time',
-      level: app.level || '',
-      site_link: app.job_link,
-      job_description: app.job_description || '',
-      salary_range: app.salary_range,
-      office_location: app.office_location || app.location,
-      rto_policy: app.rto_policy || 'UNKNOWN',
-      visa_sponsorship:
-        app.visa_sponsorship && app.visa_sponsorship !== 'UNKNOWN'
-          ? app.visa_sponsorship
-          : undefined,
-      day_one_gc: app.day_one_gc && app.day_one_gc !== 'UNKNOWN' ? app.day_one_gc : undefined,
-      growth_score: app.growth_score ?? null,
-      work_life_score: app.work_life_score ?? null,
-      brand_score: app.brand_score ?? null,
-      team_score: app.team_score ?? null,
-      date_applied: dayjsDateOnlyLocal(app.date_applied),
-      notes: app.notes,
-      linked_document_ids: documents
-        .filter((doc) => doc.application === app.id)
-        .map((doc) => doc.id),
-    });
-  };
-
-  // ?application=<id> opens that drawer once, then clears the param.
-  const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    const requested = Number(searchParams.get('application'));
-    if (!requested) return;
-    const params = new URLSearchParams(searchParams);
-    params.delete('application');
-    setSearchParams(params, { replace: true });
-    void getApplication(requested)
-      .then((response) => {
-        setDetailApp(response.data);
-        setDetailDrawerMode('view');
-      })
-      .catch((error) => {
-        console.error('Failed to open the requested application', error);
-        messageApi.error('Could not open that application.');
-      });
-    // Runs for whatever id the URL carries; the drawer setters are stable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  const openDetailDrawer = (app: CareerApplication) => {
-    setDetailApp(app);
-    setDetailDrawerMode('view');
-  };
-
-  const openEditDrawer = (app: CareerApplication) => {
-    populateApplicationForm(app);
-    setIsAddModalOpen(false);
-    setDetailApp(app);
-    setDetailDrawerMode('edit');
-  };
-
-  const closeDetailDrawer = () => {
-    setDetailApp(null);
-    setDetailDrawerMode('view');
-    setEditingId(null);
-    form.resetFields();
-  };
-
-  const cancelDrawerEdit = () => {
-    setDetailDrawerMode('view');
-    setEditingId(null);
-    form.resetFields();
-  };
-
-  const importProps: UploadProps = {
-    name: 'file',
-    multiple: false,
-    showUploadList: false,
-    beforeUpload: (file) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      setApplicationImportFileName(file.name);
-      setApplicationImportPreview(null);
-      setApplicationImportRows([]);
-      setApplicationImportMapping({});
-      setApplicationImportPreviewing(true);
-      previewImportApplications(formData)
-        .then((response) => {
-          setApplicationImportPreview(response.data.preview);
-          setApplicationImportRows(response.data.preview.rows);
-          setApplicationImportMapping(getCoreImportMapping(response.data.preview.mapping));
-        })
-        .catch((error) => {
-          messageApi.error(getApiErrorMessage(error, 'Import preview failed'));
-        })
-        .finally(() => {
-          setApplicationImportPreviewing(false);
-        });
-      return false;
-    },
-  };
-
-  const closeImportModal = () => {
-    setIsImportModalOpen(false);
-    setApplicationImportPreview(null);
-    setApplicationImportRows([]);
-    setApplicationImportFileName('');
-    setApplicationImportMapping({});
-  };
-
-  const updateImportMapping = (fieldKey: string, header: string) => {
-    setApplicationImportMapping((current) => {
-      const next = { ...current };
-      if (header) {
-        next[fieldKey] = header;
-      } else {
-        delete next[fieldKey];
-      }
-      return next;
-    });
-  };
-
-  const getImportFieldValue = useCallback(
-    (row: Record<string, string>, fieldKey: ApplicationImportReviewFieldKey) => {
-      return readImportFieldValue(row, applicationImportMapping, fieldKey);
-    },
-    [applicationImportMapping]
-  );
-
-  const updateImportRowValue = (
-    rowIndex: number,
-    fieldKey: ApplicationImportReviewFieldKey,
-    value: string
-  ) => {
-    const header = applicationImportMapping[fieldKey];
-    if (!header) {
-      messageApi.warning('Map this field to a column before editing its values.');
-      return;
-    }
-    setApplicationImportRows((current) =>
-      current.map((row, index) => (index === rowIndex ? { ...row, [header]: value } : row))
-    );
-  };
-
-  const editableImportReview = useMemo(() => {
-    if (!applicationImportPreview) return null;
-    return buildEditableImportReview({
-      rows: applicationImportRows,
-      applications,
-      mapping: applicationImportMapping,
-    });
-  }, [applicationImportPreview, applicationImportRows, applications, applicationImportMapping]);
-
-  const visibleImportReviewFields = useMemo(
-    () =>
-      APPLICATION_IMPORT_REVIEW_FIELDS.filter(
-        (field) => field.required || applicationImportMapping[field.key]
-      ),
-    [applicationImportMapping]
-  );
-
-  const applyApplicationImport = async () => {
-    if (!applicationImportPreview) return;
-    if (!applicationImportMapping.company_name || !applicationImportMapping.role_title) {
-      messageApi.warning('Map Company and Role before importing');
-      return;
-    }
-    setApplicationImportApplying(true);
-    try {
-      const response = await applyImportApplications(
-        applicationImportRows,
-        applicationImportMapping
-      );
-      const { result } = response.data;
-      if (result.errors.length > 0) {
-        messageApi.warning(
-          `Imported with ${result.errors.length} row issue(s): ${result.created} created, ${result.updated} updated`
-        );
-      } else {
-        messageApi.success(`Import complete: ${result.created} created, ${result.updated} updated`);
-      }
-      closeImportModal();
-      fetchApplications();
-    } catch (error: any) {
-      messageApi.error(getApiErrorMessage(error, 'Failed to apply import'));
-    } finally {
-      setApplicationImportApplying(false);
-    }
-  };
+  }, [location.search, navigate, openAddModal, setIsJobImportModalOpen]);
 
   const filteredData = applications;
   const paginatedData = applications;
 
-  const applicationMetrics = useMemo(() => {
-    return [
-      {
-        label: 'Matching records',
-        value: applicationSummary.total.toLocaleString(),
-        tone: 'slate' as const,
-        isActive: statusFilter === 'ALL' && isLockedFilter === undefined,
-        onClick: () => {
-          setStatusFilter('ALL');
-          setIsLockedFilter(undefined);
-        },
-      },
-      {
-        label: 'Total interviews',
-        value: applicationSummary.interviews.toLocaleString(),
-        tone: 'blue' as const,
-        isActive: statusFilter === 'INTERVIEWS',
-        onClick: () => {
-          setStatusFilter('INTERVIEWS');
-          setIsLockedFilter(undefined);
-        },
-      },
-      {
-        label: 'Total offers',
-        value: applicationSummary.offers.toLocaleString(),
-        tone: 'emerald' as const,
-        isActive: statusFilter === 'OFFER',
-        onClick: () => {
-          setStatusFilter('OFFER');
-          setIsLockedFilter(undefined);
-        },
-      },
-      {
-        label: 'Total locked',
-        value: applicationSummary.locked.toLocaleString(),
-        tone: 'amber' as const,
-        isActive: isLockedFilter === true,
-        onClick: () => {
-          setStatusFilter('ALL');
-          setIsLockedFilter(true);
-        },
-      },
-    ];
-  }, [applicationSummary, statusFilter, isLockedFilter]);
-
-  const availableYears = useMemo(
-    () => (typeof selectedYear === 'number' ? [selectedYear] : []),
-    [selectedYear]
+  const applicationMetrics = useMemo(
+    () =>
+      buildApplicationMetrics(applicationSummary, {
+        statusFilter,
+        isLockedFilter,
+        setStatusFilter,
+        setIsLockedFilter,
+      }),
+    [applicationSummary, statusFilter, isLockedFilter, setStatusFilter, setIsLockedFilter]
   );
-  const handleYearChange = (year: number | 'all') => {
-    setSelectedYear(year);
-  };
 
   const toggleSelectedApplication = (id: number, checked: boolean) => {
     setSelectedRowKeys((prev) => {
@@ -829,152 +305,25 @@ const Applications = () => {
     });
   };
 
-  const columns = [
-    {
-      title: 'Company',
-      key: 'company',
-      render: (_: unknown, record: CareerApplication) => (
-        <Space direction="vertical" size={0}>
-          <Button
-            type="link"
-            className="!h-auto !p-0 !font-semibold"
-            onClick={() => openDetailDrawer(record)}
-          >
-            {record.company_details?.name}
-          </Button>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {record.office_location || record.location || '—'}
-          </Text>
-        </Space>
-      ),
-      sorter: (a: CareerApplication, b: CareerApplication) =>
-        (a.company_details?.name || '').localeCompare(b.company_details?.name || ''),
-      defaultSortOrder: 'ascend' as const,
-    },
-    {
-      title: 'Role',
-      dataIndex: 'role_title',
-      key: 'role',
-      render: (text: string, record: CareerApplication) => (
-        <Space direction="vertical" size={2}>
-          <Space size={6} align="center">
-            <Text>{text}</Text>
-            <EmploymentTypeBadge type={record.employment_type} employmentTypes={empTypes} />
-          </Space>
-          {record.job_link && (
-            <Link href={record.job_link} target="_blank" style={{ fontSize: 12 }}>
-              <GlobalOutlined /> Link
-            </Link>
-          )}
-        </Space>
-      ),
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => <StatusBadge status={status} stages={appStages} />,
-      sorter: true,
-      sortOrder:
-        applicationOrdering === 'status'
-          ? ('ascend' as const)
-          : applicationOrdering === '-status'
-            ? ('descend' as const)
-            : undefined,
-    },
-    {
-      title: 'Date Applied',
-      dataIndex: 'date_applied',
-      key: 'date_applied',
-      render: (date: string) => formatDateOnly(date, '—'),
-      sorter: (a: CareerApplication, b: CareerApplication) =>
-        (dayjsDateOnlyLocal(a.date_applied)?.valueOf() ?? 0) -
-        (dayjsDateOnlyLocal(b.date_applied)?.valueOf() ?? 0),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_: unknown, record: CareerApplication) => (
-        <Space>
-          <Tooltip title="Details">
-            <Button
-              type="text"
-              size="small"
-              icon={<InboxOutlined style={{ color: '#334155' }} />}
-              onClick={() => openDetailDrawer(record)}
-              aria-label={`View ${record.company_details?.name || 'application'} details`}
-            />
-          </Tooltip>
-          <Tooltip title="Generate Cover Letter">
-            <Button
-              type="text"
-              size="small"
-              icon={<ThunderboltOutlined style={{ color: '#0ea5e9' }} />}
-              onClick={() => setCoverLetterApp(record)}
-              aria-label={`Generate cover letter for ${record.company_details?.name || 'application'}`}
-            />
-          </Tooltip>
-          <RowActions
-            size="middle"
-            isLocked={record.is_locked}
-            onToggleLock={() => toggleLock(record)}
-            onEdit={() => openEditDrawer(record)}
-            onDuplicate={record.is_locked ? undefined : () => handleDuplicateApplication(record)}
-            onDelete={() => handleDelete(record.id)}
-            disableDelete={record.is_locked}
-          />
-        </Space>
-      ),
-    },
-  ];
-
-  const activeFilterCount =
-    Number(Boolean(searchText)) +
-    Number(statusFilter !== 'ALL') +
-    Number(empTypeFilter !== 'ALL') +
-    Number(locationFilter !== 'ALL') +
-    Number(isLockedFilter !== undefined);
-
-  const hasActiveSearchFilters = activeFilterCount > 0;
-  const isYearFiltered = selectedYear !== 'all';
-  const clearApplicationFilters = () => {
-    setSearchText('');
-    setDebouncedSearchText('');
-    setStatusFilter('ALL');
-    setEmpTypeFilter('ALL');
-    setLocationFilter('ALL');
-    setIsLockedFilter(undefined);
-    setCurrentPage(1);
-  };
-
-  const emptyStateTitle = hasActiveSearchFilters
-    ? 'No matching applications'
-    : isYearFiltered
-      ? `No applications in ${selectedYear}`
-      : 'No applications yet';
-  const emptyStateDescription = hasActiveSearchFilters
-    ? 'No saved applications match the current search and filters.'
-    : isYearFiltered
-      ? 'Choose another year, show all years, or add an application for this year.'
-      : 'Add an application to track its status, interviews, documents, and next steps.';
-  const emptyStateActionLabel = hasActiveSearchFilters
-    ? 'Clear filters'
-    : isYearFiltered
-      ? 'Show all years'
-      : 'Add application';
-  const emptyStateAction = hasActiveSearchFilters
-    ? clearApplicationFilters
-    : isYearFiltered
-      ? () => handleYearChange('all')
-      : openAddModal;
-
+  const columns = buildApplicationColumns({
+    appStages,
+    empTypes,
+    openDetailDrawer,
+    openEditDrawer,
+    handleDelete,
+    handleDuplicateApplication,
+    toggleLock,
+    setCoverLetterApp,
+    applicationOrdering,
+  });
   const applicationEmptyState = (
-    <PageState
-      title={emptyStateTitle}
-      description={emptyStateDescription}
-      actionLabel={emptyStateActionLabel}
-      onAction={emptyStateAction}
-      icon={<InboxOutlined />}
+    <ApplicationEmptyState
+      hasActiveSearchFilters={hasActiveSearchFilters}
+      isYearFiltered={isYearFiltered}
+      selectedYear={selectedYear}
+      onClearFilters={clearApplicationFilters}
+      onShowAllYears={() => handleYearChange('all')}
+      onAddApplication={openAddModal}
     />
   );
 
@@ -987,429 +336,84 @@ const Applications = () => {
     extra
   ) => {
     if (extra.action !== 'sort') return;
-
-    const activeSorter = Array.isArray(sorter)
-      ? sorter.find((item) => item.columnKey === 'status')
-      : sorter;
-    const nextOrdering =
-      activeSorter?.columnKey === 'status'
-        ? activeSorter.order === 'ascend'
-          ? 'status'
-          : activeSorter.order === 'descend'
-            ? '-status'
-            : undefined
-        : undefined;
-
-    setApplicationOrdering(nextOrdering);
+    setApplicationOrdering(orderingFromSorter(sorter));
     setCurrentPage(1);
     setSelectedRowKeys([]);
   };
 
-  const renderApplicationForm = (
-    onCancel: () => void,
-    submitLabel = 'Save',
-    showActions = true
-  ) => (
-    <Form
-      scrollToFirstError={SCROLL_TO_FIRST_ERROR}
+  const renderApplicationForm = (props: {
+    onCancel: () => void;
+    submitLabel?: string;
+    showActions?: boolean;
+  }) => (
+    <ApplicationFormFields
       form={form}
-      layout="vertical"
-      onFinish={handleAddEdit}
-    >
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item name="company" label="Company" rules={[{ required: true }]}>
-            <AutoComplete
-              options={companyListOptions}
-              filterOption={(input, option) =>
-                String(option?.value || '')
-                  .toLocaleLowerCase()
-                  .includes(input.toLocaleLowerCase())
-              }
-              placeholder="Google"
-              notFoundContent={companyListLoading ? 'Loading companies…' : 'Enter a new company'}
-            />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item name="role_title" label="Role Title" rules={[{ required: true }]}>
-            <Input placeholder="Software Engineer" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item name="status" label="Status">
-            <Select>
-              {editableStatusOptions.map((stage) => (
-                <Option key={stage.key} value={stage.key}>
-                  {stage.label}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item name="employment_type" label="Employment Type">
-            <Select>
-              {empTypes.map((t) => (
-                <Option key={t.value} value={t.value}>
-                  {t.label}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item name="level" label="Level">
-            <Input placeholder="e.g. L5, Senior, Staff, IC3" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item name="date_applied" label="Date Applied">
-            <DatePicker inputReadOnly style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item name="office_location" label="Location">
-            <LocationSelect className="w-full" placeholder="e.g. San Francisco, CA" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item name="salary_range" label="Salary Range">
-            <SalaryRangeInput />
-          </Form.Item>
-        </Col>
-
-        <Col span={24}>
-          <Form.Item name="site_link" label="Job Link">
-            <Input prefix={<GlobalOutlined />} placeholder="https://..." />
-          </Form.Item>
-        </Col>
-        <Col span={24}>
-          <Form.Item
-            name="job_description"
-            label="Job Description"
-            tooltip="Kept so you can still review the role after the posting is taken down. Pre-fills the cover letter generator."
-          >
-            <Input.TextArea rows={5} placeholder="Paste the job posting here (optional)" />
-          </Form.Item>
-        </Col>
-        <Col span={24}>
-          <Form.Item name="linked_document_ids" label="Linked Documents (Optional)">
-            <Select
-              mode="multiple"
-              allowClear
-              placeholder="Select documents to link"
-              optionFilterProp="label"
-              options={documents.map((doc) => ({
-                value: doc.id,
-                label: `${doc.title} (v${doc.version_number || 1})`,
-              }))}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
-      {showActions ? (
-        <div className="mt-4 flex justify-end gap-3">
-          <Button size="large" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button size="large" type="primary" htmlType="submit">
-            {submitLabel}
-          </Button>
-        </div>
-      ) : null}
-    </Form>
+      handleAddEdit={handleAddEdit}
+      documents={documents}
+      empTypes={empTypes}
+      editableStatusOptions={editableStatusOptions}
+      companyListOptions={companyListOptions}
+      companyListLoading={companyListLoading}
+      {...props}
+    />
   );
 
   return (
     <div style={{ padding: 0, width: '100%' }}>
       {contextHolder}
-      <div style={{ marginBottom: 24 }}>
-        <PageActionToolbar
-          title={<span className="whitespace-nowrap">Job Applications</span>}
-          subtitle={`${applicationsTotal.toLocaleString()} applications tracked`}
-          singleRowDesktop
-          selectedYear={selectedYear}
-          onYearChange={handleYearChange}
-          availableYears={availableYears}
-          secondaryActions={
-            <Button
-              className="toolbar-btn"
-              size="large"
-              icon={<GlobalOutlined />}
-              onClick={() => setIsJobImportModalOpen(true)}
-            >
-              Import URL
-            </Button>
-          }
-          secondaryMenuItems={[
-            {
-              key: 'import-url',
-              icon: <GlobalOutlined />,
-              label: 'Import from URL',
-              onClick: () => setIsJobImportModalOpen(true),
-            },
-          ]}
-          onDeleteAll={handleDeleteAll}
-          deleteAllConfirmTitle="Delete All Applications?"
-          deleteAllConfirmDescription="This will delete all unlocked applications. This cannot be undone."
-          onExport={handleExportWrapper}
-          exportFilename="applications"
-          onImport={() => setIsImportModalOpen(true)}
-          onPrimaryAction={openAddModal}
-          primaryActionLabel="Add Application"
-          primaryActionIcon={<PlusOutlined />}
-        />
-      </div>
+      <ApplicationsToolbar
+        selectedYear={selectedYear}
+        onJobImport={() => setIsJobImportModalOpen(true)}
+        onCsvImport={() => setIsImportModalOpen(true)}
+        onDeleteAll={handleDeleteAll}
+        onExport={handleExportWrapper}
+        onAddApplication={openAddModal}
+        applicationsTotal={applicationsTotal}
+        availableYears={availableYears}
+        handleYearChange={handleYearChange}
+      />
 
       {/* Bulk action bar */}
       {selectedRowKeys.length > 0 && (
-        <div className="enterprise-filter-bar mb-4 p-4">
-          <BulkActionHeader
-            selectedCount={selectedRowKeys.length}
-            totalCount={filteredData.length}
-            title="All Applications"
-            onCancelSelection={() => setSelectedRowKeys([])}
-            bulkActions={
-              <>
-                <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
-                  Lock
-                </Button>
-                <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
-                  Unlock
-                </Button>
-                <Tooltip title={isAnySelectedLocked ? 'Unlock selected items before deleting' : ''}>
-                  <Button
-                    danger
-                    onClick={handleBulkDelete}
-                    icon={<DeleteOutlined />}
-                    disabled={isAnySelectedLocked}
-                  >
-                    Delete
-                  </Button>
-                </Tooltip>
-              </>
-            }
-          />
-        </div>
+        <ApplicationBulkBar
+          totalCount={filteredData.length}
+          isAnySelectedLocked={isAnySelectedLocked}
+          handleBulkToggleLock={handleBulkToggleLock}
+          handleBulkDelete={handleBulkDelete}
+          selectedRowKeys={selectedRowKeys}
+          setSelectedRowKeys={setSelectedRowKeys}
+        />
       )}
 
       {applicationLoadFailed ? null : loading ? (
         <MetricCardsSkeleton count={4} />
       ) : (
-        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {applicationMetrics.map((metric) => (
-            <button
-              type="button"
-              key={metric.label}
-              onClick={metric.onClick}
-              aria-label={metric.label}
-              className={`enterprise-card text-left transition-all duration-200 ease-in-out p-4 md:px-5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 active:scale-[0.98] ${
-                metric.isActive
-                  ? metric.tone === 'blue'
-                    ? 'border-blue-400 bg-blue-50/40 shadow-inner'
-                    : metric.tone === 'emerald'
-                      ? 'border-emerald-400 bg-emerald-50/40 shadow-inner'
-                      : metric.tone === 'amber'
-                        ? 'border-amber-400 bg-amber-50/40 shadow-inner'
-                        : 'border-slate-400 bg-slate-100/70 shadow-inner'
-                  : 'hover:bg-slate-50/80 hover:border-slate-300 hover:shadow-md'
-              }`}
-            >
-              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                {metric.label}
-              </div>
-              <div
-                className={`mt-2 text-2xl font-[760] leading-none ${
-                  metric.tone === 'blue'
-                    ? 'text-blue-600'
-                    : metric.tone === 'emerald'
-                      ? 'text-emerald-700'
-                      : metric.tone === 'amber'
-                        ? 'text-amber-700'
-                        : 'text-slate-950'
-                }`}
-              >
-                {metric.value}
-              </div>
-            </button>
-          ))}
-        </div>
+        <ApplicationMetricCards applicationMetrics={applicationMetrics} />
       )}
 
       {/* Filter bar */}
-      {!applicationLoadFailed &&
-        (isMobile ? (
-          <div className="mb-4 space-y-3">
-            <div className="enterprise-filter-bar p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">Filters</div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {activeFilterCount > 0
-                      ? `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active`
-                      : 'Search, status, and type'}
-                  </div>
-                </div>
-                <Button
-                  size="large"
-                  className="toolbar-native-btn"
-                  icon={mobileFiltersOpen ? <UpOutlined /> : <DownOutlined />}
-                  onClick={() => setMobileFiltersOpen((current) => !current)}
-                >
-                  {mobileFiltersOpen ? 'Hide' : 'Show'}
-                </Button>
-              </div>
-
-              {mobileFiltersOpen ? (
-                <div className="mt-4 grid grid-cols-1 gap-3">
-                  <Input
-                    size="large"
-                    aria-label="Search applications by company or role"
-                    placeholder="Search company or role"
-                    prefix={<SearchOutlined className="text-gray-400" />}
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    allowClear
-                  />
-                  <Select
-                    size="large"
-                    aria-label="Filter applications by status"
-                    value={statusFilter}
-                    onChange={(value) => {
-                      setStatusFilter(value);
-                      setIsLockedFilter(undefined);
-                    }}
-                    suffixIcon={<FilterOutlined />}
-                  >
-                    <Option value="ALL">All Statuses</Option>
-                    <Option value="INTERVIEWS">All Interviews</Option>
-                    {statusFilterOptions.map((stage) => (
-                      <Option key={stage.key} value={stage.key}>
-                        {stage.label}
-                      </Option>
-                    ))}
-                  </Select>
-                  <Select
-                    size="large"
-                    aria-label="Filter applications by employment type"
-                    value={empTypeFilter}
-                    onChange={setEmpTypeFilter}
-                    suffixIcon={<FilterOutlined />}
-                  >
-                    <Option value="ALL">All Types</Option>
-                    {empTypes.map((t) => (
-                      <Option key={t.value} value={t.value}>
-                        {t.label}
-                      </Option>
-                    ))}
-                  </Select>
-                  <Input
-                    size="large"
-                    aria-label="Filter applications by location"
-                    placeholder="Location"
-                    value={locationFilter === 'ALL' ? '' : locationFilter}
-                    onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
-                    prefix={<GlobalOutlined className="text-gray-400" />}
-                    allowClear
-                  />
-                  <div className="flex items-center justify-between gap-3 pt-2">
-                    <Text type="secondary" className="text-sm">
-                      {applicationsTotal.toLocaleString()} result
-                      {applicationsTotal !== 1 ? 's' : ''}
-                    </Text>
-                    {hasActiveSearchFilters && (
-                      <Button
-                        size="small"
-                        type="link"
-                        onClick={clearApplicationFilters}
-                        className="flex items-center gap-1.5 !text-slate-500 hover:!text-sky-600 !p-0"
-                      >
-                        Clear filters
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : (
-          <div className="enterprise-filter-bar mb-4 flex flex-wrap gap-3 p-3">
-            <Input
-              size="large"
-              aria-label="Search applications by company or role"
-              placeholder="Search company or role"
-              prefix={<SearchOutlined className="text-gray-400" />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ maxWidth: 340 }}
-              allowClear
-            />
-            <Select
-              size="large"
-              aria-label="Filter applications by status"
-              value={statusFilter}
-              onChange={(value) => {
-                setStatusFilter(value);
-                setIsLockedFilter(undefined);
-              }}
-              style={{ width: 200 }}
-              suffixIcon={<FilterOutlined />}
-            >
-              <Option value="ALL">All Statuses</Option>
-              <Option value="INTERVIEWS">All Interviews</Option>
-              {statusFilterOptions.map((stage) => (
-                <Option key={stage.key} value={stage.key}>
-                  {stage.label}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              size="large"
-              aria-label="Filter applications by employment type"
-              value={empTypeFilter}
-              onChange={setEmpTypeFilter}
-              style={{ width: 180 }}
-              suffixIcon={<FilterOutlined />}
-            >
-              <Option value="ALL">All Types</Option>
-              {empTypes.map((t) => (
-                <Option key={t.value} value={t.value}>
-                  {t.label}
-                </Option>
-              ))}
-            </Select>
-            <Input
-              size="large"
-              aria-label="Filter applications by location"
-              placeholder="Location"
-              value={locationFilter === 'ALL' ? '' : locationFilter}
-              style={{ width: 200 }}
-              onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
-              prefix={<GlobalOutlined className="text-gray-400" />}
-              allowClear
-            />
-            {(searchText ||
-              statusFilter !== 'ALL' ||
-              empTypeFilter !== 'ALL' ||
-              locationFilter !== 'ALL' ||
-              isLockedFilter !== undefined) && (
-              <div className="flex items-center gap-3 self-center">
-                <Text type="secondary" className="text-sm">
-                  {applicationsTotal.toLocaleString()} result{applicationsTotal !== 1 ? 's' : ''}
-                </Text>
-                <Button
-                  size="small"
-                  type="link"
-                  onClick={clearApplicationFilters}
-                  className="flex items-center gap-1.5 !text-slate-500 hover:!text-sky-600 !p-0"
-                >
-                  Clear filters
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
+      <ApplicationFilterBar
+        activeFilterCount={activeFilterCount}
+        applicationLoadFailed={applicationLoadFailed}
+        applicationsTotal={applicationsTotal}
+        clearApplicationFilters={clearApplicationFilters}
+        empTypeFilter={empTypeFilter}
+        empTypes={empTypes}
+        hasActiveSearchFilters={hasActiveSearchFilters}
+        isLockedFilter={isLockedFilter}
+        isMobile={isMobile}
+        locationFilter={locationFilter}
+        mobileFiltersOpen={mobileFiltersOpen}
+        searchText={searchText}
+        setEmpTypeFilter={setEmpTypeFilter}
+        setIsLockedFilter={setIsLockedFilter}
+        setLocationFilter={setLocationFilter}
+        setMobileFiltersOpen={setMobileFiltersOpen}
+        setSearchText={setSearchText}
+        setStatusFilter={setStatusFilter}
+        statusFilter={statusFilter}
+        statusFilterOptions={statusFilterOptions}
+      />
 
       {/* Data list */}
       {applicationLoadFailed ? (
@@ -1422,117 +426,50 @@ const Applications = () => {
           icon={<InboxOutlined />}
         />
       ) : isMobile ? (
-        <div className="space-y-3">
-          {loading ? (
-            Array.from({ length: 3 }).map((_, idx) => (
-              <div key={idx} className="enterprise-card space-y-3 px-4 py-5">
-                <div className="shimmer-bg h-4 w-5/12 rounded-full" />
-                <div className="shimmer-bg h-3 w-9/12 rounded-full" />
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <div className="shimmer-bg h-10 rounded-xl" />
-                  <div className="shimmer-bg h-10 rounded-xl" />
-                </div>
-              </div>
-            ))
-          ) : filteredData.length === 0 ? (
-            applicationEmptyState
-          ) : (
-            <>
-              {paginatedData.map((record) => {
-                const isSelected = selectedRowKeys.includes(record.id);
-                return (
-                  <MobileApplicationCard
-                    key={record.id}
-                    application={record}
-                    applicationStages={appStages}
-                    employmentTypes={empTypes}
-                    selected={isSelected}
-                    onSelectionChange={(selected) => toggleSelectedApplication(record.id, selected)}
-                    onViewDetails={() => openDetailDrawer(record)}
-                    onGenerateLetter={() => setCoverLetterApp(record)}
-                    onEdit={() => openEditDrawer(record)}
-                    onDuplicate={
-                      record.is_locked ? undefined : () => handleDuplicateApplication(record)
-                    }
-                    onToggleLock={() => toggleLock(record)}
-                    onDelete={() => requestDeleteApplication(record)}
-                  />
-                );
-              })}
-              {applicationsTotal > APPLICATION_PAGE_SIZE && (
-                <div className="flex justify-end mt-4 pb-2 px-1">
-                  <Pagination
-                    current={currentPage}
-                    pageSize={APPLICATION_PAGE_SIZE}
-                    total={applicationsTotal}
-                    onChange={(page) => setCurrentPage(page)}
-                    showSizeChanger={false}
-                    size="small"
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <ApplicationMobileList
+          openDetailDrawer={openDetailDrawer}
+          openEditDrawer={openEditDrawer}
+          handleDuplicateApplication={handleDuplicateApplication}
+          toggleLock={toggleLock}
+          requestDeleteApplication={requestDeleteApplication}
+          appStages={appStages}
+          applicationEmptyState={applicationEmptyState}
+          applicationsTotal={applicationsTotal}
+          currentPage={currentPage}
+          empTypes={empTypes}
+          filteredData={filteredData}
+          loading={loading}
+          paginatedData={paginatedData}
+          selectedRowKeys={selectedRowKeys}
+          setCoverLetterApp={setCoverLetterApp}
+          setCurrentPage={setCurrentPage}
+          toggleSelectedApplication={toggleSelectedApplication}
+        />
       ) : loading ? (
         <TableSkeleton />
       ) : filteredData.length === 0 ? (
         applicationEmptyState
       ) : (
-        <div className="enterprise-table-shell">
-          <Table
-            rowSelection={{
-              selectedRowKeys,
-              onChange: setSelectedRowKeys,
-            }}
-            loading={loading}
-            columns={columns}
-            dataSource={filteredData}
-            rowKey="id"
-            onChange={handleTableChange}
-            pagination={{
-              current: currentPage,
-              pageSize: APPLICATION_PAGE_SIZE,
-              total: applicationsTotal,
-              onChange: (page) => setCurrentPage(page),
-              showSizeChanger: false,
-            }}
-            scroll={{ x: 900 }}
-          />
-        </div>
+        <ApplicationTable
+          onChange={handleTableChange}
+          applicationsTotal={applicationsTotal}
+          columns={columns}
+          currentPage={currentPage}
+          filteredData={filteredData}
+          loading={loading}
+          selectedRowKeys={selectedRowKeys}
+          setCurrentPage={setCurrentPage}
+          setSelectedRowKeys={setSelectedRowKeys}
+        />
       )}
 
       {/* Add Modal */}
-      <ModalShell
-        isOpen={isAddModalOpen}
-        title="Add Application"
-        onClose={() => setIsAddModalOpen(false)}
-        maxWidthClass="max-w-[700px]"
-        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
-        footer={
-          <div className="flex flex-col gap-3 w-full sm:flex-row sm:justify-end">
-            <Button
-              size="large"
-              onClick={() => setIsAddModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              size="large"
-              type="primary"
-              onClick={() => form.submit()}
-              className="w-full sm:w-auto"
-            >
-              Add application
-            </Button>
-          </div>
-        }
-      >
-        {isAddModalOpen
-          ? renderApplicationForm(() => setIsAddModalOpen(false), 'Save', false)
-          : null}
-      </ModalShell>
+      <ApplicationAddModal
+        isAddModalOpen={isAddModalOpen}
+        setIsAddModalOpen={setIsAddModalOpen}
+        onSubmit={() => form.submit()}
+        renderApplicationForm={renderApplicationForm}
+      />
 
       {/* Cover Letter Modal */}
       {coverLetterApp && (
@@ -1552,7 +489,7 @@ const Applications = () => {
         appStages={appStages}
         editContent={
           detailDrawerMode === 'edit'
-            ? renderApplicationForm(cancelDrawerEdit, 'Save Application')
+            ? renderApplicationForm({ onCancel: cancelDrawerEdit, submitLabel: 'Save Application' })
             : null
         }
         onClose={closeDetailDrawer}
@@ -1566,362 +503,38 @@ const Applications = () => {
         }}
       />
 
-      <ModalShell
-        isOpen={isJobImportModalOpen}
-        title="Import from Job URL"
-        onClose={closeJobImportModal}
-        maxWidthClass="max-w-[760px]"
-        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
-        footer={
-          <>
-            <Button size="large" onClick={closeJobImportModal} className="w-full sm:w-auto">
-              Cancel
-            </Button>
-            <Button
-              size="large"
-              icon={<GlobalOutlined />}
-              loading={jobImportLoading}
-              onClick={handleExtractJobPosting}
-              className="w-full sm:w-auto"
-            >
-              Extract
-            </Button>
-            <Button
-              size="large"
-              type="primary"
-              disabled={!jobImportPreview}
-              loading={jobImportSaving}
-              onClick={handleCreateFromJobImport}
-              className="w-full sm:w-auto"
-            >
-              Create application
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-sky-100 bg-sky-50/50 px-4 py-3">
-            <div>
-              <div className="text-sm font-semibold text-slate-900">
-                Paste a supported job posting URL
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                Paste a LinkedIn, Greenhouse, Lever, or Workday link. CareerHub will extract the
-                fields and keep them editable before saving.
-              </div>
-            </div>
-          </div>
-
-          <Input
-            size="large"
-            prefix={<GlobalOutlined className="text-slate-400" />}
-            placeholder="https://company.wd1.myworkdayjobs.com/..."
-            value={jobImportUrl}
-            onChange={(event) => setJobImportUrl(event.target.value)}
-            onPressEnter={handleExtractJobPosting}
-          />
-
-          {jobImportPreview && (
-            <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={jobImportForm} layout="vertical">
-              <Row gutter={16}>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="company"
-                    label="Company"
-                    rules={[{ required: true, message: 'Company is required' }]}
-                  >
-                    <AutoComplete
-                      options={companyListOptions}
-                      filterOption={(input, option) =>
-                        String(option?.value || '')
-                          .toLocaleLowerCase()
-                          .includes(input.toLocaleLowerCase())
-                      }
-                      notFoundContent={
-                        companyListLoading ? 'Loading companies…' : 'Enter a new company'
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="role_title"
-                    label="Role Title"
-                    rules={[{ required: true, message: 'Role title is required' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                </Col>
-                <Col span={24}>
-                  <Form.Item name="office_location" label="Location">
-                    <LocationSelect placeholder="Remote, San Francisco, CA, ..." />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item name="employment_type" label="Employment Type">
-                    <Select>
-                      {empTypes.map((type) => (
-                        <Option key={type.value} value={type.value}>
-                          {type.label}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item name="salary_range" label="Salary">
-                    <SalaryRangeInput />
-                  </Form.Item>
-                </Col>
-                <Col span={24}>
-                  <Form.Item name="job_description" label="Job Description">
-                    <Input.TextArea rows={8} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                <div>Source: {jobImportPreview.source_host}</div>
-                <div
-                  className={
-                    jobImportPreview.ai_status === 'success'
-                      ? 'mt-1 font-medium text-emerald-700'
-                      : jobImportPreview.ai_status === 'failed'
-                        ? 'mt-1 font-medium text-rose-700'
-                        : 'mt-1 font-medium text-amber-700'
-                  }
-                >
-                  AI status:{' '}
-                  {jobImportPreview.ai_status === 'success'
-                    ? 'Success'
-                    : jobImportPreview.ai_status === 'failed'
-                      ? 'Failed'
-                      : 'Not configured'}{' '}
-                  · {jobImportPreview.ai_message || 'Used the built-in parser.'}
-                </div>
-              </div>
-            </Form>
-          )}
-        </div>
-      </ModalShell>
-
+      <JobBoardImportModal
+        jobImportForm={jobImportForm}
+        closeJobImportModal={closeJobImportModal}
+        companyListLoading={companyListLoading}
+        companyListOptions={companyListOptions}
+        empTypes={empTypes}
+        handleCreateFromJobImport={handleCreateFromJobImport}
+        handleExtractJobPosting={handleExtractJobPosting}
+        isJobImportModalOpen={isJobImportModalOpen}
+        jobImportLoading={jobImportLoading}
+        jobImportPreview={jobImportPreview}
+        jobImportSaving={jobImportSaving}
+        jobImportUrl={jobImportUrl}
+        setJobImportUrl={setJobImportUrl}
+      />
       {/* Import Modal */}
-      <ModalShell
-        isOpen={isImportModalOpen}
-        title="Import Applications"
-        onClose={closeImportModal}
-        maxWidthClass="max-w-[1100px]"
-        bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
-        footer={
-          applicationImportPreview ? (
-            <>
-              <Button size="large" onClick={closeImportModal} className="w-full sm:w-auto">
-                Cancel
-              </Button>
-              <Button
-                size="large"
-                type="primary"
-                disabled={(editableImportReview?.summary.errors || 0) > 0}
-                loading={applicationImportApplying}
-                onClick={applyApplicationImport}
-                className="w-full sm:w-auto"
-              >
-                Confirm import
-              </Button>
-            </>
-          ) : null
-        }
-      >
-        {applicationImportPreviewing ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-10">
-            <div className="mx-auto flex max-w-md flex-col items-center text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <Spin />
-              </div>
-              <div className="text-base font-semibold text-slate-900">Preparing import preview</div>
-              <div className="mt-2 text-sm text-slate-500">
-                Reading {applicationImportFileName || 'your file'}, detecting columns, and checking
-                rows against existing applications.
-              </div>
-              <div className="mt-5 grid w-full grid-cols-3 gap-2 text-left">
-                {['Read file', 'Map fields', 'Check rows'].map((step, index) => (
-                  <div key={step} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                      Step {index + 1}
-                    </div>
-                    <div className="mt-1 text-xs font-medium text-slate-700">{step}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : !applicationImportPreview ? (
-          <Dragger {...importProps}>
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined />
-            </p>
-            <p className="ant-upload-text">Click or drag a CSV/XLSX file to preview</p>
-            <p className="ant-upload-hint">
-              We infer column mapping first. Nothing is created until you confirm.
-            </p>
-          </Dragger>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
-              <div className="text-sm font-semibold text-slate-900">
-                {editableImportReview?.summary.total_rows || 0} rows ready for review
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                {editableImportReview?.summary.creates || 0} new /{' '}
-                {editableImportReview?.summary.updates || 0} updates /{' '}
-                {editableImportReview?.summary.errors || 0} need attention
-              </div>
-              <div
-                className={`mt-2 text-xs font-medium ${
-                  applicationImportPreview.ai_status === 'success'
-                    ? 'text-emerald-700'
-                    : applicationImportPreview.ai_status === 'failed'
-                      ? 'text-rose-700'
-                      : 'text-amber-700'
-                }`}
-              >
-                {applicationImportPreview.ai_status === 'success'
-                  ? 'AI mapped the columns. Review before importing.'
-                  : applicationImportPreview.ai_status === 'failed'
-                    ? 'AI mapping was unavailable, so built-in matching was used.'
-                    : 'Built-in matching was used. Configure AI provider for multilingual mapping.'}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">AI Recognized Fields</div>
-                  <div className="text-xs text-slate-500">
-                    Review the detected columns, then fix any row values below before importing.
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleImportReviewFields.map((field) => {
-                  const mappedHeader = applicationImportMapping[field.key];
-                  return (
-                    <div
-                      key={field.key}
-                      className={`rounded-lg border px-3 py-2 ${
-                        mappedHeader
-                          ? 'border-slate-200 bg-slate-50'
-                          : field.required
-                            ? 'border-rose-200 bg-rose-50'
-                            : 'border-slate-200 bg-white'
-                      }`}
-                    >
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                        {field.label}
-                        {field.required ? <span className="text-rose-500"> *</span> : null}
-                      </div>
-                      <div className="mt-1 truncate text-sm font-medium text-slate-900">
-                        {mappedHeader || 'Needs mapping'}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
-                Confirm Column Mapping
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
-                {APPLICATION_IMPORT_REVIEW_FIELDS.map((field) => (
-                  <label key={field.key} className="space-y-1">
-                    <span className="text-xs font-medium text-slate-600">
-                      {field.label}
-                      {field.required ? <span className="text-red-500"> *</span> : null}
-                    </span>
-                    <Select
-                      className="w-full"
-                      allowClear
-                      value={applicationImportMapping[field.key]}
-                      placeholder={field.required ? 'Select column' : 'Optional'}
-                      onChange={(value) => updateImportMapping(field.key, value || '')}
-                      options={applicationImportPreview.headers.map((header) => ({
-                        value: header,
-                        label: header,
-                      }))}
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <div className="bg-slate-50 px-4 py-3">
-                <div className="text-sm font-semibold text-slate-900">Review Row Values</div>
-                <div className="text-xs text-slate-500">
-                  Edit the values CareerHub will save. Changes here are included when you confirm.
-                </div>
-              </div>
-              <div className="max-h-96 overflow-auto">
-                <table className="min-w-[980px] text-sm">
-                  <thead className="bg-slate-50 text-left text-xs text-slate-500">
-                    <tr>
-                      <th className="w-14 px-3 py-2">Row</th>
-                      <th className="w-24 px-3 py-2">Action</th>
-                      {visibleImportReviewFields.map((field) => (
-                        <th key={field.key} className="min-w-36 px-3 py-2">
-                          {field.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {(editableImportReview?.items || []).slice(0, 50).map((item, rowIndex) => (
-                      <tr key={item.row}>
-                        <td className="px-3 py-2 align-top text-slate-500">{item.row}</td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                              item.action === 'create'
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : item.action === 'update'
-                                  ? 'bg-blue-50 text-blue-700'
-                                  : 'bg-rose-50 text-rose-700'
-                            }`}
-                          >
-                            {item.action}
-                          </span>
-                        </td>
-                        {visibleImportReviewFields.map((field) => {
-                          const mappedHeader = applicationImportMapping[field.key];
-                          return (
-                            <td key={field.key} className="px-3 py-2 align-top">
-                              <Input
-                                size="small"
-                                disabled={!mappedHeader}
-                                value={getImportFieldValue(item.raw, field.key)}
-                                placeholder={mappedHeader ? field.label : 'Map column first'}
-                                onChange={(event) =>
-                                  updateImportRowValue(rowIndex, field.key, event.target.value)
-                                }
-                              />
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {(editableImportReview?.items.length || 0) > 50 ? (
-                <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
-                  Showing first 50 rows.
-                </div>
-              ) : null}
-            </div>
-          </div>
-        )}
-      </ModalShell>
+      <ApplicationImportModal
+        applicationImportApplying={applicationImportApplying}
+        applicationImportFileName={applicationImportFileName}
+        applicationImportPreviewing={applicationImportPreviewing}
+        applicationImportMapping={applicationImportMapping}
+        applicationImportPreview={applicationImportPreview}
+        applyApplicationImport={applyApplicationImport}
+        closeImportModal={closeImportModal}
+        editableImportReview={editableImportReview}
+        importProps={importProps}
+        getImportFieldValue={getImportFieldValue}
+        isImportModalOpen={isImportModalOpen}
+        updateImportMapping={updateImportMapping}
+        updateImportRowValue={updateImportRowValue}
+        visibleImportReviewFields={visibleImportReviewFields}
+      />
     </div>
   );
 };

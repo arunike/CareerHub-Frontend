@@ -18,8 +18,7 @@ export interface BonusExtra {
   amount: number;
 }
 
-// A payout is stored as a share, but it is often easier to think in dollars, so the two
-// stay in step. Percent remains the source of truth: it survives a change to the total.
+// Percent is the source of truth; it survives a change to the total.
 export const amountFromPercent = (percent: number, bonusTotal: number) =>
   bonusTotal * (Math.max(0, percent) / 100);
 
@@ -41,15 +40,13 @@ export const extrasTotal = (extras: BonusExtra[]) =>
 
 const daysInYear = (year: number) => (new Date(year, 1, 29).getMonth() === 1 ? 366 : 365);
 
-// A bonus is normally earned in one year and paid in the next, so proration is measured
-// against the performance year rather than the year the money arrives.
+// Prorated against the performance year, not the year the money arrives.
 export const resolvePerformanceYear = (
   performanceYear: number | null | undefined,
   taxYear: number
 ) => performanceYear ?? taxYear - 1;
 
-// Share of the performance year the role covers. A target bonus is earned across that
-// year, so starting in September earns roughly a third of it.
+// Share of the performance year the role covers: a September start earns about a third.
 export const prorationFactor = (
   taxYear: number,
   startDate?: string | null,
@@ -67,8 +64,7 @@ export const prorationFactor = (
   return Math.min(1, inclusiveDayCount(from, to) / daysInYear(taxYear));
 };
 
-// Target times the company multiplier, prorated for time worked, plus anything
-// discretionary on top. Extras are not prorated: a spot award is not earned over the year.
+// Extras are not prorated: a spot award is not earned over the year.
 export const totalBonus = (
   targetBonus: number,
   multiplierPercent: number,
@@ -101,8 +97,7 @@ const periodIndexFor = (payout: BonusPayout, index: number, periods: PayPeriod[]
   return periods.some((period) => period.periodIndex === offCycle) ? offCycle : null;
 };
 
-// A payout outside the paid periods is dropped rather than shifted, so a bonus scheduled
-// after the role ended does not silently reappear on the last paycheck.
+// Dropped, not shifted: a payout after the role ended must not reappear on the last cheque.
 export const buildBonusEvents = (
   bonusTotal: number,
   payouts: BonusPayout[],

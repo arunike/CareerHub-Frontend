@@ -62,8 +62,7 @@ export interface CrossoverInsight {
 
 export type ProjectionBasis = 'gross' | 'adjusted';
 
-// Merit/inflation raise assumed for every role, including the current one, so
-// the comparison stays apples-to-apples. Overridable from the assumptions panel.
+// Applied to every role so the comparison stays apples-to-apples; overridable.
 export const DEFAULT_BASE_GROWTH_PCT = 3;
 export const DEFAULT_EQUITY_GROWTH_PCT = 0;
 
@@ -215,8 +214,7 @@ export interface MatchGap {
   leader: string;
   candidate: string;
   totalGap: number;
-  // Divided across the projected years because base repeats; extraGrant is the
-  // same shortfall taken as equity instead.
+  // Spread across the projected years because base repeats.
   perYearBase: number;
   extraGrant: number;
 }
@@ -234,8 +232,7 @@ export const findMatchGap = (
   const totalGap = leader.grossTotal - candidate.grossTotal;
   if (totalGap <= 0) return null;
 
-  // A raise negotiated now compounds too, so $1 of year-1 base is worth more than
-  // $4 over four years. Divide by the compounded sum rather than the year count.
+  // Year-1 base compounds, so divide by the compounded sum, not the year count.
   const compoundedYears = Array.from({ length: PROJECTION_YEARS }, (_, index) =>
     growthFactor(baseGrowthPct, index + 1)
   ).reduce((sum, factor) => sum + factor, 0);

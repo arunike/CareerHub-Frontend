@@ -1,5 +1,4 @@
-// Group only the integer part, so 30000000.00 reads as 30,000,000.00 rather than having
-// commas pushed into the decimals.
+// Integer part only, so 30000000.00 reads as 30,000,000.00.
 export const groupDigits = (raw: string) => {
   const [whole, fraction] = raw.split('.');
   const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -13,8 +12,7 @@ export const parseMoney = (raw: string | undefined) => {
   return rest.length > 0 ? `${whole}.${rest.join('')}` : whole;
 };
 
-// Room for the affix, the horizontal padding, the stepper handlers and the caret. Tailwind
-// width classes cannot be used: antd injects unlayered CSS, which outranks layered utilities.
+// Inline width: antd's unlayered CSS outranks Tailwind utilities.
 const CHROME_REM = { small: 3.4, middle: 3.9 } as const;
 
 export const fieldWidthStyle = (
@@ -32,6 +30,5 @@ export const displayText = (value: number | null | undefined, grouped = true) =>
   return grouped ? groupDigits(raw) : raw;
 };
 
-// Money is shown to the cent. Anything we calculate is rounded before it reaches a field;
-// what the user typed is left exactly as they typed it.
+// Calculated values are rounded before they reach a field; typed values are left alone.
 export const roundCents = (value: number) => Math.round(value * 100) / 100;
