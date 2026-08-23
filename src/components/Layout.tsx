@@ -6,7 +6,6 @@ import {
   CalendarOutlined,
   ScheduleOutlined,
   LineChartOutlined,
-  SettingOutlined,
   SolutionOutlined,
   DollarOutlined,
   WalletOutlined,
@@ -185,21 +184,19 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         },
       ],
     },
-    {
-      key: 'grp-4',
-      type: 'group' as const,
-      children: [
-        {
-          key: '/settings',
-          icon: <SettingOutlined />,
-          label: 'Settings',
-        },
-      ],
-    },
   ];
 
-  const isVisible = (key: string) =>
-    key === '/settings' || location.pathname === key || !hiddenNavItems.includes(key);
+  const isVisible = (key: string) => location.pathname === key || !hiddenNavItems.includes(key);
+
+  const holdsActiveRoute = (group: { children?: Array<{ key: string; children?: unknown }> }) =>
+    (group.children ?? []).some(
+      (item) =>
+        item.key === location.pathname ||
+        ('children' in item &&
+          (item.children as Array<{ key: string }> | undefined)?.some(
+            (child) => child.key.split('?')[0] === location.pathname
+          ))
+    );
 
   const filterChildren = (items: (typeof menuItems)[0]['children']) =>
     items
@@ -234,7 +231,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         )
         .map(rename),
     }))
-    .filter((group) => (group.children?.length ?? 0) > 0);
+    .filter(
+      (group) =>
+        (group.children?.length ?? 0) > 0 &&
+        (!hiddenNavItems.includes(group.key) || holdsActiveRoute(group))
+    );
 
   const menuDisplayItems = isDesktopSidebarCollapsed
     ? visibleMenuItems.flatMap((group, idx) => {
@@ -382,6 +383,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <SidebarFooter
+        settingsActive={location.pathname === '/settings'}
         displayName={displayName}
         isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
         isLoggingOut={isLoggingOut}

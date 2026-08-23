@@ -255,9 +255,11 @@ const SortableNavRow = ({
           }`}
         />
         {isGroup ? (
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
-            Group
-          </span>
+          <VisibilityToggle
+            checked={!hidden}
+            onChange={onToggleHidden}
+            label={navLabel(item.key, item.label, labels)}
+          />
         ) : (
           <>
             {pinnable && (
@@ -360,16 +362,11 @@ const NavigationSettings = ({
             Navigation
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">
-            Drag to reorder the sidebar, rename anything by typing over its name, toggle what
-            appears in it, and pin up to {MAX_PINNED} shortcuts to the mobile toolbar. Items stay
-            within their group.
+            Drag to reorder the sidebar, rename anything by typing over its name, switch off a
+            single entry or a whole group, and pin up to {MAX_PINNED} shortcuts to the mobile
+            toolbar. Items stay within their group.
           </p>
         </div>
-        {/* Was an antd text button with UndoOutlined: a bare label with no affordance, and
-            that icon's open arc reads as a clipped circle at this size. Now a compact
-            bordered button sized like the other section-header actions, so it sits on the
-            header baseline instead of floating. Confirmed because one click discards the
-            order, the hidden items and the pinned shortcuts all at once. */}
         <Popconfirm
           title="Reset navigation to default?"
           description="Your sidebar order, custom names, hidden items and pinned mobile shortcuts will all go back to the defaults."
@@ -439,18 +436,30 @@ const NavigationSettings = ({
       <div className="space-y-5">
         {orderedGroups.map((group) => {
           const groupKeys = group.items.map((item) => item.key);
+          const groupHidden = hidden.includes(group.key);
           return (
             <div key={group.key}>
-              <div className="mb-1 px-1">
+              <div className="mb-1 flex items-center gap-2 px-1">
                 <NameField
                   itemKey={group.key}
                   defaultLabel={group.label}
                   labels={labels}
                   onChange={onNavItemLabelsChange}
-                  className="!text-[11px] !font-semibold !uppercase !tracking-wide !text-slate-400"
+                  className={`min-w-0 flex-1 !text-[11px] !font-semibold !uppercase !tracking-wide ${
+                    groupHidden ? '!text-slate-300 line-through' : '!text-slate-400'
+                  }`}
+                />
+                <VisibilityToggle
+                  checked={!groupHidden}
+                  onChange={() => toggleHidden(group.key)}
+                  label={`the ${navLabel(group.key, group.label, labels)} group`}
                 />
               </div>
-              <div className="rounded-xl border border-slate-200">
+              <div
+                className={`rounded-xl border border-slate-200 transition-opacity ${
+                  groupHidden ? 'opacity-50' : ''
+                }`}
+              >
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}

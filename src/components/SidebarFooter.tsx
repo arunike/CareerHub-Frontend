@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Button, Tooltip } from 'antd';
-import { LogoutOutlined } from '@ant-design/icons';
+import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import IdentityAvatar from './IdentityAvatar';
 
 type Props = {
@@ -13,7 +13,13 @@ type Props = {
   profilePic: string | null;
   setIsLoggingOut: React.Dispatch<React.SetStateAction<boolean>>;
   user: any;
+  // Settings lives here rather than in the menu: it configures the app, it is not a destination
+  // alongside your work. The footer still owns the active state so the current page reads.
+  settingsActive: boolean;
 };
+
+const FOOTER_ACTION =
+  '!flex !h-11 !min-w-0 !items-center !justify-center !gap-2 !rounded-xl !border !bg-white !text-xs !font-bold transition-all';
 
 const SidebarFooter = ({
   displayName,
@@ -25,6 +31,7 @@ const SidebarFooter = ({
   profilePic,
   setIsLoggingOut,
   user,
+  settingsActive,
 }: Props) => (
   <div
     className={
@@ -50,6 +57,20 @@ const SidebarFooter = ({
               size="sm"
             />
           </button>
+        </Tooltip>
+        <Tooltip title="Settings" placement="right">
+          <Button
+            type="text"
+            icon={<SettingOutlined />}
+            onClick={() => navigate('/settings')}
+            aria-label="Settings"
+            aria-current={settingsActive ? 'page' : undefined}
+            className={`!h-10 !w-12 !rounded-xl ${
+              settingsActive
+                ? '!bg-blue-50 !text-blue-600'
+                : '!text-slate-400 hover:!bg-slate-100 hover:!text-slate-600'
+            }`}
+          />
         </Tooltip>
         <Tooltip title="Sign out" placement="right">
           <Button
@@ -97,24 +118,39 @@ const SidebarFooter = ({
               </p>
             </div>
           </button>
-          <Button
-            type="text"
-            icon={<LogoutOutlined />}
-            loading={isLoggingOut}
-            onClick={async (e) => {
-              e.stopPropagation();
-              setIsLoggingOut(true);
-              try {
-                await logout();
-                navigate('/login', { replace: true });
-              } finally {
-                setIsLoggingOut(false);
-              }
-            }}
-            className="w-full !flex !h-11 !items-center !justify-center !rounded-xl !border !border-slate-200/80 !bg-white !text-xs !font-bold !text-slate-500 transition-all hover:!border-rose-100 hover:!bg-rose-50/30 hover:!text-rose-500"
-          >
-            Sign Out
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="text"
+              icon={<SettingOutlined />}
+              onClick={() => navigate('/settings')}
+              aria-current={settingsActive ? 'page' : undefined}
+              className={`${FOOTER_ACTION} ${
+                settingsActive
+                  ? '!border-blue-200 !bg-blue-50/60 !text-blue-600'
+                  : '!border-slate-200/80 !text-slate-500 hover:!border-blue-100 hover:!bg-blue-50/30 hover:!text-blue-600'
+              }`}
+            >
+              Settings
+            </Button>
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              loading={isLoggingOut}
+              onClick={async (e) => {
+                e.stopPropagation();
+                setIsLoggingOut(true);
+                try {
+                  await logout();
+                  navigate('/login', { replace: true });
+                } finally {
+                  setIsLoggingOut(false);
+                }
+              }}
+              className={`${FOOTER_ACTION} !border-slate-200/80 !text-slate-500 hover:!border-rose-100 hover:!bg-rose-50/30 hover:!text-rose-500`}
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
         <p className="mt-2 text-center text-[10px] font-medium text-slate-300">© 2026 CareerHub</p>
       </>
