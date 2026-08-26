@@ -81,7 +81,7 @@ const MedicalInsuranceGroup = ({
           className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-blue-500"
         >
           <option value={26}>26 paychecks/yr (Bi-weekly standard)</option>
-          <option value={27}>27 paychecks/yr (Bi-weekly 27-paycheck year, e.g. Adobe 2026)</option>
+          <option value={27}>27 paychecks/yr (Bi-weekly year with an extra payday)</option>
           <option value={24}>24 paychecks/yr (Semi-monthly: 1st & 15th)</option>
           <option value={12}>12 paychecks/yr (Monthly)</option>
           <option value={52}>52 paychecks/yr (Weekly)</option>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Segmented, Select, message } from 'antd';
+import { Button, Input, Select, message } from 'antd';
 import {
   ApartmentOutlined,
   BarsOutlined,
@@ -7,6 +7,7 @@ import {
   SearchOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
+import SegmentedToggle from '../../components/SegmentedToggle';
 import {
   deleteContact,
   deleteContactRelationship,
@@ -342,12 +343,26 @@ const ContactsPage = () => {
           placeholder="Search people, companies, roles, notes, or relationships"
           className="max-w-xl"
         />
-        <Segmented
+        {/* Same switcher idiom as the other pages: antd's Segmented track is the page's own
+            tint, so on this background only the active pill showed. */}
+        <SegmentedToggle
           value={view}
-          onChange={(value) => setView(value as ViewMode)}
+          onChange={setView}
+          wrapperClassName="rounded-xl border border-slate-200 bg-white p-1"
+          buttonClassName="px-3.5 py-1.5"
           options={[
-            { value: 'list', label: 'List', icon: <BarsOutlined /> },
-            { value: 'network', label: 'Network', icon: <ApartmentOutlined /> },
+            {
+              value: 'list',
+              label: 'List',
+              icon: <BarsOutlined />,
+              activeClassName: 'bg-blue-50 text-blue-700',
+            },
+            {
+              value: 'network',
+              label: 'Network',
+              icon: <ApartmentOutlined />,
+              activeClassName: 'bg-blue-50 text-blue-700',
+            },
           ]}
         />
       </div>

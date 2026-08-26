@@ -6,6 +6,7 @@ import {
   percentFromAmount,
   buildBonusEvents,
   extrasTotal,
+  nextYearBonusEstimate,
   offCyclePeriods,
   payoutSharesTotal,
   prorationFactor,
@@ -281,5 +282,55 @@ describe('payout amount and percent stay in step', () => {
     const percent = percentFromAmount(5000, 20000);
     // A later multiplier bump raises the dollars while the share holds.
     expect(amountFromPercent(percent, 30000)).toBeCloseTo(7500, 6);
+  });
+});
+
+describe('nextYearBonusEstimate', () => {
+  const TARGET = 24000;
+
+  it('prorates what a part year is on course to pay out next year', () => {
+    const estimate = nextYearBonusEstimate(2026, TARGET, '2026-08-01', null);
+    expect(estimate).not.toBeNull();
+    expect(estimate?.paidInYear).toBe(2027);
+    expect(estimate?.earnedInYear).toBe(2026);
+    // Aug 1 to Dec 31 is 153 of 365 days.
+    expect(estimate?.proration).toBeCloseTo(153 / 365, 6);
+    expect(estimate?.amount).toBeCloseTo(TARGET * (153 / 365), 6);
+  });
+
+  it('pays the full target for a full year', () => {
+    const estimate = nextYearBonusEstimate(2026, TARGET, '2020-03-01', null);
+    expect(estimate?.proration).toBe(1);
+    expect(estimate?.amount).toBeCloseTo(TARGET, 6);
+  });
+
+  it('says nothing when the role ends before the year does', () => {
+    expect(nextYearBonusEstimate(2026, TARGET, '2020-03-01', '2026-09-30')).toBeNull();
+  });
+
+  it('still counts a role that runs to the last day of the year', () => {
+    const estimate = nextYearBonusEstimate(2026, TARGET, '2020-03-01', '2026-12-31');
+    expect(estimate?.proration).toBe(1);
+    expect(estimate?.amount).toBeCloseTo(TARGET, 6);
+  });
+
+  it('says nothing for a role that ended in an earlier year', () => {
+    expect(nextYearBonusEstimate(2026, TARGET, '2020-03-01', '2025-12-31')).toBeNull();
+  });
+
+  it('says nothing when there is no target bonus', () => {
+    expect(nextYearBonusEstimate(2026, 0, '2020-03-01', null)).toBeNull();
+  });
+
+  it('says nothing when the role has not started by the end of the year', () => {
+    expect(nextYearBonusEstimate(2026, TARGET, '2027-02-01', null)).toBeNull();
+  });
+
+  it('is the target for the year being earned, not the year it arrives', () => {
+    // A role starting mid-2026 earns a part-year bonus for 2026, then a full one for 2027.
+    const earnedIn2026 = nextYearBonusEstimate(2026, TARGET, '2026-07-01', null);
+    const earnedIn2027 = nextYearBonusEstimate(2027, TARGET, '2026-07-01', null);
+    expect(earnedIn2026?.amount).toBeLessThan(TARGET);
+    expect(earnedIn2027?.amount).toBeCloseTo(TARGET, 6);
   });
 });

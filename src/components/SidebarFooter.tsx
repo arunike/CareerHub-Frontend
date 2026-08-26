@@ -13,8 +13,7 @@ type Props = {
   profilePic: string | null;
   setIsLoggingOut: React.Dispatch<React.SetStateAction<boolean>>;
   user: any;
-  // Settings lives here rather than in the menu: it configures the app, it is not a destination
-  // alongside your work. The footer still owns the active state so the current page reads.
+  // The footer owns the active state, so /settings still reads as the current page.
   settingsActive: boolean;
 };
 

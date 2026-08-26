@@ -15,6 +15,8 @@ import {
   type BonusExtra,
   type BonusPayout,
 } from './bonusSchedule';
+import FigureMath from './FigureMath';
+import { bonusBreakdown } from './mathBreakdown';
 import MoneyInput from './MoneyInput';
 import PercentInput from './PercentInput';
 import { useMoney } from './amountPrivacy';
@@ -180,9 +182,21 @@ export const BonusForm = ({
               />
             </Field>
             <div className="flex items-end pb-1">
-              <div className="text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 Total bonus
-                <span className="ml-2 text-base font-semibold tabular-nums text-slate-900">
+                <FigureMath
+                  label="Total bonus"
+                  breakdown={bonusBreakdown({
+                    targetBonus,
+                    multiplierPercent,
+                    proration: prorationFactor,
+                    prorated,
+                    extras,
+                    performanceYear,
+                    bonusTotal,
+                  })}
+                />
+                <span className="ml-0.5 text-base font-semibold tabular-nums text-slate-900">
                   {money(bonusTotal)}
                 </span>
               </div>

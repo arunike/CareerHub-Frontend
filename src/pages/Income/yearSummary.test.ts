@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeYear, summarizeYears } from './yearSummary';
+import {
+  deductionsBreakdown,
+  employee401kBreakdown,
+  grossBreakdown,
+  resolveMath,
+  takeHomeBreakdown,
+  taxBreakdown,
+  totalCompBreakdown,
+} from './mathBreakdown';
 import { buildIncomeModel } from './incomeModel';
 import { DEFAULT_SETTINGS } from './incomeSettings';
 import type { IncomeSettings } from './incomeSettings';
@@ -67,13 +76,13 @@ describe('summarizeYear', () => {
     const summary = summarizeYear(
       2025,
       [
-        source({ key: 'experience-1', company: 'Small', annualSalary: 30000 }),
-        source({ key: 'experience-2', company: 'Large', annualSalary: 200000 }),
+        source({ key: 'experience-1', company: 'Google', annualSalary: 30000 }),
+        source({ key: 'experience-2', company: 'Netflix', annualSalary: 200000 }),
       ],
       resolver(),
       context
     );
-    expect(summary.roles.map((role) => role.company)).toEqual(['Large', 'Small']);
+    expect(summary.roles.map((role) => role.company)).toEqual(['Netflix', 'Google']);
   });
 
   it('drops a role that was not paid in the year', () => {
@@ -100,6 +109,122 @@ describe('summarizeYear', () => {
     );
     expect(withMatch.employerMatch).toBeGreaterThan(0);
     expect(withMatch.totalComp).toBeCloseTo(withMatch.gross + withMatch.employerMatch, 2);
+  });
+
+  it('reports what you deferred per role and for the year', () => {
+    const summary = summarizeYear(
+      2026,
+      [
+        source({ key: 'experience-1', company: 'Google', annualSalary: 200000 }),
+        source({ key: 'experience-2', company: 'Netflix', annualSalary: 100000 }),
+      ],
+      resolver({ elections: { ...DEFAULT_SETTINGS.elections, pretax401kPercent: 6 } }),
+      context
+    );
+    for (const role of summary.roles) {
+      expect(role.employee401k).toBeGreaterThan(0);
+      // Deferrals are withheld, so they are part of what the year kept back from take-home.
+      expect(role.deductions).toBeGreaterThanOrEqual(role.employee401k - 0.01);
+    }
+    expect(summary.employee401k).toBeCloseTo(
+      summary.roles.reduce((total, role) => total + role.employee401k, 0),
+      2
+    );
+  });
+
+  it('keeps the elective limit per person rather than summing it across roles', () => {
+    const summary = summarizeYear(
+      2026,
+      [
+        source({ key: 'experience-1', company: 'Google', annualSalary: 200000 }),
+        source({ key: 'experience-2', company: 'Netflix', annualSalary: 100000 }),
+      ],
+      resolver({ elections: { ...DEFAULT_SETTINGS.elections, pretax401kPercent: 6 } }),
+      context
+    );
+    expect(summary.roles).toHaveLength(2);
+    expect(summary.electiveLimit).toBe(summary.roles[0].electiveLimit);
+    expect(summary.electiveLimit).toBeGreaterThan(0);
+  });
+
+  it('leaves the elective limit at zero when nobody was paid', () => {
+    const summary = summarizeYear(
+      2026,
+      [source({ startDate: '2027-01-01', endDate: null, isCurrent: true })],
+      resolver(),
+      context
+    );
+    expect(summary.electiveLimit).toBe(0);
+    expect(summary.employee401k).toBe(0);
+  });
+
+  it('breaks every headline figure into lines that replay to it', () => {
+    const summary = summarizeYear(
+      2026,
+      [
+        source({ key: 'experience-1', company: 'Google', annualSalary: 200000, bonus: 30000 }),
+        source({ key: 'experience-2', company: 'Netflix', annualSalary: 90000 }),
+      ],
+      resolver({
+        includeBonus: true,
+        bonusPayouts: [{ id: 'p1', periodIndex: 4, payDate: null, percent: 100 }],
+        elections: {
+          ...DEFAULT_SETTINGS.elections,
+          pretax401kPercent: 6,
+          roth401kPercent: 2,
+          section125PerPeriod: 120,
+          hsaPerPeriod: 100,
+          postTaxPerPeriod: 40,
+        },
+      }),
+      context
+    );
+
+    // Not a restatement of the arithmetic — these are the very builders the card renders, run
+    // against a real modelled year, so a component the ledger folds into another (Roth sits
+    // inside post-tax) cannot quietly double count on screen.
+    for (const breakdown of [
+      grossBreakdown(summary),
+      taxBreakdown(summary),
+      deductionsBreakdown(summary),
+      takeHomeBreakdown(summary),
+      employee401kBreakdown(summary),
+      totalCompBreakdown(summary),
+    ]) {
+      expect(resolveMath(breakdown.steps)).toBeCloseTo(breakdown.total, 2);
+    }
+
+    // A modelled year itemises completely, so the balancing line must not appear.
+    expect(
+      deductionsBreakdown(summary).steps.some((step) => step.label === 'Recorded but not itemised')
+    ).toBe(false);
+
+    // And one level down: the payrolls named under a line have to add up to that line.
+    const sources = summary.roles.map((role) => ({ label: role.company, parts: role }));
+    let namedLines = 0;
+    for (const breakdown of [
+      grossBreakdown(summary, sources),
+      taxBreakdown(summary, sources),
+      deductionsBreakdown(summary, sources),
+      takeHomeBreakdown(summary, sources),
+      employee401kBreakdown(summary, sources),
+      totalCompBreakdown(summary, sources),
+    ]) {
+      expect(resolveMath(breakdown.steps)).toBeCloseTo(breakdown.total, 2);
+      for (const step of breakdown.steps) {
+        if (!step.parts) continue;
+        namedLines += 1;
+        expect(step.parts.reduce((total, part) => total + part.value, 0)).toBeCloseTo(
+          step.value,
+          2
+        );
+        expect(step.parts.map((part) => part.label)).toEqual(
+          expect.arrayContaining(['Google', 'Netflix'])
+        );
+      }
+    }
+    // Guard against the attribution silently vanishing and this test passing on nothing.
+    expect(namedLines).toBeGreaterThan(5);
   });
 
   it('counts a bonus inside gross rather than on top of it', () => {

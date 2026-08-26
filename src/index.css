@@ -47,6 +47,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* iOS sizes a date field from its own control, so w-full overflows without appearance:none. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: var(--careerhub-placeholder);

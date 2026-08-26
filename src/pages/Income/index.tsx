@@ -10,6 +10,8 @@ import ElectionsForm from './ElectionsForm';
 import OverrideConflictModal, { type OverrideConflict } from './OverrideConflictModal';
 import RetirementForm from './RetirementForm';
 import VestingForm from './VestingForm';
+import { mostRecentPaidRow } from './effectiveRows';
+import { toIsoDate } from './paySchedule';
 import { clearFieldFromOverrides, periodsOverriding } from './periodDeductions';
 import { compareRates } from './taxRates';
 import { useIncomeYear } from './useIncomeYear';
@@ -84,16 +86,18 @@ const IncomePage = () => {
     targetBonus,
     bonusTotal,
     bonusProration,
+    nextYearBonus,
     performanceYear,
     periods,
   } = useIncomeYear();
 
-  // A role that starts mid-year has no period 1, so the selection follows the ledger.
+  // A role that starts mid-year has no period 1, so the selection follows the ledger, and the
+  // default lands on the paycheck you were most recently paid rather than the first of the year.
   const row = useMemo(() => {
     if (effectiveRows.length === 0) return null;
     return (
       effectiveRows.find((candidate) => candidate.periodIndex === selectedPeriod) ??
-      effectiveRows[0]
+      mostRecentPaidRow(effectiveRows, toIsoDate(new Date()))
     );
   }, [effectiveRows, selectedPeriod]);
 
@@ -392,6 +396,8 @@ const IncomePage = () => {
 
         <IncomeSourceTabs
           Notice={Notice}
+          nextYearBonus={nextYearBonus}
+          targetBonus={targetBonus}
           allowanceSchedule={allowanceSchedule}
           drift={drift}
           effectiveRows={effectiveRows}

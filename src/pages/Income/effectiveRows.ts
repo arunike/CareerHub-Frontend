@@ -225,6 +225,19 @@ export const toEffectiveRows = (rows: PeriodRow[], actuals: PeriodActual[]): Eff
   return rows.map((row) => toEffectiveRow(row, byPeriod.get(row.periodIndex)));
 };
 
+// Falls back to the first row when nothing has paid yet, so a future year still shows something.
+export const mostRecentPaidRow = <T extends { payDate: string | null }>(
+  rows: T[],
+  todayIso: string
+): T | null => {
+  if (rows.length === 0) return null;
+  const latestPaid = rows.reduce<T | null>((latest, row) => {
+    if (!row.payDate || row.payDate > todayIso) return latest;
+    return !latest || row.payDate > (latest.payDate as string) ? row : latest;
+  }, null);
+  return latestPaid ?? rows[0];
+};
+
 export const effectiveTotals = (rows: EffectiveRow[]) => ({
   gross: rows.reduce((total, row) => total + row.gross, 0),
   taxTotal: rows.reduce((total, row) => total + row.taxTotal, 0),

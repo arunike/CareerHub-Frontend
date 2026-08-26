@@ -17,6 +17,7 @@ import { splitCustomDeductions } from './deductions';
 import { buildVestEvents } from './vestEvents';
 import {
   buildBonusEvents,
+  nextYearBonusEstimate,
   offCyclePeriods,
   prorationFactor,
   resolvePerformanceYear,
@@ -54,6 +55,7 @@ export interface IncomeModel {
   vestEvents: ReturnType<typeof buildVestEvents>;
   bonusProration: number;
   performanceYear: number;
+  nextYearBonus: ReturnType<typeof nextYearBonusEstimate>;
   ledgerPeriods: ReturnType<typeof buildPayPeriods>;
   deductionLines: { medical: number; dental: number; vision: number; dependent: number };
   allowanceSchedule: ReturnType<typeof buildAllowanceSchedule>;
@@ -109,6 +111,13 @@ export const buildIncomeModel = ({
     settings.bonusMultiplierPercent,
     settings.bonusExtras,
     settings.bonusProrated ? bonusProration : 1
+  );
+  // Quoted at target: assuming this year's rating again would be a guess, not a forecast.
+  const nextYearBonus = nextYearBonusEstimate(
+    taxYear,
+    targetBonus,
+    source?.startDate,
+    source?.endDate
   );
 
   // A bonus paid on its own date becomes an extra period, interleaved by date.
@@ -216,6 +225,7 @@ export const buildIncomeModel = ({
     vestEvents,
     bonusProration,
     performanceYear,
+    nextYearBonus,
     ledgerPeriods,
     deductionLines,
     allowanceSchedule,

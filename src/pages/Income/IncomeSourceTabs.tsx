@@ -1,6 +1,7 @@
 import type React from 'react';
-import { Button, Segmented, Tabs, message } from 'antd';
-import { SlidersOutlined } from '@ant-design/icons';
+import { Button, Tabs, message } from 'antd';
+import { CreditCardOutlined, SlidersOutlined, TableOutlined } from '@ant-design/icons';
+import SegmentedToggle from '../../components/SegmentedToggle';
 import { PageState } from '../../components/PageState';
 import BatchOverrideModal from './BatchOverrideModal';
 import IncomeSummary from './IncomeSummary';
@@ -37,6 +38,8 @@ type Props = {
   sourcesInYear: any;
   stateAbbr: any;
   taxYear: any;
+  nextYearBonus: any;
+  targetBonus: any;
   update: any;
   yearHistory: any;
   yearResolution: any;
@@ -91,6 +94,8 @@ const IncomeSourceTabs = ({
   sourcesInYear,
   stateAbbr,
   taxYear,
+  nextYearBonus,
+  targetBonus,
   update,
   yearHistory,
   yearResolution,
@@ -171,20 +176,51 @@ const IncomeSourceTabs = ({
               reconciliation={reconciliation}
               drift={drift}
               netPerPeriod={row?.net ?? 0}
+              taxYear={taxYear}
+              nextYearBonus={nextYearBonus}
+              targetBonus={targetBonus}
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Segmented
+            {/* The page's own switcher idiom, not antd's Segmented: that control's track is the
+                same tint as the page, so the active pill read as a button floating on nothing.
+                Full width on a phone, where a 44px target matters more than hugging the left. */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <SegmentedToggle
                 value={view}
-                onChange={(value) => setView(value as 'paycheck' | 'year')}
+                onChange={setView}
+                wrapperClassName="w-full rounded-xl border border-slate-200 bg-white p-1 sm:w-max"
+                buttonClassName="min-w-0 flex-1 px-3.5 py-1.5 sm:flex-none"
                 options={[
-                  { label: 'One paycheck', value: 'paycheck' },
-                  { label: 'Whole year', value: 'year' },
+                  {
+                    value: 'paycheck',
+                    label: 'One paycheck',
+                    icon: <CreditCardOutlined />,
+                    activeClassName: 'bg-blue-50 text-blue-700',
+                  },
+                  {
+                    value: 'year',
+                    label: 'Whole year',
+                    icon: <TableOutlined />,
+                    activeClassName: 'bg-blue-50 text-blue-700',
+                  },
                 ]}
               />
-              <div className="text-xs text-slate-500">
-                {amount(ledger.totals.gross)} gross · {amount(ledger.totals.taxTotal)} tax ·{' '}
-                {amount(ledger.totals.net)} take-home
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs sm:justify-end">
+                {[
+                  { label: 'gross', value: ledger.totals.gross },
+                  { label: 'tax', value: ledger.totals.taxTotal },
+                  { label: 'take-home', value: ledger.totals.net },
+                ].map((total, index) => (
+                  <span key={total.label} className="flex items-baseline gap-x-3">
+                    {index > 0 ? <span className="hidden text-slate-300 sm:inline">·</span> : null}
+                    <span className="whitespace-nowrap">
+                      <span className="font-semibold tabular-nums text-slate-700">
+                        {amount(total.value)}
+                      </span>{' '}
+                      <span className="text-slate-500">{total.label}</span>
+                    </span>
+                  </span>
+                ))}
               </div>
             </div>
 

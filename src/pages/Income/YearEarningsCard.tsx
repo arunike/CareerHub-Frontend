@@ -1,7 +1,17 @@
 import { Tooltip } from 'antd';
-import { DownOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import type { YearEarnings } from './yearSummary';
+import FigureMath from './FigureMath';
+import {
+  deductionsBreakdown,
+  employee401kBreakdown,
+  grossBreakdown,
+  takeHomeBreakdown,
+  taxBreakdown,
+  totalCompBreakdown,
+  type MathBreakdown,
+} from './mathBreakdown';
+import type { RoleEarnings, YearEarnings } from './yearSummary';
 import { useMoney } from './amountPrivacy';
 
 interface Props {
@@ -19,15 +29,32 @@ const SEGMENTS = [
   { key: 'employerMatch', label: '401(k) match', tone: 'bg-sky-500' },
 ] as const;
 
+// One quantity split by payroll, in the amber it already carries inside Deductions.
+// Only the numeric role fields can head a column, so the cells stay typed as amounts.
+const ROLE_COLUMNS: Array<{
+  key: 'equityVested' | 'bonus' | 'employee401k' | 'employerMatch';
+  label: string;
+}> = [
+  { key: 'equityVested', label: 'Vested' },
+  { key: 'bonus', label: 'Bonus' },
+  { key: 'employee401k', label: 'Your 401(k)' },
+  { key: 'employerMatch', label: 'Match' },
+];
+
+const DEFERRAL_TONES = ['bg-amber-600', 'bg-amber-500', 'bg-amber-400', 'bg-amber-300'] as const;
+const OVER_TONES = ['bg-rose-600', 'bg-rose-500', 'bg-rose-400', 'bg-rose-300'] as const;
+
 const Figure = ({
   label,
   value,
   hint,
+  breakdown,
   tone = 'text-slate-900',
 }: {
   label: string;
   value: number;
   hint?: string;
+  breakdown?: MathBreakdown;
   tone?: string;
 }) => {
   const { money } = useMoney();
@@ -35,13 +62,183 @@ const Figure = ({
     <div>
       <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
         {label}
-        {hint ? (
-          <Tooltip title={hint}>
-            <InfoCircleOutlined className="text-slate-300" />
-          </Tooltip>
-        ) : null}
+        <FigureMath label={label} hint={hint} breakdown={breakdown} />
       </span>
       <p className={`mt-1 text-lg font-semibold tabular-nums ${tone}`}>{money(value)}</p>
+    </div>
+  );
+};
+
+// Labels once in a header, one column per value; a column no role uses is dropped.
+const RoleBreakdown = ({
+  roles,
+  onSelectRole,
+}: {
+  roles: RoleEarnings[];
+  onSelectRole: (key: string) => void;
+}) => {
+  const { money } = useMoney();
+  const columns = ROLE_COLUMNS.filter((column) => roles.some((role) => role[column.key] > 0));
+
+  const template = `minmax(0,2.2fr) repeat(${columns.length + 1}, minmax(0,1fr)) minmax(6rem,1.1fr)`;
+
+  return (
+    <div className="border-t border-slate-100 px-6 py-4">
+      <div
+        className="hidden items-baseline gap-x-4 px-2 pb-2 sm:grid"
+        style={{ gridTemplateColumns: template }}
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          By role
+        </span>
+        {columns.map((column) => (
+          <span
+            key={column.key}
+            className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+          >
+            {column.label}
+          </span>
+        ))}
+        <span className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Paychecks
+        </span>
+        <span className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Total comp
+        </span>
+      </div>
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:hidden">
+        By role
+      </span>
+
+      <div className="mt-1 space-y-1 sm:mt-0 sm:space-y-0">
+        {roles.map((role) => (
+          <button
+            key={role.sourceKey}
+            type="button"
+            onClick={() => onSelectRole(role.sourceKey)}
+            style={{ gridTemplateColumns: template }}
+            className="flex w-full flex-col gap-1 rounded-lg border border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 sm:grid sm:items-baseline sm:gap-x-4 sm:gap-y-0 sm:rounded-md sm:border-0 sm:px-2 sm:py-2"
+          >
+            <span className="min-w-0 sm:truncate">
+              <span className="text-sm font-medium text-slate-800">{role.company}</span>
+              <span className="ml-2 text-xs text-slate-500">{role.roleTitle}</span>
+            </span>
+            {columns.map((column) => {
+              const value = role[column.key];
+              return (
+                <span
+                  key={column.key}
+                  // The dash keeps the desktop column aligned; the phone has its own label.
+                  className={`items-baseline justify-between gap-2 text-xs tabular-nums text-slate-700 sm:flex sm:justify-end ${
+                    value > 0 ? 'flex' : 'hidden'
+                  }`}
+                >
+                  <span className="text-slate-500 sm:hidden">{column.label}</span>
+                  {value > 0 ? money(value) : <span className="text-slate-400">—</span>}
+                </span>
+              );
+            })}
+            <span className="flex items-baseline justify-between gap-2 text-xs tabular-nums text-slate-500 sm:justify-end">
+              <span className="text-slate-500 sm:hidden">Paychecks</span>
+              {role.paychecks}
+            </span>
+            <span className="mt-0.5 flex items-baseline justify-between gap-2 border-t border-slate-100 pt-1.5 sm:mt-0 sm:justify-end sm:border-0 sm:pt-0">
+              <span className="text-xs text-slate-500 sm:hidden">Total comp</span>
+              <span className="text-sm font-semibold tabular-nums text-slate-900">
+                {money(role.totalComp)}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// The 402(g) limit follows the person across every employer, so it belongs on the year.
+const ElectiveLimitBar = ({ summary }: { summary: YearEarnings }) => {
+  const { money } = useMoney();
+  const share = Math.min(1, summary.employee401k / summary.electiveLimit);
+  const remaining = summary.electiveLimit - summary.employee401k;
+  const isOver = remaining < -0.005;
+  // Biggest deferral first, so the bar and its legend read in the same order.
+  const deferrals = summary.roles
+    .filter((role) => role.employee401k > 0)
+    .sort((a, b) => b.employee401k - a.employee401k);
+  const roleCount = deferrals.length;
+  // A finished year cannot be topped up, so it reports what went unused rather than what is left.
+  const isClosedYear = summary.taxYear < new Date().getFullYear();
+
+  return (
+    <div className="mt-5 border-t border-slate-100 pt-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          Your 401(k)
+          <FigureMath
+            label="Your 401(k)"
+            breakdown={employee401kBreakdown(
+              summary,
+              deferrals.map((role) => ({ label: role.company, parts: role }))
+            )}
+            hint="Traditional and Roth together, which is what the annual elective deferral limit counts. The employer match sits outside it."
+          />
+        </span>
+        <span className="text-xs tabular-nums text-slate-500">
+          <span className="font-semibold text-amber-700">{money(summary.employee401k)}</span> of{' '}
+          {money(summary.electiveLimit)} limit
+        </span>
+      </div>
+      {/* One segment per payroll, the split the limit cannot see; over it, all rose. */}
+      <div className="mt-2 flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-slate-100">
+        {deferrals.map((role, index) => (
+          <Tooltip
+            key={role.sourceKey}
+            title={`${role.company} ${money(role.employee401k)}`}
+            placement="top"
+          >
+            <span
+              className={`h-full ${(isOver ? OVER_TONES : DEFERRAL_TONES)[index % DEFERRAL_TONES.length]}`}
+              style={{
+                width: `${(role.employee401k / Math.max(summary.employee401k, 1)) * share * 100}%`,
+                minWidth: 3,
+              }}
+            />
+          </Tooltip>
+        ))}
+      </div>
+      {deferrals.length > 1 ? (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {deferrals.map((role, index) => (
+            <span
+              key={role.sourceKey}
+              className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${(isOver ? OVER_TONES : DEFERRAL_TONES)[index % DEFERRAL_TONES.length]}`}
+              />
+              {role.company}
+              <span className="tabular-nums text-slate-500">{money(role.employee401k)}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+        {isOver ? (
+          <span className="font-semibold text-rose-600">
+            {money(-remaining)} over the limit — the excess has to be returned before April 15 or it
+            is taxed twice.
+          </span>
+        ) : remaining < 0.005 ? (
+          <span className="font-semibold text-amber-700">Limit reached.</span>
+        ) : isClosedYear ? (
+          <>{money(remaining)} of the limit went unused.</>
+        ) : (
+          <>{money(remaining)} left to defer this year.</>
+        )}
+        {roleCount > 1
+          ? ` The limit is per person, not per employer, and ${roleCount} payrolls paid into it — one payroll cannot see another's deferrals.`
+          : ''}
+      </p>
     </div>
   );
 };
@@ -59,6 +256,9 @@ export const YearEarningsCard = ({
     false
   );
   if (summary.roles.length === 0) return null;
+
+  // Built once so a line and its attribution always read the same field off the same role.
+  const sources = summary.roles.map((role) => ({ label: role.company, parts: role }));
 
   const peak = Math.max(...history.map((year) => year.totalComp), 1);
   // Take-home, tax, deductions and the match are what total comp is made of. Summing them
@@ -102,16 +302,26 @@ export const YearEarningsCard = ({
             <Figure
               label="Gross"
               value={summary.gross}
-              hint="Everything payroll reported as wages, which already includes any bonus and any equity that vested."
+              breakdown={grossBreakdown(summary, sources)}
             />
-            <Figure label="Tax withheld" value={summary.taxWithheld} tone="text-rose-600" />
+            <Figure
+              label="Tax withheld"
+              value={summary.taxWithheld}
+              breakdown={taxBreakdown(summary, sources)}
+              tone="text-rose-600"
+            />
             <Figure
               label="Deductions"
               value={summary.deductions}
-              hint="Withheld but not tax: 401(k), insurance, HSA and anything post-tax."
+              breakdown={deductionsBreakdown(summary, sources)}
               tone="text-amber-600"
             />
-            <Figure label="Take-home" value={summary.takeHome} tone="text-emerald-600" />
+            <Figure
+              label="Take-home"
+              value={summary.takeHome}
+              breakdown={takeHomeBreakdown(summary, sources)}
+              tone="text-emerald-600"
+            />
             <Figure
               label="401(k) match"
               value={summary.employerMatch}
@@ -121,42 +331,19 @@ export const YearEarningsCard = ({
             <Figure
               label="Total comp"
               value={summary.totalComp}
-              hint="Gross plus the employer match. Bonus and vested equity are already inside gross, so adding them again would double count."
+              breakdown={totalCompBreakdown(summary, sources)}
             />
           </div>
         )}
+
+        {collapsed ||
+        summary.electiveLimit <= 0 ||
+        (summary.employee401k <= 0 && summary.employerMatch <= 0) ? null : (
+          <ElectiveLimitBar summary={summary} />
+        )}
       </div>
 
-      {collapsed ? null : (
-        <div className="border-t border-slate-100 px-6 py-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            By role
-          </span>
-          <div className="mt-2 space-y-1">
-            {summary.roles.map((role) => (
-              <button
-                key={role.sourceKey}
-                type="button"
-                onClick={() => onSelectRole(role.sourceKey)}
-                className="flex w-full flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="text-sm font-medium text-slate-800">{role.company}</span>
-                  <span className="ml-2 text-xs text-slate-500">{role.roleTitle}</span>
-                </span>
-                <span className="flex shrink-0 items-baseline gap-4 text-xs tabular-nums text-slate-500">
-                  {role.equityVested > 0 ? <span>{money(role.equityVested)} vested</span> : null}
-                  {role.bonus > 0 ? <span>{money(role.bonus)} bonus</span> : null}
-                  <span>{role.paychecks} paychecks</span>
-                  <span className="w-24 text-right text-sm font-semibold text-slate-900">
-                    {money(role.totalComp)}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {collapsed ? null : <RoleBreakdown roles={summary.roles} onSelectRole={onSelectRole} />}
 
       {!collapsed && history.length > 1 ? (
         <div className="border-t border-slate-100 px-6 py-4">

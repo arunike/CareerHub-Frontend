@@ -59,7 +59,7 @@ describe('totalCareerDuration', () => {
   it('does not double-count two roles held at once', () => {
     const overlapping = [
       role({ id: 1, start_date: '2024-01-01', end_date: '2024-06-30' }),
-      role({ id: 2, company: 'Adobe', start_date: '2024-03-01', end_date: '2024-09-30' }),
+      role({ id: 2, company: 'Netflix', start_date: '2024-03-01', end_date: '2024-09-30' }),
     ];
     // Jan–Sep is 9 months, not the 13 the two roles add up to.
     expect(totalCareerDuration(overlapping)).toBe(fmtDays(273, true));

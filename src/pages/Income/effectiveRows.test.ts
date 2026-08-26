@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveTotals, hasAnyActual, toEffectiveRow, toEffectiveRows } from './effectiveRows';
+import {
+  effectiveTotals,
+  hasAnyActual,
+  mostRecentPaidRow,
+  toEffectiveRow,
+  toEffectiveRows,
+} from './effectiveRows';
 import { buildLedger, NO_ELECTIONS, NO_EMPLOYER_CONTRIBUTIONS } from './tax/ledger';
 import { FEDERAL_2026, LIMITS_2026 } from './tax/data/federal-2026';
 import { flatStateTable } from './tax/data/states/flat';
@@ -242,5 +248,45 @@ describe('a recorded take-home larger than the paycheck can support', () => {
     const normal = toEffectiveRow(row, { periodIndex: row.periodIndex, net: row.net });
     expect(normal.residual).toBeCloseTo(0, 6);
     expect(normal.taxTotal).toBeGreaterThan(0);
+  });
+});
+
+describe('mostRecentPaidRow', () => {
+  const schedule = [
+    { periodIndex: 1, payDate: '2026-01-02' },
+    { periodIndex: 2, payDate: '2026-01-16' },
+    { periodIndex: 16, payDate: '2026-08-07' },
+    { periodIndex: 17, payDate: '2026-08-21' },
+    { periodIndex: 18, payDate: '2026-09-04' },
+  ];
+
+  it('lands on the latest paycheck already paid, not the first of the year', () => {
+    expect(mostRecentPaidRow(schedule, '2026-08-24')?.periodIndex).toBe(17);
+  });
+
+  it('counts a paycheck paid today', () => {
+    expect(mostRecentPaidRow(schedule, '2026-08-21')?.periodIndex).toBe(17);
+  });
+
+  it('falls back to the first paycheck when the year has not paid out yet', () => {
+    expect(mostRecentPaidRow(schedule, '2025-12-31')?.periodIndex).toBe(1);
+  });
+
+  it('picks the last paycheck of a year that is over', () => {
+    expect(mostRecentPaidRow(schedule, '2027-03-01')?.periodIndex).toBe(18);
+  });
+
+  it('compares pay dates rather than trusting row order', () => {
+    const unsorted = [schedule[4], schedule[0], schedule[3]];
+    expect(mostRecentPaidRow(unsorted, '2026-08-24')?.periodIndex).toBe(17);
+  });
+
+  it('ignores rows with no pay date', () => {
+    const withGap = [...schedule, { periodIndex: 19, payDate: null }];
+    expect(mostRecentPaidRow(withGap, '2026-08-24')?.periodIndex).toBe(17);
+  });
+
+  it('has nothing to select in an empty year', () => {
+    expect(mostRecentPaidRow([], '2026-08-24')).toBeNull();
   });
 });

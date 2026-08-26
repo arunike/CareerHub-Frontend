@@ -76,6 +76,42 @@ export const totalBonus = (
     Math.max(0, Math.min(1, proration)) +
   extrasTotal(extras);
 
+export interface NextYearBonusEstimate {
+  // The year the money would arrive, which is the year after the one being earned.
+  paidInYear: number;
+  earnedInYear: number;
+  amount: number;
+  proration: number;
+}
+
+// Display only, and null unless the role is still there at year end: no payout without that.
+export const nextYearBonusEstimate = (
+  taxYear: number,
+  targetBonus: number,
+  startDate?: string | null,
+  endDate?: string | null
+): NextYearBonusEstimate | null => {
+  if (targetBonus <= 0) return null;
+
+  const end = parseIsoDate(endDate);
+  // Not `endDate < Dec 31`: a role ending on the last day of the year still saw it through.
+  if (end && (end.getFullYear() < taxYear || (end.getFullYear() === taxYear && !isYearEnd(end)))) {
+    return null;
+  }
+
+  const proration = prorationFactor(taxYear, startDate, endDate);
+  if (proration <= 0) return null;
+
+  return {
+    paidInYear: taxYear + 1,
+    earnedInYear: taxYear,
+    amount: targetBonus * proration,
+    proration,
+  };
+};
+
+const isYearEnd = (date: Date) => date.getMonth() === 11 && date.getDate() === 31;
+
 // A payout on its own date becomes a period of its own so the ledger can withhold on it.
 export const offCyclePeriods = (payouts: BonusPayout[], taxYear: number): PayPeriod[] =>
   payouts

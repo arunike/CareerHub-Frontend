@@ -11,9 +11,24 @@ export interface Earnings {
   // Everything withheld that was not tax: 401(k), insurance, HSA, and anything post-tax.
   deductions: number;
   takeHome: number;
+  // Traditional and Roth together, which is what the 402(g) limit counts.
+  employee401k: number;
   // Employer money, so this is the only line that adds on top of gross.
   employerMatch: number;
   totalComp: number;
+  // The parts each figure above is built from, summed from the effective rows.
+  supplementalGross: number;
+  taxableAllowance: number;
+  taxFreeAllowance: number;
+  section125: number;
+  hsa: number;
+  pretax401k: number;
+  pretaxIncomeOnly: number;
+  roth401k: number;
+  postTax: number;
+  federalTax: number;
+  stateTax: number;
+  payrollTax: number;
 }
 
 export interface RoleEarnings extends Earnings {
@@ -21,11 +36,13 @@ export interface RoleEarnings extends Earnings {
   company: string;
   roleTitle: string;
   paychecks: number;
+  electiveLimit: number;
 }
 
 export interface YearEarnings extends Earnings {
   taxYear: number;
   roles: RoleEarnings[];
+  electiveLimit: number;
 }
 
 const EMPTY: Earnings = {
@@ -35,8 +52,21 @@ const EMPTY: Earnings = {
   taxWithheld: 0,
   deductions: 0,
   takeHome: 0,
+  employee401k: 0,
   employerMatch: 0,
   totalComp: 0,
+  supplementalGross: 0,
+  taxableAllowance: 0,
+  taxFreeAllowance: 0,
+  section125: 0,
+  hsa: 0,
+  pretax401k: 0,
+  pretaxIncomeOnly: 0,
+  roth401k: 0,
+  postTax: 0,
+  federalTax: 0,
+  stateTax: 0,
+  payrollTax: 0,
 };
 
 type TaxContext = Omit<IncomeModelInput, 'settings' | 'source' | 'taxYear'>;
@@ -65,7 +95,14 @@ const earningsFor = (
     (total, row) => total + (row.gross + row.taxFreeAllowance - row.taxTotal - row.net),
     0
   );
+  // From the effective rows, so a recorded paycheck that deferred more moves this too.
+  const employee401k = effectiveRows.reduce(
+    (total, row) => total + row.pretax401k + row.roth401k,
+    0
+  );
   const employerMatch = ledger.totals.employerMatch401k;
+  const sum = (pick: (row: (typeof effectiveRows)[number]) => number) =>
+    effectiveRows.reduce((total, row) => total + pick(row), 0);
 
   return {
     sourceKey: source.key,
@@ -78,8 +115,22 @@ const earningsFor = (
     taxWithheld,
     deductions,
     takeHome,
+    employee401k,
     employerMatch,
     totalComp: gross + employerMatch,
+    electiveLimit: ledger.elective401kLimit,
+    supplementalGross: sum((row) => row.supplementalGross),
+    taxableAllowance: sum((row) => row.taxableAllowance),
+    taxFreeAllowance: sum((row) => row.taxFreeAllowance),
+    section125: sum((row) => row.section125),
+    hsa: sum((row) => row.hsa),
+    pretax401k: sum((row) => row.pretax401k),
+    pretaxIncomeOnly: sum((row) => row.pretaxIncomeOnly),
+    roth401k: sum((row) => row.roth401k),
+    postTax: sum((row) => row.postTax),
+    federalTax: sum((row) => row.federalTax),
+    stateTax: sum((row) => row.stateTax),
+    payrollTax: sum((row) => row.payrollTaxes.reduce((t, tax) => t + tax.amount, 0)),
   };
 };
 
@@ -90,8 +141,21 @@ const add = (a: Earnings, b: Earnings): Earnings => ({
   taxWithheld: a.taxWithheld + b.taxWithheld,
   deductions: a.deductions + b.deductions,
   takeHome: a.takeHome + b.takeHome,
+  employee401k: a.employee401k + b.employee401k,
   employerMatch: a.employerMatch + b.employerMatch,
   totalComp: a.totalComp + b.totalComp,
+  supplementalGross: a.supplementalGross + b.supplementalGross,
+  taxableAllowance: a.taxableAllowance + b.taxableAllowance,
+  taxFreeAllowance: a.taxFreeAllowance + b.taxFreeAllowance,
+  section125: a.section125 + b.section125,
+  hsa: a.hsa + b.hsa,
+  pretax401k: a.pretax401k + b.pretax401k,
+  pretaxIncomeOnly: a.pretaxIncomeOnly + b.pretaxIncomeOnly,
+  roth401k: a.roth401k + b.roth401k,
+  postTax: a.postTax + b.postTax,
+  federalTax: a.federalTax + b.federalTax,
+  stateTax: a.stateTax + b.stateTax,
+  payrollTax: a.payrollTax + b.payrollTax,
 });
 
 // What every role held in one year paid, and the year's total across all of them.
@@ -108,7 +172,13 @@ export const summarizeYear = (
     .filter((role) => role.paychecks > 0)
     .sort((a, b) => b.gross - a.gross);
 
-  return { taxYear, roles, ...roles.reduce(add, EMPTY) };
+  return {
+    taxYear,
+    roles,
+    ...roles.reduce(add, EMPTY),
+    // One limit per person, so take it; summing would claim a multi-role year may defer more.
+    electiveLimit: Math.max(0, ...roles.map((role) => role.electiveLimit)),
+  };
 };
 
 export const summarizeYears = (
