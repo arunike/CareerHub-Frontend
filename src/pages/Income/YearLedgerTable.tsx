@@ -104,7 +104,7 @@ export const YearLedgerTable = ({
         </Tooltip>
       ),
       dataIndex: 'payDate',
-      width: compact ? 64 : 134,
+      width: compact ? 74 : 134,
       render: (value: string | null, row) => {
         const { dateFlags, grossFlags } = viewOf(row);
         // Gross has no column on a phone, so its warning would vanish with it.
@@ -147,7 +147,7 @@ export const YearLedgerTable = ({
       title: 'Gross',
       dataIndex: 'gross',
       align: 'right',
-      width: compact ? 102 : 116,
+      width: compact ? 96 : 116,
       onCell: editableCell('gross'),
       render: (_: number, row) => {
         const { gross, grossFlags, grossRecorded, supplemental } = viewOf(row);
@@ -230,7 +230,7 @@ export const YearLedgerTable = ({
       ),
       dataIndex: 'net',
       align: 'right',
-      width: compact ? 124 : 138,
+      width: compact ? 118 : 138,
       onCell: editableCell('net'),
       render: (_: number, row) => {
         const { takeHome, takeHomeRecorded } = viewOf(row);
@@ -311,11 +311,14 @@ export const YearLedgerTable = ({
       columns={columns}
       dataSource={rows}
       pagination={false}
-      scroll={compact ? undefined : { y: 460 }}
+      // No inner scroll region: a nested scrollbar inside a card is the ugliest thing on the page,
+      // and the sticky header keeps the columns readable while the page itself scrolls.
+      sticky
+      tableLayout="fixed"
       rowSelection={{
         selectedRowKeys: selectedKeys,
         onChange: (keys) => onSelectionChange(keys as number[]),
-        columnWidth: compact ? 28 : 50,
+        columnWidth: compact ? 36 : 50,
       }}
       expandable={
         compact

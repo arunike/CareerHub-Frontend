@@ -358,6 +358,28 @@ textarea::placeholder {
   color: #047857;
 }
 
+/* The editor is the figure turning typable, not a form control dropped into the row: no panel,
+   no focus ring, just the underline going live. Two classes outrank antd's unlayered chrome. */
+.ant-input-number.ledger-cell-editor,
+.ant-input-number.ledger-cell-editor:hover,
+.ant-input-number.ledger-cell-editor.ant-input-number-focused {
+  border: none;
+  border-bottom: 2px solid #2563eb;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  padding-inline: 0;
+}
+
+.ledger-cell-editor .ant-input-number-input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #0f172a;
+  padding-inline: 0;
+}
+
 .ledger-table .ant-table-thead > tr > th {
   background: #fbfcfe !important;
   color: #7c8ba1 !important;
@@ -434,6 +456,12 @@ textarea::placeholder {
 
   .ledger-edit-row :is(.ant-input-number-input, .ant-picker-input > input),
   .ledger-table :is(.ant-input-number-input, .ant-picker-input > input) {
+    min-height: 0;
+  }
+
+  /* The 44px touch floor above would double the row's height mid-edit and shove every row below
+     it. The cell you already tapped is the target; the field itself only has to be typable. */
+  .ledger-table .ant-input-number.ledger-cell-editor {
     min-height: 0;
   }
 }

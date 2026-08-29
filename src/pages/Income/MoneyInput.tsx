@@ -14,6 +14,11 @@ interface Props {
   minChars?: number;
   className?: string;
   autoFocus?: boolean;
+  // Puts the $ next to the digits instead of in antd's prefix slot, which strands it at the far
+  // left of a right-aligned field. The parser drops non-digits, so the value is unaffected.
+  inlineCurrency?: boolean;
+  // antd parks the step handles over the right edge, which is where a right-aligned figure sits.
+  controls?: boolean;
 }
 
 export const MoneyInput = ({
@@ -27,6 +32,8 @@ export const MoneyInput = ({
   minChars = 6,
   className,
   autoFocus = false,
+  inlineCurrency = false,
+  controls = true,
 }: Props) => (
   <InputNumber
     autoFocus={autoFocus}
@@ -39,16 +46,18 @@ export const MoneyInput = ({
           ? { width, maxWidth: '100%' }
           : fieldWidthStyle(displayText(value), size, minChars)
     }
-    prefix="$"
+    prefix={inlineCurrency ? undefined : '$'}
     min={0}
     max={max}
     step={100}
+    controls={controls}
     placeholder={placeholder}
     value={value}
     formatter={(raw) => {
       if (raw === undefined || raw === null) return '';
       const text = String(raw);
-      return text === '' ? '' : groupDigits(text);
+      if (text === '') return '';
+      return inlineCurrency ? `$${groupDigits(text)}` : groupDigits(text);
     }}
     parser={(raw) => parseMoney(raw) as unknown as number}
     onChange={(next) => onChange(next === null ? null : Number(next))}

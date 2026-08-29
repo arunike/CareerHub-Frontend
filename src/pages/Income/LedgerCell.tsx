@@ -57,6 +57,9 @@ export const LedgerCell = ({
     >
       <MoneyInput
         autoFocus
+        inlineCurrency
+        controls={false}
+        className="ledger-cell-editor"
         size="small"
         width={editorWidth}
         placeholder={modelledPlaceholder}
