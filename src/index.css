@@ -303,6 +303,141 @@ textarea::placeholder {
   border-start-end-radius: 0 !important;
 }
 
+/* Income year ledger */
+/* One horizontal gutter on every cell. antd's small table leaves 8px and the edge overrides put
+   12px on the ends, so no two columns were spaced alike. */
+.ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td) {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td):first-child {
+  padding-left: 16px !important;
+}
+
+.ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td):last-child {
+  padding-right: 16px !important;
+}
+
+/* The figure is the input. The whole cell is the hit target, but nothing draws a box around it:
+   a bordered panel and a pencil icon read as a spreadsheet selection, and 26 rows of them is
+   noise. The figure itself responds instead, and every part of it is drawn on the cell or on the
+   text, so none of it costs a pixel of column width. */
+.ledger-table .ant-table-tbody > tr > td.ledger-editable-cell {
+  cursor: text;
+}
+
+.ledger-cell-value {
+  border-bottom: 1px dashed #d7dee8;
+  padding-bottom: 2px;
+  transition:
+    border-bottom-color 0.15s var(--careerhub-ease),
+    color 0.15s var(--careerhub-ease);
+}
+
+/* The row already lifts to #fafbff on hover, so the cell needs a step past that to read at all. */
+.ledger-table .ant-table-tbody > tr > td.ledger-editable-cell:hover {
+  background: #eff3f9 !important;
+}
+
+.ledger-table .ant-table-tbody > tr > td.ledger-editable-cell:hover .ledger-cell-value {
+  border-bottom-style: solid;
+  border-bottom-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* A recorded figure already underlines itself in emerald, so it never takes the dashed hint and
+   never turns slate on hover — that would be two underlines and the wrong accent. */
+.ledger-cell-value.text-emerald-700,
+.ledger-table
+  .ant-table-tbody
+  > tr
+  > td.ledger-editable-cell:hover
+  .ledger-cell-value.text-emerald-700 {
+  border-bottom-color: transparent;
+  color: #047857;
+}
+
+.ledger-table .ant-table-thead > tr > th {
+  background: #fbfcfe !important;
+  color: #7c8ba1 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.055em;
+}
+
+.ledger-table .ant-table-tbody > tr > td {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  border-bottom-color: #f4f6fa !important;
+}
+
+.ledger-table .ant-table-tbody > tr.ledger-row-selected > td {
+  background: #f6f9ff !important;
+}
+
+/* The leftmost cell is the selection checkbox, so the accent rules the whole row. */
+.ledger-table .ant-table-tbody > tr.ledger-row-selected > td:first-child {
+  box-shadow: inset 2px 0 0 #2563eb;
+}
+
+.ledger-table .ant-table-tbody > tr.ledger-detail-row > td {
+  background: #fbfcfe !important;
+  box-shadow: inset 2px 0 0 #2563eb;
+}
+
+.ledger-table .ant-table-body {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.ledger-table .ant-table-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ledger-table .ant-table-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.ledger-table .ant-table-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  .ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td) {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td):first-child {
+    padding-left: 12px !important;
+  }
+
+  .ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td):last-child {
+    padding-right: 12px !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  /* The global mobile rule sets min-width: max-content on every table, which is exactly the
+     sideways scroll this ledger hides columns to avoid. */
+  .ledger-table.ant-table-wrapper .ant-table {
+    min-width: 0;
+  }
+
+  /* .ant-input-number is absent from the global 44px rule, so a row came out 44 / 33 / 44. */
+  .ledger-edit-row :is(.ant-picker, .ant-input-number, .ant-input),
+  .ledger-table :is(.ant-picker, .ant-input-number, .ant-input) {
+    min-height: 44px;
+  }
+
+  .ledger-edit-row :is(.ant-input-number-input, .ant-picker-input > input),
+  .ledger-table :is(.ant-input-number-input, .ant-picker-input > input) {
+    min-height: 0;
+  }
+}
+
 /* Card refinements */
 .ant-card {
   border-color: var(--careerhub-border) !important;

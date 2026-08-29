@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
 import { runAnalyticsWidgetQuery } from '../lib/browserAi';
 import { loadAnalyticsSourceData } from '../lib/analyticsQuery';
 import { runVisualWidgetQuery } from '../lib/visualWidgetQuery';
 import type { VisualConfig } from '../lib/visualWidgetQuery';
+import { useAccountSetting } from './useAccountSetting';
 
 export interface CustomWidget {
   id: string;
@@ -29,23 +30,21 @@ export const useCustomWidgets = (
   context: 'availability' | 'job-hunt',
   messageApi: MessageInstance
 ) => {
-  const [customWidgets, setCustomWidgets] = useState<CustomWidget[]>(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (error) {
-        console.error('Failed to parse custom widgets', error);
-      }
-    }
-    return [];
-  });
-  const initialWidgetsRef = useRef(customWidgets);
+  const {
+    value: customWidgets,
+    setValue: setCustomWidgets,
+    loaded,
+  } = useAccountSetting<CustomWidget[]>('custom_analytics_widgets', [], storageKey);
+  // Refresh once the account's widgets have arrived, not on first render: the list is fetched,
+  // so an effect keyed on mount would only ever see whatever the cache happened to hold.
+  const refreshedRef = useRef(false);
 
   useEffect(() => {
+    if (!loaded || refreshedRef.current) return;
     const refreshWidgets = async () => {
-      const widgetsToRefresh = initialWidgetsRef.current;
+      const widgetsToRefresh = customWidgets;
       if (widgetsToRefresh.length === 0) return;
+      refreshedRef.current = true;
 
       let sourceData;
       try {
@@ -80,25 +79,18 @@ export const useCustomWidgets = (
         })
       );
 
-      if (hasUpdates) {
-        setCustomWidgets(updatedWidgets);
-        localStorage.setItem(storageKey, JSON.stringify(updatedWidgets));
-      }
+      if (hasUpdates) setCustomWidgets(updatedWidgets);
     };
 
     refreshWidgets();
-  }, [context, messageApi, storageKey]);
+  }, [context, customWidgets, loaded, messageApi, setCustomWidgets, storageKey]);
 
   const addCustomWidget = (widget: CustomWidget) => {
-    const updated = [...customWidgets, widget];
-    setCustomWidgets(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setCustomWidgets([...customWidgets, widget]);
   };
 
   const deleteCustomWidget = (id: string) => {
-    const updated = customWidgets.filter((w) => w.id !== id);
-    setCustomWidgets(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setCustomWidgets(customWidgets.filter((w) => w.id !== id));
     messageApi.success('Custom widget deleted');
   };
 

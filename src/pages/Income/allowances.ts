@@ -2,8 +2,9 @@ import type { PayPeriod } from './paySchedule';
 
 export type AllowanceTreatment = 'TAXABLE' | 'TAX_FREE';
 
-// How often the allowance is paid. A stipend is not always once per paycheck.
-export type AllowanceUnit = 'PAYCHECK' | 'MONTH' | 'YEAR';
+// How often the allowance is paid. A stipend is not always once per paycheck, and a referral
+// bonus is not a stipend at all.
+export type AllowanceUnit = 'PAYCHECK' | 'MONTH' | 'YEAR' | 'ONCE';
 
 export interface Allowance {
   id: string;
@@ -15,6 +16,9 @@ export interface Allowance {
   unit: AllowanceUnit;
   // Which paycheck carries it; monthly lands on one, not spread across them.
   payOn: 'FIRST' | 'LAST';
+  // ONCE only: the paycheck that carries the single payment. Falls back to payOn when it is
+  // absent or names a period the year no longer has.
+  payPeriodIndex?: number | null;
 }
 
 export const ALLOWANCE_LABELS: Record<AllowanceTreatment, string> = {
@@ -33,6 +37,42 @@ export const UNIT_LABELS: Record<AllowanceUnit, string> = {
   PAYCHECK: 'per paycheck',
   MONTH: 'per month',
   YEAR: 'per year',
+  ONCE: 'one time',
+};
+
+// A preset fills the label and the frequency only. It deliberately leaves the tax treatment
+// alone: commuter and tuition benefits are excludable only up to annual caps this app does not
+// model, so pre-selecting Tax-free would overstate take-home without saying so.
+export interface AllowancePreset {
+  label: string;
+  unit: AllowanceUnit;
+}
+
+export const ALLOWANCE_PRESETS: AllowancePreset[] = [
+  { label: 'Work-from-home stipend', unit: 'MONTH' },
+  { label: 'Internet allowance', unit: 'MONTH' },
+  { label: 'Phone allowance', unit: 'MONTH' },
+  { label: 'Wellness or gym stipend', unit: 'MONTH' },
+  { label: 'Car or travel allowance', unit: 'MONTH' },
+  { label: 'Commuter benefit', unit: 'MONTH' },
+  { label: 'Meal allowance', unit: 'PAYCHECK' },
+  { label: 'On-call stipend', unit: 'PAYCHECK' },
+  { label: 'Referral bonus', unit: 'ONCE' },
+  { label: 'Spot bonus', unit: 'ONCE' },
+  { label: 'Home office setup', unit: 'ONCE' },
+  { label: 'Relocation allowance', unit: 'ONCE' },
+  { label: 'Learning and development stipend', unit: 'ONCE' },
+  { label: 'Tuition reimbursement', unit: 'ONCE' },
+];
+
+export const presetByLabel = (label: string) =>
+  ALLOWANCE_PRESETS.find((preset) => preset.label === label);
+
+// Taking a preset sets its cadence too, and resets the count: a one-time payment is never
+// paid a number of times, and a stale count would silently multiply it.
+export const applyPreset = (label: string): Partial<Allowance> => {
+  const preset = presetByLabel(label);
+  return preset ? { label: preset.label, unit: preset.unit, timesPer: 1 } : { label };
 };
 
 export const PAY_ON_LABELS = {
@@ -56,6 +96,7 @@ export const annualAmount = (allowance: Allowance, paychecksPerYear: number) => 
   const times = Math.max(0, Number(allowance.timesPer) || 0);
   if (amount === 0 || times === 0) return 0;
 
+  if (allowance.unit === 'ONCE') return amount;
   if (allowance.unit === 'PAYCHECK') return amount * times * Math.max(0, paychecksPerYear);
   if (allowance.unit === 'MONTH') return amount * times * 12;
   return amount * times;
@@ -64,6 +105,7 @@ export const annualAmount = (allowance: Allowance, paychecksPerYear: number) => 
 // What one payment is worth, not a per-paycheck fraction of it.
 export const paymentAmount = (allowance: Allowance) => {
   const amount = Math.max(0, Number(allowance.amount) || 0);
+  if (allowance.unit === 'ONCE') return amount;
   const times = Math.max(0, Number(allowance.timesPer) || 0);
   return amount * times;
 };
@@ -157,6 +199,13 @@ export const allowanceSchedule = (
 
     if (allowance.unit === 'PAYCHECK') {
       for (const period of payable) add(period.periodIndex, allowance, amount);
+      continue;
+    }
+
+    if (allowance.unit === 'ONCE') {
+      const chosen = payable.find((period) => period.periodIndex === allowance.payPeriodIndex);
+      const period = chosen ?? chosenPeriod(payable, allowance.payOn);
+      if (period) add(period.periodIndex, allowance, amount);
       continue;
     }
 

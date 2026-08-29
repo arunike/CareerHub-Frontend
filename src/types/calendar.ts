@@ -154,6 +154,14 @@ export interface UserSettings {
   nav_item_order?: string[];
   nav_item_labels?: Record<string, string>;
   mobile_toolbar_items?: string[];
+  custom_analytics_widgets?: Array<Record<string, unknown>>;
+  // Keyed by dashboard: jobHunt, availability.
+  analytics_widget_order?: Record<string, string[]>;
+  analytics_widgets_enabled?: Record<string, string[]>;
+  contact_network_positions?: {
+    nodes?: Record<string, { x: number; y: number }>;
+    labels?: Record<string, number>;
+  };
   is_locked?: boolean;
   ai_provider_adapter?: 'claude' | 'gemini' | 'openai' | 'openrouter' | 'custom';
   ai_provider_endpoint?: string;

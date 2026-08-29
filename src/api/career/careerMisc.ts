@@ -157,29 +157,12 @@ export const getCareerReferenceData = () => api.get('/career/reference-data/');
 export const getCareerRentEstimate = (city: string) =>
   api.get('/career/rent-estimate/', { params: { city } });
 
-export interface TaxProfilePayload {
-  id?: number;
-  tax_year: number;
-  filing_status: string;
-  state?: string;
-  locality?: string;
-  w4_dependents_credit?: number | string;
-  w4_other_income?: number | string;
-  w4_deductions?: number | string;
-  w4_extra_withholding_per_period?: number | string;
-  state_flat_rate_override?: number | string | null;
-}
-
 export interface PaycheckActualPayload {
   id?: number;
   income_year?: number;
   period_index: number;
   pay_date?: string | null;
   actual_gross?: number | string | null;
-  actual_federal_tax?: number | string | null;
-  actual_state_tax?: number | string | null;
-  actual_social_security?: number | string | null;
-  actual_medicare?: number | string | null;
   actual_net?: number | string | null;
   note?: string;
 }
@@ -229,14 +212,6 @@ export interface IncomeYearPayload {
   income_events?: Array<Record<string, unknown>>;
   actuals?: PaycheckActualPayload[];
 }
-
-export const getTaxProfiles = () => api.get<TaxProfilePayload[]>('/career/tax-profiles/');
-
-export const createTaxProfile = (data: TaxProfilePayload) =>
-  api.post<TaxProfilePayload>('/career/tax-profiles/', data);
-
-export const updateTaxProfile = (id: number, data: Partial<TaxProfilePayload>) =>
-  api.patch<TaxProfilePayload>(`/career/tax-profiles/${id}/`, data);
 
 export const getIncomeYears = () => api.get<IncomeYearPayload[]>('/career/income-years/');
 

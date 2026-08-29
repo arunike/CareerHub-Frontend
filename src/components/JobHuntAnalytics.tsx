@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
+import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import type { CustomWidget } from '../hooks/useCustomWidgets';
 import type { VisualConfig } from '../lib/visualWidgetQuery';
 import { AVAILABLE_WIDGETS } from './jobHuntAnalytics/constants';
@@ -135,36 +136,15 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
-  const [enabledWidgets, setEnabledWidgets] = useState<string[]>(() => {
-    const saved = localStorage.getItem('job_hunt_analytics_enabled');
-    if (saved) {
-      try {
-        const normalized = normalizeEnabledWidgets(JSON.parse(saved));
-        localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(normalized));
-        return normalized;
-      } catch (error) {
-        console.error('Failed to parse enabled widgets', error);
-      }
-    }
-    return DEFAULT_WIDGET_IDS;
-  });
+  const {
+    enabled: enabledWidgets,
+    order: widgetOrder,
+    setEnabled: setEnabledWidgets,
+    setOrder: setWidgetOrder,
+  } = useDashboardLayout('jobHunt', DEFAULT_WIDGET_IDS, normalizeEnabledWidgets);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeSize, setActiveSize] = useState<{ width: number; height: number } | null>(null);
-
-  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem('analytics_dashboard_order');
-    if (saved) {
-      try {
-        const order = JSON.parse(saved);
-        const normalized = normalizeEnabledWidgets(order);
-        return normalized.filter((id: string) => enabledWidgets.includes(id));
-      } catch (error) {
-        console.error('Failed to parse widget order', error);
-      }
-    }
-    return enabledWidgets;
-  });
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
@@ -192,16 +172,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     'job-hunt',
     messageApi
   );
-
-  useEffect(() => {
-    setWidgetOrder((prev) => {
-      const newOrder = prev.filter((id) => enabledWidgets.includes(id));
-      const newWidgets = enabledWidgets.filter((id) => !prev.includes(id));
-      const updated = [...newOrder, ...newWidgets];
-      localStorage.setItem('analytics_dashboard_order', JSON.stringify(updated));
-      return updated;
-    });
-  }, [enabledWidgets]);
 
   useEffect(() => {
     if (!enabledWidgets.some((id) => ANALYTICS_BACKED_WIDGETS.has(id))) return;
@@ -250,33 +220,21 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setWidgetOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over!.id as string);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        localStorage.setItem('analytics_dashboard_order', JSON.stringify(newItems));
-        return newItems;
-      });
-    } else {
-      localStorage.setItem('analytics_dashboard_order', JSON.stringify(widgetOrder));
+      const oldIndex = widgetOrder.indexOf(active.id as string);
+      const newIndex = widgetOrder.indexOf(over!.id as string);
+      setWidgetOrder(arrayMove(widgetOrder, oldIndex, newIndex));
     }
     setActiveId(null);
   };
 
   const toggleWidget = (widgetId: string) => {
-    setEnabledWidgets((prev) => {
-      let newEnabled: string[];
-      if (prev.includes(widgetId)) {
-        if (prev.length === 1) {
-          return prev;
-        }
-        newEnabled = prev.filter((id) => id !== widgetId);
-      } else {
-        newEnabled = [...prev, widgetId];
-      }
-      localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(newEnabled));
-      return newEnabled;
-    });
+    if (enabledWidgets.includes(widgetId)) {
+      // The dashboard has to keep at least one widget.
+      if (enabledWidgets.length === 1) return;
+      setEnabledWidgets(enabledWidgets.filter((id) => id !== widgetId));
+    } else {
+      setEnabledWidgets([...enabledWidgets, widgetId]);
+    }
   };
 
   const handleCreateCustomWidget = (widgetData: {
@@ -303,9 +261,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
 
     addCustomWidget(customWidget);
 
-    const updatedEnabled = [...enabledWidgets, customWidget.id];
-    setEnabledWidgets(updatedEnabled);
-    localStorage.setItem('job_hunt_analytics_enabled', JSON.stringify(updatedEnabled));
+    setEnabledWidgets([...enabledWidgets, customWidget.id]);
 
     setIsCreateWidgetOpen(false);
     messageApi.success('Custom widget created!');
@@ -313,7 +269,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
 
   const handleDeleteCustomWidget = (id: string) => {
     deleteCustomWidget(id);
-    setEnabledWidgets((prev) => prev.filter((wId) => wId !== id));
+    setEnabledWidgets(enabledWidgets.filter((wId) => wId !== id));
   };
 
   // The server counted these; the browser only renames the fields.

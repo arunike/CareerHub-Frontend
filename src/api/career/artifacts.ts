@@ -41,7 +41,6 @@ export interface AIArtifact {
   summary: string;
   payload: Record<string, unknown>;
   source_application: number | null;
-  source_offer: number | null;
   source_experience: number | null;
   is_locked: boolean;
   saved_at: string | null;

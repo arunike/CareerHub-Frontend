@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { HolderOutlined, SettingOutlined } from '@ant-design/icons';
 import { Typography, message } from 'antd';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
+import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import DashboardCustomizeModal from './jobHuntAnalytics/DashboardCustomizeModal';
 import { AVAILABLE_WIDGETS } from './availabilityAnalytics/constants';
 import CreateCustomWidgetModal from './jobHuntAnalytics/CreateCustomWidgetModal';
@@ -91,35 +92,15 @@ const normalizeEnabledWidgets = (ids: string[]) => {
 
 const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) => {
   const [messageApi, contextHolder] = message.useMessage();
-  const [enabledWidgets, setEnabledWidgets] = useState<string[]>(() => {
-    const saved = localStorage.getItem('availability_analytics_enabled');
-    if (saved) {
-      try {
-        const normalized = normalizeEnabledWidgets(JSON.parse(saved));
-        localStorage.setItem('availability_analytics_enabled', JSON.stringify(normalized));
-        return normalized;
-      } catch (error) {
-        console.error('Failed to parse enabled widgets', error);
-      }
-    }
-    return DEFAULT_WIDGET_IDS;
-  });
+  const {
+    enabled: enabledWidgets,
+    order: widgetOrder,
+    setEnabled: setEnabledWidgets,
+    setOrder: setWidgetOrder,
+  } = useDashboardLayout('availability', DEFAULT_WIDGET_IDS, normalizeEnabledWidgets);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeSize, setActiveSize] = useState<{ width: number; height: number } | null>(null);
-
-  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem('availability_analytics_order');
-    if (saved) {
-      try {
-        const order = normalizeEnabledWidgets(JSON.parse(saved));
-        return order.filter((id: string) => enabledWidgets.includes(id));
-      } catch (error) {
-        console.error('Failed to parse widget order', error);
-      }
-    }
-    return enabledWidgets;
-  });
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
@@ -129,16 +110,6 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     'availability',
     messageApi
   );
-
-  useEffect(() => {
-    setWidgetOrder((prev) => {
-      const newOrder = prev.filter((id) => enabledWidgets.includes(id));
-      const newWidgets = enabledWidgets.filter((id) => !prev.includes(id));
-      const updated = [...newOrder, ...newWidgets];
-      localStorage.setItem('availability_analytics_order', JSON.stringify(updated));
-      return updated;
-    });
-  }, [enabledWidgets]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -159,33 +130,21 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setWidgetOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over!.id as string);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        localStorage.setItem('availability_analytics_order', JSON.stringify(newItems));
-        return newItems;
-      });
-    } else {
-      localStorage.setItem('availability_analytics_order', JSON.stringify(widgetOrder));
+      const oldIndex = widgetOrder.indexOf(active.id as string);
+      const newIndex = widgetOrder.indexOf(over!.id as string);
+      setWidgetOrder(arrayMove(widgetOrder, oldIndex, newIndex));
     }
     setActiveId(null);
   };
 
   const toggleWidget = (widgetId: string) => {
-    setEnabledWidgets((prev) => {
-      let newEnabled: string[];
-      if (prev.includes(widgetId)) {
-        if (prev.length === 1) {
-          return prev;
-        }
-        newEnabled = prev.filter((id) => id !== widgetId);
-      } else {
-        newEnabled = [...prev, widgetId];
-      }
-      localStorage.setItem('availability_analytics_enabled', JSON.stringify(newEnabled));
-      return newEnabled;
-    });
+    if (enabledWidgets.includes(widgetId)) {
+      // The dashboard has to keep at least one widget.
+      if (enabledWidgets.length === 1) return;
+      setEnabledWidgets(enabledWidgets.filter((id) => id !== widgetId));
+    } else {
+      setEnabledWidgets([...enabledWidgets, widgetId]);
+    }
   };
 
   const handleCreateCustomWidget = (widgetData: {
@@ -212,9 +171,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
     addCustomWidget(customWidget);
 
-    const updatedEnabled = [...enabledWidgets, customWidget.id];
-    setEnabledWidgets(updatedEnabled);
-    localStorage.setItem('availability_analytics_enabled', JSON.stringify(updatedEnabled));
+    setEnabledWidgets([...enabledWidgets, customWidget.id]);
 
     setIsCreateWidgetOpen(false);
     messageApi.success('Custom widget created!');
@@ -222,7 +179,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
 
   const handleDeleteCustomWidget = (id: string) => {
     deleteCustomWidget(id);
-    setEnabledWidgets((prev) => prev.filter((wId) => wId !== id));
+    setEnabledWidgets(enabledWidgets.filter((wId) => wId !== id));
   };
 
   return (

@@ -1,4 +1,5 @@
-import { Button, Input, Select, Tooltip } from 'antd';
+import { AutoComplete, Button, Input, Select, Tooltip } from 'antd';
+import dayjs from 'dayjs';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { FilingStatus } from '../../types/tax';
 import type { Elections } from './tax/ledger';
@@ -11,11 +12,15 @@ import {
   type DeductionTreatment,
 } from './deductions';
 import type { DeductionLines } from './periodDeductions';
+import type { PayPeriod } from './paySchedule';
 import {
   ALLOWANCE_HINTS,
   ALLOWANCE_LABELS,
+  ALLOWANCE_PRESETS,
   UNIT_LABELS,
+  applyPreset,
   defaultAllowance,
+  paymentAmount,
   perPeriodAverage,
   PAY_ON_LABELS,
   type Allowance,
@@ -42,6 +47,7 @@ interface Props {
   deductionLines: DeductionLines;
   customDeductions: CustomDeduction[];
   allowances: Allowance[];
+  periods: PayPeriod[];
   onFilingStatusChange: (value: FilingStatus) => void;
   onStateChange: (value: string) => void;
   onElectionsChange: (patch: Partial<Elections>) => void;
@@ -63,6 +69,16 @@ const FILING_OPTIONS: Array<{ value: FilingStatus; label: string }> = [
 const ALLOWANCE_OPTIONS: Array<{ value: AllowanceTreatment; label: string }> = (
   ['TAXABLE', 'TAX_FREE'] as AllowanceTreatment[]
 ).map((value) => ({ value, label: ALLOWANCE_LABELS[value] }));
+
+// Plain labels, because AutoComplete puts the label in the input; the cadence rides in
+// optionRender, which only draws the dropdown row.
+const PRESET_OPTIONS = ALLOWANCE_PRESETS.map((preset) => ({
+  value: preset.label,
+  label: preset.label,
+  unit: preset.unit,
+}));
+
+const ALLOWANCE_UNITS: AllowanceUnit[] = ['PAYCHECK', 'MONTH', 'YEAR', 'ONCE'];
 
 const TREATMENT_OPTIONS: Array<{ value: DeductionTreatment; label: string }> = (
   ['SECTION_125', 'PRETAX_INCOME_ONLY', 'POST_TAX'] as DeductionTreatment[]
@@ -140,6 +156,7 @@ export const ElectionsForm = ({
   deductionLines,
   customDeductions,
   allowances,
+  periods,
   onFilingStatusChange,
   onStateChange,
   onElectionsChange,
@@ -151,6 +168,13 @@ export const ElectionsForm = ({
   onAllowancesChange,
 }: Props) => {
   const { money, moneyCents } = useMoney();
+  // Off-cycle payments carry no recurring items, so they cannot hold a one-time allowance either.
+  const paycheckOptions = periods
+    .filter((period) => !period.isOffCycle)
+    .map((period) => ({
+      value: period.periodIndex,
+      label: `#${period.periodIndex} · ${dayjs(period.payDate).format('MMM D')}`,
+    }));
   const allowanceTotal = allowances.reduce(
     (sum, allowance) => sum + perPeriodAverage(allowance, paychecksPerYear),
     0
@@ -367,16 +391,37 @@ export const ElectionsForm = ({
                   className="rounded-lg border border-slate-200 bg-slate-50/60 p-3"
                 >
                   <div className="flex items-center gap-2">
-                    <Input
+                    <AutoComplete
                       size="small"
                       className="min-w-0 flex-1"
-                      placeholder="Label, e.g. WFH stipend"
+                      placeholder="Pick a common one, or name your own"
                       value={allowance.label}
-                      onChange={(event) => patch({ label: event.target.value })}
+                      options={PRESET_OPTIONS}
+                      optionRender={(option) => (
+                        <span className="flex items-baseline justify-between gap-3">
+                          <span>{option.data.label}</span>
+                          <span className="text-[11px] text-slate-400">
+                            {UNIT_LABELS[option.data.unit as AllowanceUnit]}
+                          </span>
+                        </span>
+                      )}
+                      filterOption={(input, option) =>
+                        String(option?.value ?? '')
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      onChange={(value) => patch({ label: value ?? '' })}
+                      onSelect={(value) => patch(applyPreset(value))}
                     />
                     <span className="shrink-0 text-xs tabular-nums text-slate-500">
-                      {allowance.unit === 'PAYCHECK' ? '' : 'averages '}
-                      {money(perPeriodAverage(allowance, paychecksPerYear))} a paycheck
+                      {allowance.unit === 'ONCE' ? (
+                        <>{money(paymentAmount(allowance))} once</>
+                      ) : (
+                        <>
+                          {allowance.unit === 'PAYCHECK' ? '' : 'averages '}
+                          {money(perPeriodAverage(allowance, paychecksPerYear))} a paycheck
+                        </>
+                      )}
                     </span>
                     <Button
                       size="small"
@@ -397,28 +442,52 @@ export const ElectionsForm = ({
                         onChange={(value) => patch({ amount: Number(value ?? 0) })}
                       />
                     </Field>
-                    <Field label="Times paid">
-                      <CountInput
-                        fullWidth
-                        size="small"
-                        max={400}
-                        value={allowance.timesPer}
-                        onChange={(value) => patch({ timesPer: Number(value ?? 1) })}
-                      />
-                    </Field>
+                    {allowance.unit === 'ONCE' ? null : (
+                      <Field label="Times paid">
+                        <CountInput
+                          fullWidth
+                          size="small"
+                          max={400}
+                          value={allowance.timesPer}
+                          onChange={(value) => patch({ timesPer: Number(value ?? 1) })}
+                        />
+                      </Field>
+                    )}
                     <Field label="Per">
                       <Select
                         size="small"
                         style={{ width: '100%' }}
                         value={allowance.unit}
-                        options={(['PAYCHECK', 'MONTH', 'YEAR'] as AllowanceUnit[]).map((unit) => ({
+                        options={ALLOWANCE_UNITS.map((unit) => ({
                           value: unit,
                           label: UNIT_LABELS[unit],
                         }))}
-                        onChange={(value) => patch({ unit: value as AllowanceUnit })}
+                        onChange={(value) =>
+                          patch(
+                            value === 'ONCE'
+                              ? { unit: value as AllowanceUnit, timesPer: 1 }
+                              : { unit: value as AllowanceUnit }
+                          )
+                        }
                       />
                     </Field>
-                    {allowance.unit !== 'PAYCHECK' ? (
+                    {allowance.unit === 'ONCE' ? (
+                      <Field
+                        label="Paycheck"
+                        hint="The one paycheck this is paid on. Falls back to the first paycheck if that date is no longer in the year."
+                      >
+                        <Select
+                          size="small"
+                          style={{ width: '100%' }}
+                          placeholder="First paycheck"
+                          value={allowance.payPeriodIndex ?? undefined}
+                          options={paycheckOptions}
+                          onChange={(value) =>
+                            patch({ payPeriodIndex: value === undefined ? null : Number(value) })
+                          }
+                        />
+                      </Field>
+                    ) : allowance.unit !== 'PAYCHECK' ? (
                       <Field
                         label="Lands on"
                         hint="Which paycheck of the period carries it, rather than spreading it across them."

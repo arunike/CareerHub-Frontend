@@ -34,7 +34,8 @@ describe('hasAnyActual', () => {
   });
 
   it('is true once any line is recorded', () => {
-    expect(hasAnyActual({ periodIndex: 1, federalTax: 800 })).toBe(true);
+    expect(hasAnyActual({ periodIndex: 1, gross: 5000 })).toBe(true);
+    expect(hasAnyActual({ periodIndex: 1, net: 3380.56 })).toBe(true);
   });
 });
 
@@ -47,30 +48,29 @@ describe('toEffectiveRow', () => {
     expect(effective.actualFields).toEqual([]);
   });
 
-  it('substitutes a recorded federal tax and recomputes net', () => {
-    const modelledFederal = row.federalRegular + row.federalSupplemental;
-    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, federalTax: 900 });
-    expect(effective.federalTax).toBe(900);
-    expect(effective.net).toBeCloseTo(row.net - (900 - modelledFederal), 6);
-    expect(effective.actualFields).toEqual(['federalTax']);
-  });
-
-  it('substitutes a recorded payroll tax by name', () => {
-    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, socialSecurity: 400 });
-    expect(effective.payrollTaxes.find((tax) => tax.label === 'Social Security')!.amount).toBe(400);
-    expect(effective.payrollTaxes.find((tax) => tax.label === 'Medicare')!.amount).toBeCloseTo(
-      row.payrollTaxes.find((tax) => tax.label === 'Medicare')!.amount,
-      6
+  it('leaves the tax lines modelled, since only gross and take-home are recorded', () => {
+    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, net: 3000 });
+    expect(effective.payrollTaxes.find((tax) => tax.label === 'Social Security')!.amount).toBe(
+      row.payrollTaxes.find((tax) => tax.label === 'Social Security')!.amount
     );
   });
 
   it('lets a recorded net win over the derived one', () => {
-    const effective = toEffectiveRow(row, {
-      periodIndex: row.periodIndex,
-      federalTax: 900,
-      net: 3000,
-    });
+    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, net: 3000 });
     expect(effective.net).toBe(3000);
+    expect(effective.actualFields).toEqual(['net']);
+  });
+
+  it('scales both income tax lines to reconcile with a recorded take-home', () => {
+    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, net: row.net - 200 });
+    expect(effective.taxTotal).toBeGreaterThan(0);
+    // The column still adds up to the figure that was recorded.
+    const deductions =
+      row.section125 + row.hsa + row.pretax401k + row.pretaxIncomeOnly + row.postTax;
+    expect(effective.gross - deductions - effective.taxTotal + row.taxFreeAllowance).toBeCloseTo(
+      effective.net,
+      6
+    );
   });
 
   it('recomputes net from a recorded gross', () => {
@@ -84,8 +84,8 @@ describe('toEffectiveRow', () => {
     expect(effective.modelledNet).toBeCloseTo(row.net, 6);
   });
 
-  it('leaves deductions modelled, since a payslip records tax not elections', () => {
-    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, federalTax: 900 });
+  it('leaves deductions modelled, since a payslip records pay not elections', () => {
+    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, net: 3000 });
     expect(effective.section125).toBeCloseTo(row.section125, 6);
     expect(effective.pretax401k).toBeCloseTo(row.pretax401k, 6);
   });
@@ -93,9 +93,9 @@ describe('toEffectiveRow', () => {
 
 describe('toEffectiveRows and effectiveTotals', () => {
   it('applies each record to its own period', () => {
-    const effective = toEffectiveRows(rows, [{ periodIndex: 2, federalTax: 1 }]);
+    const effective = toEffectiveRows(rows, [{ periodIndex: 2, net: 1 }]);
     expect(effective[0].actualFields).toEqual([]);
-    expect(effective[1].actualFields).toEqual(['federalTax']);
+    expect(effective[1].actualFields).toEqual(['net']);
   });
 
   it('totals the effective figures, not the modelled ones', () => {
@@ -163,14 +163,12 @@ describe('balancing to a recorded take-home', () => {
     );
   });
 
-  it('does not touch a tax line that was recorded outright', () => {
+  it('scales both income tax lines together, since neither can be recorded on its own', () => {
     const effective = toEffectiveRow(row, {
       periodIndex: row.periodIndex,
-      federalTax: 900,
       net: row.net - 161.2,
     });
-    expect(effective.federalTax).toBe(900);
-    expect(effective.balancedFields).toEqual(['stateTax']);
+    expect(effective.balancedFields).toEqual(['federalTax', 'stateTax']);
   });
 
   it('balances nothing when the recorded take-home already agrees', () => {
@@ -181,7 +179,7 @@ describe('balancing to a recorded take-home', () => {
   });
 
   it('leaves the model alone when take-home is not recorded', () => {
-    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, federalTax: 900 });
+    const effective = toEffectiveRow(row, { periodIndex: row.periodIndex, gross: row.gross });
     expect(effective.balancedFields).toEqual([]);
     expect(effective.stateTax).toBeCloseTo(row.stateRegular + row.stateSupplemental, 6);
   });

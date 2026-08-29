@@ -7,13 +7,7 @@ import {
   RightOutlined,
   SlidersOutlined,
 } from '@ant-design/icons';
-import {
-  MEDICARE,
-  SOCIAL_SECURITY,
-  type ActualField,
-  type EffectiveRow,
-  type PeriodActual,
-} from './effectiveRows';
+import { type EffectiveRow } from './effectiveRows';
 import {
   resolveCustomDeductions,
   resolvePeriodValues,
@@ -26,7 +20,6 @@ import { resolveAllowances, type Allowance } from './allowances';
 import { formatPayDate } from './paySchedule';
 import { useMoney } from './amountPrivacy';
 import PaycheckAdjustModal from './PaycheckAdjustModal';
-import PaycheckRecordModal from './PaycheckRecordModal';
 
 interface Props {
   row: EffectiveRow;
@@ -41,18 +34,12 @@ interface Props {
   onOverrideChange: (periodIndex: number, patch: PeriodPatch) => void;
   onOverrideClear: (periodIndex: number) => void;
   matchFormulaLabel: string;
-  actual?: PeriodActual;
-  onActualChange: (
-    periodIndex: number,
-    changes: Partial<Omit<PeriodActual, 'periodIndex'>>
-  ) => void;
 }
 
 interface Line {
   label: string;
   amount: number;
   hint?: string;
-  recorded?: boolean;
   balanced?: boolean;
 }
 
@@ -74,19 +61,9 @@ const RATE_FIELDS: Array<{ key: keyof PeriodDefaults; label: string }> = [
   { key: 'roth401kPercent', label: 'Roth 401(k)' },
 ];
 
-const ACTUAL_INPUTS: Array<{ key: ActualField; label: string }> = [
-  { key: 'gross', label: 'Gross pay' },
-  { key: 'federalTax', label: 'Federal income tax' },
-  { key: 'stateTax', label: 'State income tax' },
-  { key: 'socialSecurity', label: 'Social Security' },
-  { key: 'medicare', label: 'Medicare' },
-  { key: 'net', label: 'Take-home' },
-];
-
 const trimPercent = (value: number) => Number(value.toFixed(2)).toString();
 
 const sectionsFor = (row: EffectiveRow): Section[] => {
-  const recorded = (field: ActualField) => row.actualFields.includes(field);
   const preTax: Line[] = [];
   const taxes: Line[] = [];
   const postTax: Line[] = [];
@@ -114,7 +91,6 @@ const sectionsFor = (row: EffectiveRow): Section[] => {
     taxes.push({
       label: 'Federal income tax',
       amount: row.federalTax,
-      recorded: recorded('federalTax'),
       balanced: row.balancedFields.includes('federalTax'),
     });
   }
@@ -122,19 +98,12 @@ const sectionsFor = (row: EffectiveRow): Section[] => {
     taxes.push({
       label: 'State income tax',
       amount: row.stateTax,
-      recorded: recorded('stateTax'),
       balanced: row.balancedFields.includes('stateTax'),
     });
   }
   for (const tax of row.payrollTaxes) {
     if (tax.amount <= 0) continue;
-    taxes.push({
-      label: tax.label,
-      amount: tax.amount,
-      recorded:
-        (tax.label === SOCIAL_SECURITY && recorded('socialSecurity')) ||
-        (tax.label === MEDICARE && recorded('medicare')),
-    });
+    taxes.push({ label: tax.label, amount: tax.amount });
   }
 
   if (Math.abs(row.residual) > 0.005) {
@@ -165,14 +134,12 @@ const Row = ({
   hint,
   amount,
   negative,
-  recorded,
   balanced,
 }: {
   label: string;
   hint?: string;
   amount: number;
   negative?: boolean;
-  recorded?: boolean;
   balanced?: boolean;
 }) => {
   const { moneyCents } = useMoney();
@@ -185,14 +152,7 @@ const Row = ({
             <InfoCircleOutlined className="shrink-0 text-[11px] text-slate-300" />
           </Tooltip>
         ) : null}
-        {recorded ? (
-          <Tooltip title="Taken from the paycheck you recorded">
-            <span className="shrink-0 rounded bg-emerald-50 px-1 text-[10px] font-semibold uppercase text-emerald-700">
-              actual
-            </span>
-          </Tooltip>
-        ) : null}
-        {balanced && !recorded ? (
+        {balanced ? (
           <Tooltip title="Scaled so the lines add up to your recorded take-home. Social Security and Medicare are statutory, so the difference is attributed to income tax.">
             <span className="shrink-0 rounded bg-amber-50 px-1 text-[10px] font-semibold uppercase text-amber-700">
               balanced
@@ -222,12 +182,9 @@ export const PaycheckWaterfall = ({
   onOverrideChange,
   onOverrideClear,
   matchFormulaLabel,
-  actual,
-  onActualChange,
 }: Props) => {
-  const { money, moneyCents } = useMoney();
+  const { moneyCents } = useMoney();
   const [editing, setEditing] = useState(false);
-  const [recording, setRecording] = useState(false);
   const payDateLabel = row.payDate ? formatPayDate(row.payDate) : `paycheck ${row.periodIndex}`;
   const effective = resolvePeriodValues(deductionDefaults, override);
   const effectiveCustom = resolveCustomDeductions(customDeductions, override);
@@ -409,7 +366,6 @@ export const PaycheckWaterfall = ({
                 label={line.label}
                 hint={line.hint}
                 amount={line.amount}
-                recorded={line.recorded}
                 balanced={line.balanced}
                 negative
               />
@@ -454,27 +410,7 @@ export const PaycheckWaterfall = ({
             {row.isAdjusted ? 'Edit this paycheck’s figures' : 'Adjust this paycheck'}
           </Button>
         ) : null}
-        <Button
-          size="small"
-          type={isRecorded ? 'default' : 'dashed'}
-          onClick={() => setRecording(true)}
-        >
-          {isRecorded ? 'Edit recorded payslip' : 'Record actual payslip'}
-        </Button>
       </div>
-
-      <PaycheckRecordModal
-        row={row}
-        ACTUAL_INPUTS={ACTUAL_INPUTS}
-        actual={actual}
-        onActualChange={onActualChange}
-        isRecorded={isRecorded}
-        money={money}
-        moneyCents={moneyCents}
-        payDateLabel={payDateLabel}
-        recording={recording}
-        setRecording={setRecording}
-      />
 
       <PaycheckAdjustModal
         row={row}

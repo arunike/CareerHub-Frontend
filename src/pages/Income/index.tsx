@@ -105,11 +105,6 @@ const IncomePage = () => {
     if (row && row.periodIndex !== selectedPeriod) setSelectedPeriod(row.periodIndex);
   }, [row, selectedPeriod]);
 
-  const rowActual = useMemo(
-    () => settings.actuals.find((actual) => actual.periodIndex === row?.periodIndex),
-    [row, settings.actuals]
-  );
-
   const roleOptions = useMemo(() => {
     const current = sourcesInYear.filter((candidate) => candidate.isCurrent);
     const past = sourcesInYear.filter((candidate) => !candidate.isCurrent);
@@ -184,6 +179,7 @@ const IncomePage = () => {
           deductionLines={deductionLines}
           customDeductions={settings.customDeductions}
           allowances={settings.allowances}
+          periods={periods}
           onFilingStatusChange={(value: FilingStatus) => update({ filingStatus: value })}
           onStateChange={(value) => update({ stateOverride: value })}
           onElectionsChange={(patch) => {
@@ -425,7 +421,6 @@ const IncomePage = () => {
           rates={rates}
           roleOptions={roleOptions}
           row={row}
-          rowActual={rowActual}
           selectedKeys={selectedKeys}
           setBatchOpen={setBatchOpen}
           setSelectedKeys={setSelectedKeys}

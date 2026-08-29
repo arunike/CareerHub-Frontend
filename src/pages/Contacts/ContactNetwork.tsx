@@ -5,6 +5,7 @@ import { AimOutlined, CompressOutlined, ExpandOutlined, UndoOutlined } from '@an
 import type { ApplicationContact, ContactRelationship } from '../../types';
 import { withoutGenericContact } from '../../components/contacts/contactOptions';
 import ContactNetworkGraph from './ContactNetworkGraph';
+import { useAccountSetting } from '../../hooks/useAccountSetting';
 
 // Where along each edge the user parked its label, as a 0-1 ratio keyed by edge.
 const LABEL_POSITION_KEY = 'careerhub.contacts.network.labelPositions';
@@ -15,6 +16,24 @@ interface Point {
   x: number;
   y: number;
 }
+
+const NETWORK_LAYOUT_CACHE_KEY = 'careerhub.contacts.network.layout';
+
+type NetworkLayout = { nodes: Record<string, Point>; labels: Record<string, number> };
+
+const readLegacyMap = <T,>(key: string): Record<string, T> => {
+  try {
+    return JSON.parse(window.localStorage.getItem(key) || '{}') as Record<string, T>;
+  } catch {
+    return {};
+  }
+};
+
+// The keys this graph wrote before the layout moved to the account.
+const legacyNetworkLayout: NetworkLayout = {
+  nodes: readLegacyMap<Point>(NODE_POSITION_KEY),
+  labels: readLegacyMap<number>(LABEL_POSITION_KEY),
+};
 
 interface Props {
   contacts: ApplicationContact[];
@@ -249,17 +268,19 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
 
   const { visibleIds, pathIds, hiddenCount } = layout;
 
-  const [nodeOffsets, setNodeOffsets] = useState<Record<string, Point>>(() => {
-    try {
-      return JSON.parse(window.localStorage.getItem(NODE_POSITION_KEY) || '{}');
-    } catch {
-      return {};
-    }
-  });
+  // Saved to the account so a graph arranged on a laptop is the same graph on a phone. Drags fire
+  // per frame, so the request is debounced while the on-screen positions stay immediate.
+  const { value: network, setValue: setNetwork } = useAccountSetting<NetworkLayout>(
+    'contact_network_positions',
+    legacyNetworkLayout,
+    NETWORK_LAYOUT_CACHE_KEY,
+    900
+  );
+  const nodeOffsets = network.nodes;
+  const labelPositions = network.labels;
 
-  useEffect(() => {
-    window.localStorage.setItem(NODE_POSITION_KEY, JSON.stringify(nodeOffsets));
-  }, [nodeOffsets]);
+  const setNodeOffsets = (next: (previous: Record<string, Point>) => Record<string, Point>) =>
+    setNetwork({ ...network, nodes: next(network.nodes) });
 
   // Drags are remembered per focused view, since each lays the graph out differently.
   const viewKey = focusId ? String(focusId) : 'me';
@@ -305,18 +326,14 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
       .filter((edge): edge is NonNullable<typeof edge> => edge !== null);
   }, [pathIds, positions, relationships, visibleIds]);
 
-  const [labelPositions, setLabelPositions] = useState<Record<string, number>>(() => {
-    try {
-      return JSON.parse(window.localStorage.getItem(LABEL_POSITION_KEY) || '{}');
-    } catch {
-      return {};
-    }
-  });
+  const setLabelPositions = (
+    next: Record<string, number> | ((previous: Record<string, number>) => Record<string, number>)
+  ) =>
+    setNetwork({
+      ...network,
+      labels: typeof next === 'function' ? next(network.labels) : next,
+    });
   const draggingKey = useRef<string | null>(null);
-
-  useEffect(() => {
-    window.localStorage.setItem(LABEL_POSITION_KEY, JSON.stringify(labelPositions));
-  }, [labelPositions]);
 
   const draggingNode = useRef<number | null>(null);
   // Set once a drag actually moves, so releasing a drag does not also open the drawer.

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ALLOWANCE_PRESETS,
+  UNIT_LABELS,
   annualAmount,
+  applyPreset,
   defaultAllowance,
   perPeriodAverage,
   resolveAllowances,
@@ -284,6 +287,88 @@ describe('allowanceSchedule', () => {
     const schedule = allowanceSchedule([monthly], periods);
     const total = Object.values(schedule).reduce((sum, entry) => sum + entry.taxable, 0);
     expect(total).toBe(annualAmount(monthly, 24));
+  });
+});
+
+describe('allowance presets', () => {
+  it('names each preset once, so the dropdown cannot show a duplicate', () => {
+    const labels = ALLOWANCE_PRESETS.map((preset) => preset.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it('gives every preset a unit the form can render', () => {
+    for (const preset of ALLOWANCE_PRESETS) {
+      expect(UNIT_LABELS[preset.unit]).toBeTruthy();
+    }
+  });
+
+  it('carries the cadence over with the label, not just the text', () => {
+    expect(applyPreset('Referral bonus')).toEqual({
+      label: 'Referral bonus',
+      unit: 'ONCE',
+      timesPer: 1,
+    });
+    expect(applyPreset('Work-from-home stipend')).toEqual({
+      label: 'Work-from-home stipend',
+      unit: 'MONTH',
+      timesPer: 1,
+    });
+  });
+
+  it('resets the count, so a preset cannot inherit a stale multiplier', () => {
+    expect(applyPreset('Referral bonus').timesPer).toBe(1);
+  });
+
+  it('leaves a typed label alone and does not invent a cadence for it', () => {
+    expect(applyPreset('Ferry pass')).toEqual({ label: 'Ferry pass' });
+  });
+
+  it('sets no tax treatment, since the caps that make one tax-free are not modelled', () => {
+    for (const preset of ALLOWANCE_PRESETS) {
+      expect(applyPreset(preset.label)).not.toHaveProperty('treatment');
+    }
+  });
+});
+
+describe('a one-time allowance', () => {
+  const periods = buildPayPeriods(2026, 24, { firstPayDate: '2026-01-15' });
+  const once = (overrides: Partial<Allowance> = {}) =>
+    allowance({ amount: 500, unit: 'ONCE', label: 'Referral bonus', ...overrides });
+
+  it('pays the whole amount on the paycheck it names, and nowhere else', () => {
+    const schedule = allowanceSchedule([once({ payPeriodIndex: 7 })], periods);
+    expect(schedule[7].taxable).toBe(500);
+    expect(Object.values(schedule).filter((entry) => entry.taxable > 0)).toHaveLength(1);
+  });
+
+  it('is worth its amount over the year, not once per paycheck', () => {
+    expect(annualAmount(once({ payPeriodIndex: 7 }), 24)).toBe(500);
+  });
+
+  it('ignores timesPer, so a stale count cannot multiply a single payment', () => {
+    const schedule = allowanceSchedule([once({ payPeriodIndex: 7, timesPer: 12 })], periods);
+    expect(schedule[7].taxable).toBe(500);
+    expect(annualAmount(once({ timesPer: 12 }), 24)).toBe(500);
+  });
+
+  it('falls back to the payOn choice when no paycheck is named', () => {
+    expect(allowanceSchedule([once()], periods)[1].taxable).toBe(500);
+    expect(allowanceSchedule([once({ payOn: 'LAST' })], periods)[24].taxable).toBe(500);
+  });
+
+  it('falls back rather than paying nothing when the named paycheck left the year', () => {
+    const schedule = allowanceSchedule([once({ payPeriodIndex: 99 })], periods);
+    expect(schedule[1].taxable).toBe(500);
+    expect(Object.values(schedule).filter((entry) => entry.taxable > 0)).toHaveLength(1);
+  });
+
+  it('keeps a tax-free one out of the taxable total', () => {
+    const schedule = allowanceSchedule(
+      [once({ payPeriodIndex: 3, treatment: 'TAX_FREE' })],
+      periods
+    );
+    expect(schedule[3].taxFree).toBe(500);
+    expect(schedule[3].taxable).toBe(0);
   });
 });
 

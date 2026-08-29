@@ -134,11 +134,6 @@ const fromPayload = (payload: IncomeYearPayload): Partial<IncomeSettings> => ({
   actuals: (payload.actuals ?? []).map((actual) => ({
     periodIndex: actual.period_index,
     gross: actual.actual_gross == null ? null : num(actual.actual_gross),
-    federalTax: actual.actual_federal_tax == null ? null : num(actual.actual_federal_tax),
-    stateTax: actual.actual_state_tax == null ? null : num(actual.actual_state_tax),
-    socialSecurity:
-      actual.actual_social_security == null ? null : num(actual.actual_social_security),
-    medicare: actual.actual_medicare == null ? null : num(actual.actual_medicare),
     net: actual.actual_net == null ? null : num(actual.actual_net),
     note: actual.note ?? '',
     payDate: actual.pay_date ?? null,
@@ -185,6 +180,14 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
   retirement_starting_balance: settings.retirementStartingBalance,
   retirement_current_value: settings.retirementCurrentValue,
   income_events: settings.extraEvents as unknown as Array<Record<string, unknown>>,
+  // Recorded paychecks and any pay-date override, so a phone sees what a laptop typed.
+  actuals: settings.actuals.map((actual) => ({
+    period_index: actual.periodIndex,
+    pay_date: actual.payDate ?? null,
+    actual_gross: actual.gross ?? null,
+    actual_net: actual.net ?? null,
+    note: actual.note ?? '',
+  })),
 });
 
 export const useIncomeYear = () => {

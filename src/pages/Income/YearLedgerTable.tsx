@@ -1,11 +1,14 @@
-import { DatePicker, Input, Table, Tag, Tooltip } from 'antd';
+import { useState } from 'react';
+import { DatePicker, Grid, Input, Table, Tooltip } from 'antd';
+import { RightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import type { EffectiveRow } from './effectiveRows';
-import type { PeriodActual } from './effectiveRows';
-import MoneyInput from './MoneyInput';
+import type { EffectiveRow, PeriodActual } from './effectiveRows';
+import LedgerCell, { RECORDED_CLASS } from './LedgerCell';
+import LedgerFlagChip from './LedgerFlagChip';
+import PaycheckDetailPanel from './PaycheckDetailPanel';
 import { useMoney } from './amountPrivacy';
-import { calculatedRate } from './taxRates';
+import { ledgerRowView, type LedgerRowView } from './ledgerRowView';
 
 interface Props {
   rows: EffectiveRow[];
@@ -20,6 +23,25 @@ interface Props {
   ) => void;
 }
 
+const Figure = ({
+  value,
+  recorded = false,
+  className = 'text-slate-700',
+}: {
+  value: string;
+  recorded?: boolean;
+  className?: string;
+}) => (
+  <span
+    className={`whitespace-nowrap tabular-nums ${recorded ? RECORDED_CLASS : className}`}
+    title={recorded ? 'Recorded from your payslip' : undefined}
+  >
+    {value}
+  </span>
+);
+
+const stopRowClick = (event: React.MouseEvent) => event.stopPropagation();
+
 export const YearLedgerTable = ({
   rows,
   selectedKeys,
@@ -29,132 +51,200 @@ export const YearLedgerTable = ({
   onSelectPeriod,
   onActualChange,
 }: Props) => {
-  const { money, moneyCents } = useMoney();
+  const format = useMoney();
+  const screens = Grid.useBreakpoint();
+  const [expandedKeys, setExpandedKeys] = useState<number[]>([]);
+  // The whole cell is the hit target, so which cell is open lives here rather than inside it.
+  const [editing, setEditing] = useState<{ periodIndex: number; field: 'gross' | 'net' } | null>(
+    null
+  );
   const actualByPeriod = new Map(actuals.map((actual) => [actual.periodIndex, actual.net ?? null]));
+  const grossByPeriod = new Map(
+    actuals.map((actual) => [actual.periodIndex, actual.gross ?? null])
+  );
+
+  // Below md the date picker, the actual and the note have no column, so the row opens instead.
+  const compact = !screens.md;
+
+  const views = new Map(rows.map((row) => [row.periodIndex, ledgerRowView(row, format)]));
+  const viewOf = (row: EffectiveRow): LedgerRowView =>
+    views.get(row.periodIndex) ?? ledgerRowView(row, format);
+
+  const isEditing = (row: EffectiveRow, field: 'gross' | 'net') =>
+    editing?.periodIndex === row.periodIndex && editing.field === field;
+
+  const editableCell = (field: 'gross' | 'net') => (row: EffectiveRow) => ({
+    className: 'ledger-editable-cell',
+    onClick: (event: React.MouseEvent) => {
+      event.stopPropagation();
+      setEditing({ periodIndex: row.periodIndex, field });
+    },
+  });
+
+  const closeEditor =
+    (row: EffectiveRow, field: 'gross' | 'net') => (value: number | null | undefined) => {
+      setEditing(null);
+      if (value !== undefined) onActualChange(row.periodIndex, { [field]: value });
+    };
 
   const columns: ColumnsType<EffectiveRow> = [
     {
       title: '#',
       dataIndex: 'periodIndex',
-      width: 52,
-      fixed: 'left',
-      render: (value: number, row) => (
-        <span className="tabular-nums text-slate-400">{row.isOffCycle ? '·' : value}</span>
+      width: 44,
+      responsive: ['xxl'],
+      render: (_: number, row) => (
+        <span className="tabular-nums text-slate-300">{viewOf(row).ordinal}</span>
       ),
     },
     {
       title: (
         <Tooltip title="When the money lands. Adjust it when payday shifts, e.g. a federal holiday moving it earlier.">
-          <span>Pay date</span>
+          <span>{compact ? 'Date' : 'Pay date'}</span>
         </Tooltip>
       ),
       dataIndex: 'payDate',
-      width: 168,
-      fixed: 'left',
-      render: (value: string | null, row) => (
-        <span
-          className="flex items-center gap-1.5 whitespace-nowrap"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <DatePicker
-            size="small"
-            variant="filled"
-            allowClear={false}
-            format="MMM D"
-            className="w-[104px]"
-            value={value ? dayjs(value) : null}
-            onChange={(next) =>
-              onActualChange(row.periodIndex, {
-                payDate: next ? next.format('YYYY-MM-DD') : null,
-              })
-            }
-          />
-          {row.isOffCycle ? (
-            <Tooltip title="Paid on its own date, separate from payroll">
-              <Tag color="purple" className="!mr-0 !px-1 !text-[10px]">
-                off
-              </Tag>
-            </Tooltip>
-          ) : null}
-          {row.isAdjustedDate ? (
-            <Tooltip title="Pay date moved from the regular schedule">
-              <Tag color="blue" className="!mr-0 !px-1 !text-[10px]">
-                moved
-              </Tag>
-            </Tooltip>
-          ) : null}
-        </span>
-      ),
+      width: compact ? 64 : 134,
+      render: (value: string | null, row) => {
+        const { dateFlags, grossFlags } = viewOf(row);
+        // Gross has no column on a phone, so its warning would vanish with it.
+        const flags = compact ? [...dateFlags, ...grossFlags] : dateFlags;
+        return (
+          <div className="flex flex-col gap-1">
+            {compact ? (
+              <span className="whitespace-nowrap font-medium text-slate-700">
+                {value ? dayjs(value).format('MMM D') : '—'}
+              </span>
+            ) : (
+              <span onClick={stopRowClick}>
+                <DatePicker
+                  size="small"
+                  variant="filled"
+                  allowClear={false}
+                  format="MMM D"
+                  className="w-[104px]"
+                  value={value ? dayjs(value) : null}
+                  onChange={(next) =>
+                    onActualChange(row.periodIndex, {
+                      payDate: next ? next.format('YYYY-MM-DD') : null,
+                    })
+                  }
+                />
+              </span>
+            )}
+            {flags.length > 0 ? (
+              <span className="flex flex-wrap gap-1">
+                {flags.map((entry) => (
+                  <LedgerFlagChip key={entry.key} flag={entry} />
+                ))}
+              </span>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       title: 'Gross',
       dataIndex: 'gross',
       align: 'right',
-      render: (value: number, row) => (
-        <span className="tabular-nums">
-          {row.residual < -0.005 ? (
-            <Tooltip title="The recorded take-home is more than this gross can pay. Record the gross too, or check the role's salary.">
-              <Tag color="red" className="!mr-1 !px-1 !text-[10px]">
-                low
-              </Tag>
-            </Tooltip>
-          ) : null}
-          {money(value)}
-          {row.supplementalGross > 0 ? (
-            <Tooltip title={`Includes ${money(row.supplementalGross)} of bonus or vest`}>
-              <Tag color="purple" className="!ml-2 !mr-0">
-                +{money(row.supplementalGross)}
-              </Tag>
-            </Tooltip>
-          ) : null}
-        </span>
-      ),
+      width: compact ? 102 : 116,
+      onCell: editableCell('gross'),
+      render: (_: number, row) => {
+        const { gross, grossFlags, grossRecorded, supplemental } = viewOf(row);
+        return (
+          <div className="flex flex-col items-stretch gap-0.5">
+            {/* A chip beside the figure needs 24px the phone column does not have. */}
+            <span
+              className={
+                compact
+                  ? 'flex flex-col items-stretch gap-0.5'
+                  : 'flex items-center justify-end gap-1.5'
+              }
+            >
+              {compact
+                ? null
+                : grossFlags.map((entry) => <LedgerFlagChip key={entry.key} flag={entry} />)}
+              <LedgerCell
+                display={gross}
+                recorded={grossRecorded ? (grossByPeriod.get(row.periodIndex) ?? null) : null}
+                modelledPlaceholder={format.money(row.modelledGross)}
+                className="text-slate-700"
+                editorWidth={100}
+                editing={isEditing(row, 'gross')}
+                onDone={closeEditor(row, 'gross')}
+              />
+            </span>
+            {supplemental ? (
+              <Tooltip title={`Includes ${supplemental} of bonus or vest`}>
+                {/* Shrinkable, so a longer figure cannot push the row past the card. */}
+                <span className="min-w-0 truncate text-[11px] tabular-nums text-slate-400">
+                  {supplemental}
+                </span>
+              </Tooltip>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       title: 'Pre-tax',
       align: 'right',
-      render: (_, row) => (
-        <span className="inline-flex items-baseline gap-1.5">
-          <span className="tabular-nums text-sky-600">
-            {money(row.section125 + row.hsa + row.pretax401k + row.pretaxIncomeOnly)}
+      width: 118,
+      responsive: ['xl'],
+      render: (_, row) => {
+        const { preTax, preTaxFlags } = viewOf(row);
+        return (
+          <span className="inline-flex items-center justify-end gap-1.5">
+            {preTaxFlags.map((entry) => (
+              <LedgerFlagChip key={entry.key} flag={entry} />
+            ))}
+            <Figure value={preTax} className="text-slate-500" />
           </span>
-          {row.isAdjusted ? (
-            <Tooltip title="This paycheck uses adjusted deduction amounts">
-              <Tag color="purple" className="!mr-0 !px-1 !text-[10px]">
-                adj
-              </Tag>
-            </Tooltip>
-          ) : null}
-        </span>
-      ),
+        );
+      },
     },
     {
       title: 'Tax',
       dataIndex: 'taxTotal',
       align: 'right',
-      render: (value: number) => <span className="tabular-nums text-rose-600">{money(value)}</span>,
+      width: 106,
+      responsive: ['sm'],
+      render: (_: number, row) => <Figure value={viewOf(row).tax} className="text-slate-500" />,
     },
     {
       title: (
         <Tooltip title="Tax as a share of gross pay.">
-          <span>Tax rate</span>
+          <span>Rate</span>
         </Tooltip>
       ),
       align: 'right',
-      width: 88,
-      render: (_, row) => (
-        <span className="tabular-nums text-slate-700">
-          {(calculatedRate(row) * 100).toFixed(1)}%
-        </span>
-      ),
+      width: 62,
+      responsive: ['xxl'],
+      render: (_, row) => <Figure value={viewOf(row).taxRate} className="text-slate-400" />,
     },
     {
-      title: 'Take-home',
+      title: (
+        <Tooltip title="What landed. Click a figure to record what your payslip actually says; clear it to go back to the modelled number.">
+          <span>Take-home</span>
+        </Tooltip>
+      ),
       dataIndex: 'net',
       align: 'right',
-      render: (value: number) => (
-        <span className="font-semibold tabular-nums text-slate-900">{moneyCents(value)}</span>
-      ),
+      width: compact ? 124 : 138,
+      onCell: editableCell('net'),
+      render: (_: number, row) => {
+        const { takeHome, takeHomeRecorded } = viewOf(row);
+        return (
+          <LedgerCell
+            display={takeHome}
+            recorded={takeHomeRecorded ? (actualByPeriod.get(row.periodIndex) ?? null) : null}
+            modelledPlaceholder={format.moneyCents(row.modelledNet)}
+            editorWidth={compact ? 108 : 112}
+            editing={isEditing(row, 'net')}
+            onDone={closeEditor(row, 'net')}
+          />
+        );
+      },
     },
     {
       title: (
@@ -164,29 +254,16 @@ export const YearLedgerTable = ({
       ),
       dataIndex: 'employerMatch401k',
       align: 'right',
-      width: 104,
-      render: (value: number) =>
-        value > 0 ? (
-          <span className="tabular-nums text-violet-600">{money(value)}</span>
+      width: 92,
+      responsive: ['xl'],
+      render: (_: number, row) => {
+        const { match } = viewOf(row);
+        return match ? (
+          <Figure value={match} className="text-slate-500" />
         ) : (
           <span className="text-slate-200">·</span>
-        ),
-    },
-    {
-      title: 'Actual',
-      align: 'right',
-      width: 176,
-      render: (_, row) => (
-        <span onClick={(event) => event.stopPropagation()}>
-          <MoneyInput
-            size="small"
-            minChars={9}
-            placeholder="Enter"
-            value={actualByPeriod.get(row.periodIndex) ?? null}
-            onChange={(value) => onActualChange(row.periodIndex, { net: value })}
-          />
-        </span>
-      ),
+        );
+      },
     },
     {
       title: (
@@ -194,54 +271,86 @@ export const YearLedgerTable = ({
           <span>Notes</span>
         </Tooltip>
       ),
-      width: 260,
-      render: (_, row) => (
-        <div className="flex flex-col gap-1">
-          {row.notes.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {row.notes.map((note) => (
-                <Tag
-                  key={note}
-                  className="!mr-0"
-                  color={note.includes('reached') ? 'gold' : 'blue'}
-                >
-                  {note}
-                </Tag>
-              ))}
-            </div>
-          ) : null}
-          <span onClick={(event) => event.stopPropagation()}>
-            <Input
-              size="small"
-              variant="filled"
-              placeholder="Add a note"
-              value={row.note}
-              onChange={(event) => onActualChange(row.periodIndex, { note: event.target.value })}
-            />
-          </span>
-        </div>
-      ),
+      responsive: ['xl'],
+      render: (_, row) => {
+        const { autoNotes } = viewOf(row);
+        return (
+          <div className="flex min-w-0 flex-col gap-1">
+            {autoNotes.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {autoNotes.map((note) => (
+                  <span
+                    key={note}
+                    className="min-w-0 truncate rounded-md bg-slate-100 px-1.5 py-px text-[11px] text-slate-600"
+                  >
+                    {note}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <span onClick={stopRowClick}>
+              <Input
+                size="small"
+                variant="filled"
+                placeholder="Add a note"
+                value={row.note}
+                onChange={(event) => onActualChange(row.periodIndex, { note: event.target.value })}
+              />
+            </span>
+          </div>
+        );
+      },
     },
   ];
 
   return (
     <Table<EffectiveRow>
+      className="ledger-table"
       rowKey="periodIndex"
       size="small"
       columns={columns}
       dataSource={rows}
       pagination={false}
-      scroll={{ x: 1500, y: 460 }}
+      scroll={compact ? undefined : { y: 460 }}
       rowSelection={{
         selectedRowKeys: selectedKeys,
         onChange: (keys) => onSelectionChange(keys as number[]),
-        columnWidth: 44,
-        fixed: true,
+        columnWidth: compact ? 28 : 50,
       }}
+      expandable={
+        compact
+          ? {
+              expandedRowKeys: expandedKeys,
+              onExpandedRowsChange: (keys) => setExpandedKeys(keys as number[]),
+              expandRowByClick: true,
+              columnWidth: 22,
+              expandIcon: ({ expanded }) => (
+                <span
+                  className={`inline-flex text-[10px] text-slate-300 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                >
+                  <RightOutlined />
+                </span>
+              ),
+              expandedRowClassName: () => 'ledger-detail-row',
+              expandedRowRender: (row) => (
+                <PaycheckDetailPanel
+                  row={row}
+                  onActualChange={onActualChange}
+                  onOpenPaycheck={onSelectPeriod}
+                />
+              ),
+            }
+          : undefined
+      }
       onRow={(row) => ({
-        onClick: () => onSelectPeriod(row.periodIndex),
-        className:
-          row.periodIndex === selectedPeriod ? 'cursor-pointer bg-blue-50/70' : 'cursor-pointer',
+        // On a phone the tap opens the row's own panel; navigating away would unmount it.
+        onClick: compact ? undefined : () => onSelectPeriod(row.periodIndex),
+        className: [
+          'ledger-row cursor-pointer',
+          row.periodIndex === selectedPeriod && !compact ? 'ledger-row-selected' : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
       })}
     />
   );

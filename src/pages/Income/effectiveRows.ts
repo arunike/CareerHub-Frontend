@@ -7,32 +7,17 @@ export const MEDICARE = 'Medicare';
 export interface PeriodActual {
   periodIndex: number;
   gross?: number | null;
-  federalTax?: number | null;
-  stateTax?: number | null;
-  socialSecurity?: number | null;
-  medicare?: number | null;
   net?: number | null;
   note?: string | null;
   // Overrides the scheduled pay date, e.g. when payday falls on a federal holiday.
   payDate?: string | null;
 }
 
-export type ActualField =
-  | 'gross'
-  | 'federalTax'
-  | 'stateTax'
-  | 'socialSecurity'
-  | 'medicare'
-  | 'net';
+// Only the two figures a payslip is read off in the ledger. The per-line tax fields were
+// recorded by a modal nobody used: zero production rows carried one.
+export type ActualField = 'gross' | 'net';
 
-export const ACTUAL_FIELDS: ActualField[] = [
-  'gross',
-  'federalTax',
-  'stateTax',
-  'socialSecurity',
-  'medicare',
-  'net',
-];
+export const ACTUAL_FIELDS: ActualField[] = ['gross', 'net'];
 
 // The row the page displays: modelled figures with any recorded values substituted in.
 export interface EffectiveRow {
@@ -68,6 +53,8 @@ export interface EffectiveRow {
   balancedFields: Array<'federalTax' | 'stateTax'>;
   // Anything the income tax lines could not absorb, so the column still adds up.
   residual: number;
+  // What the model said before any recorded figure replaced it, so an editor can show it.
+  modelledGross: number;
   modelledNet: number;
 }
 
@@ -85,8 +72,6 @@ const balanceTaxes = (input: {
   payrollTotal: number;
   federalTax: number;
   stateTax: number;
-  federalRecorded: boolean;
-  stateRecorded: boolean;
 }) => {
   const modelledTotal = input.federalTax + input.stateTax + input.payrollTotal;
   if (!input.recordedNet) {
@@ -99,13 +84,9 @@ const balanceTaxes = (input: {
     };
   }
 
-  const fixed =
-    input.payrollTotal +
-    (input.federalRecorded ? input.federalTax : 0) +
-    (input.stateRecorded ? input.stateTax : 0);
-  const adjustable =
-    (input.federalRecorded ? 0 : input.federalTax) + (input.stateRecorded ? 0 : input.stateTax);
-  const target = input.requiredTax - fixed;
+  // FICA is statutory, so only the income tax lines can move to reconcile a recorded take-home.
+  const adjustable = input.federalTax + input.stateTax;
+  const target = input.requiredTax - input.payrollTotal;
 
   let federalTax = input.federalTax;
   let stateTax = input.stateTax;
@@ -114,24 +95,16 @@ const balanceTaxes = (input: {
   if (Math.abs(target - adjustable) >= 0.005) {
     if (target > 0 && adjustable > 0) {
       const scale = target / adjustable;
-      if (!input.federalRecorded) {
-        federalTax = input.federalTax * scale;
-        if (input.federalTax > 0) balancedFields.push('federalTax');
-      }
-      if (!input.stateRecorded) {
-        stateTax = input.stateTax * scale;
-        if (input.stateTax > 0) balancedFields.push('stateTax');
-      }
+      federalTax = input.federalTax * scale;
+      if (input.federalTax > 0) balancedFields.push('federalTax');
+      stateTax = input.stateTax * scale;
+      if (input.stateTax > 0) balancedFields.push('stateTax');
     } else {
       // Nothing to scale, or no room left for income tax at all.
-      if (!input.federalRecorded) {
-        if (input.federalTax > 0) balancedFields.push('federalTax');
-        federalTax = 0;
-      }
-      if (!input.stateRecorded) {
-        if (input.stateTax > 0) balancedFields.push('stateTax');
-        stateTax = 0;
-      }
+      if (input.federalTax > 0) balancedFields.push('federalTax');
+      federalTax = 0;
+      if (input.stateTax > 0) balancedFields.push('stateTax');
+      stateTax = 0;
     }
   }
 
@@ -150,22 +123,9 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
   const actualFields = actual ? ACTUAL_FIELDS.filter((field) => provided(actual[field])) : [];
 
   const gross = provided(actual?.gross) ? actual.gross : row.gross;
-  const federalTax = provided(actual?.federalTax)
-    ? actual.federalTax
-    : row.federalRegular + row.federalSupplemental;
-  const stateTax = provided(actual?.stateTax)
-    ? actual.stateTax
-    : row.stateRegular + row.stateSupplemental;
-
-  const payrollTaxes = row.payrollTaxes.map((tax) => {
-    if (tax.label === SOCIAL_SECURITY && provided(actual?.socialSecurity)) {
-      return { label: tax.label, amount: actual.socialSecurity };
-    }
-    if (tax.label === MEDICARE && provided(actual?.medicare)) {
-      return { label: tax.label, amount: actual.medicare };
-    }
-    return tax;
-  });
+  const federalTax = row.federalRegular + row.federalSupplemental;
+  const stateTax = row.stateRegular + row.stateSupplemental;
+  const payrollTaxes = row.payrollTaxes;
 
   const taxTotal =
     federalTax + stateTax + payrollTaxes.reduce((total, tax) => total + tax.amount, 0);
@@ -182,8 +142,6 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
     payrollTotal: payrollTaxes.reduce((total, tax) => total + tax.amount, 0),
     federalTax,
     stateTax,
-    federalRecorded: provided(actual?.federalTax),
-    stateRecorded: provided(actual?.stateTax),
   });
 
   return {
@@ -216,6 +174,7 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
     actualFields,
     balancedFields: balanced.balancedFields,
     residual: balanced.residual,
+    modelledGross: row.gross,
     modelledNet: row.net,
   };
 };

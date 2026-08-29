@@ -13,6 +13,7 @@ interface Props {
   fullWidth?: boolean;
   minChars?: number;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export const MoneyInput = ({
@@ -25,8 +26,10 @@ export const MoneyInput = ({
   fullWidth = false,
   minChars = 6,
   className,
+  autoFocus = false,
 }: Props) => (
   <InputNumber
+    autoFocus={autoFocus}
     size={size}
     className={className}
     style={

@@ -49,7 +49,6 @@ type Props = {
   rates: any;
   roleOptions: any;
   row: any;
-  rowActual: any;
   selectedKeys: number[];
   setBatchOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedKeys: React.Dispatch<React.SetStateAction<number[]>>;
@@ -66,7 +65,6 @@ const IncomeSourceTabs = ({
   rates,
   roleOptions,
   row,
-  rowActual,
   selectedKeys,
   setBatchOpen,
   setSelectedKeys,
@@ -231,8 +229,6 @@ const IncomeSourceTabs = ({
                     row={row}
                     rows={effectiveRows}
                     periodsPerYear={paychecksPerYear}
-                    actual={rowActual}
-                    onActualChange={setActual}
                     matchFormulaLabel={describeFormula(matchFormula)}
                     onSelectPeriod={setSelectedPeriod}
                     deductionDefaults={periodDefaults}
@@ -268,9 +264,15 @@ const IncomeSourceTabs = ({
               </div>
             ) : (
               <>
-                <div className="enterprise-card p-2 sm:p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3 px-2 pb-2 pt-1">
-                    <span className="text-xs text-slate-500">
+                <div className="enterprise-card overflow-hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                    <span
+                      className={
+                        selectedKeys.length > 0
+                          ? 'text-xs font-semibold text-slate-700'
+                          : 'text-xs text-slate-500'
+                      }
+                    >
                       {selectedKeys.length > 0
                         ? `${selectedKeys.length} paycheck${selectedKeys.length === 1 ? '' : 's'} selected`
                         : 'Select paychecks to edit deductions or 401(k) in bulk'}
@@ -281,8 +283,10 @@ const IncomeSourceTabs = ({
                           Clear selection
                         </Button>
                       ) : null}
+                      {/* antd's disabled primary is grey on grey, so an inactive action drops to default. */}
                       <Button
                         size="small"
+                        type={selectedKeys.length > 0 ? 'primary' : 'default'}
                         icon={<SlidersOutlined />}
                         disabled={selectedKeys.length === 0}
                         onClick={() => setBatchOpen(true)}
