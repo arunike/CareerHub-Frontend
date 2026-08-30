@@ -324,8 +324,7 @@ const Holidays = () => {
     },
   ];
 
-  // Rides inside the calendar's own header, or above the list, so the page title is not
-  // followed by a band of controls.
+  // Inside the calendar header, so the page title is not followed by a band of controls.
   const viewControls = (
     <>
       <SegmentedToggle

@@ -52,8 +52,7 @@ interface Props {
   equityVestingSchedule?: number[];
   onEquityVestingScheduleChange?: (v: number[]) => void;
   defaultEquityMode?: EquityMode;
-  // Annual refresh lives in the equity popover so the grant and everything that
-  // modifies it stay in one place.
+  // Lives in the equity popover, with the grant it modifies.
   showEquityRefresh?: boolean;
   annualRefreshValue?: number;
   onAnnualRefreshValueChange?: (v: number) => void;

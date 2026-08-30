@@ -1,7 +1,6 @@
 import type { JurisdictionTable } from '../../../../../types/tax';
 
-// Covers every state that is not modelled with brackets yet. STATE_TAX_RATE in the
-// backend reference data supplies the rate, and zero-rate states become the 'none' tier.
+// Rate comes from STATE_TAX_RATE in the backend reference data; zero-rate becomes 'none'.
 export const flatStateTable = (
   jurisdiction: string,
   ratePercent: number,

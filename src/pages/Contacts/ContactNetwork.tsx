@@ -268,8 +268,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
 
   const { visibleIds, pathIds, hiddenCount } = layout;
 
-  // Saved to the account so a graph arranged on a laptop is the same graph on a phone. Drags fire
-  // per frame, so the request is debounced while the on-screen positions stay immediate.
+  // Saved to the account; the write is debounced while on-screen positions stay immediate.
   const { value: network, setValue: setNetwork } = useAccountSetting<NetworkLayout>(
     'contact_network_positions',
     legacyNetworkLayout,

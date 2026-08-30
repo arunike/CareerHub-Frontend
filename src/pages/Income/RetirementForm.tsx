@@ -204,8 +204,7 @@ export const RetirementForm = ({
                 )}
               </>
             ) : (
-              // Nothing to carve out, so the choice cannot change a figure — say so rather than
-              // leaving a control that looks broken.
+              // Nothing to carve out, so the choice cannot change a figure.
               <>
                 No stipends, allowances or bonus this year, so every option defers on the same pay.
               </>

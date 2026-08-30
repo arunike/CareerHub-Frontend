@@ -30,7 +30,6 @@ const SEGMENTS = [
   { key: 'employerMatch', label: '401(k) match', tone: 'bg-sky-500' },
 ] as const;
 
-// One quantity split by payroll, in the amber it already carries inside Deductions.
 // Only the numeric role fields can head a column, so the cells stay typed as amounts.
 const ROLE_COLUMNS: Array<{
   key: 'equityVested' | 'bonus' | 'employee401k' | 'employerMatch';
@@ -330,9 +329,7 @@ export const YearEarningsCard = ({
   const sources = summary.roles.map((role) => ({ label: role.company, parts: role }));
 
   const peak = Math.max(...history.map((year) => year.totalComp), 1);
-  // Take-home, tax, deductions and the match are what total comp is made of. Summing them
-  // rather than reusing totalComp keeps the segments filling the bar exactly even when a
-  // tax-free allowance lands in take-home without ever passing through gross.
+  // Summed rather than reusing totalComp, so a tax-free allowance cannot leave a gap.
   const segmentTotal = (year: YearEarnings) =>
     year.takeHome + year.taxWithheld + year.deductions + year.employerMatch;
 

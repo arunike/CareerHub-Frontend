@@ -114,8 +114,7 @@ export const useScenarioRows = ({
         equityTaxRate: Number(app?.tax_equity_rate ?? estimatedTax.equityTaxRate),
       };
 
-      // Time and cost share one office-day count, so a hybrid role is never charged a
-      // five-day commute. Falls back to the legacy single cost when no modes are set.
+      // One office-day count for both, so a hybrid role is never charged five days.
       const commute = summariseCommute(
         app?.commute_options as CommuteOption[] | undefined,
         {

@@ -1,5 +1,4 @@
-// Every figure on the page is shown to the cent: rounding to whole dollars made the
-// columns look inconsistent and hid the difference between near-identical paychecks.
+// To the cent: whole dollars hid the difference between near-identical paychecks.
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',

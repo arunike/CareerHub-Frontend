@@ -12,8 +12,7 @@ export interface ApplicationOption {
 }
 
 const PAGE_SIZE = 25;
-// Start loading before the user actually hits the bottom, so the next page is usually
-// already there by the time they get to it.
+// Loads before the bottom is reached, so the next page is usually already there.
 const SCROLL_THRESHOLD_PX = 80;
 
 const defaultLabel = (application: ApplicationOption) =>

@@ -12,8 +12,7 @@ interface YearFigures {
   socialSecurityWageBase: number;
 }
 
-// Married filing separately is set by statute at half the joint thresholds, and its
-// standard deduction equals the single filer's.
+// Married filing separately: half the joint thresholds, the single standard deduction.
 const halved = (brackets: TaxBracket[]): TaxBracket[] =>
   brackets.map((bracket) => ({
     cap: bracket.cap === Infinity ? Infinity : bracket.cap / 2,
@@ -48,8 +47,7 @@ const federalTableFor = (figures: YearFigures): JurisdictionTable => ({
       appliesAbove: null,
     },
     { label: 'Medicare', rate: 0.0145, wageBase: null, appliesAbove: null },
-    // Employers withhold the surtax once wages pass $200,000 regardless of filing status;
-    // the threshold is statutory and is not indexed.
+    // Withheld above $200,000 regardless of filing status; statutory and not indexed.
     { label: 'Additional Medicare', rate: 0.009, wageBase: null, appliesAbove: 200000 },
   ],
 });

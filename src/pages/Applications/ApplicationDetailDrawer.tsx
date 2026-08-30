@@ -274,8 +274,7 @@ const ApplicationDetailDrawer = ({
                   <ApplicationTimelinePanel application={application} appStages={appStages} />
                 ),
               },
-              // Only once the process actually reached an interview. Computed from the
-              // timeline, so a rejected-after-round-3 application still qualifies.
+              // From the timeline, so a rejected-after-round-3 application still qualifies.
               ...(application.has_reached_interview
                 ? [
                     {

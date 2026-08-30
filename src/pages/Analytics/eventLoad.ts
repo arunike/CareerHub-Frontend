@@ -4,8 +4,7 @@ import type { Event } from '../../types';
 const WEEK = { weekStartsOn: 1 } as const;
 
 export interface EventLoad {
-  // Average per week across the span the data actually covers, not per calendar week of the
-  // year — a year filtered to two months of events should not read as ~0 per week.
+  // Across the span the data covers, so two months of events do not read as ~0 per week.
   perWeek: number;
   spanWeeks: number;
   busiestDay: { date: string; count: number } | null;
@@ -32,8 +31,7 @@ const eventDate = (event: Event) => {
   }
 };
 
-// A multi-day event is one commitment, counted on the day it starts. Spreading it across
-// every day it spans would make a single conference look like a week of interviews.
+// One commitment, counted on its start day, or a conference reads as a week of interviews.
 export const eventYears = (events: Event[]) =>
   Array.from(
     new Set(
@@ -99,8 +97,7 @@ export const buildEventStats = (events: Event[], now: Date): EventStats => {
   const topWeekday = pickTop(byWeekday);
   const topHour = pickTop(byHour);
 
-  // At least one week, so a single day of events reads as "1 per week" rather than dividing
-  // by zero.
+  // At least one week, so a single day does not divide by zero.
   const spanWeeks =
     earliest && latest
       ? Math.max(1, Math.ceil((differenceInCalendarDays(latest, earliest) + 1) / 7))

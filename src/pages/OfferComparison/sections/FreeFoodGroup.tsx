@@ -57,8 +57,7 @@ const FreeFoodGroup = ({
                         { meal, value: DEFAULT_MEAL_VALUES[meal], provided: true },
                       ])
                 }
-                // 38px to match CONTROL_CLASS exactly: at 36px the three controls in a
-                // row shared neither a top nor a bottom edge.
+                // 38px to match CONTROL_CLASS; at 36px the row shared no edge.
                 className={`min-h-11 rounded-lg border px-3 text-left text-sm font-medium transition-colors sm:h-[38px] sm:min-h-0 ${
                   active
                     ? 'border-slate-300 bg-white text-slate-900'

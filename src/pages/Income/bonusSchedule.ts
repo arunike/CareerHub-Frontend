@@ -18,8 +18,7 @@ export interface BonusExtra {
   amount: number;
 }
 
-// Common one-off awards, offered as a list so the label is not retyped every time. They are all
-// supplemental wages taxed the same way, so a preset carries nothing but its wording.
+// All supplemental wages taxed alike, so a preset carries nothing but its wording.
 export const BONUS_EXTRA_PRESETS = [
   'Referral bonus',
   'Spot bonus',
@@ -55,8 +54,7 @@ export const extrasTotal = (extras: BonusExtra[]) =>
 
 const daysInYear = (year: number) => (new Date(year, 1, 29).getMonth() === 1 ? 366 : 365);
 
-// Years the role actually covers, newest last. A bonus cannot be earned in a year the role did
-// not exist, so offering one is how the target silently prorated to nothing.
+// Years the role covers, newest last; offering any other prorates the target to nothing.
 export const performanceYearOptions = (
   taxYear: number,
   startDate?: string | null,
@@ -86,8 +84,7 @@ export const resolvePerformanceYear = (
   ) {
     return performanceYear;
   }
-  // The year before is the usual case; when the role did not exist then, take the closest year
-  // it did rather than leaving a target that prorates to zero.
+  // The year before, or the closest year the role did exist.
   return options.includes(fallback) ? fallback : (options.at(-1) as number);
 };
 

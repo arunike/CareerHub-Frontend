@@ -1,8 +1,7 @@
 import type React from 'react';
 import type { PayComponentDelta, PayGrowthSummary } from './payGrowth';
 
-// Shapes mirror the page's own useMemo results; kept here so the panel is typed without
-// exporting page internals.
+// Mirrors the page's useMemo results, so the panel is typed without exporting page internals.
 type FullTimeCompSummary = {
   roleCount: number;
   trackedRoleCount: number;

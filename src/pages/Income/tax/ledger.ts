@@ -20,8 +20,7 @@ export interface IncomeEvent {
   label?: string;
 }
 
-// Which pay the plan defers and matches on. Most plans use all of it; some carve out stipends,
-// and many carve out the bonus, which is the case the old exclude-allowances flag could not say.
+// Which pay the plan defers and matches on: all of it, less stipends, or less the bonus too.
 export type DeferralBase = 'ALL' | 'NO_ALLOWANCES' | 'SALARY_ONLY';
 
 export const DEFERRAL_BASE_LABELS: Record<DeferralBase, string> = {

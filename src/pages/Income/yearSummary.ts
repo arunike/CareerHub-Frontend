@@ -41,13 +41,11 @@ export interface RoleEarnings extends Earnings {
   // Both null until the balances are recorded on the 401(k) tab for this role.
   startingBalance: number | null;
   currentValue: number | null;
-  // Contributions from paychecks that have actually landed. A balance recorded today holds
-  // none of December's money, so the year's projection is the wrong thing to compare it to.
+  // Landed paychecks only; the year's projection is the wrong thing to compare a balance to.
   contributedToDate: number;
 }
 
-// What the market did, as opposed to what was paid in. Each role is its own plan, so the
-// balances add up — unlike the deferral limit, which follows the person.
+// Each role is its own plan, so balances add up — unlike the limit, which follows the person.
 export interface RoleRetirement {
   sourceKey: string;
   company: string;
@@ -122,8 +120,7 @@ const earningsFor = (
   const gross = effectiveRows.reduce((total, row) => total + row.gross, 0);
   const taxWithheld = effectiveRows.reduce((total, row) => total + row.taxTotal, 0);
   const takeHome = effectiveRows.reduce((total, row) => total + row.net, 0);
-  // Taken as the residual of the ledger's own identity, so it stays correct whatever
-  // deduction lines a paycheck happens to carry.
+  // The residual of the ledger's identity, so any set of deduction lines stays correct.
   const deductions = effectiveRows.reduce(
     (total, row) => total + (row.gross + row.taxFreeAllowance - row.taxTotal - row.net),
     0
@@ -197,8 +194,7 @@ const add = (a: Earnings, b: Earnings): Earnings => ({
   payrollTax: a.payrollTax + b.payrollTax,
 });
 
-// A role only counts once both balances are in: pairing one role's current value against every
-// role's contributions would report a loss that is really a missing number.
+// Both balances or the role is left out; a partial pairing reports a loss that is a missing number.
 export const retirementPerformance = (roles: RoleEarnings[]): RetirementPerformance | null => {
   const counted = roles.filter(
     (role) => role.startingBalance !== null && role.currentValue !== null

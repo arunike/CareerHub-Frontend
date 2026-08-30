@@ -13,8 +13,7 @@ export interface PeriodActual {
   payDate?: string | null;
 }
 
-// Only the two figures a payslip is read off in the ledger. The per-line tax fields were
-// recorded by a modal nobody used: zero production rows carried one.
+// Only gross and take-home; the per-line tax fields had zero production rows.
 export type ActualField = 'gross' | 'net';
 
 export const ACTUAL_FIELDS: ActualField[] = ['gross', 'net'];
@@ -64,8 +63,7 @@ const provided = (value: number | null | undefined): value is number =>
 export const hasAnyActual = (actual?: PeriodActual) =>
   actual !== undefined && ACTUAL_FIELDS.some((field) => provided(actual[field]));
 
-// A recorded take-home implies a total withholding. FICA is statutory, so the difference
-// lands on the unrecorded income tax lines; those floor at zero and the rest is a residual.
+// FICA is statutory, so the difference lands on income tax, floors at zero, and leaves a residual.
 const balanceTaxes = (input: {
   recordedNet: boolean;
   requiredTax: number;

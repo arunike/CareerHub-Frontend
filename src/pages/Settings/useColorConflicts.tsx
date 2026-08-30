@@ -51,8 +51,7 @@ export const useColorConflicts = ({
 
   const freeColorSuggestion = useMemo(() => suggestFreeColor(colorOwners), [colorOwners]);
 
-  // Rendered directly under a colour picker so the clash is visible while choosing,
-  // not only after saving.
+  // Sits under the picker, so a clash shows while choosing rather than after saving.
   const renderClashNotice = (
     color: string | null | undefined,
     excluding?: { kind: 'category' | 'holiday'; label: string }

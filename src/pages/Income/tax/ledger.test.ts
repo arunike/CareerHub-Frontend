@@ -54,8 +54,7 @@ describe('buildLedger over real pay periods', () => {
     expect(rows.at(-1)!.payDate! <= '2026-09-11').toBe(true);
   });
 
-  // Payroll annualizes each paycheck as if the whole year were worked, so a part year
-  // over-withholds and the shortfall shows up as a refund.
+  // Payroll annualizes each paycheck, so a part year over-withholds and refunds.
   it('over-withholds a part year because withholding annualizes every paycheck', () => {
     const periods = buildPayPeriods(2026, 26, {
       firstPayDate: '2026-01-09',

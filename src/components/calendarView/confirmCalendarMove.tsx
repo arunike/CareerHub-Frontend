@@ -9,8 +9,7 @@ type MoveHandler<T> = (item: T, day: Date) => boolean | void | Promise<boolean |
 
 const prettyDate = (day: Date) => format(day, 'EEE, MMM d, yyyy');
 
-// Dates come back from the API as plain yyyy-MM-dd. Parsing that string directly would be
-// read as UTC midnight and can render as the previous day west of Greenwich.
+// Keyed yyyy-MM-dd; parsed directly it reads as UTC midnight and shifts a day west of Greenwich.
 const parseApiDate = (value: string) => new Date(`${value}T00:00:00`);
 
 const MoveSummary = ({

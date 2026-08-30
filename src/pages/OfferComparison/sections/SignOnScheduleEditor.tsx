@@ -8,8 +8,7 @@ const DEFAULT_YEARS = 2;
 
 const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
-// Two rows by default, because a sign-on split beyond year 2 is rare; the rest are added
-// on demand rather than sitting there empty.
+// Two rows by default; a sign-on split beyond year 2 is rare.
 const normalise = (schedule: number[], total: number) => {
   const rows = schedule.length > 0 ? schedule.map((value) => Number(value) || 0) : [total, 0];
   while (rows.length < DEFAULT_YEARS) rows.push(0);

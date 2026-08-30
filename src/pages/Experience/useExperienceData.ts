@@ -15,8 +15,7 @@ import type { OfferLike as Offer } from '../OfferComparison/calculations';
 import { DEFAULT_EMP_TYPES, parseExperienceDate } from './experienceUtils';
 import { getApiErrorMessage } from '../../utils/apiError';
 
-// Everything the page needs from the server, plus the mutations that only touch that data.
-// Modal state and rendering stay in the page.
+// Server data and its mutations; modal state and rendering stay in the page.
 export const useExperienceData = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
 

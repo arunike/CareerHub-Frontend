@@ -55,8 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-// A saved order only lists the keys the user has moved through; anything new that ships
-// later is unknown to it, so it falls back to its built-in position instead of vanishing.
+// A key absent from the saved order keeps its built-in position rather than vanishing.
 export const applyNavOrder = <T extends { key: string }>(items: T[], order?: string[]): T[] => {
   if (!order?.length) return items;
   const rank = new Map(order.map((key, index) => [key, index]));
@@ -70,7 +69,6 @@ export const applyNavOrder = <T extends { key: string }>(items: T[], order?: str
   });
 };
 
-// A renamed entry only overrides its own name; anything the user has not renamed keeps the
-// built-in one, so shipping a new entry later needs no migration of saved settings.
+// An entry absent from the map keeps its built-in name, so a new entry needs no migration.
 export const navLabel = (key: string, fallback: string, labels?: Record<string, string>) =>
   labels?.[key]?.trim() || fallback;

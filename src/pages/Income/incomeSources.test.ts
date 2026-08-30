@@ -230,8 +230,7 @@ describe('hiding roles and years', () => {
     expect(visibleSources([roleA], ['experience-9'])).toEqual([roleA]);
   });
 
-  // A picker with nothing in it reads as a broken page, and the switch that emptied it is on
-  // another screen entirely.
+  // A picker with nothing in it reads as a broken page.
   it('keeps every role rather than showing none', () => {
     expect(visibleSources([roleA, roleB], ['experience-1', 'experience-2'])).toEqual([
       roleA,

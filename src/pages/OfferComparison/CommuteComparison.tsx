@@ -12,8 +12,7 @@ import type { ScenarioRow } from './offerAdjustmentsTypes';
 
 const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
-// Cost alone understates a commute: $2,400 a year is noise next to a salary, but 200
-// hours is not. Both are shown against the same office-day count.
+// Hours as well as cost: $2,400 a year is noise next to a salary, 200 hours is not.
 const CommuteComparison = ({
   scenarioRows,
   drivingDefaults,

@@ -39,8 +39,7 @@ export const findColorConflicts = (owners: ColorOwner[]): ColorConflict[] => {
   );
 };
 
-// A palette colour nothing is using yet, so the warning can offer a way out rather than
-// just pointing at the problem.
+// A palette colour nothing is using yet, so the warning can offer a way out.
 export const suggestFreeColor = (owners: ColorOwner[]) => {
   const taken = new Set(
     owners.filter((owner) => owner.label.trim()).map((owner) => resolve(owner.color))

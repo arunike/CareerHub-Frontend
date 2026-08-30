@@ -36,8 +36,7 @@ interface CalendarViewProps {
   onHolidaySelect?: (holiday: Holiday) => void;
   onAddEvent?: (day: Date) => void;
   onAddHoliday?: (day: Date, target: CalendarHolidayTarget) => void;
-  // Page-level controls merged into the calendar's own header instead of leaving an empty
-  // band under the page title.
+  // Merged into the calendar header rather than leaving an empty band under the page title.
   pageControls?: React.ReactNode;
   // Colour for time off with no tab. Configurable, so it cannot be hardcoded here.
   defaultHolidayColor?: string;
@@ -170,8 +169,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   const federalHolidaysByDate: Record<string, Holiday[]> = {};
   federalHolidays.forEach((rawHoliday) => {
-    // Resolve the colour here, as custom holidays already do, so every consumer reads it
-    // off the holiday instead of each one hardcoding its own grey.
+    // Resolved here so every consumer reads it off the holiday rather than hardcoding a grey.
     const holiday = {
       ...rawHoliday,
       tab_color: federalHolidayColor ?? FEDERAL_HOLIDAY_COLOR,

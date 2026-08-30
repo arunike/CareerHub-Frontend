@@ -19,8 +19,7 @@ export const extractStateAbbr = (city: string, stateNameToAbbr: Record<string, s
   return stateName ? stateNameToAbbr[stateName] : '';
 };
 
-// Wage bases and surtax thresholds are annual, so year-to-date wages decide how much of
-// this period's wages the tax still applies to.
+// Wage bases are annual, so year-to-date wages decide how much of this period still applies.
 export const payrollTaxForPeriod = (tax: PayrollTax, periodWages: number, ytdWages: number) => {
   if (periodWages <= 0) return 0;
 

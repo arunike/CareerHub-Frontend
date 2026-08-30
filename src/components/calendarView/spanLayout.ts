@@ -18,8 +18,7 @@ export const isMultiDay = (event: Event) =>
 const toKey = (day: Date) =>
   `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
 
-// Lays multi-day events out as bars across one week row: which columns each covers, and
-// which lane it sits in so overlapping spans stack instead of colliding.
+// Lanes keep overlapping spans stacked rather than colliding.
 export const buildWeekSpans = (
   week: Date[],
   events: Event[]

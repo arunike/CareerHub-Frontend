@@ -99,8 +99,7 @@ const UnitNumberInput = ({
         ? {
             parser: ((raw?: string) => {
               const text = (raw ?? '').trim();
-              // Empty means the user is clearing the field; gibberish means they slipped,
-              // so hold the last good value rather than silently zeroing it.
+              // Empty clears; unparseable holds the last good value rather than zeroing it.
               if (!text) return '' as unknown as number;
               const parsed = parseText(text);
               return (parsed == null ? (value ?? '') : parsed) as number;
@@ -110,8 +109,7 @@ const UnitNumberInput = ({
         : {})}
       addonBefore={addon?.before}
       addonAfter={addon?.after}
-      // With an addon antd puts className on the inner .ant-input-number, so width
-      // has to go on rootClassName or the group collapses inside its container.
+      // With an addon antd puts className on the inner input, so width goes on rootClassName.
       className="w-full"
       rootClassName={twMerge('w-full', GROUP, className)}
       style={fillWidth ? { width: '100%', ...style } : style}

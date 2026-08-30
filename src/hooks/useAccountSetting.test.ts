@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isEmptySetting } from './useAccountSetting';
 
-// This decides whether a first load lifts the browser's copy into the account or adopts the
-// account's. Getting it wrong either loses a saved layout or writes on every page load.
+// Getting this wrong either loses a saved layout or writes on every page load.
 describe('isEmptySetting', () => {
   it('treats absent values as empty', () => {
     expect(isEmptySetting(null)).toBe(true);

@@ -15,8 +15,7 @@ type Props = {
   unit?: NumberUnit;
 };
 
-// Same unit chip and stepper as every other numeric field, but the value is only
-// pushed upward on blur/Enter so a half-typed number never hits the parent.
+// Commits on blur or Enter, so a half-typed number never reaches the parent.
 const EditableNumberInput = ({
   id,
   value,

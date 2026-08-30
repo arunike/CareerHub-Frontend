@@ -7,8 +7,7 @@ export interface RetirementSummary {
   employeeTotal: number;
   employerMatch: number;
   totalContributed: number;
-  // Only the paychecks that have actually been paid. A balance recorded today cannot contain
-  // December's contribution, so measuring it against the whole year invents a loss.
+  // Paid paychecks only: a balance recorded today cannot hold December's contribution.
   contributedToDate: number;
   paidPeriodsToDate: number;
   employeePretaxToDate: number;
@@ -25,8 +24,7 @@ export interface RetirementSummary {
   currentValue: number | null;
   gains: number | null;
   gainPercent: number | null;
-  // The 402(g) elective deferral limit covers what you contribute, traditional and Roth
-  // together. The employer match does not count against it.
+  // 402(g) covers traditional and Roth together; the employer match sits outside it.
   electiveLimit: number;
   remainingToLimit: number;
   percentOfLimit: number;
@@ -82,8 +80,7 @@ export const summarizeRetirement = (
   const employeeTotal = employeePretax + employeeRoth;
   const totalContributed = employeeTotal + employerMatch;
 
-  // An undated row counts as landed: treating an unknown date as future would zero out real
-  // contributions, which is the same wrong comparison in the other direction.
+  // An undated row counts as landed; treating it as future would zero real contributions.
   const paidRows = rows.filter((row) => row.payDate === null || row.payDate <= todayIso);
   const employeePretaxToDate = sum(paidRows, (row) => row.pretax401k);
   const employeeRothToDate = sum(paidRows, (row) => row.roth401k);
@@ -104,8 +101,7 @@ export const summarizeRetirement = (
   const percentOfLimit = electiveLimit > 0 ? employeeTotal / electiveLimit : 0;
   const crossing = limitCrossing(rows, electiveLimit);
 
-  // Gains need a starting point: without it the contributions alone say nothing about
-  // investment performance.
+  // Without a starting balance, contributions alone say nothing about performance.
   if (currentValue === null || startingBalance === null) {
     return {
       employeePretax,

@@ -18,8 +18,7 @@ export const deductionsOf = (row: RateRow) =>
 // Share of gross pay withheld as tax, which is what a paycheck actually shows.
 export const calculatedRate = (row: RateRow) => (row.gross > 0 ? row.taxTotal / row.gross : 0);
 
-// Tax implied by a real take-home figure, holding the deductions constant. If this sits
-// above the calculated rate, more was withheld than the model expects.
+// Implied by a recorded take-home with deductions held constant.
 export const impliedRate = (row: RateRow, actualNet: number | null | undefined) => {
   if (actualNet === null || actualNet === undefined || row.gross <= 0) return null;
   const impliedTax = row.gross - deductionsOf(row) - actualNet;

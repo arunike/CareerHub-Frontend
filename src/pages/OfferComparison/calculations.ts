@@ -25,8 +25,7 @@ const MONTH_NAMES = [
 
 export const formatExperienceRange = (experience: LinkedExperience): string => {
   const month = (value: string) =>
-    // Date-only strings are parsed as UTC by the Date constructor, so the parts are
-    // read straight off the string instead of round-tripping through a Date.
+    // Read off the string: the Date constructor parses a date-only string as UTC.
     `${MONTH_NAMES[Number(value.slice(5, 7)) - 1]} ${value.slice(0, 4)}`;
   if (!experience.start_date) return '';
   const start = month(experience.start_date);

@@ -38,8 +38,7 @@ type Props = {
   getDayData: GetDayData;
 };
 
-// One continuous bar across however many day columns the span covers in this row. Drawn as
-// a single element over the grid, so cell borders and padding cannot break it up.
+// One element drawn over the grid, so cell borders and padding cannot break the bar up.
 const SpanBar = ({
   span,
   onSelect,
@@ -159,8 +158,7 @@ const CalendarMonthView = ({
             !isCurrentMonth && 'bg-gray-50/50 text-gray-400',
             // Both can be true; which class wins is stylesheet order, not this order.
             isTodayDate && !isSelected && 'bg-blue-50/30',
-            // Square, grid-aligned: a rounded ring inside a hairline grid reads as a
-            // sticker pasted over the cell, with the cell's own corners peeking out.
+            // Square: a rounded ring in a hairline grid reads as a sticker over the cell.
             isSelected && 'z-10 bg-blue-50 ring-1 ring-inset ring-blue-500',
             isDropCandidate && 'border-dashed border-blue-300',
             dropTarget === dayKey && 'z-10 bg-blue-100/70 ring-1 ring-inset ring-blue-500'
@@ -192,8 +190,7 @@ const CalendarMonthView = ({
                 clickEvent.stopPropagation();
                 onDateSelect(cloneDay);
               }}
-              // The button stays a full-width tap target on mobile; the circle lives on
-              // the span inside, so `rounded-full` cannot stretch into a stadium.
+              // The circle is on the inner span, so rounded-full cannot stretch into a stadium.
               className="flex h-11 w-full min-w-11 shrink-0 items-center justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:h-7 sm:w-7 sm:min-w-0"
             >
               <span

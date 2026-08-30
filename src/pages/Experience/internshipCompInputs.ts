@@ -13,8 +13,7 @@ export interface InternshipCompInputs {
   total_earnings_override: number | null;
 }
 
-// Anything the schedule already implies is stored as null, so an edited figure means "the
-// schedule is wrong here" rather than pinning a value that happens to match today's maths.
+// Null means the schedule decides; a figure means the schedule is wrong for this row.
 export const normalizeInternshipCompInputs = (
   updates: InternshipCompInputs,
   role: Pick<Experience, 'start_date' | 'end_date' | 'is_current'>

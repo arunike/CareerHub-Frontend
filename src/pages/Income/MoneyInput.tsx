@@ -14,8 +14,7 @@ interface Props {
   minChars?: number;
   className?: string;
   autoFocus?: boolean;
-  // Puts the $ next to the digits instead of in antd's prefix slot, which strands it at the far
-  // left of a right-aligned field. The parser drops non-digits, so the value is unaffected.
+  // antd's prefix slot strands the $ at the far left of a right-aligned field.
   inlineCurrency?: boolean;
   // antd parks the step handles over the right edge, which is where a right-aligned figure sits.
   controls?: boolean;

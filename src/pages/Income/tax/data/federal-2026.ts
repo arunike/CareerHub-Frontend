@@ -2,8 +2,7 @@ import type { AnnualLimits, JurisdictionTable } from '../../../../types/tax';
 
 const IRS_2026 = 'IRS Rev. Proc. 2025-32 (tax year 2026)';
 
-// Married filing separately is not published separately; the statute sets it at half of
-// the married-filing-jointly thresholds.
+// Married filing separately is statutorily half the joint thresholds.
 export const FEDERAL_2026: JurisdictionTable = {
   year: 2026,
   jurisdiction: 'federal',
@@ -59,8 +58,7 @@ export const FEDERAL_2026: JurisdictionTable = {
   payrollTaxes: [
     { label: 'Social Security', rate: 0.062, wageBase: 184500, appliesAbove: null },
     { label: 'Medicare', rate: 0.0145, wageBase: null, appliesAbove: null },
-    // Employers withhold the surtax once wages pass $200,000 regardless of filing status;
-    // the filing-status thresholds apply to the Form 8959 liability, not to withholding.
+    // Withheld above $200,000 regardless of filing status; the thresholds are Form 8959's.
     { label: 'Additional Medicare', rate: 0.009, wageBase: null, appliesAbove: 200000 },
   ],
 };

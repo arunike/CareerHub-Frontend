@@ -13,8 +13,7 @@ import type { useEmploymentTypeEditor } from './useEmploymentTypeEditor';
 import type { useHolidayTabEditor } from './useHolidayTabEditor';
 import type { useAppStageEditor } from './useAppStageEditor';
 
-// Each section takes its editor hook's return value wholesale; only the page-wide values
-// (lock state, settings, colour conflicts) are threaded in by name.
+// Each section takes its editor hook wholesale; only page-wide values are named.
 type Props = {
   categoryEditor: ReturnType<typeof useEventCategoryEditor>;
   empTypeEditor: ReturnType<typeof useEmploymentTypeEditor>;

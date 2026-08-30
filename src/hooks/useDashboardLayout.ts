@@ -3,8 +3,7 @@ import { useAccountSetting } from './useAccountSetting';
 
 export type DashboardKey = 'jobHunt' | 'availability';
 
-// The keys these dashboards wrote before the layout moved to the account. Read once so an
-// existing browser carries its arrangement up instead of resetting to the defaults.
+// The pre-account keys, read once so an existing browser carries its arrangement up.
 const LEGACY_KEYS: Record<DashboardKey, { order: string; enabled: string }> = {
   jobHunt: { order: 'analytics_dashboard_order', enabled: 'job_hunt_analytics_enabled' },
   availability: {
@@ -54,8 +53,7 @@ export const useDashboardLayout = (
 
   const enabled = normalize(flags.value[dashboard] ?? defaultEnabled);
   const saved = orders.value[dashboard];
-  // Prune what is switched off and append what was just switched on, so a widget added after a
-  // saved order exists still appears — the reconcile effect each dashboard used to run.
+  // Prune what is off and append what is newly on, so a widget added later still appears.
   const ordered = saved ? normalize(saved).filter((id) => enabled.includes(id)) : [];
   const order = [...ordered, ...enabled.filter((id) => !ordered.includes(id))];
 

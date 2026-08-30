@@ -95,8 +95,7 @@ const IncomePage = () => {
     periods,
   } = useIncomeYear();
 
-  // A role that starts mid-year has no period 1, so the selection follows the ledger, and the
-  // default lands on the paycheck you were most recently paid rather than the first of the year.
+  // Defaults to the most recently paid row: a mid-year role has no period 1.
   const row = useMemo(() => {
     if (effectiveRows.length === 0) return null;
     return (
@@ -139,8 +138,7 @@ const IncomePage = () => {
     return `${stateAbbr} · estimated at ${ledgerInput.state.flatRatePercent}%`;
   }, [ledgerInput.state, stateAbbr]);
 
-  // A standing change cannot reach a paycheck that pins the same field, so say so rather
-  // than letting the edit look like it did nothing.
+  // A standing change cannot reach a paycheck that pins the same field.
   const flagConflict = (key: string, label: string) => {
     const periodIndexes = periodsOverriding(settings.periodDeductions, key);
     if (periodIndexes.length > 0) setConflict({ key, label, periodIndexes });

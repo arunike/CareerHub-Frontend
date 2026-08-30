@@ -12,9 +12,7 @@ export const tiersFromOffer = (matchPercent: number, limitPercent: number): Matc
 
 const sorted = (tiers: MatchTier[]) => [...tiers].sort((a, b) => a.uptoPercent - b.uptoPercent);
 
-// Employer contribution as a percent of pay. Each tier matches only the band of deferral
-// between the previous tier's cap and its own, so "100% of first 3%, then 50% up to 5%"
-// pays 3% + 1% = 4% of pay once you defer 5%.
+// Each tier matches only its own band: "100% of first 3%, then 50% up to 5%" pays 4% at 5%.
 export const matchedPercentOfPay = (deferralPercent: number, tiers: MatchTier[]) => {
   const deferral = Math.max(0, deferralPercent);
   let matched = 0;

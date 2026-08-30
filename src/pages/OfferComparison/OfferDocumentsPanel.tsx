@@ -81,8 +81,7 @@ const OfferDocumentsPanel = ({
   if (!applicationId) return null;
 
   return (
-    // No box of its own: it sits inside the section card and inherits its padding, so a
-    // hairline is all that is needed to separate it from the fields above.
+    // Inherits the section card's padding, so a hairline is all it needs.
     <div className="border-t border-slate-100 pt-4">
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">

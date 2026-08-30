@@ -124,8 +124,7 @@ export const eventSpanDays = (event: { date: string; end_date?: string | null })
   return Math.max(1, Math.round(ms / 86400000) + 1);
 };
 
-// Dragging a multi-day event moves the whole span: the end date shifts with the start so
-// the event keeps its length instead of being silently truncated.
+// The end shifts with the start, so a dragged span keeps its length.
 export const buildEventMovePatch = (
   event: { date: string; end_date?: string | null },
   day: Date

@@ -92,8 +92,7 @@ const ContactDetailsDrawer = ({
 
   const primaryContext = contact?.contexts?.[0]?.summary;
   const company = contact?.company || primaryContext?.company;
-  // Only what was typed on the contact. The context role is the role *you* applied for,
-  // so falling back to it labelled every contact with your own job title.
+  // No fallback to the context role: that is the role you applied for, not theirs.
   const jobTitle = contact?.job_title?.trim() || '';
 
   return (

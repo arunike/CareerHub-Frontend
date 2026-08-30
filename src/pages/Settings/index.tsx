@@ -71,8 +71,7 @@ const Settings: React.FC = () => {
   // Must stay below activeTab: reading it above throws a TDZ ReferenceError.
   const activeTabMeta = SETTINGS_TABS.find((tab) => tab.key === activeTab);
 
-  // A search result has to both switch tab and land on the card. The panel only mounts after
-  // the tab changes, so the scroll waits a frame for the section to exist.
+  // The panel mounts after the tab changes, so the scroll waits a frame for the section.
   const jumpToSection = (tab: SettingsTab, sectionId: string) => {
     setActiveTab(tab);
     requestAnimationFrame(() => {

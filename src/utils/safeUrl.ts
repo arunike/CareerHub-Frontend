@@ -1,5 +1,4 @@
-// A URL the user typed, or one that arrived from a Google Sheets import, is untrusted. Rendered
-// straight into href, `javascript:` runs in this origin on click, and `data:` can carry a page.
+// Untrusted: in an href, `javascript:` runs in this origin and `data:` can carry a page.
 const SAFE_SCHEMES = ['http:', 'https:', 'mailto:'];
 
 export const safeExternalHref = (value: string | null | undefined): string | undefined => {
@@ -10,8 +9,7 @@ export const safeExternalHref = (value: string | null | undefined): string | und
   if (/^[\w.-]+\.[a-z]{2,}(\/|$|\?|#)/i.test(raw)) return `https://${raw}`;
 
   try {
-    // Absolute only: these are outbound links, and a value with no scheme has already been
-    // handled above or is not a link at all.
+    // Absolute only; a value with no scheme was handled above.
     const parsed = new URL(raw);
     return SAFE_SCHEMES.includes(parsed.protocol) ? parsed.href : undefined;
   } catch {

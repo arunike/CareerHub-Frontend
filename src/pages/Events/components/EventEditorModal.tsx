@@ -83,8 +83,7 @@ const EventEditorModal = ({
   const eventDate = Form.useWatch('date', form);
   const [linkHint, setLinkHint] = useState<EventLinkHint | null>(null);
   const [autoLinked, setAutoLinked] = useState<EventLinkHint | null>(null);
-  // Applications the user took off this event, so a suggestion never reinstates one they
-  // just removed.
+  // Removed by hand, so a suggestion never reinstates one.
   const declined = useRef<Set<number>>(new Set());
 
   useEffect(() => {
@@ -109,8 +108,7 @@ const EventEditorModal = ({
     };
   }, [eventName, eventDate, linkedApplication]);
 
-  // Applied by default rather than offered. It is visible and reversible, so a wrong guess
-  // costs one click instead of going unnoticed.
+  // Applied rather than offered: visible and reversible, so a wrong guess costs one click.
   useEffect(() => {
     if (!linkHint || linkedApplication) return;
     if (declined.current.has(linkHint.application)) return;
@@ -152,8 +150,7 @@ const EventEditorModal = ({
                 inputReadOnly
                 style={{ width: '100%' }}
                 onChange={(nextStart) => {
-                  // Pushing the start past the end leaves an impossible range, so drop the
-                  // end date instead of holding a value the user has to clear themselves.
+                  // A start past the end drops the end rather than holding an impossible range.
                   const end = form.getFieldValue('end_date');
                   if (nextStart && end && end.isBefore(nextStart, 'day')) {
                     form.setFieldValue('end_date', null);

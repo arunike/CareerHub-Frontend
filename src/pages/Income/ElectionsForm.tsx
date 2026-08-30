@@ -70,8 +70,7 @@ const ALLOWANCE_OPTIONS: Array<{ value: AllowanceTreatment; label: string }> = (
   ['TAXABLE', 'TAX_FREE'] as AllowanceTreatment[]
 ).map((value) => ({ value, label: ALLOWANCE_LABELS[value] }));
 
-// Plain labels, because AutoComplete puts the label in the input; the cadence rides in
-// optionRender, which only draws the dropdown row.
+// Plain labels: AutoComplete puts the label in the input, so the cadence rides in optionRender.
 const PRESET_OPTIONS = ALLOWANCE_PRESETS.map((preset) => ({
   value: preset.label,
   label: preset.label,

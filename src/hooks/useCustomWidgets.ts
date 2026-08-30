@@ -35,8 +35,7 @@ export const useCustomWidgets = (
     setValue: setCustomWidgets,
     loaded,
   } = useAccountSetting<CustomWidget[]>('custom_analytics_widgets', [], storageKey);
-  // Refresh once the account's widgets have arrived, not on first render: the list is fetched,
-  // so an effect keyed on mount would only ever see whatever the cache happened to hold.
+  // Keyed on arrival, not mount: on mount the list is still whatever the cache held.
   const refreshedRef = useRef(false);
 
   useEffect(() => {

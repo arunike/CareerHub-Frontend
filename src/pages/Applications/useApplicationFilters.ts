@@ -4,8 +4,7 @@ import type { CareerApplication } from '../../types/application';
 import { getAvailableYears, getCurrentYear } from '../../utils/yearFilter';
 import { usePersistedState } from '../../hooks/usePersistedState';
 
-// Owns every filter the list is driven by, plus the counts the empty state and the
-// "clear filters" affordance read.
+// Every filter the list is driven by, plus the counts the empty state reads.
 export const useApplicationFilters = ({
   applications,
   setSelectedRowKeys,

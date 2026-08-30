@@ -105,8 +105,7 @@ describe('roundCents', () => {
   });
 
   it('cannot round a binary float that only looks like a half', () => {
-    // 1.005 is really 1.00499…, so it rounds down. toFixed(2) agrees, and this only ever
-    // shifts a displayed figure by a cent.
+    // 1.005 is really 1.00499…, so it rounds down, as toFixed(2) does.
     expect(roundCents(1.005)).toBe(1);
     expect(Number((1.005).toFixed(2))).toBe(1);
   });

@@ -181,9 +181,7 @@ describe('summarizeYear', () => {
       context
     );
 
-    // Not a restatement of the arithmetic — these are the very builders the card renders, run
-    // against a real modelled year, so a component the ledger folds into another (Roth sits
-    // inside post-tax) cannot quietly double count on screen.
+    // Run against a modelled year, so a folded component (Roth inside post-tax) cannot double count.
     for (const breakdown of [
       grossBreakdown(summary),
       taxBreakdown(summary),

@@ -10,8 +10,7 @@ const MobileModalBase = ({
   modalRender,
   wrapClassName,
   mobileExpandable = true,
-  // Every modal in the app is vertically centered unless it opts out. antd defaults to
-  // pinning near the top, which reads as misaligned on tall screens.
+  // antd pins near the top, which reads as misaligned on tall screens.
   centered = true,
   ...props
 }: MobileModalProps) => {
@@ -139,8 +138,7 @@ const MobileModalBase = ({
   );
 };
 
-// The imperative dialogs bypass the component above, so centre them at the source rather
-// than relying on every call site to remember.
+// The imperative dialogs bypass the component above, so they are centred at the source.
 type DialogFn = typeof AntModal.confirm;
 const centeredDialog =
   (dialog: DialogFn): DialogFn =>

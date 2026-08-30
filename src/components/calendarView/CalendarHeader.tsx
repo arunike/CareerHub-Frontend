@@ -25,8 +25,7 @@ type Props = {
   onToggleEventCategory: (categoryId: number | 'uncategorized') => void;
   onToggleCustomHolidayTab: (tabId: string | 'default') => void;
   onToggleFederal: () => void;
-  // Page-level controls (view switch, year) merged in here rather than sitting in an
-  // otherwise empty band under the page title, so they live beside the content.
+  // Merged in here rather than sitting in an otherwise empty band under the page title.
   pageControls?: React.ReactNode;
   defaultHolidayColor?: string;
   federalHolidayColor?: string;

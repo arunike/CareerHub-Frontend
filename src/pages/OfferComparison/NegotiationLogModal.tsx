@@ -85,8 +85,7 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
 
   const ordered = useMemo(() => sortNegotiationRounds(rounds), [rounds]);
 
-  // A record saved with a legacy status still needs a matching option, or the
-  // Select would render the bare enum value.
+  // A legacy status still needs an option, or the Select renders the bare enum value.
   const decisionOptions = useMemo(() => {
     if (FINAL_DECISION_OPTIONS.some((option) => option.value === decision)) {
       return FINAL_DECISION_OPTIONS;

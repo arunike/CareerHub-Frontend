@@ -78,8 +78,7 @@ export interface IncomeModel {
   drift: ReturnType<typeof compareActuals>;
 }
 
-// The whole derivation from one role's saved elections to its year of paychecks. Pure, so
-// the page can run it for the selected role and the year summary can run it for every role.
+// Pure, so the page runs it for one role and the year summary runs it for every role.
 export const buildIncomeModel = ({
   settings,
   source,

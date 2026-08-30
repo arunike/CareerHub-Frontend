@@ -223,8 +223,7 @@ export const BonusForm = ({
                 size="small"
                 className="w-[104px]"
                 value={performanceYear}
-                // Only years the role was actually held: a bonus cannot be earned in a year
-                // the job did not exist, and offering one silently prorated the target to zero.
+                // Only years the role was held; any other prorates the target to zero.
                 options={performanceYearOptions.map((year) => ({
                   value: year,
                   label: String(year),

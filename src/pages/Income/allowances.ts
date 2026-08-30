@@ -2,8 +2,7 @@ import type { PayPeriod } from './paySchedule';
 
 export type AllowanceTreatment = 'TAXABLE' | 'TAX_FREE';
 
-// How often the allowance is paid. A stipend is not always once per paycheck, and a referral
-// bonus is not a stipend at all.
+// How often it is paid; a stipend is not always once per paycheck.
 export type AllowanceUnit = 'PAYCHECK' | 'MONTH' | 'YEAR' | 'ONCE';
 
 export interface Allowance {
@@ -16,8 +15,7 @@ export interface Allowance {
   unit: AllowanceUnit;
   // Which paycheck carries it; monthly lands on one, not spread across them.
   payOn: 'FIRST' | 'LAST';
-  // ONCE only: the paycheck that carries the single payment. Falls back to payOn when it is
-  // absent or names a period the year no longer has.
+  // ONCE only; falls back to payOn when absent or naming a period the year no longer has.
   payPeriodIndex?: number | null;
 }
 
@@ -40,9 +38,7 @@ export const UNIT_LABELS: Record<AllowanceUnit, string> = {
   ONCE: 'one time',
 };
 
-// A preset fills the label and the frequency only. It deliberately leaves the tax treatment
-// alone: commuter and tuition benefits are excludable only up to annual caps this app does not
-// model, so pre-selecting Tax-free would overstate take-home without saying so.
+// Label and frequency only: commuter and tuition caps are not modelled, so Tax-free is not assumed.
 export interface AllowancePreset {
   label: string;
   unit: AllowanceUnit;
@@ -66,8 +62,7 @@ export const ALLOWANCE_PRESETS: AllowancePreset[] = [
 export const presetByLabel = (label: string) =>
   ALLOWANCE_PRESETS.find((preset) => preset.label === label);
 
-// Taking a preset sets its cadence too, and resets the count: a one-time payment is never
-// paid a number of times, and a stale count would silently multiply it.
+// Sets the cadence and resets the count, which would otherwise multiply a one-time payment.
 export const applyPreset = (label: string): Partial<Allowance> => {
   const preset = presetByLabel(label);
   return preset ? { label: preset.label, unit: preset.unit, timesPer: 1 } : { label };

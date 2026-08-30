@@ -18,8 +18,7 @@ export const EMPTY_W4: W4Inputs = {
   extraPerPeriod: 0,
 };
 
-// The IRS percentage method: annualize this period's regular pay, compute the annual tax
-// on it, then divide back down. Withholding and liability are the same calculation.
+// IRS percentage method: annualize the period, tax it, divide back down.
 export const regularWithholding = (
   periodTaxable: number,
   periodsPerYear: number,
@@ -34,8 +33,7 @@ export const regularWithholding = (
   return afterCredits / periodsPerYear + w4.extraPerPeriod;
 };
 
-// Bonuses and vests are withheld at a flat supplemental rate, which is why a large vest
-// commonly under-withholds against the real marginal rate.
+// A flat supplemental rate, which is why a large vest commonly under-withholds.
 export const supplementalWithholding = (
   amount: number,
   table: JurisdictionTable,

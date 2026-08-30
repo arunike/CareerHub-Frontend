@@ -311,8 +311,7 @@ export const YearLedgerTable = ({
       columns={columns}
       dataSource={rows}
       pagination={false}
-      // No inner scroll region: a nested scrollbar inside a card is the ugliest thing on the page,
-      // and the sticky header keeps the columns readable while the page itself scrolls.
+      // No inner scroll region; the sticky header keeps the columns readable as the page scrolls.
       sticky
       tableLayout="fixed"
       rowSelection={{

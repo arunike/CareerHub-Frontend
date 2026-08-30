@@ -12,9 +12,7 @@ import {
   totalCompBreakdown,
 } from './mathBreakdown';
 
-// The whole point of printing the arithmetic is that it reproduces the headline figure. If a
-// breakdown's own lines do not replay to its total, the card is lying in a more convincing way
-// than it was before.
+// A breakdown whose lines do not replay to its total lies more convincingly than no breakdown.
 const addsUp = (breakdown: { steps: Parameters<typeof resolveMath>[0]; total: number }) =>
   expect(resolveMath(breakdown.steps)).toBeCloseTo(breakdown.total, 6);
 
@@ -178,8 +176,7 @@ describe('attribution by company', () => {
     { label: 'Netflix', parts: netflix },
   ];
 
-  // A line whose named companies do not add up to it is the same lie as a total that does not
-  // add up to its lines, one level down.
+  // The same check one level down: named companies must add up to the line.
   const partsAddUp = (steps: ReturnType<typeof resolveMath> extends never ? never : any[]) => {
     for (const step of steps) {
       if (!step.parts) continue;

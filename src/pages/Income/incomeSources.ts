@@ -156,8 +156,7 @@ export const activeInYear = (source: IncomeSource, taxYear: number) => {
   return true;
 };
 
-// Hiding is a display choice, so it never removes the last option: a picker with nothing in it
-// reads as a broken page, and the setting that emptied it lives on another screen.
+// Never removes the last option: an empty picker reads as a broken page.
 export const applyIncomeVisibility = <T>(items: T[], hidden: (item: T) => boolean): T[] => {
   const visible = items.filter((item) => !hidden(item));
   return visible.length > 0 ? visible : items;

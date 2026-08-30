@@ -36,8 +36,7 @@ const SectionFallback = () => (
 const Analytics: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [searchParams, setSearchParams] = useSearchParams();
-  // Driven by the URL rather than local state: a refresh, a back button, or a shared link
-  // all land on the tab you were actually looking at.
+  // In the URL, so a refresh, the back button and a shared link all land on the same tab.
   const activeTab: 'availability' | 'career' =
     searchParams.get('tab') === 'career' ? 'career' : 'availability';
   const setActiveTab = (next: 'availability' | 'career') => {
@@ -73,8 +72,7 @@ const Analytics: React.FC = () => {
     }
   }, [messageApi]);
 
-  // Both tabs answer to the same year control now. Events were mixing 2024, 2025 and 2026
-  // into one "Total Events", which no amount of reading the number could reveal.
+  // One year control for both tabs; Events used to mix every year into one total.
   const eventYearOptions = useMemo(() => eventYears(events), [events]);
   const scopedEvents = useMemo(
     () => scopeEventsToYear(events, selectedYear),
@@ -85,8 +83,7 @@ const Analytics: React.FC = () => {
     [scopedEvents]
   );
 
-  // Counts come pre-aggregated, so the year filter is a 3 KB refetch rather than a
-  // client-side filter over every application the page had to download first.
+  // Pre-aggregated, so the year filter is a 3 KB refetch rather than a full download.
   const fetchCareerAnalytics = useCallback(async () => {
     try {
       setCareerLoading(true);

@@ -8,8 +8,7 @@ export const standardDeductionFor = (table: JurisdictionTable, filingStatus: Fil
 export const exemptionsClaimed = (filingStatus: FilingStatus, dependents = 0) =>
   (filingStatus === 'MARRIED_FILING_JOINTLY' ? 2 : 1) + Math.max(0, Math.floor(dependents));
 
-// The pre-2018 personal exemption phase-out: the total is cut by a fixed rate for each
-// step, or part of a step, by which income exceeds the threshold.
+// Pre-2018: cut by a fixed rate per step, or part step, above the threshold.
 export const exemptionAmount = (
   income: number,
   table: JurisdictionTable,

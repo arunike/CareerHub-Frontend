@@ -9,8 +9,7 @@ interface Props {
   saveLabel?: string;
 }
 
-// The old indicator was grey text hidden below sm, so on a phone nothing said the work was
-// unsaved at all. A tinted pill with a dot reads at a glance and survives the narrow layout.
+// A pill rather than text: the old indicator was hidden below sm, so a phone showed nothing.
 export const UnsavedChangesActions = ({
   isDirty,
   saving = false,

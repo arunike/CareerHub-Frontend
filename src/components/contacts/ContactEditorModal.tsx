@@ -66,8 +66,7 @@ const ContactEditorModal = ({
   const companyValue = Form.useWatch('company', form);
   const searchCompany = (companyValue || '').trim();
 
-  // Scoped to the company rather than loading a page of all applications: the endpoint caps
-  // page_size at 100, so with a few hundred applications the one you want is usually missing.
+  // Scoped to the company: the endpoint caps page_size at 100.
   useEffect(() => {
     if (!open || !canPickApplication || !searchCompany) {
       setApplications([]);
@@ -93,8 +92,7 @@ const ContactEditorModal = ({
   }, [canPickApplication, open, searchCompany]);
   const linkApplication = Form.useWatch('link_application', form);
 
-  // The company decides the link. Most companies have a single application, so choosing one
-  // resolves it outright; only a company with several needs you to say which.
+  // A company with one application resolves outright; only several need you to pick.
   const companyApplications = useMemo(() => {
     const company = (companyValue || '').trim().toLowerCase();
     if (!company) return [];
@@ -166,8 +164,7 @@ const ContactEditorModal = ({
     try {
       const payload: Record<string, unknown> = {
         ...values,
-        // The backend adds a context for whatever application id it is given and leaves
-        // existing links alone, so this both links a new contact and links an existing one.
+        // The backend leaves existing links alone, so this covers a new and an existing contact.
         application: applicationId ?? values.link_application,
         experience: experienceId,
       };

@@ -78,8 +78,7 @@ export const BatchOverrideModal = ({
   onApply,
   onClear,
 }: Props) => {
-  // Prefill from what is already in force. A field the selected paychecks disagree on is
-  // left blank and marked mixed, so applying cannot silently flatten them.
+  // A field the selection disagrees on is left blank and marked mixed, never flattened.
   const current = useMemo(() => {
     const resolved = selectedKeys.map((periodIndex) => {
       const override = findOverride(overrides, periodIndex);

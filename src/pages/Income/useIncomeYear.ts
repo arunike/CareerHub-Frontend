@@ -256,8 +256,7 @@ export const useIncomeYear = () => {
           : [];
       setSources(buildIncomeSources(offerRows, experienceRows));
 
-      // Hidden roles and years are a Settings choice, so the page reads them rather than owning
-      // them. A failed fetch hides nothing, which is the safe direction.
+      // A failed fetch hides nothing, which is the safe direction.
       if (settingsResult.status === 'fulfilled') {
         const userSettings = (settingsResult.value.data ?? {}) as Record<string, unknown>;
         setHiddenRoles((userSettings.hidden_income_roles as string[]) ?? []);
@@ -291,8 +290,7 @@ export const useIncomeYear = () => {
     };
   }, []);
 
-  // Hidden roles drop out of the picker, but only after the year has narrowed the list, so
-  // hiding one never empties a year that still has another role in it.
+  // Applied after the year narrows the list, so hiding one role cannot empty a year.
   const sourcesInYear = useMemo(
     () =>
       visibleSources(

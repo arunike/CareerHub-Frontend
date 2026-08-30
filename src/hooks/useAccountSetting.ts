@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getUserSettings, updateUserSettings } from '../api/availability';
 
-// Anything the user typed or arranged has to follow them to another device, so the account is the
-// source of truth and localStorage is only a cache that lets the page render before the fetch lands.
+// The account is the source of truth; localStorage only lets the page render before the fetch lands.
 const readCache = <T>(cacheKey: string, fallback: T): T => {
   try {
     const raw = window.localStorage.getItem(cacheKey);
@@ -34,9 +33,7 @@ const fetchSettings = () => {
   return inflight;
 };
 
-// "Never set", which is what lets a first load lift the cache. Checked all the way down: a
-// container whose slots are all empty — `{nodes: {}, labels: {}}` — holds nothing, and treating
-// it as a value made every first load push a pointless save.
+// Recursive: `{nodes: {}, labels: {}}` has keys but holds nothing, and counted as a value.
 export const isEmptySetting = (value: unknown): boolean => {
   if (value == null) return true;
   if (Array.isArray(value)) return value.length === 0;
@@ -48,8 +45,7 @@ export const isEmptySetting = (value: unknown): boolean => {
   return false;
 };
 
-// debounceMs coalesces high-frequency writes: dragging a graph node fires on every frame, and
-// each frame must not become a request.
+// debounceMs coalesces per-frame writes, such as a graph drag, into one request.
 export const useAccountSetting = <T>(
   field: string,
   fallback: T,

@@ -26,8 +26,7 @@ export type CalendarDragItem =
   | { kind: 'event'; event: Event }
   | { kind: 'holiday'; holiday: Holiday };
 
-// A locked event is deliberately pinned, and one occurrence of a series has no obvious
-// meaning on its own, so neither can be dragged to another day.
+// Neither a locked event nor one occurrence of a series can be dragged to another day.
 export const canDragEvent = (event: Event) =>
   !event.is_locked && !event.is_recurring && !event.parent_event;
 

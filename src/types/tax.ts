@@ -35,8 +35,7 @@ export interface JurisdictionTable {
   standardDeduction?: Record<FilingStatus, number>;
   // Percent, used for the none/flat/fallback tiers.
   flatRatePercent?: number;
-  // Pre-2018 years granted a per-person exemption on top of the standard deduction, phased
-  // out above a threshold. Zero or absent from 2018 onward.
+  // Pre-2018 only, phased out above a threshold; zero or absent from 2018 onward.
   personalExemption?: number;
   exemptionPhaseOutStart?: Record<FilingStatus, number>;
   exemptionPhaseOutStep?: Record<FilingStatus, number>;
@@ -48,8 +47,7 @@ export interface JurisdictionTable {
   source?: string;
 }
 
-// Contribution limits are federal and apply regardless of residence, so they are keyed
-// by year alone rather than sitting on every jurisdiction table.
+// Federal regardless of residence, so keyed by year rather than by jurisdiction.
 export interface AnnualLimits {
   year: number;
   elective401k: number;
