@@ -17,6 +17,41 @@ describe('buildLayout', () => {
     expect(at('ages')?.y).toBeGreaterThan(at('funnel')!.y);
   });
 
+  it('settles a widget against its own column rather than the tallest in the row', () => {
+    const heights = { funnel: 900, watch_list: 300 };
+    const layout = buildLayout(
+      ['funnel', 'watch_list', 'reply_timing', 'outcomes'],
+      {},
+      () => 6,
+      heights
+    );
+    const at = (i: string) => layout.find((item) => item.i === i)!;
+    // reply_timing sits under the tall left card, outcomes under the short right one.
+    expect(at('reply_timing').x).toBe(0);
+    expect(at('outcomes').x).toBe(6);
+    expect(at('reply_timing').y).toBe(at('funnel').y + at('funnel').h);
+    expect(at('outcomes').y).toBe(at('watch_list').y + at('watch_list').h);
+    // The short column does not wait for the tall one, so no dead space is left behind.
+    expect(at('outcomes').y).toBeLessThan(at('reply_timing').y);
+  });
+
+  it('drops two narrow widgets side by side under a wide one', () => {
+    const widths: Record<string, number> = { top: 12, left: 3, right: 3 };
+    const layout = buildLayout(['top', 'left', 'right'], {}, (id) => widths[id], {});
+    const at = (i: string) => layout.find((item) => item.i === i)!;
+    expect(at('left')).toMatchObject({ x: 0, y: at('top').h });
+    expect(at('right')).toMatchObject({ x: 3, y: at('top').h });
+  });
+
+  it('settles a newly enabled widget below what the user already placed', () => {
+    const placements = { funnel: { x: 0, y: 20, w: 6 } };
+    const layout = buildLayout(['funnel', 'fresh'], placements, () => 6, {});
+    const at = (i: string) => layout.find((item) => item.i === i)!;
+    expect(at('funnel')).toMatchObject({ x: 0, y: 20 });
+    // The placed card is untouched and the new one lands clear of it.
+    expect(at('fresh').y).toBeGreaterThanOrEqual(at('funnel').y + at('funnel').h);
+  });
+
   it('keeps a hand-placed widget exactly where it was dropped, gaps included', () => {
     const placements = { funnel: { x: 7, y: 40, w: 5 } };
     const layout = buildLayout(['funnel'], placements, width, {});

@@ -112,9 +112,9 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // Where each widget sits, chosen by dragging; empty until the user moves something.
+  // Where each widget sits, chosen by dragging; v1 held the pre-settling layout, so it is dropped.
   const [placements, setPlacements] = usePersistedState<Record<string, Placement>>(
-    'careerhub.analytics.jobHunt.placements',
+    'careerhub.analytics.jobHunt.placements.v2',
     {}
   );
 

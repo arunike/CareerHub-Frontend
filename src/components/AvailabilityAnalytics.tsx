@@ -63,9 +63,9 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     return () => observer.disconnect();
   }, []);
 
-  // Where each widget sits, chosen by dragging; empty until the user moves something.
+  // Where each widget sits, chosen by dragging; v1 held the pre-settling layout, so it is dropped.
   const [placements, setPlacements] = usePersistedState<Record<string, Placement>>(
-    'careerhub.analytics.availability.placements',
+    'careerhub.analytics.availability.placements.v2',
     {}
   );
 

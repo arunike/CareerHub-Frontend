@@ -16,40 +16,57 @@ export interface Placement {
 export const rowsFor = (height: number) =>
   Math.max(2, Math.ceil((height + MARGIN[1]) / (ROW_HEIGHT + MARGIN[1])));
 
-// Widgets never placed by hand flow left to right and wrap at the last column.
+const sizeOf = (
+  id: string,
+  placement: Placement | undefined,
+  defaultWidth: (id: string) => number,
+  heights: Record<string, number>
+) => ({
+  w: Math.min(GRID_COLS, Math.max(MIN_WIDTH, placement?.w ?? defaultWidth(id))),
+  h: rowsFor(heights[id] ?? FALLBACK_HEIGHT),
+});
+
+// The lowest row an item of this width can start on at this column, given what is already down.
+const restingRow = (bottoms: number[], x: number, w: number) =>
+  Math.max(...bottoms.slice(x, x + w));
+
 export const buildLayout = (
   ids: string[],
   placements: Record<string, Placement>,
   defaultWidth: (id: string) => number,
   heights: Record<string, number>
 ): Layout => {
-  const items: LayoutItem[] = [];
-  let cursorX = 0;
-  let cursorY = 0;
-  let tallest = 0;
+  // How far down each column is occupied, so a widget can settle against its own neighbour.
+  const bottoms: number[] = new Array(GRID_COLS).fill(0);
+  const pinned = new Map<string, LayoutItem>();
+
+  // Hand-placed widgets keep their exact cell and everything else settles around them.
   for (const id of ids) {
     const placement = placements[id];
-    const w = Math.min(GRID_COLS, Math.max(MIN_WIDTH, placement?.w ?? defaultWidth(id)));
-    const h = rowsFor(heights[id] ?? FALLBACK_HEIGHT);
-    if (placement) {
-      items.push({
-        i: id,
-        x: Math.min(placement.x, GRID_COLS - w),
-        y: placement.y,
-        w,
-        h,
-        minW: MIN_WIDTH,
-      });
+    if (!placement) continue;
+    const { w, h } = sizeOf(id, placement, defaultWidth, heights);
+    const x = Math.max(0, Math.min(placement.x, GRID_COLS - w));
+    pinned.set(id, { i: id, x, y: placement.y, w, h, minW: MIN_WIDTH });
+    for (let column = x; column < x + w; column += 1) {
+      bottoms[column] = Math.max(bottoms[column], placement.y + h);
+    }
+  }
+
+  // The rest flow left to right, wrap at the last column, then float up to the first free row.
+  const items: LayoutItem[] = [];
+  let cursorX = 0;
+  for (const id of ids) {
+    const alreadyPlaced = pinned.get(id);
+    if (alreadyPlaced) {
+      items.push(alreadyPlaced);
       continue;
     }
-    if (cursorX + w > GRID_COLS) {
-      cursorX = 0;
-      cursorY += tallest;
-      tallest = 0;
-    }
-    items.push({ i: id, x: cursorX, y: cursorY, w, h, minW: MIN_WIDTH });
-    cursorX += w;
-    tallest = Math.max(tallest, h);
+    const { w, h } = sizeOf(id, undefined, defaultWidth, heights);
+    if (cursorX + w > GRID_COLS) cursorX = 0;
+    const y = restingRow(bottoms, cursorX, w);
+    items.push({ i: id, x: cursorX, y, w, h, minW: MIN_WIDTH });
+    for (let column = cursorX; column < cursorX + w; column += 1) bottoms[column] = y + h;
+    cursorX = (cursorX + w) % GRID_COLS;
   }
   return items;
 };
