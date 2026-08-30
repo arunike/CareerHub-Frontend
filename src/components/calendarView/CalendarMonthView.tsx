@@ -208,8 +208,7 @@ const CalendarMonthView = ({
             </button>
           </div>
 
-          {/* Span bars are hidden below sm, so the mobile dots use the unfiltered day data
-              or a multi-day event would render nowhere at all on a phone. */}
+          {/* Uses unfiltered day data: span bars are hidden below sm, so a multi-day event would vanish. */}
           <CalendarMobileDaySummary dayData={rawDayData} />
           {lanes > 0 && <div className="hidden shrink-0 sm:block" style={{ height: lanes * 20 }} />}
           <div className="hidden min-h-0 flex-1 sm:flex">

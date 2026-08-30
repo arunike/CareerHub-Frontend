@@ -179,9 +179,7 @@ const IncomeSourceTabs = ({
               targetBonus={targetBonus}
             />
 
-            {/* The page's own switcher idiom, not antd's Segmented: that control's track is the
-                same tint as the page, so the active pill read as a button floating on nothing.
-                Full width on a phone, where a 44px target matters more than hugging the left. */}
+            {/* The page's own switcher idiom: antd's track is the page tint, so the pill floated on nothing. */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <SegmentedToggle
                 value={view}

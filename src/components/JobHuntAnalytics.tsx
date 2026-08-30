@@ -1,25 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { HolderOutlined, SettingOutlined } from '@ant-design/icons';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Grid, Typography, message } from 'antd';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SettingOutlined } from '@ant-design/icons';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import type { CustomWidget } from '../hooks/useCustomWidgets';
@@ -27,8 +8,12 @@ import type { VisualConfig } from '../lib/visualWidgetQuery';
 import { AVAILABLE_WIDGETS } from './jobHuntAnalytics/constants';
 import DashboardCustomizeModal from './jobHuntAnalytics/DashboardCustomizeModal';
 import CreateCustomWidgetModal from './jobHuntAnalytics/CreateCustomWidgetModal';
+import { WidgetCollapseProvider } from './jobHuntAnalytics/widgetCollapse';
+import { usePersistedState } from '../hooks/usePersistedState';
+import WidgetGrid, { GRID_COLS } from './jobHuntAnalytics/WidgetGrid';
+import type { Placement } from './jobHuntAnalytics/WidgetGrid';
 import {
-  getJobHuntWidgetColSpan,
+  getJobHuntWidgetGridWidth,
   renderJobHuntWidget,
   type JobHuntStats,
 } from './jobHuntAnalytics/widgetRenderer';
@@ -91,41 +76,7 @@ const normalizeEnabledWidgets = (ids: string[]) => {
   return normalized.length > 0 ? normalized : DEFAULT_WIDGET_IDS;
 };
 
-const SortableItem = ({
-  id,
-  children,
-  className,
-}: {
-  id: string;
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0 : 1, // Hide the original item while dragging
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className={`min-w-0 ${className || ''}`}>
-      <div className="relative group h-full">
-        <div
-          {...attributes}
-          {...listeners}
-          aria-label={`Reorder ${id} widget`}
-          className="absolute right-2 top-2 z-10 inline-flex min-h-11 min-w-11 cursor-grab items-center justify-center rounded-xl border border-slate-200/80 bg-white/90 text-gray-400 opacity-100 shadow-sm transition-opacity hover:text-gray-600 active:cursor-grabbing md:min-h-0 md:min-w-0 md:border-0 md:bg-white/50 md:p-1 md:opacity-0 md:shadow-none md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-        >
-          <HolderOutlined className="w-4 h-4" />
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
+const EMPTY_PLACEMENTS: Record<string, Placement> = {};
 
 const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
   applicationStats,
@@ -133,6 +84,14 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
   onDataChanged,
 }) => {
   const [timelineRefreshKey, setTimelineRefreshKey] = useState(0);
+  const [collapsedWidgets, setCollapsedWidgets] = usePersistedState<string[]>(
+    'careerhub.analytics.jobHunt.collapsed',
+    []
+  );
+  const toggleCollapsed = (id: string) =>
+    setCollapsedWidgets((current) =>
+      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]
+    );
   const [messageApi, contextHolder] = message.useMessage();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -140,11 +99,24 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     enabled: enabledWidgets,
     order: widgetOrder,
     setEnabled: setEnabledWidgets,
-    setOrder: setWidgetOrder,
   } = useDashboardLayout('jobHunt', DEFAULT_WIDGET_IDS, normalizeEnabledWidgets);
 
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeSize, setActiveSize] = useState<{ width: number; height: number } | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+
+  useEffect(() => {
+    const node = gridRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => setGridWidth(entry.contentRect.width));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // Where each widget sits, chosen by dragging; empty until the user moves something.
+  const [placements, setPlacements] = usePersistedState<Record<string, Placement>>(
+    'careerhub.analytics.jobHunt.placements',
+    {}
+  );
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
@@ -204,32 +176,6 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     };
   }, [needsTimelineAnalytics, selectedYear, timelineRefreshKey]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-    if (event.active.rect.current.initial) {
-      const { width, height } = event.active.rect.current.initial;
-      setActiveSize({ width, height });
-    }
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (active.id !== over?.id) {
-      const oldIndex = widgetOrder.indexOf(active.id as string);
-      const newIndex = widgetOrder.indexOf(over!.id as string);
-      setWidgetOrder(arrayMove(widgetOrder, oldIndex, newIndex));
-    }
-    setActiveId(null);
-  };
-
   const toggleWidget = (widgetId: string) => {
     if (enabledWidgets.includes(widgetId)) {
       // The dashboard has to keep at least one widget.
@@ -275,6 +221,12 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     setEnabledWidgets(enabledWidgets.filter((wId) => wId !== id));
   };
 
+  // A phone gets one full-width column, so desktop placements are ignored rather than squeezed.
+  const gridWidths = useCallback(
+    (id: string) => (isMobile ? GRID_COLS : getJobHuntWidgetGridWidth(id, customWidgets)),
+    [isMobile, customWidgets]
+  );
+
   // The server counted these; the browser only renames the fields.
   const stats: JobHuntStats = useMemo(
     () => ({
@@ -314,49 +266,31 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
         </button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-4">
-            {widgetOrder.map((id) => (
-              <SortableItem key={id} id={id} className={getJobHuntWidgetColSpan(id, customWidgets)}>
-                {renderJobHuntWidget(
-                  id,
-                  stats,
-                  customWidgets,
-                  deleteCustomWidget,
-                  applicationStats?.field_completeness ?? [],
-                  handleGhost
-                )}
-              </SortableItem>
-            ))}
-          </div>
-        </SortableContext>
-
-        <DragOverlay>
-          {activeId ? (
-            <div
-              className={`h-full ${getJobHuntWidgetColSpan(activeId, customWidgets)}`}
-              style={
-                activeSize ? { width: activeSize.width, height: activeSize.height } : undefined
-              }
+      <div ref={gridRef}>
+        <WidgetGrid
+          ids={widgetOrder}
+          width={gridWidth}
+          placements={isMobile ? EMPTY_PLACEMENTS : placements}
+          defaultWidth={gridWidths}
+          onPlacementsChange={setPlacements}
+          draggable={!isMobile}
+          renderWidget={(id) => (
+            <WidgetCollapseProvider
+              collapsed={collapsedWidgets.includes(id)}
+              onToggle={() => toggleCollapsed(id)}
             >
               {renderJobHuntWidget(
-                activeId,
+                id,
                 stats,
                 customWidgets,
                 deleteCustomWidget,
                 applicationStats?.field_completeness ?? [],
                 handleGhost
               )}
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+            </WidgetCollapseProvider>
+          )}
+        />
+      </div>
 
       <DashboardCustomizeModal
         open={isCustomizeOpen}

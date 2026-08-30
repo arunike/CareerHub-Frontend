@@ -76,24 +76,21 @@ export const renderJobHuntWidget = (
   }
 };
 
-const WIDGET_COL_SPANS: Record<string, string> = {
-  headline: 'col-span-1 md:col-span-2 lg:col-span-4',
-  funnel: 'col-span-1 md:col-span-2 lg:col-span-2',
-  watch_list: 'col-span-1 md:col-span-2 lg:col-span-2',
-  reply_timing: 'col-span-1 md:col-span-2 lg:col-span-2',
-  outcomes: 'col-span-1 md:col-span-2 lg:col-span-2',
-  response_segments: 'col-span-1 md:col-span-2 lg:col-span-2',
-  data_health: 'col-span-1 md:col-span-2 lg:col-span-2',
-  top_locations: 'col-span-1',
-  application_age: 'col-span-1',
+const WIDGET_GRID_WIDTHS: Record<string, number> = {
+  headline: 12,
+  funnel: 6,
+  watch_list: 6,
+  reply_timing: 6,
+  outcomes: 6,
+  response_segments: 6,
+  data_health: 6,
+  top_locations: 3,
+  application_age: 3,
 };
 
-export const getJobHuntWidgetColSpan = (id: string, customWidgets: CustomWidget[]) => {
-  const customWidget = customWidgets.find((w) => w.id === id);
-  if (customWidget) {
-    return customWidget.widgetType === 'chart'
-      ? 'col-span-1 md:col-span-2 lg:col-span-2'
-      : 'col-span-1';
-  }
-  return WIDGET_COL_SPANS[id] ?? 'col-span-1';
+// Columns out of 12, used as the starting width before the user drags one wider or narrower.
+export const getJobHuntWidgetGridWidth = (id: string, customWidgets: CustomWidget[]) => {
+  const customWidget = customWidgets.find((widget) => widget.id === id);
+  if (customWidget) return customWidget.widgetType === 'chart' ? 6 : 3;
+  return WIDGET_GRID_WIDTHS[id] ?? 3;
 };

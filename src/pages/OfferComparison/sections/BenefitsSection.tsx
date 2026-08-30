@@ -427,9 +427,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
         taxableSumAfterTax={taxableSumAfterTax}
       />
 
-      {/* Food on an office day is money either way: a provided meal is money kept, one you
-          buy is money spent. Each meal carries its own amount because a $6 breakfast and a
-          $20 dinner should not average into one figure. */}
+      {/* Each meal carries its own amount, so a $6 breakfast and a $20 dinner do not average. */}
       <FreeFoodGroup
         {...props}
         food={food}

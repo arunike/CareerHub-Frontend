@@ -198,8 +198,7 @@ const CategoriesSection = ({
       Deleting a tab moves its time off back to <em>My Time Off</em>.
     </p>
 
-    {/* Time off with no tab used a hardcoded colour, so it could silently match an
-        event category. It is a real setting now, and clashes are called out. */}
+    {/* A real setting now: a hardcoded colour could silently match an event category. */}
     <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">

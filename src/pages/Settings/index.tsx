@@ -378,8 +378,7 @@ const Settings: React.FC = () => {
           />
         )}
 
-        {/* These two own their own cards and save inline, so they are wrapped only with an
-            anchor the search can scroll to. */}
+        {/* These own their cards and save inline, so they only get an anchor the search can scroll to. */}
         {activeTab === 'integrations' && (
           <div id="settings-section-integrations" className="scroll-mt-24">
             <GoogleSheetsSettings />

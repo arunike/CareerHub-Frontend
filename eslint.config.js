@@ -5,6 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import commentStyle from './eslint-rules/comment-style.js';
 
 export default defineConfig([
   globalIgnores(['dist', 'node_modules', 'coverage']),
@@ -21,7 +22,9 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    plugins: { agents: commentStyle },
     rules: {
+      'agents/one-line-per-comment': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',

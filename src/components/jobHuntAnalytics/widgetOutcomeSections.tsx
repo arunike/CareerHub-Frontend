@@ -58,8 +58,7 @@ export const ReplyTimingSection = ({ stats }: { stats: JobHuntStats }) => (
 
       return (
         <>
-          {/* The headline reads across the full width. In a side column it wrapped every
-              other word and left the bars stranded in the space it was not using. */}
+          {/* Full width: in a side column the headline wrapped every other word. */}
           <div className="mb-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 rounded-lg border border-sky-100 bg-sky-50/60 px-3 py-2.5">
             <span className="text-sm text-gray-700">
               Half arrived within{' '}

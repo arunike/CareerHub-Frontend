@@ -149,8 +149,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                   option.is_primary ? 'border-blue-300 bg-white' : 'border-slate-200 bg-white/60'
                 }`}
               >
-                {/* The row's own bottom line sits in its header, because that is the number
-                    being compared between modes — previously it was a grey footnote. */}
+                {/* The bottom line sits in the header, because that is the number compared between modes. */}
                 <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
                   <Tooltip title={option.is_primary ? 'Primary mode' : 'Use as primary mode'}>
                     <label className="flex min-w-0 cursor-pointer items-center gap-2">
@@ -190,8 +189,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                   </div>
                 </div>
 
-                {/* Mode and Cost decide which fields below even apply, so they lead and are
-                    set apart rather than sitting at the same weight as the values. */}
+                {/* Mode and Cost decide which fields below apply, so they lead and are set apart. */}
                 <div className="mb-3 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-2.5 sm:grid-cols-2">
                   <Field label="Mode">
                     <select
@@ -241,8 +239,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                   </Field>
                 </div>
 
-                {/* Everything the two choices above imply, in one grid that reflows to two
-                    columns on a phone. */}
+                {/* Everything the two choices above imply, reflowing to two columns on a phone. */}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3">
                   <Field label="Time each way" hint="90, 1h30 or 1:30">
                     <UnitNumberInput
@@ -270,8 +267,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                         />
                       </Field>
 
-                      {/* The fix for the wrong total: the trip being described is now stated
-                          rather than assumed, so a round-trip figure is not doubled again. */}
+                      {/* The trip being described is stated rather than assumed, so a round trip is not doubled. */}
                       <Field
                         label="Counts as"
                         hint={
@@ -293,9 +289,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                         </select>
                       </Field>
 
-                      {/* Your car and your pump price are the same whichever offer you take,
-                          so they are read-only here and shared across offers. Overriding is
-                          possible but deliberate, for the offer that really does differ. */}
+                      {/* Your car and pump price are shared across offers; overriding is possible but deliberate. */}
                       <Field
                         label="Efficiency"
                         hint={fuelInputs.mpgOverridden ? 'overridden' : 'shared'}
@@ -377,8 +371,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                   )}
                 </div>
 
-                {/* The derived total shows every step, so a number that looks wrong can be
-                    traced to the input that caused it. */}
+                {/* Shows every step, so a number that looks wrong can be traced to its input. */}
                 {fuelCosted && (
                   <p className="mt-3 rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] leading-4 text-slate-500 tabular-nums">
                     {fuel ? (

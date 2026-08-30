@@ -343,8 +343,7 @@ const ContactsPage = () => {
           placeholder="Search people, companies, roles, notes, or relationships"
           className="max-w-xl"
         />
-        {/* Same switcher idiom as the other pages: antd's Segmented track is the page's own
-            tint, so on this background only the active pill showed. */}
+        {/* antd's Segmented track is the page's own tint, so only the active pill showed. */}
         <SegmentedToggle
           value={view}
           onChange={setView}

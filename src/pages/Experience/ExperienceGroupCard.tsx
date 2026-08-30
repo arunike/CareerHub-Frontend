@@ -180,8 +180,7 @@ const ExperienceGroupCard = ({
             }
           />
         </div>
-        {/* Card chrome, not a fifth action: the lock, pin and edit cluster sits in
-            the corner at every width instead of trailing the action buttons. */}
+        {/* Card chrome, not a fifth action: the cluster sits in the corner at every width. */}
         <div
           className={`absolute right-3 top-3 z-20 transition-opacity duration-200 sm:right-4 sm:top-4 ${
             exp.is_locked ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'
@@ -225,12 +224,9 @@ const ExperienceGroupCard = ({
     const tenure = getGroupTenure(group);
     return (
       <div className="p-4 sm:p-6">
-        {/* Company header. The group's own pin / lock-all / delete-unlocked live in
-            the card's corner, like the single-role card, instead of on a floating
-            strip of their own between the header and the first role. */}
+        {/* The group's pin, lock-all and delete-unlocked live in the corner, like the single-role card. */}
         <div className="mb-5">
-          {/* Only the name line has to clear the corner cluster; the meta line sits
-              below it and gets the full width, so the tenure never wraps. */}
+          {/* Only the name line clears the corner cluster, so the tenure never wraps. */}
           <div className="flex items-center gap-3 pr-36 md:pr-28">
             <div className="flex shrink-0 md:hidden">
               {logoSrc ? (

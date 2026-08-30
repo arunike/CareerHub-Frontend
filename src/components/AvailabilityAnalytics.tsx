@@ -1,25 +1,10 @@
-import React, { useState } from 'react';
-import { HolderOutlined, SettingOutlined } from '@ant-design/icons';
-import { Typography, message } from 'antd';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { SettingOutlined } from '@ant-design/icons';
+import { Grid, Typography, message } from 'antd';
+import WidgetGrid, { GRID_COLS } from './jobHuntAnalytics/WidgetGrid';
+import type { Placement } from './jobHuntAnalytics/widgetLayout';
+import { WidgetCollapseProvider } from './jobHuntAnalytics/widgetCollapse';
+import { usePersistedState } from '../hooks/usePersistedState';
 import { useCustomWidgets } from '../hooks/useCustomWidgets';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import DashboardCustomizeModal from './jobHuntAnalytics/DashboardCustomizeModal';
@@ -27,7 +12,7 @@ import { AVAILABLE_WIDGETS } from './availabilityAnalytics/constants';
 import CreateCustomWidgetModal from './jobHuntAnalytics/CreateCustomWidgetModal';
 import type { VisualConfig } from '../lib/visualWidgetQuery';
 import {
-  getAvailabilityWidgetClass,
+  getAvailabilityWidgetGridWidth,
   renderAvailabilityWidget,
   type AvailabilityStats,
 } from './availabilityAnalytics/widgetRenderer';
@@ -37,42 +22,6 @@ const { Text } = Typography;
 interface AvailabilityAnalyticsProps {
   stats: AvailabilityStats;
 }
-
-const SortableItem = ({
-  id,
-  children,
-  className,
-}: {
-  id: string;
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className={`min-w-0 ${className || ''}`}>
-      <div className="relative group h-full">
-        <div
-          {...attributes}
-          {...listeners}
-          aria-label={`Reorder ${id} widget`}
-          className="absolute right-2 top-2 z-10 inline-flex min-h-11 min-w-11 cursor-grab items-center justify-center rounded-xl border border-slate-200/80 bg-white/90 text-gray-400 opacity-100 shadow-sm transition-opacity hover:text-gray-600 active:cursor-grabbing md:min-h-0 md:min-w-0 md:border-0 md:bg-white/50 md:p-1 md:opacity-0 md:shadow-none md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-        >
-          <HolderOutlined className="w-4 h-4" />
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
 
 // Saved layouts can hold retired widget ids, which would render an empty card.
 const RETIRED_WIDGET_IDS = new Set(['duration', 'activity']);
@@ -90,17 +39,47 @@ const normalizeEnabledWidgets = (ids: string[]) => {
   return normalized.length > 0 ? normalized : DEFAULT_WIDGET_IDS;
 };
 
+const EMPTY_PLACEMENTS: Record<string, Placement> = {};
+
 const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const {
     enabled: enabledWidgets,
     order: widgetOrder,
     setEnabled: setEnabledWidgets,
-    setOrder: setWidgetOrder,
   } = useDashboardLayout('availability', DEFAULT_WIDGET_IDS, normalizeEnabledWidgets);
 
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeSize, setActiveSize] = useState<{ width: number; height: number } | null>(null);
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+
+  useEffect(() => {
+    const node = gridRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => setGridWidth(entry.contentRect.width));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // Where each widget sits, chosen by dragging; empty until the user moves something.
+  const [placements, setPlacements] = usePersistedState<Record<string, Placement>>(
+    'careerhub.analytics.availability.placements',
+    {}
+  );
+
+  const [collapsedWidgets, setCollapsedWidgets] = usePersistedState<string[]>(
+    'careerhub.analytics.availability.collapsed',
+    []
+  );
+
+  const toggleCollapsed = (id: string) =>
+    setCollapsedWidgets(
+      collapsedWidgets.includes(id)
+        ? collapsedWidgets.filter((widgetId) => widgetId !== id)
+        : [...collapsedWidgets, id]
+    );
 
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateWidgetOpen, setIsCreateWidgetOpen] = useState(false);
@@ -111,31 +90,11 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     messageApi
   );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+  // A phone gets one full-width column, so desktop placements are ignored rather than squeezed.
+  const gridWidths = useCallback(
+    (id: string) => (isMobile ? GRID_COLS : getAvailabilityWidgetGridWidth(id, customWidgets)),
+    [isMobile, customWidgets]
   );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-    if (event.active.rect.current.initial) {
-      const { width, height } = event.active.rect.current.initial;
-      setActiveSize({ width, height });
-    }
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (active.id !== over?.id) {
-      const oldIndex = widgetOrder.indexOf(active.id as string);
-      const newIndex = widgetOrder.indexOf(over!.id as string);
-      setWidgetOrder(arrayMove(widgetOrder, oldIndex, newIndex));
-    }
-    setActiveId(null);
-  };
 
   const toggleWidget = (widgetId: string) => {
     if (enabledWidgets.includes(widgetId)) {
@@ -201,38 +160,24 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         </button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={widgetOrder} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-6 items-start">
-            {widgetOrder.map((id) => (
-              <SortableItem
-                key={id}
-                id={id}
-                className={getAvailabilityWidgetClass(id, customWidgets)}
-              >
-                {renderAvailabilityWidget(id, stats, customWidgets, deleteCustomWidget)}
-              </SortableItem>
-            ))}
-          </div>
-        </SortableContext>
-        <DragOverlay>
-          {activeId ? (
-            <div
-              className={`h-full ${getAvailabilityWidgetClass(activeId, customWidgets)}`}
-              style={
-                activeSize ? { width: activeSize.width, height: activeSize.height } : undefined
-              }
+      <div ref={gridRef}>
+        <WidgetGrid
+          ids={widgetOrder}
+          width={gridWidth}
+          placements={isMobile ? EMPTY_PLACEMENTS : placements}
+          defaultWidth={gridWidths}
+          onPlacementsChange={setPlacements}
+          draggable={!isMobile}
+          renderWidget={(id) => (
+            <WidgetCollapseProvider
+              collapsed={collapsedWidgets.includes(id)}
+              onToggle={() => toggleCollapsed(id)}
             >
-              {renderAvailabilityWidget(activeId, stats, customWidgets, deleteCustomWidget)}
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+              {renderAvailabilityWidget(id, stats, customWidgets, deleteCustomWidget)}
+            </WidgetCollapseProvider>
+          )}
+        />
+      </div>
 
       <DashboardCustomizeModal
         open={isCustomizeOpen}

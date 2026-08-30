@@ -35,8 +35,7 @@ const SettingsTabBar = ({ activeTab, activeTabMeta, dirtyTabs, setActiveTab }: P
             {tab.icon}
           </span>
           {tab.label}
-          {/* The Save button is global, so a pending edit two tabs away is otherwise
-              invisible: the button lights up with no clue what it would write. */}
+          {/* The Save button is global, so a pending edit two tabs away is otherwise invisible. */}
           {dirtyTabs.includes(tab.key) && (
             <Tooltip title="Unsaved changes in this section">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />

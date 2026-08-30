@@ -215,8 +215,7 @@ const ActivityChart = ({
                 {option.label}
               </option>
             ))}
-            {/* Only offered as the current selection. With the picker always on screen
-                there is nothing to switch to — editing the dates is what makes it custom. */}
+            {/* Only the current selection; editing the dates is what makes it custom. */}
             {range === CUSTOM_RANGE && <option value={CUSTOM_RANGE}>{CUSTOM_RANGE_LABEL}</option>}
           </select>
           {stackPickers ? (

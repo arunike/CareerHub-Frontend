@@ -176,8 +176,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
   if (isMobile) {
     return (
       <div className="space-y-3">
-        {/* The overflow rides the title line. Given its own row it either stranded itself
-            at half width or added a bar of pure chrome to pages with no primary action. */}
+        {/* Rides the title line; its own row stranded it at half width or added a bar of chrome. */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Typography.Title
@@ -209,8 +208,7 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
           <div className="page-toolbar-mobile-primary">{primaryActionNode}</div>
         ) : null}
 
-        {/* Verbs only get a row of their own when the page has not given us menu entries
-            for them. */}
+        {/* Verbs get their own row only when the page gave us no menu entries for them. */}
         {secondaryActions && !secondaryMenuItems?.length ? (
           <div className="page-toolbar-mobile-verbs">{secondaryActions}</div>
         ) : null}

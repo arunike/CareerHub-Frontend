@@ -95,8 +95,7 @@ const WorkSetupSection = ({
           <option value="HIGH">{'High Travel (>25%)'}</option>
         </select>
       </div>
-      {/* Remote means zero office days, so a commute editor would only ever compute
-          nothing. Existing entries are kept, just not counted or shown. */}
+      {/* Remote means zero office days; existing entries are kept, just not counted. */}
       {showCommuteAndPerks && workMode !== 'REMOTE' && onCommuteOptionsChange && (
         <div className="md:col-span-2">
           <CommuteOptionsEditor

@@ -97,8 +97,7 @@ const CommuteComparison = ({
                     <div className="font-bold tabular-nums text-slate-950">
                       {money(commute.annualCost)}
                     </div>
-                    {/* A derived figure should show its working where it is read, not only in
-                        the form that produced it. */}
+                    {/* A derived figure shows its working where it is read, not only in the form that produced it. */}
                     {fuel && (
                       <div className="text-[11px] text-slate-400 tabular-nums">
                         {Math.round(fuel.annualMiles).toLocaleString()} mi (

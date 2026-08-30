@@ -7,6 +7,7 @@ import {
 import { Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import CustomWidgetCard from '../CustomWidgetCard';
+import CollapsibleCard from './CollapsibleCard';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import { COLORS } from './constants';
 import type { EventLoad } from '../../pages/Analytics/eventLoad';
@@ -56,11 +57,10 @@ export const renderAvailabilityWidget = (
       );
     case 'load':
       return (
-        <div className="enterprise-card h-full p-4 sm:p-6">
-          <div className="mb-5 flex items-center gap-2">
-            <ThunderboltOutlined className="h-5 w-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Schedule Load</h3>
-          </div>
+        <CollapsibleCard
+          icon={<ThunderboltOutlined className="h-5 w-5 text-gray-600" />}
+          title="Schedule Load"
+        >
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 opacity-80">
@@ -107,15 +107,14 @@ export const renderAvailabilityWidget = (
               </p>
             </div>
           </div>
-        </div>
+        </CollapsibleCard>
       );
     case 'category':
       return (
-        <div className="enterprise-card h-full p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <PieChartOutlined className="w-5 h-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Events by Category</h3>
-          </div>
+        <CollapsibleCard
+          icon={<PieChartOutlined className="w-5 h-5 text-gray-600" />}
+          title="Events by Category"
+        >
           <div className="careerhub-responsive-pie h-75 w-full">
             {stats.byCategory.length > 0 ? (
               <ResponsiveContainer
@@ -152,7 +151,7 @@ export const renderAvailabilityWidget = (
               </div>
             )}
           </div>
-        </div>
+        </CollapsibleCard>
       );
     default: {
       const customWidget = customWidgets.find((w) => w.id === id);
@@ -164,19 +163,16 @@ export const renderAvailabilityWidget = (
   }
 };
 
-export const getAvailabilityWidgetClass = (id: string, customWidgets: CustomWidget[]) => {
-  const customWidget = customWidgets.find((w) => w.id === id);
-  if (customWidget) {
-    return customWidget.widgetType === 'chart'
-      ? 'col-span-1 md:col-span-3 lg:col-span-3'
-      : 'col-span-1 md:col-span-2 lg:col-span-2';
-  }
+const WIDGET_GRID_WIDTHS: Record<string, number> = {
+  total: 4,
+  weekly: 4,
+  load: 4,
+  category: 6,
+};
 
-  if (['total', 'weekly', 'load'].includes(id)) {
-    return 'col-span-1 md:col-span-2 lg:col-span-2';
-  }
-  if (id === 'category') {
-    return 'col-span-1 md:col-span-3 lg:col-span-3';
-  }
-  return 'col-span-1';
+// Columns out of 12, used as the starting width before the user drags one wider or narrower.
+export const getAvailabilityWidgetGridWidth = (id: string, customWidgets: CustomWidget[]) => {
+  const customWidget = customWidgets.find((w) => w.id === id);
+  if (customWidget) return customWidget.widgetType === 'chart' ? 6 : 4;
+  return WIDGET_GRID_WIDTHS[id] ?? 2;
 };

@@ -205,8 +205,7 @@ const DrivingAssumptions = ({
       title={step === 'edit' ? 'Driving assumptions' : 'Offers with their own figures'}
       content={step === 'edit' ? editStep : reviewStep}
     >
-      {/* Labelled and given an edit affordance: as a bare "23 mpg · $5.2/gal" chip it read as a
-          summary of a setting kept somewhere else, so nobody thought to click it. */}
+      {/* Labelled and clickable: a bare "23 mpg · $5.2/gal" chip read as a setting kept elsewhere. */}
       <button
         type="button"
         aria-haspopup="dialog"

@@ -383,8 +383,7 @@ export const BonusForm = ({
                       className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        {/* antd's Segmented track is the same tint as this panel, so its own
-                            container vanishes and the active pill floats on nothing. */}
+                        {/* antd's Segmented track is the same tint as this panel, so the active pill floats on nothing. */}
                         <SegmentedToggle
                           value={offCycle ? 'own' : 'paycheck'}
                           wrapperClassName="bg-white"

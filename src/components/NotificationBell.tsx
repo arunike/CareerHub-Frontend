@@ -377,8 +377,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
         aria-label="Open notifications"
         aria-expanded={isOpen}
       >
-        {/* Keeps ringing until the list is empty, so something outstanding cannot be
-            missed; every row has a Dismiss action to stop it. */}
+        {/* Rings until the list is empty; every row has a Dismiss action to stop it. */}
         <BellOutlined className={`text-xl ${needsAttention ? 'careerhub-bell-alert' : ''}`} />
         {totalNotifications > 0 && (
           <span
@@ -392,8 +391,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       {contextHolder}
       {notificationHolder}
 
-      {/* Read-only from here: editing and deleting belong on the Events page, which this
-          links out to rather than duplicating those flows in the header. */}
+      {/* Read-only: editing and deleting belong on the Events page, which this links out to. */}
       <EventViewModal
         event={viewingEvent}
         onClose={() => setViewingEvent(null)}

@@ -382,11 +382,7 @@ const OfferDecisionScorecard = ({
                             )}
                           </span>
                         )}
-                        {/* `Offer.is_current` marks the comparison baseline; the linked
-                            experience says whether the role is still held. On a past role
-                            the two disagree, and a plain "Current" chip next to "Past Role"
-                            reads as a bug. Say what is actually true instead of hiding it —
-                            every Diff vs Current still measures against this offer. */}
+                        {/* `Offer.is_current` is the comparison baseline; the linked experience says if the role is held. */}
                         {!row.isSimulated && (row.offer as Offer).is_current && (
                           <Tooltip
                             title={

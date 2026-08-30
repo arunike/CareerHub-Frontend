@@ -349,9 +349,7 @@ const FriendlyTimeInput = ({
         </div>
       )}
 
-      {/* Portaled to the body. An antd Drawer ancestor is transformed for its slide
-          animation, which makes it the containing block for position:fixed and would trap
-          this sheet inside the drawer's body box. */}
+      {/* Portaled to the body: a transformed antd Drawer ancestor would trap a fixed sheet inside it. */}
       {sheetOpen &&
         !disabled &&
         createPortal(

@@ -224,7 +224,7 @@ export const WatchListSection = ({
       }
     >
       {(analytics) => (
-        <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+        <div className="flex h-full max-h-[420px] min-h-0 flex-col gap-2 overflow-y-auto pr-1">
           {analytics.stale_in_stage.map((item) => (
             <div
               key={item.application_id}
@@ -233,8 +233,7 @@ export const WatchListSection = ({
               <div className="flex items-start gap-2">
                 <WarningOutlined className="mt-0.5 shrink-0 text-amber-600" />
                 <div className="min-w-0 flex-1">
-                  {/* A report you cannot act on sends you hunting through 800 rows for the
-                      row it just told you about. */}
+                  {/* A report you cannot act on sends you hunting through 800 rows. */}
                   <Link
                     to={`/applications?application=${item.application_id}`}
                     className="block truncate text-sm font-semibold text-gray-900 hover:text-blue-700 hover:underline"
@@ -245,9 +244,7 @@ export const WatchListSection = ({
                   <p className="text-xs text-amber-700">
                     {item.days_in_stage} day{item.days_in_stage === 1 ? '' : 's'} in{' '}
                     {item.status_label}
-                    {/* The date the count is measured from. Several applications synced on
-                        one day legitimately share a day count, which reads like a bug until
-                        you can see where it starts. */}
+                    {/* The date the count is measured from, so a shared day count does not read as a bug. */}
                     {item.last_stage_date && (
                       <span className="text-amber-600/70">
                         {' '}
@@ -255,9 +252,7 @@ export const WatchListSection = ({
                       </span>
                     )}
                   </p>
-                  {/* A flat threshold treats a phone screen like an onsite. This says how far
-                      past normal for its own stage it actually is, which is the difference
-                      between slow and dead. */}
+                  {/* Measured against its own stage: a flat threshold treats a phone screen like an onsite. */}
                   {typeof item.days_over_typical === 'number' && item.days_over_typical > 0 && (
                     <p className="mt-0.5 text-[11px] font-semibold text-rose-600">
                       {item.days_over_typical.toLocaleString()} days past the {item.typical_days}d

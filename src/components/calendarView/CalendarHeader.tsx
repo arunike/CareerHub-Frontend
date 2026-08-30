@@ -104,8 +104,7 @@ const CalendarHeader = ({
             <CalendarOutlined className="text-lg text-slate-500" />
             {headerLabel}
           </h2>
-          {/* Beside the label on a phone, where a calendar's month arrows are expected;
-              the desktop copy stays with the other controls on the right. */}
+          {/* Beside the label on a phone, where a calendar's month arrows are expected. */}
           <div className="shrink-0 xl:hidden">{navCluster}</div>
         </div>
 
@@ -213,8 +212,7 @@ const CalendarHeader = ({
       </div>
 
       <div className="flex flex-col gap-2 sm:items-end">
-        {/* Page controls share the view-mode line rather than stacking above it; three
-            right-hand rows left a dead gap down the middle of the header. */}
+        {/* Shares the view-mode line; three right-hand rows left a dead gap down the middle. */}
         <div className="calendar-header-controls flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {pageControls}
           <div className="scrollbar-none -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">

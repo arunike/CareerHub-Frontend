@@ -453,8 +453,7 @@ export const PaycheckWaterfall = ({
               {moneyCents(row.employerMatch401k)}
             </span>
           </div>
-          {/* Explains where the amount came from: what you put in, what share of it the
-              employer added, and how much of your deferral was eligible. */}
+          {/* What you put in, what the employer added, and how much of the deferral was eligible. */}
           <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
             {contributed > 0 ? (
               <>

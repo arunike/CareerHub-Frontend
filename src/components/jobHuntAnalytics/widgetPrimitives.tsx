@@ -2,6 +2,7 @@ import type React from 'react';
 import Tooltip from 'antd/es/tooltip';
 import { format } from 'date-fns';
 import CrispInfoIcon from '../CrispInfoIcon';
+import { WidgetCollapseToggle, useWidgetCollapse } from './widgetCollapse';
 import { parseDateOnlyLocal } from '../../utils/dateOnly';
 import type { ApplicationTimelineAnalytics } from '../../types';
 import type { JobHuntStats } from './widgetStatsTypes';
@@ -202,18 +203,25 @@ export const SectionCard = ({
   tooltip: string;
   badge?: React.ReactNode;
   children: React.ReactNode;
-}) => (
-  <div className="enterprise-card h-full p-4 sm:p-6">
-    <div className="mb-4 flex items-center gap-2">
-      <span className="text-base text-gray-500">{icon}</span>
-      <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
-        <TooltipLabel title={tooltip}>{title}</TooltipLabel>
-        {badge}
-      </h3>
+}) => {
+  const collapse = useWidgetCollapse();
+  const collapsed = collapse?.collapsed ?? false;
+
+  return (
+    <div className={`enterprise-card flex flex-col p-4 sm:p-6 ${collapsed ? 'h-auto' : 'h-full'}`}>
+      <div className={`flex items-center gap-2 ${collapsed ? '' : 'mb-4'}`}>
+        <span className="text-base text-gray-500">{icon}</span>
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
+          <TooltipLabel title={tooltip}>{title}</TooltipLabel>
+          {badge}
+        </h3>
+        <WidgetCollapseToggle title={title} />
+      </div>
+      {/* min-h-0 so a scrolling child shrinks instead of pushing the card past its row. */}
+      {collapsed ? null : <div className="min-h-0 flex-1">{children}</div>}
     </div>
-    {children}
-  </div>
-);
+  );
+};
 
 export const AnalyticsSection = ({
   stats,
