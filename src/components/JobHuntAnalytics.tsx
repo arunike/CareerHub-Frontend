@@ -173,8 +173,12 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     messageApi
   );
 
+  // Whether any widget needs the fetch, not which: depending on the array refetched on every
+  // unrelated toggle, and on a new array reference it never stopped.
+  const needsTimelineAnalytics = enabledWidgets.some((id) => ANALYTICS_BACKED_WIDGETS.has(id));
+
   useEffect(() => {
-    if (!enabledWidgets.some((id) => ANALYTICS_BACKED_WIDGETS.has(id))) return;
+    if (!needsTimelineAnalytics) return;
 
     let mounted = true;
     setTimelineAnalyticsLoading(true);
@@ -199,7 +203,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     return () => {
       mounted = false;
     };
-  }, [enabledWidgets, selectedYear, timelineRefreshKey]);
+  }, [needsTimelineAnalytics, selectedYear, timelineRefreshKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),

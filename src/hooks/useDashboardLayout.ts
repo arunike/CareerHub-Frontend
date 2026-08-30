@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAccountSetting } from './useAccountSetting';
 
 export type DashboardKey = 'jobHunt' | 'availability';
@@ -34,6 +34,11 @@ const legacyDict = (pick: 'order' | 'enabled') => {
   return seeded;
 };
 
+// Read once at module load: these are only the seed for the first render, and rebuilding them
+// every render hit localStorage on each pass for a value that cannot change.
+const LEGACY_ORDER = legacyDict('order');
+const LEGACY_ENABLED = legacyDict('enabled');
+
 // Both dashboards share one field each, keyed by dashboard, so a save merges rather than replaces.
 export const useDashboardLayout = (
   dashboard: DashboardKey,
@@ -42,20 +47,28 @@ export const useDashboardLayout = (
 ) => {
   const orders = useAccountSetting<Record<string, string[]>>(
     'analytics_widget_order',
-    legacyDict('order'),
+    LEGACY_ORDER,
     ORDER_CACHE
   );
   const flags = useAccountSetting<Record<string, string[]>>(
     'analytics_widgets_enabled',
-    legacyDict('enabled'),
+    LEGACY_ENABLED,
     ENABLED_CACHE
   );
 
-  const enabled = normalize(flags.value[dashboard] ?? defaultEnabled);
-  const saved = orders.value[dashboard];
-  // Prune what is off and append what is newly on, so a widget added later still appears.
-  const ordered = saved ? normalize(saved).filter((id) => enabled.includes(id)) : [];
-  const order = [...ordered, ...enabled.filter((id) => !ordered.includes(id))];
+  // Memoised because normalize builds a new array: an unmemoised one is a fresh reference on
+  // every render, and an effect that depends on it re-runs forever.
+  const enabled = useMemo(
+    () => normalize(flags.value[dashboard] ?? defaultEnabled),
+    [normalize, flags.value, dashboard, defaultEnabled]
+  );
+
+  const order = useMemo(() => {
+    const saved = orders.value[dashboard];
+    // Prune what is off and append what is newly on, so a widget added later still appears.
+    const ordered = saved ? normalize(saved).filter((id) => enabled.includes(id)) : [];
+    return [...ordered, ...enabled.filter((id) => !ordered.includes(id))];
+  }, [normalize, orders.value, dashboard, enabled]);
 
   const setEnabled = useCallback(
     (next: string[]) => flags.setValue({ ...flags.value, [dashboard]: next }),
