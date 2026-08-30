@@ -20,7 +20,8 @@ import {
   buildBonusEvents,
   nextYearBonusEstimate,
   offCyclePeriods,
-  prorationFactor,
+  prorationDetail,
+  performanceYearOptions as performanceYearChoices,
   resolvePerformanceYear,
   totalBonus,
 } from './bonusSchedule';
@@ -58,6 +59,8 @@ export interface IncomeModel {
   vestEvents: ReturnType<typeof buildVestEvents>;
   bonusProration: number;
   performanceYear: number;
+  performanceYearOptions: number[];
+  bonusProrationDetail: ReturnType<typeof prorationDetail>;
   nextYearBonus: ReturnType<typeof nextYearBonusEstimate>;
   ledgerPeriods: ReturnType<typeof buildPayPeriods>;
   deductionLines: { medical: number; dental: number; vision: number; dependent: number };
@@ -108,8 +111,18 @@ export const buildIncomeModel = ({
   };
 
   const targetBonus = settings.bonusOverride ?? source?.bonus ?? 0;
-  const performanceYear = resolvePerformanceYear(settings.bonusPerformanceYear, taxYear);
-  const bonusProration = prorationFactor(performanceYear, source?.startDate, source?.endDate);
+  const performanceYearOptions = performanceYearChoices(
+    taxYear,
+    source?.startDate,
+    source?.endDate
+  );
+  const performanceYear = resolvePerformanceYear(
+    settings.bonusPerformanceYear,
+    taxYear,
+    performanceYearOptions
+  );
+  const bonusProrationDetail = prorationDetail(performanceYear, source?.startDate, source?.endDate);
+  const bonusProration = bonusProrationDetail.factor;
   const bonusTotal = totalBonus(
     targetBonus,
     settings.bonusMultiplierPercent,
@@ -229,6 +242,8 @@ export const buildIncomeModel = ({
     vestEvents,
     bonusProration,
     performanceYear,
+    performanceYearOptions,
+    bonusProrationDetail,
     nextYearBonus,
     ledgerPeriods,
     deductionLines,

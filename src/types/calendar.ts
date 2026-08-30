@@ -151,6 +151,9 @@ export interface UserSettings {
     locked?: boolean;
   }>;
   hidden_nav_items?: string[];
+  // Income source keys and tax years left out of the Income page pickers.
+  hidden_income_roles?: string[];
+  hidden_income_years?: number[];
   nav_item_order?: string[];
   nav_item_labels?: Record<string, string>;
   mobile_toolbar_items?: string[];

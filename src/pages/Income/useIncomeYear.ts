@@ -16,6 +16,8 @@ import {
 import {
   activeInYear,
   buildIncomeSources,
+  visibleSources,
+  visibleYears,
   yearsForSources,
   type IncomeSource,
 } from './incomeSources';
@@ -26,6 +28,7 @@ import {
   resolveTaxYear,
   type TaxTableOverrides,
 } from './tax/data';
+import { getUserSettings } from '../../api/availability';
 import { NO_ELECTIONS, type Elections, type IncomeEvent } from './tax/ledger';
 import type { PeriodActual } from './effectiveRows';
 import { DEFAULT_SETTINGS, type IncomeSettings } from './incomeSettings';
@@ -99,7 +102,9 @@ const fromPayload = (payload: IncomeYearPayload): Partial<IncomeSettings> => ({
     postTaxPerPeriod: num(payload.post_tax_deductions_per_period),
     hsaFamilyCoverage: Boolean(payload.hsa_family_coverage),
     age50Plus: Boolean(payload.age_50_plus),
-    excludeAllowancesFromDeferralBase: Boolean(payload.exclude_allowances_from_deferral_base),
+    deferralBase:
+      (payload.deferral_base as Elections['deferralBase'] | undefined) ??
+      (payload.exclude_allowances_from_deferral_base ? 'NO_ALLOWANCES' : 'ALL'),
   },
   includeBonus: payload.include_bonus ?? false,
   bonusOverride: payload.bonus_override == null ? null : num(payload.bonus_override),
@@ -153,7 +158,7 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
   post_tax_deductions_per_period: settings.elections.postTaxPerPeriod,
   hsa_family_coverage: settings.elections.hsaFamilyCoverage,
   age_50_plus: settings.elections.age50Plus,
-  exclude_allowances_from_deferral_base: settings.elections.excludeAllowancesFromDeferralBase,
+  deferral_base: settings.elections.deferralBase,
   include_bonus: settings.includeBonus,
   bonus_override: settings.bonusOverride,
   bonus_payouts: settings.bonusPayouts as unknown as Array<Record<string, unknown>>,
@@ -224,17 +229,20 @@ export const useIncomeYear = () => {
   const [taxOverrides, setTaxOverrides] = useState<TaxTableOverrides>({});
   const [recordId, setRecordId] = useState<number | null>(null);
   const [persistence, setPersistence] = useState<'api' | 'local'>('api');
+  const [hiddenRoles, setHiddenRoles] = useState<string[]>([]);
+  const [hiddenYears, setHiddenYears] = useState<number[]>([]);
 
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
-      const [offersResult, experiencesResult, referenceResult, incomeResult] =
+      const [offersResult, experiencesResult, referenceResult, incomeResult, settingsResult] =
         await Promise.allSettled([
           getOffers(),
           getExperiences(),
           getCareerReferenceData(),
           getIncomeYears(),
+          getUserSettings(),
         ]);
       if (cancelled) return;
 
@@ -247,6 +255,14 @@ export const useIncomeYear = () => {
           ? ((experiencesResult.value.data ?? []) as unknown as Array<Record<string, any>>)
           : [];
       setSources(buildIncomeSources(offerRows, experienceRows));
+
+      // Hidden roles and years are a Settings choice, so the page reads them rather than owning
+      // them. A failed fetch hides nothing, which is the safe direction.
+      if (settingsResult.status === 'fulfilled') {
+        const userSettings = (settingsResult.value.data ?? {}) as Record<string, unknown>;
+        setHiddenRoles((userSettings.hidden_income_roles as string[]) ?? []);
+        setHiddenYears(((userSettings.hidden_income_years as number[]) ?? []).map(Number));
+      }
 
       if (referenceResult.status === 'fulfilled') {
         const reference = (referenceResult.value.data ?? {}) as Record<string, any>;
@@ -275,9 +291,15 @@ export const useIncomeYear = () => {
     };
   }, []);
 
+  // Hidden roles drop out of the picker, but only after the year has narrowed the list, so
+  // hiding one never empties a year that still has another role in it.
   const sourcesInYear = useMemo(
-    () => sources.filter((candidate) => activeInYear(candidate, taxYear)),
-    [sources, taxYear]
+    () =>
+      visibleSources(
+        sources.filter((candidate) => activeInYear(candidate, taxYear)),
+        hiddenRoles
+      ),
+    [sources, taxYear, hiddenRoles]
   );
 
   const resolvedSourceKey = useMemo(() => {
@@ -373,7 +395,10 @@ export const useIncomeYear = () => {
   );
 
   // Every year any role covers, so the year re-filters the roles.
-  const availableYears = useMemo(() => yearsForSources(sources, LATEST_TAX_YEAR), [sources]);
+  const availableYears = useMemo(
+    () => visibleYears(yearsForSources(sources, LATEST_TAX_YEAR), hiddenYears),
+    [sources, hiddenYears]
+  );
 
   const taxContext = useMemo(
     () => ({ stateNames, stateTaxRates, taxOverrides }),
@@ -423,6 +448,8 @@ export const useIncomeYear = () => {
     vestEvents,
     bonusProration,
     performanceYear,
+    performanceYearOptions,
+    bonusProrationDetail,
     nextYearBonus,
     ledgerPeriods,
     deductionLines,
@@ -527,6 +554,8 @@ export const useIncomeYear = () => {
     bonusTotal,
     bonusProration,
     performanceYear,
+    performanceYearOptions,
+    bonusProrationDetail,
     nextYearBonus,
     ledgerPeriods,
     deductionLines,

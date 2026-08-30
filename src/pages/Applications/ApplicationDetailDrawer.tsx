@@ -31,6 +31,7 @@ import ApplicationTimelinePanel from './ApplicationTimelinePanel';
 import { formatDateOnly } from '../../utils/dateOnly';
 import { updateApplication } from '../../api/career';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { safeExternalHref } from '../../utils/safeUrl';
 
 const RichNotesEditor = lazy(() => import('./RichNotesEditor'));
 
@@ -251,7 +252,11 @@ const ApplicationDetailDrawer = ({
                       </Descriptions.Item>
                       <Descriptions.Item label="Job Link">
                         {application.job_link ? (
-                          <a href={application.job_link} target="_blank" rel="noreferrer">
+                          <a
+                            href={safeExternalHref(application.job_link)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             Open posting
                           </a>
                         ) : (

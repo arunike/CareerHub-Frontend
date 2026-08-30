@@ -7,6 +7,7 @@ import {
   confirmEventDeletion,
   type EventDeleteScope,
 } from '../../../components/calendarView/confirmCalendarDeletion';
+import { safeExternalHref } from '../../../utils/safeUrl';
 
 const { Text } = Typography;
 
@@ -94,7 +95,7 @@ const EventViewModal = ({ event, onClose, onEdit, onDuplicate, onDelete }: Event
             <div>
               <Text type="secondary">Meeting</Text>
               <div>
-                <a href={event.meeting_link} target="_blank" rel="noreferrer">
+                <a href={safeExternalHref(event.meeting_link)} target="_blank" rel="noreferrer">
                   {event.meeting_link}
                 </a>
               </div>

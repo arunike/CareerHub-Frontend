@@ -90,6 +90,8 @@ const IncomePage = () => {
     bonusProration,
     nextYearBonus,
     performanceYear,
+    performanceYearOptions,
+    bonusProrationDetail,
     periods,
   } = useIncomeYear();
 
@@ -247,6 +249,8 @@ const IncomePage = () => {
           prorated={settings.bonusProrated}
           prorationFactor={bonusProration}
           performanceYear={performanceYear}
+          performanceYearOptions={performanceYearOptions}
+          prorationDays={bonusProrationDetail}
           extras={settings.bonusExtras}
           payouts={settings.bonusPayouts}
           bonusEvents={bonusEvents}
@@ -276,10 +280,16 @@ const IncomePage = () => {
           pretaxPercent={settings.elections.pretax401kPercent}
           rothPercent={settings.elections.roth401kPercent}
           elective401kLimit={ledger.elective401kLimit}
-          excludeAllowances={settings.elections.excludeAllowancesFromDeferralBase}
-          onExcludeAllowancesChange={(value) =>
-            updateElections({ excludeAllowancesFromDeferralBase: value })
-          }
+          deferralBase={settings.elections.deferralBase}
+          excludableAllowances={effectiveRows.reduce(
+            (total, row) => total + row.taxableAllowance,
+            0
+          )}
+          excludableSupplemental={effectiveRows.reduce(
+            (total, row) => total + row.supplementalGross,
+            0
+          )}
+          onDeferralBaseChange={(value) => updateElections({ deferralBase: value })}
           onDeferralChange={(patch) => {
             updateElections(patch);
             if (patch.pretax401kPercent !== undefined) {

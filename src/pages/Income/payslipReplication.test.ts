@@ -21,7 +21,7 @@ const run = (deferralPercent: number, excludeAllowances: boolean) =>
       ...NO_ELECTIONS,
       pretax401kPercent: deferralPercent,
       taxableAllowancePerPeriod: ALLOWANCE,
-      excludeAllowancesFromDeferralBase: excludeAllowances,
+      deferralBase: excludeAllowances ? 'NO_ALLOWANCES' : 'ALL',
     },
     employer: {
       match401kPercent: 0,
@@ -79,7 +79,7 @@ describe('matching a payslip', () => {
       periods: periods.slice(0, 1),
       annualSalary: ANNUAL_SALARY,
       incomeEvents: [],
-      elections: { ...NO_ELECTIONS, pretax401kPercent: 4, excludeAllowancesFromDeferralBase: true },
+      elections: { ...NO_ELECTIONS, pretax401kPercent: 4, deferralBase: 'NO_ALLOWANCES' },
       employer: {
         match401kPercent: 0,
         match401kLimitPercent: 0,

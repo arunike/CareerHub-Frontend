@@ -41,6 +41,8 @@ const TAB_FIELDS: Partial<Record<SettingsTab, Array<keyof UserSettings>>> = {
     'default_holiday_color',
     'federal_holiday_color',
     'ignored_federal_holidays',
+    'hidden_income_roles',
+    'hidden_income_years',
   ],
   navigation: ['hidden_nav_items', 'mobile_toolbar_items', 'nav_item_order'],
 };

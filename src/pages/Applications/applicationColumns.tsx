@@ -6,6 +6,7 @@ import type { EmploymentType } from '../../types';
 import type { ApplicationOrdering, ApplicationStage } from './applicationTypes';
 import type { CareerApplication } from '../../types/application';
 import { dayjsDateOnlyLocal, formatDateOnly } from '../../utils/dateOnly';
+import { safeExternalHref } from '../../utils/safeUrl';
 
 const { Text, Link } = Typography;
 
@@ -65,7 +66,12 @@ export const buildApplicationColumns = ({
           <EmploymentTypeBadge type={record.employment_type} employmentTypes={empTypes} />
         </Space>
         {record.job_link && (
-          <Link href={record.job_link} target="_blank" style={{ fontSize: 12 }}>
+          <Link
+            href={safeExternalHref(record.job_link)}
+            target="_blank"
+            rel="noreferrer"
+            style={{ fontSize: 12 }}
+          >
             <GlobalOutlined /> Link
           </Link>
         )}

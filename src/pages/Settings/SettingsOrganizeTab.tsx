@@ -7,6 +7,7 @@ import EventCategoriesSection from './EventCategoriesSection';
 import EmploymentTypesSection from './EmploymentTypesSection';
 import CategoriesSection from './CategoriesSection';
 import ApplicationStagesSection from './ApplicationStagesSection';
+import IncomeVisibilitySection from './IncomeVisibilitySection';
 import type { useEventCategoryEditor } from './useEventCategoryEditor';
 import type { useEmploymentTypeEditor } from './useEmploymentTypeEditor';
 import type { useHolidayTabEditor } from './useHolidayTabEditor';
@@ -73,6 +74,17 @@ const SettingsOrganizeTab = ({
       isLocked={isLocked}
       settings={settings}
       setSettings={setSettings}
+    />
+
+    <IncomeVisibilitySection
+      hiddenRoles={settings?.hidden_income_roles ?? []}
+      hiddenYears={settings?.hidden_income_years ?? []}
+      onHiddenRolesChange={(hidden_income_roles) =>
+        setSettings((prev) => (prev ? { ...prev, hidden_income_roles } : prev))
+      }
+      onHiddenYearsChange={(hidden_income_years) =>
+        setSettings((prev) => (prev ? { ...prev, hidden_income_years } : prev))
+      }
     />
   </>
 );

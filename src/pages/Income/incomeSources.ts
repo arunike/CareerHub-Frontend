@@ -156,6 +156,23 @@ export const activeInYear = (source: IncomeSource, taxYear: number) => {
   return true;
 };
 
+// Hiding is a display choice, so it never removes the last option: a picker with nothing in it
+// reads as a broken page, and the setting that emptied it lives on another screen.
+export const applyIncomeVisibility = <T>(items: T[], hidden: (item: T) => boolean): T[] => {
+  const visible = items.filter((item) => !hidden(item));
+  return visible.length > 0 ? visible : items;
+};
+
+export const visibleSources = (sources: IncomeSource[], hiddenKeys: string[] = []) => {
+  const hidden = new Set(hiddenKeys);
+  return applyIncomeVisibility(sources, (source) => hidden.has(source.key));
+};
+
+export const visibleYears = (years: number[], hiddenYears: number[] = []) => {
+  const hidden = new Set(hiddenYears);
+  return applyIncomeVisibility(years, (year) => hidden.has(year));
+};
+
 // Every year any role covers, so a year shows only the roles held then.
 export const yearsForSources = (sources: IncomeSource[], latestYear: number): number[] => {
   const years = new Set<number>([latestYear]);

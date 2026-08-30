@@ -55,29 +55,73 @@ export const extrasTotal = (extras: BonusExtra[]) =>
 
 const daysInYear = (year: number) => (new Date(year, 1, 29).getMonth() === 1 ? 366 : 365);
 
-// Prorated against the performance year, not the year the money arrives.
-export const resolvePerformanceYear = (
-  performanceYear: number | null | undefined,
-  taxYear: number
-) => performanceYear ?? taxYear - 1;
-
-// Share of the performance year the role covers: a September start earns about a third.
-export const prorationFactor = (
+// Years the role actually covers, newest last. A bonus cannot be earned in a year the role did
+// not exist, so offering one is how the target silently prorated to nothing.
+export const performanceYearOptions = (
   taxYear: number,
   startDate?: string | null,
   endDate?: string | null
+): number[] => {
+  const start = parseIsoDate(startDate);
+  const end = parseIsoDate(endDate);
+  // Two years back is as far as a bonus is ever quoted; never past the year being modelled.
+  const first = Math.max(start ? start.getFullYear() : taxYear - 2, taxYear - 2);
+  const last = Math.min(end ? end.getFullYear() : taxYear, taxYear);
+  if (last < first) return [taxYear];
+  return Array.from({ length: last - first + 1 }, (_, index) => first + index);
+};
+
+// Prorated against the performance year, not the year the money arrives.
+export const resolvePerformanceYear = (
+  performanceYear: number | null | undefined,
+  taxYear: number,
+  options?: number[]
 ) => {
+  const fallback = taxYear - 1;
+  if (!options || options.length === 0) return performanceYear ?? fallback;
+  if (
+    performanceYear !== null &&
+    performanceYear !== undefined &&
+    options.includes(performanceYear)
+  ) {
+    return performanceYear;
+  }
+  // The year before is the usual case; when the role did not exist then, take the closest year
+  // it did rather than leaving a target that prorates to zero.
+  return options.includes(fallback) ? fallback : (options.at(-1) as number);
+};
+
+export interface ProrationDetail {
+  factor: number;
+  daysHeld: number;
+  daysInYear: number;
+}
+
+// Share of the performance year the role covers: a September start earns about a third.
+export const prorationDetail = (
+  taxYear: number,
+  startDate?: string | null,
+  endDate?: string | null
+): ProrationDetail => {
   const yearStart = new Date(taxYear, 0, 1);
   const yearEnd = new Date(taxYear, 11, 31);
+  const total = daysInYear(taxYear);
 
   const start = parseIsoDate(startDate);
   const end = parseIsoDate(endDate);
   const from = start && start > yearStart ? start : yearStart;
   const to = end && end < yearEnd ? end : yearEnd;
 
-  if (to < from) return 0;
-  return Math.min(1, inclusiveDayCount(from, to) / daysInYear(taxYear));
+  if (to < from) return { factor: 0, daysHeld: 0, daysInYear: total };
+  const daysHeld = Math.min(total, inclusiveDayCount(from, to));
+  return { factor: Math.min(1, daysHeld / total), daysHeld, daysInYear: total };
 };
+
+export const prorationFactor = (
+  taxYear: number,
+  startDate?: string | null,
+  endDate?: string | null
+) => prorationDetail(taxYear, startDate, endDate).factor;
 
 // Extras are not prorated: a spot award is not earned over the year.
 export const totalBonus = (

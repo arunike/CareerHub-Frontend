@@ -202,6 +202,8 @@ export interface IncomeYearPayload {
   dependent_premium_override?: number | string | null;
   custom_deductions?: Array<Record<string, unknown>>;
   period_deductions?: Array<Record<string, unknown>>;
+  deferral_base?: string;
+  // Read only, so a browser holding the old flag still lands on the right base.
   exclude_allowances_from_deferral_base?: boolean;
   match_tiers?: Array<Record<string, unknown>>;
   match_non_elective_percent?: number | string;

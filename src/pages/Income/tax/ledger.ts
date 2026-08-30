@@ -20,6 +20,32 @@ export interface IncomeEvent {
   label?: string;
 }
 
+// Which pay the plan defers and matches on. Most plans use all of it; some carve out stipends,
+// and many carve out the bonus, which is the case the old exclude-allowances flag could not say.
+export type DeferralBase = 'ALL' | 'NO_ALLOWANCES' | 'SALARY_ONLY';
+
+export const DEFERRAL_BASE_LABELS: Record<DeferralBase, string> = {
+  ALL: 'All pay',
+  NO_ALLOWANCES: 'Salary and bonus',
+  SALARY_ONLY: 'Salary only',
+};
+
+export const DEFERRAL_BASE_HINTS: Record<DeferralBase, string> = {
+  ALL: 'Every taxable dollar: salary, stipends and allowances, and any bonus or vest.',
+  NO_ALLOWANCES: 'Leaves out stipends and allowances. A bonus still counts.',
+  SALARY_ONLY: 'Salary only. Leaves out stipends, allowances, and any bonus or vest.',
+};
+
+// What comes off the gross to reach the base, per paycheck.
+export const excludedFromDeferral = (
+  base: DeferralBase,
+  parts: { taxableAllowance: number; supplementalGross: number }
+) => {
+  if (base === 'NO_ALLOWANCES') return parts.taxableAllowance;
+  if (base === 'SALARY_ONLY') return parts.taxableAllowance + parts.supplementalGross;
+  return 0;
+};
+
 export interface Elections {
   pretax401kPercent: number;
   roth401kPercent: number;
@@ -37,7 +63,7 @@ export interface Elections {
   hsaFamilyCoverage: boolean;
   age50Plus: boolean;
   // Off means the deferral and match compute on the whole gross, not base pay alone.
-  excludeAllowancesFromDeferralBase: boolean;
+  deferralBase: DeferralBase;
 }
 
 export const NO_ELECTIONS: Elections = {
@@ -52,7 +78,7 @@ export const NO_ELECTIONS: Elections = {
   postTaxPerPeriod: 0,
   hsaFamilyCoverage: false,
   age50Plus: false,
-  excludeAllowancesFromDeferralBase: false,
+  deferralBase: 'ALL',
 };
 
 export interface EmployerContributions {
@@ -265,9 +291,14 @@ export const buildLedger = (input: LedgerInput): Ledger => {
     const rothPercent = override?.roth401kPercent ?? elections.roth401kPercent;
     const deferralPercent = pretaxPercent + rothPercent;
 
-    const deferralBase = elections.excludeAllowancesFromDeferralBase
-      ? Math.max(0, gross - taxableAllowance)
-      : gross;
+    const deferralBase = Math.max(
+      0,
+      gross -
+        excludedFromDeferral(elections.deferralBase, {
+          taxableAllowance,
+          supplementalGross,
+        })
+    );
 
     // The 402(g) limit is shared between traditional and Roth deferrals.
     const room401k = Math.max(0, elective401kLimit - ytdElective401k);

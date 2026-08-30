@@ -14,6 +14,8 @@ import {
   totalBonus,
   type BonusPayout,
   BONUS_EXTRA_PRESETS,
+  performanceYearOptions,
+  prorationDetail,
 } from './bonusSchedule';
 import { buildPayPeriods } from './paySchedule';
 
@@ -348,5 +350,73 @@ describe('BONUS_EXTRA_PRESETS', () => {
 
   it('carries labels only, since every award is taxed as supplemental wages', () => {
     for (const preset of BONUS_EXTRA_PRESETS) expect(typeof preset).toBe('string');
+  });
+});
+
+describe('performanceYearOptions', () => {
+  it('offers only the years a role that started mid-2025 covers', () => {
+    expect(performanceYearOptions(2026, '2025-06-01', null)).toEqual([2025, 2026]);
+  });
+
+  it('offers only this year for a role that started this year', () => {
+    expect(performanceYearOptions(2026, '2026-02-01', null)).toEqual([2026]);
+  });
+
+  it('stops at the year a role ended', () => {
+    expect(performanceYearOptions(2026, '2024-01-01', '2025-08-31')).toEqual([2024, 2025]);
+  });
+
+  it('looks no further back than two years for a long-held role', () => {
+    expect(performanceYearOptions(2026, '2015-01-01', null)).toEqual([2024, 2025, 2026]);
+  });
+
+  it('falls back to the modelled year when the role sits entirely after it', () => {
+    expect(performanceYearOptions(2026, '2030-01-01', null)).toEqual([2026]);
+  });
+});
+
+describe('resolvePerformanceYear against the years a role covers', () => {
+  it('keeps the year before, which is where a bonus is usually earned', () => {
+    expect(resolvePerformanceYear(null, 2026, [2025, 2026])).toBe(2025);
+  });
+
+  it('moves to a year the role existed rather than prorating the target to nothing', () => {
+    // A role that began in 2026 earned nothing in 2025, and the old default said 2025.
+    expect(resolvePerformanceYear(null, 2026, [2026])).toBe(2026);
+  });
+
+  it('drops a stored year the role no longer covers', () => {
+    expect(resolvePerformanceYear(2024, 2026, [2025, 2026])).toBe(2025);
+  });
+
+  it('honours a stored year the role does cover', () => {
+    expect(resolvePerformanceYear(2026, 2026, [2025, 2026])).toBe(2026);
+  });
+});
+
+describe('prorationDetail', () => {
+  it('reports the days behind the factor, so the copy can show its working', () => {
+    const detail = prorationDetail(2025, '2025-07-01', null);
+    expect(detail.daysInYear).toBe(365);
+    expect(detail.daysHeld).toBe(184);
+    expect(detail.factor).toBeCloseTo(184 / 365, 10);
+  });
+
+  it('counts a leap year as 366 days', () => {
+    expect(prorationDetail(2028, null, null).daysInYear).toBe(366);
+  });
+
+  it('is a full year for a role held throughout', () => {
+    const detail = prorationDetail(2025, '2020-01-01', null);
+    expect(detail.factor).toBe(1);
+    expect(detail.daysHeld).toBe(365);
+  });
+
+  it('is nothing, with no days, when the role was not held that year', () => {
+    expect(prorationDetail(2025, '2026-01-01', null)).toEqual({
+      factor: 0,
+      daysHeld: 0,
+      daysInYear: 365,
+    });
   });
 });

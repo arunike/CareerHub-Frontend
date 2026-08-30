@@ -33,6 +33,8 @@ interface Props {
   prorated: boolean;
   prorationFactor: number;
   performanceYear: number;
+  performanceYearOptions: number[];
+  prorationDays: { daysHeld: number; daysInYear: number };
   extras: BonusExtra[];
   payouts: BonusPayout[];
   bonusEvents: IncomeEvent[];
@@ -96,6 +98,8 @@ export const BonusForm = ({
   prorated,
   prorationFactor,
   performanceYear,
+  performanceYearOptions,
+  prorationDays,
   extras,
   payouts,
   bonusEvents,
@@ -219,7 +223,9 @@ export const BonusForm = ({
                 size="small"
                 className="w-[104px]"
                 value={performanceYear}
-                options={[taxYear - 2, taxYear - 1, taxYear].map((year) => ({
+                // Only years the role was actually held: a bonus cannot be earned in a year
+                // the job did not exist, and offering one silently prorated the target to zero.
+                options={performanceYearOptions.map((year) => ({
                   value: year,
                   label: String(year),
                 }))}
@@ -246,17 +252,19 @@ export const BonusForm = ({
               ) : isPartYear ? (
                 prorated ? (
                   <>
-                    This role covered{' '}
+                    Held{' '}
                     <span className="font-medium text-slate-700">
-                      {(prorationFactor * 100).toFixed(0)}%
+                      {prorationDays.daysHeld} of {prorationDays.daysInYear} days
                     </span>{' '}
-                    of {performanceYear}, so the target is scaled to{' '}
+                    in {performanceYear}, so {money(targetBonus)} ×{' '}
+                    {(prorationFactor * 100).toFixed(1)}% ={' '}
                     <span className="font-medium text-slate-700">{money(proratedTarget)}</span>.
                   </>
                 ) : (
                   <>
-                    Off, so the full target counts even though the role covered{' '}
-                    {(prorationFactor * 100).toFixed(0)}% of {performanceYear}.
+                    Off, so the full {money(targetBonus)} counts even though the role was held only{' '}
+                    {prorationDays.daysHeld} of {prorationDays.daysInYear} days in {performanceYear}
+                    .
                   </>
                 )
               ) : (

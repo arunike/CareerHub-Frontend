@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { RetirementSummary } from './retirement';
-import { Button, Switch } from 'antd';
+import { Button, Select } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   defaultTier,
@@ -17,6 +17,9 @@ import dayjs from 'dayjs';
 import { formatPayDate } from './paySchedule';
 import { percent } from './format';
 import { useMoney } from './amountPrivacy';
+import { DEFERRAL_BASE_HINTS, DEFERRAL_BASE_LABELS, type DeferralBase } from './tax/ledger';
+
+const DEFERRAL_BASE_ORDER: DeferralBase[] = ['ALL', 'NO_ALLOWANCES', 'SALARY_ONLY'];
 
 interface Props {
   summary: RetirementSummary;
@@ -29,8 +32,11 @@ interface Props {
   rothPercent: number;
   elective401kLimit: number;
   onDeferralChange: (patch: { pretax401kPercent?: number; roth401kPercent?: number }) => void;
-  excludeAllowances: boolean;
-  onExcludeAllowancesChange: (value: boolean) => void;
+  deferralBase: DeferralBase;
+  // Per-year totals, so the copy can say what the choice is actually worth.
+  excludableAllowances: number;
+  excludableSupplemental: number;
+  onDeferralBaseChange: (value: DeferralBase) => void;
   onStartingBalanceChange: (value: number | null) => void;
   onCurrentValueChange: (value: number | null) => void;
   onMatchTiersChange: (tiers: MatchTier[]) => void;
@@ -109,8 +115,10 @@ export const RetirementForm = ({
   rothPercent,
   elective401kLimit,
   onDeferralChange,
-  excludeAllowances,
-  onExcludeAllowancesChange,
+  deferralBase,
+  excludableAllowances,
+  excludableSupplemental,
+  onDeferralBaseChange,
   onStartingBalanceChange,
   onCurrentValueChange,
   onMatchTiersChange,
@@ -118,6 +126,14 @@ export const RetirementForm = ({
   onAnnualCapChange,
 }: Props) => {
   const { money, moneyCents } = useMoney();
+  const excludableTotal = excludableAllowances + excludableSupplemental;
+  const excludedTotal =
+    deferralBase === 'NO_ALLOWANCES'
+      ? excludableAllowances
+      : deferralBase === 'SALARY_ONLY'
+        ? excludableTotal
+        : 0;
+
   return (
     <div>
       <p className="text-xs leading-relaxed text-slate-500">
@@ -147,17 +163,55 @@ export const RetirementForm = ({
           </Field>
         </div>
 
-        <label className="mt-3 flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2.5">
-          <span className="text-xs leading-relaxed text-slate-600">
-            Compute on base pay only
-            <span className="mt-0.5 block text-[11px] text-slate-400">
-              Many plans exclude stipends and allowances from the pay they defer and match on. Check
-              your payslip: divide the contribution by your rate and see whether it lands on your
-              gross or lower.
-            </span>
-          </span>
-          <Switch size="small" checked={excludeAllowances} onChange={onExcludeAllowancesChange} />
-        </label>
+        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5">
+          <Field
+            label="Deferred and matched on"
+            hint="Check your payslip: divide the contribution by your rate and see whether it lands on your gross or on something lower."
+          >
+            <Select
+              size="small"
+              style={{ width: '100%' }}
+              value={deferralBase}
+              onChange={onDeferralBaseChange}
+              options={DEFERRAL_BASE_ORDER.map((base) => ({
+                value: base,
+                label: DEFERRAL_BASE_LABELS[base],
+              }))}
+              optionRender={(option) => (
+                <span className="flex flex-col">
+                  <span>{DEFERRAL_BASE_LABELS[option.data.value as DeferralBase]}</span>
+                  <span className="text-[11px] leading-snug text-slate-400">
+                    {DEFERRAL_BASE_HINTS[option.data.value as DeferralBase]}
+                  </span>
+                </span>
+              )}
+            />
+          </Field>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+            {excludableTotal > 0.005 ? (
+              <>
+                {DEFERRAL_BASE_HINTS[deferralBase]}{' '}
+                {deferralBase === 'ALL' ? (
+                  <>
+                    <span className="font-medium text-slate-600">{money(excludableTotal)}</span> of
+                    this year&rsquo;s pay could be carved out.
+                  </>
+                ) : (
+                  <>
+                    Keeps <span className="font-medium text-slate-600">{money(excludedTotal)}</span>{' '}
+                    out of the base this year.
+                  </>
+                )}
+              </>
+            ) : (
+              // Nothing to carve out, so the choice cannot change a figure — say so rather than
+              // leaving a control that looks broken.
+              <>
+                No stipends, allowances or bonus this year, so every option defers on the same pay.
+              </>
+            )}
+          </p>
+        </div>
       </div>
 
       <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-3">

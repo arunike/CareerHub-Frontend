@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { activeInYear, buildIncomeSources, yearsForSource, yearsForSources } from './incomeSources';
+import {
+  activeInYear,
+  buildIncomeSources,
+  yearsForSource,
+  yearsForSources,
+  visibleSources,
+  visibleYears,
+} from './incomeSources';
 
 const offer = (overrides: Record<string, any> = {}) => ({
   id: 1,
@@ -203,5 +210,44 @@ describe('yearsForSources', () => {
       ]
     );
     expect(yearsForSources(sources, 2026)).toEqual([2026, 2025]);
+  });
+});
+
+describe('hiding roles and years', () => {
+  const roleA = { key: 'experience-1', company: 'Google' } as never;
+  const roleB = { key: 'experience-2', company: 'Netflix' } as never;
+
+  it('leaves out a hidden role', () => {
+    expect(visibleSources([roleA, roleB], ['experience-2'])).toEqual([roleA]);
+  });
+
+  it('hides nothing when the list is empty', () => {
+    expect(visibleSources([roleA, roleB], [])).toEqual([roleA, roleB]);
+    expect(visibleSources([roleA, roleB])).toEqual([roleA, roleB]);
+  });
+
+  it('ignores a key for a role that no longer exists', () => {
+    expect(visibleSources([roleA], ['experience-9'])).toEqual([roleA]);
+  });
+
+  // A picker with nothing in it reads as a broken page, and the switch that emptied it is on
+  // another screen entirely.
+  it('keeps every role rather than showing none', () => {
+    expect(visibleSources([roleA, roleB], ['experience-1', 'experience-2'])).toEqual([
+      roleA,
+      roleB,
+    ]);
+  });
+
+  it('leaves out hidden years', () => {
+    expect(visibleYears([2026, 2025, 2024], [2024])).toEqual([2026, 2025]);
+  });
+
+  it('keeps every year rather than showing none', () => {
+    expect(visibleYears([2026, 2025], [2026, 2025])).toEqual([2026, 2025]);
+  });
+
+  it('keeps the order it was given', () => {
+    expect(visibleYears([2026, 2025, 2024, 2023], [2025])).toEqual([2026, 2024, 2023]);
   });
 });

@@ -295,3 +295,73 @@ describe('buildLedger', () => {
     }
   });
 });
+
+describe('the deferral base', () => {
+  const BONUS = 12000;
+  const ALLOWANCE = 200;
+  const rowsFor = (deferralBase: Elections['deferralBase']) =>
+    buildLedger(
+      input({
+        incomeEvents: [{ id: 'b1', kind: 'bonus', periodIndex: 1, amount: BONUS, label: 'Bonus' }],
+        elections: {
+          ...NO_ELECTIONS,
+          pretax401kPercent: 10,
+          taxableAllowancePerPeriod: ALLOWANCE,
+          deferralBase,
+        },
+      })
+    ).rows;
+
+  it('defers on every taxable dollar by default', () => {
+    const row = rowsFor('ALL')[0];
+    expect(row.pretax401k).toBeCloseTo(row.gross * 0.1, 6);
+  });
+
+  it('leaves allowances out but keeps the bonus in', () => {
+    const row = rowsFor('NO_ALLOWANCES')[0];
+    expect(row.pretax401k).toBeCloseTo((row.gross - ALLOWANCE) * 0.1, 6);
+    // The bonus is still deferred on, which is what separates this from salary only.
+    expect(row.pretax401k).toBeGreaterThan(BONUS * 0.1);
+  });
+
+  it('leaves the bonus out too on salary only, which the old flag could not express', () => {
+    const row = rowsFor('SALARY_ONLY')[0];
+    expect(row.pretax401k).toBeCloseTo((row.gross - ALLOWANCE - BONUS) * 0.1, 6);
+  });
+
+  it('orders the three bases from widest to narrowest', () => {
+    const all = rowsFor('ALL')[0].pretax401k;
+    const noAllowances = rowsFor('NO_ALLOWANCES')[0].pretax401k;
+    const salaryOnly = rowsFor('SALARY_ONLY')[0].pretax401k;
+    expect(all).toBeGreaterThan(noAllowances);
+    expect(noAllowances).toBeGreaterThan(salaryOnly);
+  });
+
+  it('matches on the same base it defers on', () => {
+    const rows = buildLedger(
+      input({
+        incomeEvents: [{ id: 'b1', kind: 'bonus', periodIndex: 1, amount: BONUS, label: 'Bonus' }],
+        elections: {
+          ...NO_ELECTIONS,
+          pretax401kPercent: 10,
+          taxableAllowancePerPeriod: ALLOWANCE,
+          deferralBase: 'SALARY_ONLY',
+        },
+        employer: { match401kPercent: 100, match401kLimitPercent: 5, hsaAnnual: 0 },
+      })
+    ).rows;
+    const base = rows[0].gross - ALLOWANCE - BONUS;
+    expect(rows[0].employerMatch401k).toBeCloseTo(base * 0.05, 6);
+  });
+
+  it('never drops below zero when the carve-out exceeds the gross', () => {
+    const rows = buildLedger(
+      input({
+        annualSalary: 0,
+        incomeEvents: [{ id: 'b1', kind: 'bonus', periodIndex: 1, amount: 500, label: 'Bonus' }],
+        elections: { ...NO_ELECTIONS, pretax401kPercent: 10, deferralBase: 'SALARY_ONLY' },
+      })
+    ).rows;
+    expect(rows[0].pretax401k).toBe(0);
+  });
+});

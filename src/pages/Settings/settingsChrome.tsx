@@ -10,6 +10,7 @@ import {
   SafetyCertificateOutlined,
   SettingOutlined,
   TagsOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 import { SETTINGS_TAB_KEYS, TAB_LABELS, type SettingsTab } from './settingsIndex';
 
@@ -57,6 +58,7 @@ export const SECTION_ICONS = {
   employment: <AppstoreOutlined />,
   holiday: <CalendarOutlined />,
   stages: <RocketOutlined />,
+  income: <DollarOutlined />,
 };
 
 export const SettingsSection = ({
