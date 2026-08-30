@@ -1467,6 +1467,14 @@ summary,
   border-color: #cbd5e1;
 }
 
+/* react-grid-layout ships a bright red drop target; this is the same card in outline. */
+.react-grid-item.react-grid-placeholder {
+  background: rgba(59, 130, 246, 0.07);
+  border: 1px dashed rgba(148, 163, 184, 0.85);
+  border-radius: 14px;
+  opacity: 1;
+}
+
 .enterprise-shell {
   background: #ffffff;
   border-right: 1px solid rgba(203, 213, 225, 0.7);
