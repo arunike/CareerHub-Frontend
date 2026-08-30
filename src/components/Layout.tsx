@@ -30,8 +30,24 @@ import { applyNavOrder, navLabel } from '../constants/navigationItems';
 import MobileBottomNav from './MobileBottomNav';
 import SidebarHeader from './SidebarHeader';
 import SidebarFooter from './SidebarFooter';
+import Modal from './MobileModal';
+import { UnsavedChangesProvider, useUnsavedChangesApi } from '../hooks/useUnsavedChanges';
 
 const { Sider, Content } = AntLayout;
+
+// Asks before abandoning typed-but-unsaved work; resolves false to stay on the page.
+const confirmLeaveDialog = (label: string) =>
+  new Promise<boolean>((resolve) => {
+    Modal.confirm({
+      title: 'Leave without saving?',
+      content: `Your unsaved ${label} will be lost.`,
+      okText: 'Leave',
+      okButtonProps: { danger: true },
+      cancelText: 'Stay on this page',
+      onOk: () => resolve(true),
+      onCancel: () => resolve(false),
+    });
+  });
 const { useBreakpoint } = Grid;
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'careerhub.sidebar.collapsed';
 const NotificationBell = lazy(() => import('./NotificationBell'));
@@ -40,7 +56,8 @@ const NotificationBellFallback = () => (
   <div className="h-11 w-11 rounded-xl bg-slate-100" aria-hidden="true" />
 );
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+const LayoutInner = ({ children }: { children: React.ReactNode }) => {
+  const unsaved = useUnsavedChangesApi();
   const screens = useBreakpoint();
   const [collapsed, setCollapsed] = useState(true);
   const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
@@ -247,10 +264,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       })
     : visibleMenuItems;
 
-  const handleMenuClick = ({ key }: { key: string }) => {
-    if (key.startsWith('/')) {
-      navigate(key);
-    }
+  const handleMenuClick = async ({ key }: { key: string }) => {
+    if (!key.startsWith('/')) return;
+    if (await unsaved.confirmLeave()) navigate(key);
   };
 
   const toggleDesktopSidebar = () => {
@@ -293,12 +309,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     setQuickActionsOpen(true);
   };
 
-  const navigateFromQuickActions = (destination: string) => {
+  const navigateFromQuickActions = async (destination: string) => {
     const [pathname, search = ''] = destination.split('?');
     const destinationItem = getMobileNavigationItemForLocation(
       pathname,
       search ? `?${search}` : ''
     );
+    if (!(await unsaved.confirmLeave())) return;
     if (destinationItem) recordMobileNavigationUse(destinationItem.key);
     setQuickActionsOpen(false);
     setQuickActionsSourceKey(undefined);
@@ -475,5 +492,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     </AntLayout>
   );
 };
+
+// The provider sits above the shell so the nav can ask the page before leaving it.
+const Layout = ({ children }: { children: React.ReactNode }) => (
+  <UnsavedChangesProvider confirm={confirmLeaveDialog}>
+    <LayoutInner>{children}</LayoutInner>
+  </UnsavedChangesProvider>
+);
 
 export default Layout;

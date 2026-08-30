@@ -303,8 +303,8 @@ describe('allowance presets', () => {
   });
 
   it('carries the cadence over with the label, not just the text', () => {
-    expect(applyPreset('Referral bonus')).toEqual({
-      label: 'Referral bonus',
+    expect(applyPreset('Home office setup')).toEqual({
+      label: 'Home office setup',
       unit: 'ONCE',
       timesPer: 1,
     });
@@ -316,7 +316,13 @@ describe('allowance presets', () => {
   });
 
   it('resets the count, so a preset cannot inherit a stale multiplier', () => {
-    expect(applyPreset('Referral bonus').timesPer).toBe(1);
+    expect(applyPreset('Home office setup').timesPer).toBe(1);
+  });
+
+  it('offers no one-off award here: those belong to the bonus tab', () => {
+    const labels = ALLOWANCE_PRESETS.map((preset) => preset.label);
+    expect(labels).not.toContain('Referral bonus');
+    expect(labels).not.toContain('Spot bonus');
   });
 
   it('leaves a typed label alone and does not invent a cadence for it', () => {

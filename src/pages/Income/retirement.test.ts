@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { maxMatchFor, summarizeRetirement } from './retirement';
 import { buildLedger, NO_ELECTIONS, type EmployerContributions } from './tax/ledger';
+import { buildPayPeriods } from './paySchedule';
 import { FEDERAL_2026, LIMITS_2026 } from './tax/data/federal-2026';
 import { flatStateTable } from './tax/data/states/flat';
 import { EMPTY_W4 } from './tax/withholding';
@@ -163,5 +164,89 @@ describe('progress toward the deferral limit', () => {
     expect(summary.electiveLimit).toBe(0);
     expect(summary.percentOfLimit).toBe(0);
     expect(summary.limitReachedOnPeriod).toBeNull();
+  });
+});
+
+describe('gains measured to date', () => {
+  // Dated periods, so a mid-year "today" can split landed pay from projected pay.
+  const dated = buildLedger({
+    filingStatus: 'SINGLE',
+    periodsPerYear: 24,
+    annualSalary: 120000,
+    incomeEvents: [],
+    elections: { ...NO_ELECTIONS, pretax401kPercent: 10 },
+    employer,
+    w4: EMPTY_W4,
+    federal: FEDERAL_2026,
+    state: flatStateTable('WA', 0, 2026),
+    limits: LIMITS_2026,
+    periods: buildPayPeriods(2026, 24, { firstPayDate: '2026-01-15' }),
+  }).rows;
+  const halfway = dated[11].payDate as string;
+
+  it('counts every paycheck once the year is behind us', () => {
+    const summary = summarizeRetirement(dated, employer, 100000, 130000, 0, '2027-01-01');
+    expect(summary.paidPeriodsToDate).toBe(24);
+    expect(summary.contributedToDate).toBeCloseTo(summary.totalContributed, 6);
+  });
+
+  it('counts only the paychecks that have landed', () => {
+    const summary = summarizeRetirement(dated, employer, 100000, 130000, 0, halfway);
+    expect(summary.paidPeriodsToDate).toBe(12);
+    expect(summary.contributedToDate).toBeCloseTo(summary.totalContributed / 2, 6);
+  });
+
+  it('measures the gain against what landed, not against the year ahead', () => {
+    const toDate = summarizeRetirement(dated, employer, 100000, 130000, 0, halfway);
+    const wholeYear = summarizeRetirement(dated, employer, 100000, 130000, 0, '2027-01-01');
+    // Subtracting the unpaid half from a balance that cannot contain it invented a loss.
+    expect(toDate.gains!).toBeGreaterThan(wholeYear.gains!);
+    expect(toDate.gains!).toBeCloseTo(130000 - 100000 - toDate.contributedToDate, 6);
+  });
+
+  it('treats a year that has not started as nothing paid in', () => {
+    const summary = summarizeRetirement(dated, employer, 100000, 100000, 0, '2025-01-01');
+    expect(summary.paidPeriodsToDate).toBe(0);
+    expect(summary.contributedToDate).toBe(0);
+    expect(summary.gains).toBe(0);
+  });
+
+  it('still reports the whole year separately, which is what the limit bar needs', () => {
+    const summary = summarizeRetirement(dated, employer, 100000, 130000, 0, halfway);
+    expect(summary.totalContributed).toBeGreaterThan(summary.contributedToDate);
+  });
+
+  it('splits each line to date, not just the total', () => {
+    const summary = summarizeRetirement(dated, employer, null, null, 0, halfway);
+    expect(summary.employeePretaxToDate).toBeCloseTo(summary.employeePretax / 2, 6);
+    expect(summary.employerMatchToDate).toBeCloseTo(summary.employerMatch / 2, 6);
+    expect(
+      summary.employeePretaxToDate + summary.employeeRothToDate + summary.employerMatchToDate
+    ).toBeCloseTo(summary.contributedToDate, 6);
+  });
+
+  it('names the last payday it covers, so a subtotal says where it stops', () => {
+    const summary = summarizeRetirement(dated, employer, null, null, 0, halfway);
+    expect(summary.paidThroughDate).toBe(halfway);
+    expect(summary.hasUnpaidPeriods).toBe(true);
+    expect(summary.periodCount).toBe(24);
+  });
+
+  it('stops qualifying itself once every paycheck has been paid', () => {
+    const summary = summarizeRetirement(dated, employer, null, null, 0, '2027-01-01');
+    expect(summary.hasUnpaidPeriods).toBe(false);
+    expect(summary.paidThroughDate).toBe(dated.at(-1)!.payDate);
+  });
+
+  it('has no paid-through date before the first payday', () => {
+    const summary = summarizeRetirement(dated, employer, null, null, 0, '2025-01-01');
+    expect(summary.paidThroughDate).toBeNull();
+    expect(summary.hasUnpaidPeriods).toBe(true);
+  });
+
+  it('counts an undated row rather than dropping its contributions', () => {
+    const { rows } = ledgerFor(10);
+    const summary = summarizeRetirement(rows, employer, 100000, 130000, 0, '2020-01-01');
+    expect(summary.contributedToDate).toBeCloseTo(summary.totalContributed, 6);
   });
 });

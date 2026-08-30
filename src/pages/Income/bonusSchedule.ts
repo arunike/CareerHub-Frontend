@@ -18,6 +18,21 @@ export interface BonusExtra {
   amount: number;
 }
 
+// Common one-off awards, offered as a list so the label is not retyped every time. They are all
+// supplemental wages taxed the same way, so a preset carries nothing but its wording.
+export const BONUS_EXTRA_PRESETS = [
+  'Referral bonus',
+  'Spot bonus',
+  'Sign-on bonus',
+  'Retention bonus',
+  'Exceeded expectations',
+  'Project milestone',
+  'Patent or publication award',
+  'On-call or overtime award',
+  'Holiday bonus',
+  'Relocation bonus',
+];
+
 // Percent is the source of truth; it survives a change to the total.
 export const amountFromPercent = (percent: number, bonusTotal: number) =>
   bonusTotal * (Math.max(0, percent) / 100);

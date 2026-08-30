@@ -1,6 +1,7 @@
 import { buildIncomeModel, type IncomeModelInput } from './incomeModel';
 import type { IncomeSettings } from './incomeSettings';
 import { activeInYear, type IncomeSource } from './incomeSources';
+import { toIsoDate } from './paySchedule';
 
 export interface Earnings {
   // Everything payroll reports as wages, which already includes bonus and vested equity.
@@ -37,12 +38,43 @@ export interface RoleEarnings extends Earnings {
   roleTitle: string;
   paychecks: number;
   electiveLimit: number;
+  // Both null until the balances are recorded on the 401(k) tab for this role.
+  startingBalance: number | null;
+  currentValue: number | null;
+  // Contributions from paychecks that have actually landed. A balance recorded today holds
+  // none of December's money, so the year's projection is the wrong thing to compare it to.
+  contributedToDate: number;
+}
+
+// What the market did, as opposed to what was paid in. Each role is its own plan, so the
+// balances add up — unlike the deferral limit, which follows the person.
+export interface RoleRetirement {
+  sourceKey: string;
+  company: string;
+  gain: number;
+  gainPercent: number | null;
+}
+
+export interface RetirementPerformance {
+  startingBalance: number;
+  currentValue: number;
+  contributed: number;
+  gain: number;
+  // Per role, so the aggregate names its sources the way every other year figure does.
+  roles: RoleRetirement[];
+  // Simple return over the money at work, null when nothing was at work.
+  gainPercent: number | null;
+  // Roles behind the figure, and roles that contributed but recorded no balances.
+  countedRoles: number;
+  uncountedRoles: number;
 }
 
 export interface YearEarnings extends Earnings {
   taxYear: number;
   roles: RoleEarnings[];
   electiveLimit: number;
+  // Null until at least one role has both balances; a partial answer would be a wrong one.
+  retirement: RetirementPerformance | null;
 }
 
 const EMPTY: Earnings = {
@@ -79,6 +111,7 @@ const earningsFor = (
   settings: IncomeSettings,
   context: TaxContext
 ): RoleEarnings => {
+  const todayIso = context.todayIso ?? toIsoDate(new Date());
   const { ledger, bonusEvents, vestEvents, effectiveRows } = buildIncomeModel({
     ...context,
     settings,
@@ -109,6 +142,12 @@ const earningsFor = (
     company: source.company,
     roleTitle: source.roleTitle,
     paychecks: effectiveRows.length,
+    startingBalance: settings.retirementStartingBalance,
+    currentValue: settings.retirementCurrentValue,
+    contributedToDate: effectiveRows
+      // An undated row counts as landed; see summarizeRetirement.
+      .filter((row) => row.payDate === null || row.payDate <= todayIso)
+      .reduce((total, row) => total + row.pretax401k + row.roth401k + row.employerMatch401k, 0),
     gross,
     bonus: bonusEvents.reduce((total, event) => total + event.amount, 0),
     equityVested: vestEvents.reduce((total, event) => total + event.amount, 0),
@@ -158,6 +197,45 @@ const add = (a: Earnings, b: Earnings): Earnings => ({
   payrollTax: a.payrollTax + b.payrollTax,
 });
 
+// A role only counts once both balances are in: pairing one role's current value against every
+// role's contributions would report a loss that is really a missing number.
+export const retirementPerformance = (roles: RoleEarnings[]): RetirementPerformance | null => {
+  const counted = roles.filter(
+    (role) => role.startingBalance !== null && role.currentValue !== null
+  );
+  if (counted.length === 0) return null;
+
+  const startingBalance = counted.reduce((total, role) => total + (role.startingBalance ?? 0), 0);
+  const currentValue = counted.reduce((total, role) => total + (role.currentValue ?? 0), 0);
+  const contributed = counted.reduce((total, role) => total + role.contributedToDate, 0);
+  const invested = startingBalance + contributed;
+  const gain = currentValue - startingBalance - contributed;
+
+  return {
+    startingBalance,
+    currentValue,
+    contributed,
+    gain,
+    gainPercent: invested > 0 ? gain / invested : null,
+    roles: counted.map((role) => {
+      const roleInvested = (role.startingBalance ?? 0) + role.contributedToDate;
+      const roleGain =
+        (role.currentValue ?? 0) - (role.startingBalance ?? 0) - role.contributedToDate;
+      return {
+        sourceKey: role.sourceKey,
+        company: role.company,
+        gain: roleGain,
+        gainPercent: roleInvested > 0 ? roleGain / roleInvested : null,
+      };
+    }),
+    countedRoles: counted.length,
+    uncountedRoles: roles.filter(
+      (role) =>
+        (role.startingBalance === null || role.currentValue === null) && role.contributedToDate > 0
+    ).length,
+  };
+};
+
 // What every role held in one year paid, and the year's total across all of them.
 export const summarizeYear = (
   taxYear: number,
@@ -178,6 +256,7 @@ export const summarizeYear = (
     ...roles.reduce(add, EMPTY),
     // One limit per person, so take it; summing would claim a multi-role year may defer more.
     electiveLimit: Math.max(0, ...roles.map((role) => role.electiveLimit)),
+    retirement: retirementPerformance(roles),
   };
 };
 

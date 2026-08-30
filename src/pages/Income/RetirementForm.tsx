@@ -13,6 +13,7 @@ import {
 } from './matchTiers';
 import MoneyInput from './MoneyInput';
 import PercentInput from './PercentInput';
+import dayjs from 'dayjs';
 import { formatPayDate } from './paySchedule';
 import { percent } from './format';
 import { useMoney } from './amountPrivacy';
@@ -218,19 +219,35 @@ export const RetirementForm = ({
       </div>
 
       <div className="mt-6 border-t border-slate-100 pt-5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Contributed in {taxYear}
-        </span>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Contributed in {taxYear}
+          </span>
+          {/* A year still running is reporting a subtotal, so it has to say where it stops. */}
+          {summary.hasUnpaidPeriods && summary.paidThroughDate ? (
+            <span className="text-[11px] text-slate-400">
+              through {dayjs(summary.paidThroughDate).format('MMM D')} · {summary.paidPeriodsToDate}{' '}
+              of {summary.periodCount} paychecks
+            </span>
+          ) : null}
+        </div>
         <div className="mt-2 divide-y divide-slate-100">
-          <Row label="Your traditional 401(k)" value={money(summary.employeePretax)} />
-          <Row label="Your Roth 401(k)" value={money(summary.employeeRoth)} />
+          <Row label="Your traditional 401(k)" value={money(summary.employeePretaxToDate)} />
+          <Row label="Your Roth 401(k)" value={money(summary.employeeRothToDate)} />
           <Row
             label="Employer match"
-            value={money(summary.employerMatch)}
+            value={money(summary.employerMatchToDate)}
             hint="Not part of take-home, because it never reaches your paycheck."
           />
-          <Row label="Total into the account" value={money(summary.totalContributed)} emphasis />
+          <Row label="Total into the account" value={money(summary.contributedToDate)} emphasis />
         </div>
+
+        {summary.hasUnpaidPeriods ? (
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+            Paid in so far. On the current rate the year finishes at{' '}
+            <span className="font-medium text-slate-500">{money(summary.totalContributed)}</span>.
+          </p>
+        ) : null}
 
         <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
@@ -377,7 +394,10 @@ export const RetirementForm = ({
               onChange={onStartingBalanceChange}
             />
           </Field>
-          <Field label="Balance today">
+          <Field
+            label="Balance today"
+            hint="Compared against contributions to date, not the whole year."
+          >
             <MoneyInput
               value={summary.currentValue}
               max={100_000_000}
@@ -398,7 +418,11 @@ export const RetirementForm = ({
               label="Balance growth"
               value={money(summary.currentValue! - summary.startingBalance!)}
             />
-            <Row label="Less what you paid in" value={`−${money(summary.totalContributed)}`} />
+            <Row
+              label={`Less paid in over ${summary.paidPeriodsToDate} paycheck${summary.paidPeriodsToDate === 1 ? '' : 's'}`}
+              value={`−${money(summary.contributedToDate)}`}
+              hint="Only the paychecks that have already been paid. Today's balance cannot hold a contribution the year has not made yet, so counting the whole year against it would report a loss that never happened."
+            />
             <Row
               label="Investment gain"
               value={`${summary.gains >= 0 ? '+' : '−'}${money(Math.abs(summary.gains))}${

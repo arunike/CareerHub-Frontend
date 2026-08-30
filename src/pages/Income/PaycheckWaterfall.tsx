@@ -227,6 +227,24 @@ export const PaycheckWaterfall = ({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {!row.isOffCycle ? (
+            <Tooltip
+              title={
+                row.isAdjusted
+                  ? 'Edit this paycheck’s deductions and 401(k)'
+                  : 'Adjust this paycheck’s deductions and 401(k)'
+              }
+            >
+              <Button
+                size="small"
+                icon={<SlidersOutlined />}
+                onClick={() => setEditing(true)}
+                className="mr-1"
+              >
+                Edit
+              </Button>
+            </Tooltip>
+          ) : null}
           <Tooltip title="Previous paycheck">
             <Button
               shape="circle"
@@ -402,14 +420,6 @@ export const PaycheckWaterfall = ({
             {moneyCents(row.net)}
           </span>
         </div>
-      </div>
-
-      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-        {!row.isOffCycle ? (
-          <Button size="small" icon={<SlidersOutlined />} onClick={() => setEditing(true)}>
-            {row.isAdjusted ? 'Edit this paycheck’s figures' : 'Adjust this paycheck'}
-          </Button>
-        ) : null}
       </div>
 
       <PaycheckAdjustModal

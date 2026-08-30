@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getUserSettings, updateUserSettings } from '../../api';
 import type { UserSettings } from '../../types';
 import { SaveOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { Button, message } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -62,6 +63,7 @@ const Settings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [dirtyTabs, setDirtyTabs] = useState<SettingsTab[]>([]);
+  useUnsavedChanges(isDirty, 'settings');
   const [saving, setSaving] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');

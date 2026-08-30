@@ -57,8 +57,6 @@ export const ALLOWANCE_PRESETS: AllowancePreset[] = [
   { label: 'Commuter benefit', unit: 'MONTH' },
   { label: 'Meal allowance', unit: 'PAYCHECK' },
   { label: 'On-call stipend', unit: 'PAYCHECK' },
-  { label: 'Referral bonus', unit: 'ONCE' },
-  { label: 'Spot bonus', unit: 'ONCE' },
   { label: 'Home office setup', unit: 'ONCE' },
   { label: 'Relocation allowance', unit: 'ONCE' },
   { label: 'Learning and development stipend', unit: 'ONCE' },

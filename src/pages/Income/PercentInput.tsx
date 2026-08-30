@@ -9,6 +9,8 @@ interface Props {
   step?: number;
   minChars?: number;
   disabled?: boolean;
+  // Fills its container instead of sizing to content, for grid and stacked layouts.
+  fullWidth?: boolean;
 }
 
 export const PercentInput = ({
@@ -19,11 +21,14 @@ export const PercentInput = ({
   step = 1,
   minChars = 3,
   disabled,
+  fullWidth = false,
 }: Props) => (
   <InputNumber
     size={size}
     // Percents are never grouped, so the raw digits drive the width.
-    style={fieldWidthStyle(displayText(value, false), size, minChars)}
+    style={
+      fullWidth ? { width: '100%' } : fieldWidthStyle(displayText(value, false), size, minChars)
+    }
     suffix="%"
     min={0}
     max={max}

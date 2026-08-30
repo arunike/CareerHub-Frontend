@@ -13,6 +13,7 @@ import {
 } from './mathBreakdown';
 import type { RoleEarnings, YearEarnings } from './yearSummary';
 import { useMoney } from './amountPrivacy';
+import { percent } from './format';
 
 interface Props {
   summary: YearEarnings;
@@ -237,6 +238,74 @@ const ElectiveLimitBar = ({ summary }: { summary: YearEarnings }) => {
         )}
         {roleCount > 1
           ? ` The limit is per person, not per employer, and ${roleCount} payrolls paid into it — one payroll cannot see another's deferrals.`
+          : ''}
+      </p>
+
+      <RetirementGain summary={summary} />
+    </div>
+  );
+};
+
+// Contributions say what went in; only the balances say what the market did with it.
+const RetirementGain = ({ summary }: { summary: YearEarnings }) => {
+  const { money } = useMoney();
+  const performance = summary.retirement;
+
+  if (!performance) {
+    return (
+      <p className="mt-3 border-t border-dashed border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-400">
+        Record the opening and closing balances on the 401(k) tab and this year&rsquo;s investment
+        gain appears here, separated from the money you paid in.
+      </p>
+    );
+  }
+
+  const up = performance.gain >= 0;
+  return (
+    <div className="mt-3 border-t border-dashed border-slate-100 pt-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          Investment gain
+        </span>
+        <span className="text-xs tabular-nums">
+          <span className={`font-semibold ${up ? 'text-emerald-700' : 'text-rose-600'}`}>
+            {up ? '+' : '−'}
+            {money(Math.abs(performance.gain))}
+          </span>
+          {performance.gainPercent !== null ? (
+            <span className="text-slate-500">
+              {' '}
+              · {percent(Math.abs(performance.gainPercent), 1)}
+            </span>
+          ) : null}
+        </span>
+      </div>
+      {performance.roles.length > 1 ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {performance.roles.map((role) => (
+            <span
+              key={role.sourceKey}
+              className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600"
+            >
+              {role.company}
+              <span
+                className={`tabular-nums ${role.gain >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}
+              >
+                {role.gain >= 0 ? '+' : '−'}
+                {money(Math.abs(role.gain))}
+              </span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+        {money(performance.currentValue)} today, less {money(performance.startingBalance)} at the
+        start and {money(performance.contributed)} paid in so far — contributions still to come this
+        year are left out, since today&rsquo;s balance cannot hold them. A simple return, not
+        time-weighted: December&rsquo;s contribution has had far less time to grow than
+        January&rsquo;s.
+        {performance.uncountedRoles > 0
+          ? ` ${performance.uncountedRoles} more ${performance.uncountedRoles === 1 ? 'payroll' : 'payrolls'} contributed but recorded no balances, so ${performance.uncountedRoles === 1 ? 'it is' : 'they are'} left out entirely.`
           : ''}
       </p>
     </div>

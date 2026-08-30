@@ -1,10 +1,11 @@
-import { Button, DatePicker, Input, Segmented, Select, Switch, Tooltip } from 'antd';
+import { AutoComplete, Button, DatePicker, Select, Switch, Tooltip } from 'antd';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { IncomeEvent } from './tax/ledger';
 import type { PayPeriod } from './paySchedule';
 import { formatPayDate } from './paySchedule';
 import {
+  BONUS_EXTRA_PRESETS,
   amountFromPercent,
   bonusFromPercent,
   bonusPercentOfBase,
@@ -15,6 +16,7 @@ import {
   type BonusExtra,
   type BonusPayout,
 } from './bonusSchedule';
+import SegmentedToggle from '../../components/SegmentedToggle';
 import FigureMath from './FigureMath';
 import { bonusBreakdown } from './mathBreakdown';
 import MoneyInput from './MoneyInput';
@@ -44,6 +46,8 @@ interface Props {
   onExtrasChange: (extras: BonusExtra[]) => void;
   onPayoutsChange: (payouts: BonusPayout[]) => void;
 }
+
+const BONUS_EXTRA_OPTIONS = BONUS_EXTRA_PRESETS.map((label) => ({ value: label, label }));
 
 const Field = ({
   label,
@@ -294,12 +298,18 @@ export const BonusForm = ({
               <div className="mt-3 space-y-2">
                 {extras.map((extra) => (
                   <div key={extra.id} className="flex flex-wrap items-center gap-2">
-                    <Input
+                    <AutoComplete
                       size="small"
                       className="min-w-[140px] flex-1"
-                      placeholder="Reason, e.g. exceeded expectations"
+                      placeholder="Pick a common one, or name your own"
                       value={extra.label}
-                      onChange={(event) => patchExtra(extra.id, { label: event.target.value })}
+                      options={BONUS_EXTRA_OPTIONS}
+                      filterOption={(input, option) =>
+                        String(option?.value ?? '')
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      onChange={(value) => patchExtra(extra.id, { label: value ?? '' })}
                     />
                     <MoneyInput
                       size="small"
@@ -365,10 +375,13 @@ export const BonusForm = ({
                       key={payout.id}
                       className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5"
                     >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Segmented
-                          size="small"
+                      <div className="flex items-center justify-between gap-2">
+                        {/* antd's Segmented track is the same tint as this panel, so its own
+                            container vanishes and the active pill floats on nothing. */}
+                        <SegmentedToggle
                           value={offCycle ? 'own' : 'paycheck'}
+                          wrapperClassName="bg-white"
+                          buttonClassName="!min-h-0 px-2.5 py-1 text-xs"
                           onChange={(value) =>
                             patchPayout(
                               payout.id,
@@ -394,54 +407,63 @@ export const BonusForm = ({
                           size="small"
                           type="text"
                           icon={<DeleteOutlined />}
-                          className="!ml-auto"
                           onClick={() =>
                             onPayoutsChange(payouts.filter((other) => other.id !== payout.id))
                           }
                         />
                       </div>
 
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        {offCycle ? (
-                          <DatePicker
+                      {/* Three unlabelled boxes read as one long number; each says what it is. */}
+                      <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-2.5 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+                        <Field label={offCycle ? 'Pay date' : 'Paycheck'}>
+                          {offCycle ? (
+                            <DatePicker
+                              size="small"
+                              className="w-full"
+                              allowClear={false}
+                              value={payout.payDate ? dayjs(payout.payDate) : null}
+                              onChange={(value) =>
+                                patchPayout(payout.id, {
+                                  payDate: value ? value.format('YYYY-MM-DD') : null,
+                                })
+                              }
+                            />
+                          ) : (
+                            <Select
+                              size="small"
+                              style={{ width: '100%' }}
+                              value={payout.periodIndex ?? undefined}
+                              options={periodOptions}
+                              onChange={(value) =>
+                                patchPayout(payout.id, {
+                                  periodIndex: Number(value),
+                                  payDate: null,
+                                })
+                              }
+                            />
+                          )}
+                        </Field>
+                        <Field label="Share">
+                          <PercentInput
+                            fullWidth
                             size="small"
-                            className="min-w-[150px] flex-1"
-                            allowClear={false}
-                            value={payout.payDate ? dayjs(payout.payDate) : null}
+                            value={Number(payout.percent.toFixed(2))}
                             onChange={(value) =>
-                              patchPayout(payout.id, {
-                                payDate: value ? value.format('YYYY-MM-DD') : null,
-                              })
+                              patchPayout(payout.id, { percent: Number(value ?? 0) })
                             }
                           />
-                        ) : (
-                          <Select
-                            size="small"
-                            className="min-w-[150px] flex-1"
-                            value={payout.periodIndex ?? undefined}
-                            options={periodOptions}
-                            onChange={(value) =>
-                              patchPayout(payout.id, { periodIndex: Number(value), payDate: null })
-                            }
-                          />
-                        )}
-                        <PercentInput
-                          size="small"
-                          value={Number(payout.percent.toFixed(2))}
-                          onChange={(value) =>
-                            patchPayout(payout.id, { percent: Number(value ?? 0) })
-                          }
-                        />
-                        <Tooltip
-                          title={
+                        </Field>
+                        <Field
+                          label="Amount"
+                          hint={
                             bonusTotal > 0
                               ? 'Edit either side: the share and the amount stay in step.'
                               : 'Set a target bonus first, then an amount can be split out of it.'
                           }
                         >
                           <MoneyInput
+                            fullWidth
                             size="small"
-                            minChars={8}
                             value={Number(amountFromPercent(payout.percent, bonusTotal).toFixed(2))}
                             onChange={(value) =>
                               patchPayout(payout.id, {
@@ -449,7 +471,7 @@ export const BonusForm = ({
                               })
                             }
                           />
-                        </Tooltip>
+                        </Field>
                       </div>
                     </div>
                   );

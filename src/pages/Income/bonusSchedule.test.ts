@@ -13,6 +13,7 @@ import {
   resolvePerformanceYear,
   totalBonus,
   type BonusPayout,
+  BONUS_EXTRA_PRESETS,
 } from './bonusSchedule';
 import { buildPayPeriods } from './paySchedule';
 
@@ -332,5 +333,20 @@ describe('nextYearBonusEstimate', () => {
     const earnedIn2027 = nextYearBonusEstimate(2027, TARGET, '2026-07-01', null);
     expect(earnedIn2026?.amount).toBeLessThan(TARGET);
     expect(earnedIn2027?.amount).toBeCloseTo(TARGET, 6);
+  });
+});
+
+describe('BONUS_EXTRA_PRESETS', () => {
+  it('names each award once, so the dropdown cannot show a duplicate', () => {
+    expect(new Set(BONUS_EXTRA_PRESETS).size).toBe(BONUS_EXTRA_PRESETS.length);
+  });
+
+  it('holds the one-off awards that used to sit under allowances', () => {
+    expect(BONUS_EXTRA_PRESETS).toContain('Referral bonus');
+    expect(BONUS_EXTRA_PRESETS).toContain('Spot bonus');
+  });
+
+  it('carries labels only, since every award is taxed as supplemental wages', () => {
+    for (const preset of BONUS_EXTRA_PRESETS) expect(typeof preset).toBe('string');
   });
 });

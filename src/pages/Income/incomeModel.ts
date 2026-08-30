@@ -5,6 +5,7 @@ import {
   buildPayPeriods,
   defaultFirstPayDate,
   mergePeriods,
+  toIsoDate,
 } from './paySchedule';
 import { annualLimits, federalTable, stateTable, type TaxTableOverrides } from './tax/data';
 import { buildLedger, type Ledger, type LedgerInput } from './tax/ledger';
@@ -34,6 +35,8 @@ export interface IncomeModelInput {
   stateNames: Record<string, string>;
   stateTaxRates: Record<string, number>;
   taxOverrides?: TaxTableOverrides;
+  // Splits landed paychecks from projected ones. Defaults to today at the app boundary.
+  todayIso?: string;
 }
 
 export interface IncomeModel {
@@ -81,6 +84,7 @@ export const buildIncomeModel = ({
   stateNames,
   stateTaxRates,
   taxOverrides,
+  todayIso = toIsoDate(new Date()),
 }: IncomeModelInput): IncomeModel => {
   const paychecksPerYear = settings.paychecksPerYearOverride ?? source?.paychecksPerYear ?? 26;
   const annualSalary = settings.salaryOverride ?? source?.annualSalary ?? 0;
@@ -249,7 +253,8 @@ export const buildIncomeModel = ({
       ledgerInput.employer,
       settings.retirementStartingBalance,
       settings.retirementCurrentValue,
-      ledger.elective401kLimit
+      ledger.elective401kLimit,
+      todayIso
     ),
     drift: compareActuals(ledger.rows, settings.actuals),
   };

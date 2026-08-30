@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Tooltip, message } from 'antd';
-import { EyeInvisibleOutlined, EyeOutlined, SaveOutlined } from '@ant-design/icons';
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { SkeletonBlock } from '../../components/SkeletonLoader';
@@ -12,6 +12,8 @@ import RetirementForm from './RetirementForm';
 import VestingForm from './VestingForm';
 import { mostRecentPaidRow } from './effectiveRows';
 import { toIsoDate } from './paySchedule';
+import UnsavedChangesActions from '../../components/UnsavedChangesActions';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { clearFieldFromOverrides, periodsOverriding } from './periodDeductions';
 import { compareRates } from './taxRates';
 import { useIncomeYear } from './useIncomeYear';
@@ -104,6 +106,8 @@ const IncomePage = () => {
   useEffect(() => {
     if (row && row.periodIndex !== selectedPeriod) setSelectedPeriod(row.periodIndex);
   }, [row, selectedPeriod]);
+
+  useUnsavedChanges(isDirty, 'income changes');
 
   const roleOptions = useMemo(() => {
     const current = sourcesInYear.filter((candidate) => candidate.isCurrent);
@@ -351,25 +355,12 @@ const IncomePage = () => {
             </Tooltip>
           }
           extraActions={
-            <div className="flex items-center gap-2">
-              {isDirty ? (
-                <>
-                  <span className="hidden text-xs text-amber-600 sm:inline">Unsaved changes</span>
-                  <Button size="small" type="text" onClick={discardChanges}>
-                    Discard
-                  </Button>
-                </>
-              ) : null}
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                loading={saving}
-                disabled={!isDirty}
-                onClick={handleSave}
-              >
-                Save
-              </Button>
-            </div>
+            <UnsavedChangesActions
+              isDirty={isDirty}
+              saving={saving}
+              onDiscard={discardChanges}
+              onSave={handleSave}
+            />
           }
         />
 
