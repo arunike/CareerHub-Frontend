@@ -173,8 +173,7 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
     messageApi
   );
 
-  // Whether any widget needs the fetch, not which: depending on the array refetched on every
-  // unrelated toggle, and on a new array reference it never stopped.
+  // Whether any widget needs the fetch, not which: an array dep refetched on every toggle.
   const needsTimelineAnalytics = enabledWidgets.some((id) => ANALYTICS_BACKED_WIDGETS.has(id));
 
   useEffect(() => {

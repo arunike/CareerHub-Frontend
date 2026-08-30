@@ -34,8 +34,7 @@ const legacyDict = (pick: 'order' | 'enabled') => {
   return seeded;
 };
 
-// Read once at module load: these are only the seed for the first render, and rebuilding them
-// every render hit localStorage on each pass for a value that cannot change.
+// Read once: only a first-render seed, and it cannot change after load.
 const LEGACY_ORDER = legacyDict('order');
 const LEGACY_ENABLED = legacyDict('enabled');
 
@@ -56,8 +55,7 @@ export const useDashboardLayout = (
     ENABLED_CACHE
   );
 
-  // Memoised because normalize builds a new array: an unmemoised one is a fresh reference on
-  // every render, and an effect that depends on it re-runs forever.
+  // Memoised: normalize builds a new array, and an effect depending on it re-runs forever.
   const enabled = useMemo(
     () => normalize(flags.value[dashboard] ?? defaultEnabled),
     [normalize, flags.value, dashboard, defaultEnabled]
