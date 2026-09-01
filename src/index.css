@@ -303,9 +303,7 @@ textarea::placeholder {
   border-start-end-radius: 0 !important;
 }
 
-/* Income year ledger */
-/* One horizontal gutter on every cell. antd's small table leaves 8px and the edge overrides put
-   12px on the ends, so no two columns were spaced alike. */
+/* Income year ledger: one gutter on every cell, since antd and the edge overrides disagreed. */
 .ledger-table :is(.ant-table-thead > tr > th, .ant-table-tbody > tr > td) {
   padding-left: 12px !important;
   padding-right: 12px !important;
@@ -319,10 +317,7 @@ textarea::placeholder {
   padding-right: 16px !important;
 }
 
-/* The figure is the input. The whole cell is the hit target, but nothing draws a box around it:
-   a bordered panel and a pencil icon read as a spreadsheet selection, and 26 rows of them is
-   noise. The figure itself responds instead, and every part of it is drawn on the cell or on the
-   text, so none of it costs a pixel of column width. */
+/* The figure is the input: no box, no pencil, since 26 bordered panels read as spreadsheet noise. */
 .ledger-table .ant-table-tbody > tr > td.ledger-editable-cell {
   cursor: text;
 }
@@ -346,8 +341,7 @@ textarea::placeholder {
   color: #0f172a;
 }
 
-/* A recorded figure already underlines itself in emerald, so it never takes the dashed hint and
-   never turns slate on hover — that would be two underlines and the wrong accent. */
+/* A recorded figure underlines itself in emerald, so it skips the dashed hint and the hover slate. */
 .ledger-cell-value.text-emerald-700,
 .ledger-table
   .ant-table-tbody
@@ -358,8 +352,7 @@ textarea::placeholder {
   color: #047857;
 }
 
-/* The editor is the figure turning typable, not a form control dropped into the row: no panel,
-   no focus ring, just the underline going live. Two classes outrank antd's unlayered chrome. */
+/* The editor is the figure turning typable: no panel, no focus ring, just the underline going live. */
 .ant-input-number.ledger-cell-editor,
 .ant-input-number.ledger-cell-editor:hover,
 .ant-input-number.ledger-cell-editor.ant-input-number-focused {
@@ -442,8 +435,7 @@ textarea::placeholder {
 }
 
 @media (max-width: 1023px) {
-  /* The global mobile rule sets min-width: max-content on every table, which is exactly the
-     sideways scroll this ledger hides columns to avoid. */
+  /* The global mobile rule's min-width: max-content is the sideways scroll this ledger hides columns to avoid. */
   .ledger-table.ant-table-wrapper .ant-table {
     min-width: 0;
   }
@@ -459,8 +451,7 @@ textarea::placeholder {
     min-height: 0;
   }
 
-  /* The 44px touch floor above would double the row's height mid-edit and shove every row below
-     it. The cell you already tapped is the target; the field itself only has to be typable. */
+  /* The 44px touch floor would double the row's height mid-edit; the field only has to be typable. */
   .ledger-table .ant-input-number.ledger-cell-editor {
     min-height: 0;
   }
@@ -514,8 +505,7 @@ textarea::placeholder {
   border-top-color: rgba(226, 232, 240, 0.82) !important;
 }
 
-/* Direct pie labels are useful on wide cards but clip on phone-width charts.
-   The legend remains visible on mobile and provides the same category mapping. */
+/* Direct pie labels clip at phone width, and the legend already gives the same category mapping. */
 @media (max-width: 639px) {
   .careerhub-responsive-pie .recharts-pie-label-text,
   .careerhub-responsive-pie .recharts-pie-label-line {
@@ -523,11 +513,7 @@ textarea::placeholder {
   }
 }
 
-/* Shared drag-to-fullscreen behavior for legacy Ant Design modals on mobile. */
-/* iOS paints a translucent grey box over any tapped element, clipped to its
-   border-radius, and it lingers after the tap. On the calendar day button that read as a
-   stray grey slab sitting under the selected day. Every interactive surface here already
-   has its own pressed/selected styling, so the platform default only gets in the way. */
+/* iOS leaves a grey tap box behind, and every surface here already has its own pressed styling. */
 button,
 a,
 summary,
@@ -536,9 +522,7 @@ summary,
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Shared action row for imperative Modal.confirm dialogs. antd spaces confirm buttons
-   with margin-inline-start, which in a stacked mobile layout shifts every button after
-   the first and leaves it narrower than its neighbours — hence the !important reset. */
+/* antd's margin-inline-start between confirm buttons narrows the last one in a stacked layout. */
 .careerhub-dialog-actions {
   display: flex;
   flex-direction: column-reverse;
@@ -913,8 +897,7 @@ summary,
   justify-content: space-between;
   align-items: flex-end;
   gap: 14px 24px;
-  /* Wraps so a growing action cluster drops to its own row instead of squeezing the
-     title until it breaks one character per line. */
+  /* Wraps so a growing action cluster drops to its own row instead of squeezing the title. */
   flex-wrap: wrap;
   padding: 0 0 14px;
   border-bottom: 1px solid rgba(203, 213, 225, 0.62);
@@ -926,16 +909,13 @@ summary,
   flex: 1 1 auto;
 }
 
-/* Filters sit directly on the page under the title. A bordered, shadowed strip read as
-   a second card fighting the content below it, and its space-between pushed a lone
-   overflow button across a wide empty gap. */
+/* Filters sit on the page, not in a card: a bordered strip read as a second card fighting the content. */
 .page-toolbar-filters {
   order: 3;
   width: 100%;
   display: flex;
   align-items: center;
-  /* Right-aligned to share one edge with the action row above. Left-aligned filters under
-     right-aligned actions read as a zigzag. */
+  /* Right-aligned to share one edge with the action row; left under right reads as a zigzag. */
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
@@ -946,8 +926,7 @@ summary,
   display: none;
 }
 
-/* One height for every control in the row, whatever each page passed in, so a picker, a
-   segmented switch and a select stop looking like three unrelated widgets. */
+/* One height for every control in the row, whatever each page passed in. */
 .page-toolbar-filters .ant-btn,
 .page-toolbar-filters .ant-segmented,
 .page-toolbar-filters .ant-picker,
@@ -956,9 +935,7 @@ summary,
   min-height: 36px !important;
 }
 
-/* antd tints the segmented track the same grey as the page, which was invisible once the
-   white filter strip went away. Match the neighbouring controls instead: white body,
-   hairline border, tinted active segment. */
+/* antd tints the segmented track page-grey, invisible without the white strip; match the neighbours. */
 .page-toolbar-filters .ant-segmented,
 .page-toolbar-mobile-filters .ant-segmented {
   padding: 2px !important;
@@ -1031,9 +1008,7 @@ summary,
   font-weight: 650;
 }
 
-/* Calendar header on a phone. The controls were each their natural width, which left
-   narrow switches stranded against the left edge and pushed the first date row far down
-   the screen. Full-width rows, and the two page controls paired, reads as deliberate. */
+/* Calendar header on a phone: natural widths stranded the switches and pushed the dates down the screen. */
 @media (max-width: 640px) {
   .calendar-header-controls {
     display: grid;
@@ -1076,9 +1051,7 @@ summary,
   }
 }
 
-/* Icon-only overflow on the title line. Discoverability is fine here because a dot menu
-   beside a page title is the standard mobile affordance; the desktop one stays labelled
-   because it has room for a word. */
+/* Icon-only overflow, because a dot menu beside a page title is the standard mobile affordance. */
 .page-toolbar-mobile-more.ant-btn {
   flex-shrink: 0;
   width: 38px;
@@ -1108,8 +1081,7 @@ summary,
   grid-column: span 1;
 }
 
-/* The view switch earns full width on a phone: it is the control you reach for most, and
-   a wide two-option toggle is far easier to hit than a narrow one. */
+/* The view switch earns full width on a phone: most reached for, and far easier to hit wide. */
 .page-toolbar-mobile-view > * {
   width: 100% !important;
   display: flex !important;
@@ -1120,8 +1092,7 @@ summary,
   justify-content: center;
 }
 
-/* Two quiet settings pair up nicely; one on its own must not sit stranded in half a row,
-   and three or more would be too cramped side by side. */
+/* Two quiet settings pair up; one must not sit stranded in half a row, and three would be cramped. */
 .page-toolbar-mobile-filters {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1232,13 +1203,11 @@ summary,
     width: 100%;
     margin-left: 0;
     flex-wrap: wrap;
-    /* Wrapped onto its own row, it has to keep the filters' right edge or the two rows
-       zigzag against each other. */
+    /* Wrapped onto its own row, it has to keep the filters' right edge or the two rows zigzag. */
     justify-content: flex-end;
   }
 
-  /* Below this the header is too narrow for a right edge to read as intentional, so both
-   rows line up with the title instead. Declared after the 1200px rule so it wins. */
+  /* Too narrow here for a right edge to read as intentional; declared after the 1200px rule so it wins. */
   @media (max-width: 900px) {
     .page-toolbar-actions,
     .page-toolbar-filters {
@@ -1467,8 +1436,8 @@ summary,
   border-color: #cbd5e1;
 }
 
-/* react-grid-layout ships a bright red drop target; this is the same card in outline. */
-.react-grid-item.react-grid-placeholder {
+/* Outranks react-grid-layout's red drop target, which loads after this file in a lazy chunk. */
+.widget-grid.react-grid-layout .react-grid-item.react-grid-placeholder {
   background: rgba(59, 130, 246, 0.07);
   border: 1px dashed rgba(148, 163, 184, 0.85);
   border-radius: 14px;
@@ -1845,8 +1814,7 @@ summary,
     gap: 12px !important;
   }
 
-  /* Default OK/Cancel footer synthesised for drawers whose modal relied on antd's.
-     Cancel sits above so the primary action is the one nearest the thumb. */
+  /* Synthesised OK/Cancel footer; Cancel sits above so the primary action is nearest the thumb. */
   .careerhub-mobile-drawer-footer {
     display: flex;
     flex-direction: column;
@@ -1933,8 +1901,7 @@ summary,
   }
 }
 
-/* Reminder toasts sit above page content and need to read at a glance, so they carry a
-   heavier shadow and a wider card than antd's default notification. */
+/* Reminder toasts must read at a glance, so they are wider and heavier than antd's default. */
 .careerhub-reminder-toast {
   width: 380px;
   max-width: calc(100vw - 32px);
@@ -1948,9 +1915,7 @@ summary,
   margin-bottom: 2px;
 }
 
-/* Reads as a ring: a hard strike, then a fast decaying shake, then a pause. The strike
-   lands at 0% so the bell rings the moment it mounts rather than after a dead beat, and
-   the pause is short enough that a glance cannot fall entirely inside it. */
+/* Reads as a ring: a hard strike at 0%, a fast decaying shake, then a pause too short to fall inside. */
 @keyframes careerhub-bell-ring {
   0% {
     transform: rotate(0deg);
