@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-// AGENTS.md → Real Data → Substitutes is the source of truth: two companies, no others.
-const SANCTIONED = ['Google', 'Netflix'];
+// AGENTS.md → Real Data → Substitutes is the source of truth: full-time pair, internship pair.
+const SANCTIONED = ['Google', 'Netflix', 'Stripe', 'Airbnb'];
 const ALLOWED = new Set(SANCTIONED);
 
 // Vite's raw glob, because the app tsconfig carries no Node types.

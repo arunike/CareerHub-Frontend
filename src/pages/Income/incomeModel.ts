@@ -16,6 +16,7 @@ import { allowanceSchedule as buildAllowanceSchedule, splitAllowances } from './
 import { tiersFromOffer, type MatchTier } from './matchTiers';
 import { splitCustomDeductions } from './deductions';
 import { buildVestEvents } from './vestEvents';
+import { salaryByPeriod } from './raiseSchedule';
 import {
   buildBonusEvents,
   nextYearBonusEstimate,
@@ -172,6 +173,14 @@ export const buildIncomeModel = ({
   // Which paycheck each allowance actually lands on, rather than an average.
   const allowanceSchedule = buildAllowanceSchedule(settings.allowances, periods);
 
+  // A recorded raise re-rates every paycheck from its effective date; earlier ones keep the old pay.
+  const raiseSalaries = salaryByPeriod(
+    periods,
+    source?.raises ?? [],
+    annualSalary,
+    paychecksPerYear
+  );
+
   const periodDefaults: PeriodDefaults = {
     ...deductionLines,
     pretax401kPercent: settings.elections.pretax401kPercent,
@@ -198,6 +207,7 @@ export const buildIncomeModel = ({
     periodOverrides,
     allowanceByPeriod: allowanceSchedule,
     annualSalary,
+    salaryPerPeriodByIndex: raiseSalaries,
     incomeEvents: [...bonusEvents, ...vestEvents, ...settings.extraEvents],
     elections: {
       ...settings.elections,

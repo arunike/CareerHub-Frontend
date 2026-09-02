@@ -1,4 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
+import { buildEarningsReport } from './earningsByYear';
+import { useLedgerEarnings } from '../Income/useLedgerEarnings';
+import { buildInternshipParts } from './internshipParts';
 import { Button, Typography, Upload } from 'antd';
 import Modal from '../../components/MobileModal';
 import { PlusOutlined, RobotOutlined, UserOutlined, InboxOutlined } from '@ant-design/icons';
@@ -89,12 +93,22 @@ const ExperiencePage: React.FC = () => {
   const getLinkedOffer = (exp: Experience): Offer | undefined =>
     exp.offer ? allOffers.find((o) => o.id === exp.offer) : undefined;
 
+  const { ledgerByRole } = useLedgerEarnings(
+    allOffers as unknown as Array<Record<string, unknown>>,
+    experiences as unknown as Array<Record<string, unknown>>
+  );
+
   const getCompensationSnapshot = useCallback(
     (exp: Experience) => {
       const linkedOffer = exp.offer ? allOffers.find((offer) => offer.id === exp.offer) : undefined;
-      return getExperienceCompensationSnapshot(exp, linkedOffer);
+      const snapshot = getExperienceCompensationSnapshot(exp, linkedOffer);
+      // The ledger counts real paychecks, so it replaces the rate-and-days estimate where it exists.
+      const ledger = ledgerByRole.get(`experience-${exp.id}`);
+      if (snapshot?.kind === 'salary' && ledger?.length)
+        return { ...snapshot, ledgerYears: ledger };
+      return snapshot;
     },
-    [allOffers]
+    [allOffers, ledgerByRole]
   );
 
   const {
@@ -184,6 +198,42 @@ const ExperiencePage: React.FC = () => {
     : experiences;
 
   const compBreakdownSnapshot = compBreakdownExp ? getCompensationSnapshot(compBreakdownExp) : null;
+
+  // Internship pay splits by role the same way full-time pay does.
+  const internshipParts = useMemo(
+    () =>
+      buildInternshipParts(
+        experiences
+          .filter((exp) => exp.employment_type === 'internship')
+          .flatMap((exp) => {
+            const snapshot = getCompensationSnapshot(exp);
+            if (snapshot?.kind !== 'hourly') return [];
+            return [
+              {
+                key: String(exp.id),
+                company: exp.company || 'Role',
+                roleTitle: exp.title || '',
+                regularPay: snapshot.regularPay,
+                overtimePay: snapshot.overtimePay,
+              },
+            ];
+          })
+      ),
+    [experiences, getCompensationSnapshot]
+  );
+
+  // Rates cannot be summed across years; what was actually earned in each one can.
+  const fullTimeEarnings = useMemo(
+    () =>
+      buildEarningsReport(
+        experiences.filter((exp) => exp.employment_type === 'full_time'),
+        getLinkedOffer,
+        getCompensationSnapshot,
+        dayjs().format('YYYY-MM-DD')
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [experiences, allOffers, getCompensationSnapshot]
+  );
   const {
     fullTimeCompSummary,
     internshipCompSnapshots,
@@ -433,8 +483,7 @@ const ExperiencePage: React.FC = () => {
           onClose={() => setOverallCompBreakdownOpen(false)}
           titleText="Overall Full-Time Pay Breakdown"
           contextLabel={`Across ${fullTimeCompSummary.trackedRoleCount} full-time role${fullTimeCompSummary.trackedRoleCount !== 1 ? 's' : ''}`}
-          totalLabel="Combined Annual Earnings"
-          totalHint="Sum of base salary, bonus, and equity across your tracked full-time roles."
+          overallEarnings={fullTimeEarnings}
           kind="salary"
           total={fullTimeCompSummary.total}
           base={fullTimeCompSummary.base}
@@ -466,6 +515,11 @@ const ExperiencePage: React.FC = () => {
               totalLabel="Combined Internship Earnings"
               totalHint="Sum of all tracked internship earnings across roles."
               kind="hourly"
+              overallInternship={{
+                parts: internshipParts,
+                roleCount: internshipCompSummary.trackedRoleCount,
+                hours: aggHours,
+              }}
               total={internshipCompSummary.total}
               regularPay={internshipCompSummary.regularPay}
               overtimePay={internshipCompSummary.overtimePay}

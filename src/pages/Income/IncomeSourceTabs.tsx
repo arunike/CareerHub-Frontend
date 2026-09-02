@@ -5,6 +5,8 @@ import SegmentedToggle from '../../components/SegmentedToggle';
 import { PageState } from '../../components/PageState';
 import BatchOverrideModal from './BatchOverrideModal';
 import IncomeSummary from './IncomeSummary';
+import { totalsToDate } from './effectiveRows';
+import { toIsoDate } from './paySchedule';
 import YearEarningsCard from './YearEarningsCard';
 import PaycheckWaterfall from './PaycheckWaterfall';
 import ReconciliationCards from './ReconciliationCards';
@@ -109,8 +111,7 @@ const IncomeSourceTabs = ({
       <>
         <IncomeSummary
           source={source}
-          totals={ledger.totals}
-          paidPeriodCount={ledger.rows.length}
+          totals={totalsToDate(effectiveRows, toIsoDate(new Date()))}
           paychecksPerYear={paychecksPerYear}
           stateAbbr={stateAbbr}
           stateLabel={stateLabel}

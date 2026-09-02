@@ -18,7 +18,7 @@ const addsUp = (breakdown: { steps: Parameters<typeof resolveMath>[0]; total: nu
 
 const YEAR = {
   gross: 274547.36,
-  supplementalGross: 34805.86,
+  supplementalGross: 24000,
   taxableAllowance: 1200,
   taxFreeAllowance: 450,
   taxWithheld: 85389.97,
@@ -251,5 +251,37 @@ describe('attribution by company', () => {
     const hsa = breakdown.steps.find((step) => step.label === 'HSA');
     // One company left is not an attribution, it is a repeat of the line.
     expect(hsa?.parts).toBeUndefined();
+  });
+});
+
+describe('the gross breakdown reconciles with a single role card', () => {
+  const role = (label: string, gross: number, supplemental: number, allowance: number) => ({
+    label,
+    parts: {
+      gross,
+      supplementalGross: supplemental,
+      taxableAllowance: allowance,
+    },
+  });
+
+  it('splits the total by role, not only the salary line', () => {
+    const roles = [role('Google', 134769.23, 24000, 0), role('Netflix', 60000, 5747.05, 425)];
+    const totals = {
+      gross: 194769.23,
+      supplementalGross: 24000,
+      taxableAllowance: 425,
+    };
+    const math = grossBreakdown(totals, roles);
+    expect(math.totalParts).toEqual([
+      { label: 'Google', value: 134769.23 },
+      { label: 'Netflix', value: 60000 },
+    ]);
+  });
+
+  it('names the salary line as base pay only, since it excludes bonus and equity', () => {
+    const math = grossBreakdown({ gross: 100, supplementalGross: 20, taxableAllowance: 0 });
+    const salary = math.steps.find((step) => step.label === 'Salary paid');
+    expect(salary?.value).toBe(80);
+    expect(salary?.note).toContain('bonus and equity');
   });
 });

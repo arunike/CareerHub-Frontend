@@ -43,6 +43,11 @@ export interface RoleEarnings extends Earnings {
   currentValue: number | null;
   // Landed paychecks only; the year's projection is the wrong thing to compare a balance to.
   contributedToDate: number;
+  // Pay actually received so far, split the way a role's breakdown shows it.
+  toDate: { gross: number; base: number; bonus: number; equity: number };
+  paychecksToDate: number;
+  // The whole year at these settings; every other figure here counts only what has been paid.
+  projectedGross: number;
 }
 
 // Each role is its own plan, so balances add up — unlike the limit, which follows the person.
@@ -116,38 +121,53 @@ const earningsFor = (
     source,
     taxYear,
   });
+  // Paid means issued: a paycheck dated in the future has not paid anything yet.
+  const landed = effectiveRows.filter((row) => row.payDate === null || row.payDate <= todayIso);
   // Recorded paychecks win over modelled ones, so the summary agrees with the ledger table.
-  const gross = effectiveRows.reduce((total, row) => total + row.gross, 0);
-  const taxWithheld = effectiveRows.reduce((total, row) => total + row.taxTotal, 0);
-  const takeHome = effectiveRows.reduce((total, row) => total + row.net, 0);
+  const gross = landed.reduce((total, row) => total + row.gross, 0);
+  const taxWithheld = landed.reduce((total, row) => total + row.taxTotal, 0);
+  const takeHome = landed.reduce((total, row) => total + row.net, 0);
   // The residual of the ledger's identity, so any set of deduction lines stays correct.
-  const deductions = effectiveRows.reduce(
+  const deductions = landed.reduce(
     (total, row) => total + (row.gross + row.taxFreeAllowance - row.taxTotal - row.net),
     0
   );
   // From the effective rows, so a recorded paycheck that deferred more moves this too.
-  const employee401k = effectiveRows.reduce(
-    (total, row) => total + row.pretax401k + row.roth401k,
-    0
-  );
-  const employerMatch = ledger.totals.employerMatch401k;
-  const sum = (pick: (row: (typeof effectiveRows)[number]) => number) =>
-    effectiveRows.reduce((total, row) => total + pick(row), 0);
+  const employee401k = landed.reduce((total, row) => total + row.pretax401k + row.roth401k, 0);
+  const employerMatch = landed.reduce((total, row) => total + row.employerMatch401k, 0);
+  const sum = (pick: (row: (typeof landed)[number]) => number) =>
+    landed.reduce((total, row) => total + pick(row), 0);
+  // The whole year at these settings, kept so a part-year figure can be read against it.
+  const projectedGross = effectiveRows.reduce((total, row) => total + row.gross, 0);
+
+  const landedPeriods = new Set(landed.map((row) => row.periodIndex));
+  const paid = (events: { periodIndex: number; amount: number }[]) =>
+    events
+      .filter((event) => landedPeriods.has(event.periodIndex))
+      .reduce((total, event) => total + event.amount, 0);
+  const grossToDate = landed.reduce((total, row) => total + row.gross, 0);
+  const bonusToDate = paid(bonusEvents);
+  const equityToDate = paid(vestEvents);
 
   return {
     sourceKey: source.key,
     company: source.company,
     roleTitle: source.roleTitle,
     paychecks: effectiveRows.length,
+    paychecksToDate: landed.length,
+    toDate: {
+      gross: grossToDate,
+      base: grossToDate - bonusToDate - equityToDate,
+      bonus: bonusToDate,
+      equity: equityToDate,
+    },
     startingBalance: settings.retirementStartingBalance,
     currentValue: settings.retirementCurrentValue,
-    contributedToDate: effectiveRows
-      // An undated row counts as landed; see summarizeRetirement.
-      .filter((row) => row.payDate === null || row.payDate <= todayIso)
-      .reduce((total, row) => total + row.pretax401k + row.roth401k + row.employerMatch401k, 0),
+    contributedToDate: employee401k + employerMatch,
+    projectedGross,
     gross,
-    bonus: bonusEvents.reduce((total, event) => total + event.amount, 0),
-    equityVested: vestEvents.reduce((total, event) => total + event.amount, 0),
+    bonus: bonusToDate,
+    equityVested: equityToDate,
     taxWithheld,
     deductions,
     takeHome,

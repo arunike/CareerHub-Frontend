@@ -20,6 +20,8 @@ export interface MathBreakdown {
   steps: MathStep[];
   totalLabel: string;
   total: number;
+  // The total split by payroll, so it can be checked against a single role's own card.
+  totalParts?: { label: string; value: number }[];
   footnote?: string;
 }
 
@@ -88,6 +90,7 @@ export const grossBreakdown = (
   steps: trim([
     {
       label: 'Salary paid',
+      note: 'Base pay only; bonus and equity are the next line.',
       value: salaryOf(parts),
       parts: attribute(salaryOf, sources),
     },
@@ -106,6 +109,7 @@ export const grossBreakdown = (
   ]),
   totalLabel: 'Gross pay',
   total: parts.gross,
+  totalParts: attribute((role) => role.gross, sources),
   footnote:
     'Payroll reports all of this as wages, which is why total comp adds only the employer match on top.',
 });

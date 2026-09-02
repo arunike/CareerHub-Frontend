@@ -1,6 +1,6 @@
 import { Select, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import type { LedgerTotals } from './tax/ledger';
+import type { totalsToDate } from './effectiveRows';
 import type { IncomeSource } from './incomeSources';
 import { formatPayDate } from './paySchedule';
 import { useMoney } from './amountPrivacy';
@@ -12,8 +12,8 @@ interface RoleOption {
 
 interface Props {
   source: IncomeSource | null;
-  totals: LedgerTotals;
-  paidPeriodCount: number;
+  // Paid so far, so this card agrees with the year card and the Experience breakdown.
+  totals: ReturnType<typeof totalsToDate>;
   paychecksPerYear: number;
   stateAbbr: string;
   stateLabel: string;
@@ -37,7 +37,6 @@ const Meta = ({ children }: { children: React.ReactNode }) => (
 export const IncomeSummary = ({
   source,
   totals,
-  paidPeriodCount,
   paychecksPerYear,
   stateAbbr,
   stateLabel,
@@ -49,6 +48,7 @@ export const IncomeSummary = ({
   const { money } = useMoney();
   const gross = Math.max(totals.gross, 1);
   const preTax = totals.section125 + totals.hsa + totals.pretax401k + totals.pretaxIncomeOnly;
+  const salary = totals.gross - totals.supplemental - totals.taxableAllowance;
   const shares = {
     net: totals.net / gross,
     tax: totals.taxTotal / gross,
@@ -88,6 +88,12 @@ export const IncomeSummary = ({
               </span>
               <span className="text-sm text-slate-500">of {money(totals.gross)} gross</span>
             </div>
+            {/* Gross is more than salary, so name the parts rather than leave them to be inferred. */}
+            <p className="mt-1.5 text-xs text-slate-500">
+              Gross = salary {money(salary)}
+              {totals.supplemental > 0 && ` + bonus and equity ${money(totals.supplemental)}`}
+              {totals.taxableAllowance > 0 && ` + allowances ${money(totals.taxableAllowance)}`}
+            </p>
           </div>
 
           <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
@@ -133,8 +139,8 @@ export const IncomeSummary = ({
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 bg-white px-6 py-3">
         <Meta>
-          <span className="font-medium text-slate-700">{paidPeriodCount}</span> of{' '}
-          {paychecksPerYear} paychecks
+          <span className="font-medium text-slate-700">{totals.count}</span> of {paychecksPerYear}{' '}
+          paychecks paid
         </Meta>
         {window ? <Meta>{window}</Meta> : null}
         <Meta>

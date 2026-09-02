@@ -5,6 +5,10 @@ import { type ExperienceCompensationSnapshot } from './compensation';
 import type { HourlyInputUpdate } from './compensationBreakdownFormat';
 import { SalaryBreakdown } from './SalaryBreakdown';
 import { HourlyBreakdown } from './HourlyBreakdown';
+import { OverallPayBreakdown } from './OverallPayBreakdown';
+import { OverallInternshipBreakdown } from './OverallInternshipBreakdown';
+import type { EarningsReport } from './earningsByYear';
+import type { PayPart } from './PayPartsPanel';
 
 type Props = ExperienceCompensationSnapshot & {
   open: boolean;
@@ -23,6 +27,9 @@ type Props = ExperienceCompensationSnapshot & {
   onSaveHourlyInputs?: (values: HourlyInputUpdate) => Promise<void>;
   openSchedulePhases?: () => void;
   hourlyDisplayMode?: 'standard' | 'aggregate';
+  // Replaces the single-role view with the combined one: parts of pay, roles inside each.
+  overallEarnings?: EarningsReport;
+  overallInternship?: { parts: PayPart[]; roleCount: number; hours: number };
 };
 
 const CompensationBreakdownModal: React.FC<Props> = ({
@@ -42,6 +49,8 @@ const CompensationBreakdownModal: React.FC<Props> = ({
   onSaveHourlyInputs,
   openSchedulePhases,
   hourlyDisplayMode,
+  overallEarnings,
+  overallInternship,
   ...snapshot
 }) => {
   const resolvedContextLabel = contextLabel ?? [roleTitle, companyName].filter(Boolean).join(' @ ');
@@ -67,12 +76,18 @@ const CompensationBreakdownModal: React.FC<Props> = ({
         </div>
       }
     >
-      {snapshot.kind === 'salary' ? (
+      {overallInternship ? (
+        <OverallInternshipBreakdown {...overallInternship} />
+      ) : overallEarnings ? (
+        <OverallPayBreakdown groups={overallEarnings.groups} skipped={overallEarnings.skipped} />
+      ) : snapshot.kind === 'salary' ? (
         <SalaryBreakdown
           total={snapshot.total}
           base={snapshot.base}
           bonus={snapshot.bonus}
           equity={snapshot.equity}
+          earningsYears={snapshot.earningsYears}
+          ledgerYears={snapshot.ledgerYears}
           totalLabel={totalLabel}
           totalHint={totalHint}
           onEdit={onEdit}

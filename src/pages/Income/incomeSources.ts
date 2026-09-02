@@ -1,5 +1,6 @@
 import { parseIsoDate } from './paySchedule';
 import type { EmployerContributions } from './tax/ledger';
+import type { RaiseEntry } from '../../types';
 
 export interface IncomeSource {
   key: string;
@@ -23,6 +24,8 @@ export interface IncomeSource {
   cliffMonths: number;
   vestsPerYear: number;
   vestingYears: number;
+  // Recorded pay changes, so a paycheck is grossed at the rate in force on its own date.
+  raises: RaiseEntry[];
   // False when a past role has no linked offer, so benefits and match are unknown.
   hasBenefitData: boolean;
 }
@@ -71,6 +74,11 @@ const annualizedHourly = (experience: Record<string, any>) => {
   return rate * hoursPerDay * daysPerWeek * 52;
 };
 
+const raisesOf = (offer: Record<string, any> | null): RaiseEntry[] => {
+  const history = offer?.raise_history;
+  return Array.isArray(history) ? (history as RaiseEntry[]) : [];
+};
+
 const vestingOf = (offer: Record<string, any> | null) => ({
   cliffMonths: offer ? num(offer.equity_cliff_months) || 12 : 12,
   vestsPerYear: offer ? num(offer.equity_vests_per_year) || 4 : 4,
@@ -112,6 +120,7 @@ export const buildIncomeSources = (
       ...spreadPremiums(premiumsOf(offer)),
       employer: employerOf(offer),
       ...vestingOf(offer),
+      raises: raisesOf(offer),
       hasBenefitData: Boolean(offer),
     };
   });
@@ -137,6 +146,7 @@ export const buildIncomeSources = (
         ...spreadPremiums(premiumsOf(offer)),
         employer: employerOf(offer),
         ...vestingOf(offer),
+        raises: raisesOf(offer),
         hasBenefitData: true,
       };
     });

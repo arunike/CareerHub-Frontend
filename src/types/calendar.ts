@@ -12,7 +12,16 @@ export interface TeamEntry {
 export interface RaiseEntry {
   id: string;
   date: string;
-  type: 'merit' | 'cola' | 'market' | 'retention' | 'other';
+  type:
+    | 'promotion'
+    | 'merit'
+    | 'market'
+    | 'cola'
+    | 'retention'
+    | 'equity_refresh'
+    | 'role_change'
+    | 'correction'
+    | 'other';
   label?: string;
   base_before: number;
   base_after: number;

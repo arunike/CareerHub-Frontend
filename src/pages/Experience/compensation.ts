@@ -1,10 +1,19 @@
 import dayjs, { type Dayjs } from 'dayjs';
-import type { Experience } from '../../types';
+import type { Experience, RaiseEntry } from '../../types';
+import {
+  currentPackage,
+  earningsForYear,
+  employmentWindow,
+  yearsCovered,
+} from '../Income/raiseSchedule';
+import type { YearEarnings } from '../Income/raiseSchedule';
+import type { LedgerYear } from '../Income/useLedgerEarnings';
 
 interface LinkedOfferCompLike {
   base_salary?: number | string | null;
   bonus?: number | string | null;
   equity?: number | string | null;
+  raise_history?: RaiseEntry[] | null;
 }
 
 export interface SalaryCompensationSnapshot {
@@ -13,6 +22,10 @@ export interface SalaryCompensationSnapshot {
   bonus: number;
   equity: number;
   total: number;
+  // What the role paid in each year it ran, split into one stretch per rate.
+  earningsYears?: YearEarnings[];
+  // The Income tab's ledger for this role, which counts real paychecks and wins where present.
+  ledgerYears?: LedgerYear[];
 }
 
 export interface HourlyCompensationSnapshot {
@@ -209,6 +222,16 @@ export const buildHourlyCompensationSnapshot = ({
   };
 };
 
+// The offer wins where it has a figure, but a blank offer must not erase the role's own pay.
+export const storedPackageOf = (
+  exp: { base_salary?: unknown; bonus?: unknown; equity?: unknown },
+  offer?: LinkedOfferCompLike | null
+) => ({
+  base: toNumber(offer?.base_salary) || toNumber(exp.base_salary),
+  bonus: toNumber(offer?.bonus) || toNumber(exp.bonus),
+  equity: toNumber(offer?.equity) || toNumber(exp.equity),
+});
+
 export const getExperienceCompensationSnapshot = (
   exp: Experience,
   linkedOffer?: LinkedOfferCompLike
@@ -300,9 +323,24 @@ export const getExperienceCompensationSnapshot = (
     });
   }
 
-  const base = linkedOffer ? toNumber(linkedOffer.base_salary) : toNumber(exp.base_salary);
-  const bonus = linkedOffer ? toNumber(linkedOffer.bonus) : toNumber(exp.bonus);
-  const equity = linkedOffer ? toNumber(linkedOffer.equity) : toNumber(exp.equity);
+  const stored = storedPackageOf(exp, linkedOffer);
+  // A raise writes only to raise_history, so the role's own figures are the pay before it.
+  const raises = linkedOffer?.raise_history ?? [];
+  const { base, bonus, equity } = currentPackage(raises, stored);
+  const todayIso = dayjs().format('YYYY-MM-DD');
+  const finish = exp.is_current ? todayIso : (exp.end_date ?? todayIso);
+  // Without a start date there is no window to weight over, so the card falls back to the rate.
+  const earningsYears = (exp.start_date ? yearsCovered(exp.start_date, finish, todayIso) : [])
+    .map((year) =>
+      earningsForYear(
+        raises,
+        stored,
+        employmentWindow(year, exp.start_date, exp.is_current ? null : exp.end_date, todayIso),
+        year
+      )
+    )
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null && entry.total > 0)
+    .sort((a, b) => b.year - a.year);
   const hasCompData = [
     linkedOffer?.base_salary,
     linkedOffer?.bonus,
@@ -319,6 +357,7 @@ export const getExperienceCompensationSnapshot = (
         bonus,
         equity,
         total: base + bonus + equity,
+        ...(earningsYears.length > 0 ? { earningsYears } : {}),
       }
     : null;
 };

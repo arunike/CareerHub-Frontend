@@ -1,4 +1,5 @@
 import { DollarOutlined, RightOutlined, TeamOutlined } from '@ant-design/icons';
+import { payYearsOf, payYearsTotal } from './payYears';
 import type { ExperienceCompensationSnapshot } from './compensation';
 import type { RoleDateLabel } from './roleTimeline';
 
@@ -38,6 +39,7 @@ const RoleMetaRow = ({
   const isInternship = employmentType === 'internship';
   const hourly = comp?.kind === 'hourly' ? comp : null;
   const salary = comp?.kind === 'salary' ? comp : null;
+  const payYears = payYearsOf(salary?.ledgerYears, salary?.earningsYears);
 
   const earnings = (total: number, title: string, maximumFractionDigits = 0) => (
     <button
@@ -52,6 +54,25 @@ const RoleMetaRow = ({
         <span className="truncate">{money(total, maximumFractionDigits)} total earnings</span>
       </span>
       {/* antd's .anticon sets display unlayered, so Tailwind can only hide a wrapper. */}
+      <span className="shrink-0 text-[9px] text-emerald-600/70 sm:hidden">
+        <RightOutlined />
+      </span>
+    </button>
+  );
+
+  // Without a start date there is no period to total, so the package rate is labelled as one.
+  const rate = (total: number) => (
+    <button
+      type="button"
+      onClick={onOpenBreakdown}
+      title="View pay structure breakdown"
+      aria-label={`View pay structure breakdown for ${describedRole}`}
+      className={MONEY_PILL}
+    >
+      <span className="flex min-w-0 items-center gap-1.5">
+        <DollarOutlined className="shrink-0 text-emerald-500" style={{ fontSize: 11 }} />
+        <span className="truncate">{money(total)} a year</span>
+      </span>
       <span className="shrink-0 text-[9px] text-emerald-600/70 sm:hidden">
         <RightOutlined />
       </span>
@@ -101,7 +122,12 @@ const RoleMetaRow = ({
       )}
 
       {!isInternship && salary && employmentType === 'full_time' && (
-        <div className="flex min-w-0">{earnings(salary.total, 'View pay structure breakdown')}</div>
+        <div className="flex min-w-0">
+          {/* Earned across the whole stint where the dates allow it, not the current annual rate. */}
+          {payYears.length
+            ? earnings(payYearsTotal(payYears), 'View pay structure breakdown')
+            : rate(salary.total)}
+        </div>
       )}
 
       {!isInternship && salary && employmentType !== 'full_time' && (

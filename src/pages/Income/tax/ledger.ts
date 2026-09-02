@@ -125,6 +125,8 @@ export interface LedgerInput {
   // Which paycheck each allowance lands on; monthly means once a month, not a flat rate.
   allowanceByPeriod?: Record<number, { taxable: number; taxFree: number }>;
   annualSalary: number;
+  // Per-period gross where a recorded raise put the pay somewhere other than annualSalary.
+  salaryPerPeriodByIndex?: Record<number, number>;
   incomeEvents: IncomeEvent[];
   elections: Elections;
   employer: EmployerContributions;
@@ -213,6 +215,7 @@ export const buildLedger = (input: LedgerInput): Ledger => {
   const {
     filingStatus,
     periodsPerYear,
+    salaryPerPeriodByIndex,
     periods,
     periodOverrides,
     allowanceByPeriod,
@@ -274,9 +277,12 @@ export const buildLedger = (input: LedgerInput): Ledger => {
         scheduledAllowance?.taxFree ??
         elections.taxFreeAllowancePerPeriod);
 
+    // A manual override still wins; the raise schedule only moves the default rate.
+    const scheduledSalary = salaryPerPeriodByIndex?.[periodIndex] ?? salaryPerPeriod;
+
     // Taxable allowances are wages; an off-cycle payment withholds supplemental only.
     const regularGross =
-      recurringForPay * (override?.regularGross ?? salaryPerPeriod) + taxableAllowance;
+      recurringForPay * (override?.regularGross ?? scheduledSalary) + taxableAllowance;
     const supplementalGross = sumBy(events, (event) => event.amount);
     const gross = regularGross + supplementalGross;
 

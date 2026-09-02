@@ -123,15 +123,36 @@ const RaiseHistoryModal: React.FC<Props> = ({
   const setF = (key: keyof Omit<RaiseEntry, 'id'>, val: unknown) =>
     setForm((f) => ({ ...f, [key]: val }));
 
-  const beforeInput = (key: keyof Omit<RaiseEntry, 'id'>, label: string) => (
+  // One row per figure, so the two columns cannot drift as the After side grows a toggle or a hint.
+  const metricRow = (
+    label: string,
+    before: number,
+    modes: React.ReactNode,
+    after: React.ReactNode,
+    hint?: React.ReactNode
+  ) => (
     <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      <UnitNumberInput
-        unit="$"
-        min={0}
-        value={(form[key] as number) || null}
-        onChange={(value) => setF(key, value ?? 0)}
-      />
+      <div className="mb-1.5 flex min-h-11 items-center justify-between gap-2 sm:min-h-8">
+        <label className="text-xs text-gray-500">{label}</label>
+        {modes}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <span className="mb-1 block text-[11px] uppercase tracking-wide text-gray-400 sm:hidden">
+            Before
+          </span>
+          <div className="flex h-[38px] items-center rounded-[9px] border border-dashed border-slate-200 bg-slate-100 px-3 text-sm text-slate-500">
+            {before > 0 ? fmt(before) : '—'}
+          </div>
+        </div>
+        <div>
+          <span className="mb-1 block text-[11px] uppercase tracking-wide text-gray-400 sm:hidden">
+            After
+          </span>
+          {after}
+          {hint}
+        </div>
+      </div>
     </div>
   );
 
@@ -168,139 +189,129 @@ const RaiseHistoryModal: React.FC<Props> = ({
     }
   };
 
-  const baseAfterInput = () => {
+  const baseRow = () => {
     const mode = afterModes.base;
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-xs text-gray-500">Base Salary</label>
-          <div className="flex items-center gap-0.5">
-            <ModeBtn active={mode === '$'} onClick={() => switchBaseMode('$')}>
-              $
-            </ModeBtn>
-            <ModeBtn active={mode === '%change'} onClick={() => switchBaseMode('%change')}>
-              %Δ
-            </ModeBtn>
-          </div>
-        </div>
-        {mode === '$' ? (
-          <UnitNumberInput
-            unit="$"
-            min={0}
-            value={form.base_after || null}
-            onChange={(value) => setF('base_after', value ?? 0)}
-          />
-        ) : (
-          <UnitNumberInput
-            unit="%"
-            value={pctInputs.base === '' ? null : Number(pctInputs.base)}
-            onChange={(value) => {
-              setPctInputs((pi) => ({ ...pi, base: value == null ? '' : String(value) }));
-              if (value != null)
-                setF('base_after', Math.round(form.base_before * (1 + value / 100)));
-            }}
-            placeholder="e.g. 4.2"
-          />
-        )}
-        {mode === '%change' && form.base_after > 0 && (
-          <div className="text-xs text-gray-400 mt-0.5">{fmt(form.base_after)}</div>
-        )}
-      </div>
+    return metricRow(
+      'Base Salary',
+      form.base_before,
+      <div className="flex items-center gap-0.5">
+        <ModeBtn active={mode === '$'} onClick={() => switchBaseMode('$')}>
+          $
+        </ModeBtn>
+        <ModeBtn active={mode === '%change'} onClick={() => switchBaseMode('%change')}>
+          %Δ
+        </ModeBtn>
+      </div>,
+      mode === '$' ? (
+        <UnitNumberInput
+          unit="$"
+          min={0}
+          value={form.base_after || null}
+          onChange={(value) => setF('base_after', value ?? 0)}
+        />
+      ) : (
+        <UnitNumberInput
+          unit="%"
+          value={pctInputs.base === '' ? null : Number(pctInputs.base)}
+          onChange={(value) => {
+            setPctInputs((pi) => ({ ...pi, base: value == null ? '' : String(value) }));
+            if (value != null) setF('base_after', Math.round(form.base_before * (1 + value / 100)));
+          }}
+          placeholder="e.g. 4.2"
+        />
+      ),
+      mode === '%change' && form.base_after > 0 ? (
+        <div className="mt-0.5 text-xs text-gray-400">{fmt(form.base_after)}</div>
+      ) : null
     );
   };
 
-  const bonusAfterInput = () => {
+  const bonusRow = () => {
     const mode = afterModes.bonus;
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-xs text-gray-500">Annual Bonus</label>
-          <div className="flex items-center gap-0.5">
-            <ModeBtn active={mode === '$'} onClick={() => switchBonusMode('$')}>
-              $
-            </ModeBtn>
-            <ModeBtn active={mode === '%change'} onClick={() => switchBonusMode('%change')}>
-              %Δ
-            </ModeBtn>
-            <ModeBtn active={mode === '%ofbase'} onClick={() => switchBonusMode('%ofbase')}>
-              % of Base
-            </ModeBtn>
-          </div>
-        </div>
-        {mode === '$' ? (
-          <UnitNumberInput
-            unit="$"
-            min={0}
-            value={form.bonus_after || null}
-            onChange={(value) => setF('bonus_after', value ?? 0)}
-          />
-        ) : (
-          <UnitNumberInput
-            unit="%"
-            value={pctInputs.bonus === '' ? null : Number(pctInputs.bonus)}
-            onChange={(value) => {
-              setPctInputs((pi) => ({ ...pi, bonus: value == null ? '' : String(value) }));
-              if (value != null) {
-                if (mode === '%change') {
-                  setF('bonus_after', Math.round(form.bonus_before * (1 + value / 100)));
-                } else {
-                  setF('bonus_after', Math.round((form.base_after * value) / 100));
-                }
+    return metricRow(
+      'Annual Bonus',
+      form.bonus_before,
+      <div className="flex items-center gap-0.5">
+        <ModeBtn active={mode === '$'} onClick={() => switchBonusMode('$')}>
+          $
+        </ModeBtn>
+        <ModeBtn active={mode === '%change'} onClick={() => switchBonusMode('%change')}>
+          %Δ
+        </ModeBtn>
+        <ModeBtn active={mode === '%ofbase'} onClick={() => switchBonusMode('%ofbase')}>
+          % of Base
+        </ModeBtn>
+      </div>,
+      mode === '$' ? (
+        <UnitNumberInput
+          unit="$"
+          min={0}
+          value={form.bonus_after || null}
+          onChange={(value) => setF('bonus_after', value ?? 0)}
+        />
+      ) : (
+        <UnitNumberInput
+          unit="%"
+          value={pctInputs.bonus === '' ? null : Number(pctInputs.bonus)}
+          onChange={(value) => {
+            setPctInputs((pi) => ({ ...pi, bonus: value == null ? '' : String(value) }));
+            if (value != null) {
+              if (mode === '%change') {
+                setF('bonus_after', Math.round(form.bonus_before * (1 + value / 100)));
+              } else {
+                setF('bonus_after', Math.round((form.base_after * value) / 100));
               }
-            }}
-            placeholder={mode === '%ofbase' ? 'e.g. 20' : 'e.g. 5'}
-          />
-        )}
-        {mode !== '$' && form.bonus_after > 0 && (
-          <div className="text-xs text-gray-400 mt-0.5">
-            {fmt(form.bonus_after)}
-            {mode === '%ofbase' && form.base_after > 0 && (
-              <span className="ml-1 text-blue-400">of {fmt(form.base_after)} base</span>
-            )}
-          </div>
-        )}
-      </div>
+            }
+          }}
+          placeholder={mode === '%ofbase' ? 'e.g. 20' : 'e.g. 5'}
+        />
+      ),
+      mode !== '$' && form.bonus_after > 0 ? (
+        <div className="mt-0.5 text-xs text-gray-400">
+          {fmt(form.bonus_after)}
+          {mode === '%ofbase' && form.base_after > 0 && (
+            <span className="ml-1 text-blue-400">of {fmt(form.base_after)} base</span>
+          )}
+        </div>
+      ) : null
     );
   };
 
-  const equityAfterInput = () => {
+  const equityRow = () => {
     const mode = afterModes.equity;
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-xs text-gray-500">Annual RSU</label>
-          <div className="flex items-center gap-0.5">
-            <ModeBtn active={mode === '$'} onClick={() => switchEquityMode('$')}>
-              $
-            </ModeBtn>
-            <ModeBtn active={mode === '%change'} onClick={() => switchEquityMode('%change')}>
-              %Δ
-            </ModeBtn>
-          </div>
-        </div>
-        {mode === '$' ? (
-          <UnitNumberInput
-            unit="$"
-            min={0}
-            value={form.equity_after || null}
-            onChange={(value) => setF('equity_after', value ?? 0)}
-          />
-        ) : (
-          <UnitNumberInput
-            unit="%"
-            value={pctInputs.equity === '' ? null : Number(pctInputs.equity)}
-            onChange={(value) => {
-              setPctInputs((pi) => ({ ...pi, equity: value == null ? '' : String(value) }));
-              if (value != null)
-                setF('equity_after', Math.round(form.equity_before * (1 + value / 100)));
-            }}
-            placeholder="e.g. 4.2"
-          />
-        )}
-        {mode === '%change' && form.equity_after > 0 && (
-          <div className="text-xs text-gray-400 mt-0.5">{fmt(form.equity_after)}</div>
-        )}
-      </div>
+    return metricRow(
+      'Annual RSU',
+      form.equity_before,
+      <div className="flex items-center gap-0.5">
+        <ModeBtn active={mode === '$'} onClick={() => switchEquityMode('$')}>
+          $
+        </ModeBtn>
+        <ModeBtn active={mode === '%change'} onClick={() => switchEquityMode('%change')}>
+          %Δ
+        </ModeBtn>
+      </div>,
+      mode === '$' ? (
+        <UnitNumberInput
+          unit="$"
+          min={0}
+          value={form.equity_after || null}
+          onChange={(value) => setF('equity_after', value ?? 0)}
+        />
+      ) : (
+        <UnitNumberInput
+          unit="%"
+          value={pctInputs.equity === '' ? null : Number(pctInputs.equity)}
+          onChange={(value) => {
+            setPctInputs((pi) => ({ ...pi, equity: value == null ? '' : String(value) }));
+            if (value != null)
+              setF('equity_after', Math.round(form.equity_before * (1 + value / 100)));
+          }}
+          placeholder="e.g. 4.2"
+        />
+      ),
+      mode === '%change' && form.equity_after > 0 ? (
+        <div className="mt-0.5 text-xs text-gray-400">{fmt(form.equity_after)}</div>
+      ) : null
     );
   };
 
@@ -354,6 +365,17 @@ const RaiseHistoryModal: React.FC<Props> = ({
                 value={form.type}
                 onChange={(v) => setF('type', v)}
                 options={RAISE_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                // The closed control shows the label alone; the list explains what each one means.
+                optionRender={(option) => {
+                  const type = RAISE_TYPES.find((t) => t.value === option.value);
+                  return (
+                    <div className="py-0.5">
+                      <div className="text-sm text-gray-800">{type?.label}</div>
+                      <div className="text-xs leading-snug text-gray-400">{type?.hint}</div>
+                    </div>
+                  );
+                }}
+                popupMatchSelectWidth={320}
               />
             </div>
             <div>
@@ -366,24 +388,19 @@ const RaiseHistoryModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Before / After grid */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-3">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          {/* Before is what this role already pays, so it is shown, not asked for. */}
+          <div className="space-y-3">
+            <div className="hidden gap-3 sm:grid sm:grid-cols-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Before
               </div>
-              {beforeInput('base_before', 'Base Salary')}
-              {beforeInput('bonus_before', 'Annual Bonus')}
-              {beforeInput('equity_before', 'Annual RSU')}
-            </div>
-            <div className="space-y-3">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 After
               </div>
-              {baseAfterInput()}
-              {bonusAfterInput()}
-              {equityAfterInput()}
             </div>
+            {baseRow()}
+            {bonusRow()}
+            {equityRow()}
           </div>
 
           {/* Notes */}

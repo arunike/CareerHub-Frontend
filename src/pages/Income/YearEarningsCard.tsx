@@ -319,6 +319,10 @@ export const YearEarningsCard = ({
   onSelectYear,
 }: Props) => {
   const { money } = useMoney();
+  const allPaychecks = summary.roles.reduce((total, role) => total + role.paychecks, 0);
+  const paidPaychecks = summary.roles.reduce((total, role) => total + role.paychecksToDate, 0);
+  // Every figure on this card is money already paid; this is what the year comes to in full.
+  const projectedGross = summary.roles.reduce((total, role) => total + role.projectedGross, 0);
   const [collapsed, setCollapsed] = usePersistedState<boolean>(
     'careerhub.income.yearSummaryCollapsed',
     false
@@ -359,7 +363,9 @@ export const YearEarningsCard = ({
           </div>
           <span className="text-xs text-slate-500">
             {summary.roles.length === 1 ? '1 role' : `${summary.roles.length} roles`} ·{' '}
-            {summary.roles.reduce((total, role) => total + role.paychecks, 0)} paychecks
+            {paidPaychecks === allPaychecks
+              ? `${allPaychecks} paychecks`
+              : `${paidPaychecks} of ${allPaychecks} paychecks paid`}
           </span>
         </button>
 
@@ -369,6 +375,11 @@ export const YearEarningsCard = ({
               label="Gross"
               value={summary.gross}
               breakdown={grossBreakdown(summary, sources)}
+              hint={
+                projectedGross > summary.gross
+                  ? `Paid so far. The full year at these settings comes to ${money(projectedGross)}.`
+                  : undefined
+              }
             />
             <Figure
               label="Tax withheld"

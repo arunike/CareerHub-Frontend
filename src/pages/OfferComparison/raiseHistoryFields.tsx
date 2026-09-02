@@ -2,12 +2,61 @@ import React from 'react';
 import dayjs from 'dayjs';
 import type { RaiseEntry } from '../../types';
 
-export const RAISE_TYPES: { value: RaiseEntry['type']; label: string; color: string }[] = [
-  { value: 'merit', label: 'Merit', color: 'blue' },
-  { value: 'cola', label: 'COLA', color: 'cyan' },
-  { value: 'market', label: 'Market Adjustment', color: 'purple' },
-  { value: 'retention', label: 'Retention', color: 'orange' },
-  { value: 'other', label: 'Other', color: 'default' },
+export const RAISE_TYPES: {
+  value: RaiseEntry['type'];
+  label: string;
+  hint: string;
+  color: string;
+}[] = [
+  {
+    value: 'promotion',
+    label: 'Promotion',
+    hint: 'Moved up a level or into a bigger role',
+    color: 'green',
+  },
+  {
+    value: 'merit',
+    label: 'Merit increase',
+    hint: 'Annual review, based on performance',
+    color: 'blue',
+  },
+  {
+    value: 'market',
+    label: 'Market adjustment',
+    hint: 'Realigned to what the role now pays elsewhere',
+    color: 'purple',
+  },
+  {
+    value: 'cola',
+    label: 'Cost of living',
+    hint: 'Keeps up with inflation, not performance',
+    color: 'cyan',
+  },
+  {
+    value: 'retention',
+    label: 'Retention offer',
+    hint: 'Raised to keep you from leaving, often against an outside offer',
+    color: 'orange',
+  },
+  {
+    value: 'equity_refresh',
+    label: 'Equity refresh',
+    hint: 'A new grant on top of the original one',
+    color: 'geekblue',
+  },
+  {
+    value: 'role_change',
+    label: 'Role change',
+    hint: 'Lateral move, transfer or a change in scope',
+    color: 'magenta',
+  },
+  {
+    value: 'correction',
+    label: 'Pay correction',
+    hint: 'Fixes a pay gap or a payroll error rather than rewarding anything',
+    color: 'gold',
+  },
+  { value: 'other', label: 'Other', hint: 'Anything the list does not cover', color: 'default' },
 ];
 
 export type BaseEquityMode = '$' | '%change';

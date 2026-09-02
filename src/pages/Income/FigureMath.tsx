@@ -89,6 +89,16 @@ const FigureMath = ({
                       {money(math.total)}
                     </td>
                   </tr>
+                  {/* The same figure each role's own card shows, so the two can be checked. */}
+                  {(math.totalParts ?? []).map((part) => (
+                    <tr key={`total-${part.label}`} className="align-baseline">
+                      <td />
+                      <td className="pb-0.5 pl-3 pr-3 text-[11px] text-slate-500">{part.label}</td>
+                      <td className="pb-0.5 text-right text-[11px] tabular-nums text-slate-500">
+                        {money(part.value)}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               {math.footnote ? (

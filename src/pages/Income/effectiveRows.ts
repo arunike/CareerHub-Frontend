@@ -201,3 +201,27 @@ export const effectiveTotals = (rows: EffectiveRow[]) => ({
   net: rows.reduce((total, row) => total + row.net, 0),
   recordedCount: rows.filter((row) => row.actualFields.length > 0).length,
 });
+
+// Only the paychecks already issued; a row with no date is treated as landed.
+export const rowsToDate = (rows: EffectiveRow[], todayIso: string) =>
+  rows.filter((row) => row.payDate === null || row.payDate <= todayIso);
+
+// The shares the summary card draws, counted over the paychecks that have actually been paid.
+export const totalsToDate = (rows: EffectiveRow[], todayIso: string) => {
+  const landed = rowsToDate(rows, todayIso);
+  const sum = (pick: (row: EffectiveRow) => number) =>
+    landed.reduce((total, row) => total + pick(row), 0);
+  return {
+    count: landed.length,
+    gross: sum((row) => row.gross),
+    taxTotal: sum((row) => row.taxTotal),
+    net: sum((row) => row.net),
+    section125: sum((row) => row.section125),
+    hsa: sum((row) => row.hsa),
+    pretax401k: sum((row) => row.pretax401k),
+    pretaxIncomeOnly: sum((row) => row.pretaxIncomeOnly),
+    postTax: sum((row) => row.postTax),
+    supplemental: sum((row) => row.supplementalGross),
+    taxableAllowance: sum((row) => row.taxableAllowance),
+  };
+};
