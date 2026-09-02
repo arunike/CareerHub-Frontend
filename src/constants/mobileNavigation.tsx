@@ -1,52 +1,11 @@
-import {
-  CalendarOutlined,
-  CheckSquareOutlined,
-  DashboardOutlined,
-  DollarOutlined,
-  FileTextOutlined,
-  LineChartOutlined,
-  RobotOutlined,
-  ScheduleOutlined,
-  SolutionOutlined,
-  TrophyOutlined,
-  TeamOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons';
+import { ThunderboltOutlined } from '@ant-design/icons';
+import { NAV_REGISTRY } from './navigationItems';
 
 export const MOBILE_SMART_SLOT_KEY = '__smart__';
 export const MOBILE_NAVIGATION_RECENT_STORAGE_KEY = 'careerhub.mobileNav.recent.v1';
 
-export const MOBILE_NAVIGATION_ITEMS = [
-  { key: '/', label: 'Availability', shortLabel: 'Home', icon: DashboardOutlined },
-  { key: '/events', label: 'Events', shortLabel: 'Events', icon: CalendarOutlined },
-  { key: '/holidays', label: 'Holidays', shortLabel: 'Days', icon: ScheduleOutlined },
-  { key: '/applications', label: 'Applications', shortLabel: 'Apps', icon: SolutionOutlined },
-  { key: '/offers', label: 'Offers', shortLabel: 'Offers', icon: DollarOutlined },
-  { key: '/documents', label: 'Documents', shortLabel: 'Docs', icon: FileTextOutlined },
-  { key: '/tasks', label: 'Action Items', shortLabel: 'Tasks', icon: CheckSquareOutlined },
-  { key: '/experience', label: 'Experience', shortLabel: 'Career', icon: TrophyOutlined },
-  { key: '/contacts', label: 'Contacts', shortLabel: 'People', icon: TeamOutlined },
-  { key: '/jd-reports', label: 'JD Reports', shortLabel: 'Reports', icon: RobotOutlined },
-  {
-    key: '/ai-tools?tab=cover-letters',
-    label: 'Cover Letters',
-    shortLabel: 'Letters',
-    icon: RobotOutlined,
-  },
-  {
-    key: '/ai-tools?tab=negotiation-results',
-    label: 'Negotiation Results',
-    shortLabel: 'Advice',
-    icon: RobotOutlined,
-  },
-  {
-    key: '/ai-tools?tab=promotion-reviews',
-    label: 'Promotion Reviews',
-    shortLabel: 'Reviews',
-    icon: RobotOutlined,
-  },
-  { key: '/analytics', label: 'Analytics', shortLabel: 'Stats', icon: LineChartOutlined },
-] as const;
+// Derived, not restated: a tab added to NAV_REGISTRY is pinnable the moment it exists.
+export const MOBILE_NAVIGATION_ITEMS = NAV_REGISTRY;
 
 export const DEFAULT_MOBILE_TOOLBAR_KEYS = ['/', '/applications', '/offers', '/analytics'] as const;
 

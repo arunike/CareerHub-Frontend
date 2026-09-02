@@ -61,6 +61,7 @@ const SortableToolbarSlot = ({ slot, index }: { slot: MobileToolbarSlot; index: 
   );
 };
 
+// More occupies a slot of its own, so four pins fill the bar's five columns.
 const MAX_PINNED = 4;
 
 const NAME_MAX_LENGTH = 40;
@@ -400,32 +401,36 @@ const NavigationSettings = ({
             {pinnedCount}/{MAX_PINNED} pinned
           </span>
         </div>
-        <div className="grid grid-cols-5 gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleToolbarDragEnd}
+        {/* DndContext wraps the grid: its screen-reader nodes would otherwise take up cells. */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleToolbarDragEnd}
+        >
+          <div
+            className="grid gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm"
+            style={{ gridTemplateColumns: `repeat(${MAX_PINNED + 1}, minmax(0, 1fr))` }}
           >
             <SortableContext items={pinnedKeys} strategy={horizontalListSortingStrategy}>
               {previewSlots.map((slot, index) => (
                 <SortableToolbarSlot key={slot.slotKey} slot={slot} index={index} />
               ))}
             </SortableContext>
-          </DndContext>
-          {Array.from({ length: MAX_PINNED - previewSlots.length }).map((_, index) => (
-            <div
-              key={`empty-${index}`}
-              className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 px-1 text-[10px] font-semibold text-slate-400"
-            >
-              <span className="text-slate-300">+</span>
-              <span>Empty</span>
+            {Array.from({ length: MAX_PINNED - previewSlots.length }).map((_, index) => (
+              <div
+                key={`empty-${index}`}
+                className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 px-1 text-[10px] font-semibold text-slate-400"
+              >
+                <span className="text-slate-300">+</span>
+                <span>Empty</span>
+              </div>
+            ))}
+            <div className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-slate-900 px-1 text-[10px] font-semibold text-white">
+              <AppstoreOutlined className="text-base" />
+              <span>More</span>
             </div>
-          ))}
-          <div className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl bg-slate-900 px-1 text-[10px] font-semibold text-white">
-            <AppstoreOutlined className="text-base" />
-            <span>More</span>
           </div>
-        </div>
+        </DndContext>
         {pinnedKeys.includes(MOBILE_SMART_SLOT_KEY) && (
           <p className="mt-2 text-[11px] text-slate-500">
             The Smart Slot adapts to context and recent use.

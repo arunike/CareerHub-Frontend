@@ -57,3 +57,35 @@ describe('NAV_GROUPS', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 });
+
+describe('a tab added after the order was saved', () => {
+  const items = [{ key: 'a' }, { key: 'new' }, { key: 'b' }, { key: 'c' }];
+
+  it('lands in its built-in position, not at the end', () => {
+    // The saved order predates 'new', so it only names the three that existed.
+    expect(applyNavOrder(items, ['a', 'b', 'c']).map((i) => i.key)).toEqual(['a', 'new', 'b', 'c']);
+  });
+
+  it('follows its built-in predecessor even when the saved order moved things about', () => {
+    expect(applyNavOrder(items, ['c', 'b', 'a']).map((i) => i.key)).toEqual(['c', 'b', 'a', 'new']);
+  });
+
+  it('goes first when it has no predecessor left', () => {
+    const leading = [{ key: 'new' }, { key: 'a' }, { key: 'b' }];
+    expect(applyNavOrder(leading, ['a', 'b']).map((i) => i.key)).toEqual(['new', 'a', 'b']);
+  });
+
+  it('keeps two new tabs in their built-in sequence', () => {
+    const two = [{ key: 'a' }, { key: 'n1' }, { key: 'n2' }, { key: 'b' }];
+    expect(applyNavOrder(two, ['a', 'b']).map((i) => i.key)).toEqual(['a', 'n1', 'n2', 'b']);
+  });
+
+  it('still honours a saved order that names everything', () => {
+    expect(applyNavOrder(items, ['c', 'new', 'b', 'a']).map((i) => i.key)).toEqual([
+      'c',
+      'new',
+      'b',
+      'a',
+    ]);
+  });
+});
