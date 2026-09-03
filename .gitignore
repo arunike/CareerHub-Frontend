@@ -28,5 +28,3 @@ dist-ssr
 docs/
 PRODUCT.md
 .impeccable/
-# Real employer names for the leak check; must never be committed.
-.private-denylist
