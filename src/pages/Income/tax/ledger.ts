@@ -260,7 +260,8 @@ export const buildLedger = (input: LedgerInput): Ledger => {
     const periodIndex = period.periodIndex;
     const events = incomeEvents.filter((event) => event.periodIndex === periodIndex);
     const override = periodOverrides?.[periodIndex];
-    const recurringForPay = period.isOffCycle ? 0 : 1;
+    // A part-worked period pays its share; a whole one has no coverage recorded and pays in full.
+    const recurringForPay = period.isOffCycle ? 0 : (period.coverage ?? 1);
     const recurring = recurringForPay;
     const notes: string[] = [];
 

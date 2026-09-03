@@ -230,3 +230,49 @@ export const totalEarned = (years: YearEarnings[]) =>
       Math.round(year.byComponent.equity),
     0
   );
+
+export interface BackPay {
+  raiseId: string;
+  effectiveFrom: string;
+  paidFrom: string;
+  days: number;
+  daysInYear: number;
+  baseBefore: number;
+  baseAfter: number;
+  annualDifference: number;
+  amount: number;
+}
+
+// A raise announced after it took effect leaves the paychecks in between short by the difference.
+export const backPayFor = (raises: RaiseEntry[]): BackPay[] => {
+  const owed: BackPay[] = [];
+  for (const raise of dated(raises)) {
+    const effective = raise.effective_date;
+    if (!effective || effective >= raise.date) continue;
+
+    // Base only: a bonus settles at payout on the new rate, so prorating it would pay it twice.
+    const baseBefore = num(raise.base_before);
+    const baseAfter = num(raise.base_after);
+    const annualDifference = baseAfter - baseBefore;
+    if (annualDifference <= 0) continue;
+
+    // Whole days from the effective date up to the day before payroll caught up.
+    const days = epochDay(raise.date) - epochDay(effective);
+    if (days <= 0) continue;
+
+    const year = daysInYear(Number(effective.slice(0, 4)));
+
+    owed.push({
+      raiseId: raise.id,
+      effectiveFrom: effective,
+      paidFrom: raise.date,
+      days,
+      daysInYear: year,
+      baseBefore,
+      baseAfter,
+      annualDifference,
+      amount: (annualDifference * days) / year,
+    });
+  }
+  return owed;
+};

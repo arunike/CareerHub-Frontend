@@ -1756,8 +1756,19 @@ summary,
 
   .careerhub-mobile-drawer .ant-drawer-header {
     border-bottom: 1px solid #f1f5f9 !important;
-    padding: 22px 20px 14px !important;
+    padding: 30px 16px 16px !important;
     position: relative !important;
+  }
+
+  /* Close, title and actions are one row; without a gap the title starts against the close button. */
+  .careerhub-mobile-drawer .ant-drawer-header-title {
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* antd puts close first, which indents the title away from the body content beneath it. */
+  .careerhub-mobile-drawer .ant-drawer-close {
+    order: 2;
   }
 
   .careerhub-mobile-drawer-title-wrapper {
@@ -1772,9 +1783,8 @@ summary,
     justify-content: center;
     width: 100%;
     position: absolute;
-    top: 8px;
+    top: 11px;
     left: 0;
-    margin-bottom: 8px;
   }
 
   .careerhub-mobile-drawer-handle-bar > span {
@@ -1789,11 +1799,15 @@ summary,
     font-weight: 700 !important;
     color: #0f172a !important;
     line-height: 1.4;
+    /* A flex child defaults to min-width:auto, so a long title pushes the sheet wider than the phone. */
+    min-width: 0;
+    flex: 1;
   }
 
   .careerhub-mobile-drawer .ant-drawer-close {
-    width: 40px !important;
-    height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
+    flex-shrink: 0;
     border-radius: 12px;
     color: #64748b !important;
     margin-inline-end: 0 !important;
@@ -1842,18 +1856,16 @@ summary,
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     width: 100%;
-    padding-right: 48px; /* Leave space for the default close button on the right */
   }
 
+  /* In the flow, not pinned: an absolute offset only lines up for one particular title length. */
   .careerhub-mobile-drawer-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    position: absolute;
-    right: 60px; /* Positioned just to the left of the close button */
-    top: 50%;
-    transform: translateY(-50%);
+    flex-shrink: 0;
   }
 
   .careerhub-mobile-drawer-action-btn {
@@ -1876,22 +1888,32 @@ summary,
     color: #0f172a;
   }
 
-  /* Tall (default) mobile drawer height styles */
-  .careerhub-mobile-drawer:not(.careerhub-mobile-drawer-expanded):not(
-      .careerhub-mobile-drawer-short
-    )
-    .ant-drawer-content-wrapper {
-    height: 85dvh !important;
-    max-height: 85dvh !important;
+  /* The sheet is as tall as what is in it, up to a cap; a fixed height leaves dead space below. */
+  .careerhub-mobile-drawer:not(.careerhub-mobile-drawer-expanded) .ant-drawer-content-wrapper {
+    height: auto !important;
+    max-height: 88dvh !important;
   }
 
-  /* Short mobile drawer height auto overrides */
-  .careerhub-mobile-drawer-short .ant-drawer-content-wrapper,
-  .careerhub-mobile-drawer-short .ant-drawer-content,
-  .careerhub-mobile-drawer-short .ant-drawer-wrapper-body,
-  .careerhub-mobile-drawer-short .ant-drawer-body {
-    height: auto !important;
-    flex: none !important;
+  /* antd v6 renamed the panel to .ant-drawer-section; .ant-drawer-content matches nothing here. */
+  .careerhub-mobile-drawer:not(.careerhub-mobile-drawer-expanded) .ant-drawer-section {
+    max-height: 88dvh !important;
+  }
+
+  /* Past the cap the body scrolls, so header and footer stay put rather than sliding away. */
+  .careerhub-mobile-drawer .ant-drawer-section {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .careerhub-mobile-drawer .ant-drawer-body {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .careerhub-mobile-drawer .ant-drawer-header,
+  .careerhub-mobile-drawer .ant-drawer-footer {
+    flex: 0 0 auto;
   }
 
   /* Expanded full-screen mobile drawer height styles */

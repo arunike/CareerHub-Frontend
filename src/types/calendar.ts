@@ -9,19 +9,28 @@ export interface TeamEntry {
   is_locked?: boolean;
 }
 
+// The reasons the picker suggests, and the only ones with a colour or a review cycle.
+export type RaiseReason =
+  | 'promotion'
+  | 'merit'
+  | 'market'
+  | 'retention'
+  | 'equity_refresh'
+  | 'role_change'
+  | 'correction';
+
+// A reason the user typed is stored verbatim, so the suggestions are a list, not a closed set.
+export type RaiseType = RaiseReason | (string & {});
+
 export interface RaiseEntry {
   id: string;
+  // When payroll started paying the new rate.
   date: string;
-  type:
-    | 'promotion'
-    | 'merit'
-    | 'market'
-    | 'cola'
-    | 'retention'
-    | 'equity_refresh'
-    | 'role_change'
-    | 'correction'
-    | 'other';
+  // When the rise legally took effect, if payroll was told late; the gap is owed as back pay.
+  effective_date?: string | null;
+  type: RaiseType;
+  // Legacy: named an 'other' raise before the reason picker itself accepted free text.
+  custom_type?: string;
   label?: string;
   base_before: number;
   base_after: number;

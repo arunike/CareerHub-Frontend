@@ -1,26 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Select, DatePicker, Input, Tag, Tooltip, Popconfirm } from 'antd';
+import { AutoComplete, Button, DatePicker, Input, Tag, Tooltip, Popconfirm } from 'antd';
 import Modal from '../../components/MobileModal';
 import UnitNumberInput from '../../components/UnitNumberInput';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TrophyOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  DownOutlined,
+  TrophyOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { RaiseEntry } from '../../types';
 import type { OfferLike as Offer } from './calculations';
+import { backPayFor } from '../Income/raiseSchedule';
+import { cycleFor, nextEffectiveDate } from './raiseCycles';
+import BackPayWorking from './BackPayWorking';
+import RaiseBreakdown from './RaiseBreakdown';
 import {
   ModeBtn,
-  RAISE_TYPES,
   defaultModes,
   defaultPcts,
-  delta,
   emptyForm,
   fmt,
-  fmtPct,
   nanoid,
+  RAISE_TYPES,
+  reasonColor,
+  reasonLabel,
+  reasonValue,
   type AfterModes,
   type BaseEquityMode,
   type BonusMode,
   type PctInputs,
 } from './raiseHistoryFields';
+
+// Plain values only: a rich label here would be drawn inside the input, not just in the list.
+const REASON_OPTIONS = RAISE_TYPES.map((type) => ({ value: type.label }));
 
 interface Props {
   open: boolean;
@@ -48,9 +62,15 @@ const RaiseHistoryModal: React.FC<Props> = ({
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Omit<RaiseEntry, 'id'>>(emptyForm());
   const [afterModes, setAfterModes] = useState<AfterModes>(defaultModes);
+  const [showWorking, setShowWorking] = useState(false);
   const [pctInputs, setPctInputs] = useState<PctInputs>(defaultPcts);
 
   const latestEntry = sorted[0];
+
+  // Previewed from the same helper the ledger uses, so the form cannot promise a different figure.
+  const [backPay] = backPayFor([{ ...form, id: 'preview' }]);
+
+  const cycle = cycleFor(form.type);
 
   useEffect(() => {
     if (afterModes.bonus === '%ofbase' && pctInputs.bonus !== '') {
@@ -92,7 +112,8 @@ const RaiseHistoryModal: React.FC<Props> = ({
   };
 
   const openEdit = (entry: RaiseEntry) => {
-    resetFormState({ ...entry });
+    // Entries saved before the field existed were not backdated, so the two dates match.
+    resetFormState({ ...entry, effective_date: entry.effective_date ?? entry.date });
     setEditingId(entry.id);
     setShowForm(true);
   };
@@ -131,14 +152,14 @@ const RaiseHistoryModal: React.FC<Props> = ({
     after: React.ReactNode,
     hint?: React.ReactNode
   ) => (
-    <div>
-      <div className="mb-1.5 flex min-h-11 items-center justify-between gap-2 sm:min-h-8">
-        <label className="text-xs text-gray-500">{label}</label>
-        {modes}
+    <div className="px-4 py-3.5">
+      <div className="mb-2 flex flex-col items-start gap-1 sm:grid sm:min-h-7 sm:grid-cols-2 sm:items-center sm:gap-4">
+        <label className="text-xs font-medium text-slate-600">{label}</label>
+        <div className="flex min-h-11 items-center sm:min-h-0">{modes}</div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <span className="mb-1 block text-[11px] uppercase tracking-wide text-gray-400 sm:hidden">
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:hidden">
             Before
           </span>
           <div className="flex h-[38px] items-center rounded-[9px] border border-dashed border-slate-200 bg-slate-100 px-3 text-sm text-slate-500">
@@ -146,7 +167,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
         </div>
         <div>
-          <span className="mb-1 block text-[11px] uppercase tracking-wide text-gray-400 sm:hidden">
+          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-blue-600 sm:hidden">
             After
           </span>
           {after}
@@ -321,11 +342,13 @@ const RaiseHistoryModal: React.FC<Props> = ({
       onCancel={onClose}
       footer={null}
       title={
-        <div className="flex items-center gap-2">
-          <TrophyOutlined className="text-amber-500" />
-          <span>Raise History</span>
-          <span className="text-sm font-normal text-gray-500 ml-1">
-            — {companyName} / {roleTitle}
+        <div className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <TrophyOutlined className="shrink-0 text-amber-500" />
+            <span className="truncate">Raise History</span>
+          </div>
+          <span className="truncate text-sm font-normal text-gray-500 sm:ml-2">
+            {companyName} / {roleTitle}
           </span>
         </div>
       }
@@ -333,7 +356,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
     >
       {/* Add Raise button */}
       {!showForm && (
-        <div className="flex justify-end mb-4">
+        <div className="mb-4 flex justify-end md:mt-5">
           <Button type="primary" icon={<PlusOutlined />} onClick={openAdd}>
             Add Raise
           </Button>
@@ -342,44 +365,87 @@ const RaiseHistoryModal: React.FC<Props> = ({
 
       {/* Add / Edit Form */}
       {showForm && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5 space-y-4">
-          <div className="text-sm font-semibold text-gray-700 mb-1">
+        <div className="mb-5 space-y-5 md:mt-5 rounded-xl border border-gray-200 bg-gray-50 p-5">
+          <div className="text-sm font-semibold text-gray-700">
             {editingId ? 'Edit Raise' : 'New Raise'}
           </div>
 
-          {/* Date + Type + Label */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {/* Notified + Effective + Type + Label */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Date</label>
+              <label className="mb-1.5 block text-xs text-gray-500">Notified on</label>
               <DatePicker
                 className="w-full"
                 value={form.date ? dayjs(form.date) : null}
-                onChange={(d) => setF('date', d ? d.format('YYYY-MM-DD') : '')}
+                onChange={(d) => {
+                  const date = d ? d.format('YYYY-MM-DD') : '';
+                  setForm((f) => ({
+                    ...f,
+                    date,
+                    effective_date: nextEffectiveDate(f.effective_date, f, { type: f.type, date }),
+                  }));
+                }}
                 allowClear={false}
               />
+              <div className="mt-1 text-[11px] leading-snug text-gray-400">
+                The first paycheck on or after this carries the new rate
+              </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Type</label>
-              <Select
+              <label className="mb-1.5 block text-xs text-gray-500">Effective date</label>
+              <DatePicker
                 className="w-full"
-                value={form.type}
-                onChange={(v) => setF('type', v)}
-                options={RAISE_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-                // The closed control shows the label alone; the list explains what each one means.
+                value={form.effective_date ? dayjs(form.effective_date) : null}
+                onChange={(d) => setF('effective_date', d ? d.format('YYYY-MM-DD') : null)}
+                allowClear={false}
+              />
+              <div className="mt-1 text-[11px] leading-snug text-gray-400">
+                {cycle ? cycle.hint : 'When the new rate starts counting'}
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs text-gray-500">Type</label>
+              <AutoComplete
+                className="w-full"
+                value={reasonLabel(form)}
+                options={REASON_OPTIONS}
+                placeholder="Pick one or write your own"
+                popupMatchSelectWidth={320}
+                // Without a caret the box reads as plain text and the suggestions go unnoticed.
+                suffixIcon={<DownOutlined className="text-[10px] text-gray-400" />}
+                // The list explains what each reason means; the box keeps just the words.
                 optionRender={(option) => {
-                  const type = RAISE_TYPES.find((t) => t.value === option.value);
+                  const hint = RAISE_TYPES.find((type) => type.label === option.value)?.hint;
                   return (
                     <div className="py-0.5">
-                      <div className="text-sm text-gray-800">{type?.label}</div>
-                      <div className="text-xs leading-snug text-gray-400">{type?.hint}</div>
+                      <div className="text-sm text-gray-800">{String(option.value)}</div>
+                      <div className="text-xs leading-snug text-gray-400">{hint}</div>
                     </div>
                   );
                 }}
-                popupMatchSelectWidth={320}
+                // The box holds labels, so filter on those rather than on the stored keys.
+                filterOption={(input, option) =>
+                  String(option?.value ?? '')
+                    .toLowerCase()
+                    .includes(input.trim().toLowerCase())
+                }
+                onChange={(text) =>
+                  setForm((f) => {
+                    const type = reasonValue(text ?? '');
+                    return {
+                      ...f,
+                      type,
+                      effective_date: nextEffectiveDate(f.effective_date, f, {
+                        type,
+                        date: f.date,
+                      }),
+                    };
+                  })
+                }
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Label (optional)</label>
+              <label className="mb-1.5 block text-xs text-gray-500">Label (optional)</label>
               <Input
                 placeholder="e.g. Annual review"
                 value={form.label ?? ''}
@@ -388,24 +454,51 @@ const RaiseHistoryModal: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* Payroll told late owes the difference; told on time, the two dates simply match. */}
+          {backPay && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-2.5 text-xs leading-relaxed text-emerald-900">
+              Backdated {backPay.days} days —{' '}
+              <button
+                type="button"
+                aria-expanded={showWorking}
+                onClick={() => setShowWorking((open) => !open)}
+                className="font-semibold underline decoration-dotted underline-offset-2 hover:decoration-solid"
+              >
+                {fmt(backPay.amount)}
+                <DownOutlined
+                  className={`ml-1 text-[9px] transition-transform ${showWorking ? 'rotate-180' : ''}`}
+                />
+              </button>{' '}
+              of back pay, added to the first paycheck from {backPay.paidFrom}.
+              {showWorking && <BackPayWorking backPay={backPay} />}
+            </div>
+          )}
+          {form.effective_date != null && form.effective_date > form.date && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-2.5 text-xs leading-relaxed text-amber-900">
+              This takes effect after you were told about it, so nothing is owed for the gap.
+            </div>
+          )}
+
           {/* Before is what this role already pays, so it is shown, not asked for. */}
-          <div className="space-y-3">
-            <div className="hidden gap-3 sm:grid sm:grid-cols-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div className="hidden gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2.5 sm:grid sm:grid-cols-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Before
               </div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
                 After
               </div>
             </div>
-            {baseRow()}
-            {bonusRow()}
-            {equityRow()}
+            <div className="divide-y divide-slate-100">
+              {baseRow()}
+              {bonusRow()}
+              {equityRow()}
+            </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Notes (optional)</label>
+            <label className="mb-1.5 block text-xs text-gray-500">Notes (optional)</label>
             <Input.TextArea
               rows={2}
               placeholder="Any context about this raise…"
@@ -415,7 +508,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
           </div>
 
           {/* Form actions */}
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end">
             <Button onClick={cancelForm}>Cancel</Button>
             <Button type="primary" loading={saving} onClick={handleSubmit}>
               {editingId ? 'Update' : 'Add'}
@@ -431,9 +524,9 @@ const RaiseHistoryModal: React.FC<Props> = ({
         </p>
       )}
 
-      <div className="space-y-4">
+      <div className={`space-y-4 ${showForm ? 'hidden' : ''}`}>
         {sorted.map((entry) => {
-          const typeInfo = RAISE_TYPES.find((t) => t.value === entry.type);
+          const reason = reasonLabel(entry);
           const tcBefore = entry.base_before + entry.bonus_before + entry.equity_before;
           const tcAfter = entry.base_after + entry.bonus_after + entry.equity_after;
 
@@ -454,13 +547,24 @@ const RaiseHistoryModal: React.FC<Props> = ({
           return (
             <div key={entry.id} className="border border-gray-200 rounded-xl overflow-hidden">
               {/* Entry header */}
-              <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-700">{entry.date}</span>
-                  <Tag color={typeInfo?.color}>{typeInfo?.label ?? entry.type}</Tag>
-                  {entry.label && <span className="text-xs text-gray-500">{entry.label}</span>}
+              <div className="flex items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="whitespace-nowrap text-sm font-semibold text-gray-700">
+                    {entry.date}
+                  </span>
+                  <Tag color={reasonColor(entry.type)}>{reason}</Tag>
+                  {entry.effective_date && entry.effective_date < entry.date && (
+                    <Tooltip
+                      title={`Took effect ${entry.effective_date}; the difference is owed as back pay`}
+                    >
+                      <Tag color="volcano">Backdated</Tag>
+                    </Tooltip>
+                  )}
+                  {entry.label && (
+                    <span className="truncate text-xs text-gray-500">{entry.label}</span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   <Tooltip title="Edit">
                     <Button
                       type="text"
@@ -482,65 +586,10 @@ const RaiseHistoryModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Breakdown table */}
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                    <th className="text-left px-4 py-2 font-medium">Component</th>
-                    <th className="text-right px-4 py-2 font-medium">Before</th>
-                    <th className="text-right px-4 py-2 font-medium">After</th>
-                    <th className="text-right px-4 py-2 font-medium">+/-</th>
-                    <th className="text-right px-4 py-2 font-medium">%</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
-                    const changed = r.after !== r.before;
-                    return (
-                      <tr key={r.label} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="px-4 py-2 text-gray-700">
-                          <div>{r.label}</div>
-                          {r.extra && <div className="text-xs text-gray-400">{r.extra}</div>}
-                        </td>
-                        <td className="px-4 py-2 text-right text-gray-500">{fmt(r.before)}</td>
-                        <td className="px-4 py-2 text-right text-gray-700 font-medium">
-                          {fmt(r.after)}
-                        </td>
-                        <td
-                          className={`px-4 py-2 text-right font-medium ${changed ? (r.after >= r.before ? 'text-green-600' : 'text-red-500') : 'text-gray-400'}`}
-                        >
-                          {changed ? delta(r.before, r.after) : '—'}
-                        </td>
-                        <td
-                          className={`px-4 py-2 text-right font-medium ${changed ? (r.after >= r.before ? 'text-green-600' : 'text-red-500') : 'text-gray-400'}`}
-                        >
-                          {changed ? fmtPct(r.before, r.after) : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-
-                  {/* Total TC row */}
-                  <tr className="bg-blue-50 font-semibold text-blue-900">
-                    <td className="px-4 py-2">Total TC</td>
-                    <td className="px-4 py-2 text-right">{fmt(tcBefore)}</td>
-                    <td className="px-4 py-2 text-right">{fmt(tcAfter)}</td>
-                    <td
-                      className={`px-4 py-2 text-right ${tcAfter >= tcBefore ? 'text-green-700' : 'text-red-600'}`}
-                    >
-                      {delta(tcBefore, tcAfter)}
-                    </td>
-                    <td
-                      className={`px-4 py-2 text-right ${tcAfter >= tcBefore ? 'text-green-700' : 'text-red-600'}`}
-                    >
-                      {fmtPct(tcBefore, tcAfter)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <RaiseBreakdown rows={rows} tcBefore={tcBefore} tcAfter={tcAfter} />
 
               {entry.notes && (
-                <div className="px-4 py-2 text-xs text-gray-500 italic border-t border-gray-100 bg-gray-50">
+                <div className="border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs italic text-gray-500 sm:px-4">
                   {entry.notes}
                 </div>
               )}

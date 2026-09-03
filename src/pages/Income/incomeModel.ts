@@ -16,7 +16,7 @@ import { allowanceSchedule as buildAllowanceSchedule, splitAllowances } from './
 import { tiersFromOffer, type MatchTier } from './matchTiers';
 import { splitCustomDeductions } from './deductions';
 import { buildVestEvents } from './vestEvents';
-import { salaryByPeriod } from './raiseSchedule';
+import { backPayFor, salaryByPeriod } from './raiseSchedule';
 import {
   buildBonusEvents,
   nextYearBonusEstimate,
@@ -146,6 +146,21 @@ export const buildIncomeModel = ({
     ? buildBonusEvents(bonusTotal, settings.bonusPayouts, ledgerPeriods)
     : [];
 
+  // A raise payroll applied late is settled on the first paycheck that carries the new rate.
+  const backPayEvents = backPayFor(source?.raises ?? []).flatMap((owed) => {
+    const period = ledgerPeriods.find((entry) => entry.payDate && entry.payDate >= owed.paidFrom);
+    if (!period) return [];
+    return [
+      {
+        id: `backpay-${owed.raiseId}`,
+        kind: 'other' as const,
+        periodIndex: period.periodIndex,
+        amount: owed.amount,
+        label: `Back pay from ${owed.effectiveFrom}`,
+      },
+    ];
+  });
+
   const vestEvents = settings.includeVestEvents
     ? buildVestEvents({ ...vestingTerms, taxYear, paychecksPerYear, periods })
     : [];
@@ -208,7 +223,7 @@ export const buildIncomeModel = ({
     allowanceByPeriod: allowanceSchedule,
     annualSalary,
     salaryPerPeriodByIndex: raiseSalaries,
-    incomeEvents: [...bonusEvents, ...vestEvents, ...settings.extraEvents],
+    incomeEvents: [...bonusEvents, ...vestEvents, ...backPayEvents, ...settings.extraEvents],
     elections: {
       ...settings.elections,
       section125PerPeriod:

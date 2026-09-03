@@ -6,6 +6,8 @@ export interface PayPeriod {
   isOffCycle?: boolean;
   // True when the scheduled date was moved by hand.
   isAdjustedDate?: boolean;
+  // Share of this period's days that fall inside the role, 0-1. Absent means the whole period.
+  coverage?: number;
 }
 
 export const OFF_CYCLE_BASE = 1000;
@@ -101,6 +103,18 @@ export const buildPayDates = (
   });
 };
 
+const DAY_MS = 86400000;
+const epoch = (date: Date) => Math.floor(date.getTime() / DAY_MS);
+
+// Leaving mid-period pays for the days worked rather than losing the whole cheque; tail only.
+const tailCoverage = (periodStart: number, periodEnd: number, end: Date | null) => {
+  if (!end) return 1;
+  const total = periodEnd - periodStart + 1;
+  if (total <= 0) return 0;
+  const worked = Math.min(periodEnd, epoch(end)) - periodStart + 1;
+  return Math.max(0, Math.min(1, worked / total));
+};
+
 // A role that starts or ends mid-year is only paid for the periods it covers.
 export const buildPayPeriods = (
   taxYear: number,
@@ -113,15 +127,26 @@ export const buildPayPeriods = (
 ): PayPeriod[] => {
   const start = parseIsoDate(options.startDate);
   const end = parseIsoDate(options.endDate);
+  const dates = buildPayDates(taxYear, paychecksPerYear, options.firstPayDate);
+  // The opening period reaches back before the year, so borrow the spacing of the one after it.
+  const lead =
+    dates.length > 1 ? epoch(dates[1]) - epoch(dates[0]) : Math.round(365 / paychecksPerYear);
 
-  return buildPayDates(taxYear, paychecksPerYear, options.firstPayDate)
-    .map((date, index) => ({ periodIndex: index + 1, payDate: toIsoDate(date), date }))
-    .filter(({ date }) => {
-      if (start && date < start) return false;
-      if (end && date > end) return false;
-      return true;
+  return dates
+    .map((date, index) => {
+      const payDay = epoch(date);
+      const periodStart = index === 0 ? payDay - lead + 1 : epoch(dates[index - 1]) + 1;
+      return {
+        periodIndex: index + 1,
+        payDate: toIsoDate(date),
+        date,
+        coverage: tailCoverage(periodStart, payDay, end),
+      };
     })
-    .map(({ periodIndex, payDate }) => ({ periodIndex, payDate }));
+    .filter((period) => (start ? period.date >= start : true) && period.coverage > 0)
+    .map(({ periodIndex, payDate, coverage }) =>
+      coverage >= 1 ? { periodIndex, payDate } : { periodIndex, payDate, coverage }
+    );
 };
 
 // Re-sorted: an adjusted date can move a paycheck past its neighbour.

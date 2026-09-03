@@ -33,8 +33,9 @@ const MobileModalBase = ({
 
     const timer = setTimeout(() => {
       if (bodyRef.current) {
+        // Fullscreen is only worth offering once the body outgrows the sheet's 88dvh cap.
         const height = bodyRef.current.scrollHeight;
-        setIsContentShort(height < 350);
+        setIsContentShort(height <= window.innerHeight * 0.88 - 96);
       }
     }, 100);
 
@@ -126,7 +127,7 @@ const MobileModalBase = ({
       height={isExpanded ? '100dvh' : undefined}
       rootClassName={`careerhub-mobile-drawer ${
         isExpanded ? 'careerhub-mobile-drawer-expanded' : ''
-      } ${isContentShort ? 'careerhub-mobile-drawer-short' : ''}`.trim()}
+      }`.trim()}
       className={props.className}
       closable={props.closable ?? true}
       keyboard={props.keyboard}

@@ -14,6 +14,7 @@ import { buildIncomeModel } from './incomeModel';
 import { DEFAULT_SETTINGS } from './incomeSettings';
 import type { IncomeSettings } from './incomeSettings';
 import type { IncomeSource } from './incomeSources';
+import type { RaiseEntry } from '../../types';
 import { DEFAULT_STATE_NAME_TO_ABBR } from '../OfferComparison/calculations';
 
 const source = (overrides: Partial<IncomeSource> = {}): IncomeSource => ({
@@ -710,5 +711,60 @@ describe('rounding cannot separate the two pages', () => {
     const equity = Math.round(role.toDate.equity);
     expect(total - bonus - equity + bonus + equity).toBe(total);
     expect(Math.round(role.gross)).toBe(total);
+  });
+});
+
+describe('a raise payroll applied late', () => {
+  // Effective 1 Jul, but payroll only paid it from 31 Aug, so July and August were short.
+  const retroRaise: RaiseEntry[] = [
+    {
+      id: 'r1',
+      date: '2026-08-31',
+      effective_date: '2026-07-01',
+      type: 'merit' as const,
+      base_before: 165000,
+      base_after: 181500,
+      bonus_before: 0,
+      bonus_after: 0,
+      equity_before: 0,
+      equity_after: 0,
+    },
+  ];
+
+  const role = (raises: RaiseEntry[]) =>
+    summarizeYear(
+      2026,
+      [source({ annualSalary: 181500, bonus: 0, startDate: '2020-01-01', raises })],
+      resolver(),
+      { ...context, todayIso: '2026-12-31' }
+    ).roles[0];
+
+  it('keeps the paychecks before the catch-up at the old rate', () => {
+    const { ledger } = buildIncomeModel({
+      ...context,
+      settings: { ...DEFAULT_SETTINGS },
+      source: source({
+        annualSalary: 181500,
+        bonus: 0,
+        startDate: '2020-01-01',
+        raises: retroRaise,
+      }),
+      taxYear: 2026,
+    });
+    const july = ledger.rows.filter((row) => row.payDate && row.payDate < '2026-08-31');
+    expect(july.at(-1)!.regularGross).toBeCloseTo(165000 / 26, 2);
+  });
+
+  it('adds the shortfall as a one-off on the first paycheck at the new rate', () => {
+    const withRetro = role(retroRaise).gross;
+    const withoutRetro = role([{ ...retroRaise[0], effective_date: null }]).gross;
+    // 61 days at the $16,500 difference.
+    expect(withRetro - withoutRetro).toBeCloseTo((16500 * 61) / 365, 0);
+  });
+
+  it('changes nothing when payroll was on time', () => {
+    const onTime = role([{ ...retroRaise[0], effective_date: '2026-08-31' }]).gross;
+    const none = role([{ ...retroRaise[0], effective_date: null }]).gross;
+    expect(onTime).toBeCloseTo(none, 6);
   });
 });

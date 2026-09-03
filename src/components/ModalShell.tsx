@@ -66,8 +66,9 @@ const ModalShell = ({
 
     const timer = setTimeout(() => {
       if (bodyRef.current) {
+        // Fullscreen is only worth offering once the body outgrows the sheet's 88dvh cap.
         const height = bodyRef.current.scrollHeight;
-        setIsContentShort(height < 350);
+        setIsContentShort(height <= window.innerHeight * 0.88 - 96);
       }
     }, 100);
 
@@ -177,7 +178,7 @@ const ModalShell = ({
         maskClosable={false}
         rootClassName={`careerhub-mobile-drawer ${
           isExpanded ? 'careerhub-mobile-drawer-expanded' : ''
-        } ${isContentShort ? 'careerhub-mobile-drawer-short' : ''}`}
+        }`}
         className={wrapperClassName}
       >
         <div className={bodyClassName} ref={bodyRef}>

@@ -42,6 +42,7 @@ describe('buildLedger over real pay periods', () => {
     expect(rows).toHaveLength(periods.length);
     expect(rows[0].periodIndex).toBe(periods[0].periodIndex);
     expect(rows[0].payDate).toBe(periods[0].payDate);
+    // Nothing is clipped at the start, so every kept period pays in full.
     expect(totals.gross).toBeCloseTo((130000 / 26) * periods.length, 6);
   });
 
@@ -51,7 +52,9 @@ describe('buildLedger over real pay periods', () => {
       endDate: '2026-09-11',
     });
     const { rows } = buildLedger(input({ periodsPerYear: 26, periods }));
-    expect(rows.at(-1)!.payDate! <= '2026-09-11').toBe(true);
+    // The final cheque lands after the last day worked, paying only for the days it covers.
+    expect(rows.at(-1)!.payDate).toBe('2026-09-18');
+    expect(rows.at(-1)!.regularGross).toBeCloseTo(rows.at(-2)!.regularGross * (7 / 14), 6);
   });
 
   // Payroll annualizes each paycheck, so a part year over-withholds and refunds.
@@ -63,10 +66,22 @@ describe('buildLedger over real pay periods', () => {
     const partYear = buildLedger(input({ periodsPerYear: 26, periods, annualSalary: 130000 }));
     const fullYear = buildLedger(input({ periodsPerYear: 26, annualSalary: 130000 }));
 
-    const partRate = partYear.totals.federalWithheld / partYear.totals.gross;
     const fullRate = fullYear.totals.federalWithheld / fullYear.totals.gross;
-    expect(partRate).toBeCloseTo(fullRate, 6);
+    // The part-worked cheque annualizes from a smaller gross, so only the whole ones match.
+    const whole = partYear.rows.filter((_, index) => (periods[index].coverage ?? 1) >= 1);
+    const wholeGross = whole.reduce((sum, row) => sum + row.gross, 0);
+    const wholeWithheld = whole.reduce(
+      (sum, row) => sum + row.federalRegular + row.federalSupplemental,
+      0
+    );
+    expect(wholeWithheld / wholeGross).toBeCloseTo(fullRate, 6);
     expect(partYear.totals.gross).toBeLessThan(fullYear.totals.gross);
+
+    // And that short cheque withholds at a lower rate, exactly as annualizing implies.
+    const partial = partYear.rows[0];
+    expect((partial.federalRegular + partial.federalSupplemental) / partial.gross).toBeLessThan(
+      fullRate
+    );
   });
 
   it('carries year-to-date state across the paid periods only', () => {
