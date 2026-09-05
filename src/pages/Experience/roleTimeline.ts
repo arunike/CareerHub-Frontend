@@ -5,6 +5,8 @@ export interface RoleDateLabel {
   range: string;
   // "1 yr 8 mos (616 days)", "starts in 28 days", or ''.
   detail: string;
+  // A role dated in the future has earned nothing yet, which is not the same as having no dates.
+  notStarted: boolean;
 }
 
 const plural = (value: number, unit: string) => `${value} ${unit}${value === 1 ? '' : 's'}`;
@@ -63,17 +65,18 @@ export const roleDateLabel = ({
     isCurrent ? 'Present' : end ? end.format(format) : 'Unknown'
   }`;
 
-  if (!start) return { range, detail: '' };
+  if (!start) return { range, detail: '', notStarted: false };
 
   if (start.isAfter(today, 'day')) {
     const untilStart = start.diff(today, 'day');
-    return { range, detail: `starts in ${plural(untilStart, 'day')}` };
+    return { range, detail: `starts in ${plural(untilStart, 'day')}`, notStarted: true };
   }
 
-  if (!end || end.isBefore(start, 'day')) return { range, detail: '' };
+  if (!end || end.isBefore(start, 'day')) return { range, detail: '', notStarted: false };
 
   const totalDays = end.diff(start, 'day');
   return {
+    notStarted: false,
     range,
     detail:
       precision === 'rounded'

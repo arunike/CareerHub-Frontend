@@ -60,7 +60,7 @@ const RoleMetaRow = ({
     </button>
   );
 
-  // Without a start date there is no period to total, so the package rate is labelled as one.
+  // Only for a role with no dates at all: a future one has earned nothing, which is a total of 0.
   const rate = (total: number) => (
     <button
       type="button"
@@ -126,7 +126,9 @@ const RoleMetaRow = ({
           {/* Earned across the whole stint where the dates allow it, not the current annual rate. */}
           {payYears.length
             ? earnings(payYearsTotal(payYears), 'View pay structure breakdown')
-            : rate(salary.total)}
+            : dates.notStarted
+              ? earnings(0, 'View pay structure breakdown')
+              : rate(salary.total)}
         </div>
       )}
 

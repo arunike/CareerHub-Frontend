@@ -58,23 +58,23 @@ describe('buildPayPeriods', () => {
   });
 
   it('keeps the cheque that pays for the last days worked, prorated', () => {
-    // Leaving on 11 Sep, the 18 Sep cheque still covers 5-11 Sep: seven of its fourteen days.
+    // Leaving on 1 Nov, the 13 Nov cheque still covers 31 Oct - 1 Nov: two of its fourteen days.
     const periods = buildPayPeriods(2026, 26, {
       firstPayDate: '2026-01-09',
-      endDate: '2026-09-11',
+      endDate: '2026-11-01',
     });
-    expect(periods.at(-1)!.payDate).toBe('2026-09-18');
-    expect(periods.at(-1)!.coverage).toBeCloseTo(7 / 14, 6);
-    expect(periods.at(-2)!.payDate).toBe('2026-09-04');
+    expect(periods.at(-1)!.payDate).toBe('2026-11-13');
+    expect(periods.at(-1)!.coverage).toBeCloseTo(2 / 14, 6);
+    expect(periods.at(-2)!.payDate).toBe('2026-10-30');
     expect(periods.at(-2)!.coverage).toBeUndefined();
   });
 
   it('drops a cheque whose whole period falls after the end date', () => {
     const periods = buildPayPeriods(2026, 26, {
       firstPayDate: '2026-01-09',
-      endDate: '2026-09-04',
+      endDate: '2026-10-30',
     });
-    expect(periods.at(-1)!.payDate).toBe('2026-09-04');
+    expect(periods.at(-1)!.payDate).toBe('2026-10-30');
   });
 
   it('leaves the opening cheque whole, so a year-spanning role keeps its December days', () => {

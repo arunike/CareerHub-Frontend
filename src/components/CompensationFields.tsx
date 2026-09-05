@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Popover } from 'antd';
+import ModeToggle from './ModeToggle';
 import UnitNumberInput from './UnitNumberInput';
 import {
   CONTROL_CLASS,
@@ -7,34 +8,6 @@ import {
   FIELD_HINT_CLASS,
   FIELD_LABEL_CLASS,
 } from './formControls';
-
-// Small segmented control so each field's mode toggle reads as belonging to that field.
-const ModeToggle = ({
-  options,
-  value,
-  onChange,
-}: {
-  options: { label: string; value: string }[];
-  value: string;
-  onChange: (next: string) => void;
-}) => (
-  <div className="flex items-center gap-0.5 rounded-md bg-gray-100 p-0.5">
-    {options.map((option) => (
-      <button
-        key={option.value}
-        type="button"
-        onClick={() => onChange(option.value)}
-        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
-          value === option.value
-            ? 'bg-white text-blue-600 shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
-        }`}
-      >
-        {option.label}
-      </button>
-    ))}
-  </div>
-);
 
 export interface CompValue {
   base_salary: number | null;

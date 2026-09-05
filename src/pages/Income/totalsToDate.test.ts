@@ -38,7 +38,7 @@ const row = (payDate: string | null, gross: number): EffectiveRow =>
   }) as EffectiveRow;
 
 describe('totalsToDate', () => {
-  const rows = [row('2026-08-14', 100), row('2026-08-28', 100), row('2026-09-11', 100)];
+  const rows = [row('2026-08-14', 100), row('2026-08-28', 100), row('2026-10-16', 100)];
 
   it('counts a paycheck dated today', () => {
     expect(totalsToDate(rows, '2026-08-28').count).toBe(2);
@@ -47,7 +47,7 @@ describe('totalsToDate', () => {
 
   it('leaves out a paycheck still to come', () => {
     expect(totalsToDate(rows, '2026-09-01').count).toBe(2);
-    expect(totalsToDate(rows, '2026-09-11').count).toBe(3);
+    expect(totalsToDate(rows, '2026-10-16').count).toBe(3);
   });
 
   it('treats an undated row as landed', () => {

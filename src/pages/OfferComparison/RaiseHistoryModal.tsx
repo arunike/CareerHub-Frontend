@@ -14,10 +14,10 @@ import type { RaiseEntry } from '../../types';
 import type { OfferLike as Offer } from './calculations';
 import { backPayFor } from '../Income/raiseSchedule';
 import { cycleFor, nextEffectiveDate } from './raiseCycles';
+import ModeToggle from '../../components/ModeToggle';
 import BackPayWorking from './BackPayWorking';
 import RaiseBreakdown from './RaiseBreakdown';
 import {
-  ModeBtn,
   defaultModes,
   defaultPcts,
   emptyForm,
@@ -153,9 +153,9 @@ const RaiseHistoryModal: React.FC<Props> = ({
     hint?: React.ReactNode
   ) => (
     <div className="px-4 py-3.5">
-      <div className="mb-2 flex flex-col items-start gap-1 sm:grid sm:min-h-7 sm:grid-cols-2 sm:items-center sm:gap-4">
+      <div className="mb-2 flex min-h-11 items-center justify-between gap-3 sm:grid sm:min-h-7 sm:grid-cols-2 sm:gap-4">
         <label className="text-xs font-medium text-slate-600">{label}</label>
-        <div className="flex min-h-11 items-center sm:min-h-0">{modes}</div>
+        <div className="flex items-center justify-end">{modes}</div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -215,14 +215,14 @@ const RaiseHistoryModal: React.FC<Props> = ({
     return metricRow(
       'Base Salary',
       form.base_before,
-      <div className="flex items-center gap-0.5">
-        <ModeBtn active={mode === '$'} onClick={() => switchBaseMode('$')}>
-          $
-        </ModeBtn>
-        <ModeBtn active={mode === '%change'} onClick={() => switchBaseMode('%change')}>
-          %Δ
-        </ModeBtn>
-      </div>,
+      <ModeToggle
+        value={mode}
+        onChange={switchBaseMode}
+        options={[
+          { label: '$', value: '$' },
+          { label: '% increase', value: '%change' },
+        ]}
+      />,
       mode === '$' ? (
         <UnitNumberInput
           unit="$"
@@ -252,17 +252,15 @@ const RaiseHistoryModal: React.FC<Props> = ({
     return metricRow(
       'Annual Bonus',
       form.bonus_before,
-      <div className="flex items-center gap-0.5">
-        <ModeBtn active={mode === '$'} onClick={() => switchBonusMode('$')}>
-          $
-        </ModeBtn>
-        <ModeBtn active={mode === '%change'} onClick={() => switchBonusMode('%change')}>
-          %Δ
-        </ModeBtn>
-        <ModeBtn active={mode === '%ofbase'} onClick={() => switchBonusMode('%ofbase')}>
-          % of Base
-        </ModeBtn>
-      </div>,
+      <ModeToggle
+        value={mode}
+        onChange={switchBonusMode}
+        options={[
+          { label: '$', value: '$' },
+          { label: '% increase', value: '%change' },
+          { label: '% of base', value: '%ofbase' },
+        ]}
+      />,
       mode === '$' ? (
         <UnitNumberInput
           unit="$"
@@ -303,14 +301,14 @@ const RaiseHistoryModal: React.FC<Props> = ({
     return metricRow(
       'Annual RSU',
       form.equity_before,
-      <div className="flex items-center gap-0.5">
-        <ModeBtn active={mode === '$'} onClick={() => switchEquityMode('$')}>
-          $
-        </ModeBtn>
-        <ModeBtn active={mode === '%change'} onClick={() => switchEquityMode('%change')}>
-          %Δ
-        </ModeBtn>
-      </div>,
+      <ModeToggle
+        value={mode}
+        onChange={switchEquityMode}
+        options={[
+          { label: '$', value: '$' },
+          { label: '% increase', value: '%change' },
+        ]}
+      />,
       mode === '$' ? (
         <UnitNumberInput
           unit="$"

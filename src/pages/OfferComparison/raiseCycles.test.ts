@@ -4,7 +4,7 @@ import { RAISE_TYPES } from './raiseHistoryFields';
 
 describe('defaultEffectiveDate', () => {
   it('backdates a merit raise to the mid-year cycle', () => {
-    expect(defaultEffectiveDate('merit', '2026-08-31')).toBe('2026-07-01');
+    expect(defaultEffectiveDate('merit', '2026-10-01')).toBe('2026-07-01');
   });
 
   it('offers nothing when payroll paid on the cycle date itself', () => {
@@ -18,7 +18,7 @@ describe('defaultEffectiveDate', () => {
 
   it('offers nothing for the types that do not run on a cycle', () => {
     for (const type of ['promotion', 'market', 'retention', 'correction', 'other'] as const) {
-      expect(defaultEffectiveDate(type, '2026-08-31')).toBeNull();
+      expect(defaultEffectiveDate(type, '2026-10-01')).toBeNull();
     }
   });
 
@@ -36,15 +36,15 @@ describe('defaultEffectiveDate', () => {
 });
 
 describe('nextEffectiveDate', () => {
-  const merit = { type: 'merit' as const, date: '2026-08-31' };
-  const promo = { type: 'promotion' as const, date: '2026-08-31' };
+  const merit = { type: 'merit' as const, date: '2026-10-01' };
+  const promo = { type: 'promotion' as const, date: '2026-10-01' };
 
   it('leaves an unset effective date unset', () => {
     expect(nextEffectiveDate(null, merit, promo)).toBeNull();
   });
 
   it('picks up the cycle when the type gains one', () => {
-    expect(nextEffectiveDate('2026-08-31', promo, merit)).toBe('2026-07-01');
+    expect(nextEffectiveDate('2026-10-01', promo, merit)).toBe('2026-07-01');
   });
 
   it('follows the cycle when the pay date changes', () => {
@@ -58,6 +58,6 @@ describe('nextEffectiveDate', () => {
   });
 
   it('falls back to the pay date when the new type has no cycle', () => {
-    expect(nextEffectiveDate('2026-07-01', merit, promo)).toBe('2026-08-31');
+    expect(nextEffectiveDate('2026-07-01', merit, promo)).toBe('2026-10-01');
   });
 });

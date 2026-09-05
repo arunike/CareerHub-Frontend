@@ -8,6 +8,30 @@ import { normalizeApiTables, type TaxTableOverrides } from './tax/data';
 import { buildIncomeSources, yearsForSources } from './incomeSources';
 import { createSettingsResolver } from './incomeSettingsStore';
 import { summarizeYears } from './yearSummary';
+import type { RoleEarnings } from './yearSummary';
+
+// role.gross is already to-date, so the full year must come from projectedGross, not from it.
+export const ledgerYearOf = (
+  role: Pick<
+    RoleEarnings,
+    'toDate' | 'projectedGross' | 'paychecks' | 'paychecksToDate' | 'sourceKey'
+  >,
+  taxYear: number
+): LedgerYear | null => {
+  // Base carries the rounding, so the parts add to the same gross the Income tab prints.
+  const total = round(role.toDate.gross);
+  if (total <= 0) return null;
+  const bonus = round(role.toDate.bonus);
+  const equity = round(role.toDate.equity);
+  return {
+    year: taxYear,
+    total,
+    byComponent: { base: total - bonus - equity, bonus, equity },
+    paychecks: role.paychecks,
+    paychecksToDate: role.paychecksToDate,
+    projected: round(role.projectedGross),
+  };
+};
 
 export interface LedgerYear {
   year: number;
@@ -91,22 +115,9 @@ export const useLedgerEarnings = (
     const map = new Map<string, LedgerYear[]>();
     for (const year of history) {
       for (const role of year.roles) {
-        // Base carries the rounding, so the parts add to the same gross the Income tab prints.
-        const total = round(role.toDate.gross);
-        const bonus = round(role.toDate.bonus);
-        const equity = round(role.toDate.equity);
-        const byComponent = { base: total - bonus - equity, bonus, equity };
-        if (total <= 0) continue;
-        const existing = map.get(role.sourceKey) ?? [];
-        existing.push({
-          year: year.taxYear,
-          total,
-          byComponent,
-          paychecks: role.paychecks,
-          paychecksToDate: role.paychecksToDate,
-          projected: round(role.gross),
-        });
-        map.set(role.sourceKey, existing);
+        const entry = ledgerYearOf(role, year.taxYear);
+        if (!entry) continue;
+        map.set(role.sourceKey, [...(map.get(role.sourceKey) ?? []), entry]);
       }
     }
     for (const list of map.values()) list.sort((a, b) => b.year - a.year);

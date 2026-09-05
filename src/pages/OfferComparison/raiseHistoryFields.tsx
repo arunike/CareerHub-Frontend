@@ -1,4 +1,3 @@
-import React from 'react';
 import dayjs from 'dayjs';
 import type { RaiseEntry, RaiseReason, RaiseType } from '../../types';
 import { suggestEffectiveDate } from './raiseCycles';
@@ -131,23 +130,3 @@ export function emptyForm(prefill?: Partial<RaiseEntry>): Omit<RaiseEntry, 'id'>
 export function nanoid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
-
-export const ModeBtn = ({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`min-h-11 rounded-lg px-2.5 text-xs transition-colors sm:min-h-8 ${
-      active ? 'bg-blue-100 text-blue-800 font-semibold' : 'text-gray-600 hover:bg-gray-100'
-    }`}
-  >
-    {children}
-  </button>
-);

@@ -185,8 +185,8 @@ describe('prorationFactor', () => {
   });
 
   it('counts up to a mid-year end', () => {
-    // Jan 1 to Sep 11 is 254 days of 365.
-    expect(prorationFactor(2026, null, '2026-09-11')).toBeCloseTo(254 / 365, 6);
+    // Jan 1 to Oct 16 is 289 days of 365.
+    expect(prorationFactor(2026, null, '2026-10-16')).toBeCloseTo(289 / 365, 6);
   });
 
   it('handles a role that starts and ends inside the year', () => {

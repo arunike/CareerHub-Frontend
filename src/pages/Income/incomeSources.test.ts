@@ -133,7 +133,7 @@ describe('yearsForSource', () => {
   it('spans the years the role was held, most recent first', () => {
     const [source] = buildIncomeSources(
       [],
-      [experience({ offer: null, start_date: '2024-03-01', end_date: '2026-09-11' })]
+      [experience({ offer: null, start_date: '2024-03-01', end_date: '2026-10-16' })]
     );
     expect(yearsForSource(source, 2026)).toEqual([2026, 2025, 2024]);
   });

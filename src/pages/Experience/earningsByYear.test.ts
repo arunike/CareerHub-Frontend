@@ -8,7 +8,7 @@ import {
 } from './earningsByYear';
 import type { Experience } from '../../types';
 
-const TODAY = '2026-09-14';
+const TODAY = '2026-11-01';
 
 const role = (over: Partial<Experience>): Experience =>
   ({
@@ -39,9 +39,9 @@ describe('buildEarningsByYear', () => {
       1: { base_salary: 336000, bonus: 0, equity: 0 },
     });
     expect(groups.map((group) => group.year)).toEqual([2026, 2025]);
-    // 2025 ran Mar–Dec, 2026 only to 14 Sep, so neither is a full year.
+    // 2025 ran Mar–Dec, 2026 only to 1 Nov, so neither is a full year.
     expect(groups[1].total).toBeCloseTo((336000 * 306) / 365, 0);
-    expect(groups[0].total).toBeCloseTo((336000 * 257) / 365, 0);
+    expect(groups[0].total).toBeCloseTo((336000 * 305) / 365, 0);
   });
 
   it('lists each role separately within a year and totals them', () => {

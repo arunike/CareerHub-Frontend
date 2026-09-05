@@ -112,7 +112,7 @@ describe('currentPackage', () => {
   it('prefers the latest raise, because a raise never writes back to the role', () => {
     const raises = [
       raise({ id: 'a', date: '2026-01-01', base_after: 181500 }),
-      raise({ id: 'b', date: '2026-08-31', base_after: 165000 }),
+      raise({ id: 'b', date: '2026-10-01', base_after: 165000 }),
     ];
     expect(currentPackage(raises, stored).base).toBe(165000);
   });
@@ -120,7 +120,7 @@ describe('currentPackage', () => {
 
 describe('employmentWindow', () => {
   it('is the whole year for a role held right through it', () => {
-    const w = employmentWindow(2025, '2020-01-01', null, '2026-08-31')!;
+    const w = employmentWindow(2025, '2020-01-01', null, '2026-10-01')!;
     expect(w).toMatchObject({ start: '2025-01-01', end: '2025-12-31', wholeYear: true });
   });
 
@@ -134,20 +134,20 @@ describe('employmentWindow', () => {
   });
 
   it('stops at today for a role still running, since the rest of the year is unearned', () => {
-    const w = employmentWindow(2026, '2020-01-01', null, '2026-08-31')!;
-    expect(w).toMatchObject({ end: '2026-08-31', endsToday: true, wholeYear: false });
+    const w = employmentWindow(2026, '2020-01-01', null, '2026-10-01')!;
+    expect(w).toMatchObject({ end: '2026-10-01', endsToday: true, wholeYear: false });
   });
 
   it('is null for a year the role did not overlap', () => {
-    expect(employmentWindow(2026, '2027-01-01', null, '2026-08-31')).toBeNull();
+    expect(employmentWindow(2026, '2027-01-01', null, '2026-10-01')).toBeNull();
   });
 });
 
-describe('the exact case: joined 6 Jan, raised 31 Aug, viewed 14 Sep', () => {
+describe('a role joined mid-year, raised late, viewed before year end', () => {
   it('opens the window on the joining date, not 1 January', () => {
-    const w = employmentWindow(2026, '2026-01-06', null, '2026-09-14')!;
-    expect(w.start).toBe('2026-01-06');
-    expect(w.end).toBe('2026-09-14');
+    const w = employmentWindow(2026, '2026-02-01', null, '2026-11-01')!;
+    expect(w.start).toBe('2026-02-01');
+    expect(w.end).toBe('2026-11-01');
   });
 });
 
@@ -158,7 +158,7 @@ describe('earningsForYear', () => {
   const raises = [
     {
       id: 'r1',
-      date: '2026-08-31',
+      date: '2026-10-01',
       type: 'promotion' as const,
       base_before: 165000,
       base_after: 181500,
@@ -169,35 +169,35 @@ describe('earningsForYear', () => {
     },
   ];
 
-  const window = employmentWindow(2026, '2026-01-06', null, '2026-09-14')!;
+  const window = employmentWindow(2026, '2026-02-01', null, '2026-11-01')!;
 
   it('splits the window into one stretch per rate', () => {
     const result = earningsForYear(raises, stored, window, 2026)!;
     expect(result.segments).toHaveLength(2);
-    expect(result.segments[0]).toMatchObject({ from: '2026-01-06', to: '2026-08-30', days: 237 });
-    expect(result.segments[1]).toMatchObject({ from: '2026-08-31', to: '2026-09-14', days: 15 });
+    expect(result.segments[0]).toMatchObject({ from: '2026-02-01', to: '2026-09-30', days: 242 });
+    expect(result.segments[1]).toMatchObject({ from: '2026-10-01', to: '2026-11-01', days: 32 });
   });
 
   it('prices each stretch at its own rate, pro-rated over the year', () => {
     const result = earningsForYear(raises, stored, window, 2026)!;
     expect(result.segments[0].annualRate).toBeCloseTo(oldRate, 2);
     expect(result.segments[1].annualRate).toBeCloseTo(newRate, 2);
-    expect(result.segments[0].amount).toBeCloseTo((oldRate * 237) / 365, 2);
-    expect(result.segments[1].amount).toBeCloseTo((newRate * 15) / 365, 2);
+    expect(result.segments[0].amount).toBeCloseTo((oldRate * 242) / 365, 2);
+    expect(result.segments[1].amount).toBeCloseTo((newRate * 32) / 365, 2);
   });
 
   it('totals to money earned, well under a full year at either rate', () => {
     const result = earningsForYear(raises, stored, window, 2026)!;
-    expect(result.total).toBeCloseTo((oldRate * 237 + newRate * 15) / 365, 2);
+    expect(result.total).toBeCloseTo((oldRate * 242 + newRate * 32) / 365, 2);
     expect(result.total).toBeLessThan(oldRate);
-    expect(result.daysWorked).toBe(252);
+    expect(result.daysWorked).toBe(274);
     expect(result.daysInYear).toBe(365);
   });
 
   it('is a single stretch when no raise falls inside the window', () => {
     const result = earningsForYear([], stored, window, 2026)!;
     expect(result.segments).toHaveLength(1);
-    expect(result.total).toBeCloseTo((oldRate * 252) / 365, 2);
+    expect(result.total).toBeCloseTo((oldRate * 274) / 365, 2);
   });
 
   it('counts a leap year as 366 days', () => {
@@ -206,7 +206,7 @@ describe('earningsForYear', () => {
   });
 
   it('is a full year of pay when the role ran the whole year', () => {
-    const whole = employmentWindow(2025, '2020-01-01', null, '2026-09-14')!;
+    const whole = employmentWindow(2025, '2020-01-01', null, '2026-11-01')!;
     expect(earningsForYear([], stored, whole, 2025)!.total).toBeCloseTo(oldRate, 2);
   });
 });
@@ -214,18 +214,18 @@ describe('earningsForYear', () => {
 describe('earningsForYear components', () => {
   it('splits the total into parts that add back up to it', () => {
     const stored = { base: 165000, bonus: 24750, equity: 50000 };
-    const window = employmentWindow(2026, '2026-01-06', null, '2026-09-14')!;
+    const window = employmentWindow(2026, '2026-02-01', null, '2026-11-01')!;
     const result = earningsForYear([], stored, window, 2026)!;
     const { base, bonus, equity } = result.byComponent;
     expect(base + bonus + equity).toBeCloseTo(result.total, 6);
-    expect(base).toBeCloseTo((165000 * 252) / 365, 2);
+    expect(base).toBeCloseTo((165000 * 274) / 365, 2);
   });
 });
 
 describe('backPayFor', () => {
   const retro = (over: Partial<RaiseEntry> = {}): RaiseEntry => ({
     id: 'r1',
-    date: '2026-08-31',
+    date: '2026-10-01',
     effective_date: '2026-07-01',
     type: 'merit',
     base_before: 165000,
@@ -239,14 +239,14 @@ describe('backPayFor', () => {
 
   it('owes the difference for the days payroll was late', () => {
     const [owed] = backPayFor([retro()]);
-    // 1 Jul to 30 Aug inclusive is 61 days at $16,500 a year.
-    expect(owed.days).toBe(61);
+    // 1 Jul to 30 Sep inclusive is 92 days at $16,500 a year.
+    expect(owed.days).toBe(92);
     expect(owed.annualDifference).toBe(16500);
-    expect(owed.amount).toBeCloseTo((16500 * 61) / 365, 2);
+    expect(owed.amount).toBeCloseTo((16500 * 92) / 365, 2);
   });
 
   it('owes nothing when payroll paid it from the effective date', () => {
-    expect(backPayFor([retro({ effective_date: '2026-08-31' })])).toEqual([]);
+    expect(backPayFor([retro({ effective_date: '2026-10-01' })])).toEqual([]);
     expect(backPayFor([retro({ effective_date: null })])).toEqual([]);
     expect(backPayFor([retro({ effective_date: undefined })])).toEqual([]);
   });
@@ -268,7 +268,7 @@ describe('backPayFor', () => {
   it('handles two late raises independently', () => {
     const owed = backPayFor([
       retro({ id: 'a', date: '2025-03-01', effective_date: '2025-01-01' }),
-      retro({ id: 'b', date: '2026-08-31', effective_date: '2026-07-01' }),
+      retro({ id: 'b', date: '2026-10-01', effective_date: '2026-07-01' }),
     ]);
     expect(owed.map((entry) => entry.raiseId)).toEqual(['a', 'b']);
     expect(owed[0].days).toBe(59);
@@ -279,7 +279,7 @@ describe('backPayFor breakdown', () => {
   const owed = backPayFor([
     {
       id: 'r1',
-      date: '2026-08-31',
+      date: '2026-10-01',
       effective_date: '2026-07-01',
       type: 'merit',
       base_before: 165000,
@@ -300,7 +300,7 @@ describe('backPayFor breakdown', () => {
   it('leaves the bonus out, since it is settled at payout on the new rate', () => {
     // The raise also lifts the bonus by 2475, and that may not be prorated into back pay.
     expect(owed.annualDifference).not.toBe(16500 + 2475);
-    expect(owed.amount).toBeCloseTo((16500 * 61) / 365, 6);
+    expect(owed.amount).toBeCloseTo((16500 * 92) / 365, 6);
   });
 
   it('reports the day count it divided by', () => {

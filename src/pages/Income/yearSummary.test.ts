@@ -665,7 +665,7 @@ describe('the Income card and the Experience breakdown quote one number', () => 
   const role2026 = () =>
     summarizeYear(
       2026,
-      [source({ annualSalary: 160000, startDate: '2025-01-06' })],
+      [source({ annualSalary: 160000, startDate: '2025-07-01' })],
       resolver(),
       midYear
     ).roles[0];
@@ -702,7 +702,7 @@ describe('rounding cannot separate the two pages', () => {
     // Figures chosen so the parts each carry a fraction.
     const role = summarizeYear(
       2026,
-      [source({ annualSalary: 144333, bonus: 24000, startDate: '2025-01-06' })],
+      [source({ annualSalary: 144333, bonus: 24000, startDate: '2025-07-01' })],
       resolver(),
       { ...context, todayIso: '2026-09-01' }
     ).roles[0];
@@ -719,7 +719,7 @@ describe('a raise payroll applied late', () => {
   const retroRaise: RaiseEntry[] = [
     {
       id: 'r1',
-      date: '2026-08-31',
+      date: '2026-10-01',
       effective_date: '2026-07-01',
       type: 'merit' as const,
       base_before: 165000,
@@ -751,19 +751,19 @@ describe('a raise payroll applied late', () => {
       }),
       taxYear: 2026,
     });
-    const july = ledger.rows.filter((row) => row.payDate && row.payDate < '2026-08-31');
+    const july = ledger.rows.filter((row) => row.payDate && row.payDate < '2026-10-01');
     expect(july.at(-1)!.regularGross).toBeCloseTo(165000 / 26, 2);
   });
 
   it('adds the shortfall as a one-off on the first paycheck at the new rate', () => {
     const withRetro = role(retroRaise).gross;
     const withoutRetro = role([{ ...retroRaise[0], effective_date: null }]).gross;
-    // 61 days at the $16,500 difference.
-    expect(withRetro - withoutRetro).toBeCloseTo((16500 * 61) / 365, 0);
+    // 92 days at the $16,500 difference.
+    expect(withRetro - withoutRetro).toBeCloseTo((16500 * 92) / 365, 0);
   });
 
   it('changes nothing when payroll was on time', () => {
-    const onTime = role([{ ...retroRaise[0], effective_date: '2026-08-31' }]).gross;
+    const onTime = role([{ ...retroRaise[0], effective_date: '2026-10-01' }]).gross;
     const none = role([{ ...retroRaise[0], effective_date: null }]).gross;
     expect(onTime).toBeCloseTo(none, 6);
   });
