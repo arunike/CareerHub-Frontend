@@ -25,8 +25,8 @@ const Notice = ({ tone, children }: { tone: 'info' | 'warn'; children: React.Rea
   <div
     className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${
       tone === 'warn'
-        ? 'border-amber-200 bg-amber-50/70 text-amber-800'
-        : 'border-slate-200 bg-slate-50 text-slate-600'
+        ? 'border-amber-200 dark:border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200'
+        : 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200'
     }`}
   >
     {children}

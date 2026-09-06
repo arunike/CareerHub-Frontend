@@ -141,18 +141,22 @@ export const ApplicationFunnelSection = ({ stats }: { stats: JobHuntStats }) => 
             {pipeline.map((stage) => (
               <div key={stage.key}>
                 <div className="mb-1 flex items-baseline justify-between gap-3 text-xs">
-                  <span className="truncate font-medium text-gray-700">{stage.label}</span>
-                  <span className="shrink-0 text-gray-500">
-                    <span className="font-semibold text-gray-900">
+                  <span className="truncate font-medium text-gray-700 dark:text-ink-100">
+                    {stage.label}
+                  </span>
+                  <span className="shrink-0 text-gray-500 dark:text-ink-400">
+                    <span className="font-semibold text-gray-900 dark:text-ink-50">
                       {stage.reached_count.toLocaleString()}
                     </span>{' '}
                     reached · {formatShare(stage.conversion_rate, stage.reached_count)}
                     {stage.current_count > 0 && (
-                      <span className="ml-2 text-gray-400">{stage.current_count} now</span>
+                      <span className="ml-2 text-gray-400 dark:text-ink-500">
+                        {stage.current_count} now
+                      </span>
                     )}
                   </span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-ink-800">
                   <div
                     className={`h-full rounded-full transition-all duration-300 ${getStageColor(stage.key)}`}
                     style={{
@@ -166,12 +170,14 @@ export const ApplicationFunnelSection = ({ stats }: { stats: JobHuntStats }) => 
               </div>
             ))}
             {pipeline.length === 0 && (
-              <div className="py-6 text-center text-sm text-gray-400">No stage data</div>
+              <div className="py-6 text-center text-sm text-gray-400 dark:text-ink-500">
+                No stage data
+              </div>
             )}
           </div>
 
           {typicalStages.length > 0 && (
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500 dark:text-ink-400">
               <TooltipLabel
                 title={`Median days each stage takes before moving on, from your own timeline. Stages with fewer than ${analytics.min_duration_sample} recorded moves are left out — one transition is an anecdote, not a typical duration.`}
               >
@@ -180,7 +186,9 @@ export const ApplicationFunnelSection = ({ stats }: { stats: JobHuntStats }) => 
               {typicalStages.map((row, index) => (
                 <span key={row.key}>
                   {index > 0 && ' · '}
-                  <span className="font-semibold text-slate-600">{row.label}</span>{' '}
+                  <span className="font-semibold text-slate-600 dark:text-ink-200">
+                    {row.label}
+                  </span>{' '}
                   {row.median_days}d
                 </span>
               ))}
@@ -188,7 +196,7 @@ export const ApplicationFunnelSection = ({ stats }: { stats: JobHuntStats }) => 
           )}
 
           {analytics.biggest_drop && (
-            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-[13px] leading-relaxed text-amber-900">
+            <p className="mt-4 rounded-xl border border-amber-200 dark:border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 text-[13px] leading-relaxed text-amber-900 dark:text-amber-200">
               Biggest drop-off is{' '}
               <span className="font-semibold">{analytics.biggest_drop.from_label}</span> →{' '}
               <span className="font-semibold">{analytics.biggest_drop.to_label}</span>, where{' '}
@@ -217,7 +225,7 @@ export const WatchListSection = ({
       tooltip="Active applications that have stayed in the same stage longer than your ghosting threshold, longest first."
       badge={
         staleCount > 0 ? (
-          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700">
+          <span className="rounded-full bg-amber-100 dark:bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-700 dark:text-amber-300">
             {staleCount}
           </span>
         ) : undefined
@@ -228,25 +236,25 @@ export const WatchListSection = ({
           {analytics.stale_in_stage.map((item) => (
             <div
               key={item.application_id}
-              className="group/stale rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
+              className="group/stale rounded-lg border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-3 py-2"
             >
               <div className="flex items-start gap-2">
-                <WarningOutlined className="mt-0.5 shrink-0 text-amber-600" />
+                <WarningOutlined className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
                 <div className="min-w-0 flex-1">
                   {/* A report you cannot act on sends you hunting through 800 rows. */}
                   <Link
                     to={`/applications?application=${item.application_id}`}
-                    className="block truncate text-sm font-semibold text-gray-900 hover:text-blue-700 hover:underline"
+                    className="block truncate text-sm font-semibold text-gray-900 dark:text-ink-50 hover:text-blue-700 hover:underline"
                     title={`Open ${item.company} — ${item.role_title}`}
                   >
                     {item.company} · {item.role_title}
                   </Link>
-                  <p className="text-xs text-amber-700">
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
                     {item.days_in_stage} day{item.days_in_stage === 1 ? '' : 's'} in{' '}
                     {item.status_label}
                     {/* The date the count is measured from, so a shared day count does not read as a bug. */}
                     {item.last_stage_date && (
-                      <span className="text-amber-600/70">
+                      <span className="text-amber-600/70 dark:text-amber-300">
                         {' '}
                         · since {formatStageDate(item.last_stage_date)}
                       </span>
@@ -254,7 +262,7 @@ export const WatchListSection = ({
                   </p>
                   {/* Measured against its own stage: a flat threshold treats a phone screen like an onsite. */}
                   {typeof item.days_over_typical === 'number' && item.days_over_typical > 0 && (
-                    <p className="mt-0.5 text-[11px] font-semibold text-rose-600">
+                    <p className="mt-0.5 text-[11px] font-semibold text-rose-600 dark:text-rose-300">
                       {item.days_over_typical.toLocaleString()} days past the {item.typical_days}d
                       typical for this stage
                     </p>
@@ -266,7 +274,7 @@ export const WatchListSection = ({
                       type="button"
                       onClick={() => onGhost(item.application_id)}
                       aria-label={`Mark ${item.company} as ghosted`}
-                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-white hover:text-rose-600"
+                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-white hover:text-rose-600"
                     >
                       Ghosted
                     </button>
@@ -276,7 +284,7 @@ export const WatchListSection = ({
             </div>
           ))}
           {analytics.stale_in_stage.length === 0 && (
-            <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+            <div className="rounded-lg border border-dashed border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 px-4 py-6 text-center text-sm text-gray-500 dark:text-ink-400">
               No stale active stages
             </div>
           )}

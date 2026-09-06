@@ -58,18 +58,18 @@ const EventCategoriesSection = ({
 }: Props) => (
   <div
     id="settings-section-categories"
-    className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+    className="scroll-mt-24 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6"
   >
     <div className="mb-4 flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
-      <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
-        <span className="text-slate-400">{SECTION_ICONS.categories}</span>
+      <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-ink-50">
+        <span className="text-slate-400 dark:text-ink-500">{SECTION_ICONS.categories}</span>
         Manage Categories
       </h2>
       <div className="flex items-center justify-end gap-2">
         <button
           type="button"
           onClick={() => setIsCategoriesLocked((l) => !l)}
-          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isCategoriesLocked ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isCategoriesLocked ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100' : 'text-gray-600 dark:text-ink-200 hover:bg-gray-100 hover:text-gray-800'}`}
           title={isCategoriesLocked ? 'Unlock section' : 'Lock section'}
           aria-pressed={isCategoriesLocked}
         >
@@ -88,7 +88,7 @@ const EventCategoriesSection = ({
                 setIsAddingCategory(true);
               }
             }}
-            className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
+            className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
           >
             {isAddingCategory ? (
               <CloseOutlined className="text-base" />
@@ -104,23 +104,27 @@ const EventCategoriesSection = ({
     {isAddingCategory && !isCategoriesLocked && (
       <form
         onSubmit={handleSaveCategory}
-        className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200"
+        className="mb-6 bg-gray-50 dark:bg-ink-900 p-4 rounded-lg border border-gray-200 dark:border-white/[0.08]"
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-ink-400 mb-1">
+                Name
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Health, Finance"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-white/[0.12] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Icon</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-ink-400 mb-1">
+                Icon
+              </label>
               <IconPicker value={newCategoryIcon} onChange={setNewCategoryIcon} />
             </div>
             <button
@@ -132,7 +136,9 @@ const EventCategoriesSection = ({
             </button>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Color</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-ink-400 mb-1">
+              Color
+            </label>
             <ColorSwatchPicker
               value={newCategoryColor}
               onChange={setNewCategoryColor}
@@ -150,7 +156,9 @@ const EventCategoriesSection = ({
 
     <div className="space-y-2">
       {categories.length === 0 ? (
-        <p className="text-gray-500 text-sm text-center py-4">No categories defined.</p>
+        <p className="text-gray-500 dark:text-ink-400 text-sm text-center py-4">
+          No categories defined.
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {categories.map((cat) => (

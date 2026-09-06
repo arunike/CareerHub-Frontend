@@ -16,10 +16,12 @@ interface ApplicationOption {
 
 const applicationStatusTone = (status: string) => {
   const value = (status || '').toLocaleUpperCase();
-  if (value === 'ACCEPTED') return 'bg-emerald-50 text-emerald-700';
-  if (value === 'OFFER') return 'bg-blue-50 text-blue-700';
-  if (value === 'REJECTED' || value === 'GHOSTED') return 'bg-rose-50 text-rose-700';
-  return 'bg-slate-100 text-slate-600';
+  if (value === 'ACCEPTED')
+    return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+  if (value === 'OFFER') return 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300';
+  if (value === 'REJECTED' || value === 'GHOSTED')
+    return 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300';
+  return 'bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200';
 };
 
 interface ContactEditorValues {
@@ -233,8 +235,8 @@ const ContactEditorModal = ({
           </Form.Item>
         </div>
         {canPickApplication && (
-          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+          <div className="mb-6 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-ink-500">
               Linked application
             </p>
 
@@ -244,16 +246,20 @@ const ContactEditorModal = ({
             </Form.Item>
 
             {applicationsLoading ? (
-              <p className="mt-1.5 text-sm text-slate-400">Loading applications…</p>
+              <p className="mt-1.5 text-sm text-slate-400 dark:text-ink-500">
+                Loading applications…
+              </p>
             ) : !(companyValue || '').trim() ? (
-              <p className="mt-1.5 text-sm text-slate-400">Pick a company above to link one.</p>
+              <p className="mt-1.5 text-sm text-slate-400 dark:text-ink-500">
+                Pick a company above to link one.
+              </p>
             ) : companyApplications.length === 0 ? (
-              <p className="mt-1.5 text-sm text-slate-400">
+              <p className="mt-1.5 text-sm text-slate-400 dark:text-ink-500">
                 No application at {companyValue} yet, so there is nothing to link.
               </p>
             ) : companyApplications.length > 1 && !resolvedApplication ? (
               <>
-                <p className="mb-2 mt-1.5 text-sm text-slate-500">
+                <p className="mb-2 mt-1.5 text-sm text-slate-500 dark:text-ink-400">
                   {companyApplications.length} applications at {companyValue} — pick the one you met
                   them through.
                 </p>
@@ -273,7 +279,7 @@ const ContactEditorModal = ({
               </>
             ) : resolvedApplication ? (
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-slate-800 dark:text-ink-50">
                   {resolvedApplication.role_title}
                 </span>
                 <span
@@ -295,7 +301,7 @@ const ContactEditorModal = ({
             ) : null}
 
             {linkedApplicationIds.size > 0 && (
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-400 dark:text-ink-500">
                 Already linked to {linkedApplicationIds.size}{' '}
                 {linkedApplicationIds.size === 1 ? 'application' : 'applications'}. This adds a link
                 rather than replacing them.
@@ -309,7 +315,7 @@ const ContactEditorModal = ({
         </Form.Item>
 
         {!contact && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-4">
             <Form.Item name="connect_to_self" valuePropName="checked" className="!mb-3">
               <Checkbox>Add this person to my relationship network</Checkbox>
             </Form.Item>

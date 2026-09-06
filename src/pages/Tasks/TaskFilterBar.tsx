@@ -21,12 +21,14 @@ const TaskFilterBar = ({
 }: Props) => (
   <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
     <div className="flex items-start gap-3 lg:w-[280px]">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-300">
         <BellOutlined />
       </div>
       <div className="min-w-0">
-        <h2 className="text-sm font-semibold text-slate-900">Smart reminders</h2>
-        <div className="text-xs text-slate-500">Type a reminder in natural language.</div>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-ink-50">Smart reminders</h2>
+        <div className="text-xs text-slate-500 dark:text-ink-400">
+          Type a reminder in natural language.
+        </div>
       </div>
     </div>
 
@@ -44,11 +46,11 @@ const TaskFilterBar = ({
       />
       <div
         id="smart-reminder-help"
-        className="mt-2 min-h-5 text-xs text-slate-500"
+        className="mt-2 min-h-5 text-xs text-slate-500 dark:text-ink-400"
         aria-live="polite"
       >
         {smartReminderDraft ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-700 dark:text-emerald-300">
             <CheckCircleOutlined />
             {smartReminderDraft.dueDate.format('MMM D, YYYY')} · {smartReminderDraft.priority}
           </span>
@@ -70,7 +72,7 @@ const TaskFilterBar = ({
             <button
               type="button"
               onClick={() => setSmartReminderText(example)}
-              className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-medium text-slate-600 dark:text-ink-200 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
             >
               {example}
             </button>

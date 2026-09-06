@@ -154,14 +154,15 @@ const CalendarMonthView = ({
         <div
           key={cloneDay.toString()}
           className={clsx(
-            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 p-1 transition-all [@media(hover:hover)]:hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
-            !isCurrentMonth && 'bg-gray-50/50 text-gray-400',
+            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 dark:border-white/[0.07] p-1 transition-all [@media(hover:hover)]:hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
+            !isCurrentMonth && 'bg-gray-50/50 dark:bg-ink-900/50 text-gray-400 dark:text-ink-500',
             // Both can be true; which class wins is stylesheet order, not this order.
-            isTodayDate && !isSelected && 'bg-blue-50/30',
+            isTodayDate && !isSelected && 'bg-blue-50/30 dark:bg-blue-500/10',
             // Square: a rounded ring in a hairline grid reads as a sticker over the cell.
-            isSelected && 'z-10 bg-blue-50 ring-1 ring-inset ring-blue-500',
-            isDropCandidate && 'border-dashed border-blue-300',
-            dropTarget === dayKey && 'z-10 bg-blue-100/70 ring-1 ring-inset ring-blue-500'
+            isSelected && 'z-10 bg-blue-50 dark:bg-blue-500/10 ring-1 ring-inset ring-blue-500',
+            isDropCandidate && 'border-dashed border-blue-300 dark:border-blue-500/30',
+            dropTarget === dayKey &&
+              'z-10 bg-blue-100/70 dark:bg-blue-500/10 ring-1 ring-inset ring-blue-500'
           )}
           onClick={() => onDateSelect(cloneDay)}
           onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
@@ -199,8 +200,8 @@ const CalendarMonthView = ({
                   isTodayDate
                     ? 'bg-blue-600 text-white'
                     : isSelected
-                      ? 'bg-blue-100 font-semibold text-blue-700'
-                      : 'text-gray-700'
+                      ? 'bg-blue-100 dark:bg-blue-500/15 font-semibold text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-ink-100'
                 )}
               >
                 {format(cloneDay, 'd')}
@@ -263,12 +264,15 @@ const CalendarMonthView = ({
     <>
       <div className="grid grid-cols-7 mb-2">
         {WEEKDAY_LABELS.map((label) => (
-          <div className="text-center font-medium text-gray-400 text-xs py-2" key={label}>
+          <div
+            className="text-center font-medium text-gray-400 dark:text-ink-500 text-xs py-2"
+            key={label}
+          >
             {label}
           </div>
         ))}
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-ink-900 rounded-xl border border-gray-200 dark:border-white/[0.08] overflow-hidden shadow-sm">
         {rows}
       </div>
     </>

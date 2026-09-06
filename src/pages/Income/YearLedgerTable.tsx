@@ -26,7 +26,7 @@ interface Props {
 const Figure = ({
   value,
   recorded = false,
-  className = 'text-slate-700',
+  className = 'text-slate-700 dark:text-ink-100',
 }: {
   value: string;
   recorded?: boolean;
@@ -94,7 +94,7 @@ export const YearLedgerTable = ({
       width: 44,
       responsive: ['xxl'],
       render: (_: number, row) => (
-        <span className="tabular-nums text-slate-300">{viewOf(row).ordinal}</span>
+        <span className="tabular-nums text-slate-300 dark:text-ink-600">{viewOf(row).ordinal}</span>
       ),
     },
     {
@@ -112,7 +112,7 @@ export const YearLedgerTable = ({
         return (
           <div className="flex flex-col gap-1">
             {compact ? (
-              <span className="whitespace-nowrap font-medium text-slate-700">
+              <span className="whitespace-nowrap font-medium text-slate-700 dark:text-ink-100">
                 {value ? dayjs(value).format('MMM D') : '—'}
               </span>
             ) : (
@@ -168,7 +168,7 @@ export const YearLedgerTable = ({
                 display={gross}
                 recorded={grossRecorded ? (grossByPeriod.get(row.periodIndex) ?? null) : null}
                 modelledPlaceholder={format.money(row.modelledGross)}
-                className="text-slate-700"
+                className="text-slate-700 dark:text-ink-100"
                 editorWidth={100}
                 editing={isEditing(row, 'gross')}
                 onDone={closeEditor(row, 'gross')}
@@ -177,7 +177,7 @@ export const YearLedgerTable = ({
             {supplemental ? (
               <Tooltip title={`Includes ${supplemental} of bonus or vest`}>
                 {/* Shrinkable, so a longer figure cannot push the row past the card. */}
-                <span className="min-w-0 truncate text-[11px] tabular-nums text-slate-400">
+                <span className="min-w-0 truncate text-[11px] tabular-nums text-slate-400 dark:text-ink-500">
                   {supplemental}
                 </span>
               </Tooltip>
@@ -198,7 +198,7 @@ export const YearLedgerTable = ({
             {preTaxFlags.map((entry) => (
               <LedgerFlagChip key={entry.key} flag={entry} />
             ))}
-            <Figure value={preTax} className="text-slate-500" />
+            <Figure value={preTax} className="text-slate-500 dark:text-ink-400" />
           </span>
         );
       },
@@ -209,7 +209,9 @@ export const YearLedgerTable = ({
       align: 'right',
       width: 106,
       responsive: ['sm'],
-      render: (_: number, row) => <Figure value={viewOf(row).tax} className="text-slate-500" />,
+      render: (_: number, row) => (
+        <Figure value={viewOf(row).tax} className="text-slate-500 dark:text-ink-400" />
+      ),
     },
     {
       title: (
@@ -220,7 +222,9 @@ export const YearLedgerTable = ({
       align: 'right',
       width: 62,
       responsive: ['xxl'],
-      render: (_, row) => <Figure value={viewOf(row).taxRate} className="text-slate-400" />,
+      render: (_, row) => (
+        <Figure value={viewOf(row).taxRate} className="text-slate-400 dark:text-ink-500" />
+      ),
     },
     {
       title: (
@@ -259,7 +263,7 @@ export const YearLedgerTable = ({
       render: (_: number, row) => {
         const { match } = viewOf(row);
         return match ? (
-          <Figure value={match} className="text-slate-500" />
+          <Figure value={match} className="text-slate-500 dark:text-ink-400" />
         ) : (
           <span className="text-slate-200">·</span>
         );
@@ -281,7 +285,7 @@ export const YearLedgerTable = ({
                 {autoNotes.map((note) => (
                   <span
                     key={note}
-                    className="min-w-0 truncate rounded-md bg-slate-100 px-1.5 py-px text-[11px] text-slate-600"
+                    className="min-w-0 truncate rounded-md bg-slate-100 dark:bg-ink-800 px-1.5 py-px text-[11px] text-slate-600 dark:text-ink-200"
                   >
                     {note}
                   </span>
@@ -328,7 +332,7 @@ export const YearLedgerTable = ({
               columnWidth: 22,
               expandIcon: ({ expanded }) => (
                 <span
-                  className={`inline-flex text-[10px] text-slate-300 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                  className={`inline-flex text-[10px] text-slate-300 dark:text-ink-600 transition-transform ${expanded ? 'rotate-90' : ''}`}
                 >
                   <RightOutlined />
                 </span>

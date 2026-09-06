@@ -43,7 +43,7 @@ const FigureMath = ({
         <div className="max-w-[19rem]">
           {math ? (
             <>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-ink-400">
                 How {label.toLowerCase()} is worked out
               </p>
               <table className="w-full border-collapse text-xs">
@@ -51,18 +51,18 @@ const FigureMath = ({
                   {math.steps.map((step, index) => (
                     <Fragment key={step.label}>
                       <tr className="align-baseline">
-                        <td className="w-3 pr-1 text-right font-medium text-slate-500">
+                        <td className="w-3 pr-1 text-right font-medium text-slate-500 dark:text-ink-400">
                           {index === 0 ? '' : OPERATOR[step.op ?? 'plus']}
                         </td>
-                        <td className="py-0.5 pr-3 text-slate-600">
+                        <td className="py-0.5 pr-3 text-slate-600 dark:text-ink-200">
                           {step.label}
                           {step.note ? (
-                            <span className="block text-[11px] leading-snug text-slate-500">
+                            <span className="block text-[11px] leading-snug text-slate-500 dark:text-ink-400">
                               {step.note}
                             </span>
                           ) : null}
                         </td>
-                        <td className="py-0.5 text-right tabular-nums text-slate-800">
+                        <td className="py-0.5 text-right tabular-nums text-slate-800 dark:text-ink-50">
                           {show(step)}
                         </td>
                       </tr>
@@ -70,10 +70,10 @@ const FigureMath = ({
                       {(step.parts ?? []).map((part) => (
                         <tr key={`${step.label}-${part.label}`} className="align-baseline">
                           <td />
-                          <td className="pb-0.5 pl-3 pr-3 text-[11px] text-slate-500">
+                          <td className="pb-0.5 pl-3 pr-3 text-[11px] text-slate-500 dark:text-ink-400">
                             {part.label}
                           </td>
-                          <td className="pb-0.5 text-right text-[11px] tabular-nums text-slate-500">
+                          <td className="pb-0.5 text-right text-[11px] tabular-nums text-slate-500 dark:text-ink-400">
                             {money(part.value)}
                           </td>
                         </tr>
@@ -82,10 +82,10 @@ const FigureMath = ({
                   ))}
                   <tr className="align-baseline">
                     <td />
-                    <td className="border-t border-slate-200 pt-1.5 pr-3 font-semibold text-slate-700">
+                    <td className="border-t border-slate-200 dark:border-white/[0.08] pt-1.5 pr-3 font-semibold text-slate-700 dark:text-ink-100">
                       {math.totalLabel}
                     </td>
-                    <td className="border-t border-slate-200 pt-1.5 text-right font-semibold tabular-nums text-slate-900">
+                    <td className="border-t border-slate-200 dark:border-white/[0.08] pt-1.5 text-right font-semibold tabular-nums text-slate-900 dark:text-ink-50">
                       {money(math.total)}
                     </td>
                   </tr>
@@ -93,8 +93,10 @@ const FigureMath = ({
                   {(math.totalParts ?? []).map((part) => (
                     <tr key={`total-${part.label}`} className="align-baseline">
                       <td />
-                      <td className="pb-0.5 pl-3 pr-3 text-[11px] text-slate-500">{part.label}</td>
-                      <td className="pb-0.5 text-right text-[11px] tabular-nums text-slate-500">
+                      <td className="pb-0.5 pl-3 pr-3 text-[11px] text-slate-500 dark:text-ink-400">
+                        {part.label}
+                      </td>
+                      <td className="pb-0.5 text-right text-[11px] tabular-nums text-slate-500 dark:text-ink-400">
                         {money(part.value)}
                       </td>
                     </tr>
@@ -102,13 +104,15 @@ const FigureMath = ({
                 </tbody>
               </table>
               {math.footnote ? (
-                <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{math.footnote}</p>
+                <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-ink-400">
+                  {math.footnote}
+                </p>
               ) : null}
             </>
           ) : null}
           {prose ? (
             <p
-              className={`text-[11px] leading-relaxed text-slate-500 ${math ? 'mt-2 border-t border-slate-100 pt-2' : ''}`}
+              className={`text-[11px] leading-relaxed text-slate-500 dark:text-ink-400 ${math ? 'mt-2 border-t border-slate-100 dark:border-white/[0.07] pt-2' : ''}`}
             >
               {prose}
             </p>
@@ -119,7 +123,7 @@ const FigureMath = ({
       <button
         type="button"
         aria-label={`How ${label.toLowerCase()} is worked out`}
-        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-300 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-300 dark:text-ink-600 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         <InfoCircleOutlined />
       </button>

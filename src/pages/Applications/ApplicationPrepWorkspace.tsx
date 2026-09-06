@@ -58,11 +58,11 @@ const Section = ({
   action?: ReactNode;
   children: ReactNode;
 }) => (
-  <section className="border-t border-slate-100 px-5 py-5 first:border-t-0">
+  <section className="border-t border-slate-100 dark:border-white/[0.07] px-5 py-5 first:border-t-0">
     <div className="mb-3 flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-[15px] font-bold text-slate-950">
-          <span className="text-sm text-slate-400">{icon}</span>
+        <div className="flex items-center gap-2 text-[15px] font-bold text-slate-950 dark:text-ink-50">
+          <span className="text-sm text-slate-400 dark:text-ink-500">{icon}</span>
           {title}
         </div>
       </div>
@@ -83,12 +83,14 @@ const EmptyBlock = ({
   description: string;
   action?: ReactNode;
 }) => (
-  <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3.5 py-3">
+  <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 dark:bg-ink-900 px-3.5 py-3">
     <div className="flex min-w-0 items-start gap-3">
-      <div className="mt-0.5 text-slate-400">{icon}</div>
+      <div className="mt-0.5 text-slate-400 dark:text-ink-500">{icon}</div>
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-slate-800">{title}</div>
-        <p className="m-0 mt-0.5 text-sm leading-5 text-slate-500">{description}</p>
+        <div className="text-sm font-semibold text-slate-800 dark:text-ink-50">{title}</div>
+        <p className="m-0 mt-0.5 text-sm leading-5 text-slate-500 dark:text-ink-400">
+          {description}
+        </p>
       </div>
     </div>
     {action && <div className="shrink-0">{action}</div>}
@@ -202,18 +204,18 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white">
+    <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900">
       {contextHolder}
 
       <section className="px-5 py-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-ink-500">
               Application Prep
             </div>
           </div>
           <div className="w-full md:w-48">
-            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-ink-400">
               <span>Ready</span>
               <span>
                 {completedReadiness}/{readinessItems.length}
@@ -234,8 +236,8 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
               key={item.label}
               className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
                 item.done
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-500'
+                  ? 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  : 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-500 dark:text-ink-400'
               }`}
             >
               {item.done && <CheckCircleOutlined />}
@@ -278,16 +280,16 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
                     strokeColor={scoreColor(fitScore)}
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="font-bold text-slate-900">
+                    <div className="font-bold text-slate-900 dark:text-ink-50">
                       {workspace.latest_jd_report.title || 'Latest JD report'}
                     </div>
-                    <p className="m-0 mt-1 line-clamp-2 text-sm text-slate-500">
+                    <p className="m-0 mt-1 line-clamp-2 text-sm text-slate-500 dark:text-ink-400">
                       {asText(latestPayload.summary) ||
                         workspace.latest_jd_report.summary ||
                         'No summary saved.'}
                     </p>
                     <a
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:underline"
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-sky-600 dark:text-sky-300 hover:underline"
                       href={`/jd-report/${workspace.latest_jd_report.client_id}`}
                     >
                       <LinkOutlined /> Open report
@@ -312,19 +314,19 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
             {(bestExperiences.length > 0 || tailoredBullets.length > 0) && (
               <div className="space-y-2 pt-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <BulbOutlined className="text-sm text-slate-400" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <BulbOutlined className="text-sm text-slate-400 dark:text-ink-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-ink-500">
                     Resume Evidence
                   </span>
                 </div>
                 <div className="grid gap-2">
                   {bestExperiences.slice(0, 3).map((item, index) => (
-                    <div key={index} className="rounded-lg bg-slate-50 px-3 py-2.5">
-                      <div className="text-sm font-bold text-slate-900">
+                    <div key={index} className="rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2.5">
+                      <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
                         {asText(item.title, 'Experience')}{' '}
                         {item.company ? `@ ${asText(item.company)}` : ''}
                       </div>
-                      <p className="m-0 mt-1 line-clamp-2 text-sm text-slate-500">
+                      <p className="m-0 mt-1 line-clamp-2 text-sm text-slate-500 dark:text-ink-400">
                         {asText(item.relevance)}
                       </p>
                     </div>
@@ -332,15 +334,20 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
                   {tailoredBullets.slice(0, 3).map((item, index) => {
                     const reason = asText(item.reason);
                     return (
-                      <div key={`bullet-${index}`} className="rounded-lg bg-sky-50 px-3 py-2.5">
-                        <div className="text-xs font-bold uppercase text-sky-700">
+                      <div
+                        key={`bullet-${index}`}
+                        className="rounded-lg bg-sky-50 dark:bg-sky-500/10 px-3 py-2.5"
+                      >
+                        <div className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">
                           Suggested Bullet
                         </div>
-                        <p className="m-0 mt-1 text-sm font-semibold text-slate-800">
+                        <p className="m-0 mt-1 text-sm font-semibold text-slate-800 dark:text-ink-50">
                           {asText(item.revised)}
                         </p>
                         {reason && (
-                          <p className="m-0 mt-1 line-clamp-2 text-xs text-slate-500">{reason}</p>
+                          <p className="m-0 mt-1 line-clamp-2 text-xs text-slate-500 dark:text-ink-400">
+                            {reason}
+                          </p>
                         )}
                       </div>
                     );
@@ -364,7 +371,7 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
             dataSource={workspace.documents}
             renderItem={(documentRecord) => (
               <List.Item
-                className="!border-slate-100 !px-0"
+                className="!border-slate-100 dark:!border-white/[0.07] !px-0"
                 actions={[
                   <Button key="open" size="small" onClick={() => openDocument(documentRecord)}>
                     Open
@@ -397,8 +404,10 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
       >
         {latestCoverLetter ? (
           <div>
-            <div className="font-bold text-slate-900">{latestCoverLetter.title}</div>
-            <p className="m-0 mt-2 line-clamp-4 whitespace-pre-line text-sm text-slate-500">
+            <div className="font-bold text-slate-900 dark:text-ink-50">
+              {latestCoverLetter.title}
+            </div>
+            <p className="m-0 mt-2 line-clamp-4 whitespace-pre-line text-sm text-slate-500 dark:text-ink-400">
               {coverLetterText || latestCoverLetter.summary || 'Cover letter saved.'}
             </p>
           </div>
@@ -414,21 +423,23 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
       <Section title="Notes & Timeline" icon={<WarningOutlined />}>
         <div className="space-y-3">
           <div>
-            <div className="mb-1 text-xs font-bold uppercase tracking-[0.1em] text-slate-400">
+            <div className="mb-1 text-xs font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-ink-500">
               Notes
             </div>
-            <p className="m-0 line-clamp-3 text-sm text-slate-600">
+            <p className="m-0 line-clamp-3 text-sm text-slate-600 dark:text-ink-200">
               {workspace.notes.replace(/<[^>]*>/g, ' ').trim() || 'No notes saved.'}
             </p>
           </div>
           <div className="space-y-2">
             {workspace.timeline.slice(0, 4).map((entry) => (
               <div key={entry.id} className="flex items-start gap-2 text-sm">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400 dark:bg-ink-700" />
                 <div className="min-w-0">
-                  <span className="font-semibold text-slate-800">{entry.stage_label}</span>
-                  <span className="mx-1.5 text-slate-300">/</span>
-                  <span className="text-xs text-slate-500">
+                  <span className="font-semibold text-slate-800 dark:text-ink-50">
+                    {entry.stage_label}
+                  </span>
+                  <span className="mx-1.5 text-slate-300 dark:text-ink-600">/</span>
+                  <span className="text-xs text-slate-500 dark:text-ink-400">
                     {formatDateOnly(entry.event_date || '', 'No date')}
                   </span>
                 </div>

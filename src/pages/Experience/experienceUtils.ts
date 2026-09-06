@@ -86,16 +86,20 @@ export const DEFAULT_EMP_TYPES: EmploymentType[] = [
 ];
 
 export const BADGE_CLASSES: Record<string, string> = {
-  blue: 'bg-blue-50 text-blue-700 border-blue-200',
-  teal: 'bg-teal-50 text-teal-700 border-teal-200',
-  amber: 'bg-amber-50 text-amber-700 border-amber-200',
-  purple: 'bg-purple-50 text-purple-700 border-purple-200',
-  orange: 'bg-orange-50 text-orange-700 border-orange-200',
-  green: 'bg-green-50 text-green-700 border-green-200',
-  red: 'bg-red-50 text-red-700 border-red-200',
-  pink: 'bg-pink-50 text-pink-700 border-pink-200',
-  sky: 'bg-sky-50 text-sky-700 border-sky-200',
-  gray: 'bg-gray-50 text-gray-700 border-gray-200',
+  blue: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/25',
+  teal: 'bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-500/25',
+  amber:
+    'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/25',
+  purple:
+    'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/25',
+  orange:
+    'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-500/25',
+  green:
+    'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-300 border-green-200 dark:border-green-500/25',
+  red: 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/25',
+  pink: 'bg-pink-50 dark:bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-200 dark:border-pink-500/25',
+  sky: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/25',
+  gray: 'bg-gray-50 dark:bg-ink-900 text-gray-700 dark:text-ink-100 border-gray-200 dark:border-white/[0.08]',
 };
 
 export const DOT_CLASSES: Record<string, string> = {

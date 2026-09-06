@@ -49,7 +49,7 @@ const Figure = ({
   value,
   hint,
   breakdown,
-  tone = 'text-slate-900',
+  tone = 'text-slate-900 dark:text-ink-50',
 }: {
   label: string;
   value: number;
@@ -60,7 +60,7 @@ const Figure = ({
   const { money } = useMoney();
   return (
     <div>
-      <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
         {label}
         <FigureMath label={label} hint={hint} breakdown={breakdown} />
       </span>
@@ -83,30 +83,30 @@ const RoleBreakdown = ({
   const template = `minmax(0,2.2fr) repeat(${columns.length + 1}, minmax(0,1fr)) minmax(6rem,1.1fr)`;
 
   return (
-    <div className="border-t border-slate-100 px-6 py-4">
+    <div className="border-t border-slate-100 dark:border-white/[0.07] px-6 py-4">
       <div
         className="hidden items-baseline gap-x-4 px-2 pb-2 sm:grid"
         style={{ gridTemplateColumns: template }}
       >
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           By role
         </span>
         {columns.map((column) => (
           <span
             key={column.key}
-            className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+            className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-ink-400"
           >
             {column.label}
           </span>
         ))}
-        <span className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <span className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-ink-400">
           Paychecks
         </span>
-        <span className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <span className="text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-ink-400">
           Total comp
         </span>
       </div>
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:hidden">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500 sm:hidden">
         By role
       </span>
 
@@ -117,11 +117,15 @@ const RoleBreakdown = ({
             type="button"
             onClick={() => onSelectRole(role.sourceKey)}
             style={{ gridTemplateColumns: template }}
-            className="flex w-full flex-col gap-1 rounded-lg border border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 sm:grid sm:items-baseline sm:gap-x-4 sm:gap-y-0 sm:rounded-md sm:border-0 sm:px-2 sm:py-2"
+            className="flex w-full flex-col gap-1 rounded-lg border border-slate-100 dark:border-white/[0.07] px-3 py-2.5 text-left transition hover:bg-slate-50 sm:grid sm:items-baseline sm:gap-x-4 sm:gap-y-0 sm:rounded-md sm:border-0 sm:px-2 sm:py-2"
           >
             <span className="min-w-0 sm:truncate">
-              <span className="text-sm font-medium text-slate-800">{role.company}</span>
-              <span className="ml-2 text-xs text-slate-500">{role.roleTitle}</span>
+              <span className="text-sm font-medium text-slate-800 dark:text-ink-50">
+                {role.company}
+              </span>
+              <span className="ml-2 text-xs text-slate-500 dark:text-ink-400">
+                {role.roleTitle}
+              </span>
             </span>
             {columns.map((column) => {
               const value = role[column.key];
@@ -129,22 +133,26 @@ const RoleBreakdown = ({
                 <span
                   key={column.key}
                   // The dash keeps the desktop column aligned; the phone has its own label.
-                  className={`items-baseline justify-between gap-2 text-xs tabular-nums text-slate-700 sm:flex sm:justify-end ${
+                  className={`items-baseline justify-between gap-2 text-xs tabular-nums text-slate-700 dark:text-ink-100 sm:flex sm:justify-end ${
                     value > 0 ? 'flex' : 'hidden'
                   }`}
                 >
-                  <span className="text-slate-500 sm:hidden">{column.label}</span>
-                  {value > 0 ? money(value) : <span className="text-slate-400">—</span>}
+                  <span className="text-slate-500 dark:text-ink-400 sm:hidden">{column.label}</span>
+                  {value > 0 ? (
+                    money(value)
+                  ) : (
+                    <span className="text-slate-400 dark:text-ink-500">—</span>
+                  )}
                 </span>
               );
             })}
-            <span className="flex items-baseline justify-between gap-2 text-xs tabular-nums text-slate-500 sm:justify-end">
-              <span className="text-slate-500 sm:hidden">Paychecks</span>
+            <span className="flex items-baseline justify-between gap-2 text-xs tabular-nums text-slate-500 dark:text-ink-400 sm:justify-end">
+              <span className="text-slate-500 dark:text-ink-400 sm:hidden">Paychecks</span>
               {role.paychecks}
             </span>
-            <span className="mt-0.5 flex items-baseline justify-between gap-2 border-t border-slate-100 pt-1.5 sm:mt-0 sm:justify-end sm:border-0 sm:pt-0">
-              <span className="text-xs text-slate-500 sm:hidden">Total comp</span>
-              <span className="text-sm font-semibold tabular-nums text-slate-900">
+            <span className="mt-0.5 flex items-baseline justify-between gap-2 border-t border-slate-100 dark:border-white/[0.07] pt-1.5 sm:mt-0 sm:justify-end sm:border-0 sm:pt-0">
+              <span className="text-xs text-slate-500 dark:text-ink-400 sm:hidden">Total comp</span>
+              <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-ink-50">
                 {money(role.totalComp)}
               </span>
             </span>
@@ -170,9 +178,9 @@ const ElectiveLimitBar = ({ summary }: { summary: YearEarnings }) => {
   const isClosedYear = summary.taxYear < new Date().getFullYear();
 
   return (
-    <div className="mt-5 border-t border-slate-100 pt-4">
+    <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           Your 401(k)
           <FigureMath
             label="Your 401(k)"
@@ -183,13 +191,15 @@ const ElectiveLimitBar = ({ summary }: { summary: YearEarnings }) => {
             hint="Traditional and Roth together, which is what the annual elective deferral limit counts. The employer match sits outside it."
           />
         </span>
-        <span className="text-xs tabular-nums text-slate-500">
-          <span className="font-semibold text-amber-700">{money(summary.employee401k)}</span> of{' '}
-          {money(summary.electiveLimit)} limit
+        <span className="text-xs tabular-nums text-slate-500 dark:text-ink-400">
+          <span className="font-semibold text-amber-700 dark:text-amber-300">
+            {money(summary.employee401k)}
+          </span>{' '}
+          of {money(summary.electiveLimit)} limit
         </span>
       </div>
       {/* One segment per payroll, the split the limit cannot see; over it, all rose. */}
-      <div className="mt-2 flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-2 flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
         {deferrals.map((role, index) => (
           <Tooltip
             key={role.sourceKey}
@@ -211,25 +221,27 @@ const ElectiveLimitBar = ({ summary }: { summary: YearEarnings }) => {
           {deferrals.map((role, index) => (
             <span
               key={role.sourceKey}
-              className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600"
+              className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-ink-200"
             >
               <span
                 className={`h-2 w-2 rounded-full ${(isOver ? OVER_TONES : DEFERRAL_TONES)[index % DEFERRAL_TONES.length]}`}
               />
               {role.company}
-              <span className="tabular-nums text-slate-500">{money(role.employee401k)}</span>
+              <span className="tabular-nums text-slate-500 dark:text-ink-400">
+                {money(role.employee401k)}
+              </span>
             </span>
           ))}
         </div>
       ) : null}
-      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+      <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-ink-400">
         {isOver ? (
-          <span className="font-semibold text-rose-600">
+          <span className="font-semibold text-rose-600 dark:text-rose-300">
             {money(-remaining)} over the limit — the excess has to be returned before April 15 or it
             is taxed twice.
           </span>
         ) : remaining < 0.005 ? (
-          <span className="font-semibold text-amber-700">Limit reached.</span>
+          <span className="font-semibold text-amber-700 dark:text-amber-300">Limit reached.</span>
         ) : isClosedYear ? (
           <>{money(remaining)} of the limit went unused.</>
         ) : (
@@ -252,7 +264,7 @@ const RetirementGain = ({ summary }: { summary: YearEarnings }) => {
 
   if (!performance) {
     return (
-      <p className="mt-3 border-t border-dashed border-slate-100 pt-3 text-[11px] leading-relaxed text-slate-400">
+      <p className="mt-3 border-t border-dashed border-slate-100 dark:border-white/[0.07] pt-3 text-[11px] leading-relaxed text-slate-400 dark:text-ink-500">
         Record the opening and closing balances on the 401(k) tab and this year&rsquo;s investment
         gain appears here, separated from the money you paid in.
       </p>
@@ -261,18 +273,20 @@ const RetirementGain = ({ summary }: { summary: YearEarnings }) => {
 
   const up = performance.gain >= 0;
   return (
-    <div className="mt-3 border-t border-dashed border-slate-100 pt-3">
+    <div className="mt-3 border-t border-dashed border-slate-100 dark:border-white/[0.07] pt-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           Investment gain
         </span>
         <span className="text-xs tabular-nums">
-          <span className={`font-semibold ${up ? 'text-emerald-700' : 'text-rose-600'}`}>
+          <span
+            className={`font-semibold ${up ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}
+          >
             {up ? '+' : '−'}
             {money(Math.abs(performance.gain))}
           </span>
           {performance.gainPercent !== null ? (
-            <span className="text-slate-500">
+            <span className="text-slate-500 dark:text-ink-400">
               {' '}
               · {percent(Math.abs(performance.gainPercent), 1)}
             </span>
@@ -284,11 +298,11 @@ const RetirementGain = ({ summary }: { summary: YearEarnings }) => {
           {performance.roles.map((role) => (
             <span
               key={role.sourceKey}
-              className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600"
+              className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-ink-200"
             >
               {role.company}
               <span
-                className={`tabular-nums ${role.gain >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}
+                className={`tabular-nums ${role.gain >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}
               >
                 {role.gain >= 0 ? '+' : '−'}
                 {money(Math.abs(role.gain))}
@@ -297,7 +311,7 @@ const RetirementGain = ({ summary }: { summary: YearEarnings }) => {
           ))}
         </div>
       ) : null}
-      <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+      <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-ink-400">
         {money(performance.currentValue)} today, less {money(performance.startingBalance)} at the
         start and {money(performance.contributed)} paid in so far — contributions still to come this
         year are left out, since today&rsquo;s balance cannot hold them. A simple return, not
@@ -339,7 +353,7 @@ export const YearEarningsCard = ({
 
   return (
     <div className="enterprise-card overflow-hidden">
-      <div className="bg-gradient-to-br from-slate-50 to-white px-6 py-5">
+      <div className="bg-gradient-to-br from-slate-50 dark:from-ink-900 to-white dark:to-ink-900 px-6 py-5">
         <button
           type="button"
           onClick={() => setCollapsed((previous) => !previous)}
@@ -348,20 +362,20 @@ export const YearEarningsCard = ({
         >
           <div className="flex items-baseline gap-2">
             <DownOutlined
-              className={`text-[10px] text-slate-400 transition-transform ${
+              className={`text-[10px] text-slate-400 dark:text-ink-500 transition-transform ${
                 collapsed ? '-rotate-90' : ''
               }`}
             />
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
                 All roles in {taxYear}
               </span>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-ink-50">
                 {money(summary.totalComp)}
               </p>
             </div>
           </div>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-ink-400">
             {summary.roles.length === 1 ? '1 role' : `${summary.roles.length} roles`} ·{' '}
             {paidPaychecks === allPaychecks
               ? `${allPaychecks} paychecks`
@@ -385,25 +399,25 @@ export const YearEarningsCard = ({
               label="Tax withheld"
               value={summary.taxWithheld}
               breakdown={taxBreakdown(summary, sources)}
-              tone="text-rose-600"
+              tone="text-rose-600 dark:text-rose-300"
             />
             <Figure
               label="Deductions"
               value={summary.deductions}
               breakdown={deductionsBreakdown(summary, sources)}
-              tone="text-amber-600"
+              tone="text-amber-600 dark:text-amber-300"
             />
             <Figure
               label="Take-home"
               value={summary.takeHome}
               breakdown={takeHomeBreakdown(summary, sources)}
-              tone="text-emerald-600"
+              tone="text-emerald-600 dark:text-emerald-300"
             />
             <Figure
               label="401(k) match"
               value={summary.employerMatch}
               hint="Employer money, so this is the only figure here that adds on top of gross."
-              tone="text-sky-600"
+              tone="text-sky-600 dark:text-sky-300"
             />
             <Figure
               label="Total comp"
@@ -423,16 +437,16 @@ export const YearEarningsCard = ({
       {collapsed ? null : <RoleBreakdown roles={summary.roles} onSelectRole={onSelectRole} />}
 
       {!collapsed && history.length > 1 ? (
-        <div className="border-t border-slate-100 px-6 py-4">
+        <div className="border-t border-slate-100 dark:border-white/[0.07] px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               By year
             </span>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {SEGMENTS.map((segment) => (
                 <span
                   key={segment.key}
-                  className="flex items-center gap-1.5 text-[11px] text-slate-500"
+                  className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-ink-400"
                 >
                   <span className={`h-2 w-2 rounded-full ${segment.tone}`} />
                   {segment.label}
@@ -447,16 +461,16 @@ export const YearEarningsCard = ({
                 type="button"
                 onClick={() => onSelectYear(year.taxYear)}
                 className={`flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50 ${
-                  year.taxYear === taxYear ? 'bg-slate-50' : ''
+                  year.taxYear === taxYear ? 'bg-slate-50 dark:bg-ink-900' : ''
                 }`}
               >
-                <span className="w-10 shrink-0 text-xs font-medium tabular-nums text-slate-600">
+                <span className="w-10 shrink-0 text-xs font-medium tabular-nums text-slate-600 dark:text-ink-200">
                   {year.taxYear}
                 </span>
-                <span className="w-16 shrink-0 text-xs text-slate-400">
+                <span className="w-16 shrink-0 text-xs text-slate-400 dark:text-ink-500">
                   {year.roles.length === 1 ? '1 role' : `${year.roles.length} roles`}
                 </span>
-                <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
                   <span
                     className="flex h-full overflow-hidden rounded-full"
                     style={{ width: `${(year.totalComp / peak) * 100}%` }}
@@ -476,7 +490,7 @@ export const YearEarningsCard = ({
                     })}
                   </span>
                 </span>
-                <span className="w-28 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-900">
+                <span className="w-28 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-900 dark:text-ink-50">
                   {money(year.totalComp)}
                 </span>
               </button>

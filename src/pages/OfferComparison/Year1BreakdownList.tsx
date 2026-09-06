@@ -39,7 +39,7 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
         {COMPONENTS.map((component) => (
           <span
             key={component.label}
-            className="flex items-center gap-1.5 text-[11px] text-slate-500"
+            className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-ink-400"
           >
             <span className={`h-2 w-2 rounded-full ${component.dot}`} />
             {component.label}
@@ -49,7 +49,7 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[680px] text-sm">
-          <thead className="text-[11px] uppercase tracking-wide text-slate-500">
+          <thead className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-ink-400">
             <tr>
               <th className="py-2 pr-4 text-left font-bold">Offer</th>
               {COMPONENTS.map((component) => (
@@ -66,10 +66,13 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
               const share = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
               const isBest = data.length > 1 && row === best;
               return (
-                <tr key={row.id ?? row.name} className="border-t border-slate-100">
+                <tr
+                  key={row.id ?? row.name}
+                  className="border-t border-slate-100 dark:border-white/[0.07]"
+                >
                   <td className="py-3 pr-4">
-                    <div className="font-medium text-slate-900">{row.name}</div>
-                    <div className="mt-1.5 h-1 w-full max-w-[160px] overflow-hidden rounded-full bg-slate-100">
+                    <div className="font-medium text-slate-900 dark:text-ink-50">{row.name}</div>
+                    <div className="mt-1.5 h-1 w-full max-w-[160px] overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
                       <div
                         className="h-full rounded-full bg-blue-400"
                         style={{ width: `${Math.max(0, Math.min(100, share))}%` }}
@@ -81,7 +84,7 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
                     return (
                       <td
                         key={component.label}
-                        className={`px-3 py-3 text-right ${value > 0 ? 'text-slate-900' : 'text-slate-300'}`}
+                        className={`px-3 py-3 text-right ${value > 0 ? 'text-slate-900 dark:text-ink-50' : 'text-slate-300 dark:text-ink-600'}`}
                       >
                         {value > 0 ? formatCurrency(value) : '—'}
                       </td>
@@ -89,7 +92,9 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
                   })}
                   <td
                     className={`py-3 pl-3 text-right font-bold ${
-                      isBest ? 'text-emerald-600' : 'text-slate-950'
+                      isBest
+                        ? 'text-emerald-600 dark:text-emerald-300'
+                        : 'text-slate-950 dark:text-ink-50'
                     }`}
                   >
                     {formatCurrency(total)}
@@ -101,7 +106,7 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
         </table>
       </div>
 
-      <p className="text-[11px] leading-relaxed text-slate-400">
+      <p className="text-[11px] leading-relaxed text-slate-400 dark:text-ink-500">
         Year 1 salary, bonus, realizable equity, sign-on, and benefits. Paper equity is excluded.
       </p>
     </div>

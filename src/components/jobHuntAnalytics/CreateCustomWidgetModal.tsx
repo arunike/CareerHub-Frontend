@@ -297,9 +297,11 @@ const CreateCustomWidgetModal = ({
   return (
     <Modal
       title={
-        <div className="flex flex-col gap-1 border-b border-slate-100 pb-3 pr-6">
-          <span className="text-lg font-bold text-slate-800">Customize Custom Widget</span>
-          <span className="text-xs font-normal text-slate-400">
+        <div className="flex flex-col gap-1 border-b border-slate-100 dark:border-white/[0.07] pb-3 pr-6">
+          <span className="text-lg font-bold text-slate-800 dark:text-ink-50">
+            Customize Custom Widget
+          </span>
+          <span className="text-xs font-normal text-slate-400 dark:text-ink-500">
             Design your own custom metrics or charts with ultimate query freedom.
           </span>
         </div>

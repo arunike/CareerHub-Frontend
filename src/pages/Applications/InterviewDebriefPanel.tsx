@@ -15,7 +15,7 @@ import { getApiErrorMessage } from '../../utils/apiError';
 const { TextArea } = Input;
 
 const FIELD_LABEL =
-  'mb-1 block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400';
+  'mb-1 block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-ink-500';
 
 interface Draft {
   stage: string;
@@ -187,7 +187,7 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
   const patch = (next: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...next }));
 
   const editor = (
-    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+    <div className="space-y-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className={FIELD_LABEL}>Round</label>
@@ -256,10 +256,10 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-ink-500">
             Debriefs
           </p>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-ink-400">
             One per round — what was asked, what to fix, what happens next.
           </p>
         </div>
@@ -283,8 +283,8 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
         <div className="space-y-2">
           {/* Prompted from the calendar: an interview that happened with nothing written. */}
           {editingId === null && awaitingDebrief.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
-              <p className="text-sm font-medium text-amber-900">
+            <div className="rounded-xl border border-amber-200 dark:border-amber-500/25 bg-amber-50/60 dark:bg-amber-500/10 px-4 py-3">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
                 {awaitingDebrief.length === 1
                   ? 'An interview has passed without a debrief'
                   : `${awaitingDebrief.length} interviews have passed without a debrief`}
@@ -292,7 +292,7 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
               <ul className="mt-2 space-y-1.5">
                 {awaitingDebrief.map((event) => (
                   <li key={event.id} className="flex items-center justify-between gap-3">
-                    <span className="min-w-0 text-xs text-amber-900/80">
+                    <span className="min-w-0 text-xs text-amber-900/80 dark:text-amber-300">
                       <span className="font-medium">{dayjs(event.date).format('MMM D')}</span>{' '}
                       <span className="truncate">{event.name}</span>
                     </span>
@@ -311,19 +311,22 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
           )}
 
           {editingId === null && upcoming.length > 0 && (
-            <div className="rounded-xl border border-slate-200 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-ink-500">
                 Upcoming
               </p>
               <ul className="mt-1.5 space-y-1">
                 {upcoming.map((event) => (
-                  <li key={event.id} className="flex items-baseline gap-2 text-xs text-slate-600">
-                    <span className="font-medium text-slate-800">
+                  <li
+                    key={event.id}
+                    className="flex items-baseline gap-2 text-xs text-slate-600 dark:text-ink-200"
+                  >
+                    <span className="font-medium text-slate-800 dark:text-ink-50">
                       {dayjs(event.date).format('MMM D')}
                     </span>
                     <span className="truncate">{event.name}</span>
                     {!event.is_all_day && (
-                      <span className="shrink-0 text-slate-400">
+                      <span className="shrink-0 text-slate-400 dark:text-ink-500">
                         {event.start_time.substring(0, 5)}
                       </span>
                     )}
@@ -336,9 +339,9 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
           {editingId === 'new' && editor}
 
           {debriefs.length === 0 && editingId === null && (
-            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center">
-              <SolutionOutlined className="text-lg text-slate-300" />
-              <p className="mt-2 text-sm text-slate-400">
+            <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center">
+              <SolutionOutlined className="text-lg text-slate-300 dark:text-ink-600" />
+              <p className="mt-2 text-sm text-slate-400 dark:text-ink-500">
                 No debriefs yet. Write one straight after an interview, while you still remember the
                 questions.
               </p>
@@ -351,16 +354,16 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
             ) : (
               <div
                 key={debrief.id}
-                className="group rounded-xl border border-slate-200 px-4 py-3 transition hover:border-slate-300"
+                className="group rounded-xl border border-slate-200 dark:border-white/[0.08] px-4 py-3 transition hover:border-slate-300"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium text-slate-900">
+                      <span className="text-sm font-medium text-slate-900 dark:text-ink-50">
                         {labelFor(debrief.stage)}
                       </span>
                       {debrief.interview_date && (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-400 dark:text-ink-500">
                           {dayjs(debrief.interview_date).format('MMM D, YYYY')}
                         </span>
                       )}
@@ -400,8 +403,8 @@ const InterviewDebriefPanel = ({ applicationId, appStages }: Props) => {
                   ).map(([key, label]) =>
                     debrief[key] ? (
                       <div key={key} className="flex gap-2 text-xs leading-relaxed">
-                        <dt className="w-20 shrink-0 text-slate-400">{label}</dt>
-                        <dd className="min-w-0 whitespace-pre-wrap text-slate-600">
+                        <dt className="w-20 shrink-0 text-slate-400 dark:text-ink-500">{label}</dt>
+                        <dd className="min-w-0 whitespace-pre-wrap text-slate-600 dark:text-ink-200">
                           {debrief[key]}
                         </dd>
                       </div>

@@ -45,19 +45,20 @@ export const useExperienceDragOrder = ({
 
     Modal.confirm({
       title: 'Confirm Timeline Order Change',
-      icon: <HolderOutlined className="text-blue-500" />,
+      icon: <HolderOutlined className="text-blue-500 dark:text-blue-400" />,
       content: (
         <div className="py-2">
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-gray-600 dark:text-ink-200 mb-2">
             Are you sure you want to update the order of your work experiences on the timeline?
           </p>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs space-y-1">
+          <div className="bg-gray-50 dark:bg-ink-900 border border-gray-200 dark:border-white/[0.08] rounded-lg p-3 text-xs space-y-1">
             <div>
-              <span className="font-semibold text-gray-700">Moving:</span> {draggedTitle}
+              <span className="font-semibold text-gray-700 dark:text-ink-100">Moving:</span>{' '}
+              {draggedTitle}
             </div>
             <div>
-              <span className="font-semibold text-gray-700">New position:</span> Position #
-              {newIndex + 1} (near {targetTitle})
+              <span className="font-semibold text-gray-700 dark:text-ink-100">New position:</span>{' '}
+              Position #{newIndex + 1} (near {targetTitle})
             </div>
           </div>
         </div>

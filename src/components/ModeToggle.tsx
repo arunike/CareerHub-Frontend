@@ -46,12 +46,12 @@ const ModeToggle = <T extends string>({
     <div
       ref={trackRef}
       role="radiogroup"
-      className="relative inline-flex items-center rounded-lg bg-slate-100 p-0.5 ring-1 ring-inset ring-slate-900/[0.04]"
+      className="relative inline-flex items-center rounded-lg bg-slate-100 dark:bg-ink-800 p-0.5 ring-1 ring-inset ring-slate-900/[0.04]"
     >
       {thumb && (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-y-0.5 rounded-[7px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.04)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className="pointer-events-none absolute inset-y-0.5 rounded-[7px] bg-white dark:bg-ink-900 shadow-[0_1px_2px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.04)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
           style={{ width: thumb.width, transform: `translateX(${thumb.left}px)`, left: 0 }}
         />
       )}
@@ -67,7 +67,9 @@ const ModeToggle = <T extends string>({
           }}
           onClick={() => onChange(option.value)}
           className={`relative z-10 min-h-8 rounded-[7px] px-2 text-center text-[10px] font-semibold transition-colors duration-150 sm:min-h-0 sm:py-1 ${
-            value === option.value ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+            value === option.value
+              ? 'text-blue-600 dark:text-blue-300'
+              : 'text-slate-500 dark:text-ink-400 hover:text-slate-700'
           }`}
         >
           {option.label}

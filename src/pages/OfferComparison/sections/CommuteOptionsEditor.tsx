@@ -53,19 +53,23 @@ const Field = ({
   className?: string;
 }) => (
   <div className={`min-w-0 ${className}`}>
-    <span className="mb-1 block text-[11px] font-semibold text-slate-500">{label}</span>
+    <span className="mb-1 block text-[11px] font-semibold text-slate-500 dark:text-ink-400">
+      {label}
+    </span>
     {children}
     {hint ? (
       onHintClick ? (
         <button
           type="button"
           onClick={onHintClick}
-          className="mt-1 block text-[10px] leading-3 font-semibold text-blue-600 transition-colors hover:text-blue-800"
+          className="mt-1 block text-[10px] leading-3 font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800"
         >
           {hint} · use shared
         </button>
       ) : (
-        <span className="mt-1 block text-[10px] leading-3 text-slate-400">{hint}</span>
+        <span className="mt-1 block text-[10px] leading-3 text-slate-400 dark:text-ink-500">
+          {hint}
+        </span>
       )
     ) : null}
   </div>
@@ -80,14 +84,14 @@ const SharedValue = ({
   onOverride: () => void;
   label: string;
 }) => (
-  <div className="flex h-[38px] items-center justify-between gap-2 rounded-[9px] border border-dashed border-slate-200 bg-slate-50 px-2.5">
-    <span className="truncate text-sm text-slate-600 tabular-nums">{text}</span>
+  <div className="flex h-[38px] items-center justify-between gap-2 rounded-[9px] border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 px-2.5">
+    <span className="truncate text-sm text-slate-600 dark:text-ink-200 tabular-nums">{text}</span>
     <button
       type="button"
       onClick={onOverride}
       aria-label={label}
       title={label}
-      className="shrink-0 rounded px-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 transition-colors hover:text-blue-800"
+      className="shrink-0 rounded px-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800"
     >
       Edit
     </button>
@@ -109,27 +113,29 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+    <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-4">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
         <span className={FIELD_LABEL_CLASS}>Commute</span>
         <button
           type="button"
           onClick={() => onChange([...options, newOption(options.map((o) => o.mode))])}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 transition hover:bg-blue-50"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 transition hover:bg-blue-50"
         >
           <PlusOutlined className="text-[10px]" /> Add mode
         </button>
       </div>
-      <p className="mb-3 text-[11px] leading-4 text-slate-500">
+      <p className="mb-3 text-[11px] leading-4 text-slate-500 dark:text-ink-400">
         Time and cost are both counted over{' '}
-        <span className="font-semibold text-slate-600">{Math.round(officeDays)} office days</span> a
-        year, from this offer&apos;s RTO policy and time off. For driving, set Cost to{' '}
-        <span className="font-semibold text-slate-600">From gas</span> to work it out from distance
-        and pump price instead of guessing a yearly total.
+        <span className="font-semibold text-slate-600 dark:text-ink-200">
+          {Math.round(officeDays)} office days
+        </span>{' '}
+        a year, from this offer&apos;s RTO policy and time off. For driving, set Cost to{' '}
+        <span className="font-semibold text-slate-600 dark:text-ink-200">From gas</span> to work it
+        out from distance and pump price instead of guessing a yearly total.
       </p>
 
       {options.length === 0 ? (
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-slate-400 dark:text-ink-500">
           No modes yet — add one to compare travel time as well as cost.
         </p>
       ) : (
@@ -146,11 +152,13 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
               <div
                 key={index}
                 className={`rounded-xl border p-3 transition-colors ${
-                  option.is_primary ? 'border-blue-300 bg-white' : 'border-slate-200 bg-white/60'
+                  option.is_primary
+                    ? 'border-blue-300 dark:border-blue-500/30 bg-white dark:bg-ink-900'
+                    : 'border-slate-200 dark:border-white/[0.08] bg-white/60 dark:bg-ink-900/60'
                 }`}
               >
                 {/* The bottom line sits in the header, because that is the number compared between modes. */}
-                <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
+                <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-white/[0.07] pb-2.5">
                   <Tooltip title={option.is_primary ? 'Primary mode' : 'Use as primary mode'}>
                     <label className="flex min-w-0 cursor-pointer items-center gap-2">
                       <input
@@ -160,20 +168,22 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                         aria-label={`Use ${COMMUTE_MODE_LABELS[option.mode]} as the primary commute`}
                         className="h-4 w-4 shrink-0 cursor-pointer accent-blue-600"
                       />
-                      <span className="truncate text-sm font-semibold text-slate-900">
+                      <span className="truncate text-sm font-semibold text-slate-900 dark:text-ink-50">
                         {COMMUTE_MODE_LABELS[option.mode]}
                       </span>
                       {option.is_primary && (
-                        <span className="shrink-0 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                        <span className="shrink-0 rounded-full bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">
                           Primary
                         </span>
                       )}
                     </label>
                   </Tooltip>
                   <div className="flex shrink-0 items-center gap-3">
-                    <span className="text-xs tabular-nums text-slate-500">
+                    <span className="text-xs tabular-nums text-slate-500 dark:text-ink-400">
                       {cost > 0 && (
-                        <span className="font-bold text-slate-900">{money(cost)}/yr</span>
+                        <span className="font-bold text-slate-900 dark:text-ink-50">
+                          {money(cost)}/yr
+                        </span>
                       )}
                       {cost > 0 && hours > 0 && ' · '}
                       {hours > 0 && formatHours(hours)}
@@ -182,7 +192,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                       type="button"
                       onClick={() => remove(index)}
                       aria-label={`Remove ${COMMUTE_MODE_LABELS[option.mode]}`}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 dark:text-ink-500 transition-colors hover:bg-red-50 hover:text-red-600"
                     >
                       <DeleteOutlined className="text-xs" />
                     </button>
@@ -190,7 +200,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                 </div>
 
                 {/* Mode and Cost decide which fields below apply, so they lead and are set apart. */}
-                <div className="mb-3 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-2.5 sm:grid-cols-2">
+                <div className="mb-3 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-ink-900/80 p-2.5 sm:grid-cols-2">
                   <Field label="Mode">
                     <select
                       value={option.mode}
@@ -373,19 +383,19 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
 
                 {/* Shows every step, so a number that looks wrong can be traced to its input. */}
                 {fuelCosted && (
-                  <p className="mt-3 rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] leading-4 text-slate-500 tabular-nums">
+                  <p className="mt-3 rounded-lg bg-slate-50 dark:bg-ink-900 px-2.5 py-2 text-[11px] leading-4 text-slate-500 dark:text-ink-400 tabular-nums">
                     {fuel ? (
                       <>
                         {perDayMiles.toLocaleString()} mi/day × {Math.round(officeDays)} days ={' '}
                         {Math.round(fuel.annualMiles).toLocaleString()} mi · {money(fuel.fuelCost)}{' '}
                         gas
                         {fuel.parkingCost > 0 && <> · {money(fuel.parkingCost)} parking</>} ={' '}
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-slate-700 dark:text-ink-100">
                           {money(fuel.annualCost)}/yr
                         </span>
                       </>
                     ) : (
-                      <span className="text-slate-400">
+                      <span className="text-slate-400 dark:text-ink-500">
                         Add distance, efficiency and gas price for an estimate.
                       </span>
                     )}

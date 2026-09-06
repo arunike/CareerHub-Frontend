@@ -463,7 +463,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 <UnitNumberInput unit="$/hr" min={0} step={0.01} placeholder="e.g. 45.00" />
               </Form.Item>
 
-              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+              <div className="rounded-xl border border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 px-4 py-3 text-sm text-gray-600 dark:text-ink-200">
                 Advanced internship earnings inputs like hours per day, working days per week, total
                 hours, overtime, and direct total override can be edited from the role's `Internship
                 Earnings Breakdown` after you save.
@@ -484,7 +484,9 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                   <LinkOutlined className="text-blue-400" />
                   Start from an offer
                   <Tooltip title="Connect this role to its application and offer. The application stays in Applications and is marked Accepted.">
-                    <span className="text-gray-400 cursor-help text-xs">(optional)</span>
+                    <span className="text-gray-400 dark:text-ink-500 cursor-help text-xs">
+                      (optional)
+                    </span>
                   </Tooltip>
                 </span>
               }

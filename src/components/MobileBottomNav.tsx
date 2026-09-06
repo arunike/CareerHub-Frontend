@@ -36,7 +36,7 @@ const MobileBottomNav = ({
   currentQuickActionSourceKey,
   isMoreActive,
 }: Props) => (
-  <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 bg-white shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)]">
+  <div className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[910] border-t border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-[0_-18px_48px_-36px_rgba(15,23,42,0.65)]">
     <div
       className="mx-auto grid max-w-3xl gap-1 px-2 pt-2"
       style={{
@@ -73,8 +73,8 @@ const MobileBottomNav = ({
             }}
             className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
               isActive
-                ? 'bg-blue-50 text-blue-600 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
+                : 'text-slate-500 dark:text-ink-400 hover:bg-slate-50 hover:text-slate-700'
             }`}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
@@ -114,7 +114,7 @@ const MobileBottomNav = ({
         className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
           isMoreActive || !collapsed
             ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+            : 'text-slate-500 dark:text-ink-400 hover:bg-slate-50 hover:text-slate-700'
         }`}
         aria-label="Open more navigation"
         aria-description={

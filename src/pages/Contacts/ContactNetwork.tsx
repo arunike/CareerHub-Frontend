@@ -462,7 +462,11 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
   return (
     // Outside the scroller so they stay put, inside the wrapper so they follow it full-page.
     <div
-      className={isExpanded ? 'fixed inset-0 z-40 flex flex-col bg-white p-3 sm:p-4' : 'relative'}
+      className={
+        isExpanded
+          ? 'fixed inset-0 z-40 flex flex-col bg-white dark:bg-ink-900 p-3 sm:p-4'
+          : 'relative'
+      }
     >
       <div className="absolute left-4 top-4 z-[2] flex flex-wrap items-center gap-2">
         {focusId && (
@@ -477,7 +481,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
         )}
       </div>
       <div className="absolute right-4 top-4 z-[2] flex items-center gap-2">
-        <p className="pointer-events-none hidden text-xs text-slate-400 sm:block">
+        <p className="pointer-events-none hidden text-xs text-slate-400 dark:text-ink-500 sm:block">
           Drag people or labels to rearrange
         </p>
         <Button
@@ -492,7 +496,7 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
       </div>
       <div
         ref={containerRef}
-        className={`overflow-auto rounded-2xl border border-slate-200 bg-slate-50/60 ${
+        className={`overflow-auto rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 ${
           isExpanded ? 'min-h-0 flex-1' : 'max-h-[80vh] min-h-[560px]'
         }`}
       >
@@ -518,14 +522,16 @@ const ContactNetwork = ({ contacts, relationships, focusId, onSelect, onBackToMe
 
       {visibleContacts.length === 0 && (
         <div className="pointer-events-none absolute inset-x-4 bottom-12 z-[2] text-center">
-          <p className="text-sm font-medium text-slate-600">No one is connected yet</p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="text-sm font-medium text-slate-600 dark:text-ink-200">
+            No one is connected yet
+          </p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-ink-500">
             Add a relationship to place someone in your network.
           </p>
         </div>
       )}
       {hiddenCount > 0 && (
-        <p className="absolute bottom-4 right-4 z-[2] rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500">
+        <p className="absolute bottom-4 right-4 z-[2] rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 py-1 text-xs text-slate-500 dark:text-ink-400">
           {hiddenCount} more available in List view
         </p>
       )}

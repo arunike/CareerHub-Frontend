@@ -122,18 +122,20 @@ export default function LegalPage({ type }: LegalPageProps) {
   const alternateLabel = type === 'privacy' ? 'Terms of Service' : 'Privacy Policy';
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-600 selection:bg-blue-500/20">
+    <main className="min-h-screen bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200 selection:bg-blue-500/20">
       <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 pb-5 pt-24 sm:px-8 sm:pt-32 lg:px-10">
         <PublicHeader />
 
         <div className="mx-auto w-full max-w-6xl">
           <section className="grid gap-8 py-8 sm:py-10 lg:grid-cols-[1.35fr_0.65fr] lg:items-end lg:py-16">
             <div>
-              <p className="text-sm font-semibold text-blue-700">{copy.eyebrow}</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-slate-950 sm:text-5xl">
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                {copy.eyebrow}
+              </p>
+              <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-slate-950 dark:text-ink-50 sm:text-5xl">
                 {copy.title}
               </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 dark:text-ink-200 sm:text-lg">
                 {copy.intro}
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
@@ -142,9 +144,9 @@ export default function LegalPage({ type }: LegalPageProps) {
                   return (
                     <span
                       key={item.label}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-ink-100"
                     >
-                      <Icon className="text-blue-600" />
+                      <Icon className="text-blue-600 dark:text-blue-300" />
                       {item.label}
                     </span>
                   );
@@ -152,41 +154,47 @@ export default function LegalPage({ type }: LegalPageProps) {
               </div>
             </div>
 
-            <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-8">
-              <p className="text-sm font-semibold text-blue-700">Quick summary</p>
+            <aside className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-8">
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                Quick summary
+              </p>
               <ul className="mt-5 space-y-4">
                 {copy.summary.map((item) => (
                   <li
                     key={item}
-                    className="flex gap-3 text-sm font-medium leading-6 text-slate-700"
+                    className="flex gap-3 text-sm font-medium leading-6 text-slate-700 dark:text-ink-100"
                   >
-                    <CheckCircleOutlined className="mt-1 shrink-0 text-emerald-500" />
+                    <CheckCircleOutlined className="mt-1 shrink-0 text-emerald-500 dark:text-emerald-400" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-6 border-t border-slate-200 pt-4 text-xs font-medium text-slate-500">
+              <p className="mt-6 border-t border-slate-200 dark:border-white/[0.08] pt-4 text-xs font-medium text-slate-500 dark:text-ink-400">
                 Last updated: {updatedAt}
               </p>
             </aside>
           </section>
 
-          <section className="mb-12 rounded-2xl border border-slate-200 bg-white px-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:px-8">
+          <section className="mb-12 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:px-8">
             {copy.sections.map((section) => (
               <article
                 key={section.title}
-                className="border-b border-slate-200 py-6 last:border-b-0 sm:py-8"
+                className="border-b border-slate-200 dark:border-white/[0.08] py-6 last:border-b-0 sm:py-8"
               >
-                <h2 className="text-xl font-bold text-slate-900">{section.title}</h2>
-                <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">{section.body}</p>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-ink-50">
+                  {section.title}
+                </h2>
+                <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600 dark:text-ink-200">
+                  {section.body}
+                </p>
                 {section.bullets && (
                   <ul className="mt-5 max-w-4xl space-y-3">
                     {section.bullets.map((bullet) => (
                       <li
                         key={bullet}
-                        className="flex gap-3 text-sm font-medium leading-6 text-slate-600"
+                        className="flex gap-3 text-sm font-medium leading-6 text-slate-600 dark:text-ink-200"
                       >
-                        <CheckCircleOutlined className="mt-1 shrink-0 text-blue-600" />
+                        <CheckCircleOutlined className="mt-1 shrink-0 text-blue-600 dark:text-blue-300" />
                         <span>{bullet}</span>
                       </li>
                     ))}
@@ -196,13 +204,13 @@ export default function LegalPage({ type }: LegalPageProps) {
             ))}
           </section>
 
-          <footer className="mt-auto flex flex-col gap-4 border-t border-slate-200 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <footer className="mt-auto flex flex-col gap-4 border-t border-slate-200 dark:border-white/[0.08] py-8 text-sm text-slate-500 dark:text-ink-400 sm:flex-row sm:items-center sm:justify-between">
             <span className="font-medium">
               CareerHub legal information is available without signing in.
             </span>
             <Link
               to={`/${alternateType}`}
-              className="inline-flex min-h-11 items-center font-bold text-slate-600 transition hover:text-slate-900"
+              className="inline-flex min-h-11 items-center font-bold text-slate-600 dark:text-ink-200 transition hover:text-slate-900"
             >
               View {alternateLabel}
             </Link>

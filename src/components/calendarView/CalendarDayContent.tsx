@@ -136,7 +136,7 @@ export const CalendarMobileDaySummary = ({ dayData }: Pick<DayDataProps, 'dayDat
         );
       })}
       {compactItems.length > 3 && (
-        <span className="ml-0.5 text-[10px] font-semibold text-slate-500">
+        <span className="ml-0.5 text-[10px] font-semibold text-slate-500 dark:text-ink-400">
           +{compactItems.length - 3}
         </span>
       )}
@@ -169,7 +169,7 @@ export const CalendarCompactDayEntries = ({
               title={`Observed Holiday: ${holiday.description}`}
               mouseEnterDelay={0}
             >
-              <div className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded truncate">
+              <div className="bg-gray-100 dark:bg-ink-800 text-gray-600 dark:text-ink-200 px-1.5 py-0.5 rounded truncate">
                 Federal: {holiday.description}
               </div>
             </Tooltip>
@@ -276,7 +276,7 @@ export const CalendarCompactDayEntries = ({
             clickEvent.stopPropagation();
             onViewMore?.();
           }}
-          className="w-full rounded border border-gray-200 bg-white/85 px-1.5 py-0.5 text-left font-medium text-gray-500 transition-colors hover:border-blue-200 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="w-full rounded border border-gray-200 dark:border-white/[0.08] bg-white/85 dark:bg-ink-900/85 px-1.5 py-0.5 text-left font-medium text-gray-500 dark:text-ink-400 transition-colors hover:border-blue-200 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
         >
           View {hiddenCount} more
         </button>
@@ -292,7 +292,11 @@ export const CalendarDayAgendaEntries = ({
   day,
 }: DayDataProps) => {
   if (!hasDayItems(dayData)) {
-    return <div className="text-sm text-gray-400 italic">No events or time off scheduled.</div>;
+    return (
+      <div className="text-sm text-gray-400 dark:text-ink-500 italic">
+        No events or time off scheduled.
+      </div>
+    );
   }
 
   return (
@@ -300,9 +304,9 @@ export const CalendarDayAgendaEntries = ({
       {dayData.federalHolidays.map((holiday, index) => (
         <div
           key={`fed-${index}-${holiday.description}`}
-          className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          className="rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 px-3 py-2 text-sm text-gray-700 dark:text-ink-100"
         >
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-ink-500">
             Observed Holiday
           </div>
           <div className="mt-1">{holiday.description}</div>

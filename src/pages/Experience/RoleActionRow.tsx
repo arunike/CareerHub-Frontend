@@ -42,7 +42,7 @@ const RoleActionRow = ({
           size="small"
           icon={<RiseOutlined />}
           onClick={onPromotion}
-          className={`${ACTION_BUTTON} text-indigo-600 border-indigo-200 bg-indigo-50 hover:!bg-indigo-100 hover:!border-indigo-300 hover:!text-indigo-700`}
+          className={`${ACTION_BUTTON} text-indigo-600 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/25 bg-indigo-50 dark:bg-indigo-500/10 hover:!bg-indigo-100 dark:hover:!bg-indigo-500/15 hover:!border-indigo-300 dark:hover:!border-indigo-500/30 hover:!text-indigo-700 dark:hover:!text-indigo-300`}
         >
           Promotion
         </Button>
@@ -54,7 +54,7 @@ const RoleActionRow = ({
           size="small"
           icon={<TeamOutlined />}
           onClick={onTeamNorms}
-          className={`${ACTION_BUTTON} text-blue-600 border-blue-200 bg-blue-50 hover:!bg-blue-100 hover:!border-blue-300 hover:!text-blue-700`}
+          className={`${ACTION_BUTTON} text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 hover:!bg-blue-100 dark:hover:!bg-blue-500/15 hover:!border-blue-300 dark:hover:!border-blue-500/30 hover:!text-blue-700 dark:hover:!text-blue-300`}
         >
           Team Norms
         </Button>
@@ -67,7 +67,7 @@ const RoleActionRow = ({
             size="small"
             icon={<UserOutlined />}
             onClick={onContacts}
-            className={`${ACTION_BUTTON} text-slate-600 border-slate-200 bg-slate-50 hover:!bg-slate-100 hover:!border-slate-300 hover:!text-slate-700`}
+            className={`${ACTION_BUTTON} text-slate-600 dark:text-ink-200 border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 hover:!bg-slate-100 dark:hover:!bg-ink-800 hover:!border-slate-300 dark:hover:!border-white/[0.12] hover:!text-slate-700 dark:hover:!text-ink-100`}
           >
             Contacts
           </Button>
@@ -81,7 +81,7 @@ const RoleActionRow = ({
             size="small"
             icon={<TrophyOutlined />}
             onClick={onRaiseHistory}
-            className={`${ACTION_BUTTON} text-amber-600 border-amber-200 bg-amber-50 hover:!bg-amber-100 hover:!border-amber-300 hover:!text-amber-700`}
+            className={`${ACTION_BUTTON} text-amber-600 dark:text-amber-300 border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 hover:!bg-amber-100 dark:hover:!bg-amber-500/15 hover:!border-amber-300 dark:hover:!border-amber-500/30 hover:!text-amber-700 dark:hover:!text-amber-300`}
           >
             Raise History
           </Button>
@@ -94,7 +94,7 @@ const RoleActionRow = ({
             size="small"
             icon={<LinkOutlined />}
             onClick={onLinkOffer}
-            className={`${ACTION_BUTTON} border-gray-200 text-gray-400 hover:!border-blue-300 hover:!text-blue-600`}
+            className={`${ACTION_BUTTON} border-gray-200 dark:border-white/[0.08] text-gray-400 dark:text-ink-500 hover:!border-blue-300 dark:hover:!border-blue-500/30 hover:!text-blue-600 dark:hover:!text-blue-300`}
           >
             Link Offer
           </Button>

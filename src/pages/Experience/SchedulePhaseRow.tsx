@@ -42,44 +42,48 @@ const SchedulePhaseRow = ({
           className={`border rounded-xl p-4 transition-all group ${
             editingId === phase.id
               ? 'hidden'
-              : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+              : 'border-gray-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 hover:border-gray-200 hover:shadow-sm'
           }`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="text-base font-semibold text-gray-900">{phase.name}</span>
+                <span className="text-base font-semibold text-gray-900 dark:text-ink-50">
+                  {phase.name}
+                </span>
                 {phase.is_current && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/25">
                     Current
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-500 mb-2 flex items-center gap-2 flex-wrap">
+              <div className="text-sm text-gray-500 dark:text-ink-400 mb-2 flex items-center gap-2 flex-wrap">
                 <span>
                   {fmtDate(phase.start_date)} –{' '}
                   {phase.is_current ? 'Present' : fmtDate(phase.end_date)}
                 </span>
               </div>
 
-              <div className="flex text-xs mt-2 bg-gray-50 p-2 rounded-lg inline-flex flex-wrap border border-gray-100 items-center">
+              <div className="flex text-xs mt-2 bg-gray-50 dark:bg-ink-900 p-2 rounded-lg inline-flex flex-wrap border border-gray-100 dark:border-white/[0.07] items-center">
                 <div className="flex gap-4 items-center">
                   {phase.hourly_rate != null && (
                     <span>
-                      <span className="text-gray-400">Rate:</span> ${phase.hourly_rate}/hr
+                      <span className="text-gray-400 dark:text-ink-500">Rate:</span> $
+                      {phase.hourly_rate}/hr
                     </span>
                   )}
                   {phase.hours_per_day != null && phase.working_days_per_week != null && (
                     <span>
-                      <span className="text-gray-400">Schedule:</span> {phase.hours_per_day}
+                      <span className="text-gray-400 dark:text-ink-500">Schedule:</span>{' '}
+                      {phase.hours_per_day}
                       h/day, {phase.working_days_per_week} days/wk
                     </span>
                   )}
                 </div>
                 {snapshot && snapshot.estimatedHours > 0 && (
-                  <div className="flex items-center pl-3 ml-3 border-l border-gray-200 text-gray-600 font-medium">
+                  <div className="flex items-center pl-3 ml-3 border-l border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-ink-200 font-medium">
                     <span>{snapshot.estimatedHours} hrs</span>
-                    <span className="text-gray-300 mx-2">•</span>
+                    <span className="text-gray-300 dark:text-ink-600 mx-2">•</span>
                     <span>
                       $
                       {snapshot.total.toLocaleString(undefined, {
@@ -100,7 +104,7 @@ const SchedulePhaseRow = ({
                     icon={<EditOutlined />}
                     onClick={() => startEdit(phase)}
                     disabled={isFormEditing}
-                    className="text-gray-400 hover:text-emerald-500"
+                    className="text-gray-400 dark:text-ink-500 hover:text-emerald-500"
                   />
                 </Tooltip>
                 <Popconfirm
@@ -115,7 +119,7 @@ const SchedulePhaseRow = ({
                       size="small"
                       icon={<DeleteOutlined />}
                       disabled={isFormEditing}
-                      className="text-gray-400 hover:text-red-500"
+                      className="text-gray-400 dark:text-ink-500 hover:text-red-500"
                     />
                   </Tooltip>
                 </Popconfirm>

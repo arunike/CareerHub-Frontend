@@ -21,21 +21,23 @@ const SchedulePhaseQuickImport = ({
   setQuickImportText,
   setShowQuickImport,
 }: Props) => (
-  <div className="border border-amber-200 rounded-xl bg-amber-50/40 p-4 space-y-3">
+  <div className="border border-amber-200 dark:border-amber-500/25 rounded-xl bg-amber-50/40 dark:bg-amber-500/10 p-4 space-y-3">
     <div>
-      <div className="text-sm font-semibold text-amber-900">Quick Import Weekly Schedule</div>
-      <div className="mt-1 text-sm text-amber-700 leading-relaxed">
+      <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+        Quick Import Weekly Schedule
+      </div>
+      <div className="mt-1 text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
         Paste weekly timesheet text with `Week`, `Date`, `Hours`, and `Overtime Hours`. We&apos;ll
         merge consecutive weeks that share the same schedule into phases and keep exact total +
         overtime hours from the import.
       </div>
       {importDefaultsSummary && (
-        <div className="mt-2 text-xs text-amber-700/80">
+        <div className="mt-2 text-xs text-amber-700/80 dark:text-amber-300">
           Imported phases will use this role&apos;s saved defaults: {importDefaultsSummary}.
         </div>
       )}
       {local.length > 0 && (
-        <div className="mt-1 text-xs text-amber-700/80">
+        <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-300">
           Generating phases here replaces the unsaved phases currently shown in this modal.
         </div>
       )}

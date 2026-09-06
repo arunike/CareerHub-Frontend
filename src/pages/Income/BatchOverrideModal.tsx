@@ -58,8 +58,10 @@ const Field = ({
 }) => (
   <label className="block">
     <span className="flex items-baseline gap-1.5">
-      <span className="text-xs font-medium text-slate-600">{label}</span>
-      {mixed ? <span className="text-[10px] uppercase text-amber-600">mixed</span> : null}
+      <span className="text-xs font-medium text-slate-600 dark:text-ink-200">{label}</span>
+      {mixed ? (
+        <span className="text-[10px] uppercase text-amber-600 dark:text-amber-300">mixed</span>
+      ) : null}
     </span>
     <div className="mt-1.5">{children}</div>
   </label>
@@ -200,7 +202,7 @@ export const BatchOverrideModal = ({
         </div>
       }
     >
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed text-slate-500 dark:text-ink-400">
         Prefilled with what these paychecks use now. Only fields you change are applied.
       </p>
 
@@ -231,8 +233,8 @@ export const BatchOverrideModal = ({
       </div>
 
       {customDeductions.length > 0 ? (
-        <div className="mt-5 border-t border-slate-100 pt-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Custom deductions
           </span>
           <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
@@ -257,8 +259,8 @@ export const BatchOverrideModal = ({
       ) : null}
 
       {allowances.length > 0 ? (
-        <div className="mt-5 border-t border-slate-100 pt-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Allowances
           </span>
           <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
@@ -282,8 +284,8 @@ export const BatchOverrideModal = ({
         </div>
       ) : null}
 
-      <div className="mt-5 border-t border-slate-100 pt-4">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           Employer match
         </span>
         <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
@@ -300,7 +302,7 @@ export const BatchOverrideModal = ({
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-slate-400">
+      <p className="mt-4 text-xs text-slate-400 dark:text-ink-500">
         Clearing removes every per-paycheck override on the selected paychecks, returning them to
         your standing elections.
       </p>

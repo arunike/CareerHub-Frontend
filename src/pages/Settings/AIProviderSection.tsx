@@ -41,23 +41,25 @@ const AIProviderSection = ({
     title="AI Provider"
     description="Your own provider powers cover letters, JD matching and custom widgets. The key is stored encrypted and never shown again after saving."
   >
-    <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-sky-50 p-5 space-y-4">
+    <div className="rounded-2xl border border-sky-100 dark:border-sky-500/20 bg-gradient-to-br from-sky-50 via-white dark:via-ink-900 to-sky-50 p-5 space-y-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
           <RobotOutlined className="text-lg" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold text-gray-900">Encrypted Server-side BYOK</h3>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-sky-200 text-sky-700">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-ink-50">
+              Encrypted Server-side BYOK
+            </h3>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white dark:bg-ink-900 border border-sky-200 dark:border-sky-500/25 text-sky-700 dark:text-sky-300">
               Multi-provider
             </span>
           </div>
-          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-ink-200 mt-1 leading-relaxed">
             Your endpoint and model are stored with your account. Your API key is encrypted at rest
             on the backend and used only by the authenticated server-side relay.
           </p>
-          <p className="text-xs text-emerald-700 mt-2">
+          <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-2">
             After save, the full key is not returned to the browser. You&apos;ll only see a masked
             confirmation that a key is on file.
           </p>
@@ -65,9 +67,11 @@ const AIProviderSection = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Provider Adapter</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1.5">
+          Provider Adapter
+        </label>
         <select
-          className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-xl border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
           value={aiSettings.adapter}
           onChange={(e) => applyAiProviderPreset(e.target.value as AIProviderSettings['adapter'])}
         >
@@ -77,19 +81,21 @@ const AIProviderSection = ({
           <option value="openrouter">OpenRouter</option>
           <option value="custom">Custom</option>
         </select>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 dark:text-ink-400 mt-2">
           Use Custom for providers with an chat completions endpoint, including Mistral and other
           BYOK APIs.
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Endpoint URL</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1.5">
+          Endpoint URL
+        </label>
         <div className="relative">
-          <ApiOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <ApiOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-ink-500" />
           <input
             type="url"
-            className="w-full rounded-xl border border-gray-300 bg-white pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full rounded-xl border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 pl-10 pr-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
             value={aiSettings.endpoint}
             onChange={(e) => updateAiSetting('endpoint', e.target.value)}
             placeholder={
@@ -108,10 +114,12 @@ const AIProviderSection = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Model</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1.5">
+          Model
+        </label>
         <input
           type="text"
-          className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-xl border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
           value={aiSettings.model}
           onChange={(e) => updateAiSetting('model', e.target.value)}
           placeholder={
@@ -130,12 +138,14 @@ const AIProviderSection = ({
 
       <div>
         <div className="flex items-center justify-between gap-3 mb-1.5">
-          <label className="block text-sm font-medium text-gray-700">API Key</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100">
+            API Key
+          </label>
           {aiSettings.apiKey && (
             <button
               type="button"
               onClick={() => setShowAiApiKey((current) => !current)}
-              className="text-xs font-medium text-sky-600 hover:text-sky-700"
+              className="text-xs font-medium text-sky-600 dark:text-sky-300 hover:text-sky-700"
             >
               {showAiApiKey ? 'Hide key' : 'Show key'}
             </button>
@@ -143,7 +153,7 @@ const AIProviderSection = ({
         </div>
         <input
           type={showAiApiKey ? 'text' : 'password'}
-          className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-xl border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-sky-500"
           value={aiSettings.apiKey}
           onChange={(e) => updateAiSetting('apiKey', e.target.value)}
           placeholder={
@@ -154,43 +164,45 @@ const AIProviderSection = ({
           autoComplete="off"
           spellCheck={false}
         />
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 dark:text-ink-400 mt-2">
           Used by Cover Letter generation, JD Matcher, job URL import, Negotiation Advisor, and
           Analytics custom widgets.
         </p>
         {aiSettings.apiKeyConfigured && !aiSettings.apiKey && (
-          <p className="text-xs text-sky-600 mt-1">
+          <p className="text-xs text-sky-600 dark:text-sky-300 mt-1">
             A key is already stored securely for this account:{' '}
             {aiSettings.apiKeyMasked || 'Saved key'}
           </p>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-slate-700">
+      <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 p-4 text-slate-700 dark:text-ink-100">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <label className="block text-sm font-semibold text-slate-900">Request preview</label>
-            <p className="text-xs text-slate-500 mt-1">
+            <label className="block text-sm font-semibold text-slate-900 dark:text-ink-50">
+              Request preview
+            </label>
+            <p className="text-xs text-slate-500 dark:text-ink-400 mt-1">
               This is the server-side request CareerHub will make from the saved adapter, endpoint,
               model, and encrypted key.
             </p>
           </div>
-          <span className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+          <span className="rounded-full border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-ink-200">
             {aiSettings.adapter}
           </span>
         </div>
-        <pre className="m-0 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-200/50 border border-slate-200/80 p-3 font-mono text-xs leading-relaxed text-slate-800">
+        <pre className="m-0 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-200/50 dark:bg-ink-800/50 border border-slate-200/80 dark:border-white/[0.08] p-3 font-mono text-xs leading-relaxed text-slate-800 dark:text-ink-50">
           {buildAIProviderCurlPreview(aiSettings)}
         </pre>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+      <div className="rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-900">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-ink-50">
               Import from provider curl
             </label>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-ink-400 mt-1">
               Optional shortcut. Paste a chat-completions curl command to fill endpoint, Bearer key,
               and model.
             </p>
@@ -200,7 +212,7 @@ const AIProviderSection = ({
           </Button>
         </div>
         <textarea
-          className="w-full min-h-[96px] rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 font-mono text-xs text-gray-700 outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full min-h-[96px] rounded-xl border border-gray-300 dark:border-white/[0.12] bg-gray-50 dark:bg-ink-900 px-3 py-2.5 font-mono text-xs text-gray-700 dark:text-ink-100 outline-none focus:ring-2 focus:ring-sky-500"
           value={aiProviderCurl}
           onChange={(e) => setAiProviderCurl(e.target.value)}
           onPaste={handleAiProviderCurlPaste}
@@ -213,7 +225,7 @@ const AIProviderSection = ({
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-ink-400">
           Claude uses Messages, Gemini uses generateContent, and OpenAI/OpenRouter/Custom use chat
           completions.
         </div>
@@ -222,7 +234,7 @@ const AIProviderSection = ({
             type="button"
             onClick={handleClearAiSettings}
             disabled={!aiSettings.apiKeyConfigured}
-            className="min-h-11 rounded-xl border border-gray-300 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="min-h-11 rounded-xl border border-gray-300 dark:border-white/[0.12] px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 transition-colors hover:bg-gray-50"
           >
             Clear Stored Key
           </button>

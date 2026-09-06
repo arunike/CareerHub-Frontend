@@ -31,12 +31,14 @@ export const renderAvailabilityWidget = (
       return (
         <div className="enterprise-card h-full p-4 sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
-              <CalendarOutlined className="text-2xl text-blue-600" />
+            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-500/15 rounded-lg">
+              <CalendarOutlined className="text-2xl text-blue-600 dark:text-blue-300" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Events</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalEvents}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-ink-400">Total Events</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-ink-50">
+                {stats.totalEvents}
+              </p>
             </div>
           </div>
         </div>
@@ -45,12 +47,14 @@ export const renderAvailabilityWidget = (
       return (
         <div className="enterprise-card h-full p-4 sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
-              <RiseOutlined className="text-2xl text-green-600" />
+            <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-500/15 rounded-lg">
+              <RiseOutlined className="text-2xl text-green-600 dark:text-green-300" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Events This Week</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.thisWeek}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-ink-400">
+                Events This Week
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-ink-50">{stats.thisWeek}</p>
             </div>
           </div>
         </div>
@@ -58,51 +62,53 @@ export const renderAvailabilityWidget = (
     case 'load':
       return (
         <CollapsibleCard
-          icon={<ThunderboltOutlined className="h-5 w-5 text-gray-600" />}
+          icon={<ThunderboltOutlined className="h-5 w-5 text-gray-600 dark:text-ink-200" />}
           title="Schedule Load"
         >
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 opacity-80">
+            <div className="rounded-lg border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 opacity-80">
                 Per Week
               </p>
-              <p className="mt-1 text-2xl font-bold leading-none text-blue-700">
+              <p className="mt-1 text-2xl font-bold leading-none text-blue-700 dark:text-blue-300">
                 {stats.load.perWeek}
               </p>
-              <p className="mt-1.5 text-xs text-blue-700 opacity-75">
+              <p className="mt-1.5 text-xs text-blue-700 dark:text-blue-300 opacity-75">
                 over {stats.load.spanWeeks} week{stats.load.spanWeeks === 1 ? '' : 's'}
               </p>
             </div>
-            <div className="rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 opacity-80">
+            <div className="rounded-lg border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 opacity-80">
                 Busiest Day
               </p>
-              <p className="mt-1 text-2xl font-bold leading-none text-amber-700">
+              <p className="mt-1 text-2xl font-bold leading-none text-amber-700 dark:text-amber-300">
                 {stats.load.busiestDay?.count ?? 0}
               </p>
-              <p className="mt-1.5 text-xs text-amber-700 opacity-75">
+              <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-300 opacity-75">
                 {stats.load.busiestDay
                   ? format(parseISO(stats.load.busiestDay.date), 'MMM d, yyyy')
                   : 'No events'}
               </p>
             </div>
-            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700 opacity-80">
+            <div className="rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700 dark:text-ink-100 opacity-80">
                 Doubled-Up Days
               </p>
-              <p className="mt-1 text-2xl font-bold leading-none text-slate-700">
+              <p className="mt-1 text-2xl font-bold leading-none text-slate-700 dark:text-ink-100">
                 {stats.load.multiEventDays}
               </p>
-              <p className="mt-1.5 text-xs text-slate-700 opacity-75">2 or more in one day</p>
+              <p className="mt-1.5 text-xs text-slate-700 dark:text-ink-100 opacity-75">
+                2 or more in one day
+              </p>
             </div>
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 opacity-80">
+            <div className="rounded-lg border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/10 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 opacity-80">
                 Usually
               </p>
-              <p className="mt-1 truncate text-xl font-bold leading-none text-emerald-700">
+              <p className="mt-1 truncate text-xl font-bold leading-none text-emerald-700 dark:text-emerald-300">
                 {stats.load.busiestWeekday?.label ?? '-'}
               </p>
-              <p className="mt-1.5 text-xs text-emerald-700 opacity-75">
+              <p className="mt-1.5 text-xs text-emerald-700 dark:text-emerald-300 opacity-75">
                 {stats.load.busiestHour ? `around ${stats.load.busiestHour.label}` : 'No pattern'}
               </p>
             </div>
@@ -112,7 +118,7 @@ export const renderAvailabilityWidget = (
     case 'category':
       return (
         <CollapsibleCard
-          icon={<PieChartOutlined className="w-5 h-5 text-gray-600" />}
+          icon={<PieChartOutlined className="w-5 h-5 text-gray-600 dark:text-ink-200" />}
           title="Events by Category"
         >
           <div className="careerhub-responsive-pie h-75 w-full">
@@ -146,7 +152,7 @@ export const renderAvailabilityWidget = (
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="h-full flex items-center justify-center text-gray-400 dark:text-ink-500">
                 No category data available
               </div>
             )}

@@ -15,11 +15,16 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_CLASSES: Record<string, string> = {
-  OFFER_LETTER: 'border-amber-200 bg-amber-50 text-amber-700',
-  RESUME: 'border-blue-200 bg-blue-50 text-blue-700',
-  COVER_LETTER: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  PORTFOLIO: 'border-purple-200 bg-purple-50 text-purple-700',
-  OTHER: 'border-slate-200 bg-slate-50 text-slate-600',
+  OFFER_LETTER:
+    'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  RESUME:
+    'border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
+  COVER_LETTER:
+    'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  PORTFOLIO:
+    'border-purple-200 dark:border-purple-500/25 bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300',
+  OTHER:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200',
 };
 
 const OfferDocumentsPanel = ({
@@ -82,15 +87,15 @@ const OfferDocumentsPanel = ({
 
   return (
     // Inherits the section card's padding, so a hairline is all it needs.
-    <div className="border-t border-slate-100 pt-4">
+    <div className="border-t border-slate-100 dark:border-white/[0.07] pt-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400">
           <PaperClipOutlined /> Attached documents
         </span>
         <button
           type="button"
           onClick={() => setIsUploadOpen(true)}
-          className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+          className="text-xs font-semibold text-blue-600 dark:text-blue-300 hover:text-blue-700"
         >
           Add
         </button>
@@ -102,8 +107,9 @@ const OfferDocumentsPanel = ({
         </div>
       ) : documents.length === 0 ? (
         // One quiet line: attaching a file is optional, so it should not shout.
-        <p className="mt-2 text-xs text-slate-400">
-          None yet — use <span className="text-slate-500">Add</span> to attach the offer letter.
+        <p className="mt-2 text-xs text-slate-400 dark:text-ink-500">
+          None yet — use <span className="text-slate-500 dark:text-ink-400">Add</span> to attach the
+          offer letter.
         </p>
       ) : (
         <ul className="mt-2.5 space-y-1">
@@ -113,18 +119,21 @@ const OfferDocumentsPanel = ({
               className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50"
             >
               <span className="flex min-w-0 items-center gap-2.5">
-                <FileTextOutlined className="shrink-0 text-slate-400" />
+                <FileTextOutlined className="shrink-0 text-slate-400 dark:text-ink-500" />
                 {doc.file ? (
                   <button
                     type="button"
                     onClick={() => void openDocument(doc)}
-                    className="truncate text-left text-[13px] text-blue-600 hover:text-blue-700 hover:underline"
+                    className="truncate text-left text-[13px] text-blue-600 dark:text-blue-300 hover:text-blue-700 hover:underline"
                     title={doc.title}
                   >
                     {doc.title}
                   </button>
                 ) : (
-                  <span className="truncate text-[13px] text-slate-700" title={doc.title}>
+                  <span
+                    className="truncate text-[13px] text-slate-700 dark:text-ink-100"
+                    title={doc.title}
+                  >
                     {doc.title}
                   </span>
                 )}

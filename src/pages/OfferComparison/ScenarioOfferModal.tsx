@@ -103,28 +103,28 @@ const ScenarioOfferModal = ({
       titleNode={
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-base font-semibold text-slate-950 sm:text-lg">
+            <span className="truncate text-base font-semibold text-slate-950 dark:text-ink-50 sm:text-lg">
               {scenarioModalMode === 'view'
                 ? 'Scenario details'
                 : editingScenarioId
                   ? 'Edit scenario'
                   : 'Add scenario'}
             </span>
-            <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
+            <span className="hidden rounded-full border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 sm:inline-flex">
               What-if
             </span>
           </div>
-          <p className="mt-0.5 truncate text-xs font-normal text-slate-500">
+          <p className="mt-0.5 truncate text-xs font-normal text-slate-500 dark:text-ink-400">
             Test assumptions without changing a saved offer
           </p>
         </div>
       }
       onClose={onClose}
       maxWidthClass="max-w-6xl"
-      bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50"
-      headerClassName="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4"
+      bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50 dark:bg-ink-900"
+      headerClassName="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 sm:px-6 sm:py-4"
       titleClassName="min-w-0 flex-1 pr-4"
-      footerClassName="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:px-6 sm:py-3"
+      footerClassName="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:px-6 sm:py-3"
       footer={
         <OfferFormModalFooter
           mode={scenarioModalMode === 'view' ? 'view' : editingScenarioId ? 'edit' : 'add'}

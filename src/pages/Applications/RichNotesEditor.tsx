@@ -26,14 +26,16 @@ const ToolbarButton = ({ active, onClick, title, children }: ToolbarButtonProps)
       onClick();
     }}
     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-sm transition-colors sm:h-8 sm:w-8 ${
-      active ? 'bg-sky-100 text-sky-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+      active
+        ? 'bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300'
+        : 'text-slate-500 dark:text-ink-400 hover:bg-slate-100 hover:text-slate-700'
     }`}
   >
     {children}
   </button>
 );
 
-const Divider = () => <div className="mx-1 h-4 w-px bg-slate-200" />;
+const Divider = () => <div className="mx-1 h-4 w-px bg-slate-200 dark:bg-ink-800" />;
 
 type Props = {
   applicationId: number;
@@ -120,31 +122,34 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
       {/* Section header */}
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-ink-500">
             Notes
           </p>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-400 dark:text-ink-500">
             Jot down anything useful about this application.
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
           {saveState === 'saving' && (
-            <span className="flex items-center gap-1 text-slate-400">
+            <span className="flex items-center gap-1 text-slate-400 dark:text-ink-500">
               <LoadingOutlined className="text-[11px]" /> Saving…
             </span>
           )}
           {saveState === 'saved' && (
-            <span className="flex items-center gap-1 text-emerald-500">
+            <span className="flex items-center gap-1 text-emerald-500 dark:text-emerald-400">
               <CheckOutlined className="text-[11px]" /> Saved
             </span>
           )}
           {saveState === 'error' && (
-            <span className="flex items-center gap-1.5 text-rose-600" role="alert">
+            <span
+              className="flex items-center gap-1.5 text-rose-600 dark:text-rose-300"
+              role="alert"
+            >
               <WarningOutlined className="text-[11px]" /> Not saved
               <button
                 type="button"
                 onClick={() => void persistNotes(editor.getHTML())}
-                className="min-h-11 rounded-lg px-2 font-semibold text-rose-700 underline decoration-rose-300 underline-offset-2 hover:bg-rose-50 sm:min-h-8"
+                className="min-h-11 rounded-lg px-2 font-semibold text-rose-700 dark:text-rose-300 underline decoration-rose-300 underline-offset-2 hover:bg-rose-50 sm:min-h-8"
               >
                 Retry
               </button>
@@ -154,9 +159,9 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
       </div>
 
       {/* Editor card */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow focus-within:border-sky-300 focus-within:shadow-md focus-within:shadow-sky-50">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-sm transition-shadow focus-within:border-sky-300 focus-within:shadow-md focus-within:shadow-sky-50">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-100 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-100 dark:border-white/[0.07] px-3 py-2">
           {/* Text style */}
           <ToolbarButton
             active={editor.isActive('bold')}
@@ -272,8 +277,10 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end border-t border-slate-50 px-4 py-2">
-          <span className={`text-[11px] ${nearLimit ? 'text-amber-400' : 'text-slate-300'}`}>
+        <div className="flex items-center justify-end border-t border-slate-50 dark:border-white/[0.07] px-4 py-2">
+          <span
+            className={`text-[11px] ${nearLimit ? 'text-amber-400' : 'text-slate-300 dark:text-ink-600'}`}
+          >
             {charCount} / {MAX_CHARS}
           </span>
         </div>

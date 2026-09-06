@@ -33,13 +33,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       onClose={onCancel}
       maxWidthClass="max-w-sm"
       bodyClassName="overflow-y-auto px-4 py-5 sm:px-6"
-      titleClassName="text-lg font-bold text-gray-900"
+      titleClassName="text-lg font-bold text-gray-900 dark:text-ink-50"
       footer={
         <>
           <button
             type="button"
             onClick={onCancel}
-            className="min-h-11 flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:flex-none"
+            className="min-h-11 flex-1 rounded-xl border border-gray-300 dark:border-white/[0.12] px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-ink-100 transition hover:bg-gray-50 sm:flex-none"
           >
             {cancelText}
           </button>
@@ -64,22 +64,24 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div
           className={clsx(
             'flex h-12 w-12 shrink-0 items-center justify-center rounded-full',
-            type === 'danger' && 'bg-red-100',
-            type === 'warning' && 'bg-amber-100',
-            type === 'info' && 'bg-blue-100'
+            type === 'danger' && 'bg-red-100 dark:bg-red-500/15',
+            type === 'warning' && 'bg-amber-100 dark:bg-amber-500/15',
+            type === 'info' && 'bg-blue-100 dark:bg-blue-500/15'
           )}
         >
           <ExclamationCircleOutlined
             className={clsx(
               'text-2xl',
-              type === 'danger' && 'text-red-600',
-              type === 'warning' && 'text-amber-600',
-              type === 'info' && 'text-blue-600'
+              type === 'danger' && 'text-red-600 dark:text-red-300',
+              type === 'warning' && 'text-amber-600 dark:text-amber-300',
+              type === 'info' && 'text-blue-600 dark:text-blue-300'
             )}
           />
         </div>
         <div className="min-w-0">
-          <p className="text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">{message}</p>
+          <p className="text-sm leading-relaxed text-gray-600 dark:text-ink-200 whitespace-pre-wrap">
+            {message}
+          </p>
         </div>
       </div>
     </ModalShell>

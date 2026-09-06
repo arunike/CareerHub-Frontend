@@ -9,14 +9,14 @@ export const SmartListItem: React.FC<{ item: string }> = ({ item }) => {
   const { lead, subpoints } = splitSubpoints(item);
 
   return (
-    <li className="text-sm leading-6 text-slate-700">
+    <li className="text-sm leading-6 text-slate-700 dark:text-ink-100">
       <span>{parseInlineMarkdown(lead)}</span>
       {subpoints.length > 0 && (
-        <ul className="mt-2 space-y-1.5 border-l border-slate-200 pl-4">
+        <ul className="mt-2 space-y-1.5 border-l border-slate-200 dark:border-white/[0.08] pl-4">
           {subpoints.map((subpoint, index) => (
             <li
               key={`${subpoint}-${index}`}
-              className="list-none text-[13px] leading-6 text-slate-600"
+              className="list-none text-[13px] leading-6 text-slate-600 dark:text-ink-200"
             >
               {parseInlineMarkdown(subpoint)}
             </li>
@@ -49,7 +49,7 @@ export const ListBlock: React.FC<{ title?: string; items?: string[]; compact?: b
   return (
     <div>
       {title && (
-        <Text className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <Text className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-ink-500">
           {title}
         </Text>
       )}
@@ -80,11 +80,15 @@ export const ratingClass = (rating: string) => {
 
 export const scoreToneClass = (rating: string) => {
   const normalized = rating.toLowerCase();
-  if (normalized.includes('strong')) return 'border-emerald-200 bg-emerald-50/30';
-  if (normalized.includes('solid')) return 'border-blue-200 bg-blue-50/30';
-  if (normalized.includes('develop')) return 'border-amber-200 bg-amber-50/30';
-  if (normalized.includes('weak')) return 'border-rose-200 bg-rose-50/30';
-  return 'border-slate-200 bg-white';
+  if (normalized.includes('strong'))
+    return 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/30 dark:bg-emerald-500/10';
+  if (normalized.includes('solid'))
+    return 'border-blue-200 dark:border-blue-500/25 bg-blue-50/30 dark:bg-blue-500/10';
+  if (normalized.includes('develop'))
+    return 'border-amber-200 dark:border-amber-500/25 bg-amber-50/30 dark:bg-amber-500/10';
+  if (normalized.includes('weak'))
+    return 'border-rose-200 dark:border-rose-500/25 bg-rose-50/30 dark:bg-rose-500/10';
+  return 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900';
 };
 
 export const SectionHeading: React.FC<{
@@ -94,13 +98,17 @@ export const SectionHeading: React.FC<{
 }> = ({ eyebrow, title, description }) => (
   <div className="mb-5">
     {eyebrow && (
-      <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
+      <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-ink-500">
         {eyebrow}
       </div>
     )}
-    <h2 className="m-0 text-xl font-bold tracking-tight text-slate-950">{title}</h2>
+    <h2 className="m-0 text-xl font-bold tracking-tight text-slate-950 dark:text-ink-50">
+      {title}
+    </h2>
     {description && (
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-ink-400">
+        {description}
+      </p>
     )}
   </div>
 );

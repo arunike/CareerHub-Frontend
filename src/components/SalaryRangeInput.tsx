@@ -66,11 +66,13 @@ const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
           placeholder={placeholder ?? 'e.g. Competitive, DOE'}
         />
         <div className={FIELD_HINT_CLASS}>
-          <span className="min-w-0 truncate text-gray-400">Saved exactly as written</span>
+          <span className="min-w-0 truncate text-gray-400 dark:text-ink-500">
+            Saved exactly as written
+          </span>
           <button
             type="button"
             onClick={() => setMode('range')}
-            className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 hover:bg-blue-50"
+            className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
           >
             Use min / max
           </button>
@@ -96,7 +98,7 @@ const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
           placeholder="Min"
           aria-label="Minimum salary"
         />
-        <span className="shrink-0 text-sm text-gray-400">–</span>
+        <span className="shrink-0 text-sm text-gray-400 dark:text-ink-500">–</span>
         <UnitNumberInput
           unit="$"
           min={0}
@@ -108,7 +110,9 @@ const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
         />
       </div>
       <div className={FIELD_HINT_CLASS}>
-        <span className={`min-w-0 truncate ${invalid ? 'text-amber-600' : 'text-gray-400'}`}>
+        <span
+          className={`min-w-0 truncate ${invalid ? 'text-amber-600 dark:text-amber-300' : 'text-gray-400 dark:text-ink-500'}`}
+        >
           {invalid
             ? 'Max is below min'
             : parsed === null
@@ -120,7 +124,7 @@ const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
         <button
           type="button"
           onClick={() => setMode('text')}
-          className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 hover:bg-blue-50"
+          className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
         >
           Enter as text
         </button>

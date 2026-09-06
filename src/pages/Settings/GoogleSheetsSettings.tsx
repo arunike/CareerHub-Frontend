@@ -288,11 +288,11 @@ const GoogleSheetsSettings: React.FC = () => {
   return (
     <div className="space-y-6">
       {contextHolder}
-      <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm space-y-5">
+      <div className="bg-white dark:bg-ink-900 p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-white/[0.08] shadow-sm space-y-5">
         <div className="flex items-start justify-between gap-4 border-b pb-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Google Sheets</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-ink-50">Google Sheets</h3>
+            <p className="text-sm text-gray-500 dark:text-ink-400 mt-1">
               Link a sheet, map columns, then let the daily maintenance job import changes.
             </p>
           </div>
@@ -338,10 +338,12 @@ const GoogleSheetsSettings: React.FC = () => {
           <SheetApplicationOptions draft={draft} updateDraft={updateDraft} />
         )}
 
-        <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-gray-900">Preview before creating</div>
-            <div className="text-xs text-gray-600 mt-0.5">
+            <div className="text-sm font-semibold text-gray-900 dark:text-ink-50">
+              Preview before creating
+            </div>
+            <div className="text-xs text-gray-600 dark:text-ink-200 mt-0.5">
               Test reads the sheet headers, fills the mapping, and shows sample values before
               anything is saved.
             </div>
@@ -373,11 +375,11 @@ const GoogleSheetsSettings: React.FC = () => {
           updateStrategy={updateStrategy}
           visibleMappingFields={visibleMappingFields}
         />
-        <div className="pt-5 mt-2 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+        <div className="pt-5 mt-2 border-t border-gray-200 dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-ink-100">
             <input
               type="checkbox"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+              className="rounded border-gray-300 dark:border-white/[0.12] text-blue-600 dark:text-blue-300 focus:ring-blue-500 h-4 w-4"
               checked={draft.enabled}
               onChange={(event) => updateDraft({ enabled: event.target.checked })}
             />

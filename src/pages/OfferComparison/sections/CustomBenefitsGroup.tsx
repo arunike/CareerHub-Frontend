@@ -34,7 +34,7 @@ const CustomBenefitsGroup = ({
         <button
           type="button"
           onClick={onAddBenefitItem}
-          className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:rounded-lg"
+          className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 px-3 text-xs font-semibold text-blue-700 dark:text-blue-300 transition hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:rounded-lg"
         >
           + Add Custom Item
         </button>
@@ -83,13 +83,13 @@ const CustomBenefitsGroup = ({
               onClick={() => onUpdateBenefitItem(item.id, { is_taxable: !item.is_taxable })}
               className={`flex h-[38px] items-center justify-center gap-1.5 rounded-[9px] border text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 item.is_taxable
-                  ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                  : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  ? 'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100'
+                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400 hover:bg-slate-50'
               }`}
             >
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
-                  item.is_taxable ? 'bg-amber-500' : 'bg-slate-300'
+                  item.is_taxable ? 'bg-amber-500' : 'bg-slate-300 dark:bg-ink-700'
                 }`}
               />
               {item.is_taxable ? 'Taxable' : 'Tax-free'}
@@ -97,7 +97,7 @@ const CustomBenefitsGroup = ({
             <button
               type="button"
               onClick={() => onRemoveBenefitItem(item.id)}
-              className="flex h-[38px] items-center justify-center rounded-[9px] text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+              className="flex h-[38px] items-center justify-center rounded-[9px] text-slate-400 dark:text-ink-500 transition-colors hover:bg-red-50 hover:text-red-600"
               aria-label="Remove benefit item"
             >
               <CloseOutlined className="text-xs" />
@@ -105,21 +105,21 @@ const CustomBenefitsGroup = ({
           </div>
         ))}
       </div>
-      <div className="mt-2 space-y-0.5 text-xs text-gray-500">
+      <div className="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-ink-400">
         <p>Annualized total: ${Math.round(computeBenefitsTotal(benefitItems)).toLocaleString()}</p>
         {taxableSum > 0 && (
           <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/25">
               <span className="h-1 w-1 rounded-full bg-amber-400" />
               Taxable: ${Math.round(taxableSum).toLocaleString()}
               {taxableSumAfterTax !== null && (
-                <span className="text-amber-600 font-normal">
+                <span className="text-amber-600 dark:text-amber-300 font-normal">
                   → ${Math.round(taxableSumAfterTax).toLocaleString()} after-tax
                 </span>
               )}
             </span>
             {nonTaxableSum > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-ink-800 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-ink-200 ring-1 ring-slate-200 dark:ring-white/[0.08]">
                 Tax-free: ${Math.round(nonTaxableSum).toLocaleString()}
               </span>
             )}

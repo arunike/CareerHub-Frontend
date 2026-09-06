@@ -11,18 +11,18 @@ type Props = {
 };
 
 const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
-  <div className="col-span-2 pt-2 border-t border-slate-100">
+  <div className="col-span-2 pt-2 border-t border-slate-100 dark:border-white/[0.07]">
     <div className="flex justify-between items-center">
       <div>
         <HelpTooltipTrigger
           title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
           ariaLabel="Explain time off"
           density="comfortable"
-          className="text-xs font-medium text-slate-500"
+          className="text-xs font-medium text-slate-500 dark:text-ink-400"
         >
           Time Off
         </HelpTooltipTrigger>
-        <div className="text-sm font-medium text-slate-900">
+        <div className="text-sm font-medium text-slate-900 dark:text-ink-50">
           {formatPtoLabel(row.offer.pto_days, !!row.offer.is_unlimited_pto)} PTO,{' '}
           {row.offer.is_unlimited_pto && row.offer.sick_leave_included_in_unlimited_pto !== false
             ? 'Sick Leave Included, '
@@ -36,7 +36,7 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
             title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
             ariaLabel="Explain difference from current job"
             density="comfortable"
-            className="justify-end text-xs font-medium text-slate-500"
+            className="justify-end text-xs font-medium text-slate-500 dark:text-ink-400"
           >
             Diff vs Current
           </HelpTooltipTrigger>
@@ -52,7 +52,9 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
               <div
                 className={clsx(
                   'text-sm font-bold',
-                  diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                  diff >= 0
+                    ? 'text-emerald-600 dark:text-emerald-300'
+                    : 'text-rose-500 dark:text-rose-400'
                 )}
               >
                 {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
@@ -71,7 +73,7 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
             title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
             ariaLabel="Explain difference from current job"
             density="comfortable"
-            className="justify-end text-xs font-medium text-slate-500"
+            className="justify-end text-xs font-medium text-slate-500 dark:text-ink-400"
           >
             Diff vs Current
           </HelpTooltipTrigger>
@@ -87,7 +89,9 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
               <div
                 className={clsx(
                   'text-sm font-bold',
-                  diff >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                  diff >= 0
+                    ? 'text-emerald-600 dark:text-emerald-300'
+                    : 'text-rose-500 dark:text-rose-400'
                 )}
               >
                 {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}

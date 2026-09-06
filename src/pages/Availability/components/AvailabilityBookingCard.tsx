@@ -2,12 +2,14 @@ import { LinkOutlined, PlusOutlined, SettingOutlined, StopOutlined } from '@ant-
 import { useId, useState } from 'react';
 import type { BookingIntakeQuestion, ShareLink } from '../../../types';
 
-const bookingFieldLabelClass = 'mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500';
+const bookingFieldLabelClass =
+  'mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-ink-400';
 
-const bookingFieldClass = 'min-h-11 min-w-0 rounded-lg border bg-white px-3 py-2 text-sm';
+const bookingFieldClass =
+  'min-h-11 min-w-0 rounded-lg border bg-white dark:bg-ink-900 px-3 py-2 text-sm';
 
 const secondaryButtonClass =
-  'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-70 sm:w-auto';
+  'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 text-sm font-medium text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-50 disabled:opacity-70 sm:w-auto';
 
 const primaryButtonClass =
   'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-70 motion-reduce:active:scale-100 sm:w-auto';
@@ -91,10 +93,12 @@ const AvailabilityBookingCard = ({
   return (
     <div className="enterprise-section min-w-0 p-4 sm:p-6">
       <div className="flex items-center gap-2">
-        <LinkOutlined aria-hidden="true" className="text-gray-500" />
-        <h2 className="text-sm font-semibold text-gray-800">Public Booking Link</h2>
+        <LinkOutlined aria-hidden="true" className="text-gray-500 dark:text-ink-400" />
+        <h2 className="text-sm font-semibold text-gray-800 dark:text-ink-50">
+          Public Booking Link
+        </h2>
       </div>
-      <p className="mt-1 break-words text-xs text-gray-500">
+      <p className="mt-1 break-words text-xs text-gray-500 dark:text-ink-400">
         People can only see and book your available slots. Event and holiday details stay private.
       </p>
 
@@ -104,12 +108,12 @@ const AvailabilityBookingCard = ({
             readOnly
             aria-label="Public booking link"
             value={getShareLinkUrl()}
-            className="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
+            className="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-gray-50 dark:bg-ink-900 px-3 py-2 text-sm"
           />
-          <p className="mt-3 break-words text-xs text-gray-500">
+          <p className="mt-3 break-words text-xs text-gray-500 dark:text-ink-400">
             Expires: {new Date(shareLink.expires_at).toLocaleString()}
           </p>
-          <p className="mt-1 break-words text-xs text-gray-500">
+          <p className="mt-1 break-words text-xs text-gray-500 dark:text-ink-400">
             Booking duration: {shareLink.booking_block_minutes} minutes per slot
             {shareLink.buffer_minutes ? ` · ${shareLink.buffer_minutes} min buffer` : ''}
             {shareLink.max_bookings_per_day ? ` · max ${shareLink.max_bookings_per_day}/day` : ''}
@@ -119,7 +123,7 @@ const AvailabilityBookingCard = ({
               : ''}
           </p>
           {shareLink.intake_questions?.length > 0 && (
-            <p className="mt-1 break-words text-xs text-gray-500">
+            <p className="mt-1 break-words text-xs text-gray-500 dark:text-ink-400">
               Intake questions:{' '}
               {shareLink.intake_questions.map((question) => question.label).join(', ')}
             </p>
@@ -136,20 +140,22 @@ const AvailabilityBookingCard = ({
                 id={`${bookingFormId}-title`}
                 value={shareTitle}
                 onChange={(e) => onShareTitleChange(e.target.value)}
-                className={`${bookingFieldClass} border-gray-300`}
+                className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12]`}
                 placeholder="e.g. Book a recruiter screen"
               />
             </div>
             <div className="flex min-w-0 flex-col">
               <label htmlFor={`${bookingFormId}-display-name`} className={bookingFieldLabelClass}>
-                Display Name <span className="text-red-500">*</span>
+                Display Name <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <input
                 id={`${bookingFormId}-display-name`}
                 value={hostDisplayName}
                 onChange={(e) => onHostDisplayNameChange(e.target.value)}
                 className={`${bookingFieldClass} ${
-                  !hostDisplayName.trim() && generatingLink ? 'border-red-500' : 'border-gray-300'
+                  !hostDisplayName.trim() && generatingLink
+                    ? 'border-red-500'
+                    : 'border-gray-300 dark:border-white/[0.12]'
                 }`}
                 placeholder="e.g. John Smith"
                 required
@@ -157,7 +163,7 @@ const AvailabilityBookingCard = ({
             </div>
             <div className="flex min-w-0 flex-col sm:col-span-2 xl:col-span-1">
               <label htmlFor={`${bookingFormId}-host-email`} className={bookingFieldLabelClass}>
-                Host Email <span className="text-red-500">*</span>
+                Host Email <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <input
                 id={`${bookingFormId}-host-email`}
@@ -165,7 +171,9 @@ const AvailabilityBookingCard = ({
                 value={hostEmail}
                 onChange={(e) => onHostEmailChange(e.target.value)}
                 className={`${bookingFieldClass} ${
-                  !hostEmail.trim() && generatingLink ? 'border-red-500' : 'border-gray-300'
+                  !hostEmail.trim() && generatingLink
+                    ? 'border-red-500'
+                    : 'border-gray-300 dark:border-white/[0.12]'
                 }`}
                 placeholder="e.g. john.smith@example.com"
                 required
@@ -179,7 +187,7 @@ const AvailabilityBookingCard = ({
                 id={`${bookingFormId}-public-note`}
                 value={publicNote}
                 onChange={(e) => onPublicNoteChange(e.target.value)}
-                className="min-h-20 min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                className="min-h-20 min-w-0 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2 text-sm"
                 placeholder="e.g. Please include role, company, and interview format."
               />
             </div>
@@ -188,7 +196,7 @@ const AvailabilityBookingCard = ({
           {showConfig && (
             <div
               id={`${bookingFormId}-config-panel`}
-              className="mt-4 grid grid-cols-1 gap-3 border-t border-gray-100 pt-4 sm:grid-cols-2 xl:grid-cols-4"
+              className="mt-4 grid grid-cols-1 gap-3 border-t border-gray-100 dark:border-white/[0.07] pt-4 sm:grid-cols-2 xl:grid-cols-4"
             >
               <div className="flex min-w-0 flex-col">
                 <label htmlFor={`${bookingFormId}-expires-in`} className={bookingFieldLabelClass}>
@@ -198,7 +206,7 @@ const AvailabilityBookingCard = ({
                   id={`${bookingFormId}-expires-in`}
                   value={shareDuration}
                   onChange={(e) => onShareDurationChange(Number(e.target.value))}
-                  className={`${bookingFieldClass} border-gray-300`}
+                  className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12]`}
                 >
                   <option value={7}>7 days</option>
                   <option value={14}>14 days</option>
@@ -213,7 +221,7 @@ const AvailabilityBookingCard = ({
                   id={`${bookingFormId}-duration`}
                   value={bookingBlockMinutes}
                   onChange={(e) => onBookingBlockMinutesChange(Number(e.target.value))}
-                  className={`${bookingFieldClass} border-gray-300`}
+                  className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12]`}
                 >
                   <option value={15}>15 min</option>
                   <option value={20}>20 min</option>
@@ -232,7 +240,7 @@ const AvailabilityBookingCard = ({
                   id={`${bookingFormId}-buffer`}
                   value={bufferMinutes}
                   onChange={(e) => onBufferMinutesChange(Number(e.target.value))}
-                  className={`${bookingFieldClass} border-gray-300`}
+                  className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12]`}
                 >
                   <option value={0}>No buffer</option>
                   <option value={5}>5 min</option>
@@ -252,7 +260,7 @@ const AvailabilityBookingCard = ({
                   id={`${bookingFormId}-daily-limit`}
                   value={maxBookingsPerDay}
                   onChange={(e) => onMaxBookingsPerDayChange(Number(e.target.value))}
-                  className={`${bookingFieldClass} border-gray-300`}
+                  className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12]`}
                 >
                   <option value={0}>No limit</option>
                   <option value={1}>Max 1/day</option>
@@ -263,8 +271,8 @@ const AvailabilityBookingCard = ({
                   <option value={8}>Max 8/day</option>
                 </select>
               </div>
-              <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 xl:col-span-4">
-                <label className="flex min-w-0 items-center gap-2 text-sm font-medium text-gray-700">
+              <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 p-3 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 xl:col-span-4">
+                <label className="flex min-w-0 items-center gap-2 text-sm font-medium text-gray-700 dark:text-ink-100">
                   <input
                     type="checkbox"
                     checked={allowRescheduleCancel}
@@ -277,7 +285,9 @@ const AvailabilityBookingCard = ({
                   <label
                     htmlFor={`${bookingFormId}-change-cutoff`}
                     className={`text-xs font-semibold uppercase tracking-wide ${
-                      allowRescheduleCancel ? 'text-gray-500' : 'text-gray-400'
+                      allowRescheduleCancel
+                        ? 'text-gray-500 dark:text-ink-400'
+                        : 'text-gray-400 dark:text-ink-500'
                     }`}
                   >
                     Change Cutoff
@@ -287,7 +297,7 @@ const AvailabilityBookingCard = ({
                     value={rescheduleCancelDeadlineHours}
                     onChange={(e) => onRescheduleCancelDeadlineHoursChange(Number(e.target.value))}
                     disabled={!allowRescheduleCancel}
-                    className={`${bookingFieldClass} border-gray-300 disabled:bg-gray-100 disabled:text-gray-400`}
+                    className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12] disabled:bg-gray-100 disabled:text-gray-400`}
                   >
                     <option value={0}>No cutoff</option>
                     <option value={2}>2 hours before</option>
@@ -301,7 +311,7 @@ const AvailabilityBookingCard = ({
               <div className="min-w-0 sm:col-span-2 xl:col-span-4">
                 <div className={bookingFieldLabelClass}>Intake Questions</div>
                 {intakeQuestions.length === 0 ? (
-                  <p className="mb-2 text-xs text-gray-500">
+                  <p className="mb-2 text-xs text-gray-500 dark:text-ink-400">
                     Optional. Ask for company, role, agenda, phone number, or anything you want
                     before the meeting.
                   </p>
@@ -316,11 +326,11 @@ const AvailabilityBookingCard = ({
                           aria-label={`Question ${index + 1}`}
                           value={question.label}
                           onChange={(e) => updateQuestion(index, { label: e.target.value })}
-                          className={`${bookingFieldClass} border-gray-300 sm:flex-1`}
+                          className={`${bookingFieldClass} border-gray-300 dark:border-white/[0.12] sm:flex-1`}
                           placeholder="e.g. Which company is this for?"
                         />
                         <div className="flex shrink-0 items-center gap-2">
-                          <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 sm:flex-none">
+                          <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-600 dark:text-ink-200 sm:flex-none">
                             <input
                               type="checkbox"
                               checked={!!question.required}
@@ -339,7 +349,7 @@ const AvailabilityBookingCard = ({
                                 intakeQuestions.filter((_, idx) => idx !== index)
                               )
                             }
-                            className="min-h-11 shrink-0 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-500 transition-colors hover:border-red-200 hover:text-red-600"
+                            className="min-h-11 shrink-0 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-500 dark:text-ink-400 transition-colors hover:border-red-200 hover:text-red-600"
                           >
                             Remove
                           </button>
@@ -356,7 +366,7 @@ const AvailabilityBookingCard = ({
                       { id: `q_${Date.now()}`, label: '', required: false },
                     ])
                   }
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-50 hover:text-gray-900"
                 >
                   <PlusOutlined aria-hidden="true" />
                   Add question
@@ -367,7 +377,7 @@ const AvailabilityBookingCard = ({
         </>
       )}
 
-      <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 dark:border-white/[0.07] pt-4 sm:flex-row sm:items-center sm:justify-between">
         {!shareLink ? (
           <>
             <button
@@ -377,7 +387,7 @@ const AvailabilityBookingCard = ({
               aria-controls={`${bookingFormId}-config-panel`}
               className={
                 showConfig
-                  ? `${secondaryButtonClass} border-gray-300 bg-gray-100 text-gray-700`
+                  ? `${secondaryButtonClass} border-gray-300 dark:border-white/[0.12] bg-gray-100 dark:bg-ink-800 text-gray-700 dark:text-ink-100`
                   : secondaryButtonClass
               }
             >

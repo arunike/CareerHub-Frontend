@@ -187,7 +187,7 @@ const HolidayListCard = ({
 
           return (
             <List.Item key={`item-${item.id}`} className="holiday-list-item">
-              <div className="group w-full rounded-xl border border-slate-200/80 bg-white px-5 py-4 sm:px-6 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
+              <div className="group w-full rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-5 py-4 sm:px-6 shadow-2xs transition-all duration-200 hover:border-red-200 hover:shadow-xs">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <SelectionCheckbox
@@ -197,14 +197,14 @@ const HolidayListCard = ({
                     />
 
                     {/* Unified Red Mini Calendar Tile */}
-                    <div className="flex shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 bg-white shadow-2xs">
+                    <div className="flex shrink-0 flex-col items-center overflow-hidden rounded-xl border border-red-200/80 dark:border-red-500/25 bg-white dark:bg-ink-900 shadow-2xs">
                       <div className="w-full bg-gradient-to-r from-red-500 via-rose-500 to-red-600 px-2.5 py-0.5 text-center">
                         <span className="text-[10px] font-extrabold uppercase tracking-widest text-white">
                           {monthText}
                         </span>
                       </div>
                       <div className="flex flex-1 items-center justify-center px-3 py-1.5 min-w-[42px]">
-                        <span className="font-extrabold text-slate-800 text-sm tracking-tight whitespace-nowrap">
+                        <span className="font-extrabold text-slate-800 dark:text-ink-50 text-sm tracking-tight whitespace-nowrap">
                           {dayText}
                         </span>
                       </div>
@@ -212,19 +212,21 @@ const HolidayListCard = ({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-slate-900 text-base sm:text-lg leading-tight truncate">
+                        <span className="font-semibold text-slate-900 dark:text-ink-50 text-base sm:text-lg leading-tight truncate">
                           {titleText}
                         </span>
                       </div>
 
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                        <span className="font-medium text-slate-600">{formattedDate}</span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-ink-400">
+                        <span className="font-medium text-slate-600 dark:text-ink-200">
+                          {formattedDate}
+                        </span>
 
                         {item.is_recurring && (
                           <Tag
                             color="blue"
                             icon={<SyncOutlined />}
-                            className="m-0 rounded border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium px-1.5 py-0"
+                            className="m-0 rounded border-sky-200 dark:border-sky-500/25 bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 text-xs font-medium px-1.5 py-0"
                           >
                             Yearly
                           </Tag>
@@ -234,7 +236,7 @@ const HolidayListCard = ({
                           <Tag
                             color="gold"
                             icon={<LockOutlined />}
-                            className="m-0 rounded border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium px-1.5 py-0"
+                            className="m-0 rounded border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-medium px-1.5 py-0"
                           >
                             Locked
                           </Tag>
@@ -244,7 +246,7 @@ const HolidayListCard = ({
                   </div>
 
                   <div className="holiday-item-actions flex shrink-0 items-center justify-end">
-                    <div className="rounded-lg border border-slate-200/60 bg-slate-50/60 p-0.5">
+                    <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 p-0.5">
                       <RowActions
                         key={`actions-${item.id}`}
                         size="middle"

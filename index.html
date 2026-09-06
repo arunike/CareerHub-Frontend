@@ -5,6 +5,27 @@
     <link rel="icon" type="image/png" href="/src/assets/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>CareerHub</title>
+    <script>
+      // Paint before React mounts, or a dark-mode visitor sees a white flash on every route.
+      (function () {
+        try {
+          var supported = function (value) {
+            return value === 'light' || value === 'dark' || value === 'system';
+          };
+          var stored = window.localStorage.getItem('careerhub-theme');
+          if (!supported(stored)) stored = window.localStorage.getItem('careerhub-public-theme');
+          var preference = supported(stored) ? stored : 'system';
+          var dark =
+            preference === 'dark' ||
+            (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (!dark) return;
+          document.documentElement.style.colorScheme = 'dark';
+          document.documentElement.style.backgroundColor = '#08090b';
+        } catch (error) {
+          /* A blocked storage read just means the default light paint. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

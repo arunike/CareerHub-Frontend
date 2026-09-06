@@ -60,8 +60,10 @@ export const SortableStageRow = ({
               ? 'Unlock the stage to reorder it'
               : 'Drag to reorder — this sets the funnel order'
           }
-          className={`shrink-0 rounded p-1 text-gray-300 transition-colors ${
-            disabled ? 'cursor-not-allowed' : 'cursor-grab text-gray-400 hover:text-gray-600'
+          className={`shrink-0 rounded p-1 text-gray-300 dark:text-ink-600 transition-colors ${
+            disabled
+              ? 'cursor-not-allowed'
+              : 'cursor-grab text-gray-400 dark:text-ink-500 hover:text-gray-600'
           }`}
         >
           <HolderOutlined />

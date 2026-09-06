@@ -375,8 +375,8 @@ const Tasks: React.FC = () => {
               onClick={() => setViewMode('kanban')}
               className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
                 viewMode === 'kanban'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm'
+                  : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
               }`}
               aria-pressed={viewMode === 'kanban'}
             >
@@ -387,8 +387,8 @@ const Tasks: React.FC = () => {
               onClick={() => setViewMode('checklist')}
               className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
                 viewMode === 'checklist'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm'
+                  : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
               }`}
               aria-pressed={viewMode === 'checklist'}
             >
@@ -472,11 +472,11 @@ const Tasks: React.FC = () => {
                     />
                     <div className="min-w-0">
                       <div
-                        className={`font-medium truncate ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
+                        className={`font-medium truncate ${task.status === 'DONE' ? 'line-through text-gray-400 dark:text-ink-500' : ''}`}
                       >
                         {task.title}
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-ink-400">
                         <Tag color={PRIORITY_COLOR[task.priority]}>{task.priority}</Tag>
                         {task.due_date ? (
                           <span>Due {dayjs(task.due_date).format('YYYY-MM-DD')}</span>

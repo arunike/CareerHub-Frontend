@@ -42,12 +42,36 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
   const { cachedData, color, icon, name } = widget;
 
   const colorMap: Record<string, { bg: string; text: string; fill: string }> = {
-    blue: { bg: 'bg-blue-100', text: 'text-blue-600', fill: '#2563eb' },
-    green: { bg: 'bg-green-100', text: 'text-green-600', fill: '#10b981' },
-    amber: { bg: 'bg-amber-100', text: 'text-amber-600', fill: '#f59e0b' },
-    red: { bg: 'bg-red-100', text: 'text-red-600', fill: '#ef4444' },
-    purple: { bg: 'bg-purple-100', text: 'text-purple-600', fill: '#60a5fa' },
-    pink: { bg: 'bg-pink-100', text: 'text-pink-600', fill: '#ec4899' },
+    blue: {
+      bg: 'bg-blue-100 dark:bg-blue-500/15',
+      text: 'text-blue-600 dark:text-blue-300',
+      fill: '#2563eb',
+    },
+    green: {
+      bg: 'bg-green-100 dark:bg-green-500/15',
+      text: 'text-green-600 dark:text-green-300',
+      fill: '#10b981',
+    },
+    amber: {
+      bg: 'bg-amber-100 dark:bg-amber-500/15',
+      text: 'text-amber-600 dark:text-amber-300',
+      fill: '#f59e0b',
+    },
+    red: {
+      bg: 'bg-red-100 dark:bg-red-500/15',
+      text: 'text-red-600 dark:text-red-300',
+      fill: '#ef4444',
+    },
+    purple: {
+      bg: 'bg-purple-100 dark:bg-purple-500/15',
+      text: 'text-purple-600 dark:text-purple-300',
+      fill: '#60a5fa',
+    },
+    pink: {
+      bg: 'bg-pink-100 dark:bg-pink-500/15',
+      text: 'text-pink-600 dark:text-pink-300',
+      fill: '#ec4899',
+    },
   };
 
   const colors = colorMap[color] || colorMap.blue;
@@ -94,9 +118,10 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
             <IconComponent className={`text-2xl ${colors.text}`} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">{name}</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {value} <span className="text-sm font-normal text-gray-500">{unit}</span>
+            <p className="text-sm font-medium text-gray-500 dark:text-ink-400">{name}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-ink-50">
+              {value}{' '}
+              <span className="text-sm font-normal text-gray-500 dark:text-ink-400">{unit}</span>
             </p>
           </div>
         </div>
@@ -111,7 +136,7 @@ const CustomWidgetCard: React.FC<CustomWidgetCardProps> = ({ widget }) => {
       <div className="enterprise-card group relative h-full p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-6">
           <IconComponent className={`w-5 h-5 ${colors.text}`} />
-          <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-ink-50">{name}</h3>
         </div>
         <div className={`h-75 w-full ${chartType === 'pie' ? 'careerhub-responsive-pie' : ''}`}>
           <ResponsiveContainer

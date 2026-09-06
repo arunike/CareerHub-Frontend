@@ -56,21 +56,23 @@ const CalendarRangeView = ({
                 onDoubleClick={() => onDateDoubleClick?.(day)}
                 onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, day)}
                 className={clsx(
-                  'w-full touch-manipulation border-b border-gray-100 px-4 py-3 text-left transition-colors',
-                  isSelected ? 'bg-blue-50' : 'bg-gray-50/80 hover:bg-gray-50'
+                  'w-full touch-manipulation border-b border-gray-100 dark:border-white/[0.07] px-4 py-3 text-left transition-colors',
+                  isSelected
+                    ? 'bg-blue-50 dark:bg-blue-500/10'
+                    : 'bg-gray-50/80 dark:bg-ink-900/80 hover:bg-gray-50'
                 )}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-ink-500">
                       {format(day, 'EEE')}
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-gray-900">
+                    <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-ink-50">
                       {format(day, 'MMMM d, yyyy')}
                     </div>
                   </div>
                   {isTodayDate && (
-                    <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                    <span className="rounded-full bg-blue-100 dark:bg-blue-500/15 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
                       Today
                     </span>
                   )}

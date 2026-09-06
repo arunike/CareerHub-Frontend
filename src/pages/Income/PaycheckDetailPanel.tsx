@@ -15,12 +15,15 @@ interface Props {
   onOpenPaycheck: (periodIndex: number) => void;
 }
 
-const FIELD_LABEL = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400';
+const FIELD_LABEL =
+  'text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500';
 
 const Figure = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-baseline justify-between gap-3">
-    <span className="text-xs text-slate-500">{label}</span>
-    <span className="whitespace-nowrap text-sm tabular-nums text-slate-700">{value}</span>
+    <span className="text-xs text-slate-500 dark:text-ink-400">{label}</span>
+    <span className="whitespace-nowrap text-sm tabular-nums text-slate-700 dark:text-ink-100">
+      {value}
+    </span>
   </div>
 );
 
@@ -46,7 +49,7 @@ export const PaycheckDetailPanel = ({ row, onActualChange, onOpenPaycheck }: Pro
           {view.autoNotes.map((note) => (
             <span
               key={note}
-              className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
+              className="rounded-md bg-slate-100 dark:bg-ink-800 px-2 py-0.5 text-[11px] text-slate-600 dark:text-ink-200"
             >
               {note}
             </span>

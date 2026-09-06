@@ -86,7 +86,7 @@ const NotFoundPage = ({ standalone = false }: { standalone?: boolean }) => {
   if (!standalone) return content;
 
   return (
-    <main className="flex min-h-screen w-full min-w-0 items-center overflow-x-hidden bg-slate-50 px-4 py-12 sm:px-6">
+    <main className="flex min-h-screen w-full min-w-0 items-center overflow-x-hidden bg-slate-50 dark:bg-ink-900 px-4 py-12 sm:px-6">
       {content}
     </main>
   );
@@ -173,7 +173,7 @@ const RouteFallback = () => {
       <div className="w-full space-y-6">
         <PageHeaderSkeleton />
         <div className="enterprise-card p-5 space-y-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between">
+          <div className="border-b border-slate-100 dark:border-white/[0.07] pb-3 flex justify-between">
             <SkeletonBlock width="120px" height="1.1rem" />
             <SkeletonBlock width="80px" height="1.1rem" />
           </div>
@@ -181,7 +181,7 @@ const RouteFallback = () => {
             {Array.from({ length: 5 }).map((_, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-b-0"
+                className="flex items-center gap-3 py-2 border-b border-slate-50 dark:border-white/[0.07] last:border-b-0"
               >
                 <SkeletonBlock width="20px" height="20px" circle className="shrink-0" />
                 <SkeletonBlock width="60%" height="0.95rem" />
@@ -266,7 +266,7 @@ const RouteFallback = () => {
             <SkeletonBlock width="80px" height="0.75rem" className="mt-2 opacity-60" />
           </div>
           <div className="flex-1 space-y-5">
-            <div className="border-b border-slate-100 pb-2">
+            <div className="border-b border-slate-100 dark:border-white/[0.07] pb-2">
               <SkeletonBlock width="140px" height="1.25rem" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -285,7 +285,7 @@ const RouteFallback = () => {
 
   return (
     <div className="flex min-h-[40vh] items-center justify-center">
-      <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
+      <div className="w-full max-w-md space-y-4 rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/75 dark:bg-ink-900/75 p-5 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.45)] backdrop-blur">
         <div className="flex items-center gap-3">
           <div className="shimmer-bg w-6 h-6 rounded-full" />
           <SkeletonBlock width="120px" height="1.1rem" />

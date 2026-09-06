@@ -16,7 +16,7 @@ export const CollapsibleCard = ({
     <div className={`enterprise-card p-4 sm:p-6 ${collapsed ? 'h-auto' : 'h-full'}`}>
       <div className={`flex items-center gap-2 ${collapsed ? '' : 'mb-5'}`}>
         {icon}
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-ink-50">{title}</h3>
         <WidgetCollapseToggle title={title} />
       </div>
       {collapsed ? null : children}

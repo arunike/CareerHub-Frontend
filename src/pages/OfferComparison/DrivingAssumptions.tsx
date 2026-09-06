@@ -65,12 +65,14 @@ const DrivingAssumptions = ({
 
   const editStep = (
     <div className="w-[268px] space-y-3">
-      <p className="m-0 text-xs leading-5 text-slate-500">
+      <p className="m-0 text-xs leading-5 text-slate-500 dark:text-ink-400">
         Shared by every offer that costs its commute by fuel. An offer can override either figure on
         its Work &amp; commute tab.
       </p>
       <label className="block">
-        <span className="mb-1 block text-xs font-semibold text-slate-600">Efficiency</span>
+        <span className="mb-1 block text-xs font-semibold text-slate-600 dark:text-ink-200">
+          Efficiency
+        </span>
         <UnitNumberInput
           unit="mpg"
           min={1}
@@ -82,7 +84,9 @@ const DrivingAssumptions = ({
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-semibold text-slate-600">Gas price</span>
+        <span className="mb-1 block text-xs font-semibold text-slate-600 dark:text-ink-200">
+          Gas price
+        </span>
         <UnitNumberInput
           unit="$/gal"
           min={0}
@@ -95,15 +99,15 @@ const DrivingAssumptions = ({
         />
       </label>
       {overrides.length > 0 && (
-        <p className="m-0 text-[11px] leading-4 text-amber-600">
+        <p className="m-0 text-[11px] leading-4 text-amber-600 dark:text-amber-300">
           {overrideLabel} — you can apply these to them after saving.
         </p>
       )}
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-2.5">
+      <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-white/[0.07] pt-2.5">
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
           Cancel
         </button>
@@ -124,9 +128,9 @@ const DrivingAssumptions = ({
 
   const reviewStep = (
     <div className="w-[300px] space-y-3">
-      <p className="m-0 text-xs leading-5 text-slate-500">
+      <p className="m-0 text-xs leading-5 text-slate-500 dark:text-ink-400">
         {overrideLabel}. Tick the ones that should switch to{' '}
-        <strong className="font-semibold text-slate-700 tabular-nums">
+        <strong className="font-semibold text-slate-700 dark:text-ink-100 tabular-nums">
           {nextDefaults.mpg} mpg · ${nextDefaults.gasPricePerGallon}/gal
         </strong>
         .
@@ -134,7 +138,7 @@ const DrivingAssumptions = ({
       <ul className="m-0 max-h-[220px] list-none space-y-1.5 overflow-y-auto p-0">
         {overrides.map((target) => (
           <li key={target.key}>
-            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-50">
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 dark:border-white/[0.08] p-2 transition-colors hover:bg-slate-50">
               <input
                 type="checkbox"
                 checked={selected.includes(target.key)}
@@ -142,10 +146,10 @@ const DrivingAssumptions = ({
                 className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-blue-600"
               />
               <span className="min-w-0">
-                <span className="block truncate text-xs font-semibold text-slate-800">
+                <span className="block truncate text-xs font-semibold text-slate-800 dark:text-ink-50">
                   {target.name}
                 </span>
-                <span className="block text-[11px] leading-4 text-slate-500 tabular-nums">
+                <span className="block text-[11px] leading-4 text-slate-500 dark:text-ink-400 tabular-nums">
                   {target.mpg !== null && (
                     <>
                       {target.mpg} → {nextDefaults.mpg} mpg
@@ -163,7 +167,7 @@ const DrivingAssumptions = ({
           </li>
         ))}
       </ul>
-      <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
+      <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-white/[0.07] pt-2.5">
         <button
           type="button"
           onClick={() =>
@@ -171,7 +175,7 @@ const DrivingAssumptions = ({
               prev.length === overrides.length ? [] : overrides.map((target) => target.key)
             )
           }
-          className="rounded px-1 text-[11px] font-semibold text-blue-600 transition-colors hover:text-blue-800"
+          className="rounded px-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800"
         >
           {selected.length === overrides.length ? 'Clear all' : 'Select all'}
         </button>
@@ -179,7 +183,7 @@ const DrivingAssumptions = ({
           <button
             type="button"
             onClick={() => setStep('edit')}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             Back
           </button>
@@ -210,14 +214,14 @@ const DrivingAssumptions = ({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-blue-400 hover:text-blue-700"
+        className="flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-ink-200 shadow-sm transition-colors hover:border-blue-400 hover:text-blue-700"
       >
-        <CarOutlined className="text-slate-400" />
-        <span className="text-slate-500">Driving:</span>
-        <span className="tabular-nums text-slate-900">
+        <CarOutlined className="text-slate-400 dark:text-ink-500" />
+        <span className="text-slate-500 dark:text-ink-400">Driving:</span>
+        <span className="tabular-nums text-slate-900 dark:text-ink-50">
           {mpg} mpg · ${gasPrice}/gal
         </span>
-        <EditOutlined className="text-[11px] text-blue-600" />
+        <EditOutlined className="text-[11px] text-blue-600 dark:text-blue-300" />
       </button>
     </Popover>
   );

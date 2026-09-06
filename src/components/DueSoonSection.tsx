@@ -18,8 +18,8 @@ const DueSoonSection = ({
   setViewingEvent,
   reminderSettings,
 }: Props) => (
-  <div className="bg-amber-50/50">
-    <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+  <div className="bg-amber-50/50 dark:bg-amber-500/10">
+    <p className="px-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300">
       Coming up
     </p>
     {dueSoon.map((event) => {
@@ -32,10 +32,10 @@ const DueSoonSection = ({
               className="min-w-0 text-left"
               onClick={() => setViewingEvent(event)}
             >
-              <p className="truncate text-sm font-medium text-slate-900 hover:text-blue-700">
+              <p className="truncate text-sm font-medium text-slate-900 dark:text-ink-50 hover:text-blue-700">
                 {event.name}
               </p>
-              <p className="mt-0.5 text-xs text-amber-700">
+              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
                 {away === 0 ? 'Today' : away === 1 ? 'Tomorrow' : `In ${away} days`}
                 {!event.is_all_day && ` · ${event.start_time.substring(0, 5)}`}
               </p>
@@ -44,7 +44,7 @@ const DueSoonSection = ({
           <div className="mt-1.5 flex items-center gap-3">
             <button
               type="button"
-              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+              className="text-xs font-semibold text-slate-500 dark:text-ink-400 hover:text-slate-700"
               onClick={(clickEvent) => {
                 // Clear the entry too, or the bell keeps ringing after a dismiss.
                 setReminder(event.id, dismissUntil(reminderSettings));
@@ -56,7 +56,7 @@ const DueSoonSection = ({
             {reminderSettings.allowForeverIgnore && (
               <button
                 type="button"
-                className="text-xs text-slate-400 hover:text-slate-600"
+                className="text-xs text-slate-400 dark:text-ink-500 hover:text-slate-600"
                 onClick={() => setReminder(event.id, 'forever')}
               >
                 Never remind me

@@ -35,10 +35,10 @@ export const OverrideConflictModal = ({ conflict, rows, onKeep, onReplace }: Pro
       cancelText="Keep their values"
       onOk={onReplace}
     >
-      <p className="text-sm leading-relaxed text-slate-600">
+      <p className="text-sm leading-relaxed text-slate-600 dark:text-ink-200">
         These paychecks pin their own{' '}
-        <span className="font-medium text-slate-900">{conflict?.label}</span>, so your new standing
-        amount will not reach them.
+        <span className="font-medium text-slate-900 dark:text-ink-50">{conflict?.label}</span>, so
+        your new standing amount will not reach them.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
@@ -49,7 +49,7 @@ export const OverrideConflictModal = ({ conflict, rows, onKeep, onReplace }: Pro
         ))}
       </div>
 
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">
+      <p className="mt-4 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
         Replacing drops the per-paycheck value for this one field only, so any other adjustments on
         those paychecks stay as they are.
       </p>

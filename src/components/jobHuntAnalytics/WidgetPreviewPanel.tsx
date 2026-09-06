@@ -34,26 +34,28 @@ const WidgetPreviewPanel = ({
   visualConfig,
   widgetName,
 }: Props) => (
-  <div className="flex max-h-none flex-[2] flex-col justify-between border-t border-slate-100 bg-slate-50 p-4 sm:p-6 lg:max-h-[650px] lg:border-l lg:border-t-0">
+  <div className="flex max-h-none flex-[2] flex-col justify-between border-t border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 p-4 sm:p-6 lg:max-h-[650px] lg:border-l lg:border-t-0">
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <span className="text-xs font-bold text-slate-400 dark:text-ink-500 uppercase tracking-wider">
           Live Preview
         </span>
         {loadingData && <Spin size="small" />}
       </div>
 
       {/* Live widget renderer */}
-      <div className="flex min-h-[200px] w-full items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-200/50 p-3 shadow-inner sm:min-h-[250px] sm:p-4">
+      <div className="flex min-h-[200px] w-full items-center justify-center rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-slate-200/50 dark:bg-ink-800/50 p-3 shadow-inner sm:min-h-[250px] sm:p-4">
         {loadingData ? (
           <div className="text-center space-y-2">
             <Spin size="default" />
-            <p className="text-xs text-slate-400 font-medium">Syncing live dashboard data...</p>
+            <p className="text-xs text-slate-400 dark:text-ink-500 font-medium">
+              Syncing live dashboard data...
+            </p>
           </div>
         ) : currentPreviewData ? (
           <div className="w-full">
             {currentWidgetType === 'metric' ? (
-              <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-4 sm:p-6 relative">
+              <div className="bg-white dark:bg-ink-900 border border-slate-200/60 dark:border-white/[0.08] rounded-xl shadow-sm p-4 sm:p-6 relative">
                 <div className="flex items-center gap-4">
                   <div
                     className={`flex items-center justify-center w-12 h-12 ${activeColorTheme.bg} rounded-lg`}
@@ -61,12 +63,12 @@ const WidgetPreviewPanel = ({
                     <IconComponent className={`text-2xl ${activeColorTheme.text}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500 leading-none">
+                    <p className="text-sm font-medium text-gray-500 dark:text-ink-400 leading-none">
                       {widgetName || 'Untitled Widget'}
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 mt-2 leading-none">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-ink-50 mt-2 leading-none">
                       {currentPreviewData.value ?? 0}{' '}
-                      <span className="text-sm font-normal text-gray-500">
+                      <span className="text-sm font-normal text-gray-500 dark:text-ink-400">
                         {currentPreviewData.unit || ''}
                       </span>
                     </p>
@@ -74,10 +76,10 @@ const WidgetPreviewPanel = ({
                 </div>
               </div>
             ) : (
-              <div className="bg-white border border-slate-200/60 rounded-xl shadow-sm p-4 sm:p-6 w-full">
+              <div className="bg-white dark:bg-ink-900 border border-slate-200/60 dark:border-white/[0.08] rounded-xl shadow-sm p-4 sm:p-6 w-full">
                 <div className="flex items-center gap-2 mb-4">
                   <IconComponent className={`w-5 h-5 ${activeColorTheme.text}`} />
-                  <h3 className="text-sm font-semibold text-gray-900 truncate leading-none">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-ink-50 truncate leading-none">
                     {widgetName || 'Untitled Chart'}
                   </h3>
                 </div>
@@ -115,7 +117,7 @@ const WidgetPreviewPanel = ({
                       )}
                     </ResponsiveContainer>
                   ) : (
-                    <div className="text-xs text-slate-400 font-medium">
+                    <div className="text-xs text-slate-400 dark:text-ink-500 font-medium">
                       No records match the current filters.
                     </div>
                   )}
@@ -124,15 +126,17 @@ const WidgetPreviewPanel = ({
             )}
           </div>
         ) : (
-          <div className="text-center p-6 text-slate-400 text-xs font-semibold">
+          <div className="text-center p-6 text-slate-400 dark:text-ink-500 text-xs font-semibold">
             Configure filters on the left to see the interactive widget preview.
           </div>
         )}
       </div>
     </div>
 
-    <div className="bg-white/80 border border-slate-100 rounded-xl p-4 text-xs text-slate-500 shadow-sm mt-4">
-      <span className="font-semibold text-slate-700 block mb-1">💡 Interactive BI customizer</span>
+    <div className="bg-white/80 dark:bg-ink-900/80 border border-slate-100 dark:border-white/[0.07] rounded-xl p-4 text-xs text-slate-500 dark:text-ink-400 shadow-sm mt-4">
+      <span className="font-semibold text-slate-700 dark:text-ink-100 block mb-1">
+        💡 Interactive BI customizer
+      </span>
       <p className="leading-relaxed">
         Combine multi-rule AND filters to refine your data stack. Renders live averages, counts, or
         rates instantly with full precision.

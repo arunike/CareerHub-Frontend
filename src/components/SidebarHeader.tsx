@@ -18,7 +18,7 @@ const SidebarHeader = ({
   toggleDesktopSidebar,
 }: Props) => (
   <div
-    className={`relative shrink-0 border-b border-slate-200/70 transition-all duration-200 ${
+    className={`relative shrink-0 border-b border-slate-200/70 dark:border-white/[0.08] transition-all duration-200 ${
       isDesktopSidebarCollapsed
         ? 'h-[72px] px-0 flex items-center justify-center'
         : 'h-[72px] px-5 py-3 flex items-center justify-between gap-3'
@@ -56,7 +56,7 @@ const SidebarHeader = ({
               icon={<MenuFoldOutlined />}
               onClick={toggleDesktopSidebar}
               aria-label="Collapse sidebar"
-              className="!h-9 !w-9 !shrink-0 !rounded-xl !text-slate-400 hover:!text-blue-600 hover:!bg-blue-50"
+              className="!h-9 !w-9 !shrink-0 !rounded-xl !text-slate-400 dark:!text-ink-500 hover:!text-blue-600 dark:hover:!text-blue-300 dark:!text-blue-300 hover:!bg-blue-50 dark:hover:!bg-blue-500/10 dark:!bg-blue-500/10"
             />
           </Tooltip>
         ) : (
@@ -65,7 +65,7 @@ const SidebarHeader = ({
             icon={<CloseOutlined />}
             onClick={() => setCollapsed(true)}
             aria-label="Close navigation"
-            className="!h-11 !w-11 !text-gray-500 hover:!text-gray-700"
+            className="!h-11 !w-11 !text-gray-500 dark:!text-ink-400 hover:!text-gray-700 dark:hover:!text-ink-100"
           />
         )}
       </>

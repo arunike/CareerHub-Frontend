@@ -123,8 +123,8 @@ const CreateAvailabilityWidgetModal = ({
                 onClick={() => setNewWidgetIcon(icon)}
                 className={`p-3 border rounded-lg transition-all ${
                   newWidgetIcon === icon
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                    : 'border-gray-200 dark:border-white/[0.08] hover:border-gray-300'
                 }`}
               >
                 {icon === 'CalendarOutlined' && <CalendarOutlined className="text-xl" />}
@@ -152,7 +152,9 @@ const CreateAvailabilityWidgetModal = ({
                 key={color.name}
                 onClick={() => setNewWidgetColor(color.name)}
                 className={`w-10 h-10 rounded-lg ${color.class} transition-all ${
-                  newWidgetColor === color.name ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                  newWidgetColor === color.name
+                    ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-white/[0.16]'
+                    : ''
                 }`}
                 title={color.name}
               />

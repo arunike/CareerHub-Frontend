@@ -78,10 +78,10 @@ const YearByYearSection = ({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs leading-5 text-slate-500">
+        <p className="text-xs leading-5 text-slate-500 dark:text-ink-400">
           Sign-on and relocation count in year 1 only. Equity follows each grant&apos;s vesting
           schedule. Base and bonus grow {baseGrowthPct}% a year — adjust both rates under{' '}
-          <span className="font-medium text-slate-600">Equity / Base</span>.
+          <span className="font-medium text-slate-600 dark:text-ink-200">Equity / Base</span>.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <ProjectionAssumptions
@@ -103,9 +103,9 @@ const YearByYearSection = ({
       </div>
 
       {crossover && (
-        <div className="flex items-start gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3">
-          <SwapRightOutlined className="mt-0.5 shrink-0 text-indigo-500" />
-          <p className="text-[13px] leading-relaxed text-indigo-900">
+        <div className="flex items-start gap-2 rounded-xl border border-indigo-200 dark:border-indigo-500/25 bg-indigo-50/70 dark:bg-indigo-500/10 px-4 py-3">
+          <SwapRightOutlined className="mt-0.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
+          <p className="text-[13px] leading-relaxed text-indigo-900 dark:text-indigo-200">
             <span className="font-semibold">{crossover.lateLeader}</span> overtakes{' '}
             <span className="font-semibold">{crossover.earlyLeader}</span> in year {crossover.year},
             and is ahead by {formatCurrency(crossover.gapAtFlip)} cumulatively by then.
@@ -114,15 +114,15 @@ const YearByYearSection = ({
       )}
 
       {matchGap && (
-        <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
-          <AimOutlined className="mt-0.5 shrink-0 text-emerald-600" />
-          <p className="text-[13px] leading-relaxed text-emerald-900">
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/70 dark:bg-emerald-500/10 px-4 py-3">
+          <AimOutlined className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+          <p className="text-[13px] leading-relaxed text-emerald-900 dark:text-emerald-200">
             To match <span className="font-semibold">{matchGap.leader}</span> over four years,{' '}
             <span className="font-semibold">{matchGap.candidate}</span> needs{' '}
             <span className="font-semibold">+{formatCurrency(matchGap.perYearBase)}/yr base</span>{' '}
             or <span className="font-semibold">+{formatCurrency(matchGap.extraGrant)} equity</span>{' '}
             — a {formatCurrency(matchGap.totalGap)} gap.
-            <span className="mt-1 block text-[11px] text-emerald-700/80">
+            <span className="mt-1 block text-[11px] text-emerald-700/80 dark:text-emerald-300">
               Gross figures, so they are ready to use as a counter-ask. The base ask is a year-1
               raise that then compounds at {baseGrowthPct}% like the rest.
             </span>
@@ -135,7 +135,7 @@ const YearByYearSection = ({
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px] text-sm">
-            <thead className="text-[11px] uppercase tracking-wide text-slate-500">
+            <thead className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-ink-400">
               <tr>
                 <th className="py-2 pr-4 text-left font-bold">Offer</th>
                 {YEARS.map((year) => (
@@ -151,16 +151,23 @@ const YearByYearSection = ({
                 const total = totalFor(projection, basis);
                 const share = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
                 return (
-                  <tr key={projection.key} className="border-t border-slate-100">
+                  <tr
+                    key={projection.key}
+                    className="border-t border-slate-100 dark:border-white/[0.07]"
+                  >
                     <td className="py-3 pr-4">
-                      <div className="font-medium text-slate-900">{projection.label}</div>
+                      <div className="font-medium text-slate-900 dark:text-ink-50">
+                        {projection.label}
+                      </div>
                       {projection.isCurrent && (
-                        <div className="text-[11px] text-slate-400">Current role</div>
+                        <div className="text-[11px] text-slate-400 dark:text-ink-500">
+                          Current role
+                        </div>
                       )}
-                      <div className="mt-1.5 h-1 w-full max-w-[160px] overflow-hidden rounded-full bg-slate-100">
+                      <div className="mt-1.5 h-1 w-full max-w-[160px] overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
                         <div
                           className={`h-full rounded-full ${
-                            projection.isCurrent ? 'bg-slate-300' : 'bg-indigo-400'
+                            projection.isCurrent ? 'bg-slate-300 dark:bg-ink-700' : 'bg-indigo-400'
                           }`}
                           style={{ width: `${Math.max(0, Math.min(100, share))}%` }}
                         />
@@ -172,19 +179,23 @@ const YearByYearSection = ({
                       return (
                         <td key={year} className="px-3 py-3 text-right">
                           <div
-                            className={isBest ? 'font-semibold text-emerald-600' : 'text-slate-900'}
+                            className={
+                              isBest
+                                ? 'font-semibold text-emerald-600 dark:text-emerald-300'
+                                : 'text-slate-900 dark:text-ink-50'
+                            }
                           >
                             {formatCurrency(valueFor(projection, year, basis))}
                           </div>
                           {entry && entry.oneTime > 0 && (
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[10px] text-slate-400 dark:text-ink-500">
                               incl. {formatCurrency(entry.oneTime)} one-time
                             </div>
                           )}
                         </td>
                       );
                     })}
-                    <td className="py-3 pl-3 text-right font-bold text-slate-950">
+                    <td className="py-3 pl-3 text-right font-bold text-slate-950 dark:text-ink-50">
                       {formatCurrency(total)}
                     </td>
                   </tr>
@@ -195,7 +206,7 @@ const YearByYearSection = ({
         </div>
       )}
 
-      <p className="text-[11px] leading-relaxed text-slate-400">
+      <p className="text-[11px] leading-relaxed text-slate-400 dark:text-ink-500">
         {basis === 'gross'
           ? 'Gross figures are before tax and cost of living, so year 1 lines up with your offer letter.'
           : 'Adjusted figures are after tax, indexed to cost of living, and net of rent — the same basis as Adjusted Value.'}{' '}

@@ -207,12 +207,14 @@ const CoverLetters: React.FC = () => {
       {/* Empty state */}
       {letters.length === 0 && (
         <div className="enterprise-empty flex flex-col items-center justify-center gap-6 py-24">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10">
             <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
           </div>
           <div className="text-center">
-            <h3 className="text-gray-900 font-bold text-xl m-0 mb-2">No cover letters yet</h3>
-            <p className="text-gray-500 m-0 max-w-sm">
+            <h3 className="text-gray-900 dark:text-ink-50 font-bold text-xl m-0 mb-2">
+              No cover letters yet
+            </h3>
+            <p className="text-gray-500 dark:text-ink-400 m-0 max-w-sm">
               Generate from any application to save a tailored cover letter here.
             </p>
           </div>
@@ -246,7 +248,9 @@ const CoverLetters: React.FC = () => {
             <article
               key={letter.id}
               className={`group enterprise-card overflow-hidden ${
-                isSelected ? 'border-sky-300 shadow-md ring-1 ring-sky-200' : ''
+                isSelected
+                  ? 'border-sky-300 dark:border-sky-500/30 shadow-md ring-1 ring-sky-200 dark:ring-sky-500/25'
+                  : ''
               }`}
             >
               <div className="flex items-start gap-3 p-4 sm:gap-4 sm:p-5">
@@ -260,7 +264,7 @@ const CoverLetters: React.FC = () => {
                 </div>
 
                 {/* Icon */}
-                <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shrink-0">
                   <FileTextOutlined style={{ color: '#0ea5e9', fontSize: 18 }} />
                 </div>
 
@@ -271,7 +275,7 @@ const CoverLetters: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setViewingLetter(letter)}
-                        className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 hover:text-blue-600"
+                        className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-ink-50 hover:text-blue-600"
                       >
                         <span className="line-clamp-2">{displayTitle}</span>
                       </button>
@@ -280,13 +284,13 @@ const CoverLetters: React.FC = () => {
                         onClick={() => {
                           setEditingLetter({ id: letter.id, title: displayTitle });
                         }}
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-ink-500 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Rename ${displayTitle}`}
                       >
                         <EditOutlined />
                       </button>
                       {letter.isLocked && (
-                        <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                        <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-500/20 text-[10px] font-bold uppercase tracking-wider shrink-0">
                           <LockOutlined className="text-[10px]" /> Locked
                         </span>
                       )}
@@ -302,7 +306,7 @@ const CoverLetters: React.FC = () => {
                     </Text>
                   )}
 
-                  <p className="text-gray-600 text-sm m-0 leading-relaxed line-clamp-2">
+                  <p className="text-gray-600 dark:text-ink-200 text-sm m-0 leading-relaxed line-clamp-2">
                     {preview}
                     {letter.coverLetter.length > 200 ? '…' : ''}
                   </p>
@@ -312,7 +316,9 @@ const CoverLetters: React.FC = () => {
               {/* Footer */}
               <div
                 className={`flex items-center justify-end gap-2 border-t px-4 py-2 transition-colors sm:px-5 sm:py-3 ${
-                  isSelected ? 'bg-sky-50/40 border-sky-100' : 'bg-gray-50/60 border-gray-50'
+                  isSelected
+                    ? 'bg-sky-50/40 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20'
+                    : 'bg-gray-50/60 dark:bg-ink-900/60 border-gray-50 dark:border-white/[0.07]'
                 }`}
               >
                 <RowActions
@@ -385,7 +391,7 @@ const CoverLetters: React.FC = () => {
         onCancel={() => setEditingLetter(null)}
       >
         <div className="py-4">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">
+          <label className="text-xs font-bold text-gray-400 dark:text-ink-500 uppercase tracking-widest mb-2 block">
             Title
           </label>
           <Input

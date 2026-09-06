@@ -36,10 +36,11 @@ const verdictColor = (label?: string) => {
 const ratingToneClass = (label?: string) => {
   const normalized = (label || '').toLowerCase();
   if (normalized.includes('strong') || normalized.includes('ready')) {
-    return 'border-emerald-200 bg-emerald-50/30';
+    return 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/30 dark:bg-emerald-500/10';
   }
-  if (normalized.includes('building')) return 'border-amber-200 bg-amber-50/30';
-  return 'border-slate-200';
+  if (normalized.includes('building'))
+    return 'border-amber-200 dark:border-amber-500/25 bg-amber-50/30 dark:bg-amber-500/10';
+  return 'border-slate-200 dark:border-white/[0.08]';
 };
 
 const PromotionReviewsTab: React.FC = () => {
@@ -275,7 +276,7 @@ const PromotionReviewsTab: React.FC = () => {
             return (
               <article
                 key={item.id}
-                className={`rounded-2xl border bg-white p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-colors sm:p-6 ${ratingToneClass(
+                className={`rounded-2xl border bg-white dark:bg-ink-900 p-4 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.7)] transition-colors sm:p-6 ${ratingToneClass(
                   verdict?.label
                 )}`}
               >
@@ -306,28 +307,28 @@ const PromotionReviewsTab: React.FC = () => {
                         </Tag>
                         {item.isLocked && <Tag icon={<LockOutlined />}>Locked</Tag>}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 dark:text-ink-400">
                         {item.roleTitle} @ {item.companyName} ·{' '}
                         {new Date(item.savedAt).toLocaleString()}
                       </div>
-                      <p className="mt-4 line-clamp-3 max-w-[96ch] text-sm leading-6 text-slate-700">
+                      <p className="mt-4 line-clamp-3 max-w-[96ch] text-sm leading-6 text-slate-700 dark:text-ink-100">
                         {parseInlineMarkdown(verdict?.summary)}
                       </p>
                       {prediction && (
                         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
-                          <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
-                            <div className="text-xl font-black leading-none text-blue-700">
+                          <div className="rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 px-3 py-2">
+                            <div className="text-xl font-black leading-none text-blue-700 dark:text-blue-300">
                               {prediction.probability_percent}%
                             </div>
-                            <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                            <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">
                               {prediction.chance_label} chance
                             </div>
                           </div>
-                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                          <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 px-3 py-2">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                               Likely timing
                             </div>
-                            <div className="mt-1 text-sm font-bold text-slate-900">
+                            <div className="mt-1 text-sm font-bold text-slate-900 dark:text-ink-50">
                               {prediction.likely_timeline}
                             </div>
                           </div>
@@ -354,7 +355,7 @@ const PromotionReviewsTab: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-end border-t border-slate-100 pt-2 sm:border-0 sm:pt-0">
+                  <div className="flex justify-end border-t border-slate-100 dark:border-white/[0.07] pt-2 sm:border-0 sm:pt-0">
                     <RowActions
                       isLocked={item.isLocked}
                       onToggleLock={() => handleToggleLock(item)}

@@ -64,22 +64,22 @@ const ExperienceAnalyticsPanels = ({
   topSkills,
   totalCompanies,
 }: Props) => (
-  <div className="mb-7 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs">
+  <div className="mb-7 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 sm:p-6 shadow-xs">
     <Row gutter={[0, 20]} align="stretch">
       {/* 1. Total Experience */}
       <Col xs={24} md={12} xl={6}>
         <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:pr-6">
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400">
                 <ClockCircleOutlined className="text-sm" />
               </div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
                 Total Experience
               </div>
             </div>
             <div className="mt-3.5 min-w-0">
-              <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900">
+              <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900 dark:text-ink-50">
                 {calculateTotalCareerDuration()}
               </div>
               <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
@@ -88,12 +88,12 @@ const ExperienceAnalyticsPanels = ({
                   .map(([type, months]) => (
                     <span
                       key={type}
-                      className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500"
+                      className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500 dark:text-ink-400"
                     >
                       <span
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${getTypeDisplay(type).dot}`}
                       />
-                      <span className="font-semibold text-slate-700">
+                      <span className="font-semibold text-slate-700 dark:text-ink-100">
                         {fmtMonths(months, true)}
                       </span>
                       <span>{getTypeDisplay(type).label}</span>
@@ -110,15 +110,15 @@ const ExperienceAnalyticsPanels = ({
         <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:px-6">
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
                 <BankOutlined className="text-sm" />
               </div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
                 Companies
               </div>
             </div>
             <div className="mt-3.5 min-w-0">
-              <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900">
+              <div className="text-[24px] font-bold leading-none tracking-tight text-slate-900 dark:text-ink-50">
                 {totalCompanies}
               </div>
               <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
@@ -127,12 +127,14 @@ const ExperienceAnalyticsPanels = ({
                   .map(([type, count]) => (
                     <span
                       key={type}
-                      className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500"
+                      className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500 dark:text-ink-400"
                     >
                       <span
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${getTypeDisplay(type).dot}`}
                       />
-                      <span className="font-semibold text-slate-700">{count}</span>
+                      <span className="font-semibold text-slate-700 dark:text-ink-100">
+                        {count}
+                      </span>
                       <span>{getTypeDisplay(type).label}</span>
                     </span>
                   ))}
@@ -147,10 +149,10 @@ const ExperienceAnalyticsPanels = ({
         <div className="flex h-full flex-col justify-between xl:border-r xl:border-slate-100 xl:px-6">
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400">
                 <DollarOutlined className="text-sm" />
               </div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
                 Earnings
               </div>
             </div>
@@ -160,16 +162,16 @@ const ExperienceAnalyticsPanels = ({
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
                           Full-Time
                         </span>
-                        <span className="text-[16px] font-bold leading-none text-slate-900">
+                        <span className="text-[16px] font-bold leading-none text-slate-900 dark:text-ink-50">
                           {fullTimeCompSummary.trackedRoleCount > 0
                             ? `$${fullTimeCompSummary.total.toLocaleString()}`
                             : 'No pay data'}
                         </span>
                       </div>
-                      <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                      <div className="mt-1 text-[11px] leading-tight text-slate-500 dark:text-ink-400">
                         {fullTimeCompSummary.trackedRoleCount > 0 ? (
                           <>
                             {fullTimeCompSummary.trackedRoleCount} tracked
@@ -189,7 +191,7 @@ const ExperienceAnalyticsPanels = ({
                         onClick={() => setOverallCompBreakdownOpen(true)}
                         title="View overall pay structure breakdown"
                         aria-label="View full-time earnings breakdown"
-                        className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                        className="shrink-0 rounded-full border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/80 dark:bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100"
                       >
                         Breakdown
                       </button>
@@ -197,20 +199,20 @@ const ExperienceAnalyticsPanels = ({
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-2.5 min-w-0">
+                <div className="border-t border-slate-100 dark:border-white/[0.07] pt-2.5 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
                           Internship
                         </span>
-                        <span className="text-[16px] font-bold leading-none text-slate-900">
+                        <span className="text-[16px] font-bold leading-none text-slate-900 dark:text-ink-50">
                           {internshipCompSummary.trackedRoleCount > 0
                             ? `$${internshipCompSummary.total.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                             : 'No estimate yet'}
                         </span>
                       </div>
-                      <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                      <div className="mt-1 text-[11px] leading-tight text-slate-500 dark:text-ink-400">
                         {internshipCompSummary.trackedRoleCount > 0 ? (
                           <>
                             {internshipCompSummary.trackedRoleCount} tracked
@@ -236,7 +238,7 @@ const ExperienceAnalyticsPanels = ({
                         onClick={() => setOverallInternshipBreakdownOpen(true)}
                         title="View internship earnings breakdown"
                         aria-label="View internship earnings breakdown"
-                        className="shrink-0 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+                        className="shrink-0 rounded-full border border-amber-200 dark:border-amber-500/25 bg-amber-50/80 dark:bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-amber-100"
                       >
                         Breakdown
                       </button>
@@ -245,27 +247,27 @@ const ExperienceAnalyticsPanels = ({
                 </div>
 
                 {payGrowthHeadline && (
-                  <div className="border-t border-slate-100 pt-2.5 min-w-0">
+                  <div className="border-t border-slate-100 dark:border-white/[0.07] pt-2.5 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
                             Growth
                           </span>
                           <span
                             className={`flex items-center gap-1 text-[16px] font-bold leading-none ${
                               payGrowthHeadline.amount > 0
-                                ? 'text-emerald-600'
+                                ? 'text-emerald-600 dark:text-emerald-300'
                                 : payGrowthHeadline.amount < 0
-                                  ? 'text-rose-600'
-                                  : 'text-slate-500'
+                                  ? 'text-rose-600 dark:text-rose-300'
+                                  : 'text-slate-500 dark:text-ink-400'
                             }`}
                           >
                             <PayGrowthArrow delta={payGrowthHeadline} />
                             {formatDeltaPercent(payGrowthHeadline)}
                           </span>
                         </div>
-                        <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                        <div className="mt-1 text-[11px] leading-tight text-slate-500 dark:text-ink-400">
                           {formatDeltaAmount(payGrowthHeadline)} vs{' '}
                           {payGrowth.defaultComparison?.previousExp.company ?? 'previous role'}
                         </div>
@@ -275,7 +277,7 @@ const ExperienceAnalyticsPanels = ({
                         onClick={() => setPayGrowthOpen(true)}
                         title="View pay growth breakdown"
                         aria-label="View pay growth breakdown"
-                        className="shrink-0 rounded-full border border-sky-200 bg-sky-50/80 px-2.5 py-1 text-[10px] font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                        className="shrink-0 rounded-full border border-sky-200 dark:border-sky-500/25 bg-sky-50/80 dark:bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold text-sky-700 dark:text-sky-300 transition-colors hover:bg-sky-100"
                       >
                         Growth
                       </button>
@@ -294,10 +296,10 @@ const ExperienceAnalyticsPanels = ({
           <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-ink-800 text-slate-500 dark:text-ink-400">
                   <CodeOutlined className="text-sm" />
                 </div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
                   Top Skills
                 </div>
               </div>
@@ -305,7 +307,7 @@ const ExperienceAnalyticsPanels = ({
                 <button
                   type="button"
                   onClick={() => setSelectedSkill(null)}
-                  className="text-[11px] font-medium text-blue-600 transition-colors hover:text-blue-700"
+                  className="text-[11px] font-medium text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-700"
                 >
                   Clear filter
                 </button>
@@ -323,7 +325,7 @@ const ExperienceAnalyticsPanels = ({
                       className={`m-0 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-4 transition-all ${
                         isSelected
                           ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-slate-200/80 bg-slate-50/60 text-slate-600 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600'
+                          : 'border-slate-200/80 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 text-slate-600 dark:text-ink-200 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600'
                       }`}
                     >
                       {skill} <span className="ml-1 opacity-50">{skillCounts[skill]}</span>

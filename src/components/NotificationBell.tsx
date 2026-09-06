@@ -52,19 +52,19 @@ const EVENT_DISMISS_KEY = 'notification_dismissed_events';
 
 const URGENCY_TONE = {
   today: {
-    card: 'border-l-4 border-l-rose-500 !bg-rose-50',
-    title: 'text-rose-700',
-    icon: 'text-rose-600 text-lg',
+    card: 'border-l-4 border-l-rose-500 !bg-rose-50 dark:!bg-rose-500/10',
+    title: 'text-rose-700 dark:text-rose-300',
+    icon: 'text-rose-600 dark:text-rose-300 text-lg',
   },
   tomorrow: {
-    card: 'border-l-4 border-l-amber-500 !bg-amber-50',
-    title: 'text-amber-700',
-    icon: 'text-amber-600 text-lg',
+    card: 'border-l-4 border-l-amber-500 !bg-amber-50 dark:!bg-amber-500/10',
+    title: 'text-amber-700 dark:text-amber-300',
+    icon: 'text-amber-600 dark:text-amber-300 text-lg',
   },
   soon: {
-    card: 'border-l-4 border-l-blue-500 !bg-blue-50/70',
-    title: 'text-blue-700',
-    icon: 'text-blue-600 text-lg',
+    card: 'border-l-4 border-l-blue-500 !bg-blue-50/70 dark:!bg-blue-500/10',
+    title: 'text-blue-700 dark:text-blue-300',
+    icon: 'text-blue-600 dark:text-blue-300 text-lg',
   },
 } as const;
 
@@ -259,7 +259,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             {!event.is_all_day && ` · ${event.start_time.substring(0, 5)}`}
           </span>
         ),
-        description: <span className="text-sm text-slate-700">{event.name}</span>,
+        description: <span className="text-sm text-slate-700 dark:text-ink-100">{event.name}</span>,
         placement: 'topRight',
         // 0 tells antd to keep it up until dismissed.
         duration: reminderSettings.toastDurationSeconds || 0,
@@ -373,7 +373,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 outline-none transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 dark:text-ink-200 outline-none transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         aria-label="Open notifications"
         aria-expanded={isOpen}
       >
@@ -405,7 +405,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       {isOpen && (
         <div
           className={`
-            absolute z-50 w-[calc(100vw-1rem)] max-w-80 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)]
+            absolute z-50 w-[calc(100vw-1rem)] max-w-80 overflow-hidden rounded-xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-[0_24px_72px_-46px_rgba(15,23,42,0.78)]
             ${
               placement === 'bottom-right'
                 ? 'top-full right-0 mt-2 origin-top-right'
@@ -413,11 +413,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             }
           `}
         >
-          <div className="flex items-center justify-between border-b border-slate-200/80 bg-slate-50/80 px-4 py-3">
-            <h3 className="text-sm font-bold tracking-[-0.01em] text-slate-950">Notifications</h3>
+          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] bg-slate-50/80 dark:bg-ink-900/80 px-4 py-3">
+            <h3 className="text-sm font-bold tracking-[-0.01em] text-slate-950 dark:text-ink-50">
+              Notifications
+            </h3>
             <Link
               to="/?view=calendar"
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-blue-600 dark:text-blue-300 hover:text-blue-700 font-medium"
               onClick={() => setIsOpen(false)}
             >
               View Calendar
@@ -426,17 +428,19 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
 
           <div className="max-h-75 overflow-y-auto">
             {loading ? (
-              <div className="flex items-center justify-center gap-2 p-6 text-xs text-slate-400">
+              <div className="flex items-center justify-center gap-2 p-6 text-xs text-slate-400 dark:text-ink-500">
                 <Spin size="small" />
                 Checking your calendar…
               </div>
             ) : totalNotifications === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-sm font-semibold text-slate-600">No notifications</p>
-                <p className="mt-1 text-xs text-slate-400">You're all clear</p>
+                <p className="text-sm font-semibold text-slate-600 dark:text-ink-200">
+                  No notifications
+                </p>
+                <p className="mt-1 text-xs text-slate-400 dark:text-ink-500">You're all clear</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-white/[0.07]">
                 {dueSoon.length > 0 && (
                   <DueSoonSection
                     reminderSettings={reminderSettings}
@@ -448,8 +452,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                 )}
 
                 {conflicts.length > 0 && (
-                  <div className="bg-red-50/50">
-                    <div className="px-3 py-2 text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-red-50/50 dark:bg-red-500/10">
+                    <div className="px-3 py-2 text-xs font-bold text-red-800 dark:text-red-200 uppercase tracking-wider flex items-center gap-2">
                       <AlertOutlined className="text-xs" />
                       Conflicts Detected
                     </div>
@@ -458,10 +462,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                         key={conflict.id}
                         className="p-3 hover:bg-red-50 transition-colors relative group"
                       >
-                        <div className="text-xs font-medium text-gray-900 mb-1">
+                        <div className="text-xs font-medium text-gray-900 dark:text-ink-50 mb-1">
                           Overlap Detected
                         </div>
-                        <div className="flex flex-col gap-1 text-xs text-gray-600 border-l-2 border-red-200 pl-2">
+                        <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-ink-200 border-l-2 border-red-200 dark:border-red-500/25 pl-2">
                           <div className="truncate">
                             {conflict.event1_details?.name || 'Unknown Event'}
                           </div>
@@ -474,7 +478,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                           <button
                             type="button"
                             onClick={(e) => handleResolve(conflict.id, e)}
-                            className="flex min-h-11 items-center gap-1 rounded border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 shadow-sm transition-colors hover:bg-red-600 hover:text-white"
+                            className="flex min-h-11 items-center gap-1 rounded border border-red-200 dark:border-red-500/25 bg-white dark:bg-ink-900 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-300 shadow-sm transition-colors hover:bg-red-600 hover:text-white"
                           >
                             <CheckOutlined className="text-xs" />
                             Resolve
@@ -495,7 +499,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                 )}
 
                 {otherUpcoming.length > 0 && (
-                  <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                  <div className="px-3 py-2 text-xs font-bold text-gray-400 dark:text-ink-500 uppercase tracking-wider bg-gray-50/50 dark:bg-ink-900/50">
                     Upcoming
                   </div>
                 )}

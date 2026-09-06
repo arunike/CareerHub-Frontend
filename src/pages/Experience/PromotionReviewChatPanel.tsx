@@ -56,7 +56,9 @@ const renderAssistantContent = (content: string) => {
     const line = lines[index];
 
     if (/^-{3,}$/.test(line)) {
-      blocks.push(<hr key={`hr-${index}`} className="my-3 border-slate-200" />);
+      blocks.push(
+        <hr key={`hr-${index}`} className="my-3 border-slate-200 dark:border-white/[0.08]" />
+      );
       index += 1;
       continue;
     }
@@ -65,7 +67,7 @@ const renderAssistantContent = (content: string) => {
       blocks.push(
         <h4
           key={`heading-${index}`}
-          className="mb-2 mt-4 text-sm font-bold text-slate-950 first:mt-0"
+          className="mb-2 mt-4 text-sm font-bold text-slate-950 dark:text-ink-50 first:mt-0"
         >
           {renderInline(stripMarkdownPrefix(line))}
         </h4>
@@ -87,28 +89,28 @@ const renderAssistantContent = (content: string) => {
         blocks.push(
           <div
             key={`table-${index}`}
-            className="my-3 overflow-x-auto rounded-xl border border-slate-200"
+            className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-white/[0.08]"
           >
             <table className="min-w-full border-collapse text-left text-xs">
-              <thead className="bg-slate-50 text-slate-700">
+              <thead className="bg-slate-50 dark:bg-ink-900 text-slate-700 dark:text-ink-100">
                 <tr>
                   {header.map((cell, cellIndex) => (
                     <th
                       key={`${cell}-${cellIndex}`}
-                      className="border-b border-slate-200 px-3 py-2 font-semibold"
+                      className="border-b border-slate-200 dark:border-white/[0.08] px-3 py-2 font-semibold"
                     >
                       {renderInline(cell)}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.07] bg-white dark:bg-ink-900">
                 {body.map((row, rowIndex) => (
                   <tr key={`row-${rowIndex}`}>
                     {row.map((cell, cellIndex) => (
                       <td
                         key={`${cell}-${cellIndex}`}
-                        className="px-3 py-2 align-top text-slate-600"
+                        className="px-3 py-2 align-top text-slate-600 dark:text-ink-200"
                       >
                         {renderInline(cell)}
                       </td>
@@ -132,7 +134,7 @@ const renderAssistantContent = (content: string) => {
       blocks.push(
         <blockquote
           key={`quote-${index}`}
-          className="my-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-sm font-medium leading-6 text-blue-950"
+          className="my-3 rounded-lg border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 px-3 py-2 text-sm font-medium leading-6 text-blue-950"
         >
           {quotes.map((quote, quoteIndex) => (
             <p key={`${quote}-${quoteIndex}`} className="m-0">
@@ -273,28 +275,30 @@ const PromotionReviewChatPanel: React.FC<{
         }`}
       >
         <div>
-          <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
+          <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">
             <MessageOutlined />
             Follow-up coach
           </div>
-          <h3 className="m-0 text-lg font-bold tracking-tight text-slate-950">
+          <h3 className="m-0 text-lg font-bold tracking-tight text-slate-950 dark:text-ink-50">
             Ask about this promotion review
           </h3>
         </div>
-        <Text className="text-sm text-slate-500">This chat is saved only on this review.</Text>
+        <Text className="text-sm text-slate-500 dark:text-ink-400">
+          This chat is saved only on this review.
+        </Text>
       </div>
 
       <div
-        className={`mb-4 space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/70 ${
+        className={`mb-4 space-y-3 overflow-y-auto rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 ${
           variant === 'floating' ? 'max-h-[420px] p-3.5' : 'max-h-72 p-4'
         }`}
       >
         {messages.length === 0 ? (
           <div className="py-6 text-center">
-            <Text className="block text-sm font-semibold text-slate-600">
+            <Text className="block text-sm font-semibold text-slate-600 dark:text-ink-200">
               Ask a follow-up after reading the review.
             </Text>
-            <Text className="mt-1 block text-xs leading-5 text-slate-400">
+            <Text className="mt-1 block text-xs leading-5 text-slate-400 dark:text-ink-500">
               Good questions: manager wording, evidence gaps, packet edits, or next actions.
             </Text>
           </div>
@@ -308,7 +312,7 @@ const PromotionReviewChatPanel: React.FC<{
                 className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
                   item.role === 'user'
                     ? 'max-w-[88%] bg-blue-600 text-white'
-                    : 'max-w-full border border-slate-200 bg-white text-slate-700 shadow-sm'
+                    : 'max-w-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 shadow-sm'
                 }`}
               >
                 {item.role === 'assistant'
@@ -320,8 +324,8 @@ const PromotionReviewChatPanel: React.FC<{
         )}
         {sending && (
           <div className="flex justify-start">
-            <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <div className="w-full rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-ink-100">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-600" />
@@ -333,12 +337,14 @@ const PromotionReviewChatPanel: React.FC<{
                   <div
                     key={step}
                     className={`flex items-center gap-2 text-xs transition-colors ${
-                      stepIndex === thinkingIndex ? 'text-slate-800' : 'text-slate-400'
+                      stepIndex === thinkingIndex
+                        ? 'text-slate-800 dark:text-ink-50'
+                        : 'text-slate-400 dark:text-ink-500'
                     }`}
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full ${
-                        stepIndex === thinkingIndex ? 'bg-blue-600' : 'bg-slate-300'
+                        stepIndex === thinkingIndex ? 'bg-blue-600' : 'bg-slate-300 dark:bg-ink-700'
                       }`}
                     />
                     {step}
@@ -379,7 +385,7 @@ const PromotionReviewChatPanel: React.FC<{
           }}
           rows={2}
           placeholder="Ask how to improve the packet, what to ask your manager, or how to rewrite a section..."
-          className="!rounded-xl !border-slate-200 !text-sm"
+          className="!rounded-xl !border-slate-200 dark:!border-white/[0.08] !text-sm"
         />
         <Button
           type="primary"
@@ -398,7 +404,7 @@ const PromotionReviewChatPanel: React.FC<{
       <div className="no-print fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
         {contextHolder}
         {open && (
-          <div className="relative w-[min(calc(100vw-1.5rem),480px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_28px_80px_-28px_rgba(15,23,42,0.45)]">
+          <div className="relative w-[min(calc(100vw-1.5rem),480px)] rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-5 shadow-[0_28px_80px_-28px_rgba(15,23,42,0.45)]">
             <Button
               type="text"
               icon={<CloseOutlined />}
@@ -421,7 +427,7 @@ const PromotionReviewChatPanel: React.FC<{
   }
 
   return (
-    <div className="rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)]">
+    <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-5 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)]">
       {contextHolder}
       {chatBody}
     </div>

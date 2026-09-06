@@ -37,7 +37,7 @@ const HolidayEditModal = ({
   >
     <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={editForm} layout="vertical">
       {editingItem?.isBulk && !editingItem?.allSameDesc && (
-        <div className="mb-4 text-gray-500 text-sm italic">
+        <div className="mb-4 text-gray-500 dark:text-ink-400 text-sm italic">
           You are editing multiple holidays with different names. Leave the name field blank to keep
           their original names, or type a new name to overwrite all of them.
         </div>
@@ -67,7 +67,7 @@ const HolidayEditModal = ({
           <Select>
             {editingItem?.isBulk && (
               <Select.Option value="__unchanged__">
-                <span className="text-gray-400 italic">Leave unchanged</span>
+                <span className="text-gray-400 dark:text-ink-500 italic">Leave unchanged</span>
               </Select.Option>
             )}
             <Select.Option value="">My Time Off (default)</Select.Option>

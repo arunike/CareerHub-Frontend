@@ -107,7 +107,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
         key,
         label: formatStageLabel(key),
         shortLabel: key.slice(0, 5),
-        tone: 'bg-gray-300',
+        tone: 'bg-gray-300 dark:bg-ink-700',
       }));
     return [...configuredStages, ...extraStages];
   }, [appStages, drafts]);
@@ -247,10 +247,10 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-ink-500">
             Timeline
           </p>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-ink-400">
             Track progression, key dates, and notes for each stage.
           </p>
         </div>
@@ -276,7 +276,7 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
       </div>
 
       {isAddingStage && (
-        <div className="mb-4 rounded-xl border border-sky-100 bg-sky-50/50 p-3">
+        <div className="mb-4 rounded-xl border border-sky-100 dark:border-sky-500/20 bg-sky-50/50 dark:bg-sky-500/10 p-3">
           <div className="flex flex-col gap-2 sm:flex-row">
             <Select
               value={selectedStageKey}
@@ -313,9 +313,9 @@ const ApplicationTimelinePanel = ({ application, appStages = [] }: Props) => {
           <Spin />
         </div>
       ) : activeStages.length === 0 ? (
-        <div className="flex flex-col items-center py-14 text-slate-400">
+        <div className="flex flex-col items-center py-14 text-slate-400 dark:text-ink-500">
           <div className="mb-1 text-sm font-medium">No stages recorded yet</div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-slate-400 dark:text-ink-500">
             Stages appear as your application progresses.
           </div>
         </div>

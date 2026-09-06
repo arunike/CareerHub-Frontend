@@ -263,7 +263,7 @@ const ExperiencePage: React.FC = () => {
               size="large"
               icon={<RobotOutlined />}
               onClick={() => setJdModalOpen(true)}
-              className="toolbar-btn text-sky-600 bg-sky-50 border-sky-200 hover:bg-sky-100 hover:border-sky-300 shadow-sm"
+              className="toolbar-btn text-sky-600 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/25 hover:bg-sky-100 hover:border-sky-300 shadow-sm"
             >
               Match JD
             </Button>
@@ -336,8 +336,8 @@ const ExperiencePage: React.FC = () => {
             <div className="relative pl-6 md:pl-8">
               <div className="space-y-10 relative z-10">
                 {filteredExperiences.length === 0 && selectedSkill && (
-                  <div className="text-center px-4 py-10 bg-white/50 rounded-2xl border border-dashed border-gray-200">
-                    <Text className="text-gray-500">
+                  <div className="text-center px-4 py-10 bg-white/50 dark:bg-ink-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-white/[0.08]">
+                    <Text className="text-gray-500 dark:text-ink-400">
                       No timeline events match the selected skill filter.
                     </Text>
                     <div className="mt-2">
@@ -401,10 +401,10 @@ const ExperiencePage: React.FC = () => {
           footer={null}
           title={
             <div className="flex items-center gap-2">
-              <UserOutlined className="text-slate-500" />
+              <UserOutlined className="text-slate-500 dark:text-ink-400" />
               <span>
                 Contacts
-                <span className="ml-2 font-normal text-slate-500">
+                <span className="ml-2 font-normal text-slate-500 dark:text-ink-400">
                   {contactsExp.title} @ {contactsExp.company}
                 </span>
               </span>

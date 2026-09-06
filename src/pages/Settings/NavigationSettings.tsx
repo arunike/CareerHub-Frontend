@@ -49,10 +49,10 @@ const SortableToolbarSlot = ({ slot, index }: { slot: MobileToolbarSlot; index: 
       aria-label={`Drag ${slot.label} to reorder the mobile toolbar. Position ${index + 1}.`}
       className={`flex min-h-[58px] min-w-0 cursor-grab touch-none flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-semibold transition active:cursor-grabbing ${
         isDragging
-          ? 'z-10 bg-white opacity-90 shadow-lg ring-2 ring-blue-400'
+          ? 'z-10 bg-white dark:bg-ink-900 opacity-90 shadow-lg ring-2 ring-blue-400'
           : slot.isSmart
-            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-            : 'text-slate-500 hover:bg-slate-100'
+            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100'
+            : 'text-slate-500 dark:text-ink-400 hover:bg-slate-100'
       }`}
     >
       <Icon className="text-base" />
@@ -119,7 +119,7 @@ const NameField = ({
       value={draft}
       placeholder={defaultLabel}
       aria-label={`Rename ${defaultLabel}`}
-      className={`!px-1.5 !rounded-md transition-colors hover:!bg-slate-100 focus:!bg-white focus:!ring-2 focus:!ring-blue-500/40 ${className}`}
+      className={`!px-1.5 !rounded-md transition-colors hover:!bg-slate-100 dark:hover:!bg-ink-800 focus:!bg-white dark:focus:!bg-ink-900 focus:!ring-2 focus:!ring-blue-500/40 ${className}`}
       onFocus={() => {
         focused.current = true;
       }}
@@ -149,11 +149,11 @@ const VisibilityToggle = ({
     aria-label={`${checked ? 'Hide' : 'Show'} ${label} in the sidebar`}
     onClick={onChange}
     className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-      checked ? 'bg-sky-500' : 'bg-gray-200'
+      checked ? 'bg-sky-500' : 'bg-gray-200 dark:bg-ink-800'
     }`}
   >
     <span
-      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white dark:bg-ink-900 shadow-sm transition-transform ${
         checked ? 'translate-x-4' : 'translate-x-0'
       }`}
     />
@@ -189,8 +189,8 @@ const PinButton = ({
       onClick={onChange}
       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
         pinned
-          ? 'bg-blue-50 text-blue-600'
-          : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300'
+          ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300'
+          : 'text-slate-300 dark:text-ink-600 hover:bg-slate-100 hover:text-slate-500 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300'
       }`}
     >
       <PushpinFilled />
@@ -232,17 +232,17 @@ const SortableNavRow = ({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`rounded-xl border transition-shadow ${
         isDragging
-          ? 'z-10 border-blue-300 bg-white shadow-xl shadow-blue-900/10'
+          ? 'z-10 border-blue-300 dark:border-blue-500/30 bg-white dark:bg-ink-900 shadow-xl shadow-blue-900/10'
           : 'border-transparent'
       }`}
     >
-      <div className="flex items-center gap-2 border-b border-slate-100 py-1.5 pl-1 pr-2 last:border-b-0">
+      <div className="flex items-center gap-2 border-b border-slate-100 dark:border-white/[0.07] py-1.5 pl-1 pr-2 last:border-b-0">
         <button
           type="button"
           {...attributes}
           {...listeners}
           aria-label={`Drag ${navLabel(item.key, item.label, labels)} to reorder`}
-          className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing"
+          className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-300 dark:text-ink-600 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing"
         >
           <HolderOutlined />
         </button>
@@ -252,7 +252,9 @@ const SortableNavRow = ({
           labels={labels}
           onChange={onLabelsChange}
           className={`min-w-0 flex-1 !text-sm ${
-            hidden ? '!text-slate-400 line-through' : '!text-slate-800'
+            hidden
+              ? '!text-slate-400 dark:!text-ink-500 line-through'
+              : '!text-slate-800 dark:!text-ink-50'
           }`}
         />
         {isGroup ? (
@@ -353,16 +355,16 @@ const NavigationSettings = ({
   };
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-3">
+    <section className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 dark:border-white/[0.08] pb-3">
         <div className="max-w-2xl">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950">
-            <span className="text-slate-400">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-ink-50">
+            <span className="text-slate-400 dark:text-ink-500">
               <MenuOutlined />
             </span>
             Navigation
           </h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             Drag to reorder the sidebar, rename anything by typing over its name, switch off a
             single entry or a whole group, and pin up to {MAX_PINNED} shortcuts to the mobile
             toolbar. Items stay within their group.
@@ -384,7 +386,7 @@ const NavigationSettings = ({
         >
           <button
             type="button"
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:h-9"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] px-2.5 text-xs font-semibold text-slate-600 dark:text-ink-200 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:h-9"
           >
             <ReloadOutlined className="text-xs" />
             Reset to default
@@ -392,12 +394,13 @@ const NavigationSettings = ({
         </Popconfirm>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="mb-6 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 p-3">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-bold text-slate-600">
-            Mobile toolbar <span className="font-normal text-slate-400">· drag to reorder</span>
+          <p className="text-xs font-bold text-slate-600 dark:text-ink-200">
+            Mobile toolbar{' '}
+            <span className="font-normal text-slate-400 dark:text-ink-500">· drag to reorder</span>
           </p>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-ink-400">
             {pinnedCount}/{MAX_PINNED} pinned
           </span>
         </div>
@@ -408,7 +411,7 @@ const NavigationSettings = ({
           onDragEnd={handleToolbarDragEnd}
         >
           <div
-            className="grid gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm"
+            className="grid gap-1 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-2 shadow-sm"
             style={{ gridTemplateColumns: `repeat(${MAX_PINNED + 1}, minmax(0, 1fr))` }}
           >
             <SortableContext items={pinnedKeys} strategy={horizontalListSortingStrategy}>
@@ -419,9 +422,9 @@ const NavigationSettings = ({
             {Array.from({ length: MAX_PINNED - previewSlots.length }).map((_, index) => (
               <div
                 key={`empty-${index}`}
-                className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 px-1 text-[10px] font-semibold text-slate-400"
+                className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] px-1 text-[10px] font-semibold text-slate-400 dark:text-ink-500"
               >
-                <span className="text-slate-300">+</span>
+                <span className="text-slate-300 dark:text-ink-600">+</span>
                 <span>Empty</span>
               </div>
             ))}
@@ -432,7 +435,7 @@ const NavigationSettings = ({
           </div>
         </DndContext>
         {pinnedKeys.includes(MOBILE_SMART_SLOT_KEY) && (
-          <p className="mt-2 text-[11px] text-slate-500">
+          <p className="mt-2 text-[11px] text-slate-500 dark:text-ink-400">
             The Smart Slot adapts to context and recent use.
           </p>
         )}
@@ -451,7 +454,9 @@ const NavigationSettings = ({
                   labels={labels}
                   onChange={onNavItemLabelsChange}
                   className={`min-w-0 flex-1 !text-[11px] !font-semibold !uppercase !tracking-wide ${
-                    groupHidden ? '!text-slate-300 line-through' : '!text-slate-400'
+                    groupHidden
+                      ? '!text-slate-300 dark:!text-ink-600 line-through'
+                      : '!text-slate-400 dark:!text-ink-500'
                   }`}
                 />
                 <VisibilityToggle
@@ -461,7 +466,7 @@ const NavigationSettings = ({
                 />
               </div>
               <div
-                className={`rounded-xl border border-slate-200 transition-opacity ${
+                className={`rounded-xl border border-slate-200 dark:border-white/[0.08] transition-opacity ${
                   groupHidden ? 'opacity-50' : ''
                 }`}
               >

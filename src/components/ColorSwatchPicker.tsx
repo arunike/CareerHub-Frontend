@@ -51,13 +51,13 @@ const ColorSwatchPicker = ({
   return (
     <div
       className={clsx(
-        'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]',
+        'w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]',
         className
       )}
     >
       <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-        <span className="text-xs font-medium text-slate-500">Color</span>
-        <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+        <span className="text-xs font-medium text-slate-500 dark:text-ink-400">Color</span>
+        <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 dark:bg-ink-900 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:text-ink-200">
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: selectedColor.dot }}
@@ -79,13 +79,15 @@ const ColorSwatchPicker = ({
               aria-label={`${option.label} color`}
               className={clsx(
                 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 active:scale-95 md:h-8 md:w-8',
-                isSelected ? 'border-slate-900 bg-white' : 'border-slate-200 bg-white'
+                isSelected
+                  ? 'border-slate-900 bg-white dark:bg-ink-900'
+                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900'
               )}
             >
               <span
                 className={clsx(
                   'h-4 w-4 rounded-full transition',
-                  isSelected ? 'ring-4 ring-slate-100' : 'ring-2 ring-white'
+                  isSelected ? 'ring-4 ring-slate-100 dark:ring-white/[0.08]' : 'ring-2 ring-white'
                 )}
                 style={{ backgroundColor: option.dot }}
               />
@@ -98,8 +100,8 @@ const ColorSwatchPicker = ({
             className={clsx(
               'ml-1 flex h-11 min-w-[92px] cursor-pointer items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition hover:border-slate-400 hover:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1 md:h-8',
               hasCustomValue
-                ? 'border-slate-900 bg-slate-50 text-slate-900'
-                : 'border-slate-200 bg-white text-slate-600'
+                ? 'border-slate-900 bg-slate-50 dark:bg-ink-900 text-slate-900 dark:text-ink-50'
+                : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200'
             )}
           >
             <span

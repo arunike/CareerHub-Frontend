@@ -61,10 +61,13 @@ export const getDeadlineStatus = (
 };
 
 export const DEADLINE_TONE_CLASSES: Record<DeadlineTone, string> = {
-  expired: 'border-slate-200 bg-slate-100 text-slate-500',
-  critical: 'border-rose-200 bg-rose-50 text-rose-700',
-  warning: 'border-amber-200 bg-amber-50 text-amber-700',
-  calm: 'border-slate-200 bg-slate-50 text-slate-600',
+  expired:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-ink-800 text-slate-500 dark:text-ink-400',
+  critical:
+    'border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  warning:
+    'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  calm: 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200',
 };
 
 // The offer shape the notification bell needs to render a countdown.

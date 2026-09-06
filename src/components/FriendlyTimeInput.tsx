@@ -27,9 +27,10 @@ const optionBaseClass =
 const desktopOptionClass = 'mb-0.5 h-9 text-sm last:mb-0';
 const mobileOptionClass = 'mb-0.5 min-h-12 text-lg last:mb-0';
 const activeOptionClass =
-  'bg-white text-gray-950 shadow-[0_1px_8px_rgba(15,23,42,0.08)] ring-1 ring-gray-200';
-const inactiveOptionClass = 'text-gray-500 hover:bg-white hover:text-gray-900';
-const columnClass = 'overflow-y-auto rounded-md bg-gray-50/70 p-1 ring-1 ring-gray-100';
+  'bg-white dark:bg-ink-900 text-gray-950 dark:text-ink-50 shadow-[0_1px_8px_rgba(15,23,42,0.08)] ring-1 ring-gray-200 dark:ring-white/[0.08]';
+const inactiveOptionClass = 'text-gray-500 dark:text-ink-400 hover:bg-white hover:text-gray-900';
+const columnClass =
+  'overflow-y-auto rounded-md bg-gray-50/70 dark:bg-ink-900/70 p-1 ring-1 ring-gray-100 dark:ring-white/[0.08]';
 
 const normalizeMinute = (minute: number, step: number) => Math.round(minute / step) * step;
 
@@ -218,7 +219,7 @@ const FriendlyTimeInput = ({
   };
 
   const inputClasses = clsx(
-    'min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-900 outline-none transition',
+    'min-h-11 w-full rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 text-base text-gray-900 dark:text-ink-50 outline-none transition',
     'hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100',
     'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400',
     className
@@ -238,7 +239,7 @@ const FriendlyTimeInput = ({
         className={clsx(
           inputClasses,
           'cursor-pointer text-left sm:hidden',
-          !value && 'text-gray-400'
+          !value && 'text-gray-400 dark:text-ink-500'
         )}
       />
 
@@ -276,9 +277,9 @@ const FriendlyTimeInput = ({
       {open && !disabled && (
         <div
           ref={desktopPickerRef}
-          className="absolute left-0 right-0 top-full z-[1055] mt-2 hidden rounded-lg border border-gray-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] sm:block"
+          className="absolute left-0 right-0 top-full z-[1055] mt-2 hidden rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] sm:block"
         >
-          <div className="mb-3 text-center text-base font-semibold tracking-wide text-gray-950">
+          <div className="mb-3 text-center text-base font-semibold tracking-wide text-gray-950 dark:text-ink-50">
             {desktopValue.format(DISPLAY_FORMAT)}
           </div>
           <div className="grid grid-cols-[1fr_1fr_0.75fr] gap-2">
@@ -362,7 +363,7 @@ const FriendlyTimeInput = ({
             />
             <div
               className={clsx(
-                'absolute bottom-0 left-0 right-0 flex max-h-[92dvh] flex-col overflow-hidden bg-white shadow-[0_-18px_50px_rgba(15,23,42,0.18)]',
+                'absolute bottom-0 left-0 right-0 flex max-h-[92dvh] flex-col overflow-hidden bg-white dark:bg-ink-900 shadow-[0_-18px_50px_rgba(15,23,42,0.18)]',
                 mobileSheet.isExpanded
                   ? 'fixed inset-0 h-[100dvh] max-h-[100dvh] rounded-none'
                   : 'rounded-t-2xl'
@@ -391,25 +392,27 @@ const FriendlyTimeInput = ({
                 <span
                   className={clsx(
                     'h-1 w-11 rounded-full transition-colors',
-                    mobileSheet.isDragging ? 'bg-blue-400' : 'bg-gray-300 group-active:bg-blue-400'
+                    mobileSheet.isDragging
+                      ? 'bg-blue-400'
+                      : 'bg-gray-300 dark:bg-ink-700 group-active:bg-blue-400'
                   )}
                   aria-hidden="true"
                 />
               </button>
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/[0.07] px-4 py-3">
                 <button
                   type="button"
-                  className="min-h-11 rounded-md px-2 text-sm font-medium text-gray-500"
+                  className="min-h-11 rounded-md px-2 text-sm font-medium text-gray-500 dark:text-ink-400"
                   onClick={() => setSheetOpen(false)}
                 >
                   Cancel
                 </button>
-                <div className="text-lg font-semibold tracking-wide text-gray-950">
+                <div className="text-lg font-semibold tracking-wide text-gray-950 dark:text-ink-50">
                   {sheetValue.format(DISPLAY_FORMAT)}
                 </div>
                 <button
                   type="button"
-                  className="min-h-11 rounded-md px-2 text-sm font-semibold text-gray-950"
+                  className="min-h-11 rounded-md px-2 text-sm font-semibold text-gray-950 dark:text-ink-50"
                   onClick={() => {
                     onChange?.(sheetValue);
                     setDraft(formatDisplay(sheetValue));
@@ -497,10 +500,10 @@ const FriendlyTimeInput = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-100 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3">
+              <div className="flex items-center justify-between border-t border-gray-100 dark:border-white/[0.07] px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3">
                 <button
                   type="button"
-                  className="min-h-11 rounded-md px-3 text-sm font-semibold text-gray-700"
+                  className="min-h-11 rounded-md px-3 text-sm font-semibold text-gray-700 dark:text-ink-100"
                   onClick={() => setSheetValue(roundTime(dayjs(), minuteStep))}
                 >
                   Now
@@ -508,7 +511,7 @@ const FriendlyTimeInput = ({
                 {allowClear && (
                   <button
                     type="button"
-                    className="min-h-11 rounded-md px-3 text-sm font-medium text-gray-500"
+                    className="min-h-11 rounded-md px-3 text-sm font-medium text-gray-500 dark:text-ink-400"
                     onClick={() => {
                       onChange?.(null);
                       setDraft('');

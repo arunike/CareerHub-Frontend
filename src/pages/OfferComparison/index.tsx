@@ -35,7 +35,7 @@ import OfferModalStack from './OfferModalStack';
 const CompensationSimulator = lazy(() => import('./CompensationSimulator'));
 
 const LazySectionFallback = () => (
-  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-sm">
     <Spin size="large" />
   </div>
 );
@@ -248,7 +248,8 @@ const OfferComparison = () => {
     getApplicationName,
   });
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading offers...</div>;
+  if (loading)
+    return <div className="p-8 text-center text-gray-500 dark:text-ink-400">Loading offers...</div>;
 
   return (
     <div className="space-y-6">
@@ -278,11 +279,11 @@ const OfferComparison = () => {
 
       {/* Nothing to compare when every offer is remote, so skip the empty card. */}
       {displayScenarioRows.some((row) => row.commute?.primary) && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+        <section className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 dark:border-white/[0.07] pb-3">
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-slate-900">Commute</h2>
-              <p className="mt-0.5 text-xs text-slate-400">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-ink-50">Commute</h2>
+              <p className="mt-0.5 text-xs text-slate-400 dark:text-ink-500">
                 Travel time and cost across offers, weighted by each one&apos;s RTO policy
               </p>
             </div>

@@ -38,7 +38,7 @@ const OfferFormModalFooter = ({
       <button
         type="button"
         onClick={onClose}
-        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:translate-y-px sm:min-h-10"
+        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-ink-100 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:translate-y-px sm:min-h-10"
       >
         {closeLabel}
       </button>

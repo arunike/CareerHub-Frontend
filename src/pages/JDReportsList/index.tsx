@@ -251,7 +251,7 @@ const JDReportsListPage: React.FC = () => {
 
         <div className="flex flex-col gap-6">
           {selectedIds.length > 0 && (
-            <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm">
+            <div className="bg-white dark:bg-ink-900 p-4 rounded-xl border border-sky-100 dark:border-sky-500/20 shadow-sm">
               <BulkActionHeader
                 selectedCount={selectedIds.length}
                 totalCount={reports.length}
@@ -268,12 +268,14 @@ const JDReportsListPage: React.FC = () => {
           {/* Empty state */}
           {hasLoadedReports && reports.length === 0 && (
             <div className="enterprise-empty flex flex-col items-center justify-center gap-6 px-4 py-16 sm:py-24">
-              <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 bg-sky-50 dark:bg-sky-500/10 rounded-full flex items-center justify-center">
                 <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
               </div>
               <div className="text-center">
-                <h3 className="text-gray-900 font-bold text-xl m-0 mb-2">No reports yet</h3>
-                <p className="text-gray-500 m-0 max-w-sm">
+                <h3 className="text-gray-900 dark:text-ink-50 font-bold text-xl m-0 mb-2">
+                  No reports yet
+                </h3>
+                <p className="text-gray-500 dark:text-ink-400 m-0 max-w-sm">
                   Run the AI Resume Evaluator to generate your first technical gap analysis report.
                 </p>
               </div>
@@ -305,10 +307,10 @@ const JDReportsListPage: React.FC = () => {
                 return (
                   <article
                     key={report.id}
-                    className={`group overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${
+                    className={`group overflow-hidden rounded-2xl border bg-white dark:bg-ink-900 transition-all duration-300 ${
                       isSelected
-                        ? 'border-sky-300 shadow-md ring-1 ring-sky-200'
-                        : 'border-slate-200 shadow-sm'
+                        ? 'border-sky-300 dark:border-sky-500/30 shadow-md ring-1 ring-sky-200 dark:ring-sky-500/25'
+                        : 'border-slate-200 dark:border-white/[0.08] shadow-sm'
                     }`}
                   >
                     <div className="flex items-start gap-3 p-4 sm:gap-5 sm:p-6">
@@ -335,7 +337,7 @@ const JDReportsListPage: React.FC = () => {
                               {meta.label} Match
                             </span>
                             {report.isLocked && (
-                              <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
+                              <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-500/20">
                                 <LockOutlined className="text-[10px]" />
                                 <span className="text-[10px] font-bold uppercase tracking-wider">
                                   Locked
@@ -344,7 +346,7 @@ const JDReportsListPage: React.FC = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                            <span className="text-[11px] font-medium text-gray-400 dark:text-ink-500 uppercase tracking-wider">
                               {date}
                             </span>
                           </div>
@@ -354,7 +356,7 @@ const JDReportsListPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => navigate(`/jd-report/${report.id}`)}
-                            className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 hover:text-blue-600"
+                            className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-ink-50 hover:text-blue-600"
                           >
                             <span className="line-clamp-2">
                               {report.title || report.jdSnippet || 'Untitled Match'}
@@ -368,7 +370,7 @@ const JDReportsListPage: React.FC = () => {
                                 title: report.title || report.jdSnippet || '',
                               });
                             }}
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/title:opacity-100"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-ink-500 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/title:opacity-100"
                             aria-label="Rename report"
                           >
                             <EditOutlined className="text-sm" />
@@ -379,13 +381,13 @@ const JDReportsListPage: React.FC = () => {
                           {report.matched_skills?.slice(0, 6).map((s, i) => (
                             <span
                               key={i}
-                              className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold"
+                              className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20 font-semibold"
                             >
                               {reportSkillName(s)}
                             </span>
                           ))}
                           {(report.matched_skills?.length ?? 0) > 6 && (
-                            <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-400 border border-gray-100 font-medium">
+                            <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 border border-gray-100 dark:border-white/[0.07] font-medium">
                               +{report.matched_skills.length - 6} more
                             </span>
                           )}
@@ -396,10 +398,12 @@ const JDReportsListPage: React.FC = () => {
                     {/* Card Footer */}
                     <div
                       className={`flex flex-col gap-2 border-t px-4 py-2 transition-colors duration-300 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-3.5 ${
-                        isSelected ? 'bg-sky-50/40 border-sky-100' : 'bg-gray-50/60 border-gray-50'
+                        isSelected
+                          ? 'bg-sky-50/40 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20'
+                          : 'bg-gray-50/60 dark:bg-ink-900/60 border-gray-50 dark:border-white/[0.07]'
                       }`}
                     >
-                      <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold text-gray-500 sm:flex sm:items-center sm:gap-4 sm:text-xs sm:font-bold sm:uppercase sm:tracking-widest sm:text-gray-400">
+                      <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold text-gray-500 dark:text-ink-400 sm:flex sm:items-center sm:gap-4 sm:text-xs sm:font-bold sm:uppercase sm:tracking-widest sm:text-gray-400">
                         <span className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{' '}
                           {report.matched_skills?.length ?? 0} strengths
@@ -443,7 +447,9 @@ const JDReportsListPage: React.FC = () => {
         onOk={() => deletingId && handleDelete(deletingId)}
         onCancel={() => setDeletingId(null)}
       >
-        <p className="text-gray-600">This report will be permanently removed from your history.</p>
+        <p className="text-gray-600 dark:text-ink-200">
+          This report will be permanently removed from your history.
+        </p>
       </Modal>
 
       {/* Edit title modal */}
@@ -456,7 +462,7 @@ const JDReportsListPage: React.FC = () => {
         onCancel={() => setEditingReport(null)}
       >
         <div className="py-4">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">
+          <label className="text-xs font-bold text-gray-400 dark:text-ink-500 uppercase tracking-widest mb-2 block">
             Report Title
           </label>
           <Input

@@ -72,9 +72,15 @@ const RowActions: React.FC<RowActionsProps> = ({
             size={size}
             icon={
               isLocked ? (
-                <LockOutlined className={disableLock ? 'text-amber-500/60' : 'text-amber-500'} />
+                <LockOutlined
+                  className={
+                    disableLock
+                      ? 'text-amber-500/60 dark:text-amber-300'
+                      : 'text-amber-500 dark:text-amber-400'
+                  }
+                />
               ) : (
-                <UnlockOutlined className="text-gray-400" />
+                <UnlockOutlined className="text-gray-400 dark:text-ink-500" />
               )
             }
             onClick={stopAndRun(onToggleLock)}
@@ -127,7 +133,13 @@ const RowActions: React.FC<RowActionsProps> = ({
           <Button
             type="text"
             size={size}
-            icon={isPinned ? <PushpinFilled className="text-amber-500" /> : <PushpinOutlined />}
+            icon={
+              isPinned ? (
+                <PushpinFilled className="text-amber-500 dark:text-amber-400" />
+              ) : (
+                <PushpinOutlined />
+              )
+            }
             onClick={stopAndRun(onTogglePin)}
             aria-label={isPinned ? 'Unpin' : 'Pin to top'}
           />

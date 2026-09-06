@@ -26,13 +26,13 @@ const ExperienceLogoField = ({
             <Avatar
               size={72}
               src={currentLogoSrc}
-              className="shadow-md border-4 border-white ring-2 ring-gray-100"
+              className="shadow-md border-4 border-white ring-2 ring-gray-100 dark:ring-white/[0.08]"
             />
           ) : (
             <Avatar
               size={72}
               style={getAvatarStyle(companyName)}
-              className="font-bold text-2xl shadow-md border-4 border-white ring-2 ring-gray-100"
+              className="font-bold text-2xl shadow-md border-4 border-white ring-2 ring-gray-100 dark:ring-white/[0.08]"
             >
               {companyName?.charAt(0)?.toUpperCase() || <BankOutlined />}
             </Avatar>
@@ -63,7 +63,7 @@ const ExperienceLogoField = ({
             size="small"
             icon={<CameraOutlined />}
             type="link"
-            className="!min-h-11 !px-3 text-gray-600 hover:text-blue-500 font-medium lg:!min-h-0 lg:!px-0"
+            className="!min-h-11 !px-3 text-gray-600 dark:text-ink-200 hover:text-blue-500 font-medium lg:!min-h-0 lg:!px-0"
           >
             {currentLogoSrc ? 'Change logo' : 'Upload logo'}
           </Button>
@@ -75,13 +75,13 @@ const ExperienceLogoField = ({
             icon={<ZoomInOutlined />}
             type="link"
             onClick={handleOpenAdjustModal}
-            className="!min-h-11 !px-3 text-blue-600 hover:text-blue-700 font-medium lg:!min-h-0 lg:!px-0"
+            className="!min-h-11 !px-3 text-blue-600 dark:text-blue-300 hover:text-blue-700 font-medium lg:!min-h-0 lg:!px-0"
           >
             Adjust size / fit
           </Button>
         )}
       </div>
-      <span className="text-xs text-gray-400">PNG, JPG up to 4MB</span>
+      <span className="text-xs text-gray-400 dark:text-ink-500">PNG, JPG up to 4MB</span>
     </div>
   </div>
 );

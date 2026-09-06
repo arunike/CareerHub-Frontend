@@ -52,12 +52,12 @@ const CalendarHeader = ({
   const filterButtonClassName = (active: boolean) =>
     `inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1 md:text-sm ${
       active
-        ? 'border-gray-200 bg-white text-gray-700 shadow-sm hover:border-blue-200'
-        : 'border-gray-200 bg-gray-50 text-gray-400 hover:text-gray-500'
+        ? 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-700 dark:text-ink-100 shadow-sm hover:border-blue-200'
+        : 'border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 hover:text-gray-500'
     } ${loading ? 'cursor-not-allowed opacity-60' : ''}`;
 
   const rangeButtonClassName =
-    'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
+    'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
 
   const navCluster = (
     <div
@@ -79,7 +79,7 @@ const CalendarHeader = ({
         type="button"
         onClick={onGoToToday}
         disabled={loading}
-        className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-700 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
+        className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3.5 text-sm font-medium text-slate-700 dark:text-ink-100 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
       >
         Today
       </button>
@@ -100,8 +100,8 @@ const CalendarHeader = ({
     <div className="mb-4 flex flex-col gap-4 sm:mb-6 xl:flex-row xl:items-start xl:justify-between">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold text-slate-800 sm:text-xl">
-            <CalendarOutlined className="text-lg text-slate-500" />
+          <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold text-slate-800 dark:text-ink-50 sm:text-xl">
+            <CalendarOutlined className="text-lg text-slate-500 dark:text-ink-400" />
             {headerLabel}
           </h2>
           {/* Beside the label on a phone, where a calendar's month arrows are expected. */}
@@ -219,11 +219,11 @@ const CalendarHeader = ({
             <SegmentedToggle
               value={viewMode}
               onChange={onViewModeChange}
-              wrapperClassName="w-max rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
+              wrapperClassName="w-max rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-1 shadow-sm"
               buttonClassName="px-3 py-1.5"
               options={VIEW_OPTIONS.map((option) => ({
                 ...option,
-                activeClassName: 'bg-blue-50 text-blue-700',
+                activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
               }))}
             />
           </div>

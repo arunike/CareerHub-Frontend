@@ -159,8 +159,11 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         </Form.Item>
 
         {lockedApplicationId ? (
-          <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-            Linking to <span className="font-medium text-slate-900">{lockedApplicationLabel}</span>
+          <div className="mb-6 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 px-3 py-2 text-sm text-slate-600 dark:text-ink-200">
+            Linking to{' '}
+            <span className="font-medium text-slate-900 dark:text-ink-50">
+              {lockedApplicationLabel}
+            </span>
           </div>
         ) : (
           <Form.Item name="application" label="Link to Application (Optional)">

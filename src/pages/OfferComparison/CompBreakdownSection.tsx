@@ -10,7 +10,7 @@ const YearByYearSection = lazy(() => import('./YearByYearSection'));
 const Year1BreakdownList = lazy(() => import('./Year1BreakdownList'));
 
 const LazySectionFallback = () => (
-  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-sm">
     <Spin size="large" />
   </div>
 );
@@ -36,7 +36,7 @@ const CompBreakdownSection = ({
   setCompBreakdownView,
   setIsChartExpanded,
 }: Props) => (
-  <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
+  <section className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
     <button
       type="button"
       onClick={() => setIsChartExpanded((current) => !current)}
@@ -44,23 +44,25 @@ const CompBreakdownSection = ({
       className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
     >
       <span className="flex min-w-0 items-center gap-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">
           <BarChartOutlined />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-semibold text-slate-950">Compensation breakdown</span>
-          <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+          <span className="block text-sm font-semibold text-slate-950 dark:text-ink-50">
+            Compensation breakdown
+          </span>
+          <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-ink-400">
             Year 1 by component, or the four-year outlook across the grant.
           </span>
         </span>
       </span>
-      <span className="shrink-0 text-xs font-semibold text-blue-700">
+      <span className="shrink-0 text-xs font-semibold text-blue-700 dark:text-blue-300">
         {isChartExpanded ? 'Hide chart' : 'View chart'}
       </span>
     </button>
 
     {isChartExpanded && (
-      <div className="space-y-5 border-t border-slate-200 p-4 sm:p-6">
+      <div className="space-y-5 border-t border-slate-200 dark:border-white/[0.08] p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Segmented
             value={compBreakdownView}

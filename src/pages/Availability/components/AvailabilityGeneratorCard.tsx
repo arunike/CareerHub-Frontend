@@ -32,38 +32,44 @@ const AvailabilityGeneratorCard = ({
     <div className="enterprise-section p-4 sm:p-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.55fr)_auto] xl:items-end">
         <div className="min-w-0">
-          <label htmlFor={startDateId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={startDateId}
+            className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
+          >
             Start Date
           </label>
           <div className="relative min-w-0">
             <CalendarOutlined
               aria-hidden="true"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400 dark:text-ink-500"
             />
             <input
               id={startDateId}
               type="date"
               value={startDate}
               onChange={(e) => onStartDateChange(e.target.value)}
-              className="min-h-11 min-w-0 w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              className="min-h-11 min-w-0 w-full rounded-lg border border-gray-300 dark:border-white/[0.12] px-3 py-2 pl-10 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
         <div className="min-w-0">
-          <label htmlFor={timezoneId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={timezoneId}
+            className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
+          >
             Timezone
           </label>
           <div className="relative min-w-0">
             <ClockCircleOutlined
               aria-hidden="true"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400 dark:text-ink-500"
             />
             <select
               id={timezoneId}
               value={timezone}
               onChange={(e) => onTimezoneChange(e.target.value)}
-              className="min-h-11 min-w-0 w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pl-10 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              className="min-h-11 min-w-0 w-full appearance-none rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2 pl-10 text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             >
               {TIMEZONE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -75,7 +81,10 @@ const AvailabilityGeneratorCard = ({
         </div>
 
         <div className="min-w-0">
-          <label htmlFor={rangeId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={rangeId}
+            className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
+          >
             Range
           </label>
           <EditableNumberInput

@@ -40,8 +40,12 @@ const EventsFilterBar = ({
       <Card bodyStyle={{ padding: '16px' }} className="enterprise-filter-bar">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-slate-900">Event Filters</div>
-            <div className="mt-1 text-xs text-slate-500">Category, date range, and sorting</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-ink-50">
+              Event Filters
+            </div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">
+              Category, date range, and sorting
+            </div>
           </div>
           <Button
             size="large"

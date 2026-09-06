@@ -85,7 +85,7 @@ const AccessibleStarRating = ({
                   : 'text-slate-200'
                 : isFilled
                   ? 'text-amber-400'
-                  : 'text-slate-300 hover:text-amber-400'
+                  : 'text-slate-300 dark:text-ink-600 hover:text-amber-400'
             }`}
             onClick={() => {
               if (!disabled) {

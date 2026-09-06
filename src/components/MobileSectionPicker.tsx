@@ -26,7 +26,11 @@ const MobileSectionPicker = <T extends string>({
 
   return (
     <div className={className}>
-      <label id={labelId} htmlFor={id} className="mb-2 block text-sm font-semibold text-slate-700">
+      <label
+        id={labelId}
+        htmlFor={id}
+        className="mb-2 block text-sm font-semibold text-slate-700 dark:text-ink-100"
+      >
         {label}
       </label>
       <Select<T>

@@ -26,7 +26,7 @@ export const SortableGroupCard: React.FC<SortableGroupCardProps> = ({ id, childr
       <div
         {...attributes}
         {...listeners}
-        className="absolute -left-7 top-6 hidden md:flex items-center justify-center p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors z-20 touch-none"
+        className="absolute -left-7 top-6 hidden md:flex items-center justify-center p-1.5 rounded-lg text-gray-300 dark:text-ink-600 hover:text-gray-600 hover:bg-gray-100 cursor-grab active:cursor-grabbing transition-colors z-20 touch-none"
         title="Drag to reorder career timeline"
       >
         <HolderOutlined style={{ fontSize: 18 }} />

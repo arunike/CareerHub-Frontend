@@ -17,21 +17,23 @@ type Props = {
 const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidaySelect }: Props) => {
   return (
     <div className="enterprise-section mt-4 p-4">
-      <h3 className="mb-3 flex items-center gap-2 font-semibold text-gray-900">
-        <ClockCircleOutlined className="mr-1 text-base text-blue-500" />
+      <h3 className="mb-3 flex items-center gap-2 font-semibold text-gray-900 dark:text-ink-50">
+        <ClockCircleOutlined className="mr-1 text-base text-blue-500 dark:text-blue-400" />
         Details for {format(selectedDate, 'MMMM d, yyyy')}
       </h3>
       <div className="space-y-2">
         {!hasDayItems(dayData) ? (
-          <div className="text-gray-400 text-sm italic">No events or time off scheduled.</div>
+          <div className="text-gray-400 dark:text-ink-500 text-sm italic">
+            No events or time off scheduled.
+          </div>
         ) : (
           <>
             {dayData.federalHolidays.map((holiday, index) => (
               <div
                 key={`selected-fed-${index}-${holiday.description}`}
-                className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm text-gray-600"
+                className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 p-2 text-sm text-gray-600 dark:text-ink-200"
               >
-                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-ink-700"></span>
                 <span className="font-medium">Observed Holiday:</span> {holiday.description}
               </div>
             ))}

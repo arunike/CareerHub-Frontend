@@ -153,7 +153,7 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 px-4 py-3">
               <BulkActionHeader
                 selectedCount={selectedSnapshotIds.length}
                 totalCount={snapshots.length}
@@ -188,7 +188,10 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
               />
             </div>
             {snapshots.map((snapshot) => (
-              <div key={snapshot.id} className="rounded-xl border border-slate-200 bg-white p-4">
+              <div
+                key={snapshot.id}
+                className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4"
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
                     <Checkbox
@@ -199,12 +202,12 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                     />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="m-0 text-sm font-semibold text-slate-900">
+                        <h3 className="m-0 text-sm font-semibold text-slate-900 dark:text-ink-50">
                           {snapshot.title || 'Untitled snapshot'}
                         </h3>
                         {snapshot.is_locked && <Tag color="gold">Locked</Tag>}
                       </div>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-slate-400 dark:text-ink-500">
                         {new Date(snapshot.captured_at).toLocaleString()}
                       </p>
                     </div>
@@ -251,27 +254,27 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                  <div className="rounded-lg bg-slate-50 p-2">
-                    <span className="block text-slate-400">Score</span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-ink-900 p-2">
+                    <span className="block text-slate-400 dark:text-ink-500">Score</span>
                     <strong>{snapshot.decision_score ?? '-'}</strong>
                   </div>
-                  <div className="rounded-lg bg-slate-50 p-2">
-                    <span className="block text-slate-400">Rank</span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-ink-900 p-2">
+                    <span className="block text-slate-400 dark:text-ink-500">Rank</span>
                     <strong>{snapshot.rank ? `#${snapshot.rank}` : '-'}</strong>
                   </div>
-                  <div className="rounded-lg bg-slate-50 p-2">
-                    <span className="block text-slate-400">TC</span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-ink-900 p-2">
+                    <span className="block text-slate-400 dark:text-ink-500">TC</span>
                     <strong>{currency(snapshot.total_comp)}</strong>
                   </div>
-                  <div className="rounded-lg bg-slate-50 p-2">
-                    <span className="block text-slate-400">Adjusted</span>
+                  <div className="rounded-lg bg-slate-50 dark:bg-ink-900 p-2">
+                    <span className="block text-slate-400 dark:text-ink-500">Adjusted</span>
                     <strong>
                       {snapshot.adjusted_value ? currency(snapshot.adjusted_value) : '-'}
                     </strong>
                   </div>
                 </div>
                 {snapshot.notes && (
-                  <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">
+                  <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600 dark:text-ink-200">
                     {snapshot.notes}
                   </p>
                 )}

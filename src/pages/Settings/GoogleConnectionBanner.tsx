@@ -14,10 +14,12 @@ const GoogleConnectionBanner = ({
   googleBusy,
   googleStatus,
 }: Props) => (
-  <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+  <div className="rounded-xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
     <div>
-      <div className="text-sm font-semibold text-gray-900">Private Google Sheets Access</div>
-      <div className="text-xs text-gray-600 mt-0.5">
+      <div className="text-sm font-semibold text-gray-900 dark:text-ink-50">
+        Private Google Sheets Access
+      </div>
+      <div className="text-xs text-gray-600 dark:text-ink-200 mt-0.5">
         {googleStatus?.connected
           ? googleStatus.can_list_spreadsheets
             ? `Connected as ${googleStatus.email || 'Google account'} with read-only Sheets access.`

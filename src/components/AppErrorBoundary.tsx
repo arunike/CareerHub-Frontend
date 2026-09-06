@@ -23,15 +23,15 @@ class AppErrorBoundary extends Component<Props, State> {
     if (!this.state.error) return this.props.children;
 
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-5 py-10 text-slate-700">
-        <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_70px_-52px_rgba(15,23,42,0.55)] sm:p-8">
-          <div className="mb-5 inline-flex rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-slate-50 dark:bg-ink-900 px-5 py-10 text-slate-700 dark:text-ink-100">
+        <section className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-6 shadow-[0_24px_70px_-52px_rgba(15,23,42,0.55)] sm:p-8">
+          <div className="mb-5 inline-flex rounded-lg border border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200">
             Page refresh needed
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-ink-50">
             CareerHub could not finish loading this view.
           </h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-ink-200">
             The app may have been updated while this tab was open. Your saved data is not affected.
           </p>
           <button

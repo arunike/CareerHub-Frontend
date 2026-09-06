@@ -48,7 +48,7 @@ const IdentitySection = ({
     <>
       {showLinkApplication && onLinkedApplicationChange && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
             Link Existing Application (Optional)
           </label>
           <ApplicationSelect
@@ -67,9 +67,9 @@ const IdentitySection = ({
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
                 Company{' '}
-                <span className="text-red-500" aria-hidden="true">
+                <span className="text-red-500 dark:text-red-400" aria-hidden="true">
                   *
                 </span>
               </label>
@@ -85,7 +85,7 @@ const IdentitySection = ({
                 className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
                   invalidCompanyName
                     ? 'border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-100'
-                    : 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    : 'border-gray-300 dark:border-white/[0.12] focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 }`}
                 placeholder={companyPlaceholder}
               />
@@ -96,9 +96,9 @@ const IdentitySection = ({
               </datalist>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
                 Role{' '}
-                <span className="text-red-500" aria-hidden="true">
+                <span className="text-red-500 dark:text-red-400" aria-hidden="true">
                   *
                 </span>
               </label>
@@ -113,7 +113,7 @@ const IdentitySection = ({
                 className={`w-full rounded-lg border px-3 py-2 text-sm transition ${
                   invalidRoleTitle
                     ? 'border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-100'
-                    : 'border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    : 'border-gray-300 dark:border-white/[0.12] focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 }`}
                 placeholder={rolePlaceholder}
               />
@@ -122,7 +122,9 @@ const IdentitySection = ({
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {onLevelChange !== undefined && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+                  Level
+                </label>
                 <input
                   type="text"
                   value={level}
@@ -135,7 +137,7 @@ const IdentitySection = ({
             {onDeadlineChange !== undefined && (
               <div>
                 <label
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
                   htmlFor="offer-form-deadline"
                 >
                   Decision deadline

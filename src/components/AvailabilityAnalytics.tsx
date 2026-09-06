@@ -146,14 +146,14 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
       {contextHolder}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
-          <Text className="text-gray-500">
+          <Text className="text-gray-500 dark:text-ink-400">
             {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
           </Text>
         </div>
         <button
           type="button"
           onClick={() => setIsCustomizeOpen(true)}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 sm:w-auto"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-500 dark:text-ink-400 transition-all hover:bg-gray-100 hover:text-gray-700 sm:w-auto"
         >
           <SettingOutlined />
           Customize view

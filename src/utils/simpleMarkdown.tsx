@@ -8,7 +8,7 @@ export const parseInlineMarkdown = (text?: string): React.ReactNode => {
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
-        <strong key={`${part}-${index}`} className="font-semibold text-slate-950">
+        <strong key={`${part}-${index}`} className="font-semibold text-slate-950 dark:text-ink-50">
           {part.slice(2, -2)}
         </strong>
       );
@@ -16,7 +16,7 @@ export const parseInlineMarkdown = (text?: string): React.ReactNode => {
 
     if (part.startsWith('*') && part.endsWith('*')) {
       return (
-        <em key={`${part}-${index}`} className="text-slate-700">
+        <em key={`${part}-${index}`} className="text-slate-700 dark:text-ink-100">
           {part.slice(1, -1)}
         </em>
       );

@@ -59,9 +59,9 @@ export const useColorConflicts = ({
     const clashes = findClashesWith(colorOwners, color, excluding);
     if (clashes.length === 0) return null;
     return (
-      <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-amber-700">
+      <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-amber-700 dark:text-amber-300">
         <span
-          className="mt-1 h-2 w-2 shrink-0 rounded-full ring-1 ring-amber-300"
+          className="mt-1 h-2 w-2 shrink-0 rounded-full ring-1 ring-amber-300 dark:ring-amber-500/30"
           style={{ backgroundColor: getPaletteColor(color).dot }}
         />
         <span>

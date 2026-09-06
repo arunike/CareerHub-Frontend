@@ -35,8 +35,11 @@ const HelpTooltipTrigger = ({
       )}
     >
       {children}
-      <span className="inline-flex shrink-0 items-center justify-center text-slate-400/90 transition-colors group-hover:text-blue-600">
-        <CrispInfoIcon size={14} className="text-slate-400 group-hover:text-blue-600" />
+      <span className="inline-flex shrink-0 items-center justify-center text-slate-400/90 dark:text-ink-500/90 transition-colors group-hover:text-blue-600">
+        <CrispInfoIcon
+          size={14}
+          className="text-slate-400 dark:text-ink-500 group-hover:text-blue-600"
+        />
       </span>
     </button>
   </Tooltip>

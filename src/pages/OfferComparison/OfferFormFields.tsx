@@ -336,7 +336,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
   };
 
   return (
-    <div className="offer-form-workspace grid min-h-full min-w-0 w-full overflow-x-hidden bg-slate-50/80 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="offer-form-workspace grid min-h-full min-w-0 w-full overflow-x-hidden bg-slate-50/80 dark:bg-ink-900/80 lg:grid-cols-[220px_minmax(0,1fr)]">
       <OfferFormSidebar
         activeSectionIndex={activeSectionIndex}
         navigationItems={navigationItems}
@@ -355,10 +355,10 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
               event.preventDefault();
               if (activeSectionIndex > 0) showSection(activeSectionIndex - 1);
             }}
-            className={`inline-flex min-h-10 min-w-20 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+            className={`inline-flex min-h-10 min-w-20 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
               activeSectionIndex === 0
-                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                : 'bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                ? 'cursor-not-allowed bg-slate-100 dark:bg-ink-800 text-slate-400 dark:text-ink-500'
+                : 'bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
             Back
@@ -379,14 +379,14 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
             }}
             className={`inline-flex min-h-10 min-w-20 items-center justify-center rounded-xl px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
               activeSectionIndex === navigationItems.length - 1
-                ? 'cursor-not-allowed bg-slate-200 text-slate-500'
+                ? 'cursor-not-allowed bg-slate-200 dark:bg-ink-800 text-slate-500 dark:text-ink-400'
                 : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
             Next
           </a>
         </div>
-        <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-38px_rgba(15,23,42,0.45)]">
+        <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-[0_18px_48px_-38px_rgba(15,23,42,0.45)]">
           <OfferBasicsPanel
             {...props}
             isActiveSection={isActiveSection}

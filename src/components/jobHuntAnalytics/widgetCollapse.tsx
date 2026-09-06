@@ -39,7 +39,7 @@ export const WidgetCollapseToggle = ({ title }: { title: string }) => {
       aria-label={collapsed ? `Expand ${title}` : `Collapse ${title}`}
       onClick={toggle}
       // mr-9 keeps the drag handle's corner clear at every width.
-      className="ml-auto mr-9 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+      className="ml-auto mr-9 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 dark:text-ink-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
     >
       <DownOutlined
         className={`text-[11px] transition-transform ${collapsed ? '-rotate-90' : ''}`}

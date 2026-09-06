@@ -13,8 +13,8 @@ const BackPayWorking = ({ backPay }: { backPay: BackPay }) => {
   });
 
   return (
-    <div className="mt-2.5 border-t border-emerald-200/70 pt-2.5">
-      <div className="mb-2 text-emerald-800/80">
+    <div className="mt-2.5 border-t border-emerald-200/70 dark:border-emerald-500/25 pt-2.5">
+      <div className="mb-2 text-emerald-800/80 dark:text-emerald-300">
         {day(backPay.effectiveFrom)} → {day(lastOldRateDay)} — the {backPay.days} days you were paid
         at the old rate.
       </div>
@@ -22,21 +22,21 @@ const BackPayWorking = ({ backPay }: { backPay: BackPay }) => {
         <div className="flex items-baseline justify-between gap-3">
           <span>
             Base salary
-            <span className="hidden text-emerald-800/60 sm:inline">
+            <span className="hidden text-emerald-800/60 dark:text-emerald-300 sm:inline">
               {' '}
               · {fmt(backPay.baseBefore)} → {fmt(backPay.baseAfter)}
             </span>
           </span>
           <span className="font-medium">+{fmt(backPay.annualDifference)} a year</span>
         </div>
-        <div className="flex items-baseline justify-between gap-3 border-t border-emerald-200/70 pt-1.5">
+        <div className="flex items-baseline justify-between gap-3 border-t border-emerald-200/70 dark:border-emerald-500/25 pt-1.5">
           <span>
             × {backPay.days} days ÷ {backPay.daysInYear} days in {backPay.effectiveFrom.slice(0, 4)}
           </span>
           <span className="font-semibold">${exact}</span>
         </div>
       </div>
-      <div className="mt-2 text-emerald-800/70">
+      <div className="mt-2 text-emerald-800/70 dark:text-emerald-300">
         Base only — a bonus is settled at payout against the new rate, and equity is not paid by the
         day, so neither is owed here.
       </div>

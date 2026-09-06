@@ -32,10 +32,14 @@ const Row = ({
 }) => (
   <div className="flex items-center justify-between gap-3 py-2.5">
     <span className="min-w-0">
-      <span className={`block truncate text-sm ${visible ? 'text-slate-700' : 'text-slate-400'}`}>
+      <span
+        className={`block truncate text-sm ${visible ? 'text-slate-700 dark:text-ink-100' : 'text-slate-400 dark:text-ink-500'}`}
+      >
         {label}
       </span>
-      {meta ? <span className="mt-0.5 block text-xs text-slate-400">{meta}</span> : null}
+      {meta ? (
+        <span className="mt-0.5 block text-xs text-slate-400 dark:text-ink-500">{meta}</span>
+      ) : null}
     </span>
     <Tooltip title={disabledReason}>
       <span>
@@ -87,12 +91,12 @@ export const IncomeVisibilitySection = ({
 
   const body = () => {
     if (sources === null) {
-      return <p className="text-sm text-slate-400">Loading roles…</p>;
+      return <p className="text-sm text-slate-400 dark:text-ink-500">Loading roles…</p>;
     }
 
     if (sources.length === 0) {
       return (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-400 dark:text-ink-500">
           No roles yet. Add one on the Experience page, or mark an offer as your current role, and
           it will appear here.
         </p>
@@ -102,14 +106,14 @@ export const IncomeVisibilitySection = ({
     return (
       <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Roles
           </span>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             A hidden role is left out of the Income page&rsquo;s role picker. Nothing is deleted,
             and its paychecks still count toward the year totals.
           </p>
-          <div className="mt-2 divide-y divide-slate-100">
+          <div className="mt-2 divide-y divide-slate-100 dark:divide-white/[0.07]">
             {sources.map((source) => {
               const visible = !hiddenRoles.includes(source.key);
               return (
@@ -132,14 +136,14 @@ export const IncomeVisibilitySection = ({
         </div>
 
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Tax years
           </span>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             A hidden year is left out of the year picker. Useful for years before you started
             tracking, which model a full year off a partial record.
           </p>
-          <div className="mt-2 divide-y divide-slate-100">
+          <div className="mt-2 divide-y divide-slate-100 dark:divide-white/[0.07]">
             {years.map((year) => {
               const visible = !hiddenYears.includes(year);
               return (

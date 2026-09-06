@@ -14,7 +14,10 @@ export const renderExperienceDescription = (text: string) => {
       inList = true;
       const pureText = line.replace(/^[-•*]\s*/, '').trim();
       currentList.push(
-        <li key={`li-${index}`} className="mb-2.5 pl-1 leading-relaxed text-gray-700 relative">
+        <li
+          key={`li-${index}`}
+          className="mb-2.5 pl-1 leading-relaxed text-gray-700 dark:text-ink-100 relative"
+        >
           {pureText}
         </li>
       );
@@ -35,7 +38,10 @@ export const renderExperienceDescription = (text: string) => {
       }
       if (line.trim().length > 0) {
         elements.push(
-          <div key={`p-${index}`} className="mb-4 text-gray-700 leading-relaxed font-medium">
+          <div
+            key={`p-${index}`}
+            className="mb-4 text-gray-700 dark:text-ink-100 leading-relaxed font-medium"
+          >
             {line}
           </div>
         );

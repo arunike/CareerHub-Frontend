@@ -37,7 +37,7 @@ export const OverallPayBreakdown = ({
 
   if (groups.length === 0) {
     return (
-      <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-gray-500">
+      <p className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 px-4 py-6 text-center text-sm text-gray-500 dark:text-ink-400">
         Add a start date and pay to a role to see what you earned.
       </p>
     );
@@ -45,12 +45,14 @@ export const OverallPayBreakdown = ({
 
   return (
     <div className="mt-2 space-y-4">
-      <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-blue-50 p-5">
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+      <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 via-white dark:via-ink-900 to-blue-50 p-5">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-ink-500">
           Earned all time
         </div>
-        <div className="mt-2 text-3xl font-bold text-gray-900">{money(allTime)}</div>
-        <div className="mt-1 text-sm text-gray-500">
+        <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-ink-50">
+          {money(allTime)}
+        </div>
+        <div className="mt-1 text-sm text-gray-500 dark:text-ink-400">
           Every full-time year on record{years.length > 0 && `, ${years.at(-1)}–${years[0]}`}
         </div>
 
@@ -69,15 +71,20 @@ export const OverallPayBreakdown = ({
         )}
 
         {selected !== 'all' && (
-          <div className="mt-3 flex items-baseline justify-between gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2">
-            <span className="text-xs font-medium text-slate-500">
+          <div className="mt-3 flex items-baseline justify-between gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/80 dark:bg-ink-900/80 px-3 py-2">
+            <span className="text-xs font-medium text-slate-500 dark:text-ink-400">
               Earned in {selected}
               {/* A year still running is paid to date, not a full year, so say which. */}
               {selected === dayjs().year() && (
-                <span className="text-slate-400"> · to {dayjs().format('D MMM')}</span>
+                <span className="text-slate-400 dark:text-ink-500">
+                  {' '}
+                  · to {dayjs().format('D MMM')}
+                </span>
               )}
             </span>
-            <span className="text-sm font-semibold text-slate-900">{money(scoped)}</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-ink-50">
+              {money(scoped)}
+            </span>
           </div>
         )}
 
@@ -94,7 +101,7 @@ export const OverallPayBreakdown = ({
       </div>
 
       {skipped.length > 0 && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-800">
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200">
           Not counted:{' '}
           {skipped
             .map(

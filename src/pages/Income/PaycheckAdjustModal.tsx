@@ -45,7 +45,7 @@ const PaycheckAdjustModal = ({
             Reset to the standing amounts
           </Button>
         ) : (
-          <span className="text-xs text-slate-500">Nothing overridden yet</span>
+          <span className="text-xs text-slate-500 dark:text-ink-400">Nothing overridden yet</span>
         )}
         <Button type="primary" onClick={() => setEditing(false)}>
           Done
@@ -53,11 +53,11 @@ const PaycheckAdjustModal = ({
       </div>
     }
   >
-    <p className="text-xs leading-relaxed text-slate-500">
+    <p className="text-xs leading-relaxed text-slate-500 dark:text-ink-400">
       Changes here apply to {payDateLabel} and leave every other paycheck alone.
     </p>
     <label className="mt-3 block">
-      <span className="text-xs font-medium text-slate-600">Gross pay</span>
+      <span className="text-xs font-medium text-slate-600 dark:text-ink-200">Gross pay</span>
       <div className="mt-1">
         <MoneyInput
           size="small"
@@ -67,15 +67,17 @@ const PaycheckAdjustModal = ({
           }
         />
       </div>
-      <span className="mt-1 block text-[11px] text-slate-400">
+      <span className="mt-1 block text-[11px] text-slate-400 dark:text-ink-500">
         Regular pay only. A bonus or vest on this paycheck is unaffected.
       </span>
     </label>
 
-    <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
+    <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 dark:border-white/[0.07] pt-3 sm:grid-cols-2">
       {DEDUCTION_FIELDS.map((field: { key: string; label: string }) => (
         <label key={field.key} className="block">
-          <span className="text-xs font-medium text-slate-600">{field.label}</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-ink-200">
+            {field.label}
+          </span>
           <div className="mt-1">
             <MoneyInput
               size="small"
@@ -89,10 +91,12 @@ const PaycheckAdjustModal = ({
       ))}
     </div>
 
-    <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
+    <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 dark:border-white/[0.07] pt-3 sm:grid-cols-2">
       {RATE_FIELDS.map((field: { key: string; label: string }) => (
         <label key={field.key} className="block">
-          <span className="text-xs font-medium text-slate-600">{field.label}</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-ink-200">
+            {field.label}
+          </span>
           <div className="mt-1">
             <PercentInput
               size="small"
@@ -107,10 +111,10 @@ const PaycheckAdjustModal = ({
     </div>
 
     {effectiveCustom.length > 0 ? (
-      <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 sm:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 border-t border-slate-100 dark:border-white/[0.07] pt-3 sm:grid-cols-2">
         {effectiveCustom.map((deduction: any) => (
           <label key={deduction.id} className="block">
-            <span className="truncate text-xs font-medium text-slate-600">
+            <span className="truncate text-xs font-medium text-slate-600 dark:text-ink-200">
               {deduction.label || 'Untitled deduction'}
             </span>
             <div className="mt-1">
@@ -130,17 +134,17 @@ const PaycheckAdjustModal = ({
     ) : null}
 
     {effectiveAllowances.length > 0 ? (
-      <div className="mt-3 border-t border-slate-100 pt-3">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="mt-3 border-t border-slate-100 dark:border-white/[0.07] pt-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           Allowances this paycheck
         </span>
-        <p className="mt-1 text-[11px] text-slate-400">
+        <p className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
           Set one to zero for a paycheck it was not paid on.
         </p>
         <div className="mt-2 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
           {effectiveAllowances.map((allowance: any) => (
             <label key={allowance.id} className="block">
-              <span className="truncate text-xs font-medium text-slate-600">
+              <span className="truncate text-xs font-medium text-slate-600 dark:text-ink-200">
                 {allowance.label || 'Untitled allowance'}
               </span>
               <div className="mt-1">
@@ -160,8 +164,10 @@ const PaycheckAdjustModal = ({
       </div>
     ) : null}
 
-    <label className="mt-3 block border-t border-slate-100 pt-3">
-      <span className="text-xs font-medium text-slate-600">Match on this paycheck</span>
+    <label className="mt-3 block border-t border-slate-100 dark:border-white/[0.07] pt-3">
+      <span className="text-xs font-medium text-slate-600 dark:text-ink-200">
+        Match on this paycheck
+      </span>
       <div className="mt-1">
         <MoneyInput
           size="small"
@@ -171,7 +177,7 @@ const PaycheckAdjustModal = ({
           }
         />
       </div>
-      <span className="mt-1 block text-[11px] text-slate-400">
+      <span className="mt-1 block text-[11px] text-slate-400 dark:text-ink-500">
         Set it when the employer paid something other than the formula, such as a true-up.
       </span>
     </label>

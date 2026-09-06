@@ -80,7 +80,9 @@ const LocationTaxSection = ({
     <>
       {onOfficeLocationChange && workMode !== 'REMOTE' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Office Location</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+            Office Location
+          </label>
           <AutoComplete
             className="w-full"
             value={officeLocation}
@@ -91,7 +93,7 @@ const LocationTaxSection = ({
             allowClear
             filterOption={false}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-ink-400 mt-1">
             Used for work location context and display. Commute impact is configured separately
             below.
           </p>
@@ -99,7 +101,9 @@ const LocationTaxSection = ({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Home Location</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+          Home Location
+        </label>
         <AutoComplete
           className="w-full"
           value={location}
@@ -111,20 +115,22 @@ const LocationTaxSection = ({
           filterOption={false}
         />
         {taxRatePreview && (
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-ink-400 mt-1">
             Tax estimate (B/Bn/Eq): {Math.round(taxRatePreview.baseTaxRate)}% /{' '}
             {Math.round(taxRatePreview.bonusTaxRate)}% / {Math.round(taxRatePreview.equityTaxRate)}%
             {taxRatePreview.note ? ` • ${taxRatePreview.note}` : ''}
           </p>
         )}
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-500 dark:text-ink-400 mt-1">
           Used for tax, cost-of-living, and rent assumptions.
         </p>
       </div>
 
       {editableTaxRates && onEditableTaxRatesChange && (
-        <div className="rounded-lg border border-gray-200 p-3 space-y-3">
-          <div className="text-sm font-medium text-gray-700">Tax Rates (for this offer)</div>
+        <div className="rounded-lg border border-gray-200 dark:border-white/[0.08] p-3 space-y-3">
+          <div className="text-sm font-medium text-gray-700 dark:text-ink-100">
+            Tax Rates (for this offer)
+          </div>
           {[
             ['Base', editableTaxRates.baseTaxRate, 'baseTaxRate'],
             ['Bonus', editableTaxRates.bonusTaxRate, 'bonusTaxRate'],
@@ -132,8 +138,8 @@ const LocationTaxSection = ({
           ].map(([label, value, key]) => (
             <div key={String(key)}>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-gray-600">{String(label)}</span>
-                <span className="text-xs font-semibold text-gray-900">
+                <span className="text-xs text-gray-600 dark:text-ink-200">{String(label)}</span>
+                <span className="text-xs font-semibold text-gray-900 dark:text-ink-50">
                   {Math.round(Number(value))}%
                 </span>
               </div>
@@ -152,7 +158,7 @@ const LocationTaxSection = ({
               />
             </div>
           ))}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-ink-400">
             Set a rate to `0%` when that pay type does not apply, like offers with no bonus or no
             equity.
           </p>
@@ -161,7 +167,7 @@ const LocationTaxSection = ({
 
       {typeof editableMonthlyRent === 'number' && onEditableMonthlyRentChange && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
             Monthly Rent (for this offer)
           </label>
           <UnitNumberInput

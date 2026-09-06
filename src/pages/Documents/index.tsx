@@ -231,10 +231,11 @@ const Documents: React.FC = () => {
 
   const getFileIcon = (fileName: string | null | undefined) => {
     const normalized = (fileName || '').toLowerCase();
-    if (normalized.endsWith('.pdf')) return <FilePdfOutlined className="text-red-500 text-lg" />;
+    if (normalized.endsWith('.pdf'))
+      return <FilePdfOutlined className="text-red-500 dark:text-red-400 text-lg" />;
     if (normalized.endsWith('.doc') || normalized.endsWith('.docx'))
-      return <FileWordOutlined className="text-blue-500 text-lg" />;
-    return <FileOutlined className="text-gray-500 text-lg" />;
+      return <FileWordOutlined className="text-blue-500 dark:text-blue-400 text-lg" />;
+    return <FileOutlined className="text-gray-500 dark:text-ink-400 text-lg" />;
   };
 
   const openDocument = async (record: Document) => {
@@ -321,11 +322,13 @@ const Documents: React.FC = () => {
           <button
             type="button"
             onClick={() => openDocument(record)}
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-blue-600 dark:text-blue-300 hover:underline"
           >
             {text}
           </button>
-          {record.is_locked ? <LockOutlined className="text-amber-500" /> : null}
+          {record.is_locked ? (
+            <LockOutlined className="text-amber-500 dark:text-amber-400" />
+          ) : null}
         </div>
       ),
     },
@@ -354,7 +357,7 @@ const Documents: React.FC = () => {
         record.application_details ? (
           `${record.application_details.role} @ ${record.application_details.company}`
         ) : (
-          <span className="text-gray-400">None</span>
+          <span className="text-gray-400 dark:text-ink-500">None</span>
         ),
     },
     {

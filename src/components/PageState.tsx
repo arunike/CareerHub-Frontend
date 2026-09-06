@@ -28,15 +28,17 @@ export const PageState = ({
       {icon ? (
         <div
           className={`mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl ${
-            tone === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'
+            tone === 'error'
+              ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300'
+              : 'bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200'
           }`}
           aria-hidden="true"
         >
           {icon}
         </div>
       ) : null}
-      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md break-words text-sm leading-6 text-slate-600">
+      <h2 className="text-lg font-bold text-slate-900 dark:text-ink-50">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md break-words text-sm leading-6 text-slate-600 dark:text-ink-200">
         {description}
       </p>
       {actionLabel && onAction ? (
@@ -64,7 +66,7 @@ export const PanelSkeleton = ({
   className?: string;
 }) => (
   <div
-    className={`rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 ${className}`.trim()}
+    className={`rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-5 sm:p-6 ${className}`.trim()}
     aria-busy="true"
     aria-label="Loading content"
   >

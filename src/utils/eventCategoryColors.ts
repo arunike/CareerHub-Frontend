@@ -20,7 +20,8 @@ const MIN_TEXT_CONTRAST = 7;
 
 type Rgb = { r: number; g: number; b: number };
 
-const SURFACE: Rgb = { r: 255, g: 255, b: 255 };
+// Flattened onto white and painted opaque, so a chip reads the same in either theme.
+const CHIP_SURFACE: Rgb = { r: 255, g: 255, b: 255 };
 
 const normalizeHexColor = (color?: string | null) => {
   if (!color) return DEFAULT_EVENT_COLOR;
@@ -56,6 +57,9 @@ const rgb = (hex: string, alpha: number) => {
   const { r, g, b } = hexToRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
+
+const toRgbString = ({ r, g, b }: Rgb) =>
+  `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 
 const toHex = ({ r, g, b }: Rgb) =>
   `#${[r, g, b].map((channel) => Math.round(channel).toString(16).padStart(2, '0')).join('')}`;
@@ -145,14 +149,14 @@ export const getEventCategoryColor = (
   fallbackColor?: string | null
 ): EventCategoryColor => {
   const color = normalizeHexColor(category?.color || fallbackColor);
-  const chipBackground = compositeOver(hexToRgb(color), CHIP_BG_ALPHA, SURFACE);
+  const chipBackground = compositeOver(hexToRgb(color), CHIP_BG_ALPHA, CHIP_SURFACE);
 
   return {
-    bg: rgb(color, CHIP_BG_ALPHA),
+    bg: toRgbString(chipBackground),
     border: rgb(color, CHIP_BORDER_ALPHA),
     text: readableTextColor(color, chipBackground),
     dot: color,
-    hoverBg: rgb(color, CHIP_HOVER_BG_ALPHA),
+    hoverBg: toRgbString(compositeOver(hexToRgb(color), CHIP_HOVER_BG_ALPHA, CHIP_SURFACE)),
     focusRing: rgb(color, CHIP_FOCUS_RING_ALPHA),
   };
 };

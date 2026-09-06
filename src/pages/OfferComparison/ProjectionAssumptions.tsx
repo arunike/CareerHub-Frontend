@@ -41,7 +41,7 @@ const ProjectionAssumptions = ({
   const content = (
     <div className="w-[248px] space-y-4">
       <div>
-        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1.5">
           Equity market growth
         </span>
         <div className="mb-2 flex gap-1">
@@ -53,8 +53,8 @@ const ProjectionAssumptions = ({
               className={clsx(
                 'flex-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
                 equityGrowthPct === shortcut.value
-                  ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 hover:border-slate-300 hover:bg-slate-50'
               )}
             >
               {shortcut.label}
@@ -69,13 +69,13 @@ const ProjectionAssumptions = ({
           max={EQUITY_RANGE.max}
           aria-label="Annual equity market growth percentage"
         />
-        <p className="mt-1 text-[11px] leading-4 text-slate-400">
+        <p className="mt-1 text-[11px] leading-4 text-slate-400 dark:text-ink-500">
           Share price change per year, compounded from year 2.
         </p>
       </div>
 
       <div>
-        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1.5">
           Base salary increase
         </span>
         <UnitNumberInput
@@ -86,7 +86,7 @@ const ProjectionAssumptions = ({
           max={BASE_RANGE.max}
           aria-label="Annual base salary increase percentage"
         />
-        <p className="mt-1 text-[11px] leading-4 text-slate-400">
+        <p className="mt-1 text-[11px] leading-4 text-slate-400 dark:text-ink-500">
           Annual raise applied to base and bonus on every row, current role included.
         </p>
       </div>
@@ -98,8 +98,8 @@ const ProjectionAssumptions = ({
         className={clsx(
           'text-[11px] font-medium transition-colors',
           isDefault
-            ? 'cursor-default text-slate-300'
-            : 'text-indigo-600 hover:text-indigo-700 hover:underline'
+            ? 'cursor-default text-slate-300 dark:text-ink-600'
+            : 'text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 hover:underline'
         )}
       >
         Reset to defaults
@@ -110,7 +110,11 @@ const ProjectionAssumptions = ({
   return (
     <Popover
       content={content}
-      title={<span className="text-sm font-bold text-slate-800">Projection assumptions</span>}
+      title={
+        <span className="text-sm font-bold text-slate-800 dark:text-ink-50">
+          Projection assumptions
+        </span>
+      }
       trigger="click"
       placement="bottomRight"
       open={open}
@@ -119,14 +123,14 @@ const ProjectionAssumptions = ({
     >
       <button
         type="button"
-        className="flex min-h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-indigo-400 hover:text-indigo-600"
+        className="flex min-h-8 items-center gap-1.5 rounded-md border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-ink-100 transition-colors hover:border-indigo-400 hover:text-indigo-600"
         aria-label={`Projection assumptions: equity ${formatSigned(equityGrowthPct)} per year, base ${formatSigned(baseGrowthPct)} per year`}
       >
-        <SlidersOutlined className="text-[11px] text-slate-400" />
+        <SlidersOutlined className="text-[11px] text-slate-400 dark:text-ink-500" />
         <span>Equity {formatSigned(equityGrowthPct)}</span>
-        <span className="text-slate-300">·</span>
+        <span className="text-slate-300 dark:text-ink-600">·</span>
         <span>Base {formatSigned(baseGrowthPct)}</span>
-        <DownOutlined className="text-[9px] text-slate-400" />
+        <DownOutlined className="text-[9px] text-slate-400 dark:text-ink-500" />
       </button>
     </Popover>
   );

@@ -75,12 +75,14 @@ const TaskKanbanBoard = ({
               >
                 <div className="space-y-2">
                   {task.description ? (
-                    <p className="text-sm text-gray-600 m-0">{task.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-ink-200 m-0">
+                      {task.description}
+                    </p>
                   ) : null}
                   <div className="flex items-center justify-between">
                     <Tag color={PRIORITY_COLOR[task.priority]}>{task.priority}</Tag>
                     {task.due_date ? (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-ink-400">
                         Due {dayjs(task.due_date).format('MMM D')}
                       </span>
                     ) : null}

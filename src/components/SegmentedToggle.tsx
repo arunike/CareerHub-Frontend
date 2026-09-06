@@ -28,7 +28,7 @@ const SegmentedToggle = <T extends string>({
     <div
       role="group"
       className={clsx(
-        'flex rounded-[10px] border border-slate-200/80 bg-slate-100/80 p-0.5',
+        'flex rounded-[10px] border border-slate-200/80 dark:border-white/[0.08] bg-slate-100/80 dark:bg-ink-800/80 p-0.5',
         wrapperClassName
       )}
     >
@@ -45,9 +45,9 @@ const SegmentedToggle = <T extends string>({
               buttonClassName,
               isActive
                 ? option.activeClassName ||
-                    'bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
+                    'bg-white dark:bg-ink-900 text-slate-950 dark:text-ink-50 shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
                 : option.inactiveClassName ||
-                    'text-slate-500 hover:bg-white/50 hover:text-slate-700'
+                    'text-slate-500 dark:text-ink-400 hover:bg-white/50 hover:text-slate-700'
             )}
           >
             {option.icon}

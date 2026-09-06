@@ -131,9 +131,10 @@ const TeamHistoryModal: React.FC<Props> = ({
     <Modal
       title={
         <div className="flex items-center gap-2">
-          <TeamOutlined className="text-blue-500" />
+          <TeamOutlined className="text-blue-500 dark:text-blue-400" />
           <span>
-            Team History — <span className="font-normal text-gray-500">{experienceName}</span>
+            Team History —{' '}
+            <span className="font-normal text-gray-500 dark:text-ink-400">{experienceName}</span>
           </span>
         </div>
       }
@@ -157,10 +158,12 @@ const TeamHistoryModal: React.FC<Props> = ({
       <div className="space-y-3 mt-2">
         {/* Entry form */}
         {isFormEditing && (
-          <div className="border border-blue-200 rounded-xl bg-blue-50/40 p-4 space-y-3">
+          <div className="border border-blue-200 dark:border-blue-500/25 rounded-xl bg-blue-50/40 dark:bg-blue-500/10 p-4 space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Team Name *</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+                  Team Name *
+                </label>
                 <Input
                   placeholder="e.g. Platform Team"
                   value={form.name}
@@ -169,7 +172,9 @@ const TeamHistoryModal: React.FC<Props> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Manager</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+                  Manager
+                </label>
                 <Input
                   placeholder="e.g. San Zhang"
                   value={form.manager ?? ''}
@@ -180,7 +185,7 @@ const TeamHistoryModal: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
                   Currently on this team
                 </label>
                 <div className="flex items-center gap-2 h-8">
@@ -191,20 +196,24 @@ const TeamHistoryModal: React.FC<Props> = ({
                       setForm((f) => ({ ...f, is_current: v, end_date: v ? null : f.end_date }))
                     }
                   />
-                  <span className="text-sm text-gray-500">{form.is_current ? 'Yes' : 'No'}</span>
+                  <span className="text-sm text-gray-500 dark:text-ink-400">
+                    {form.is_current ? 'Yes' : 'No'}
+                  </span>
                 </div>
               </div>
             </div>
 
             {isIntern && (
-              <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+              <div className="text-xs text-gray-400 dark:text-ink-500 bg-gray-50 dark:bg-ink-900 rounded-lg px-3 py-2 border border-gray-100 dark:border-white/[0.07]">
                 Dates auto-filled from experience ({fmtDate(expStartDate)} –{' '}
                 {expIsCurrent ? 'Present' : fmtDate(expEndDate)})
               </div>
             )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+                  Start Date
+                </label>
                 <DatePicker
                   className="w-full"
                   picker="month"
@@ -216,7 +225,9 @@ const TeamHistoryModal: React.FC<Props> = ({
               </div>
               {!form.is_current && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">End Date</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+                    End Date
+                  </label>
                   <DatePicker
                     className="w-full"
                     picker="month"
@@ -230,7 +241,7 @@ const TeamHistoryModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
                 Team Norms & Standards
               </label>
               <TextArea
@@ -254,7 +265,7 @@ const TeamHistoryModal: React.FC<Props> = ({
 
         {/* Entry list */}
         {local.length === 0 && !isFormEditing && (
-          <div className="text-center py-10 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+          <div className="text-center py-10 text-gray-400 dark:text-ink-500 text-sm border border-dashed border-gray-200 dark:border-white/[0.08] rounded-xl">
             No teams recorded yet. Click "Add Team" to get started.
           </div>
         )}
@@ -266,41 +277,46 @@ const TeamHistoryModal: React.FC<Props> = ({
               editingId === entry.id
                 ? 'hidden'
                 : entry.is_locked
-                  ? 'border-amber-100 bg-amber-50/30'
-                  : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+                  ? 'border-amber-100 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/10'
+                  : 'border-gray-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 hover:border-gray-200 hover:shadow-sm'
             }`}
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="text-base font-semibold text-gray-900">{entry.name}</span>
+                  <span className="text-base font-semibold text-gray-900 dark:text-ink-50">
+                    {entry.name}
+                  </span>
                   {entry.is_current && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/25">
                       Current
                     </span>
                   )}
                   {entry.is_locked && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-200 dark:border-amber-500/25 flex items-center gap-1">
                       <LockOutlined style={{ fontSize: 9 }} /> Locked
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-500 mb-2 flex items-center gap-2 flex-wrap">
+                <div className="text-sm text-gray-500 dark:text-ink-400 mb-2 flex items-center gap-2 flex-wrap">
                   <span>
                     {fmtDate(entry.start_date)} –{' '}
                     {entry.is_current ? 'Present' : fmtDate(entry.end_date)}
                   </span>
                   {entry.manager && (
                     <>
-                      <span className="text-gray-300">·</span>
+                      <span className="text-gray-300 dark:text-ink-600">·</span>
                       <span>
-                        Manager: <span className="font-medium text-gray-600">{entry.manager}</span>
+                        Manager:{' '}
+                        <span className="font-medium text-gray-600 dark:text-ink-200">
+                          {entry.manager}
+                        </span>
                       </span>
                     </>
                   )}
                 </div>
                 {entry.norms && (
-                  <p className="text-[15px] text-gray-600 whitespace-pre-wrap leading-relaxed line-clamp-3">
+                  <p className="text-[15px] text-gray-600 dark:text-ink-200 whitespace-pre-wrap leading-relaxed line-clamp-3">
                     {entry.norms}
                   </p>
                 )}
@@ -313,7 +329,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                       size="small"
                       icon={<LockOutlined />}
                       onClick={() => toggleLock(entry.id)}
-                      className="text-amber-500!"
+                      className="text-amber-500 dark:text-amber-400!"
                     />
                   </Tooltip>
                 ) : (
@@ -325,7 +341,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                         icon={<UnlockOutlined />}
                         onClick={() => toggleLock(entry.id)}
                         disabled={isFormEditing}
-                        className="text-gray-300!"
+                        className="text-gray-300 dark:text-ink-600!"
                       />
                     </Tooltip>
                     <Tooltip title="Edit">
@@ -335,7 +351,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                         icon={<EditOutlined />}
                         onClick={() => startEdit(entry)}
                         disabled={isFormEditing}
-                        className="text-gray-400 hover:text-blue-500"
+                        className="text-gray-400 dark:text-ink-500 hover:text-blue-500"
                       />
                     </Tooltip>
                     <Popconfirm
@@ -350,7 +366,7 @@ const TeamHistoryModal: React.FC<Props> = ({
                           size="small"
                           icon={<DeleteOutlined />}
                           disabled={isFormEditing}
-                          className="text-gray-400 hover:text-red-500"
+                          className="text-gray-400 dark:text-ink-500 hover:text-red-500"
                         />
                       </Tooltip>
                     </Popconfirm>

@@ -64,7 +64,7 @@ const Section = ({
     </div>
     <ul className="m-0 pl-4 flex flex-col gap-1.5">
       {items.map((item, i) => (
-        <li key={i} className="text-sm text-gray-700 leading-relaxed">
+        <li key={i} className="text-sm text-gray-700 dark:text-ink-100 leading-relaxed">
           {item}
         </li>
       ))}
@@ -164,7 +164,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose, onPersistR
       width={720}
     >
       {/* Offer snapshot */}
-      <div className="flex gap-4 flex-wrap justify-center mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100 text-sm">
+      <div className="flex gap-4 flex-wrap justify-center mb-5 p-3 bg-gray-50 dark:bg-ink-900 rounded-xl border border-gray-100 dark:border-white/[0.07] text-sm">
         {[
           { label: 'Base', value: fmt(Number(offer.base_salary)) },
           { label: 'Bonus', value: fmt(Number(offer.bonus)) },
@@ -225,7 +225,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose, onPersistR
         <div className="flex flex-col gap-4">
           {/* Suggested Ask */}
           {advice.suggested_ask && (
-            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+            <div className="rounded-xl border border-sky-200 dark:border-sky-500/25 bg-sky-50 dark:bg-sky-500/10 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <DollarOutlined style={{ color: '#0ea5e9' }} />
                 <Text strong style={{ color: '#0ea5e9' }}>
@@ -248,7 +248,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose, onPersistR
                   .map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex flex-col items-center min-w-[80px] bg-white rounded-lg border border-sky-100 px-3 py-2"
+                      className="flex flex-col items-center min-w-[80px] bg-white dark:bg-ink-900 rounded-lg border border-sky-100 dark:border-sky-500/20 px-3 py-2"
                     >
                       <Text type="secondary" className="text-xs uppercase tracking-wider">
                         {label}
@@ -304,7 +304,7 @@ const NegotiationAdvisorModal = ({ offer, application, open, onClose, onPersistR
             <Button onClick={handleGenerate}>Regenerate</Button>
             {savedId && (
               <>
-                <span className="text-xs text-gray-400 flex items-center gap-1">
+                <span className="text-xs text-gray-400 dark:text-ink-500 flex items-center gap-1">
                   <SaveOutlined /> Saved
                 </span>
                 <Button

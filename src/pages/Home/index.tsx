@@ -19,6 +19,8 @@ import {
 } from '@ant-design/icons';
 import PublicHeader from '../../components/PublicHeader';
 import PublicFaq from './PublicFaq';
+import ThemeSwitch from '../../theme/ThemeSwitch';
+import { useTheme } from '../../theme/ThemeProvider';
 import WeekAtGlance from './WeekAtGlance';
 
 const lifecycle = [
@@ -85,40 +87,47 @@ const upcomingItems = [
 function ProductPreview() {
   return (
     <div className="relative mx-auto w-full max-w-[620px] lg:mx-0">
-      <div className="absolute -inset-8 rounded-[2.5rem] bg-blue-200/35 blur-3xl" aria-hidden />
       <div
-        className="absolute -bottom-5 left-12 right-12 h-16 rounded-full bg-blue-300/30 blur-2xl"
+        className="absolute -inset-8 rounded-[2.5rem] bg-blue-200/35 blur-3xl dark:bg-blue-500/10"
         aria-hidden
       />
-      <div className="relative overflow-hidden rounded-[1.4rem] bg-white shadow-[0_42px_110px_-54px_rgba(30,64,175,0.48)] ring-1 ring-slate-200/90">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-5">
+      <div
+        className="absolute -bottom-5 left-12 right-12 h-16 rounded-full bg-blue-300/30 blur-2xl dark:bg-blue-500/10"
+        aria-hidden
+      />
+      <div className="relative overflow-hidden rounded-[1.4rem] bg-white shadow-[0_42px_110px_-54px_rgba(30,64,175,0.48)] ring-1 ring-slate-200/90 dark:bg-ink-950 dark:shadow-[0_42px_110px_-54px_rgba(0,0,0,0.95)] dark:ring-white/[0.12]">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-white/[0.08] dark:bg-ink-950 sm:px-5">
           <div className="flex items-center gap-2" aria-hidden>
-            <span className="h-2 w-2 rounded-full bg-slate-300" />
-            <span className="h-2 w-2 rounded-full bg-slate-300" />
-            <span className="h-2 w-2 rounded-full bg-slate-300" />
+            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-ink-700" />
+            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-ink-700" />
+            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-ink-700" />
           </div>
-          <span className="text-[11px] font-semibold tracking-wide text-slate-500">
+          <span className="text-[11px] font-semibold tracking-wide text-slate-500 dark:text-ink-400">
             ILLUSTRATIVE WORKSPACE
           </span>
         </div>
 
-        <div className="grid gap-px bg-slate-200 sm:grid-cols-[minmax(0,1.3fr)_minmax(180px,0.7fr)]">
-          <div className="bg-white p-5 sm:p-6">
+        <div className="grid gap-px bg-slate-200 dark:bg-ink-800 sm:grid-cols-[minmax(0,1.3fr)_minmax(180px,0.7fr)]">
+          <div className="bg-white p-5 dark:bg-ink-950 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-medium text-slate-500">Active application</p>
-                <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                <p className="text-xs font-medium text-slate-500 dark:text-ink-400">
+                  Active application
+                </p>
+                <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950 dark:text-ink-50">
                   Software Engineer
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">Google · Mountain View, CA</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-ink-400">
+                  Google · Mountain View, CA
+                </p>
               </div>
-              <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+              <span className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:ring-blue-400/30">
                 Interview
               </span>
             </div>
 
             <div className="mt-7">
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-ink-400">
                 <span>Application progress</span>
                 <span>Interview stage</span>
               </div>
@@ -126,56 +135,62 @@ function ProductPreview() {
                 {[true, true, false].map((complete, index) => (
                   <div key={index} className="flex flex-1 items-center last:flex-none">
                     <span
-                      className={`h-2.5 w-2.5 rounded-full ring-4 ring-white ${complete ? 'bg-blue-500' : 'bg-slate-300'}`}
+                      className={`h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-ink-950 ${complete ? 'bg-blue-500' : 'bg-slate-300 dark:bg-ink-700'}`}
                     />
                     {index < 2 && (
                       <span
-                        className={`h-px flex-1 ${index < 1 ? 'bg-blue-500' : 'bg-slate-300'}`}
+                        className={`h-px flex-1 ${index < 1 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-ink-700'}`}
                       />
                     )}
                   </div>
                 ))}
               </div>
-              <div className="mt-3 grid grid-cols-3 text-[11px] text-slate-400">
+              <div className="mt-3 grid grid-cols-3 text-[11px] text-slate-400 dark:text-ink-500">
                 <span>Applied</span>
-                <span className="text-center font-medium text-blue-700">Interview</span>
+                <span className="text-center font-medium text-blue-700 dark:text-blue-300">
+                  Interview
+                </span>
                 <span className="text-right">Decision</span>
               </div>
             </div>
 
             <div className="mt-7 grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200">
-                <FileTextOutlined className="text-slate-400" />
-                <p className="mt-4 text-xs text-slate-500">Submitted</p>
-                <p className="mt-1 text-sm font-medium text-slate-950">Resume</p>
+              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200 dark:bg-ink-900 dark:ring-white/[0.12]">
+                <FileTextOutlined className="text-slate-400 dark:text-ink-500" />
+                <p className="mt-4 text-xs text-slate-500 dark:text-ink-400">Submitted</p>
+                <p className="mt-1 text-sm font-medium text-slate-950 dark:text-ink-50">Resume</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200">
-                <TeamOutlined className="text-slate-400" />
-                <p className="mt-4 text-xs text-slate-500">Contacts</p>
-                <p className="mt-1 text-sm font-medium text-slate-950">Connected</p>
+              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200 dark:bg-ink-900 dark:ring-white/[0.12]">
+                <TeamOutlined className="text-slate-400 dark:text-ink-500" />
+                <p className="mt-4 text-xs text-slate-500 dark:text-ink-400">Contacts</p>
+                <p className="mt-1 text-sm font-medium text-slate-950 dark:text-ink-50">
+                  Connected
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-blue-50/70 p-5 sm:p-6">
+          <div className="bg-blue-50/70 p-5 dark:bg-ink-900 sm:p-6">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-slate-500">Next up</p>
-              <ClockCircleOutlined className="text-slate-400" />
+              <p className="text-xs font-medium text-slate-500 dark:text-ink-400">Next up</p>
+              <ClockCircleOutlined className="text-slate-400 dark:text-ink-500" />
             </div>
             <div className="mt-4 space-y-4">
               {upcomingItems.map((item) => (
                 <div key={item.title} className="grid grid-cols-[8px_minmax(0,1fr)] gap-3">
                   <span className={`mt-1.5 h-2 w-2 rounded-full ${item.tone}`} />
                   <div>
-                    <p className="text-sm font-medium leading-5 text-slate-900">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{item.time}</p>
+                    <p className="text-sm font-medium leading-5 text-slate-900 dark:text-ink-50">
+                      {item.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-ink-400">{item.time}</p>
                   </div>
                 </div>
               ))}
             </div>
             <Link
               to="/login"
-              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(37,99,235,0.85)] transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-50"
+              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(37,99,235,0.85)] transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-50 dark:focus-visible:bg-blue-500 dark:hover:bg-blue-400 dark:focus-visible:ring-offset-ink-900"
             >
               Open workspace
               <ArrowRightOutlined />
@@ -183,7 +198,7 @@ function ProductPreview() {
           </div>
         </div>
       </div>
-      <p className="mt-4 text-center text-xs leading-5 text-slate-500 lg:text-left">
+      <p className="mt-4 text-center text-xs leading-5 text-slate-500 dark:text-ink-400 lg:text-left">
         Illustrative data only. No personal information is shown.
       </p>
     </div>
@@ -191,8 +206,14 @@ function ProductPreview() {
 }
 
 export default function HomePage() {
+  const { preference, setPreference, resolved: resolvedTheme } = useTheme();
+
   return (
-    <main className="public-home min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f6f8fc] text-slate-700">
+    <main
+      className="public-home min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f6f8fc] text-slate-700 transition-colors duration-300 dark:bg-ink-950 dark:text-ink-200"
+      data-theme={resolvedTheme}
+      style={{ colorScheme: resolvedTheme }}
+    >
       <PublicHeader
         navItems={[
           { label: 'How it works', to: '#workflow' },
@@ -200,11 +221,12 @@ export default function HomePage() {
           { label: 'FAQ', to: '#faq' },
         ]}
         actionLabel="Sign in"
+        utility={<ThemeSwitch value={preference} onChange={setPreference} />}
       />
 
       <section className="relative isolate px-5 pb-20 pt-36 sm:px-8 sm:pb-28 sm:pt-44 lg:px-10 lg:pb-32">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[660px] bg-[radial-gradient(circle_at_75%_24%,rgba(191,219,254,0.55),transparent_33%),radial-gradient(circle_at_12%_6%,rgba(224,231,255,0.55),transparent_28%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[660px] bg-[radial-gradient(circle_at_75%_24%,rgba(191,219,254,0.55),transparent_33%),radial-gradient(circle_at_12%_6%,rgba(224,231,255,0.55),transparent_28%)] dark:bg-[radial-gradient(circle_at_75%_24%,rgba(37,99,235,0.16),transparent_34%),radial-gradient(circle_at_12%_6%,rgba(79,70,229,0.12),transparent_30%)]"
           aria-hidden
         />
         <div
@@ -213,14 +235,14 @@ export default function HomePage() {
         />
         <div className="relative mx-auto grid w-full max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.88fr)_minmax(520px,1.12fr)] lg:items-center lg:gap-16">
           <div className="max-w-2xl">
-            <p className="mb-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+            <p className="mb-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
               Private career workspace
             </p>
-            <h1 className="max-w-[13ch] text-balance text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-6xl lg:text-[4.5rem]">
+            <h1 className="max-w-[13ch] text-balance text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-slate-950 dark:text-ink-50 sm:text-6xl lg:text-[4.5rem]">
               Your career decisions deserve a system.
             </h1>
-            <p className="mt-7 max-w-[58ch] text-pretty text-lg leading-8 text-slate-600 sm:text-xl sm:leading-9">
+            <p className="mt-7 max-w-[58ch] text-pretty text-lg leading-8 text-slate-600 dark:text-ink-200 sm:text-xl sm:leading-9">
               CareerHub keeps the full story—from first application to accepted offer, career
               growth, and income planning—in one private workspace built for you.
             </p>
@@ -235,17 +257,17 @@ export default function HomePage() {
               </Link>
               <a
                 href="#workflow"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-xl px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white/70 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-xl px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white/70 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:text-ink-100 dark:hover:bg-ink-800 dark:hover:text-ink-50 dark:focus-visible:ring-offset-ink-950"
               >
                 See how it works
               </a>
             </div>
 
-            <div className="mt-9 flex flex-wrap gap-2 text-sm text-slate-600">
+            <div className="mt-9 flex flex-wrap gap-2 text-sm text-slate-600 dark:text-ink-200">
               {['Private by default', 'AI is optional', 'No ad trackers'].map((item) => (
                 <span
                   key={item}
-                  className="inline-flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-slate-200/80 backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-slate-200/80 backdrop-blur-sm dark:bg-ink-900/70 dark:ring-white/[0.12]"
                 >
                   <CheckCircleFilled className="text-emerald-600" />
                   {item}
@@ -258,8 +280,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200/80 bg-white px-5 py-8 sm:px-8 lg:px-10">
-        <div className="mx-auto grid w-full max-w-7xl gap-5 text-sm font-medium text-slate-600 sm:grid-cols-3 sm:divide-x sm:divide-slate-200">
+      <section className="border-y border-slate-200/80 bg-white px-5 py-8 dark:border-white/[0.08] dark:bg-ink-900 sm:px-8 lg:px-10">
+        <div className="mx-auto grid w-full max-w-7xl gap-5 text-sm font-medium text-slate-600 dark:text-ink-200 sm:grid-cols-3 sm:divide-x sm:divide-slate-200 sm:dark:divide-white/[0.12]">
           <p className="flex items-center justify-center gap-2 sm:justify-start">
             <SolutionOutlined className="text-blue-600" /> One record across the full career cycle
           </p>
@@ -277,51 +299,53 @@ export default function HomePage() {
         className="relative scroll-mt-28 overflow-hidden px-5 py-20 sm:px-8 sm:py-28 lg:px-10"
       >
         <div
-          className="pointer-events-none absolute -left-40 bottom-20 h-80 w-80 rounded-full bg-indigo-100/60 blur-3xl"
+          className="pointer-events-none absolute -left-40 bottom-20 h-80 w-80 rounded-full bg-indigo-100/60 blur-3xl dark:bg-indigo-500/10"
           aria-hidden
         />
         <div className="mx-auto w-full max-w-7xl">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-20">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
                 01 · The connected workflow
               </p>
-              <h2 className="mt-5 max-w-[13ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl">
+              <h2 className="mt-5 max-w-[13ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
                 One story. No scattered pieces.
               </h2>
             </div>
-            <p className="max-w-[65ch] text-lg leading-8 text-slate-600">
+            <p className="max-w-[65ch] text-lg leading-8 text-slate-600 dark:text-ink-200">
               Most tools stop at a list of applications. CareerHub connects the work before, during,
               and after the decision, so context follows you instead of disappearing at every
               milestone.
             </p>
           </div>
 
-          <div className="mt-14 border-t border-slate-300">
+          <div className="mt-14 border-t border-slate-300 dark:border-white/[0.12]">
             {lifecycle.map((item, index) => {
               const Icon = item.icon;
               return (
                 <article
                   key={item.title}
-                  className="group relative grid gap-5 border-b border-slate-200 py-8 transition-colors duration-300 hover:border-blue-200 sm:grid-cols-[64px_minmax(200px,0.75fr)_minmax(0,1.25fr)] sm:items-start sm:gap-8 sm:py-10"
+                  className="group relative grid gap-5 border-b border-slate-200 py-8 transition-colors duration-300 hover:border-blue-200 dark:hover:border-white/[0.08] dark:hover:border-blue-500/50 sm:grid-cols-[64px_minmax(200px,0.75fr)_minmax(0,1.25fr)] sm:items-start sm:gap-8 sm:py-10"
                 >
                   <div className="flex items-center gap-4 sm:block">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-700 ring-1 ring-inset ring-blue-100 transition-transform duration-300 group-hover:-translate-y-0.5">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-700 ring-1 ring-inset ring-blue-100 transition-transform duration-300 group-hover:-translate-y-0.5 dark:group-hover:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-400/20">
                       <Icon />
                     </span>
-                    <span className="text-xs font-semibold text-slate-400 sm:mt-3 sm:block">
+                    <span className="text-xs font-semibold text-slate-400 dark:text-ink-500 sm:mt-3 sm:block">
                       0{index + 1}
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold tracking-[-0.015em] text-slate-950">
+                    <h3 className="text-xl font-semibold tracking-[-0.015em] text-slate-950 dark:text-ink-50">
                       {item.title}
                     </h3>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-300">
                       {item.detail}
                     </p>
                   </div>
-                  <p className="max-w-[62ch] text-base leading-7 text-slate-600">{item.body}</p>
+                  <p className="max-w-[62ch] text-base leading-7 text-slate-600 dark:text-ink-200">
+                    {item.body}
+                  </p>
                 </article>
               );
             })}
@@ -331,32 +355,35 @@ export default function HomePage() {
 
       <WeekAtGlance />
 
-      <section className="relative overflow-hidden border-y border-blue-100 bg-blue-50/70 px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
+      <section className="relative overflow-hidden border-y border-blue-100 bg-blue-50/70 px-5 py-20 dark:border-white/[0.08] dark:bg-ink-900/70 sm:px-8 sm:py-28 lg:px-10">
         <div
-          className="pointer-events-none absolute -right-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-white/80 blur-3xl"
+          className="pointer-events-none absolute -right-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-white/80 blur-3xl dark:bg-blue-500/5"
           aria-hidden
         />
         <div className="mx-auto grid w-full max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(440px,1.1fr)] lg:items-center lg:gap-20">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
               03 · Decision support
             </p>
-            <h2 className="mt-5 max-w-[14ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl">
+            <h2 className="mt-5 max-w-[14ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
               Compare the life around the offer.
             </h2>
-            <p className="mt-6 max-w-[60ch] text-lg leading-8 text-slate-600">
+            <p className="mt-6 max-w-[60ch] text-lg leading-8 text-slate-600 dark:text-ink-200">
               Headline compensation is only the opening number. CareerHub keeps the assumptions
               visible, so a decision can include the costs, benefits, and tradeoffs that shape the
               workday.
             </p>
-            <div className="mt-9 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+            <div className="mt-9 grid gap-3 text-sm text-slate-700 dark:text-ink-100 sm:grid-cols-2">
               {[
                 'Taxes and take-home',
                 'Benefits and time off',
                 'Commute and local costs',
                 'Equity and vesting',
               ].map((item) => (
-                <span key={item} className="flex items-center gap-3 border-t border-blue-200 py-3">
+                <span
+                  key={item}
+                  className="flex items-center gap-3 border-t border-blue-200 py-3 dark:border-white/[0.12]"
+                >
                   <CheckCircleOutlined className="text-blue-600" />
                   {item}
                 </span>
@@ -364,39 +391,43 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative rounded-2xl bg-white p-5 text-slate-900 shadow-[0_34px_90px_-54px_rgba(30,64,175,0.5)] ring-1 ring-slate-200 sm:p-7">
+          <div className="relative rounded-2xl bg-white p-5 text-slate-900 shadow-[0_34px_90px_-54px_rgba(30,64,175,0.5)] ring-1 ring-slate-200 dark:bg-ink-950 dark:text-ink-50 dark:shadow-[0_34px_90px_-54px_rgba(0,0,0,0.95)] dark:ring-white/[0.12] sm:p-7">
             <span
               className="absolute left-0 top-7 h-12 w-1 rounded-r-full bg-blue-600"
               aria-hidden
             />
-            <div className="flex items-start justify-between gap-5 border-b border-slate-200 pb-5">
+            <div className="flex items-start justify-between gap-5 border-b border-slate-200 pb-5 dark:border-white/[0.08]">
               <div>
-                <p className="text-xs font-medium text-slate-500">Illustrative offer</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-ink-400">
+                  Illustrative offer
+                </p>
                 <h3 className="mt-1 text-xl font-semibold">Google · Software Engineer</h3>
               </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                 Active
               </span>
             </div>
-            <dl className="divide-y divide-slate-200">
+            <dl className="divide-y divide-slate-200 dark:divide-white/[0.08]">
               <div className="flex items-center justify-between gap-6 py-4">
-                <dt className="text-sm text-slate-500">Base salary</dt>
+                <dt className="text-sm text-slate-500 dark:text-ink-400">Base salary</dt>
                 <dd className="font-semibold tabular-nums">$165,000</dd>
               </div>
               <div className="flex items-center justify-between gap-6 py-4">
-                <dt className="text-sm text-slate-500">Annual bonus</dt>
+                <dt className="text-sm text-slate-500 dark:text-ink-400">Annual bonus</dt>
                 <dd className="font-semibold tabular-nums">$24,750</dd>
               </div>
               <div className="flex items-center justify-between gap-6 py-4">
-                <dt className="text-sm text-slate-500">Equity per year</dt>
+                <dt className="text-sm text-slate-500 dark:text-ink-400">Equity per year</dt>
                 <dd className="font-semibold tabular-nums">$50,000</dd>
               </div>
               <div className="flex items-center justify-between gap-6 pt-5">
-                <dt className="font-semibold text-slate-950">Year-one package</dt>
-                <dd className="text-xl font-bold tabular-nums text-blue-700">$239,750</dd>
+                <dt className="font-semibold text-slate-950 dark:text-ink-50">Year-one package</dt>
+                <dd className="text-xl font-bold tabular-nums text-blue-700 dark:text-blue-300">
+                  $239,750
+                </dd>
               </div>
             </dl>
-            <p className="mt-5 rounded-xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-600">
+            <p className="mt-5 rounded-xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-600 dark:bg-ink-900 dark:text-ink-400">
               Illustrative values only. Real comparisons stay private to the signed-in account.
             </p>
           </div>
@@ -407,39 +438,43 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
             <div className="lg:sticky lg:top-28 lg:self-start">
-              <LockOutlined className="text-2xl text-blue-700" />
-              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+              <LockOutlined className="text-2xl text-blue-700 dark:text-blue-300" />
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
                 04 · Ownership
               </p>
-              <h2 className="mt-5 max-w-[14ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl">
+              <h2 className="mt-5 max-w-[14ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
                 Private should be specific.
               </h2>
-              <p className="mt-5 max-w-[58ch] text-base leading-8 text-slate-600">
+              <p className="mt-5 max-w-[58ch] text-base leading-8 text-slate-600 dark:text-ink-200">
                 CareerHub states the boundary clearly: what requires an account, when an outside
                 provider is involved, and how to take your records with you.
               </p>
               <Link
                 to="/privacy"
-                className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-lg font-semibold text-blue-700 transition-colors hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-lg font-semibold text-blue-700 transition-colors hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:text-blue-300 dark:hover:text-blue-200 dark:focus-visible:ring-offset-ink-950"
               >
                 Read the privacy policy
                 <ArrowRightOutlined />
               </Link>
             </div>
 
-            <div className="border-t border-slate-300">
+            <div className="border-t border-slate-300 dark:border-white/[0.12]">
               {privacyFacts.map((fact) => {
                 const Icon = fact.icon;
                 return (
                   <article
                     key={fact.title}
-                    className="grid gap-3 border-b border-slate-200 py-8 sm:grid-cols-[48px_minmax(160px,0.65fr)_minmax(0,1.35fr)] sm:items-start sm:gap-6 sm:py-10"
+                    className="grid gap-3 border-b border-slate-200 py-8 dark:border-white/[0.08] sm:grid-cols-[48px_minmax(160px,0.65fr)_minmax(0,1.35fr)] sm:items-start sm:gap-6 sm:py-10"
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
                       <Icon />
                     </span>
-                    <h3 className="pt-2 text-base font-semibold text-slate-950">{fact.title}</h3>
-                    <p className="text-sm leading-7 text-slate-600 sm:pt-1.5">{fact.body}</p>
+                    <h3 className="pt-2 text-base font-semibold text-slate-950 dark:text-ink-50">
+                      {fact.title}
+                    </h3>
+                    <p className="text-sm leading-7 text-slate-600 dark:text-ink-200 sm:pt-1.5">
+                      {fact.body}
+                    </p>
                   </article>
                 );
               })}
@@ -450,7 +485,7 @@ export default function HomePage() {
 
       <PublicFaq />
 
-      <section className="bg-white px-5 pb-10 pt-16 sm:px-8 sm:pb-12 sm:pt-20 lg:px-10">
+      <section className="bg-white px-5 pb-10 pt-16 dark:bg-ink-950 sm:px-8 sm:pb-12 sm:pt-20 lg:px-10">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-8 overflow-hidden rounded-3xl bg-blue-600 px-6 py-10 text-white shadow-[0_32px_80px_-42px_rgba(29,78,216,0.72)] sm:px-10 sm:py-12 lg:flex-row lg:items-center lg:px-14">
           <div
             className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border-[40px] border-white/10"
@@ -469,7 +504,7 @@ export default function HomePage() {
           </div>
           <Link
             to="/login"
-            className="relative inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-blue-700 shadow-[0_18px_30px_-20px_rgba(15,23,42,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600"
+            className="relative inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-blue-700 shadow-[0_18px_30px_-20px_rgba(15,23,42,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 dark:focus-visible:bg-ink-950 dark:text-blue-300 dark:hover:bg-slate-900"
           >
             Sign in to CareerHub
             <ArrowRightOutlined />
@@ -478,13 +513,19 @@ export default function HomePage() {
       </section>
 
       <footer className="px-5 sm:px-8 lg:px-10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 border-t border-slate-200 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 border-t border-slate-200 py-8 text-sm text-slate-500 dark:border-white/[0.08] dark:text-ink-400 sm:flex-row sm:items-center sm:justify-between">
           <span>CareerHub is a private career management workspace for individuals.</span>
           <div className="flex gap-6">
-            <Link className="font-medium transition-colors hover:text-slate-950" to="/privacy">
+            <Link
+              className="font-medium transition-colors hover:text-slate-950 dark:hover:text-ink-50"
+              to="/privacy"
+            >
               Privacy
             </Link>
-            <Link className="font-medium transition-colors hover:text-slate-950" to="/terms">
+            <Link
+              className="font-medium transition-colors hover:text-slate-950 dark:hover:text-ink-50"
+              to="/terms"
+            >
               Terms
             </Link>
           </div>

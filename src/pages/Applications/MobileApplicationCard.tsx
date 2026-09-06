@@ -102,7 +102,7 @@ const MobileApplicationCard = ({
 
   return (
     <article
-      className={`enterprise-card p-4 ${selected ? 'border-blue-200 ring-2 ring-blue-100' : ''}`}
+      className={`enterprise-card p-4 ${selected ? 'border-blue-200 dark:border-blue-500/25 ring-2 ring-blue-100 dark:ring-blue-500/20' : ''}`}
     >
       <div className="flex items-start gap-3">
         <SelectionCheckbox
@@ -113,18 +113,22 @@ const MobileApplicationCard = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-base font-semibold text-slate-900">{companyName}</div>
-              <div className="mt-1 text-sm text-slate-600">{application.role_title}</div>
+              <div className="text-base font-semibold text-slate-900 dark:text-ink-50">
+                {companyName}
+              </div>
+              <div className="mt-1 text-sm text-slate-600 dark:text-ink-200">
+                {application.role_title}
+              </div>
             </div>
             <StatusBadge status={application.status} stages={applicationStages} />
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            <span className="rounded-lg bg-slate-100 dark:bg-ink-800 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-ink-200">
               Applied {formatDateOnly(application.date_applied, 'Unknown')}
             </span>
             {application.office_location || application.location ? (
-              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+              <span className="rounded-lg bg-slate-100 dark:bg-ink-800 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-ink-200">
                 {application.office_location || application.location}
               </span>
             ) : null}
@@ -133,7 +137,7 @@ const MobileApplicationCard = ({
               employmentTypes={employmentTypes}
             />
             {application.is_locked ? (
-              <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+              <span className="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
                 Locked
               </span>
             ) : null}

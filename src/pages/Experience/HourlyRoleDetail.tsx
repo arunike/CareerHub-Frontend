@@ -60,9 +60,11 @@ const HourlyRoleDetail = ({
   return (
     <div className="space-y-3">
       {isMultiPhase ? (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 mt-4 space-y-3">
-          <h3 className="text-sm font-semibold text-emerald-900">Multi-Phase Schedule Active</h3>
-          <p className="text-sm text-emerald-700 leading-relaxed">
+        <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/10 p-5 mt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+            Multi-Phase Schedule Active
+          </h3>
+          <p className="text-sm text-emerald-700 dark:text-emerald-300 leading-relaxed">
             The compensation for this role is being calculated across multiple schedule phases.
             Inline editing of hours and rates is disabled to protect your complex schedule tracking.
           </p>
@@ -79,18 +81,18 @@ const HourlyRoleDetail = ({
       ) : (
         <>
           {openSchedulePhases && (
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
+            <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-500/10 p-4 space-y-3">
               <div>
-                <div className="text-sm font-semibold text-emerald-900">
+                <div className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
                   Need a multi-phase schedule?
                 </div>
-                <div className="mt-1 text-sm text-emerald-700 leading-relaxed">
+                <div className="mt-1 text-sm text-emerald-700 dark:text-emerald-300 leading-relaxed">
                   Split this internship into phases when your dates, pay rate, or weekly schedule
                   changed over time.
                 </div>
               </div>
               <Button
-                className="border-emerald-200 text-emerald-700 hover:!border-emerald-300 hover:!text-emerald-800"
+                className="border-emerald-200 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300 hover:!border-emerald-300 dark:hover:!border-emerald-500/30 hover:!text-emerald-800 dark:hover:!text-emerald-200"
                 onClick={openSchedulePhases}
               >
                 Set Up Multi-Phase Schedule
@@ -183,7 +185,7 @@ const HourlyRoleDetail = ({
           <Button
             type="dashed"
             block
-            className="h-10 text-gray-400 hover:text-gray-600 border-gray-200"
+            className="h-10 text-gray-400 dark:text-ink-500 hover:text-gray-600 border-gray-200 dark:border-white/[0.08]"
             onClick={() => setShowOverrides(true)}
           >
             {advancedOptionsCta}
@@ -248,7 +250,7 @@ const HourlyRoleDetail = ({
             <Button
               type="text"
               size="small"
-              className="text-gray-400 hover:text-gray-600 mb-1"
+              className="text-gray-400 dark:text-ink-500 hover:text-gray-600 mb-1"
               onClick={() => setShowOverrides(false)}
             >
               Hide Advanced Options

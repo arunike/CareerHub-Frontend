@@ -29,7 +29,7 @@ const UpcomingEventRows = ({ dismissEvent, otherUpcoming, setViewingEvent }: Pro
             aria-label={`Dismiss ${event.name}`}
             title="Dismiss"
             // Always visible: a hover-only control is unreachable on a touch screen.
-            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-100 hover:text-slate-600"
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-ink-600 transition hover:bg-slate-100 hover:text-slate-600"
           >
             <CloseOutlined className="text-[11px]" />
           </button>
@@ -39,22 +39,26 @@ const UpcomingEventRows = ({ dismissEvent, otherUpcoming, setViewingEvent }: Pro
             className="block w-full p-3 pr-10 text-left transition-colors hover:bg-gray-50"
           >
             <div className="flex justify-between items-start gap-2">
-              <span className="font-medium text-sm text-gray-900 line-clamp-1">{event.name}</span>
+              <span className="font-medium text-sm text-gray-900 dark:text-ink-50 line-clamp-1">
+                {event.name}
+              </span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                   isToday(eventDate)
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'bg-gray-100 dark:bg-ink-800 text-gray-600 dark:text-ink-200'
                 }`}
               >
                 {dayLabel}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500 dark:text-ink-400">
               <ClockCircleOutlined className="text-xs" />
               <span>{timeLabel}</span>
               <span>•</span>
-              <span className="font-medium text-slate-600">{countdownLabel(event.date)}</span>
+              <span className="font-medium text-slate-600 dark:text-ink-200">
+                {countdownLabel(event.date)}
+              </span>
               {event.category_details && (
                 <>
                   <span>•</span>

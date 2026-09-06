@@ -29,7 +29,9 @@ export const getTypeDisplay = (value: string, empTypes: EmploymentType[]) => {
   return {
     label: type?.label ?? value,
     dot: DOT_CLASSES[type?.color ?? 'gray'] ?? 'bg-gray-400',
-    badge: BADGE_CLASSES[type?.color ?? 'gray'] ?? 'bg-gray-50 text-gray-700 border-gray-200',
+    badge:
+      BADGE_CLASSES[type?.color ?? 'gray'] ??
+      'bg-gray-50 dark:bg-ink-900 text-gray-700 dark:text-ink-100 border-gray-200 dark:border-white/[0.08]',
   };
 };
 

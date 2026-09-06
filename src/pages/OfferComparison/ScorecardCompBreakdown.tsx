@@ -37,7 +37,7 @@ const ScorecardCompBreakdown = ({
   scenarioRows,
   showDeltas,
 }: Props) => (
-  <div className="mb-6 rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm">
+  <div className="mb-6 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 overflow-hidden shadow-sm">
     <button
       type="button"
       onClick={() => toggleOfferDetails(row.id)}
@@ -45,14 +45,14 @@ const ScorecardCompBreakdown = ({
       className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
     >
       <span>
-        <span className="block text-xs font-semibold text-slate-800">
+        <span className="block text-xs font-semibold text-slate-800 dark:text-ink-50">
           Compensation & benefits details
         </span>
-        <span className="mt-0.5 block text-[10px] text-slate-500">
+        <span className="mt-0.5 block text-[10px] text-slate-500 dark:text-ink-400">
           Cash, taxes, health insurance, retirement, and full time-off breakdown
         </span>
       </span>
-      <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-sky-700">
+      <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-sky-700 dark:text-sky-300">
         {!collapsedDetailIds.has(row.id) ? 'Hide' : 'View'}
         {!collapsedDetailIds.has(row.id) ? (
           <DownOutlined className="text-[10px]" />
@@ -63,18 +63,18 @@ const ScorecardCompBreakdown = ({
     </button>
 
     {!collapsedDetailIds.has(row.id) && (
-      <div className="border-t border-slate-100 bg-slate-50/30 px-4 py-4 sm:px-6 sm:py-5">
+      <div className="border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/30 dark:bg-ink-900/30 px-4 py-4 sm:px-6 sm:py-5">
         <div className="grid grid-cols-2 gap-x-6 gap-y-4">
           <div>
             <HelpTooltipTrigger
               title="Your fixed annual salary before tax, the main guaranteed component of compensation. The after-tax amount applies your estimated tax rate."
               ariaLabel="Explain base salary"
               density="comfortable"
-              className="text-xs font-medium text-slate-500"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
             >
               Base Salary
             </HelpTooltipTrigger>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
               ${Number(row.offer.base_salary).toLocaleString()}
             </div>
             {showDeltas && currentOffer && baselineLabel && (
@@ -84,7 +84,7 @@ const ScorecardCompBreakdown = ({
                 baselineLabel={baselineLabel}
               />
             )}
-            <div className="text-[10px] text-slate-400">
+            <div className="text-[10px] text-slate-400 dark:text-ink-500">
               After tax: $
               {Math.round(
                 adjustedByOfferId[Number(row.offer.id)]?.afterTaxBase || 0
@@ -96,11 +96,11 @@ const ScorecardCompBreakdown = ({
               title="Annual performance bonus, typically a percentage of base and treated as a target amount. The after-tax estimate uses the supplemental bonus rate."
               ariaLabel="Explain annual bonus"
               density="comfortable"
-              className="text-xs font-medium text-slate-500"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
             >
               Bonus
             </HelpTooltipTrigger>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
               ${Number(row.offer.bonus).toLocaleString()}
             </div>
             {showDeltas && currentOffer && baselineLabel && (
@@ -110,7 +110,7 @@ const ScorecardCompBreakdown = ({
                 baselineLabel={baselineLabel}
               />
             )}
-            <div className="text-[10px] text-slate-400">
+            <div className="text-[10px] text-slate-400 dark:text-ink-500">
               After tax: $
               {Math.round(
                 adjustedByOfferId[Number(row.offer.id)]?.afterTaxBonus || 0
@@ -122,11 +122,11 @@ const ScorecardCompBreakdown = ({
               title="Annualized grant value. Financial scoring counts the full value when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable. Tax applies only to the realizable amount."
               ariaLabel="Explain annual equity"
               density="comfortable"
-              className="text-xs font-medium text-slate-500"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
             >
               Equity / Yr
             </HelpTooltipTrigger>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
               ${Number(row.offer.equity).toLocaleString()}
             </div>
             {showDeltas && currentOffer && baselineLabel && (
@@ -145,10 +145,10 @@ const ScorecardCompBreakdown = ({
                 ? simulatedMetrics?.afterTaxEquity
                 : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
               return (
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[10px] text-slate-500 dark:text-ink-400">
                   {liquidity.label} · {liquidity.detail}
                   {liquidity.realizable > 0 && (
-                    <span className="block text-slate-400">
+                    <span className="block text-slate-400 dark:text-ink-500">
                       After tax: ${Math.round(afterTax || 0).toLocaleString()}
                     </span>
                   )}
@@ -161,11 +161,11 @@ const ScorecardCompBreakdown = ({
               title="One-time signing bonus paid when you join. Often subject to a clawback period (typically 1–2 years)."
               ariaLabel="Explain sign-on bonus"
               density="comfortable"
-              className="text-xs font-medium text-slate-500"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
             >
               Sign-On
             </HelpTooltipTrigger>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
               ${Number(row.offer.sign_on).toLocaleString()}
             </div>
             {showDeltas && currentOffer && baselineLabel && (
@@ -185,7 +185,7 @@ const ScorecardCompBreakdown = ({
               const schedule = (row.offer.sign_on_schedule || []).map(Number);
               const paidYears = schedule.filter((amount) => amount > 0).length;
               return (
-                <div className="text-[10px] text-slate-400">
+                <div className="text-[10px] text-slate-400 dark:text-ink-500">
                   {paidYears > 1
                     ? `Over ${paidYears} years · ${schedule
                         .filter((amount) => amount > 0)
@@ -207,14 +207,14 @@ const ScorecardCompBreakdown = ({
                 title="One-time relocation or signing perk cash value. The after-tax estimate uses the supplemental W2 bonus rate."
                 ariaLabel="Explain relocation perk"
                 density="comfortable"
-                className="text-xs font-medium text-slate-500"
+                className="text-xs font-medium text-slate-500 dark:text-ink-400"
               >
                 Relocation Perk
               </HelpTooltipTrigger>
-              <div className="text-sm font-bold text-slate-900">
+              <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
                 ${Number(row.offer.relocation_bonus).toLocaleString()}
               </div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-[10px] text-slate-400 dark:text-ink-500">
                 After tax: $
                 {Math.round(
                   adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
@@ -224,34 +224,34 @@ const ScorecardCompBreakdown = ({
           )}
 
           {/* Health Insurance & 401(k) Match Sub-section */}
-          <div className="col-span-2 pt-2 border-t border-slate-100">
+          <div className="col-span-2 pt-2 border-t border-slate-100 dark:border-white/[0.07]">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <HelpTooltipTrigger
                   title="Monthly premium and annual HSA contribution details."
                   ariaLabel="Explain health insurance"
                   density="comfortable"
-                  className="text-xs font-medium text-slate-500"
+                  className="text-xs font-medium text-slate-500 dark:text-ink-400"
                 >
                   Health Insurance
                 </HelpTooltipTrigger>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
                   {Number(row.offer.health_premium_monthly || 0) > 0
                     ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
                     : 'Free Premium'}
                 </div>
                 {row.offer.health_plan_type && (
-                  <div className="text-[10px] text-slate-500 font-medium">
+                  <div className="text-[10px] text-slate-500 dark:text-ink-400 font-medium">
                     Type: {row.offer.health_plan_type}
                   </div>
                 )}
                 {Number(row.offer.health_oop_max || 0) > 0 && (
-                  <div className="text-[10px] text-slate-400">
+                  <div className="text-[10px] text-slate-400 dark:text-ink-500">
                     OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
                   </div>
                 )}
                 {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
-                  <div className="text-[10px] text-emerald-600 font-semibold">
+                  <div className="text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold">
                     HSA Match: +$
                     {Number(row.offer.hsa_employer_contribution).toLocaleString()}
                     /yr
@@ -263,11 +263,11 @@ const ScorecardCompBreakdown = ({
                   title="401(k) Employer retirement match percentage and max contribution matched."
                   ariaLabel="Explain 401(k) matching"
                   density="comfortable"
-                  className="text-xs font-medium text-slate-500"
+                  className="text-xs font-medium text-slate-500 dark:text-ink-400"
                 >
                   401(k) Matching
                 </HelpTooltipTrigger>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
                   {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
                   Number(row.offer.forty_one_k_max_match || 0) > 0
                     ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
@@ -275,7 +275,7 @@ const ScorecardCompBreakdown = ({
                 </div>
                 {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
                   Number(row.offer.forty_one_k_max_match || 0) > 0 && (
-                    <div className="text-[10px] text-emerald-600 font-semibold">
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold">
                       Match Value: +$
                       {Math.round(
                         Number(row.offer.base_salary) *

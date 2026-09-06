@@ -37,10 +37,10 @@ const ModalShell = ({
   maxWidthClass = 'max-w-lg',
   bodyClassName = 'flex-1 min-h-0 overflow-y-auto',
   wrapperClassName = '',
-  headerClassName = 'flex items-center justify-between border-b border-slate-200/80 bg-slate-50/80 px-4 py-4 sm:px-6',
-  titleClassName = 'font-semibold tracking-[-0.01em] text-base sm:text-lg text-slate-950',
-  closeButtonClassName = 'inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 sm:h-10 sm:w-10',
-  footerClassName = 'flex flex-col-reverse justify-end gap-3 border-t border-slate-200/80 bg-slate-50/80 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:flex-row sm:px-6 sm:py-4',
+  headerClassName = 'flex items-center justify-between border-b border-slate-200/80 dark:border-white/[0.08] bg-slate-50/80 dark:bg-ink-900/80 px-4 py-4 sm:px-6',
+  titleClassName = 'font-semibold tracking-[-0.01em] text-base sm:text-lg text-slate-950 dark:text-ink-50',
+  closeButtonClassName = 'inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 dark:text-ink-500 transition hover:bg-slate-100 hover:text-slate-600 sm:h-10 sm:w-10',
+  footerClassName = 'flex flex-col-reverse justify-end gap-3 border-t border-slate-200/80 dark:border-white/[0.08] bg-slate-50/80 dark:bg-ink-900/80 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:flex-row sm:px-6 sm:py-4',
   zIndex = 1100,
   footer,
   mobileExpandable = true,
@@ -199,7 +199,7 @@ const ModalShell = ({
     >
       <div
         ref={dialogRef}
-        className={`careerhub-modal-shell mt-auto flex w-full min-h-0 flex-col overflow-hidden border-slate-200/80 bg-white shadow-[0_28px_80px_-44px_rgba(15,23,42,0.72)] max-h-[92dvh] rounded-t-[24px] border sm:static sm:inset-auto sm:mt-0 sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:border ${maxWidthClass} ${wrapperClassName}`.trim()}
+        className={`careerhub-modal-shell mt-auto flex w-full min-h-0 flex-col overflow-hidden border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-[0_28px_80px_-44px_rgba(15,23,42,0.72)] max-h-[92dvh] rounded-t-[24px] border sm:static sm:inset-auto sm:mt-0 sm:h-auto sm:max-h-[90vh] sm:rounded-xl sm:border ${maxWidthClass} ${wrapperClassName}`.trim()}
         onClick={(event) => event.stopPropagation()}
         onKeyDown={handleDialogKeyDown}
         role="dialog"

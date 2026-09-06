@@ -31,7 +31,7 @@ const FederalHolidayModal = ({
     okText={isFederalRangeMode ? 'Add Range' : 'Add time off'}
   >
     <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={federalForm} layout="vertical">
-      <div className="mb-4 text-gray-500 text-sm">
+      <div className="mb-4 text-gray-500 dark:text-ink-400 text-sm">
         Add a company holiday, wellness day, or another shared day off as one date or a continuous
         range.
       </div>
@@ -45,7 +45,7 @@ const FederalHolidayModal = ({
               nextIsRange ? { date: undefined } : { dateRange: undefined }
             );
           }}
-          wrapperClassName="w-full rounded-xl bg-gray-100 p-1"
+          wrapperClassName="w-full rounded-xl bg-gray-100 dark:bg-ink-800 p-1"
           buttonClassName="flex-1 justify-center px-4 py-2.5"
           options={[
             { value: 'single', label: 'Single Day' },

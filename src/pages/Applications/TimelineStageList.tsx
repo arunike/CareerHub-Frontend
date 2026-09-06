@@ -40,7 +40,7 @@ const TimelineStageList = ({
   drafts,
 }: Props) => (
   <div className="space-y-5">
-    <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4">
+    <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-slate-50/70 dark:bg-ink-900/70 px-4 py-4">
       <div className="flex min-w-full w-max items-center justify-center gap-2">
         {activeStages.map((stage: DisplayStage, index: number) => {
           const draft = drafts[stage.key] || emptyDraft();
@@ -73,7 +73,9 @@ const TimelineStageList = ({
                   </div>
                   <div
                     className={`max-w-[90px] truncate text-center text-[11px] font-semibold ${
-                      isCurrent ? 'text-slate-950' : 'text-slate-500'
+                      isCurrent
+                        ? 'text-slate-950 dark:text-ink-50'
+                        : 'text-slate-500 dark:text-ink-400'
                     }`}
                   >
                     {hasCustomTitle ? displayTitle : stage.shortLabel || stage.label}
@@ -90,7 +92,7 @@ const TimelineStageList = ({
     </div>
 
     <div className="relative pl-8">
-      <div className="absolute bottom-2 left-[11px] top-2 w-px bg-slate-100" />
+      <div className="absolute bottom-2 left-[11px] top-2 w-px bg-slate-100 dark:bg-ink-800" />
       {activeStages.map((stage: DisplayStage, index: number) => {
         const draft = drafts[stage.key] || emptyDraft();
         const isCurrent = application?.status === stage.key;
@@ -122,12 +124,12 @@ const TimelineStageList = ({
             </div>
 
             <div
-              className={`rounded-xl border bg-white transition-shadow duration-150 ${
+              className={`rounded-xl border bg-white dark:bg-ink-900 transition-shadow duration-150 ${
                 isFocused
-                  ? 'border-blue-200 shadow-lg shadow-blue-100/70 ring-2 ring-blue-100'
+                  ? 'border-blue-200 dark:border-blue-500/25 shadow-lg shadow-blue-100/70 ring-2 ring-blue-100 dark:ring-blue-500/20'
                   : isCurrent
-                    ? 'border-slate-200 shadow-md shadow-slate-100'
-                    : 'border-slate-100 hover:shadow-sm'
+                    ? 'border-slate-200 dark:border-white/[0.08] shadow-md shadow-slate-100'
+                    : 'border-slate-100 dark:border-white/[0.07] hover:shadow-sm'
               } ${isLast ? 'mb-0' : 'mb-2'}`}
             >
               <div className="flex items-center justify-between gap-4 px-4 pt-3.5">
@@ -166,7 +168,7 @@ const TimelineStageList = ({
                     variant="borderless"
                     inputReadOnly
                     suffixIcon={<CalendarOutlined />}
-                    className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600"
+                    className="!-mr-1 shrink-0 !text-xs [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-input>input]:!text-slate-600 dark:!text-ink-200"
                     format="MMM D, YYYY"
                   />
                   {draft.id && (
@@ -186,7 +188,7 @@ const TimelineStageList = ({
                           aria-label={`Remove ${draft.title || stage.label} timeline entry`}
                           icon={<DeleteOutlined />}
                           loading={deletingStageKey === stage.key}
-                          className="!h-7 !w-7 !rounded-lg !text-slate-300 hover:!text-rose-500"
+                          className="!h-7 !w-7 !rounded-lg !text-slate-300 dark:!text-ink-600 hover:!text-rose-500 dark:hover:!text-rose-400"
                         />
                       </Tooltip>
                     </Popconfirm>
@@ -196,14 +198,14 @@ const TimelineStageList = ({
                       type="text"
                       size="small"
                       icon={<CloseOutlined />}
-                      className="!h-7 !w-7 !rounded-lg !text-slate-300 hover:!text-rose-500"
+                      className="!h-7 !w-7 !rounded-lg !text-slate-300 dark:!text-ink-600 hover:!text-rose-500 dark:hover:!text-rose-400"
                       onClick={() => handleRemoveAddedStage(stage.key)}
                     />
                   )}
                 </div>
               </div>
 
-              <div className="mx-4 mt-2 h-px bg-slate-50" />
+              <div className="mx-4 mt-2 h-px bg-slate-50 dark:bg-ink-900" />
 
               <div className="px-3 pb-3 pt-2">
                 <Input.TextArea
@@ -212,7 +214,7 @@ const TimelineStageList = ({
                   placeholder={`Notes for ${(draft.title || stage.label).toLowerCase()}…`}
                   autoSize={{ minRows: 1, maxRows: 5 }}
                   variant="borderless"
-                  className="!px-1 !text-sm !text-slate-600 placeholder:!text-slate-300"
+                  className="!px-1 !text-sm !text-slate-600 dark:!text-ink-200 placeholder:!text-slate-300 dark:!text-ink-600"
                 />
               </div>
             </div>

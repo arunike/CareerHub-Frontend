@@ -107,9 +107,11 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
     >
       <div className="space-y-5 pt-1">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+            Repeat
+          </label>
           <select
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-white/[0.12] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={frequency}
             onChange={(e) =>
               setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly')
@@ -123,7 +125,9 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+            Every
+          </label>
           <div className="flex items-center gap-3">
             <UnitNumberInput
               min={1}
@@ -132,7 +136,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
               value={intervalValue === '' ? null : Number(intervalValue)}
               onChange={(value) => setIntervalValue(value == null ? '' : String(value))}
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-700 dark:text-ink-100">
               {frequency === 'daily' && (Number(intervalValue) === 1 ? 'day' : 'days')}
               {frequency === 'weekly' && (Number(intervalValue) === 1 ? 'week' : 'weeks')}
               {frequency === 'monthly' && (Number(intervalValue) === 1 ? 'month' : 'months')}
@@ -143,7 +147,9 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
 
         {frequency === 'weekly' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Repeat on</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-2">
+              Repeat on
+            </label>
             <div className="flex gap-2">
               {weekDays.map((day) => (
                 <button
@@ -154,7 +160,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors',
                     selectedDays.includes(day.value)
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-ink-800 text-gray-700 dark:text-ink-100 hover:bg-gray-200'
                   )}
                 >
                   {day.label}
@@ -165,7 +171,9 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Ends</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-2">
+            Ends
+          </label>
           <div className="space-y-2">
             <label className="flex items-center gap-3 px-2 py-1 rounded">
               <input
@@ -174,7 +182,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                 checked={endType === 'never'}
                 onChange={() => setEndType('never')}
               />
-              <span className="text-sm text-gray-700">Never</span>
+              <span className="text-sm text-gray-700 dark:text-ink-100">Never</span>
             </label>
 
             <label className="flex items-center gap-3 px-2 py-1 rounded">
@@ -184,7 +192,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                 checked={endType === 'count'}
                 onChange={() => setEndType('count')}
               />
-              <span className="text-sm text-gray-700">After</span>
+              <span className="text-sm text-gray-700 dark:text-ink-100">After</span>
               <UnitNumberInput
                 min={1}
                 max={999}
@@ -194,7 +202,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                 onChange={(value) => setCountValue(value == null ? '' : String(value))}
                 onFocus={() => setEndType('count')}
               />
-              <span className="text-sm text-gray-700">occurrences</span>
+              <span className="text-sm text-gray-700 dark:text-ink-100">occurrences</span>
             </label>
 
             <label className="flex items-center gap-3 px-2 py-1 rounded">
@@ -204,11 +212,11 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                 checked={endType === 'until'}
                 onChange={() => setEndType('until')}
               />
-              <span className="text-sm text-gray-700">On</span>
+              <span className="text-sm text-gray-700 dark:text-ink-100">On</span>
               <input
                 type="date"
                 disabled={endType !== 'until'}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                className="flex-1 rounded-lg border border-gray-300 dark:border-white/[0.12] px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                 value={until}
                 onChange={(e) => setUntil(e.target.value)}
                 onFocus={() => setEndType('until')}

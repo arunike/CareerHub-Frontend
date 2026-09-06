@@ -311,13 +311,15 @@ const ContactsPage = () => {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-5">
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
+      <header className="flex flex-col gap-4 border-b border-slate-200 dark:border-white/[0.08] pb-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
             Career relationships
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Contacts</h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-500">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 dark:text-ink-50">
+            Contacts
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-ink-400">
             People you met while applying and the relationships that continued into your work.
           </p>
         </div>
@@ -336,7 +338,7 @@ const ContactsPage = () => {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <Input
           allowClear
-          prefix={<SearchOutlined className="text-slate-400" />}
+          prefix={<SearchOutlined className="text-slate-400 dark:text-ink-500" />}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           onPressEnter={focusSearchResult}
@@ -347,20 +349,20 @@ const ContactsPage = () => {
         <SegmentedToggle
           value={view}
           onChange={setView}
-          wrapperClassName="rounded-xl border border-slate-200 bg-white p-1"
+          wrapperClassName="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-1"
           buttonClassName="px-3.5 py-1.5"
           options={[
             {
               value: 'list',
               label: 'List',
               icon: <BarsOutlined />,
-              activeClassName: 'bg-blue-50 text-blue-700',
+              activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
             },
             {
               value: 'network',
               label: 'Network',
               icon: <ApartmentOutlined />,
-              activeClassName: 'bg-blue-50 text-blue-700',
+              activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
             },
           ]}
         />
@@ -404,7 +406,7 @@ const ContactsPage = () => {
             ]}
           />
         )}
-        <span className="ml-auto text-xs text-slate-400">
+        <span className="ml-auto text-xs text-slate-400 dark:text-ink-500">
           {filteredContacts.length} {filteredContacts.length === 1 ? 'person' : 'people'}
         </span>
       </div>
@@ -506,7 +508,7 @@ const ContactsPage = () => {
         onOk={merge}
         onCancel={() => setMergeContact(null)}
       >
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-slate-500 dark:text-ink-400">
           Linked applications, notes, and relationships will be kept on {mergeContact?.name}.
         </p>
         <Select

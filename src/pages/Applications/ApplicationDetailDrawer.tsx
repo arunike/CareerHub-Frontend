@@ -38,8 +38,8 @@ const RichNotesEditor = lazy(() => import('./RichNotesEditor'));
 const RichNotesFallback = () => (
   <div className="space-y-3 py-4" aria-busy="true" aria-label="Loading notes editor">
     <div className="shimmer-bg h-3 w-24 rounded-full" />
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="flex gap-2 border-b border-slate-100 px-3 py-2">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900">
+      <div className="flex gap-2 border-b border-slate-100 dark:border-white/[0.07] px-3 py-2">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="shimmer-bg h-8 w-8 rounded-md" />
         ))}
@@ -300,7 +300,9 @@ const ApplicationDetailDrawer = ({
                 children: (
                   <>
                     <div className="mb-4 flex items-center justify-between gap-2">
-                      <p className="text-sm text-slate-500">Files linked to this application.</p>
+                      <p className="text-sm text-slate-500 dark:text-ink-400">
+                        Files linked to this application.
+                      </p>
                       <Button
                         size="small"
                         icon={<UploadOutlined />}
@@ -314,7 +316,7 @@ const ApplicationDetailDrawer = ({
                       <Empty
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                         description={
-                          <span className="text-sm text-slate-400">
+                          <span className="text-sm text-slate-400 dark:text-ink-500">
                             No documents linked to this application yet.
                           </span>
                         }
@@ -325,7 +327,7 @@ const ApplicationDetailDrawer = ({
                         dataSource={linkedDocuments}
                         renderItem={(documentRecord) => (
                           <List.Item
-                            className="!rounded-xl !border !border-slate-200 !px-4 !py-3 hover:!border-sky-200 hover:!bg-sky-50/30"
+                            className="!rounded-xl !border !border-slate-200 dark:!border-white/[0.08] !px-4 !py-3 hover:!border-sky-200 dark:hover:!border-sky-500/25 hover:!bg-sky-50/30 dark:hover:!bg-sky-500/10"
                             actions={[
                               <Button
                                 key="submitted"
@@ -333,8 +335,8 @@ const ApplicationDetailDrawer = ({
                                 type={submittedIds.has(documentRecord.id) ? 'default' : 'text'}
                                 className={
                                   submittedIds.has(documentRecord.id)
-                                    ? '!border-emerald-200 !bg-emerald-50 !text-emerald-700'
-                                    : '!text-slate-400'
+                                    ? '!border-emerald-200 dark:!border-emerald-500/25 !bg-emerald-50 dark:!bg-emerald-500/10 !text-emerald-700 dark:!text-emerald-300'
+                                    : '!text-slate-400 dark:!text-ink-500'
                                 }
                                 onClick={() => toggleSubmitted(documentRecord.id)}
                                 title={
@@ -359,15 +361,17 @@ const ApplicationDetailDrawer = ({
                             ]}
                           >
                             <List.Item.Meta
-                              avatar={<FileTextOutlined className="text-base text-slate-500" />}
+                              avatar={
+                                <FileTextOutlined className="text-base text-slate-500 dark:text-ink-400" />
+                              }
                               title={
-                                <span className="font-semibold text-slate-900">
+                                <span className="font-semibold text-slate-900 dark:text-ink-50">
                                   {documentRecord.title}
                                 </span>
                               }
                               description={
                                 <span
-                                  className="cursor-pointer text-sky-500 hover:underline"
+                                  className="cursor-pointer text-sky-500 dark:text-sky-400 hover:underline"
                                   onClick={() => openDocument(documentRecord)}
                                 >
                                   {documentRecord.file_name || documentRecord.document_type}

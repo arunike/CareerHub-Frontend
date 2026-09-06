@@ -47,10 +47,10 @@ const UpcomingEvents: React.FC = () => {
   if (events.length === 0) {
     return (
       <div className="mt-6 px-4">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+        <h3 className="text-xs font-semibold text-gray-400 dark:text-ink-500 uppercase tracking-wider mb-2">
           Upcoming
         </h3>
-        <p className="text-sm text-gray-500 italic">No upcoming events.</p>
+        <p className="text-sm text-gray-500 dark:text-ink-400 italic">No upcoming events.</p>
       </div>
     );
   }
@@ -59,8 +59,10 @@ const UpcomingEvents: React.FC = () => {
     <div className="mt-6 px-4">
       {contextHolder}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Upcoming</h3>
-        <Link to="/events" className="text-xs text-blue-600 hover:text-blue-800">
+        <h3 className="text-xs font-semibold text-gray-400 dark:text-ink-500 uppercase tracking-wider">
+          Upcoming
+        </h3>
+        <Link to="/events" className="text-xs text-blue-600 dark:text-blue-300 hover:text-blue-800">
           View all
         </Link>
       </div>
@@ -75,18 +77,20 @@ const UpcomingEvents: React.FC = () => {
           return (
             <div
               key={event.id}
-              className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-gray-50 dark:bg-ink-900 rounded-lg p-2.5 border border-gray-100 dark:border-white/[0.07] shadow-sm hover:shadow-md transition-shadow"
             >
               <Tooltip title={event.name} mouseEnterDelay={0}>
-                <div className="font-medium text-sm text-gray-900 truncate">{event.name}</div>
+                <div className="font-medium text-sm text-gray-900 dark:text-ink-50 truncate">
+                  {event.name}
+                </div>
               </Tooltip>
               <div className="flex items-center gap-2 mt-1.5">
                 <div
-                  className={`text-xs px-1.5 py-0.5 rounded ${isToday(eventDate) ? 'bg-green-100 text-green-700 font-medium' : 'bg-white text-gray-500 border border-gray-200'}`}
+                  className={`text-xs px-1.5 py-0.5 rounded ${isToday(eventDate) ? 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-300 font-medium' : 'bg-white dark:bg-ink-900 text-gray-500 dark:text-ink-400 border border-gray-200 dark:border-white/[0.08]'}`}
                 >
                   {dateLabel}
                 </div>
-                <div className="flex items-center text-xs text-gray-500">
+                <div className="flex items-center text-xs text-gray-500 dark:text-ink-400">
                   <ClockCircleOutlined className="text-xs mr-1" />
                   {format(new Date(`2000-01-01T${event.start_time}`), 'h:mm a')}
                 </div>

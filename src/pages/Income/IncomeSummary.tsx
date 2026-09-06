@@ -31,7 +31,9 @@ const LEGEND = [
 ] as const;
 
 const Meta = ({ children }: { children: React.ReactNode }) => (
-  <span className="flex items-center gap-1.5 text-xs text-slate-500">{children}</span>
+  <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-ink-400">
+    {children}
+  </span>
 );
 
 export const IncomeSummary = ({
@@ -62,34 +64,38 @@ export const IncomeSummary = ({
 
   return (
     <div className="enterprise-card overflow-hidden">
-      <div className="bg-gradient-to-br from-slate-50 to-white px-6 py-6">
+      <div className="bg-gradient-to-br from-slate-50 dark:from-ink-900 to-white dark:to-ink-900 px-6 py-6">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
                 {source?.company ?? 'No role'}
               </span>
               {source?.roleTitle ? (
-                <span className="truncate text-[11px] uppercase tracking-wider text-slate-400">
+                <span className="truncate text-[11px] uppercase tracking-wider text-slate-400 dark:text-ink-500">
                   · {source.roleTitle}
                 </span>
               ) : null}
               {source && !source.isCurrent ? (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <span className="rounded-full bg-slate-100 dark:bg-ink-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                   Past role
                 </span>
               ) : null}
             </div>
 
-            <p className="mt-3 text-xs font-medium text-slate-500">Take-home in {taxYear}</p>
+            <p className="mt-3 text-xs font-medium text-slate-500 dark:text-ink-400">
+              Take-home in {taxYear}
+            </p>
             <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-4xl font-semibold leading-none tracking-tight text-slate-900 tabular-nums">
+              <span className="text-4xl font-semibold leading-none tracking-tight text-slate-900 dark:text-ink-50 tabular-nums">
                 {money(totals.net)}
               </span>
-              <span className="text-sm text-slate-500">of {money(totals.gross)} gross</span>
+              <span className="text-sm text-slate-500 dark:text-ink-400">
+                of {money(totals.gross)} gross
+              </span>
             </div>
             {/* Gross is more than salary, so name the parts rather than leave them to be inferred. */}
-            <p className="mt-1.5 text-xs text-slate-500">
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-ink-400">
               Gross = salary {money(salary)}
               {totals.supplemental > 0 && ` + bonus and equity ${money(totals.supplemental)}`}
               {totals.taxableAllowance > 0 && ` + allowances ${money(totals.taxableAllowance)}`}
@@ -97,10 +103,10 @@ export const IncomeSummary = ({
           </div>
 
           <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               Role
               <Tooltip title="Every role from your Experience page is listed here, alongside your current offer.">
-                <InfoCircleOutlined className="text-slate-300" />
+                <InfoCircleOutlined className="text-slate-300 dark:text-ink-600" />
               </Tooltip>
             </span>
             <Select
@@ -112,7 +118,7 @@ export const IncomeSummary = ({
           </div>
         </div>
 
-        <div className="mt-6 flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-6 flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
           {LEGEND.map((item) =>
             shares[item.key] > 0.002 ? (
               <div
@@ -126,10 +132,13 @@ export const IncomeSummary = ({
 
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
           {LEGEND.map((item) => (
-            <span key={item.key} className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span
+              key={item.key}
+              className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-ink-400"
+            >
               <span className={`h-1.5 w-1.5 rounded-full ${item.tone}`} />
               {item.label}
-              <span className="font-medium tabular-nums text-slate-700">
+              <span className="font-medium tabular-nums text-slate-700 dark:text-ink-100">
                 {(shares[item.key] * 100).toFixed(0)}%
               </span>
             </span>
@@ -137,18 +146,24 @@ export const IncomeSummary = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 bg-white px-6 py-3">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 px-6 py-3">
         <Meta>
-          <span className="font-medium text-slate-700">{totals.count}</span> of {paychecksPerYear}{' '}
-          paychecks paid
+          <span className="font-medium text-slate-700 dark:text-ink-100">{totals.count}</span> of{' '}
+          {paychecksPerYear} paychecks paid
         </Meta>
         {window ? <Meta>{window}</Meta> : null}
         <Meta>
-          <span className="font-medium text-slate-700">{(rates.calculated * 100).toFixed(1)}%</span>{' '}
+          <span className="font-medium text-slate-700 dark:text-ink-100">
+            {(rates.calculated * 100).toFixed(1)}%
+          </span>{' '}
           effective tax rate
           {rates.actual !== null ? (
             <span
-              className={rates.actual > rates.calculated ? 'text-rose-600' : 'text-emerald-600'}
+              className={
+                rates.actual > rates.calculated
+                  ? 'text-rose-600 dark:text-rose-300'
+                  : 'text-emerald-600 dark:text-emerald-300'
+              }
             >
               {' '}
               · {(rates.actual * 100).toFixed(1)}% on {rates.comparedCount} recorded

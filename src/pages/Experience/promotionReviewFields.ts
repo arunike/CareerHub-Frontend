@@ -113,7 +113,9 @@ export const buildDefaultPromotionContext = (experience: Experience): PromotionR
 
 export const checklistToneClass = (status?: string) => {
   const normalized = (status || '').toLowerCase();
-  if (normalized.includes('strong')) return 'border-emerald-100 bg-emerald-50 text-emerald-900';
-  if (normalized.includes('partial')) return 'border-amber-100 bg-amber-50 text-amber-950';
-  return 'border-slate-200 bg-slate-50 text-slate-700';
+  if (normalized.includes('strong'))
+    return 'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-200';
+  if (normalized.includes('partial'))
+    return 'border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-950';
+  return 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-700 dark:text-ink-100';
 };

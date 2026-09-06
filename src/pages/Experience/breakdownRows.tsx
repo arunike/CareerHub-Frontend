@@ -12,16 +12,16 @@ export const EditNotice = ({
   actionLabel: string;
   onEdit: () => void;
 }) => (
-  <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+  <div className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-blue-50/70 dark:bg-blue-500/10 px-4 py-3">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-gray-900">{title}</div>
-        <div className="mt-1 text-sm text-gray-500 leading-relaxed">{hint}</div>
+        <div className="text-sm font-semibold text-gray-900 dark:text-ink-50">{title}</div>
+        <div className="mt-1 text-sm text-gray-500 dark:text-ink-400 leading-relaxed">{hint}</div>
       </div>
       <button
         type="button"
         onClick={onEdit}
-        className="shrink-0 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
+        className="shrink-0 rounded-full border border-blue-200 dark:border-blue-500/25 bg-white dark:bg-ink-900 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:bg-blue-100"
       >
         {actionLabel}
       </button>
@@ -66,14 +66,14 @@ export const MetricSection = ({
   hint?: string;
   children: React.ReactNode;
 }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+  <div className="rounded-2xl border border-gray-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 p-4 shadow-sm">
     <div className="pb-2">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-ink-500">
         {title}
       </div>
-      {hint && <div className="mt-1 text-sm text-gray-500">{hint}</div>}
+      {hint && <div className="mt-1 text-sm text-gray-500 dark:text-ink-400">{hint}</div>}
     </div>
-    <div className="divide-y divide-gray-100">{children}</div>
+    <div className="divide-y divide-gray-100 dark:divide-white/[0.07]">{children}</div>
   </div>
 );
 
@@ -102,14 +102,18 @@ export const EditableMetricRow = ({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-2 -mx-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-ink-500">
                 {label}
               </div>
-              <div className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 uppercase tracking-widest">
+              <div className="rounded border border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 uppercase tracking-widest">
                 Editing
               </div>
             </div>
-            {hint && <div className="mt-1 text-sm text-gray-500 leading-relaxed">{hint}</div>}
+            {hint && (
+              <div className="mt-1 text-sm text-gray-500 dark:text-ink-400 leading-relaxed">
+                {hint}
+              </div>
+            )}
           </div>
           <div className="sm:w-64 mt-2 sm:mt-0">{children}</div>
         </div>
@@ -125,14 +129,18 @@ export const EditableMetricRow = ({
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 group-hover:text-gray-600 transition-colors">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-ink-500 group-hover:text-gray-600 transition-colors">
             {label}
           </div>
-          {hint && <div className="mt-0.5 text-[13px] text-gray-400 leading-relaxed">{hint}</div>}
+          {hint && (
+            <div className="mt-0.5 text-[13px] text-gray-400 dark:text-ink-500 leading-relaxed">
+              {hint}
+            </div>
+          )}
         </div>
         <div className="shrink-0 flex items-center gap-3 text-left sm:text-right mt-1 sm:mt-0">
-          <div className="text-[15px] font-bold text-gray-800">{value}</div>
-          <div className="text-[10px] font-semibold text-gray-400 group-hover:text-blue-600 transition-colors uppercase tracking-widest bg-gray-50 px-1.5 py-0.5 rounded group-hover:bg-blue-50">
+          <div className="text-[15px] font-bold text-gray-800 dark:text-ink-50">{value}</div>
+          <div className="text-[10px] font-semibold text-gray-400 dark:text-ink-500 group-hover:text-blue-600 transition-colors uppercase tracking-widest bg-gray-50 dark:bg-ink-900 px-1.5 py-0.5 rounded group-hover:bg-blue-50">
             Edit
           </div>
         </div>
@@ -153,13 +161,17 @@ export const MetricRow = ({
   <div className="py-2.5 px-2 -mx-2 first:pt-0 last:pb-0">
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-ink-500">
           {label}
         </div>
-        {hint && <div className="mt-0.5 text-[13px] text-gray-400 leading-relaxed">{hint}</div>}
+        {hint && (
+          <div className="mt-0.5 text-[13px] text-gray-400 dark:text-ink-500 leading-relaxed">
+            {hint}
+          </div>
+        )}
       </div>
       <div className="shrink-0 text-left sm:text-right mt-1 sm:mt-0 items-center flex">
-        <div className="text-[15px] font-bold text-gray-700">{value}</div>
+        <div className="text-[15px] font-bold text-gray-700 dark:text-ink-100">{value}</div>
       </div>
     </div>
   </div>

@@ -42,11 +42,11 @@ const DocumentMobileList = ({
     {loading ? (
       <Card className="enterprise-card">
         <div className="space-y-3 py-3">
-          <div className="h-4 w-6/12 rounded-full bg-slate-100" />
-          <div className="h-3 w-9/12 rounded-full bg-slate-100" />
+          <div className="h-4 w-6/12 rounded-full bg-slate-100 dark:bg-ink-800" />
+          <div className="h-3 w-9/12 rounded-full bg-slate-100 dark:bg-ink-800" />
           <div className="grid grid-cols-2 gap-2 pt-2">
-            <div className="h-10 rounded-xl bg-slate-100" />
-            <div className="h-10 rounded-xl bg-slate-100" />
+            <div className="h-10 rounded-xl bg-slate-100 dark:bg-ink-800" />
+            <div className="h-10 rounded-xl bg-slate-100 dark:bg-ink-800" />
           </div>
         </div>
       </Card>
@@ -64,12 +64,12 @@ const DocumentMobileList = ({
                     <button
                       type="button"
                       onClick={() => openDocument(record)}
-                      className="min-w-0 text-left text-base font-semibold text-blue-600"
+                      className="min-w-0 text-left text-base font-semibold text-blue-600 dark:text-blue-300"
                     >
                       <span className="line-clamp-2">{record.title}</span>
                     </button>
                     {record.is_locked ? (
-                      <LockOutlined className="mt-1 shrink-0 text-amber-500" />
+                      <LockOutlined className="mt-1 shrink-0 text-amber-500 dark:text-amber-400" />
                     ) : null}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -79,7 +79,7 @@ const DocumentMobileList = ({
                     <Tag color="geekblue">v{record.version_number || 1}</Tag>
                     <Tag>{new Date(record.created_at).toLocaleDateString()}</Tag>
                   </div>
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className="mt-2 text-xs text-gray-500 dark:text-ink-400">
                     {record.application_details
                       ? `${record.application_details.role} @ ${record.application_details.company}`
                       : 'Not linked to an application'}
@@ -95,7 +95,7 @@ const DocumentMobileList = ({
                   History
                 </Button>
               </div>
-              <div className="flex justify-end border-t border-slate-100 pt-2">
+              <div className="flex justify-end border-t border-slate-100 dark:border-white/[0.07] pt-2">
                 <RowActions
                   size="middle"
                   isLocked={record.is_locked}

@@ -72,17 +72,19 @@ const CalendarYearView = ({
                 onDoubleClick={() => onDateDoubleClick?.(cloneDay)}
                 onPointerUp={(pointerEvent) => handlePointerUp(pointerEvent, cloneDay)}
                 className={clsx(
-                  'aspect-square touch-manipulation bg-white px-1 py-1 text-center transition-colors flex flex-col items-center justify-center gap-1',
-                  !isCurrentMonth && 'bg-gray-50 text-gray-300',
-                  isTodayDate && 'bg-blue-50',
+                  'aspect-square touch-manipulation bg-white dark:bg-ink-900 px-1 py-1 text-center transition-colors flex flex-col items-center justify-center gap-1',
+                  !isCurrentMonth && 'bg-gray-50 dark:bg-ink-900 text-gray-300 dark:text-ink-600',
+                  isTodayDate && 'bg-blue-50 dark:bg-blue-500/10',
                   isSelected && 'ring-2 ring-blue-500 ring-inset z-10'
                 )}
               >
                 <span
                   className={clsx(
                     'text-xs leading-none',
-                    isTodayDate ? 'font-semibold text-blue-700' : 'text-gray-700',
-                    !isCurrentMonth && 'text-gray-300'
+                    isTodayDate
+                      ? 'font-semibold text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-ink-100',
+                    !isCurrentMonth && 'text-gray-300 dark:text-ink-600'
                   )}
                 >
                   {format(cloneDay, 'd')}
@@ -101,7 +103,7 @@ const CalendarYearView = ({
                     />
                   )}
                   {dayData.federalHolidays.length > 0 && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-ink-700" />
                   )}
                 </div>
               </button>
@@ -113,24 +115,28 @@ const CalendarYearView = ({
         return (
           <div
             key={monthDate.toString()}
-            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-sm"
           >
-            <div className="border-b border-gray-100 px-4 py-3">
-              <h3 className="font-semibold text-gray-900">{format(monthDate, 'MMMM')}</h3>
+            <div className="border-b border-gray-100 dark:border-white/[0.07] px-4 py-3">
+              <h3 className="font-semibold text-gray-900 dark:text-ink-50">
+                {format(monthDate, 'MMMM')}
+              </h3>
             </div>
 
             <div className="grid grid-cols-7 gap-1 px-3 pt-3 pb-2">
               {MINI_WEEKDAY_LABELS.map((label, index) => (
                 <div
                   key={`${label}-${index}`}
-                  className="text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400"
+                  className="text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-ink-500"
                 >
                   {label}
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-px bg-gray-100 p-px">{dayCells}</div>
+            <div className="grid grid-cols-7 gap-px bg-gray-100 dark:bg-ink-800 p-px">
+              {dayCells}
+            </div>
           </div>
         );
       })}

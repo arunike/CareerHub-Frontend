@@ -39,7 +39,7 @@ const Explain = ({ label, title }: { label: string; title: ReactNode }) => (
   <HelpTooltipTrigger
     title={title}
     ariaLabel={`Explain ${label}`}
-    className="ml-1 text-slate-400"
+    className="ml-1 text-slate-400 dark:text-ink-500"
   />
 );
 
@@ -123,7 +123,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
       <button
         type="button"
         onClick={() => setIsExpanded((current) => !current)}
@@ -131,19 +131,19 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
         className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
       >
         <span className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
             <DollarOutlined />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-semibold text-slate-950">
+            <span className="block text-sm font-semibold text-slate-950 dark:text-ink-50">
               Compensation simulator
             </span>
-            <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+            <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-ink-400">
               Stress-test monthly take-home, living costs, and four-year equity vesting.
             </span>
           </span>
         </span>
-        <span className="shrink-0 text-xs font-semibold text-blue-700">
+        <span className="shrink-0 text-xs font-semibold text-blue-700 dark:text-blue-300">
           {isExpanded ? 'Close simulator' : 'Open simulator'}
         </span>
       </button>
@@ -151,19 +151,19 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
       <div
         className={
           isExpanded
-            ? 'flex flex-col gap-4 border-t border-b border-slate-200 px-6 py-5 xl:flex-row xl:items-end xl:justify-between'
+            ? 'flex flex-col gap-4 border-t border-b border-slate-200 dark:border-white/[0.08] px-6 py-5 xl:flex-row xl:items-end xl:justify-between'
             : 'hidden'
         }
       >
         <div>
-          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2.5 py-1">
+          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-full px-2.5 py-1">
             <DollarOutlined />
             Compensation simulator
           </div>
-          <h2 className="mt-3 text-xl font-bold text-slate-950">
+          <h2 className="mt-3 text-xl font-bold text-slate-950 dark:text-ink-50">
             Monthly take-home and vesting scenarios
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-ink-400">
             Uses the same tax, rent, commute, food, PTO, and realizable-equity assumptions as the
             comparison rows.
           </p>
@@ -171,7 +171,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1">
               Equity market
             </span>
             <Select
@@ -187,7 +187,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             />
           </label>
           <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1">
               Custom growth
             </span>
             <UnitNumberInput
@@ -200,7 +200,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             />
           </label>
           <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1">
               Rent override
             </span>
             <UnitNumberInput
@@ -212,7 +212,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             />
           </label>
           <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1">
               Commute override
             </span>
             <UnitNumberInput
@@ -224,7 +224,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             />
           </label>
           <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400 mb-1">
               Food budget
             </span>
             <UnitNumberInput
@@ -239,7 +239,9 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
 
       <div
         className={
-          isExpanded ? 'grid grid-cols-2 border-b border-slate-100 md:grid-cols-4' : 'hidden'
+          isExpanded
+            ? 'grid grid-cols-2 border-b border-slate-100 dark:border-white/[0.07] md:grid-cols-4'
+            : 'hidden'
         }
       >
         {[
@@ -268,20 +270,25 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
             help: 'Monthly food budget before subtracting whatever the office provides.',
           },
         ].map((item) => (
-          <div key={item.label} className="px-5 py-4 border-r border-slate-100 last:border-r-0">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <span className="text-slate-400">{item.icon}</span>
+          <div
+            key={item.label}
+            className="px-5 py-4 border-r border-slate-100 dark:border-white/[0.07] last:border-r-0"
+          >
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-ink-400">
+              <span className="text-slate-400 dark:text-ink-500">{item.icon}</span>
               {item.label}
               <Explain label={item.label} title={item.help} />
             </div>
-            <div className="mt-1 text-lg font-bold text-slate-950">{item.value}</div>
+            <div className="mt-1 text-lg font-bold text-slate-950 dark:text-ink-50">
+              {item.value}
+            </div>
           </div>
         ))}
       </div>
 
       <div className={isExpanded ? 'hidden overflow-x-auto md:block' : 'hidden'}>
         <table className="min-w-[1040px] w-full text-sm">
-          <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
+          <thead className="bg-slate-50 dark:bg-ink-900 text-[11px] uppercase tracking-wide text-slate-500 dark:text-ink-400">
             <tr>
               <th className="text-left font-bold px-5 py-3">Offer</th>
               <th className="text-right font-bold px-4 py-3">
@@ -335,70 +342,74 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-white/[0.07]">
             {rows.map((item) => (
               <tr key={item.key} className="hover:bg-slate-50/70">
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-950">{item.row.appName}</span>
+                    <span className="font-semibold text-slate-950 dark:text-ink-50">
+                      {item.row.appName}
+                    </span>
                     {item.row.offer.is_current && (
                       <span
                         className={clsx(
                           'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
                           isPastRole(item.row.offer)
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-blue-50 text-blue-700'
+                            ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                            : 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
                         )}
                       >
                         {isPastRole(item.row.offer) ? 'Baseline' : 'Current'}
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">{item.row.homeLocationLabel}</div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">
+                    {item.row.homeLocationLabel}
+                  </div>
                 </td>
-                <td className="px-4 py-4 text-right font-semibold text-slate-900">
+                <td className="px-4 py-4 text-right font-semibold text-slate-900 dark:text-ink-50">
                   <div>{formatCurrency(item.monthlyTakeHome)}</div>
-                  <div className="mt-0.5 text-[10px] font-medium text-slate-400">
+                  <div className="mt-0.5 text-[10px] font-medium text-slate-400 dark:text-ink-500">
                     Before tax {formatCurrency(item.preTaxCashMonthly + item.grossEquityMonthly)}
                   </div>
-                  <div className="text-[10px] font-medium text-slate-400">
+                  <div className="text-[10px] font-medium text-slate-400 dark:text-ink-500">
                     Tax {item.row.usedBaseTaxRate}% / {item.row.usedBonusTaxRate}% /{' '}
                     {item.row.usedEquityTaxRate}%
                   </div>
                 </td>
                 <td className="px-4 py-4 text-right">
-                  <div className="font-semibold text-slate-900">
+                  <div className="font-semibold text-slate-900 dark:text-ink-50">
                     {formatCurrency(item.yearOneMonthly)}
                   </div>
                   {item.preTaxSignOnMonthly > 0 && (
-                    <div className="mt-0.5 text-[10px] font-medium text-slate-400">
+                    <div className="mt-0.5 text-[10px] font-medium text-slate-400 dark:text-ink-500">
                       Sign-on before tax {formatCurrency(item.preTaxSignOnMonthly)}
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-4 text-right text-slate-700">
+                <td className="px-4 py-4 text-right text-slate-700 dark:text-ink-100">
                   {formatCurrency(item.monthlyRent)}
                 </td>
-                <td className="px-4 py-4 text-right text-slate-700">
+                <td className="px-4 py-4 text-right text-slate-700 dark:text-ink-100">
                   {formatCurrency(item.monthlyCommute)}
                 </td>
-                <td className="px-4 py-4 text-right text-slate-700">
+                <td className="px-4 py-4 text-right text-slate-700 dark:text-ink-100">
                   <div>{formatCurrency(item.monthlyFoodNet)}</div>
                   {item.monthlyFoodPerk > 0 && (
-                    <div className="text-[10px] text-emerald-600">
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-300">
                       {formatCurrency(item.monthlyFoodPerk)} provided
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-4 text-right text-slate-700">
+                <td className="px-4 py-4 text-right text-slate-700 dark:text-ink-100">
                   {item.ptoValue == null ? 'Unlimited' : formatCurrency(item.ptoValue)}
                 </td>
                 <td className="px-4 py-4 text-right">
                   <span
                     className={
                       item.leftoverMonthly >= 0
-                        ? 'font-bold text-emerald-700'
-                        : 'font-bold text-rose-700'
+                        ? 'font-bold text-emerald-700 dark:text-emerald-300'
+                        : 'font-bold text-rose-700 dark:text-rose-300'
                     }
                   >
                     {formatCurrency(item.leftoverMonthly)}
@@ -415,23 +426,29 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
       ) : null}
 
       <div
-        className={isExpanded ? 'hidden border-t border-slate-100 px-6 py-5 md:block' : 'hidden'}
+        className={
+          isExpanded
+            ? 'hidden border-t border-slate-100 dark:border-white/[0.07] px-6 py-5 md:block'
+            : 'hidden'
+        }
       >
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-bold text-slate-950">After-tax equity vesting</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="text-sm font-bold text-slate-950 dark:text-ink-50">
+              After-tax equity vesting
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-ink-400">
               Main values are after tax. Before-tax vesting, market scenario, and equity tax rate
               are shown per year.
             </p>
           </div>
-          <div className="text-xs font-semibold text-slate-500">
+          <div className="text-xs font-semibold text-slate-500 dark:text-ink-400">
             Combined Year 1: {formatCurrency(totalVestingByYear[0])}
           </div>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-[720px] w-full text-sm">
-            <thead className="text-[11px] uppercase tracking-wide text-slate-500">
+            <thead className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-ink-400">
               <tr>
                 <th className="text-left font-bold py-2 pr-4">Offer</th>
                 <th className="text-right font-bold py-2 px-4">
@@ -464,15 +481,20 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/[0.07]">
               {rows.map((item) => (
                 <tr key={`${item.key}-vesting`}>
-                  <td className="py-3 pr-4 font-semibold text-slate-900">{item.row.appName}</td>
+                  <td className="py-3 pr-4 font-semibold text-slate-900 dark:text-ink-50">
+                    {item.row.appName}
+                  </td>
                   {item.vestingYears.map((value, index) => (
-                    <td key={index} className="py-3 px-4 text-right text-slate-700">
+                    <td
+                      key={index}
+                      className="py-3 px-4 text-right text-slate-700 dark:text-ink-100"
+                    >
                       <div>{value > 0 ? formatCurrency(value) : '-'}</div>
                       {value > 0 && (
-                        <div className="mt-0.5 text-[10px] text-slate-400">
+                        <div className="mt-0.5 text-[10px] text-slate-400 dark:text-ink-500">
                           Gross {formatCurrency(item.grossVestingYears[index] || 0)} · Tax{' '}
                           {item.row.usedEquityTaxRate}%
                         </div>

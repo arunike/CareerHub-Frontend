@@ -24,7 +24,7 @@ const AvailabilityViewToggle = ({ viewTab, onChange }: Props) => {
               </>
             ),
             icon: <UnorderedListOutlined className="text-base" />,
-            activeClassName: 'bg-white text-blue-600 shadow-sm',
+            activeClassName: 'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm',
           },
           {
             value: 'calendar',
@@ -35,7 +35,7 @@ const AvailabilityViewToggle = ({ viewTab, onChange }: Props) => {
               </>
             ),
             icon: <CalendarOutlined className="text-base" />,
-            activeClassName: 'bg-white text-blue-600 shadow-sm',
+            activeClassName: 'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm',
           },
         ]}
       />

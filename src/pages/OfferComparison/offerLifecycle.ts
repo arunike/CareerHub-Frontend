@@ -27,10 +27,14 @@ export const NEGOTIATION_OUTCOME_LABELS: Record<NegotiationOutcome, string> = {
 };
 
 export const NEGOTIATION_OUTCOME_CLASSES: Record<NegotiationOutcome, string> = {
-  pending: 'border-slate-200 bg-slate-50 text-slate-600',
-  accepted: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  partial: 'border-amber-200 bg-amber-50 text-amber-700',
-  rejected: 'border-rose-200 bg-rose-50 text-rose-700',
+  pending:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200',
+  accepted:
+    'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  partial:
+    'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  rejected:
+    'border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
 };
 
 const NEGOTIATION_COMPONENTS = [
@@ -88,12 +92,18 @@ export const FINAL_DECISION_OPTIONS: { value: FinalDecisionStatus; label: string
 ];
 
 export const FINAL_DECISION_CLASSES: Record<FinalDecisionStatus, string> = {
-  PENDING: 'border-slate-200 bg-slate-50 text-slate-600',
-  ACCEPTED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  REJECTED: 'border-slate-200 bg-slate-100 text-slate-600',
-  DECLINED: 'border-slate-200 bg-slate-100 text-slate-600',
-  EXPIRED: 'border-rose-200 bg-rose-50 text-rose-700',
-  WITHDRAWN: 'border-rose-200 bg-rose-50 text-rose-700',
+  PENDING:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200',
+  ACCEPTED:
+    'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  REJECTED:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200',
+  DECLINED:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200',
+  EXPIRED:
+    'border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  WITHDRAWN:
+    'border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
 };
 
 export const FINAL_DECISION_LABELS: Record<FinalDecisionStatus, string> = {

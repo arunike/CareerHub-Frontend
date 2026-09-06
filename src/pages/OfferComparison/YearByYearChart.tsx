@@ -39,19 +39,21 @@ const CustomTooltip = ({
   // Highest-paying offer first, so the year's winner reads immediately.
   const sorted = [...payload].sort((a, b) => Number(b.value) - Number(a.value));
   return (
-    <div className="min-w-[220px] space-y-1.5 rounded-xl border border-gray-200 bg-white p-3 text-xs shadow-md">
-      <p className="font-bold text-slate-800">{label}</p>
+    <div className="min-w-[220px] space-y-1.5 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 text-xs shadow-md">
+      <p className="font-bold text-slate-800 dark:text-ink-50">{label}</p>
       <div className="space-y-1">
         {sorted.map((entry) => (
           <div key={entry.name} className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-1.5 text-slate-500">
+            <span className="flex items-center gap-1.5 text-slate-500 dark:text-ink-400">
               <span
                 className="inline-block h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
               {entry.name}
             </span>
-            <span className="font-semibold text-slate-700">{formatCurrency(entry.value)}</span>
+            <span className="font-semibold text-slate-700 dark:text-ink-100">
+              {formatCurrency(entry.value)}
+            </span>
           </div>
         ))}
       </div>

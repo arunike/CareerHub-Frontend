@@ -66,16 +66,24 @@ const DashboardCustomizeModal = ({
               <div
                 key={widget.id}
                 className={`p-4 border rounded-lg transition-all ${
-                  isEnabled ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
+                  isEnabled
+                    ? 'border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10'
+                    : 'border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="text-xl mt-1">{widget.icon}</div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{widget.name}</div>
-                      <div className="text-sm text-gray-500 mt-1">{widget.description}</div>
-                      <div className="text-xs text-gray-400 mt-1 capitalize">{widget.category}</div>
+                      <div className="font-medium text-gray-900 dark:text-ink-50">
+                        {widget.name}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-ink-400 mt-1">
+                        {widget.description}
+                      </div>
+                      <div className="text-xs text-gray-400 dark:text-ink-500 mt-1 capitalize">
+                        {widget.category}
+                      </div>
                     </div>
                   </div>
                   <Switch
@@ -106,14 +114,18 @@ const DashboardCustomizeModal = ({
                   <div
                     key={widget.id}
                     className={`p-4 border rounded-lg transition-all ${
-                      isEnabled ? 'border-purple-200 bg-purple-50' : 'border-gray-200 bg-gray-50'
+                      isEnabled
+                        ? 'border-purple-200 dark:border-purple-500/25 bg-purple-50 dark:bg-purple-500/10'
+                        : 'border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">{widget.name}</div>
+                        <div className="font-medium text-gray-900 dark:text-ink-50">
+                          {widget.name}
+                        </div>
                         <div
-                          className="text-xs text-gray-400 mt-1 font-mono max-w-[320px] truncate"
+                          className="text-xs text-gray-400 dark:text-ink-500 mt-1 font-mono max-w-[320px] truncate"
                           title={widget.query}
                         >
                           Custom • {widget.query}

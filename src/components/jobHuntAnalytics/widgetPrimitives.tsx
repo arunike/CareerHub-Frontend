@@ -28,7 +28,7 @@ export const getStageColor = (key: string) => {
     case 'OFFER':
       return 'bg-emerald-500';
     default:
-      return 'bg-slate-500';
+      return 'bg-slate-500 dark:bg-ink-700';
   }
 };
 
@@ -42,11 +42,16 @@ export const TERMINAL_STAGE_KEYS = new Set([
 ]);
 
 export const OUTCOME_CLASSES: Record<string, string> = {
-  OFFER: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  ACCEPTED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  REJECTED: 'border-rose-200 bg-rose-50 text-rose-700',
-  OFFER_REJECTED: 'border-amber-200 bg-amber-50 text-amber-700',
-  GHOSTED: 'border-slate-200 bg-slate-100 text-slate-600',
+  OFFER:
+    'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  ACCEPTED:
+    'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  REJECTED:
+    'border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
+  OFFER_REJECTED:
+    'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  GHOSTED:
+    'border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200',
 };
 
 export const MIN_SEGMENT_SAMPLE = 20;
@@ -92,7 +97,7 @@ export const TooltipLabel = ({
       <span>{children}</span>
       <CrispInfoIcon
         size={13}
-        className="text-slate-400 opacity-70 group-hover:opacity-100 group-hover:text-blue-600 transition-all"
+        className="text-slate-400 dark:text-ink-500 opacity-70 group-hover:opacity-100 group-hover:text-blue-600 transition-all"
       />
     </span>
   </Tooltip>
@@ -113,25 +118,28 @@ export const renderPercentageList = (
           key={item.name}
           className="group/metric relative grid grid-cols-[minmax(0,88px)_minmax(28px,1fr)_56px] items-center gap-2 rounded-lg px-1 py-1.5 transition-colors hover:bg-slate-50 md:grid-cols-[96px_1fr_44px] md:gap-3"
         >
-          <span className="truncate text-sm font-medium text-gray-700" title={item.name}>
+          <span
+            className="truncate text-sm font-medium text-gray-700 dark:text-ink-100"
+            title={item.name}
+          >
             {item.name}
           </span>
-          <div className="relative h-2 overflow-visible rounded-full bg-gray-100">
+          <div className="relative h-2 overflow-visible rounded-full bg-gray-100 dark:bg-ink-800">
             <div
               className={`h-full rounded-full ${percentageColor(index)} transition-all duration-300`}
               style={{ width: `${Math.max(percent, item.count > 0 ? 4 : 0)}%` }}
             />
             <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 scale-95 whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-center text-xs text-white opacity-0 shadow-xl transition-all duration-150 group-hover/metric:scale-100 group-hover/metric:opacity-100 md:block">
               <span className="block font-bold text-slate-100">{item.name}</span>
-              <span className="mt-0.5 block text-[11px] text-slate-300">
+              <span className="mt-0.5 block text-[11px] text-slate-300 dark:text-ink-600">
                 {item.count} application{item.count === 1 ? '' : 's'} ({shownPercent})
               </span>
               <span className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-800 bg-slate-900" />
             </div>
           </div>
-          <span className="flex flex-col items-end text-right text-xs font-semibold text-blue-600">
+          <span className="flex flex-col items-end text-right text-xs font-semibold text-blue-600 dark:text-blue-300">
             <span>{shownPercent}</span>
-            <span className="mt-0.5 whitespace-nowrap font-medium text-slate-500 md:hidden">
+            <span className="mt-0.5 whitespace-nowrap font-medium text-slate-500 dark:text-ink-400 md:hidden">
               {item.count} apps
             </span>
           </span>
@@ -139,7 +147,7 @@ export const renderPercentageList = (
       );
     })}
     {items.length === 0 && (
-      <div className="py-6 text-center text-sm text-gray-400">{emptyText}</div>
+      <div className="py-6 text-center text-sm text-gray-400 dark:text-ink-500">{emptyText}</div>
     )}
   </div>
 );
@@ -160,11 +168,15 @@ export const MetricTile = ({
   trend?: { delta: number; tooltip: string } | null;
 }) => {
   const tones = {
-    blue: 'border-blue-100 bg-blue-50/60 text-blue-700',
-    purple: 'border-purple-100 bg-purple-50/60 text-purple-700',
-    emerald: 'border-emerald-100 bg-emerald-50/60 text-emerald-700',
-    amber: 'border-amber-100 bg-amber-50/70 text-amber-700',
-    slate: 'border-slate-100 bg-slate-50 text-slate-700',
+    blue: 'border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
+    purple:
+      'border-purple-100 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300',
+    emerald:
+      'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    amber:
+      'border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    slate:
+      'border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 text-slate-700 dark:text-ink-100',
   };
 
   return (
@@ -178,7 +190,9 @@ export const MetricTile = ({
           <Tooltip title={trend.tooltip} placement="top">
             <span
               className={`cursor-help rounded px-1 py-0.5 text-[11px] font-bold tabular-nums ${
-                trend.delta > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                trend.delta > 0
+                  ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300'
               }`}
             >
               {trend.delta > 0 ? '▲' : '▼'} {Math.abs(trend.delta)}
@@ -210,8 +224,8 @@ export const SectionCard = ({
   return (
     <div className={`enterprise-card flex flex-col p-4 sm:p-6 ${collapsed ? 'h-auto' : 'h-full'}`}>
       <div className={`flex items-center gap-2 ${collapsed ? '' : 'mb-4'}`}>
-        <span className="text-base text-gray-500">{icon}</span>
-        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600">
+        <span className="text-base text-gray-500 dark:text-ink-400">{icon}</span>
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-ink-200">
           <TooltipLabel title={tooltip}>{title}</TooltipLabel>
           {badge}
         </h3>
@@ -245,26 +259,26 @@ export const AnalyticsSection = ({
 
   if (!analytics && stats.timelineAnalyticsLoading) {
     body = (
-      <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-6">
-        <div className="flex items-center gap-3 text-sm font-medium text-blue-700">
+      <div className="rounded-lg border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 px-4 py-6">
+        <div className="flex items-center gap-3 text-sm font-medium text-blue-700 dark:text-blue-300">
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
           Loading…
         </div>
         <div className="mt-4 space-y-2">
-          <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-blue-100" />
-          <div className="h-2.5 w-1/2 animate-pulse rounded-full bg-blue-100" />
+          <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-blue-100 dark:bg-blue-500/15" />
+          <div className="h-2.5 w-1/2 animate-pulse rounded-full bg-blue-100 dark:bg-blue-500/15" />
         </div>
       </div>
     );
   } else if (!analytics && stats.timelineAnalyticsError) {
     body = (
-      <div className="rounded-lg border border-rose-100 bg-rose-50 px-4 py-6 text-center text-sm text-rose-600">
+      <div className="rounded-lg border border-rose-100 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 px-4 py-6 text-center text-sm text-rose-600 dark:text-rose-300">
         Could not load. Try refreshing the dashboard.
       </div>
     );
   } else if (!analytics) {
     body = (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="rounded-lg border border-dashed border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 px-4 py-6 text-center text-sm text-gray-500 dark:text-ink-400">
         {emptyText}
       </div>
     );

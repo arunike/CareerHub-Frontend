@@ -154,7 +154,7 @@ const ApplicationSelect = ({
         <>
           {menu}
           {loading && options.length > 0 && (
-            <div className="flex items-center justify-center gap-2 border-t border-slate-100 py-2 text-xs text-slate-400">
+            <div className="flex items-center justify-center gap-2 border-t border-slate-100 dark:border-white/[0.07] py-2 text-xs text-slate-400 dark:text-ink-500">
               <Spin size="small" />
               Loading more…
             </div>

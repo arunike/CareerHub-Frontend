@@ -25,37 +25,43 @@ export const syncReviewItems = (summary: SyncSummarySource | null | undefined) =
     key: 'created',
     label: 'Created',
     value: syncSummaryValue(summary, 'created'),
-    className: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    className:
+      'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   },
   {
     key: 'updated',
     label: 'Updated',
     value: syncSummaryValue(summary, 'updated'),
-    className: 'border-blue-100 bg-blue-50 text-blue-700',
+    className:
+      'border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
   },
   {
     key: 'archived',
     label: 'Archived',
     value: syncSummaryValue(summary, 'archived'),
-    className: 'border-amber-100 bg-amber-50 text-amber-700',
+    className:
+      'border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
   },
   {
     key: 'missing_from_sheet',
     label: 'Missing from sheet',
     value: syncMissingFromSheet(summary),
-    className: 'border-orange-100 bg-orange-50 text-orange-700',
+    className:
+      'border-orange-100 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300',
   },
   {
     key: 'deleted',
     label: 'Deleted',
     value: syncSummaryValue(summary, 'deleted'),
-    className: 'border-red-100 bg-red-50 text-red-700',
+    className:
+      'border-red-100 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300',
   },
   {
     key: 'skipped',
     label: 'Skipped',
     value: syncSummaryValue(summary, 'skipped'),
-    className: 'border-slate-100 bg-slate-50 text-slate-600',
+    className:
+      'border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200',
   },
 ];
 

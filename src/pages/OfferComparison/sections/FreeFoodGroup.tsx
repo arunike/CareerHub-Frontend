@@ -28,10 +28,10 @@ const FreeFoodGroup = ({
     }
   >
     <div className="space-y-3">
-      <p className="text-[11px] leading-4 text-slate-500">
+      <p className="text-[11px] leading-4 text-slate-500 dark:text-ink-400">
         Meals you would eat on an office day. Mark the ones the office provides — those are money
         you keep; the rest are money you spend, counted over{' '}
-        <span className="font-semibold text-slate-600">
+        <span className="font-semibold text-slate-600 dark:text-ink-200">
           {Math.round(officeDays ?? 0)} office days
         </span>{' '}
         a year.
@@ -60,8 +60,8 @@ const FreeFoodGroup = ({
                 // 38px to match CONTROL_CLASS; at 36px the row shared no edge.
                 className={`min-h-11 rounded-lg border px-3 text-left text-sm font-medium transition-colors sm:h-[38px] sm:min-h-0 ${
                   active
-                    ? 'border-slate-300 bg-white text-slate-900'
-                    : 'border-dashed border-slate-200 bg-white text-slate-400 hover:text-slate-600'
+                    ? 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-900 dark:text-ink-50'
+                    : 'border-dashed border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-400 dark:text-ink-500 hover:text-slate-600'
                 }`}
               >
                 {MEAL_LABELS[meal]}
@@ -106,7 +106,7 @@ const FreeFoodGroup = ({
         })}
       </div>
 
-      <p className="rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] leading-4 text-slate-500 tabular-nums">
+      <p className="rounded-lg bg-slate-50 dark:bg-ink-900 px-2.5 py-2 text-[11px] leading-4 text-slate-500 dark:text-ink-400 tabular-nums">
         {food ? (
           <>
             {food.savedAnnual > 0 && (
@@ -120,14 +120,14 @@ const FreeFoodGroup = ({
             )}{' '}
             ={' '}
             <span
-              className={`font-semibold ${food.netAnnual >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}
+              className={`font-semibold ${food.netAnnual >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}
             >
               {food.netAnnual >= 0 ? '+' : '−'}$
               {Math.abs(Math.round(food.netAnnual)).toLocaleString()}/yr
             </span>
           </>
         ) : (
-          <span className="text-slate-400">
+          <span className="text-slate-400 dark:text-ink-500">
             {(officeDays ?? 0) <= 0
               ? 'No office days for this offer, so meals there cost nothing either way.'
               : 'Add the meals you would eat on an office day.'}
@@ -136,7 +136,7 @@ const FreeFoodGroup = ({
       </p>
 
       {!food && (legacyFreeFoodAnnual ?? 0) > 0 && (
-        <p className="text-[11px] text-amber-700">
+        <p className="text-[11px] text-amber-700 dark:text-amber-300">
           Still using the old flat total of $
           {Math.round(legacyFreeFoodAnnual ?? 0).toLocaleString()}/yr. Add meals above to replace
           it.

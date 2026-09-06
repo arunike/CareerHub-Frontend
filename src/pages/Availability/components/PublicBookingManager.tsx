@@ -51,27 +51,31 @@ const getLinkBookingState = (link: ShareLink) => {
   if (active > 0) {
     return {
       label: active === 1 ? '1 active booking' : `${active} active bookings`,
-      className: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+      className:
+        'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
     };
   }
 
   if (total === 0) {
     return {
       label: 'No booking yet',
-      className: 'border-slate-100 bg-white text-slate-500',
+      className:
+        'border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400',
     };
   }
 
   if (canceled === total) {
     return {
       label: total === 1 ? 'Canceled booking' : `${total} canceled bookings`,
-      className: 'border-rose-100 bg-rose-50 text-rose-700',
+      className:
+        'border-rose-100 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300',
     };
   }
 
   return {
     label: `${total} bookings`,
-    className: 'border-slate-100 bg-white text-slate-600',
+    className:
+      'border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200',
   };
 };
 
@@ -197,8 +201,8 @@ const PublicBookingManager = ({
         <div className="mb-4">
           <BulkActionHeader
             title={
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                <LinkOutlined className="text-blue-500" />
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-ink-50">
+                <LinkOutlined className="text-blue-500 dark:text-blue-400" />
                 Public availability links
               </div>
             }
@@ -242,18 +246,18 @@ const PublicBookingManager = ({
               </div>
             }
             defaultActions={
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-100">
+              <span className="rounded-full bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-500/20">
                 {links.length}
               </span>
             }
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-ink-400 mt-1">
             Manage every recruiter-facing link you have created.
           </p>
         </div>
 
         {links.length === 0 ? (
-          <div className="enterprise-empty p-5 text-sm text-gray-500">
+          <div className="enterprise-empty p-5 text-sm text-gray-500 dark:text-ink-400">
             No public links yet. Create one above when you are ready to share availability.
           </div>
         ) : (
@@ -265,8 +269,8 @@ const PublicBookingManager = ({
                   key={link.id}
                   className={`rounded-xl border transition-all p-4 ${
                     selectedLinkIds.includes(link.id)
-                      ? 'border-blue-200 bg-blue-50/30'
-                      : 'border-slate-200 bg-white/70'
+                      ? 'border-blue-200 dark:border-blue-500/25 bg-blue-50/30 dark:bg-blue-500/10'
+                      : 'border-slate-200 dark:border-white/[0.08] bg-white/70 dark:bg-ink-900/70'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -280,22 +284,26 @@ const PublicBookingManager = ({
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="m-0 min-w-0 break-words text-sm font-bold text-gray-900 [overflow-wrap:anywhere]">
+                            <h3 className="m-0 min-w-0 break-words text-sm font-bold text-gray-900 dark:text-ink-50 [overflow-wrap:anywhere]">
                               {link.title}
                             </h3>
-                            {link.is_locked && <LockOutlined className="text-amber-500 text-xs" />}
+                            {link.is_locked && (
+                              <LockOutlined className="text-amber-500 dark:text-amber-400 text-xs" />
+                            )}
                             <span
                               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${
                                 link.is_active && !link.is_expired
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                  : 'bg-gray-100 text-gray-500 border-gray-200'
+                                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20'
+                                  : 'bg-gray-100 dark:bg-ink-800 text-gray-500 dark:text-ink-400 border-gray-200 dark:border-white/[0.08]'
                               }`}
                             >
                               {link.is_active && !link.is_expired ? 'Active' : 'Inactive'}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1 truncate">/book/{link.uuid}</p>
-                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-ink-400 mt-1 truncate">
+                            /book/{link.uuid}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-ink-400">
                             <span>{link.booking_block_minutes} min slots</span>
                             <span>{link.buffer_minutes || 0} min buffer</span>
                             <span>
@@ -325,13 +333,13 @@ const PublicBookingManager = ({
                             </span>
                           </div>
                           {link.intake_questions?.length > 0 && (
-                            <p className="mt-2 break-words text-xs leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
+                            <p className="mt-2 break-words text-xs leading-relaxed text-gray-600 dark:text-ink-200 [overflow-wrap:anywhere]">
                               Intake:{' '}
                               {link.intake_questions.map((question) => question.label).join(', ')}
                             </p>
                           )}
                           {link.public_note && (
-                            <p className="mt-2 break-words text-xs leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
+                            <p className="mt-2 break-words text-xs leading-relaxed text-gray-600 dark:text-ink-200 [overflow-wrap:anywhere]">
                               {link.public_note}
                             </p>
                           )}
@@ -340,7 +348,7 @@ const PublicBookingManager = ({
                           <button
                             type="button"
                             onClick={() => onCopyLink(link)}
-                            className="h-11 w-11 rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-blue-200 hover:text-blue-600 sm:h-9 sm:w-9 sm:rounded-lg"
+                            className="h-11 w-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 transition-colors hover:border-blue-200 hover:text-blue-600 sm:h-9 sm:w-9 sm:rounded-lg"
                             title="Copy booking link"
                             aria-label="Copy booking link"
                           >
@@ -350,7 +358,7 @@ const PublicBookingManager = ({
                             <button
                               type="button"
                               onClick={() => onDeactivateLink(link.id)}
-                              className="h-11 w-11 rounded-xl border border-gray-200 bg-white text-gray-600 transition-colors hover:border-red-200 hover:text-red-600 sm:h-9 sm:w-9 sm:rounded-lg"
+                              className="h-11 w-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 transition-colors hover:border-red-200 hover:text-red-600 sm:h-9 sm:w-9 sm:rounded-lg"
                               title="Deactivate link"
                               aria-label="Deactivate booking link"
                             >

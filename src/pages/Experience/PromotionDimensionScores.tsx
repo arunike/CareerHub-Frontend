@@ -15,7 +15,7 @@ type Props = {
 };
 
 const PromotionDimensionScores = ({ review }: Props) => (
-  <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+  <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
     <SectionHeading
       eyebrow="Evaluation"
       title="Promotion dimensions"
@@ -29,8 +29,10 @@ const PromotionDimensionScores = ({ review }: Props) => (
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="m-0 text-base font-bold text-slate-950">{score.dimension}</h3>
-              <div className="mt-1 text-xs font-medium capitalize text-slate-500">
+              <h3 className="m-0 text-base font-bold text-slate-950 dark:text-ink-50">
+                {score.dimension}
+              </h3>
+              <div className="mt-1 text-xs font-medium capitalize text-slate-500 dark:text-ink-400">
                 Confidence: {score.confidence}
               </div>
             </div>
@@ -56,10 +58,10 @@ const PromotionDimensionScores = ({ review }: Props) => (
             </div>
           )}
           {score.how_to_strengthen && (
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white/75 p-4 text-[13px] leading-6 text-slate-700">
-              <BulbOutlined className="mr-1.5 inline-block align-middle text-sm text-amber-500" />
+            <div className="mt-4 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/75 dark:bg-ink-900/75 p-4 text-[13px] leading-6 text-slate-700 dark:text-ink-100">
+              <BulbOutlined className="mr-1.5 inline-block align-middle text-sm text-amber-500 dark:text-amber-400" />
               <span className="inline align-middle">
-                <strong className="text-slate-950">Next action:</strong>{' '}
+                <strong className="text-slate-950 dark:text-ink-50">Next action:</strong>{' '}
                 {parseInlineMarkdown(score.how_to_strengthen)}
               </span>
             </div>

@@ -330,11 +330,19 @@ const Holidays = () => {
       <SegmentedToggle
         value={contentView}
         onChange={setContentView}
-        wrapperClassName="page-toolbar-view-switch w-max rounded-xl border border-gray-200 bg-white p-1"
+        wrapperClassName="page-toolbar-view-switch w-max rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-1"
         buttonClassName="px-3 py-1.5"
         options={[
-          { value: 'list', label: 'List', activeClassName: 'bg-blue-50 text-blue-700' },
-          { value: 'calendar', label: 'Calendar', activeClassName: 'bg-blue-50 text-blue-700' },
+          {
+            value: 'list',
+            label: 'List',
+            activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
+          },
+          {
+            value: 'calendar',
+            label: 'Calendar',
+            activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
+          },
         ]}
       />
       <YearFilter

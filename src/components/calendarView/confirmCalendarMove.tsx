@@ -28,23 +28,23 @@ const MoveSummary = ({
   movedEnd?: Date;
 }) => (
   <div className="mt-1 space-y-3">
-    <p className="text-sm font-semibold text-slate-900">{name}</p>
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-slate-50 px-3 py-2">
-      <span className="text-sm text-slate-500 line-through decoration-slate-300">
+    <p className="text-sm font-semibold text-slate-900 dark:text-ink-50">{name}</p>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2">
+      <span className="text-sm text-slate-500 dark:text-ink-400 line-through decoration-slate-300">
         {prettyDate(from)}
       </span>
-      <ArrowRightOutlined className="text-xs text-slate-400" />
-      <span className="text-sm font-semibold text-slate-900">
+      <ArrowRightOutlined className="text-xs text-slate-400 dark:text-ink-500" />
+      <span className="text-sm font-semibold text-slate-900 dark:text-ink-50">
         {prettyDate(to)}
         {movedEnd && ` – ${prettyDate(movedEnd)}`}
       </span>
     </div>
     {spanDays > 1 && (
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500 dark:text-ink-400">
         The whole {spanDays}-day span moves together, keeping its length.
       </p>
     )}
-    {footnote && <p className="text-xs text-slate-500">{footnote}</p>}
+    {footnote && <p className="text-xs text-slate-500 dark:text-ink-400">{footnote}</p>}
   </div>
 );
 

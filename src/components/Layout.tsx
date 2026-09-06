@@ -53,7 +53,7 @@ const SIDEBAR_COLLAPSED_STORAGE_KEY = 'careerhub.sidebar.collapsed';
 const NotificationBell = lazy(() => import('./NotificationBell'));
 
 const NotificationBellFallback = () => (
-  <div className="h-11 w-11 rounded-xl bg-slate-100" aria-hidden="true" />
+  <div className="h-11 w-11 rounded-xl bg-slate-100 dark:bg-ink-800" aria-hidden="true" />
 );
 
 const LayoutInner = ({ children }: { children: React.ReactNode }) => {
@@ -360,7 +360,7 @@ const LayoutInner = ({ children }: { children: React.ReactNode }) => {
             <button
               type="button"
               onClick={() => openQuickActions()}
-              className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 text-left text-sm font-bold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 px-3 text-left text-sm font-bold text-blue-700 dark:text-blue-300 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               <ThunderboltOutlined />
               <span>{currentMobileNavigationItem?.label} actions</span>

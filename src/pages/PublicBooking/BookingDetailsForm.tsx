@@ -56,16 +56,19 @@ const BookingDetailsForm = ({
   timezone,
 }: Props) => (
   <div className="lg:col-span-2">
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-8 lg:sticky lg:top-6">
-      <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-900">
-        <UserOutlined className="text-blue-500" />
+    <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-8 lg:sticky lg:top-6">
+      <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-ink-50">
+        <UserOutlined className="text-blue-500 dark:text-blue-400" />
         {manageAction ? 'Booking Details' : '2. Your Details'}
       </h2>
 
       <div className="space-y-5">
         <div className="space-y-2">
-          <label htmlFor="booking-name" className="text-sm font-medium text-slate-700">
-            Full Name <span className="text-rose-500">*</span>
+          <label
+            htmlFor="booking-name"
+            className="text-sm font-medium text-slate-700 dark:text-ink-100"
+          >
+            Full Name <span className="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <input
             id="booking-name"
@@ -80,8 +83,11 @@ const BookingDetailsForm = ({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="booking-email" className="text-sm font-medium text-slate-700">
-            Email Address <span className="text-rose-500">*</span>
+          <label
+            htmlFor="booking-email"
+            className="text-sm font-medium text-slate-700 dark:text-ink-100"
+          >
+            Email Address <span className="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <input
             id="booking-email"
@@ -104,14 +110,20 @@ const BookingDetailsForm = ({
             }`}
           />
           {!manageAction && emailTouched && emailIsInvalid && (
-            <p id="booking-email-error" className="text-xs font-medium text-rose-700">
+            <p
+              id="booking-email-error"
+              className="text-xs font-medium text-rose-700 dark:text-rose-300"
+            >
               Enter a valid email address.
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="booking-notes" className="text-sm font-medium text-slate-700">
+          <label
+            htmlFor="booking-notes"
+            className="text-sm font-medium text-slate-700 dark:text-ink-100"
+          >
             Additional Notes
           </label>
           <textarea
@@ -129,9 +141,10 @@ const BookingDetailsForm = ({
             <div className="space-y-2" key={question.id}>
               <label
                 htmlFor={`booking-question-${question.id}`}
-                className="text-sm font-medium text-slate-700"
+                className="text-sm font-medium text-slate-700 dark:text-ink-100"
               >
-                {question.label} {question.required && <span className="text-rose-500">*</span>}
+                {question.label}{' '}
+                {question.required && <span className="text-rose-500 dark:text-rose-400">*</span>}
               </label>
               <textarea
                 id={`booking-question-${question.id}`}
@@ -148,7 +161,10 @@ const BookingDetailsForm = ({
 
         {manageAction === 'cancel' && (
           <div className="space-y-2">
-            <label htmlFor="booking-cancel-reason" className="text-sm font-medium text-slate-700">
+            <label
+              htmlFor="booking-cancel-reason"
+              className="text-sm font-medium text-slate-700 dark:text-ink-100"
+            >
               Cancel Reason
             </label>
             <textarea
@@ -163,38 +179,49 @@ const BookingDetailsForm = ({
 
         <div className="pt-2">
           {selectedSlot && (
-            <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 p-4">
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-blue-700">Confirm This Time</div>
+                <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                  Confirm This Time
+                </div>
                 <div className="mt-1 text-sm font-semibold text-blue-950">{selectedSlot.label}</div>
-                <div className="mt-1 text-xs text-blue-800">
+                <div className="mt-1 text-xs text-blue-800 dark:text-blue-200">
                   {formatDateOnly(selectedDate)} · {timezone}
                 </div>
-                <div className="mt-1 text-xs leading-5 text-blue-700">
+                <div className="mt-1 text-xs leading-5 text-blue-700 dark:text-blue-300">
                   Host receives the calendar hold in their saved timezone.
                 </div>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-white">
-                <ClockCircleOutlined className="text-blue-500" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-100 dark:border-blue-500/20 bg-white dark:bg-ink-900">
+                <ClockCircleOutlined className="text-blue-500 dark:text-blue-400" />
               </div>
             </div>
           )}
           {confirmedBooking && (
-            <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+            <div className="mb-5 rounded-xl border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 p-4 text-sm text-emerald-950">
               <div className="font-semibold">Booking confirmed</div>
               <div className="mt-3 flex flex-wrap gap-4 text-xs font-semibold">
                 {confirmedBooking.ics_url && (
-                  <a href={confirmedBooking.ics_url} className="text-emerald-700 underline">
+                  <a
+                    href={confirmedBooking.ics_url}
+                    className="text-emerald-700 dark:text-emerald-300 underline"
+                  >
                     Download .ics
                   </a>
                 )}
                 {confirmedBooking.reschedule_url && (
-                  <a href={confirmedBooking.reschedule_url} className="text-emerald-700 underline">
+                  <a
+                    href={confirmedBooking.reschedule_url}
+                    className="text-emerald-700 dark:text-emerald-300 underline"
+                  >
                     Reschedule
                   </a>
                 )}
                 {confirmedBooking.cancel_url && (
-                  <a href={confirmedBooking.cancel_url} className="text-emerald-700 underline">
+                  <a
+                    href={confirmedBooking.cancel_url}
+                    className="text-emerald-700 dark:text-emerald-300 underline"
+                  >
                     Cancel
                   </a>
                 )}
@@ -234,7 +261,7 @@ const BookingDetailsForm = ({
               'Confirm Booking'
             )}
           </button>
-          <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500 dark:text-ink-400">
             By confirming, the host will receive the booking details and calendar file.
           </p>
         </div>

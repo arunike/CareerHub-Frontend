@@ -49,15 +49,18 @@ export const MetricCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 })
       {Array.from({ length: count }).map((_, idx) => {
         // Vary the color block themes (blue, emerald, amber, slate)
         const tones = [
-          { bg: 'bg-blue-50/60', dot: 'bg-blue-400' },
-          { bg: 'bg-emerald-50/60', dot: 'bg-emerald-400' },
-          { bg: 'bg-amber-50/60', dot: 'bg-amber-400' },
-          { bg: 'bg-slate-50/70', dot: 'bg-slate-400' },
+          { bg: 'bg-blue-50/60 dark:bg-blue-500/10', dot: 'bg-blue-400' },
+          { bg: 'bg-emerald-50/60 dark:bg-emerald-500/10', dot: 'bg-emerald-400' },
+          { bg: 'bg-amber-50/60 dark:bg-amber-500/10', dot: 'bg-amber-400' },
+          { bg: 'bg-slate-50/70 dark:bg-ink-900/70', dot: 'bg-slate-400 dark:bg-ink-700' },
         ];
         const tone = tones[idx % tones.length];
 
         return (
-          <div key={idx} className="enterprise-card px-4 py-4 md:px-5 md:py-5 space-y-4 bg-white">
+          <div
+            key={idx}
+            className="enterprise-card px-4 py-4 md:px-5 md:py-5 space-y-4 bg-white dark:bg-ink-900"
+          >
             <div className="flex justify-between items-center">
               <SkeletonBlock width="50%" height="0.8rem" className="opacity-60" />
               <div
@@ -79,9 +82,9 @@ export const MetricCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 })
 
 export const TableSkeleton: React.FC = () => {
   return (
-    <div className="enterprise-table-shell bg-white">
+    <div className="enterprise-table-shell bg-white dark:bg-ink-900">
       {/* Fake Filter bar */}
-      <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 border-b border-slate-100 dark:border-white/[0.07] flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2.5 flex-1 max-w-lg">
           <SkeletonBlock width="180px" height="2.25rem" />
           <SkeletonBlock width="130px" height="2.25rem" className="hidden sm:block" />
@@ -94,7 +97,7 @@ export const TableSkeleton: React.FC = () => {
       </div>
 
       {/* Fake Table Header */}
-      <div className="bg-slate-50/80 p-4 grid grid-cols-4 md:grid-cols-6 gap-4 border-b border-slate-200/60 items-center">
+      <div className="bg-slate-50/80 dark:bg-ink-900/80 p-4 grid grid-cols-4 md:grid-cols-6 gap-4 border-b border-slate-200/60 dark:border-white/[0.08] items-center">
         <div className="flex items-center gap-3">
           <SkeletonBlock width="16px" height="16px" className="rounded shrink-0" />
           <SkeletonBlock width="50%" height="0.75rem" className="opacity-80" />
@@ -111,13 +114,29 @@ export const TableSkeleton: React.FC = () => {
       </div>
 
       {/* Fake Table Rows */}
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 dark:divide-white/[0.07]">
         {Array.from({ length: 6 }).map((_, idx) => {
           const statuses = [
-            { bg: 'bg-blue-50/80 border-blue-100/60', dot: 'bg-blue-400', width: '60px' },
-            { bg: 'bg-emerald-50/80 border-emerald-100/60', dot: 'bg-emerald-400', width: '55px' },
-            { bg: 'bg-amber-50/80 border-amber-100/60', dot: 'bg-amber-400', width: '70px' },
-            { bg: 'bg-rose-50/80 border-rose-100/60', dot: 'bg-rose-400', width: '65px' },
+            {
+              bg: 'bg-blue-50/80 dark:bg-blue-500/10 border-blue-100/60 dark:border-blue-500/25',
+              dot: 'bg-blue-400',
+              width: '60px',
+            },
+            {
+              bg: 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-100/60 dark:border-emerald-500/25',
+              dot: 'bg-emerald-400',
+              width: '55px',
+            },
+            {
+              bg: 'bg-amber-50/80 dark:bg-amber-500/10 border-amber-100/60 dark:border-amber-500/25',
+              dot: 'bg-amber-400',
+              width: '70px',
+            },
+            {
+              bg: 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-100/60 dark:border-rose-500/25',
+              dot: 'bg-rose-400',
+              width: '65px',
+            },
           ];
           const status = statuses[idx % statuses.length];
 
@@ -156,7 +175,7 @@ export const TableSkeleton: React.FC = () => {
       </div>
 
       {/* Fake Table Pagination */}
-      <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+      <div className="p-4 border-t border-slate-100 dark:border-white/[0.07] flex items-center justify-between bg-slate-50/30 dark:bg-ink-900/30">
         <SkeletonBlock width="140px" height="0.8rem" className="opacity-60" />
         <div className="flex gap-1.5">
           <SkeletonBlock width="28px" height="28px" className="rounded-lg" />
@@ -174,7 +193,7 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className="enterprise-card p-5 flex flex-col justify-between gap-5 bg-white border border-slate-100"
+          className="enterprise-card p-5 flex flex-col justify-between gap-5 bg-white dark:bg-ink-900 border border-slate-100 dark:border-white/[0.07]"
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
             <div className="flex min-w-0 flex-1 items-center gap-4">
@@ -182,7 +201,7 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <SkeletonBlock width="240px" height="1.1rem" className="font-semibold" />
-                  <div className="h-5 rounded-full bg-blue-50/50 border border-blue-100/30 px-2 flex items-center">
+                  <div className="h-5 rounded-full bg-blue-50/50 dark:bg-blue-500/10 border border-blue-100/30 dark:border-blue-500/25 px-2 flex items-center">
                     <SkeletonBlock
                       width="45px"
                       height="0.45rem"
@@ -196,14 +215,14 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2.5 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100/70 justify-end items-center">
+            <div className="flex gap-2.5 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100/70 dark:border-white/[0.07] justify-end items-center">
               <SkeletonBlock width="85px" height="2rem" />
               <SkeletonBlock width="85px" height="2rem" />
             </div>
           </div>
 
           {/* Realistic Skill Tag Row for Journey List items */}
-          <div className="pt-3 border-t border-slate-100/60 flex flex-wrap gap-2">
+          <div className="pt-3 border-t border-slate-100/60 dark:border-white/[0.06] flex flex-wrap gap-2">
             {Array.from({ length: 3 }).map((_, tIdx) => (
               <SkeletonBlock
                 key={tIdx}
@@ -224,16 +243,16 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
       {Array.from({ length: count }).map((_, idx) => {
         const borderColors = [
-          'border-blue-100/50',
-          'border-emerald-100/50',
-          'border-amber-100/50',
-          'border-slate-100/60',
+          'border-blue-100/50 dark:border-blue-500/25',
+          'border-emerald-100/50 dark:border-emerald-500/25',
+          'border-amber-100/50 dark:border-amber-500/25',
+          'border-slate-100/60 dark:border-white/[0.06]',
         ];
         const tagColors = [
-          { bg: 'bg-blue-50/70', dot: 'bg-blue-400' },
-          { bg: 'bg-emerald-50/70', dot: 'bg-emerald-400' },
-          { bg: 'bg-amber-50/70', dot: 'bg-amber-400' },
-          { bg: 'bg-slate-50/80', dot: 'bg-slate-400' },
+          { bg: 'bg-blue-50/70 dark:bg-blue-500/10', dot: 'bg-blue-400' },
+          { bg: 'bg-emerald-50/70 dark:bg-emerald-500/10', dot: 'bg-emerald-400' },
+          { bg: 'bg-amber-50/70 dark:bg-amber-500/10', dot: 'bg-amber-400' },
+          { bg: 'bg-slate-50/80 dark:bg-ink-900/80', dot: 'bg-slate-400 dark:bg-ink-700' },
         ];
         const border = borderColors[idx % borderColors.length];
         const tag = tagColors[idx % tagColors.length];
@@ -241,7 +260,7 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
         return (
           <div
             key={idx}
-            className={`enterprise-card p-5 flex flex-col justify-between bg-white border ${border}`}
+            className={`enterprise-card p-5 flex flex-col justify-between bg-white dark:bg-ink-900 border ${border}`}
             style={{ height: '225px' }}
           >
             <div className="space-y-4">
@@ -260,7 +279,7 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
                 <SkeletonBlock width="85%" height="0.85rem" className="opacity-80" />
               </div>
             </div>
-            <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+            <div className="pt-4 border-t border-slate-100 dark:border-white/[0.07] flex justify-between items-center">
               <div className={`h-5.5 rounded-md ${tag.bg} flex items-center px-2 gap-1.5`}>
                 <div className={`w-1.2 h-1.2 rounded-full ${tag.dot}`} />
                 <SkeletonBlock width="45px" height="0.45rem" className="opacity-75" />
@@ -276,7 +295,7 @@ export const GridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
 
 export const CalendarSkeleton: React.FC = () => {
   return (
-    <div className="enterprise-section space-y-4 bg-white/50 p-4 sm:space-y-5 sm:p-5">
+    <div className="enterprise-section space-y-4 bg-white/50 dark:bg-ink-900/50 p-4 sm:space-y-5 sm:p-5">
       {/* Calendar Header */}
       <div className="flex items-center justify-between gap-4">
         <SkeletonBlock width="140px" height="1.75rem" />
@@ -287,7 +306,7 @@ export const CalendarSkeleton: React.FC = () => {
       </div>
 
       {/* Weekdays Row */}
-      <div className="grid grid-cols-7 gap-1 border-b border-slate-100 pb-2 sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 border-b border-slate-100 dark:border-white/[0.07] pb-2 sm:gap-2">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
           <div key={day} className="text-center">
             <SkeletonBlock width="40%" height="0.75rem" className="mx-auto opacity-70" />
@@ -303,7 +322,7 @@ export const CalendarSkeleton: React.FC = () => {
           return (
             <div
               key={idx}
-              className="flex min-h-18 flex-col justify-between rounded-lg border border-slate-100 bg-white p-1 shadow-[0_1px_2px_rgba(0,0,0,0.02)] sm:min-h-[95px] sm:rounded-xl sm:p-2"
+              className="flex min-h-18 flex-col justify-between rounded-lg border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 p-1 shadow-[0_1px_2px_rgba(0,0,0,0.02)] sm:min-h-[95px] sm:rounded-xl sm:p-2"
             >
               <div className="flex justify-between items-center">
                 <SkeletonBlock width="20px" height="0.85rem" className="opacity-60" />
@@ -342,7 +361,7 @@ export const AvailabilityTextSkeleton: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* AvailabilityGeneratorCard Skeleton */}
-      <div className="enterprise-card p-6 space-y-4 bg-white">
+      <div className="enterprise-card p-6 space-y-4 bg-white dark:bg-ink-900">
         <SkeletonBlock width="160px" height="1.25rem" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
@@ -364,8 +383,8 @@ export const AvailabilityTextSkeleton: React.FC = () => {
       </div>
 
       {/* AvailabilityBookingCard Skeleton */}
-      <div className="enterprise-card p-6 space-y-5 bg-white">
-        <div className="border-b border-slate-100 pb-3 flex justify-between">
+      <div className="enterprise-card p-6 space-y-5 bg-white dark:bg-ink-900">
+        <div className="border-b border-slate-100 dark:border-white/[0.07] pb-3 flex justify-between">
           <SkeletonBlock width="220px" height="1.25rem" />
           <SkeletonBlock width="80px" height="1.25rem" className="rounded-full" />
         </div>
@@ -404,7 +423,7 @@ export const AvailabilityTextSkeleton: React.FC = () => {
       </div>
 
       {/* PublicBookingManager Skeleton */}
-      <div className="enterprise-card p-5 space-y-4 bg-white">
+      <div className="enterprise-card p-5 space-y-4 bg-white dark:bg-ink-900">
         <SkeletonBlock width="180px" height="1.25rem" />
         <TableSkeleton />
       </div>
@@ -418,16 +437,19 @@ export const SettingsSkeleton: React.FC = () => {
       <PageHeaderSkeleton />
 
       {/* Tab bar list */}
-      <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl">
+      <div className="flex flex-wrap gap-1 bg-slate-100 dark:bg-ink-800 p-1 rounded-xl">
         {Array.from({ length: 6 }).map((_, idx) => (
-          <div key={idx} className="flex-1 min-w-[100px] h-9 px-4 py-2 rounded-lg bg-white/70">
+          <div
+            key={idx}
+            className="flex-1 min-w-[100px] h-9 px-4 py-2 rounded-lg bg-white/70 dark:bg-ink-900/70"
+          >
             <SkeletonBlock width="60%" height="0.85rem" className="mx-auto" />
           </div>
         ))}
       </div>
 
       {/* Settings general layout (Form) */}
-      <div className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+      <div className="bg-white dark:bg-ink-900 p-4 sm:p-6 rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-6">
         <div className="border-b pb-2">
           <SkeletonBlock width="120px" height="1.25rem" />
         </div>
@@ -450,21 +472,28 @@ export const DocumentGridSkeleton: React.FC = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, idx) => (
-        <div key={idx} className="enterprise-card p-4 space-y-4 bg-white border border-slate-100">
-          <div className="aspect-video bg-slate-50 border border-slate-100/50 rounded-xl flex items-center justify-center p-4">
+        <div
+          key={idx}
+          className="enterprise-card p-4 space-y-4 bg-white dark:bg-ink-900 border border-slate-100 dark:border-white/[0.07]"
+        >
+          <div className="aspect-video bg-slate-50 dark:bg-ink-900 border border-slate-100/50 dark:border-white/[0.05] rounded-xl flex items-center justify-center p-4">
             <SkeletonBlock
               width="36px"
               height="36px"
               circle
-              className="opacity-85 bg-blue-100/50"
+              className="opacity-85 bg-blue-100/50 dark:bg-blue-500/10"
             />
           </div>
           <div className="space-y-2">
             <SkeletonBlock width="85%" height="1.05rem" className="font-semibold" />
             <SkeletonBlock width="55%" height="0.75rem" className="opacity-60" />
           </div>
-          <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between">
-            <SkeletonBlock width="60px" height="1.35rem" className="rounded-full bg-slate-100" />
+          <div className="pt-2.5 border-t border-slate-100 dark:border-white/[0.07] flex items-center justify-between">
+            <SkeletonBlock
+              width="60px"
+              height="1.35rem"
+              className="rounded-full bg-slate-100 dark:bg-ink-800"
+            />
             <div className="flex gap-2">
               <SkeletonBlock width="22px" height="22px" circle className="opacity-70" />
               <SkeletonBlock width="22px" height="22px" circle className="opacity-70" />
@@ -480,8 +509,8 @@ export const OfferComparisonSkeleton: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {Array.from({ length: 3 }).map((_, idx) => (
-        <div key={idx} className="enterprise-card p-6 space-y-5 bg-white">
-          <div className="space-y-2.5 text-center pb-4 border-b border-slate-100">
+        <div key={idx} className="enterprise-card p-6 space-y-5 bg-white dark:bg-ink-900">
+          <div className="space-y-2.5 text-center pb-4 border-b border-slate-100 dark:border-white/[0.07]">
             <SkeletonBlock width="65%" height="1.35rem" className="mx-auto font-semibold" />
             <SkeletonBlock width="45%" height="0.85rem" className="mx-auto opacity-60" />
           </div>
@@ -493,7 +522,7 @@ export const OfferComparisonSkeleton: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100 dark:border-white/[0.07]">
             <SkeletonBlock width="100%" height="2.5rem" className="rounded-xl" />
           </div>
         </div>

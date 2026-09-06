@@ -198,11 +198,12 @@ export const ElectionsForm = ({
 
   return (
     <div>
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed text-slate-500 dark:text-ink-400">
         {source ? (
           <>
-            Saved against <span className="font-medium text-slate-600">{source.company}</span> for
-            this year only — each role keeps its own elections.
+            Saved against{' '}
+            <span className="font-medium text-slate-600 dark:text-ink-200">{source.company}</span>{' '}
+            for this year only — each role keeps its own elections.
           </>
         ) : (
           'Premiums start from the linked offer. Anything you change here wins.'
@@ -233,10 +234,10 @@ export const ElectionsForm = ({
         </Field>
       </div>
 
-      <div className="mt-7 border-t border-slate-100 pt-5">
+      <div className="mt-7 border-t border-slate-100 dark:border-white/[0.07] pt-5">
         <SectionLabel
           trailing={
-            <span className="text-xs font-medium tabular-nums text-slate-600">
+            <span className="text-xs font-medium tabular-nums text-slate-600 dark:text-ink-200">
               {moneyCents(deductionTotal)}
             </span>
           }
@@ -297,7 +298,7 @@ export const ElectionsForm = ({
           </div>
 
           {customDeductions.length === 0 ? (
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-slate-400 dark:text-ink-500">
               Life insurance, commuter, union dues, stock purchase plan.
             </p>
           ) : (
@@ -345,12 +346,12 @@ export const ElectionsForm = ({
         </div>
       </div>
 
-      <div className="mt-6 border-t border-slate-100 pt-5">
+      <div className="mt-6 border-t border-slate-100 dark:border-white/[0.07] pt-5">
         <div className="flex items-center justify-between gap-3">
           <SectionLabel
             trailing={
               allowanceTotal > 0 ? (
-                <span className="text-xs font-medium tabular-nums text-slate-600">
+                <span className="text-xs font-medium tabular-nums text-slate-600 dark:text-ink-200">
                   {money(allowanceTotal * paychecksPerYear)} a year
                 </span>
               ) : undefined
@@ -370,7 +371,7 @@ export const ElectionsForm = ({
         </div>
 
         {allowances.length === 0 ? (
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-400 dark:text-ink-500">
             Work-from-home stipend, phone or internet allowance, commuter or meal benefit. Set how
             often it is paid; a monthly one is spread across your paychecks.
           </p>
@@ -387,7 +388,7 @@ export const ElectionsForm = ({
               return (
                 <div
                   key={allowance.id}
-                  className="rounded-lg border border-slate-200 bg-slate-50/60 p-3"
+                  className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 p-3"
                 >
                   <div className="flex items-center gap-2">
                     <AutoComplete
@@ -399,7 +400,7 @@ export const ElectionsForm = ({
                       optionRender={(option) => (
                         <span className="flex items-baseline justify-between gap-3">
                           <span>{option.data.label}</span>
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-[11px] text-slate-400 dark:text-ink-500">
                             {UNIT_LABELS[option.data.unit as AllowanceUnit]}
                           </span>
                         </span>
@@ -412,7 +413,7 @@ export const ElectionsForm = ({
                       onChange={(value) => patch({ label: value ?? '' })}
                       onSelect={(value) => patch(applyPreset(value))}
                     />
-                    <span className="shrink-0 text-xs tabular-nums text-slate-500">
+                    <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-ink-400">
                       {allowance.unit === 'ONCE' ? (
                         <>{money(paymentAmount(allowance))} once</>
                       ) : (

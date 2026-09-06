@@ -79,20 +79,22 @@ export const SettingsSection = ({
   <section
     id={`settings-section-${id}`}
     // scroll-mt keeps the heading clear of the page header when search jumps here.
-    className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+    className="scroll-mt-24 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6"
     aria-labelledby={`settings-section-${id}-title`}
   >
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-3">
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 dark:border-white/[0.08] pb-3">
       <div className="min-w-0">
         <h2
           id={`settings-section-${id}-title`}
-          className="flex items-center gap-2 text-base font-semibold text-slate-950"
+          className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-ink-50"
         >
-          <span className="text-slate-400">{icon}</span>
+          <span className="text-slate-400 dark:text-ink-500">{icon}</span>
           {title}
         </h2>
         {description ? (
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">{description}</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
+            {description}
+          </p>
         ) : null}
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}

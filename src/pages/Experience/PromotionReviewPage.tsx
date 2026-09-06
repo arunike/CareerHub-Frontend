@@ -14,9 +14,11 @@ import { PageState, PanelSkeleton } from '../../components/PageState';
 
 const checklistToneClass = (status?: string) => {
   const normalized = (status || '').toLowerCase();
-  if (normalized.includes('strong')) return 'border-emerald-100 bg-emerald-50/60 text-emerald-950';
-  if (normalized.includes('partial')) return 'border-amber-100 bg-amber-50/60 text-amber-950';
-  return 'border-slate-200 bg-slate-50 text-slate-700';
+  if (normalized.includes('strong'))
+    return 'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/10 text-emerald-950';
+  if (normalized.includes('partial'))
+    return 'border-amber-100 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/10 text-amber-950';
+  return 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-slate-700 dark:text-ink-100';
 };
 
 const PromotionReviewPage: React.FC = () => {
@@ -45,7 +47,7 @@ const PromotionReviewPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto min-h-screen max-w-6xl bg-slate-50/50 px-4 py-12 sm:px-6">
+      <div className="mx-auto min-h-screen max-w-6xl bg-slate-50/50 dark:bg-ink-900/50 px-4 py-12 sm:px-6">
         <PanelSkeleton rows={6} />
       </div>
     );
@@ -53,7 +55,7 @@ const PromotionReviewPage: React.FC = () => {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-slate-50/50 px-4 py-16 sm:px-6">
+      <div className="min-h-screen bg-slate-50/50 dark:bg-ink-900/50 px-4 py-16 sm:px-6">
         <PageState
           title="Promotion review not found"
           description="This review may have been deleted or is no longer available in this account."
@@ -84,7 +86,7 @@ const PromotionReviewPage: React.FC = () => {
       />
 
       {/* Main content body */}
-      <div className="min-h-screen bg-slate-50 px-4 py-6 shadow-inner sm:px-6 sm:py-10">
+      <div className="min-h-screen bg-slate-50 dark:bg-ink-900 px-4 py-6 shadow-inner sm:px-6 sm:py-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 sm:gap-8">
           {/* Page Title & Meta Header */}
           <ArtifactHeaderCard
@@ -98,23 +100,23 @@ const PromotionReviewPage: React.FC = () => {
 
           {/* Verdict summary block */}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading
                 eyebrow="Readiness"
                 title="Executive Summary"
                 description="A cleaned-up narrative view of what is strong, what is missing, and what needs to happen next."
               />
-              <p className="m-0 text-[15px] font-medium leading-7 text-slate-800">
+              <p className="m-0 text-[15px] font-medium leading-7 text-slate-800 dark:text-ink-50">
                 {parseInlineMarkdown(review.readiness_verdict?.summary)}
               </p>
             </div>
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-5 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)]">
-              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-5 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)]">
+              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-ink-500">
                 Current Signal
               </div>
               <div className="mt-5 space-y-4">
                 <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                     Verdict
                   </div>
                   <Tag
@@ -124,11 +126,11 @@ const PromotionReviewPage: React.FC = () => {
                     {review.readiness_verdict?.label || 'Promotion review'}
                   </Tag>
                 </div>
-                <div className="border-t border-slate-100 pt-4">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div className="border-t border-slate-100 dark:border-white/[0.07] pt-4">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                     Confidence
                   </div>
-                  <div className="text-lg font-bold capitalize text-slate-950">
+                  <div className="text-lg font-bold capitalize text-slate-950 dark:text-ink-50">
                     {review.readiness_verdict?.confidence || 'unknown'}
                   </div>
                 </div>
@@ -137,44 +139,44 @@ const PromotionReviewPage: React.FC = () => {
           </div>
 
           {review.promotion_prediction && (
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading
                 eyebrow="Prediction"
                 title="Promotion chances and timing"
                 description="A probability estimate grounded in saved evidence, target level, timeline, manager signal, and missing context."
               />
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
-                  <div className="text-5xl font-black leading-none text-blue-700">
+                <div className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 p-5 text-center">
+                  <div className="text-5xl font-black leading-none text-blue-700 dark:text-blue-300">
                     {review.promotion_prediction.probability_percent}%
                   </div>
-                  <div className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+                  <div className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700 dark:text-blue-300">
                     {review.promotion_prediction.chance_label} chance
                   </div>
-                  <div className="mt-4 border-t border-blue-100 pt-4 text-xs font-semibold capitalize text-blue-900">
+                  <div className="mt-4 border-t border-blue-100 dark:border-blue-500/20 pt-4 text-xs font-semibold capitalize text-blue-900 dark:text-blue-200">
                     Confidence: {review.promotion_prediction.confidence}
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 p-4">
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                         Likely timing
                       </div>
-                      <div className="mt-1 text-sm font-bold text-slate-950">
+                      <div className="mt-1 text-sm font-bold text-slate-950 dark:text-ink-50">
                         {review.promotion_prediction.likely_timeline}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-                      <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+                    <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/10 p-4">
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                         Best case
                       </div>
                       <div className="mt-1 text-sm font-bold text-emerald-950">
                         {review.promotion_prediction.earliest_reasonable_timeline}
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
-                      <div className="text-[11px] font-bold uppercase tracking-wide text-amber-700">
+                    <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/10 p-4">
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                         If gaps remain
                       </div>
                       <div className="mt-1 text-sm font-bold text-amber-950">
@@ -182,26 +184,26 @@ const PromotionReviewPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="m-0 text-sm leading-7 text-slate-700">
+                  <p className="m-0 text-sm leading-7 text-slate-700 dark:text-ink-100">
                     {parseInlineMarkdown(review.promotion_prediction.rationale)}
                   </p>
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                  <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-slate-700">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-5">
+                  <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-slate-700 dark:text-ink-100">
                     Assumptions
                   </h3>
                   <ListBlock compact items={review.promotion_prediction.assumptions} />
                 </div>
-                <div className="rounded-2xl border border-rose-100 bg-rose-50/30 p-5">
-                  <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-rose-800">
+                <div className="rounded-2xl border border-rose-100 dark:border-rose-500/20 bg-rose-50/30 dark:bg-rose-500/10 p-5">
+                  <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-rose-800 dark:text-rose-200">
                     Blockers
                   </h3>
                   <ListBlock compact items={review.promotion_prediction.chance_blockers} />
                 </div>
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-5">
-                  <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800">
+                <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-500/10 p-5">
+                  <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-200">
                     Improvers
                   </h3>
                   <ListBlock compact items={review.promotion_prediction.chance_improvers} />
@@ -213,7 +215,7 @@ const PromotionReviewPage: React.FC = () => {
           {review.general_calibration &&
             (hasItems(review.general_calibration.heuristics) ||
               hasItems(review.general_calibration.questions_to_validate)) && (
-              <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50/45 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+              <div className="rounded-[1.25rem] border border-blue-100 dark:border-blue-500/20 bg-blue-50/45 dark:bg-blue-500/10 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
                 <SectionHeading
                   eyebrow="Calibration"
                   title="General context to validate"
@@ -221,16 +223,16 @@ const PromotionReviewPage: React.FC = () => {
                 />
                 <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                   {hasItems(review.general_calibration.heuristics) && (
-                    <div className="rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
-                      <h3 className="m-0 mb-4 text-sm font-semibold text-blue-900">
+                    <div className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-white dark:bg-ink-900 p-4 sm:p-6">
+                      <h3 className="m-0 mb-4 text-sm font-semibold text-blue-900 dark:text-blue-200">
                         General heuristics
                       </h3>
                       <ListBlock items={review.general_calibration.heuristics} />
                     </div>
                   )}
                   {hasItems(review.general_calibration.questions_to_validate) && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-                      <h3 className="m-0 mb-4 text-sm font-semibold text-slate-800">
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 sm:p-6">
+                      <h3 className="m-0 mb-4 text-sm font-semibold text-slate-800 dark:text-ink-50">
                         Validate with manager
                       </h3>
                       <ListBlock items={review.general_calibration.questions_to_validate} />
@@ -241,44 +243,44 @@ const PromotionReviewPage: React.FC = () => {
             )}
 
           {review.readiness_dashboard && (
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading
                 eyebrow="Readiness"
                 title="Packet and conversation dashboard"
                 description="A compact view of whether your evidence is ready to become a promotion packet and whether the manager conversation is calibrated."
               />
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[190px_240px_minmax(0,1fr)]">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                     Packet readiness
                   </div>
-                  <div className="mt-2 text-4xl font-black leading-none text-slate-950">
+                  <div className="mt-2 text-4xl font-black leading-none text-slate-950 dark:text-ink-50">
                     {review.readiness_dashboard.packet_readiness_score}
                   </div>
-                  <div className="mt-2 text-sm font-bold capitalize text-slate-500">
+                  <div className="mt-2 text-sm font-bold capitalize text-slate-500 dark:text-ink-400">
                     {review.readiness_dashboard.packet_readiness_label}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-blue-700">
+                <div className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 p-5">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">
                     Manager conversation
                   </div>
                   <div className="mt-2 text-base font-black capitalize leading-6 text-blue-950">
                     {review.readiness_dashboard.manager_conversation_readiness}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 sm:p-6">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                     Confidence explanation
                   </div>
-                  <p className="mb-0 mt-2 text-sm leading-7 text-slate-700">
+                  <p className="mb-0 mt-2 text-sm leading-7 text-slate-700 dark:text-ink-100">
                     {parseInlineMarkdown(review.readiness_dashboard.confidence_explanation)}
                   </p>
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_0.8fr]">
                 <div>
-                  <h3 className="m-0 mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-700">
+                  <h3 className="m-0 mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-700 dark:text-ink-100">
                     Evidence checklist
                   </h3>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -298,8 +300,8 @@ const PromotionReviewPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/35 p-5">
-                  <h3 className="m-0 mb-3 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800">
+                <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/35 dark:bg-emerald-500/10 p-5">
+                  <h3 className="m-0 mb-3 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-200">
                     Top odds improvers
                   </h3>
                   <ListBlock items={review.readiness_dashboard.top_odds_improvers.slice(0, 3)} />
@@ -309,27 +311,27 @@ const PromotionReviewPage: React.FC = () => {
           )}
 
           {/* Evidence overview */}
-          <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+          <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
             <SectionHeading
               eyebrow="Evidence"
               title="What the saved data says"
               description="The report now separates role facts, proof points, and missing promotion signals so the story is easier to scan."
             />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.75fr_1fr_1fr]">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-slate-700">
+              <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-5">
+                <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-slate-700 dark:text-ink-100">
                   Saved Evidence
                 </h3>
                 <ListBlock compact items={review.evidence_summary?.role_snapshot} />
               </div>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-5">
-                <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800">
+              <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-500/10 p-5">
+                <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-200">
                   Strongest Evidence
                 </h3>
                 <ListBlock items={review.evidence_summary?.strongest_evidence} />
               </div>
-              <div className="rounded-2xl border border-amber-100 bg-amber-50/30 p-5">
-                <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-amber-800">
+              <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/10 p-5">
+                <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-amber-800 dark:text-amber-200">
                   Missing Context
                 </h3>
                 <ListBlock items={review.evidence_summary?.missing_context} />
@@ -339,8 +341,8 @@ const PromotionReviewPage: React.FC = () => {
 
           {/* Quality Assessment note */}
           {review.evidence_summary?.data_quality_note && (
-            <div className="rounded-[1.25rem] border border-blue-100 bg-blue-50/60 p-5 text-sm leading-7 text-blue-950">
-              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700">
+            <div className="rounded-[1.25rem] border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 p-5 text-sm leading-7 text-blue-950">
+              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700 dark:text-blue-300">
                 <BulbOutlined />
                 Evidence Quality Note
               </div>
@@ -361,9 +363,9 @@ const PromotionReviewPage: React.FC = () => {
 
           {/* Manager Conversation Strategy */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_0.85fr]">
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading eyebrow="Manager" title="Conversation strategy" />
-              <p className="mb-5 mt-0 text-sm leading-7 text-slate-700">
+              <p className="mb-5 mt-0 text-sm leading-7 text-slate-700 dark:text-ink-100">
                 {parseInlineMarkdown(review.manager_conversation?.recommendation)}
               </p>
               <ListBlock
@@ -371,7 +373,7 @@ const PromotionReviewPage: React.FC = () => {
                 items={review.manager_conversation?.talking_points}
               />
             </div>
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading eyebrow="1:1" title="Questions to ask" />
               <ListBlock title="Questions" items={review.manager_conversation?.questions_to_ask} />
             </div>
@@ -379,9 +381,9 @@ const PromotionReviewPage: React.FC = () => {
 
           {/* Email/Slack Draft Template */}
           {review.manager_conversation?.draft_message && (
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading eyebrow="Draft" title="Email or Slack message" />
-              <div className="whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-800">
+              <div className="whitespace-pre-wrap rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 p-4 font-mono text-sm leading-7 text-slate-800 dark:text-ink-50">
                 {parseInlineMarkdown(review.manager_conversation.draft_message)}
               </div>
             </div>
@@ -392,7 +394,7 @@ const PromotionReviewPage: React.FC = () => {
             (hasItems(review.growth_plan.next_30_days) ||
               hasItems(review.growth_plan.next_60_days) ||
               hasItems(review.growth_plan.next_90_days)) && (
-              <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+              <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
                 <SectionHeading
                   eyebrow="Plan"
                   title="30 / 60 / 90 day moves"
@@ -400,24 +402,24 @@ const PromotionReviewPage: React.FC = () => {
                 />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
                   {hasItems(review.growth_plan.next_30_days) && (
-                    <div className="rounded-2xl border border-blue-100 bg-blue-50/35 p-5">
-                      <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-blue-800">
+                    <div className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-blue-50/35 dark:bg-blue-500/10 p-5">
+                      <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-blue-800 dark:text-blue-200">
                         Next 30 Days
                       </h3>
                       <ListBlock items={review.growth_plan.next_30_days} />
                     </div>
                   )}
                   {hasItems(review.growth_plan.next_60_days) && (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                      <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-slate-700">
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-5">
+                      <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-slate-700 dark:text-ink-100">
                         Next 60 Days
                       </h3>
                       <ListBlock items={review.growth_plan.next_60_days} />
                     </div>
                   )}
                   {hasItems(review.growth_plan.next_90_days) && (
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/35 p-5">
-                      <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800">
+                    <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/35 dark:bg-emerald-500/10 p-5">
+                      <h3 className="m-0 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-200">
                         Next 90 Days
                       </h3>
                       <ListBlock items={review.growth_plan.next_90_days} />
@@ -429,21 +431,21 @@ const PromotionReviewPage: React.FC = () => {
 
           {/* Promo Packet Outline */}
           {review.promo_packet_outline && review.promo_packet_outline.length > 0 && (
-            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
+            <div className="rounded-[1.25rem] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-[0_20px_55px_-46px_rgba(15,23,42,0.7)] sm:p-6">
               <SectionHeading eyebrow="Packet" title="Promotion packet outline" />
               <div className="space-y-4">
                 {review.promo_packet_outline.map((section) => (
                   <div
                     key={section.section}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5"
+                    className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 p-5"
                   >
-                    <h3 className="m-0 text-[15px] font-bold text-slate-950">
+                    <h3 className="m-0 text-[15px] font-bold text-slate-950 dark:text-ink-50">
                       {parseInlineMarkdown(section.section)}
                     </h3>
-                    <p className="mb-0 mt-2 text-sm leading-7 text-slate-600">
+                    <p className="mb-0 mt-2 text-sm leading-7 text-slate-600 dark:text-ink-200">
                       {parseInlineMarkdown(section.content_guidance)}
                     </p>
-                    <div className="mt-4 border-t border-slate-200 pt-4">
+                    <div className="mt-4 border-t border-slate-200 dark:border-white/[0.08] pt-4">
                       <ListBlock title="Evidence needed" items={section.evidence_needed} />
                     </div>
                   </div>
@@ -452,7 +454,9 @@ const PromotionReviewPage: React.FC = () => {
             </div>
           )}
 
-          <p className="pb-6 text-center text-xs text-slate-400">CareerHub AI · {date}</p>
+          <p className="pb-6 text-center text-xs text-slate-400 dark:text-ink-500">
+            CareerHub AI · {date}
+          </p>
         </div>
       </div>
     </>

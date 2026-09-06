@@ -87,10 +87,10 @@ const FederalHolidayCard = ({
     <div
       className={`flex min-h-[166px] w-full flex-col rounded-xl border p-5 transition-all duration-200 ${
         !isAdvancedMode
-          ? 'cursor-default border-gray-200 bg-gray-50 opacity-60 grayscale'
+          ? 'cursor-default border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 opacity-60 grayscale'
           : isIgnored
-            ? 'border-dashed border-gray-300 bg-gray-100 opacity-60 grayscale-[70%]'
-            : 'border-blue-100 bg-white shadow-sm hover:border-blue-300 hover:shadow-md'
+            ? 'border-dashed border-gray-300 dark:border-white/[0.12] bg-gray-100 dark:bg-ink-800 opacity-60 grayscale-[70%]'
+            : 'border-blue-100 dark:border-blue-500/20 bg-white dark:bg-ink-900 shadow-sm hover:border-blue-300 hover:shadow-md'
       }`}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -98,10 +98,10 @@ const FederalHolidayCard = ({
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
               isIgnored
-                ? 'bg-gray-200 text-gray-400'
+                ? 'bg-gray-200 dark:bg-ink-800 text-gray-400 dark:text-ink-500'
                 : isAdvancedMode
-                  ? 'bg-blue-50 text-blue-500'
-                  : 'bg-gray-100 text-gray-400'
+                  ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400'
+                  : 'bg-gray-100 dark:bg-ink-800 text-gray-400 dark:text-ink-500'
             }`}
           >
             <CalendarOutlined className="text-lg" />
@@ -110,11 +110,13 @@ const FederalHolidayCard = ({
             <Text
               strong
               delete={isIgnored}
-              className={`text-base ${isIgnored ? 'text-gray-400' : 'text-gray-800'}`}
+              className={`text-base ${isIgnored ? 'text-gray-400 dark:text-ink-500' : 'text-gray-800 dark:text-ink-50'}`}
             >
               {dateLabel}
             </Text>
-            <Text className={`text-xs ${isIgnored ? 'text-gray-400' : 'text-gray-500'}`}>
+            <Text
+              className={`text-xs ${isIgnored ? 'text-gray-400 dark:text-ink-500' : 'text-gray-500 dark:text-ink-400'}`}
+            >
               {dateDetail}
             </Text>
           </div>
@@ -124,10 +126,10 @@ const FederalHolidayCard = ({
           <Tag
             className={`m-0 rounded-full px-2.5 py-1 ${
               isIgnored
-                ? 'border-gray-300 bg-gray-100 text-gray-500'
+                ? 'border-gray-300 dark:border-white/[0.12] bg-gray-100 dark:bg-ink-800 text-gray-500 dark:text-ink-400'
                 : isAdvancedMode
-                  ? 'border-blue-200 bg-blue-50 text-blue-600'
-                  : 'border-gray-200 bg-gray-100 text-gray-500'
+                  ? 'border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300'
+                  : 'border-gray-200 dark:border-white/[0.08] bg-gray-100 dark:bg-ink-800 text-gray-500 dark:text-ink-400'
             }`}
             color={isIgnored || !isAdvancedMode ? 'default' : 'blue'}
           >
@@ -160,7 +162,9 @@ const FederalHolidayCard = ({
       <div className="mb-4 min-h-10 flex-grow overflow-hidden">
         <Text
           className={`line-clamp-2 text-sm ${
-            isIgnored ? 'text-gray-400 line-through' : 'text-gray-600'
+            isIgnored
+              ? 'text-gray-400 dark:text-ink-500 line-through'
+              : 'text-gray-600 dark:text-ink-200'
           }`}
           title={item.description}
         >
@@ -171,10 +175,12 @@ const FederalHolidayCard = ({
       {isAdvancedMode && (
         <div
           className={`mt-auto flex items-center justify-between border-t pt-4 ${
-            isIgnored ? 'border-gray-200' : 'border-blue-50'
+            isIgnored ? 'border-gray-200 dark:border-white/[0.08]' : 'border-blue-50'
           }`}
         >
-          <Text className={`text-xs font-medium ${isIgnored ? 'text-gray-400' : 'text-blue-500'}`}>
+          <Text
+            className={`text-xs font-medium ${isIgnored ? 'text-gray-400 dark:text-ink-500' : 'text-blue-500 dark:text-blue-400'}`}
+          >
             Observance Status
           </Text>
           <Switch

@@ -2,8 +2,8 @@ import { Tooltip } from 'antd';
 import type { LedgerFlag } from './ledgerRowView';
 
 const TONE_CLASS: Record<LedgerFlag['tone'], string> = {
-  quiet: 'bg-slate-100 text-slate-500',
-  warn: 'bg-amber-50 text-amber-700',
+  quiet: 'bg-slate-100 dark:bg-ink-800 text-slate-500 dark:text-ink-400',
+  warn: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
 };
 
 export const LedgerFlagChip = ({ flag }: { flag: LedgerFlag }) => (

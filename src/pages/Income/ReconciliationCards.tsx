@@ -34,12 +34,16 @@ const Stat = ({
   className = '',
 }: Cell & { className?: string }) => {
   const valueTone =
-    tone === 'good' ? 'text-emerald-600' : tone === 'bad' ? 'text-rose-600' : 'text-slate-900';
+    tone === 'good'
+      ? 'text-emerald-600 dark:text-emerald-300'
+      : tone === 'bad'
+        ? 'text-rose-600 dark:text-rose-300'
+        : 'text-slate-900 dark:text-ink-50';
 
   return (
-    <div className={`bg-white px-6 py-5 ${className}`}>
+    <div className={`bg-white dark:bg-ink-900 px-6 py-5 ${className}`}>
       <div className="flex items-center gap-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           {label}
         </span>
         <FigureMath label={label} hint={hint} breakdown={breakdown} />
@@ -49,7 +53,7 @@ const Stat = ({
       >
         {value}
       </div>
-      <div className="mt-2 text-xs leading-relaxed text-slate-500">{detail}</div>
+      <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-ink-400">{detail}</div>
     </div>
   );
 };
@@ -122,7 +126,9 @@ export const ReconciliationCards = ({
 
   return (
     <div className="enterprise-card overflow-hidden !p-0">
-      <div className={`grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-2 ${wideColumns}`}>
+      <div
+        className={`grid grid-cols-1 gap-px bg-slate-100 dark:bg-ink-800 sm:grid-cols-2 ${wideColumns}`}
+      >
         {cells.map((cell, index) => (
           <Stat key={cell.label} {...cell} className={index === cells.length - 1 ? oddLast : ''} />
         ))}

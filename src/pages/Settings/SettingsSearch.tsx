@@ -27,7 +27,7 @@ const SettingsSearch = ({ onJump }: { onJump: (tab: SettingsTab, sectionId: stri
 
   return (
     <div ref={containerRef} className="relative w-full sm:w-[280px]">
-      <SearchOutlined className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <SearchOutlined className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-ink-500" />
       <input
         type="search"
         value={query}
@@ -47,9 +47,11 @@ const SettingsSearch = ({ onJump }: { onJump: (tab: SettingsTab, sectionId: stri
       />
 
       {isOpen && query.trim().length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-lg">
           {results.length === 0 ? (
-            <p className="px-3 py-3 text-sm text-slate-500">No settings match “{query.trim()}”.</p>
+            <p className="px-3 py-3 text-sm text-slate-500 dark:text-ink-400">
+              No settings match “{query.trim()}”.
+            </p>
           ) : (
             <ul className="max-h-[320px] overflow-y-auto py-1">
               {results.map((entry) => (
@@ -59,10 +61,10 @@ const SettingsSearch = ({ onJump }: { onJump: (tab: SettingsTab, sectionId: stri
                     onClick={() => jump(entry.tab, entry.id)}
                     className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-slate-50"
                   >
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-900">
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-900 dark:text-ink-50">
                       {entry.title}
                     </span>
-                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
                       {TAB_LABELS[entry.tab]}
                     </span>
                   </button>

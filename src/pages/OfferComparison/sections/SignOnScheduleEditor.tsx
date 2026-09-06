@@ -39,7 +39,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
           <div className={FIELD_LABEL_CLASS}>Payout by year</div>
-          <div className="mt-0.5 text-[11px] text-gray-400">
+          <div className="mt-0.5 text-[11px] text-gray-400 dark:text-ink-500">
             Allocated {money(allocated)} of {money(total)}
           </div>
         </div>
@@ -47,7 +47,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
           <button
             type="button"
             onClick={() => onChange([total, ...rows.slice(1).map(() => 0)])}
-            className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
+            className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
           >
             All in Y1
           </button>
@@ -57,7 +57,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
       <div className="grid grid-cols-2 gap-2">
         {rows.map((amount, index) => (
           <label key={index} className="flex min-w-0 items-center gap-2">
-            <span className="w-6 shrink-0 text-[11px] font-bold uppercase text-gray-500">
+            <span className="w-6 shrink-0 text-[11px] font-bold uppercase text-gray-500 dark:text-ink-400">
               Y{index + 1}
             </span>
             <UnitNumberInput
@@ -72,12 +72,12 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 dark:border-white/[0.07] pt-2">
         {rows.length < MAX_YEARS ? (
           <button
             type="button"
             onClick={() => onChange([...rows, 0])}
-            className="rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
+            className="rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
           >
             + Year {rows.length + 1}
           </button>
@@ -87,7 +87,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 hover:bg-gray-50"
+          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-ink-400 hover:bg-gray-50"
         >
           Done
         </button>
@@ -97,7 +97,9 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
 
   return (
     <div className={FIELD_HINT_CLASS}>
-      <span className={`min-w-0 truncate ${balanced ? 'text-gray-400' : 'text-amber-600'}`}>
+      <span
+        className={`min-w-0 truncate ${balanced ? 'text-gray-400 dark:text-ink-500' : 'text-amber-600 dark:text-amber-300'}`}
+      >
         {balanced
           ? `Split over ${rows.filter((amount) => amount > 0).length || 1} year${rows.filter((amount) => amount > 0).length === 1 ? '' : 's'}`
           : `${money(Math.abs(remainder))} ${remainder > 0 ? 'unallocated' : 'over the total'}`}
@@ -111,7 +113,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
       >
         <button
           type="button"
-          className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
+          className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
         >
           Payout by year
         </button>

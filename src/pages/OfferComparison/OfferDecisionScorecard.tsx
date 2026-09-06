@@ -173,12 +173,12 @@ const OfferDecisionScorecard = ({
   const leader = rows[0];
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 bg-white px-4 py-5 sm:px-8 sm:py-8">
+    <section className="overflow-hidden rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-sm">
+      <div className="border-b border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 px-4 py-5 sm:px-8 sm:py-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 shadow-sm ring-1 ring-sky-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-300 shadow-sm ring-1 ring-sky-100 dark:ring-sky-500/20">
                 <svg
                   width="20"
                   height="20"
@@ -193,14 +193,14 @@ const OfferDecisionScorecard = ({
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-500">
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-500 dark:text-sky-400">
                 Decision Scorecard
               </p>
             </div>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Best overall: <span className="text-sky-600">{leader.company}</span>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-ink-50 sm:text-3xl">
+              Best overall: <span className="text-sky-600 dark:text-sky-300">{leader.company}</span>
             </h2>
-            <p className="mt-2 text-sm font-medium text-slate-500 max-w-2xl">
+            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-ink-400 max-w-2xl">
               Weighted beyond total comp. Advanced signals only count after you fill them in.
             </p>
           </div>
@@ -226,21 +226,21 @@ const OfferDecisionScorecard = ({
                 onChange={(val) => setStatusFilter(val as OfferStatusFilter)}
               />
             )}
-            <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
+            <div className="flex shrink-0 items-center gap-4 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-ink-900/50 p-4 shadow-sm">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500">
                   Top Score
                 </p>
-                <p className="mt-1 text-3xl font-black tracking-tight text-slate-900">
+                <p className="mt-1 text-3xl font-black tracking-tight text-slate-900 dark:text-ink-50">
                   {leader.score}
                 </p>
               </div>
-              <div className="h-12 w-[1px] bg-slate-200" />
+              <div className="h-12 w-[1px] bg-slate-200 dark:bg-ink-800" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500">
                   Value
                 </p>
-                <p className="mt-1 text-xl font-bold tracking-tight text-emerald-600">
+                <p className="mt-1 text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-300">
                   {formatCurrency(leader.financialValue)}
                 </p>
               </div>
@@ -271,10 +271,10 @@ const OfferDecisionScorecard = ({
                 className={clsx(
                   'relative flex flex-col overflow-hidden rounded-3xl border shadow-sm transition-all hover:shadow-md',
                   isRowRejected
-                    ? 'border-rose-300 bg-rose-50/20 hover:border-rose-400'
+                    ? 'border-rose-300 dark:border-rose-500/30 bg-rose-50/20 dark:bg-rose-500/10 hover:border-rose-400'
                     : isRowPast
-                      ? 'border-slate-300 bg-slate-50/40 hover:border-slate-400'
-                      : 'border-slate-200 bg-white hover:border-sky-300'
+                      ? 'border-slate-300 dark:border-white/[0.12] bg-slate-50/40 dark:bg-ink-900/40 hover:border-slate-400'
+                      : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 hover:border-sky-300'
                 )}
               >
                 {/* Card Header */}
@@ -282,10 +282,10 @@ const OfferDecisionScorecard = ({
                   className={clsx(
                     'border-b px-4 py-4 sm:px-6 sm:py-5',
                     isRowRejected
-                      ? 'border-rose-100 bg-rose-50/40'
+                      ? 'border-rose-100 dark:border-rose-500/20 bg-rose-50/40 dark:bg-rose-500/10'
                       : isRowPast
-                        ? 'border-slate-200 bg-slate-100/60'
-                        : 'border-slate-100 bg-slate-50/50'
+                        ? 'border-slate-200 dark:border-white/[0.08] bg-slate-100/60 dark:bg-ink-800/60'
+                        : 'border-slate-100 dark:border-white/[0.07] bg-slate-50/50 dark:bg-ink-900/50'
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -297,21 +297,25 @@ const OfferDecisionScorecard = ({
                             isRowRejected
                               ? 'bg-rose-500'
                               : isRowPast
-                                ? 'bg-slate-500'
+                                ? 'bg-slate-500 dark:bg-ink-700'
                                 : 'bg-sky-600'
                           )}
                         >
                           {row.rank}
                         </span>
-                        <h3 className="text-lg font-bold text-slate-900">{row.company}</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-ink-50">
+                          {row.company}
+                        </h3>
                       </div>
-                      <p className="text-sm font-medium text-slate-500">{row.role}</p>
+                      <p className="text-sm font-medium text-slate-500 dark:text-ink-400">
+                        {row.role}
+                      </p>
                     </div>
                     <div className="flex flex-col items-end text-right">
                       <Popover
                         content={<ScoreBreakdownContent row={row} />}
                         title={
-                          <span className="text-sm font-bold text-slate-800">
+                          <span className="text-sm font-bold text-slate-800 dark:text-ink-50">
                             How {row.company}'s score is calculated
                           </span>
                         }
@@ -327,12 +331,14 @@ const OfferDecisionScorecard = ({
                           <p
                             className={clsx(
                               'text-3xl font-black tracking-tight group-hover:underline decoration-dotted underline-offset-4',
-                              isRowRejected ? 'text-rose-600' : 'text-sky-600'
+                              isRowRejected
+                                ? 'text-rose-600 dark:text-rose-300'
+                                : 'text-sky-600 dark:text-sky-300'
                             )}
                           >
                             {row.score}
                           </p>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500 flex items-center gap-1">
                             Total Score
                           </p>
                         </button>
@@ -368,15 +374,15 @@ const OfferDecisionScorecard = ({
                     return (
                       <div className="mt-4 flex flex-wrap gap-2">
                         {isRowRejected && (
-                          <span className="rounded-lg border border-rose-200 bg-rose-100/80 px-2.5 py-1 text-[11px] font-semibold text-rose-700 shadow-sm flex items-center gap-1">
+                          <span className="rounded-lg border border-rose-200 dark:border-rose-500/25 bg-rose-100/80 dark:bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-700 dark:text-rose-300 shadow-sm flex items-center gap-1">
                             <CloseCircleOutlined /> Rejected
                           </span>
                         )}
                         {isRowPast && rowExperience && (
-                          <span className="flex items-center gap-1 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
+                          <span className="flex items-center gap-1 rounded-lg border border-slate-300 dark:border-white/[0.12] bg-slate-100 dark:bg-ink-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-ink-200 shadow-sm">
                             <HistoryOutlined /> Past Role
                             {rowExperience.start_date && (
-                              <span className="font-medium text-slate-500">
+                              <span className="font-medium text-slate-500 dark:text-ink-400">
                                 · {formatExperienceRange(rowExperience)}
                               </span>
                             )}
@@ -395,8 +401,8 @@ const OfferDecisionScorecard = ({
                               className={clsx(
                                 'rounded-lg border px-2.5 py-1 text-[11px] font-semibold shadow-sm',
                                 isRowPast
-                                  ? 'cursor-help border-amber-300 bg-amber-50 text-amber-700'
-                                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  ? 'cursor-help border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                  : 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                               )}
                             >
                               {isRowPast ? 'Comparison Baseline' : 'Current'}
@@ -410,7 +416,7 @@ const OfferDecisionScorecard = ({
                             <button
                               type="button"
                               onClick={() => onToggleCurrent(baselineCandidates[0])}
-                              className="rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 shadow-sm transition-colors hover:bg-amber-50"
+                              className="rounded-lg border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 shadow-sm transition-colors hover:bg-amber-50"
                             >
                               Move to {offerLabel(baselineCandidates[0])} →
                             </button>
@@ -420,7 +426,7 @@ const OfferDecisionScorecard = ({
                               placement="bottom"
                               content={
                                 <div className="flex w-56 flex-col py-1">
-                                  <p className="px-2 pb-1.5 text-[11px] text-slate-500">
+                                  <p className="px-2 pb-1.5 text-[11px] text-slate-500 dark:text-ink-400">
                                     You hold more than one role, so pick the one comparisons should
                                     measure against.
                                   </p>
@@ -429,11 +435,11 @@ const OfferDecisionScorecard = ({
                                       key={candidate.id}
                                       type="button"
                                       onClick={() => onToggleCurrent(candidate)}
-                                      className="rounded-lg px-2 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                      className="rounded-lg px-2 py-1.5 text-left text-xs font-semibold text-slate-700 dark:text-ink-100 hover:bg-slate-50"
                                     >
                                       {offerLabel(candidate)}
                                       {candidate.linked_experience?.start_date && (
-                                        <span className="ml-1 font-medium text-slate-400">
+                                        <span className="ml-1 font-medium text-slate-400 dark:text-ink-500">
                                           {formatExperienceRange(candidate.linked_experience)}
                                         </span>
                                       )}
@@ -444,7 +450,7 @@ const OfferDecisionScorecard = ({
                             >
                               <button
                                 type="button"
-                                className="rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 shadow-sm transition-colors hover:bg-amber-50"
+                                className="rounded-lg border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 shadow-sm transition-colors hover:bg-amber-50"
                               >
                                 Move baseline →
                               </button>
@@ -460,7 +466,7 @@ const OfferDecisionScorecard = ({
                           .map((label) => (
                             <span
                               key={label}
-                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-sm"
+                              className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-ink-200 shadow-sm"
                             >
                               {label}
                             </span>

@@ -9,11 +9,11 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-slate-50"
+        className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-ink-900"
         role="status"
         aria-label="Loading CareerHub"
       >
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-white/[0.08] border-t-blue-600" />
       </div>
     );
   }

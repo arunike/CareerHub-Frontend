@@ -12,7 +12,7 @@ type Props = {
 const SettingsTabBar = ({ activeTab, activeTabMeta, dirtyTabs, setActiveTab }: Props) => (
   <div className="hidden md:block">
     <div
-      className="grid grid-cols-6 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1"
+      className="grid grid-cols-6 gap-1 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-ink-800 p-1"
       role="tablist"
       aria-label="Settings sections"
     >
@@ -27,11 +27,17 @@ const SettingsTabBar = ({ activeTab, activeTabMeta, dirtyTabs, setActiveTab }: P
           onClick={() => setActiveTab(tab.key)}
           className={`flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors ${
             activeTab === tab.key
-              ? 'bg-white text-slate-950 shadow-sm'
-              : 'text-slate-600 hover:bg-white/60 hover:text-slate-900'
+              ? 'bg-white dark:bg-ink-900 text-slate-950 dark:text-ink-50 shadow-sm'
+              : 'text-slate-600 dark:text-ink-200 hover:bg-white/60 hover:text-slate-900'
           }`}
         >
-          <span className={activeTab === tab.key ? 'text-blue-600' : 'text-slate-400'}>
+          <span
+            className={
+              activeTab === tab.key
+                ? 'text-blue-600 dark:text-blue-300'
+                : 'text-slate-400 dark:text-ink-500'
+            }
+          >
             {tab.icon}
           </span>
           {tab.label}
@@ -44,7 +50,9 @@ const SettingsTabBar = ({ activeTab, activeTabMeta, dirtyTabs, setActiveTab }: P
         </button>
       ))}
     </div>
-    <p className="mt-2 px-1 text-xs text-slate-500">{activeTabMeta?.description}</p>
+    <p className="mt-2 px-1 text-xs text-slate-500 dark:text-ink-400">
+      {activeTabMeta?.description}
+    </p>
   </div>
 );
 

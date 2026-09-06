@@ -3,7 +3,7 @@ import MoneyInput from './MoneyInput';
 
 // Recorded figures carry the page's one accent, so a glance says which numbers are real.
 export const RECORDED_CLASS =
-  'text-emerald-700 decoration-emerald-300 underline underline-offset-4';
+  'text-emerald-700 dark:text-emerald-300 decoration-emerald-300 underline underline-offset-4';
 
 interface Props {
   // What the row shows today: the recorded figure when there is one, else the model's.
@@ -24,7 +24,7 @@ export const LedgerCell = ({
   modelledPlaceholder,
   editing,
   onDone,
-  className = 'font-semibold text-slate-900',
+  className = 'font-semibold text-slate-900 dark:text-ink-50',
   editorWidth = 116,
 }: Props) => {
   const [draft, setDraft] = useState<number | null>(recorded);

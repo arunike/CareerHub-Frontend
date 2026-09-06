@@ -83,8 +83,8 @@ export const SalaryBreakdown = ({
       )}
 
       <div className="grid gap-5 md:grid-cols-[320px,1fr]">
-        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-blue-50 p-5">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+        <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 via-white dark:via-ink-900 to-blue-50 p-5">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-ink-500">
             {totalLabel ??
               (years.length
                 ? years.length === 1
@@ -92,8 +92,10 @@ export const SalaryBreakdown = ({
                   : `Earned ${years.at(-1)!.year}–${years[0].year}`
                 : 'Total Annual Earnings')}
           </div>
-          <div className="mt-2 text-3xl font-bold text-gray-900">{fmtMoney(headline)}</div>
-          <div className="mt-1 text-sm text-gray-500">
+          <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-ink-50">
+            {fmtMoney(headline)}
+          </div>
+          <div className="mt-1 text-sm text-gray-500 dark:text-ink-400">
             {totalHint ??
               (years.length
                 ? `${years.at(-1)!.year}–${years[0].year} · ${fromLedger ? 'from your paycheck ledger' : 'estimated from your pay and dates'}`
@@ -102,25 +104,33 @@ export const SalaryBreakdown = ({
 
           {years.length > 0 && (
             <>
-              <div className="mt-4 flex items-baseline justify-between gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2">
-                <span className="text-xs font-medium text-slate-500">Current rate</span>
-                <span className="text-sm font-semibold text-slate-900">
+              <div className="mt-4 flex items-baseline justify-between gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/80 dark:bg-ink-900/80 px-3 py-2">
+                <span className="text-xs font-medium text-slate-500 dark:text-ink-400">
+                  Current rate
+                </span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-ink-50">
                   {fmtMoney(round(currentRate))}
-                  <span className="ml-1 text-xs font-normal text-slate-500">a year</span>
+                  <span className="ml-1 text-xs font-normal text-slate-500 dark:text-ink-400">
+                    a year
+                  </span>
                 </span>
               </div>
 
-              <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 p-3">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <div className="mt-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white/80 dark:bg-ink-900/80 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
                   How this adds up
                 </div>
                 {years.map((year) => (
                   <div key={year.year} className="mt-2">
                     <div className="flex items-baseline justify-between gap-2 text-xs">
-                      <span className="font-semibold text-slate-700">{year.year}</span>
-                      <span className="font-semibold text-slate-900">{fmtMoney(year.total)}</span>
+                      <span className="font-semibold text-slate-700 dark:text-ink-100">
+                        {year.year}
+                      </span>
+                      <span className="font-semibold text-slate-900 dark:text-ink-50">
+                        {fmtMoney(year.total)}
+                      </span>
                     </div>
-                    <div className="mt-1 text-[11px] text-slate-400">
+                    <div className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
                       {year.detail} · base {fmtMoney(year.byComponent.base)}
                       {year.byComponent.bonus > 0 && ` · bonus ${fmtMoney(year.byComponent.bonus)}`}
                       {year.byComponent.equity > 0 &&
@@ -132,11 +142,13 @@ export const SalaryBreakdown = ({
                   </div>
                 ))}
                 {years.length > 1 && (
-                  <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-slate-200 pt-2 text-xs">
-                    <span className="font-medium text-slate-600">
+                  <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-slate-200 dark:border-white/[0.08] pt-2 text-xs">
+                    <span className="font-medium text-slate-600 dark:text-ink-200">
                       {years.length} years in this role
                     </span>
-                    <span className="font-bold text-slate-900">{fmtMoney(headline)}</span>
+                    <span className="font-bold text-slate-900 dark:text-ink-50">
+                      {fmtMoney(headline)}
+                    </span>
                   </div>
                 )}
               </div>
@@ -156,7 +168,7 @@ export const SalaryBreakdown = ({
             return (
               <div
                 key={row.key}
-                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+                className="rounded-2xl border border-gray-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -165,18 +177,20 @@ export const SalaryBreakdown = ({
                         className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                         style={{ backgroundColor: row.color }}
                       />
-                      <span className="truncate text-sm font-semibold text-gray-800">
+                      <span className="truncate text-sm font-semibold text-gray-800 dark:text-ink-50">
                         {row.label}
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-gray-400">
+                    <div className="mt-1 text-xs text-gray-400 dark:text-ink-500">
                       {value > 0
                         ? `${pct.toFixed(1)}%${row.sublabel ? ` · ${row.sublabel}` : ''}`
                         : 'Not included'}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-gray-900">{fmtMoney(value)}</div>
+                    <div className="text-lg font-bold text-gray-900 dark:text-ink-50">
+                      {fmtMoney(value)}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3">
@@ -191,7 +205,7 @@ export const SalaryBreakdown = ({
                       }))}
                     />
                   ) : (
-                    <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-ink-800">
                       <div
                         className="h-full rounded-full"
                         style={{
@@ -204,7 +218,7 @@ export const SalaryBreakdown = ({
                 </div>
 
                 {years.length > 1 && value > 0 && (
-                  <div className="mt-3 space-y-1.5 border-t border-gray-100 pt-3">
+                  <div className="mt-3 space-y-1.5 border-t border-gray-100 dark:border-white/[0.07] pt-3">
                     {years.map((year, index) => {
                       const part = round(year.byComponent[row.key]);
                       if (part <= 0) return null;
@@ -213,16 +227,16 @@ export const SalaryBreakdown = ({
                           key={year.year}
                           className="flex items-baseline justify-between gap-3 text-sm"
                         >
-                          <span className="flex items-center gap-2 text-gray-700">
+                          <span className="flex items-center gap-2 text-gray-700 dark:text-ink-100">
                             <span
                               className="inline-block h-2 w-2 shrink-0 rounded-full"
                               style={{ backgroundColor: yearShades[row.key][index] }}
                             />
                             {year.year}
                           </span>
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-gray-900 dark:text-ink-50">
                             {fmtMoney(part)}
-                            <span className="ml-1.5 text-xs font-normal text-gray-400">
+                            <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-ink-500">
                               {Math.round((part / value) * 100)}%
                             </span>
                           </span>

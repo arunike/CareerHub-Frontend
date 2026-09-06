@@ -49,17 +49,21 @@ const CustomTooltip = ({
   const bucket = payload?.[0]?.payload;
   if (!active || !bucket) return null;
   return (
-    <div className="rounded-xl border border-slate-100 bg-white/95 p-3 shadow-[0_8px_30px_rgba(49,88,183,0.055)] backdrop-blur-md">
-      <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+    <div className="rounded-xl border border-slate-100 dark:border-white/[0.07] bg-white/95 dark:bg-ink-900/95 p-3 shadow-[0_8px_30px_rgba(49,88,183,0.055)] backdrop-blur-md">
+      <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-ink-500">
         {bucket.fullLabel}
       </p>
-      <p className="text-sm font-bold text-slate-900">
+      <p className="text-sm font-bold text-slate-900 dark:text-ink-50">
         {bucket.count} {bucket.count === 1 ? noun.one : noun.many}
       </p>
       {bucket.partial && (
-        <p className="mt-1 text-[11px] text-slate-400">Only the part inside this breakdown</p>
+        <p className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
+          Only the part inside this breakdown
+        </p>
       )}
-      {bucket.drillable && <p className="mt-1 text-[11px] text-blue-600">Click to break down</p>}
+      {bucket.drillable && (
+        <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-300">Click to break down</p>
+      )}
     </div>
   );
 };
@@ -181,12 +185,12 @@ const ActivityChart = ({
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <RiseOutlined className="text-xl text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <RiseOutlined className="text-xl text-blue-600 dark:text-blue-300" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-ink-50">
               {GRANULARITY_LABELS[series.granularity]} {title}
             </h3>
           </div>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-ink-400">
             {formatWindow(series.windowStart, series.windowEnd)} · {series.total.toLocaleString()}{' '}
             {series.total === 1 ? noun.one : noun.many}
             {series.capped && ' · range capped'}
@@ -256,11 +260,11 @@ const ActivityChart = ({
       </div>
 
       {drill.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs">
+        <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 px-3 py-2 text-xs">
           <button
             type="button"
             onClick={() => setDrill([])}
-            className="font-semibold text-blue-700 transition-colors hover:text-blue-900"
+            className="font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:text-blue-900"
           >
             {picked
               ? formatWindow(picked.start, picked.end)
@@ -276,8 +280,8 @@ const ActivityChart = ({
                 disabled={index === drill.length - 1}
                 className={
                   index === drill.length - 1
-                    ? 'font-semibold text-slate-900'
-                    : 'font-semibold text-blue-700 transition-colors hover:text-blue-900'
+                    ? 'font-semibold text-slate-900 dark:text-ink-50'
+                    : 'font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:text-blue-900'
                 }
               >
                 {step.label}
@@ -288,7 +292,7 @@ const ActivityChart = ({
             type="button"
             onClick={() => setDrill([])}
             aria-label="Clear breakdown"
-            className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 font-semibold text-slate-500 transition-colors hover:bg-white hover:text-slate-800"
+            className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-white hover:text-slate-800"
           >
             <CloseOutlined className="text-[10px]" /> Reset
           </button>
@@ -351,7 +355,7 @@ const ActivityChart = ({
       </div>
 
       {canDrill && (
-        <p className="mt-3 text-[11px] text-slate-400">
+        <p className="mt-3 text-[11px] text-slate-400 dark:text-ink-500">
           Click a bar to break it down by {FINER_GRANULARITY[series.granularity]}.
         </p>
       )}

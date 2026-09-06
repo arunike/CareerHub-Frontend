@@ -396,7 +396,7 @@ const ProfilePage: React.FC = () => {
         }}
       >
         <div className="space-y-4 pt-2">
-          <p className="text-sm leading-relaxed text-slate-600">
+          <p className="text-sm leading-relaxed text-slate-600 dark:text-ink-200">
             This schedules permanent account and server-side data deletion after a 14-day grace
             period. Sign in again before the deadline to cancel it. Type DELETE to enable the next
             step.
@@ -406,7 +406,7 @@ const ProfilePage: React.FC = () => {
             value={deleteConfirm}
             onChange={(e) => setDeleteConfirm(e.target.value)}
             placeholder="Type DELETE"
-            className="h-11 w-full rounded-xl border border-rose-200 bg-white px-3 text-sm font-semibold text-rose-950 focus:outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-400"
+            className="h-11 w-full rounded-xl border border-rose-200 dark:border-rose-500/25 bg-white dark:bg-ink-900 px-3 text-sm font-semibold text-rose-950 focus:outline-none focus:ring-4 focus:ring-rose-500/5 focus:border-rose-400"
           />
         </div>
       </Modal>

@@ -22,8 +22,8 @@ export const askSpanEditScope = (
     width: 460,
     content: (
       <div className="mt-1 space-y-2">
-        <p className="text-sm font-semibold text-slate-900">{event.name}</p>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm font-semibold text-slate-900 dark:text-ink-50">{event.name}</p>
+        <p className="text-sm text-slate-500 dark:text-ink-400">
           This runs {prettyDay(event.date)} – {prettyDay(event.end_date!)}. You clicked{' '}
           <strong>{prettyDay(day)}</strong>.
         </p>
@@ -64,7 +64,7 @@ export const askOverrideOverwrite = (
     icon: null,
     width: 460,
     content: (
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-slate-500 dark:text-ink-400">
         {count === 1 ? '1 day has' : `${count} days have`} its own version. Applying this change to
         all days can either leave {count === 1 ? 'it' : 'them'} alone or replace{' '}
         {count === 1 ? 'it' : 'them'} with the span.

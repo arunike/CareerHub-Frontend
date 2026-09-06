@@ -1,6 +1,20 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
+  /* Dark scale: near-neutral rather than slate, so surfaces read as paper-in-a-dark-room. */
+  --color-ink-50: #f5f5f6;
+  --color-ink-100: #e3e4e7;
+  --color-ink-200: #c4c6cc;
+  --color-ink-300: #a4a7af;
+  --color-ink-400: #8a8e97;
+  --color-ink-500: #6e727b;
+  --color-ink-600: #52565e;
+  --color-ink-700: #2c2f36;
+  --color-ink-800: #1b1d22;
+  --color-ink-900: #111216;
+  --color-ink-950: #08090b;
   --color-gray-50: #f8fafc;
   --color-gray-900: #111827;
   --color-blue-50: #eff6ff;
@@ -96,12 +110,23 @@ textarea::placeholder {
   color: #ffffff;
 }
 
+.public-home[data-theme='dark'] ::selection {
+  background: #60a5fa;
+  color: #0f172a;
+}
+
 .public-home-grid {
   background-image:
     linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.public-home[data-theme='dark'] .public-home-grid {
+  background-image:
+    linear-gradient(rgba(96, 165, 250, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96, 165, 250, 0.07) 1px, transparent 1px);
 }
 
 .scrollbar-none {
@@ -2014,4 +2039,265 @@ summary,
   .careerhub-bell-dot-alert {
     animation: none;
   }
+}
+
+/* Dark surfaces for the rules that hard-code a colour, which no dark: utility can reach. */
+[data-theme='dark'] {
+  --careerhub-accent: #4d8dfd;
+  --careerhub-accent-hover: #6ba2ff;
+  --careerhub-accent-soft: rgba(77, 141, 253, 0.14);
+  --careerhub-ink: #f5f5f6;
+  --careerhub-muted: #8a8e97;
+  --careerhub-placeholder: #6e727b;
+  --careerhub-surface: #111216;
+  --careerhub-surface-subtle: #0d0e11;
+  --careerhub-panel: #16181d;
+  /* Hairlines, not slate rules: a solid border draws a seam round every card. */
+  --careerhub-border: rgba(255, 255, 255, 0.12);
+  --careerhub-border-soft: rgba(255, 255, 255, 0.08);
+  --careerhub-shadow: 0 18px 52px -42px rgba(0, 0, 0, 0.9);
+  --careerhub-shadow-strong: 0 26px 76px -54px rgba(0, 0, 0, 1);
+}
+
+[data-theme='dark'] body {
+  background: #08090b;
+  color: var(--careerhub-ink);
+}
+
+[data-theme='dark'] .enterprise-card,
+[data-theme='dark'] .enterprise-section,
+[data-theme='dark'] .enterprise-card-list-item,
+[data-theme='dark'] .enterprise-table-shell,
+[data-theme='dark'] .enterprise-filter-bar,
+[data-theme='dark'] .enterprise-empty,
+[data-theme='dark'] .enterprise-command-surface {
+  background: var(--careerhub-surface);
+  border-color: var(--careerhub-border-soft);
+}
+
+[data-theme='dark'] .enterprise-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme='dark'] .enterprise-kpi {
+  background: var(--careerhub-surface-subtle);
+  border-color: var(--careerhub-border-soft);
+}
+
+[data-theme='dark'] .enterprise-shell {
+  background: var(--careerhub-surface);
+  border-right-color: var(--careerhub-border-soft);
+}
+
+[data-theme='dark'] .enterprise-data-label {
+  color: var(--careerhub-muted);
+}
+
+[data-theme='dark'] .glass-pill {
+  background-color: var(--careerhub-surface);
+  border-color: var(--careerhub-border-soft);
+}
+
+[data-theme='dark'] .glass-pill-active {
+  background-color: var(--careerhub-accent-soft);
+  border-color: rgba(77, 141, 253, 0.38);
+  color: #8fb6ff;
+}
+
+/* The sidebar menu is styled here rather than by antd's algorithm, so it needs its own pass. */
+[data-theme='dark'] .enterprise-shell .ant-menu-item,
+[data-theme='dark'] .enterprise-shell .ant-menu-submenu-title {
+  color: var(--careerhub-ink);
+}
+
+[data-theme='dark'] .enterprise-shell .ant-menu-item .anticon,
+[data-theme='dark'] .enterprise-shell .ant-menu-submenu-title .anticon {
+  color: var(--careerhub-muted);
+}
+
+[data-theme='dark'] .enterprise-shell .ant-menu-item:hover,
+[data-theme='dark'] .enterprise-shell .ant-menu-submenu-title:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--careerhub-ink) !important;
+}
+
+[data-theme='dark'] .enterprise-shell .ant-menu-item-selected {
+  background: var(--careerhub-accent-soft) !important;
+  color: #8fb6ff !important;
+  box-shadow: inset 0 0 0 1px rgba(77, 141, 253, 0.28);
+}
+
+[data-theme='dark'] .enterprise-shell .ant-menu-item-selected .anticon,
+[data-theme='dark'] .enterprise-shell .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #8fb6ff !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-drawer .ant-drawer-section,
+[data-theme='dark'] .careerhub-mobile-modal-frame > .ant-modal .ant-modal-content {
+  background: var(--careerhub-panel) !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-drawer .ant-drawer-header,
+[data-theme='dark'] .careerhub-mobile-drawer .ant-drawer-footer {
+  background: var(--careerhub-panel) !important;
+  border-color: var(--careerhub-border-soft) !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-drawer-title-text {
+  color: var(--careerhub-ink) !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-drawer-handle-bar > span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme='dark'] .ledger-cell-value {
+  color: var(--careerhub-ink);
+}
+
+/* Our antd overrides use !important, so they outrank the dark algorithm and need an answer each. */
+[data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input-affix-wrapper,
+[data-theme='dark'] .ant-select-selector,
+[data-theme='dark'] .ant-picker {
+  border-color: var(--careerhub-border) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: var(--careerhub-ink) !important;
+}
+
+[data-theme='dark'] .ant-input::placeholder,
+[data-theme='dark'] .ant-select-selection-placeholder,
+[data-theme='dark'] .ant-picker-input > input::placeholder {
+  color: var(--careerhub-placeholder) !important;
+}
+
+[data-theme='dark'] .ant-table-thead > tr > th {
+  background: var(--careerhub-surface-subtle) !important;
+  color: var(--careerhub-muted) !important;
+  border-bottom-color: var(--careerhub-border-soft) !important;
+}
+
+[data-theme='dark'] .ant-table-tbody > tr > td {
+  border-bottom-color: var(--careerhub-border-soft) !important;
+  color: var(--careerhub-ink);
+}
+
+[data-theme='dark'] .ant-table-tbody > tr:hover > td.ant-table-column-sort,
+[data-theme='dark'] .ant-table-tbody > tr:hover > td {
+  background: rgba(30, 41, 59, 0.6) !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-section-picker.ant-select .ant-select-selector {
+  border-color: var(--careerhub-border) !important;
+  background: var(--careerhub-surface) !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-section-picker.ant-select .ant-select-selection-item {
+  color: var(--careerhub-ink);
+}
+
+[data-theme='dark'] .ant-select-item-option-active,
+[data-theme='dark'] .ant-select-item-option-selected {
+  background: var(--careerhub-accent-soft) !important;
+  color: #8fb6ff !important;
+}
+
+/* Surfaces the class sweep cannot see because they are styled here, not in markup. */
+[data-theme='dark']
+  .careerhub-mobile-section-picker-popup
+  .ant-select-item-option-active:not(.ant-select-item-option-selected) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='dark'] .careerhub-mobile-section-picker-popup .ant-select-item-option-selected {
+  background: var(--careerhub-accent-soft);
+  color: #8fb6ff;
+}
+
+[data-theme='dark'] .ledger-table .ant-table-thead > tr > th,
+[data-theme='dark'] .ledger-table .ant-table-tbody > tr.ledger-detail-row > td {
+  background: var(--careerhub-surface-subtle) !important;
+}
+
+[data-theme='dark'] .ledger-table .ant-table-body {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+[data-theme='dark'] .ledger-table .ant-table-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme='dark'] .careerhub-mobile-modal-frame,
+[data-theme='dark'] .careerhub-mobile-modal-handle,
+[data-theme='dark'] .careerhub-mobile-drawer .ant-drawer-content {
+  background: var(--careerhub-panel) !important;
+}
+
+[data-theme='dark'] .careerhub-mobile-modal-handle > span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme='dark'] .row-actions .ant-btn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme='dark'] .page-toolbar-filters .ant-segmented,
+[data-theme='dark'] .page-toolbar-mobile-filters .ant-segmented {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme='dark'] .page-toolbar-filters .ant-segmented-item-selected,
+[data-theme='dark'] .page-toolbar-mobile-filters .ant-segmented-item-selected {
+  background: var(--careerhub-accent-soft) !important;
+  color: #8fb6ff !important;
+}
+
+[data-theme='dark'] .enterprise-card-list-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme='dark'] .shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+}
+
+[data-theme='dark'] .offer-form-workspace :where(input, select, textarea) {
+  border-color: var(--careerhub-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--careerhub-ink);
+}
+
+[data-theme='dark'] .offer-form-workspace :where(input, select, textarea):disabled {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--careerhub-placeholder);
+}
+
+[data-theme='dark'] .careerhub-mobile-drawer-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--careerhub-ink);
+}
+
+[data-theme='dark'] .careerhub-mobile-drawer-action-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Antd draws its empty state as a light SVG, which glares against a near-black panel. */
+[data-theme='dark'] .ant-empty-img-simple-ellipse,
+[data-theme='dark'] .ant-empty-img-simple-path {
+  fill: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .ant-empty-img-simple-g {
+  stroke: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme='dark'] .ant-empty-image,
+[data-theme='dark'] .ant-empty img,
+[data-theme='dark'] .ant-empty svg {
+  opacity: 0.38;
 }

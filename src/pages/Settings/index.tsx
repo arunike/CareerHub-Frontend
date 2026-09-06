@@ -338,7 +338,7 @@ const Settings: React.FC = () => {
             <div>
               <label
                 htmlFor="settings-ghosting-threshold"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
               >
                 Ghosting Threshold
               </label>
@@ -353,7 +353,10 @@ const Settings: React.FC = () => {
                   setSettings((prev) => (prev ? { ...prev, ghosting_threshold_days: value } : null))
                 }
               />
-              <p id="settings-ghosting-threshold-help" className="text-xs text-gray-500 mt-1">
+              <p
+                id="settings-ghosting-threshold-help"
+                className="text-xs text-gray-500 dark:text-ink-400 mt-1"
+              >
                 Applications still marked "Applied" this many days after their Date Applied will
                 automatically be marked as "Ghosted".
               </p>

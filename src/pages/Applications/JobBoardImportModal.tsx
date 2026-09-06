@@ -76,12 +76,12 @@ const JobBoardImportModal = ({
     }
   >
     <div className="space-y-4">
-      <div className="rounded-2xl border border-sky-100 bg-sky-50/50 px-4 py-3">
+      <div className="rounded-2xl border border-sky-100 dark:border-sky-500/20 bg-sky-50/50 dark:bg-sky-500/10 px-4 py-3">
         <div>
-          <div className="text-sm font-semibold text-slate-900">
+          <div className="text-sm font-semibold text-slate-900 dark:text-ink-50">
             Paste a supported job posting URL
           </div>
-          <div className="mt-1 text-xs text-slate-500">
+          <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">
             Paste a LinkedIn, Greenhouse, Lever, or Workday link. CareerHub will extract the fields
             and keep them editable before saving.
           </div>
@@ -90,7 +90,7 @@ const JobBoardImportModal = ({
 
       <Input
         size="large"
-        prefix={<GlobalOutlined className="text-slate-400" />}
+        prefix={<GlobalOutlined className="text-slate-400 dark:text-ink-500" />}
         placeholder="https://company.wd1.myworkdayjobs.com/..."
         value={jobImportUrl}
         onChange={(event) => setJobImportUrl(event.target.value)}
@@ -155,15 +155,15 @@ const JobBoardImportModal = ({
               </Form.Item>
             </Col>
           </Row>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 px-3 py-2 text-xs text-slate-500 dark:text-ink-400">
             <div>Source: {jobImportPreview.source_host}</div>
             <div
               className={
                 jobImportPreview.ai_status === 'success'
-                  ? 'mt-1 font-medium text-emerald-700'
+                  ? 'mt-1 font-medium text-emerald-700 dark:text-emerald-300'
                   : jobImportPreview.ai_status === 'failed'
-                    ? 'mt-1 font-medium text-rose-700'
-                    : 'mt-1 font-medium text-amber-700'
+                    ? 'mt-1 font-medium text-rose-700 dark:text-rose-300'
+                    : 'mt-1 font-medium text-amber-700 dark:text-amber-300'
               }
             >
               AI status:{' '}

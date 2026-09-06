@@ -363,10 +363,10 @@ const EventEditorModal = ({
                     />
                   </Form.Item>
                   {autoLinked && (
-                    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-50/70 px-3 py-2 text-xs text-slate-600">
+                    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-500/10 px-3 py-2 text-xs text-slate-600 dark:text-ink-200">
                       <span className="min-w-0">
                         Linked to{' '}
-                        <strong className="font-semibold text-slate-800">
+                        <strong className="font-semibold text-slate-800 dark:text-ink-50">
                           {autoLinked.company_name} · {autoLinked.role_title}
                         </strong>{' '}
                         automatically
@@ -386,10 +386,10 @@ const EventEditorModal = ({
                     </div>
                   )}
                   {linkHint && (
-                    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-blue-50/70 px-3 py-2 text-xs text-slate-600">
+                    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg bg-blue-50/70 dark:bg-blue-500/10 px-3 py-2 text-xs text-slate-600 dark:text-ink-200">
                       <span className="min-w-0">
                         Looks like{' '}
-                        <strong className="font-semibold text-slate-800">
+                        <strong className="font-semibold text-slate-800 dark:text-ink-50">
                           {linkHint.company_name} · {linkHint.role_title}
                         </strong>
                         {linkHint.other_applications > 0 &&

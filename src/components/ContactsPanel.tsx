@@ -60,10 +60,10 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-ink-500">
             Contacts
           </p>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-ink-400">
             {description ?? 'People you met through this application.'}
           </p>
         </div>
@@ -84,9 +84,9 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
       ) : (
         <div className="space-y-2">
           {contacts.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center">
-              <UserOutlined className="text-lg text-slate-300" />
-              <p className="mt-2 text-sm text-slate-400">
+            <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center">
+              <UserOutlined className="text-lg text-slate-300 dark:text-ink-600" />
+              <p className="mt-2 text-sm text-slate-400 dark:text-ink-500">
                 No contacts yet. Add someone you met through this record.
               </p>
             </div>
@@ -95,34 +95,34 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
           {contacts.map((contact) => (
             <div
               key={contact.id}
-              className="group flex items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 transition hover:border-slate-300"
+              className="group flex items-start gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] px-4 py-3 transition hover:border-slate-300"
             >
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-500">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-ink-800 text-[11px] font-semibold text-slate-500 dark:text-ink-400">
                 {contactInitials(contact.name) || <UserOutlined />}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="truncate text-sm font-medium text-slate-900">
+                  <span className="truncate text-sm font-medium text-slate-900 dark:text-ink-50">
                     {contact.name}
                   </span>
                   {contact.inherited && <Tag>from application</Tag>}
                   {contact.possible_duplicate && <Tag color="orange">possible duplicate</Tag>}
                 </div>
                 {(contact.job_title || contact.company) && (
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-slate-500 dark:text-ink-400">
                     {[contact.job_title, contact.company].filter(Boolean).join(' · ')}
                   </p>
                 )}
                 {contact.email && (
                   <a
                     href={`mailto:${contact.email}`}
-                    className="block truncate text-xs text-slate-500 hover:text-blue-600"
+                    className="block truncate text-xs text-slate-500 dark:text-ink-400 hover:text-blue-600"
                   >
                     {contact.email}
                   </a>
                 )}
                 {contact.notes && (
-                  <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-slate-500">
+                  <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-slate-500 dark:text-ink-400">
                     {contact.notes}
                   </p>
                 )}

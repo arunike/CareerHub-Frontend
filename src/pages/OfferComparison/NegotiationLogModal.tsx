@@ -147,10 +147,10 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
       width={760}
       title={
         <div className="flex items-center gap-2">
-          <ThunderboltOutlined className="text-indigo-500" />
+          <ThunderboltOutlined className="text-indigo-500 dark:text-indigo-400" />
           <span>
             Negotiation log
-            <span className="ml-2 font-normal text-slate-500">{offerLabel}</span>
+            <span className="ml-2 font-normal text-slate-500 dark:text-ink-400">{offerLabel}</span>
           </span>
         </div>
       }
@@ -166,7 +166,7 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
       <div className="space-y-6 pt-1">
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
               Rounds
             </div>
             {editingId === null && (
@@ -177,7 +177,7 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
           </div>
 
           {ordered.length === 0 && editingId === null && (
-            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-[13px] text-slate-500">
+            <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-8 text-center text-[13px] text-slate-500 dark:text-ink-400">
               No rounds logged yet. Record what you asked for and what came back.
             </div>
           )}
@@ -186,11 +186,14 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
             {ordered.map((round) => {
               const items = getNegotiationLineItems(round);
               return (
-                <li key={round.id} className="rounded-xl border border-slate-200 px-4 py-3">
+                <li
+                  key={round.id}
+                  className="rounded-xl border border-slate-200 dark:border-white/[0.08] px-4 py-3"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-medium text-slate-900">
+                        <span className="text-[13px] font-medium text-slate-900 dark:text-ink-50">
                           {dayjs(round.date).format('MMM D, YYYY')}
                         </span>
                         <span
@@ -204,17 +207,23 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
                           {items.map((item) => (
                             <div
                               key={item.label}
-                              className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-slate-600"
+                              className="flex flex-wrap items-baseline gap-x-2 text-[12px] text-slate-600 dark:text-ink-200"
                             >
-                              <span className="w-14 shrink-0 text-slate-400">{item.label}</span>
+                              <span className="w-14 shrink-0 text-slate-400 dark:text-ink-500">
+                                {item.label}
+                              </span>
                               <span>asked {money(item.asked)}</span>
-                              <span className="text-slate-300">→</span>
-                              <span className="font-medium text-slate-900">
+                              <span className="text-slate-300 dark:text-ink-600">→</span>
+                              <span className="font-medium text-slate-900 dark:text-ink-50">
                                 got {money(item.received)}
                               </span>
                               {item.gap != null && item.gap !== 0 && (
                                 <span
-                                  className={item.gap > 0 ? 'text-emerald-600' : 'text-rose-600'}
+                                  className={
+                                    item.gap > 0
+                                      ? 'text-emerald-600 dark:text-emerald-300'
+                                      : 'text-rose-600 dark:text-rose-300'
+                                  }
                                 >
                                   ({item.gap > 0 ? '+' : '−'}
                                   {Math.abs(item.gap).toLocaleString()})
@@ -225,7 +234,7 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
                         </div>
                       )}
                       {round.notes && (
-                        <p className="mt-2 text-[12px] leading-relaxed text-slate-500">
+                        <p className="mt-2 text-[12px] leading-relaxed text-slate-500 dark:text-ink-400">
                           {round.notes}
                         </p>
                       )}
@@ -260,10 +269,10 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
           </ul>
 
           {editingId !== null && (
-            <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/40 px-4 py-4">
+            <div className="space-y-3 rounded-xl border border-indigo-200 dark:border-indigo-500/25 bg-indigo-50/40 dark:bg-indigo-500/10 px-4 py-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-ink-400">
                     Date
                   </label>
                   <DatePicker
@@ -275,7 +284,7 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-ink-400">
                     Outcome
                   </label>
                   <Select
@@ -289,14 +298,16 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
                 </div>
               </div>
 
-              <div className="grid grid-cols-[64px_1fr_1fr] items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              <div className="grid grid-cols-[64px_1fr_1fr] items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-ink-500">
                 <span />
                 <span>Asked</span>
                 <span>Received</span>
               </div>
               {COMPONENT_FIELDS.map((field) => (
                 <div key={field.label} className="grid grid-cols-[64px_1fr_1fr] items-center gap-2">
-                  <span className="text-[12px] text-slate-600">{field.label}</span>
+                  <span className="text-[12px] text-slate-600 dark:text-ink-200">
+                    {field.label}
+                  </span>
                   <UnitNumberInput
                     unit="$"
                     value={draft[field.asked] as number | null}
@@ -335,8 +346,8 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
 
         <section className="space-y-2">
           <div className="flex items-center gap-2">
-            <WarningOutlined className="text-rose-500" />
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <WarningOutlined className="text-rose-500 dark:text-rose-400" />
+            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
               Risks &amp; watch-outs
             </div>
           </div>
@@ -346,14 +357,14 @@ const NegotiationLogModal = ({ open, onClose, offer, offerLabel, onSave }: Props
             onChange={(e) => setRiskNotes(e.target.value)}
             placeholder="Illiquid equity, short runway, unclear scope…"
           />
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 dark:text-ink-500">
             The Negotiation Advisor writes its &ldquo;Watch Out For&rdquo; list here so it survives
             beyond this browser.
           </p>
         </section>
 
         <section className="space-y-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-ink-500">
             Final decision
           </div>
           <div className="flex flex-wrap items-center gap-2">

@@ -253,13 +253,13 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
       {contextHolder}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <div>
-          <Text className="text-gray-500">
+          <Text className="text-gray-500 dark:text-ink-400">
             {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
           </Text>
         </div>
         <button
           onClick={() => setIsCustomizeOpen(true)}
-          className={`${isMobile ? 'flex w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-700 shadow-sm' : 'hidden sm:flex sm:w-auto'} items-center justify-center gap-2 text-sm font-medium transition-all hover:bg-gray-100 hover:text-gray-700`}
+          className={`${isMobile ? 'flex w-full rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 text-slate-700 dark:text-ink-100 shadow-sm' : 'hidden sm:flex sm:w-auto'} items-center justify-center gap-2 text-sm font-medium transition-all hover:bg-gray-100 hover:text-gray-700`}
         >
           <SettingOutlined />
           Customize view

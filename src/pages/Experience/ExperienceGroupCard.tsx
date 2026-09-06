@@ -88,13 +88,13 @@ const ExperienceGroupCard = ({
     <Avatar
       size={52}
       src={logoSrc}
-      className="shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
+      className="shadow-md border-4 border-white ring-1 ring-gray-100 dark:ring-white/[0.08] z-10"
     />
   ) : (
     <Avatar
       size={52}
       style={getAvatarStyle(primary.company)}
-      className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 z-10"
+      className="font-bold text-xl shadow-md border-4 border-white ring-1 ring-gray-100 dark:ring-white/[0.08] z-10"
     >
       {primary.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
     </Avatar>
@@ -119,25 +119,25 @@ const ExperienceGroupCard = ({
                   {exp.company?.charAt(0)?.toUpperCase() || <BankOutlined />}
                 </Avatar>
               )}
-              <div className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-900">
+              <div className="min-w-0 truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-ink-50">
                 {exp.company}
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="m-0 min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-blue-700 sm:text-[21px]">
+              <h3 className="m-0 min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.015em] text-slate-950 dark:text-ink-50 transition-colors group-hover:text-blue-700 sm:text-[21px]">
                 {exp.title}
               </h3>
               <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
               {exp.level && <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>}
               {exp.is_return_offer && (
                 <span
-                  className={`${STATUS_BADGE_CLASS} border-blue-100 bg-blue-50/80 text-blue-700`}
+                  className={`${STATUS_BADGE_CLASS} border-blue-100 dark:border-blue-500/20 bg-blue-50/80 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300`}
                 >
                   <LinkOutlined style={{ fontSize: 9 }} /> Return offer
                 </span>
               )}
             </div>
-            <div className="mt-0.5 hidden text-[15px] font-medium tracking-[-0.01em] text-slate-500 md:block">
+            <div className="mt-0.5 hidden text-[15px] font-medium tracking-[-0.01em] text-slate-500 dark:text-ink-400 md:block">
               {exp.company}
             </div>
             <RoleMetaRow
@@ -154,8 +154,8 @@ const ExperienceGroupCard = ({
               (() => {
                 const team = getLatestTeam(exp);
                 return team ? (
-                  <div className="mt-2 flex items-start gap-1.5 text-sm font-medium text-gray-500">
-                    <TeamOutlined className="mt-[3px] shrink-0 text-gray-400" />
+                  <div className="mt-2 flex items-start gap-1.5 text-sm font-medium text-gray-500 dark:text-ink-400">
+                    <TeamOutlined className="mt-[3px] shrink-0 text-gray-400 dark:text-ink-500" />
                     <span className="min-w-0">{team.name}</span>
                   </div>
                 ) : null;
@@ -205,11 +205,11 @@ const ExperienceGroupCard = ({
           <div className="mt-5 text-[15px] sm:mt-6">{renderDescription(exp.description)}</div>
         )}
         {skills.length > 0 && (
-          <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
+          <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.07] flex flex-wrap gap-2">
             {skills.map((skill) => (
               <Tag
                 key={skill}
-                className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium hover:bg-blue-50 transition-colors"
+                className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 dark:text-blue-300 border border-blue-100/60 dark:border-blue-500/25 font-medium hover:bg-blue-50 transition-colors"
               >
                 {skill}
               </Tag>
@@ -241,16 +241,18 @@ const ExperienceGroupCard = ({
                 </Avatar>
               )}
             </div>
-            <div className="min-w-0 truncate text-[17px] font-semibold tracking-[-0.015em] text-slate-950 sm:text-[19px]">
+            <div className="min-w-0 truncate text-[17px] font-semibold tracking-[-0.015em] text-slate-950 dark:text-ink-50 sm:text-[19px]">
               {primary.company}
             </div>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[12.5px] leading-5">
-            <span className="text-slate-500">{group.length} roles</span>
+            <span className="text-slate-500 dark:text-ink-400">{group.length} roles</span>
             {tenure && (
               <>
-                <span className="text-slate-300">·</span>
-                <span className="tabular-nums text-slate-400">{tenure} total</span>
+                <span className="text-slate-300 dark:text-ink-600">·</span>
+                <span className="tabular-nums text-slate-400 dark:text-ink-500">
+                  {tenure} total
+                </span>
               </>
             )}
           </div>
@@ -283,8 +285,8 @@ const ExperienceGroupCard = ({
             return (
               <div key={exp.id} className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}>
                 {/* Timeline dot */}
-                <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-gray-400" />
+                <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white dark:bg-ink-900 border-2 border-gray-300 dark:border-white/[0.12] flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-ink-700" />
                 </div>
                 {(() => {
                   const compGroup = experiences.filter((e) => e.company === exp.company);
@@ -316,12 +318,12 @@ const ExperienceGroupCard = ({
                 <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-start">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 pr-12 md:pr-9 lg:pr-0">
-                      <span className="min-w-0 text-[15px] font-semibold leading-snug tracking-[-0.01em] text-slate-950 sm:text-[17px]">
+                      <span className="min-w-0 text-[15px] font-semibold leading-snug tracking-[-0.01em] text-slate-950 dark:text-ink-50 sm:text-[17px]">
                         {exp.title}
                       </span>
                       {exp.is_promotion && (
                         <span
-                          className={`${STATUS_BADGE_CLASS} border-emerald-100 bg-emerald-50/80 text-emerald-700`}
+                          className={`${STATUS_BADGE_CLASS} border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/80 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300`}
                         >
                           <RiseOutlined style={{ fontSize: 9 }} /> Promoted
                         </span>
@@ -330,7 +332,7 @@ const ExperienceGroupCard = ({
                       {exp.level && <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>}
                       {exp.is_return_offer && (
                         <span
-                          className={`${STATUS_BADGE_CLASS} border-blue-100 bg-blue-50/80 text-blue-700`}
+                          className={`${STATUS_BADGE_CLASS} border-blue-100 dark:border-blue-500/20 bg-blue-50/80 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300`}
                         >
                           <LinkOutlined style={{ fontSize: 9 }} /> Return offer
                         </span>
@@ -357,7 +359,7 @@ const ExperienceGroupCard = ({
                       (() => {
                         const team = getLatestTeam(exp);
                         return team ? (
-                          <div className="mt-1 flex items-start gap-1.5 text-[15px] text-gray-500">
+                          <div className="mt-1 flex items-start gap-1.5 text-[15px] text-gray-500 dark:text-ink-400">
                             <TeamOutlined
                               className="mt-[4px] shrink-0"
                               style={{ fontSize: 12, color: '#9ca3af' }}
@@ -399,7 +401,7 @@ const ExperienceGroupCard = ({
                     {skills.map((skill) => (
                       <Tag
                         key={skill}
-                        className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 border border-blue-100/60 font-medium text-sm hover:bg-blue-50 transition-colors"
+                        className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 dark:text-blue-300 border border-blue-100/60 dark:border-blue-500/25 font-medium text-sm hover:bg-blue-50 transition-colors"
                       >
                         {skill}
                       </Tag>
@@ -434,10 +436,10 @@ const ExperienceGroupCard = ({
         />
         {gapBelow && <TimelineGapLabel label={gapBelow} />}
         <div
-          className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
+          className={`relative min-w-0 flex-grow overflow-hidden rounded-2xl border bg-white/80 dark:bg-ink-900/80 shadow-sm backdrop-blur-sm transition-all duration-300 sm:rounded-3xl ${
             primary.is_pinned
-              ? 'border-amber-200 ring-1 ring-amber-100 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
-              : 'border-gray-100 hover:border-blue-100 hover:shadow-md'
+              ? 'border-amber-200 dark:border-amber-500/25 ring-1 ring-amber-100 dark:ring-amber-500/20 hover:border-amber-400 hover:shadow-amber-100/60 hover:shadow-lg'
+              : 'border-gray-100 dark:border-white/[0.07] hover:border-blue-100 hover:shadow-md'
           }`}
         >
           <div

@@ -371,7 +371,7 @@ const PublicBookingPage = () => {
 
   if (linkInvalid) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 pt-16 sm:p-8 sm:pt-20">
+      <div className="min-h-screen bg-gray-50 dark:bg-ink-900 p-4 pt-16 sm:p-8 sm:pt-20">
         {contextHolder}
         <PageState
           tone="error"
@@ -385,7 +385,7 @@ const PublicBookingPage = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[max(env(safe-area-inset-top),1rem)] selection:bg-blue-100 selection:text-blue-900 sm:p-6 lg:p-10">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-ink-900 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[max(env(safe-area-inset-top),1rem)] selection:bg-blue-100 selection:text-blue-900 sm:p-6 lg:p-10">
       {contextHolder}
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header Card */}

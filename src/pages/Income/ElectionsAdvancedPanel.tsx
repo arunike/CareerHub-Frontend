@@ -40,11 +40,13 @@ const ElectionsAdvancedPanel = ({
     ghost
     size="small"
     expandIconPosition="end"
-    className="mt-6 border-t border-slate-100 !bg-transparent pt-1 [&_.ant-collapse-content-box]:!px-0 [&_.ant-collapse-content-box]:!pb-4 [&_.ant-collapse-content-box]:!pt-1 [&_.ant-collapse-header]:!px-0 [&_.ant-collapse-header]:!py-3 [&_.ant-collapse-item]:!border-b [&_.ant-collapse-item]:!border-slate-100"
+    className="mt-6 border-t border-slate-100 dark:border-white/[0.07] !bg-transparent pt-1 [&_.ant-collapse-content-box]:!px-0 [&_.ant-collapse-content-box]:!pb-4 [&_.ant-collapse-content-box]:!pt-1 [&_.ant-collapse-header]:!px-0 [&_.ant-collapse-header]:!py-3 [&_.ant-collapse-item]:!border-b [&_.ant-collapse-item]:!border-slate-100 dark:!border-white/[0.07]"
     items={[
       {
         key: 'schedule',
-        label: <span className="text-sm font-medium text-slate-700">Pay schedule</span>,
+        label: (
+          <span className="text-sm font-medium text-slate-700 dark:text-ink-100">Pay schedule</span>
+        ),
         children: (
           <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
             <Field
@@ -76,7 +78,11 @@ const ElectionsAdvancedPanel = ({
       },
       {
         key: 'advanced',
-        label: <span className="text-sm font-medium text-slate-700">Advanced options</span>,
+        label: (
+          <span className="text-sm font-medium text-slate-700 dark:text-ink-100">
+            Advanced options
+          </span>
+        ),
         children: (
           <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
             <Field
@@ -124,7 +130,7 @@ const ElectionsAdvancedPanel = ({
               />
             </Field>
             <div className="flex items-end gap-6 pb-1">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-ink-200">
                 <Switch
                   size="small"
                   checked={elections.hsaFamilyCoverage}
@@ -132,7 +138,7 @@ const ElectionsAdvancedPanel = ({
                 />
                 Family HSA
               </label>
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-ink-200">
                 <Switch
                   size="small"
                   checked={elections.age50Plus}
@@ -146,27 +152,33 @@ const ElectionsAdvancedPanel = ({
       },
       {
         key: 'role',
-        label: <span className="text-sm font-medium text-slate-700">From this role</span>,
+        label: (
+          <span className="text-sm font-medium text-slate-700 dark:text-ink-100">
+            From this role
+          </span>
+        ),
         children: (
           <div>
             <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-              <span className="text-slate-500">Base salary</span>
-              <span className="tabular-nums text-slate-800">{money(annualSalary)}</span>
+              <span className="text-slate-500 dark:text-ink-400">Base salary</span>
+              <span className="tabular-nums text-slate-800 dark:text-ink-50">
+                {money(annualSalary)}
+              </span>
             </div>
             <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-              <span className="text-slate-500">Paychecks this year</span>
-              <span className="tabular-nums text-slate-800">
+              <span className="text-slate-500 dark:text-ink-400">Paychecks this year</span>
+              <span className="tabular-nums text-slate-800 dark:text-ink-50">
                 {paidPeriodCount} of {paychecksPerYear}
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
-              <span className="text-slate-500">Employer HSA contribution</span>
-              <span className="tabular-nums text-slate-800">
+              <span className="text-slate-500 dark:text-ink-400">Employer HSA contribution</span>
+              <span className="tabular-nums text-slate-800 dark:text-ink-50">
                 {source?.hasBenefitData ? money(source.employer.hsaAnnual) : 'Unknown'}
               </span>
             </div>
             {source && !source.hasBenefitData ? (
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
                 This role has no linked offer, so premiums and match started at zero. Link an offer
                 on the Experience page, or just type the amounts above.
               </p>

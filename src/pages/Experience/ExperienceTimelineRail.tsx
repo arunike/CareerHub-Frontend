@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 const LINE_CLASS = 'absolute left-1/2 w-0.5 -translate-x-1/2 rounded-full';
-const LINE_TINT = 'bg-slate-200';
+const LINE_TINT = 'bg-slate-200 dark:bg-ink-800';
 // Reaches into the space-y-10 gap so the line never breaks between cards.
 const LINE_SPAN = { top: 26, bottom: 'calc(-2.5rem - 26px)' } as const;
 
@@ -22,7 +22,7 @@ export const TimelineRailDesktop = ({
     {isFirst && (
       <>
         <div
-          className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-200'}`}
+          className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-200 dark:to-ink-800'}`}
           style={{ top: -18, height: 44 }}
         />
         {isCurrent && (
@@ -38,11 +38,11 @@ export const TimelineRailDesktop = ({
     <div className="relative z-10">{avatar}</div>
     {/* Connector into the card: the 24px column gap. */}
     <div
-      className="absolute left-full top-[25px] h-0.5 w-5 bg-gradient-to-r from-slate-300 to-transparent"
+      className="absolute left-full top-[25px] h-0.5 w-5 bg-gradient-to-r from-slate-300 dark:from-ink-700 to-transparent"
       aria-hidden
     />
     {year && (
-      <span className="relative z-10 mt-2 rounded bg-white/90 px-1 text-[11px] font-semibold tabular-nums text-slate-400">
+      <span className="relative z-10 mt-2 rounded bg-white/90 dark:bg-ink-900/90 px-1 text-[11px] font-semibold tabular-nums text-slate-400 dark:text-ink-500">
         {year}
       </span>
     )}
@@ -61,22 +61,22 @@ export const TimelineRailMobile = ({
   <div className="absolute -left-6 bottom-0 top-0 z-10 w-6 md:hidden" aria-hidden>
     {isFirst && (
       <div
-        className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-200'}`}
+        className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-200 dark:to-ink-800'}`}
         style={{ top: 0, height: 26 }}
       />
     )}
     {!isLast && <div className={`${LINE_CLASS} ${LINE_TINT}`} style={LINE_SPAN} />}
     <div
-      className={`absolute left-1/2 top-[20px] h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 bg-white ${
-        isCurrent ? 'border-blue-400' : 'border-slate-300'
+      className={`absolute left-1/2 top-[20px] h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 bg-white dark:bg-ink-900 ${
+        isCurrent ? 'border-blue-400' : 'border-slate-300 dark:border-white/[0.12]'
       }`}
     />
-    <div className="absolute left-1/2 top-[24px] h-0.5 w-3.5 bg-gradient-to-r from-slate-300 to-transparent" />
+    <div className="absolute left-1/2 top-[24px] h-0.5 w-3.5 bg-gradient-to-r from-slate-300 dark:from-ink-700 to-transparent" />
   </div>
 );
 
 export const TimelineGapLabel = ({ label }: { label: string }) => (
   <div className="pointer-events-none absolute -bottom-[26px] left-0 right-0 md:pl-[76px]">
-    <span className="text-[11px] font-medium text-slate-400">{label}</span>
+    <span className="text-[11px] font-medium text-slate-400 dark:text-ink-500">{label}</span>
   </div>
 );

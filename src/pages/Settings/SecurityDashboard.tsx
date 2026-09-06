@@ -22,9 +22,9 @@ type CheckItem = {
 };
 
 const statusStyles: Record<CheckStatus, string> = {
-  ok: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  warn: 'border-amber-200 bg-amber-50 text-amber-700',
-  bad: 'border-red-200 bg-red-50 text-red-700',
+  ok: 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  warn: 'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  bad: 'border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300',
 };
 
 const statusLabel: Record<CheckStatus, string> = {
@@ -190,14 +190,16 @@ const SecurityDashboard: React.FC = () => {
   return (
     <div className="space-y-5">
       {contextHolder}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 border-b border-gray-100 dark:border-white/[0.07] pb-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <SafetyCertificateOutlined className="text-sky-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Security Dashboard</h3>
+              <SafetyCertificateOutlined className="text-sky-600 dark:text-sky-300" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-ink-50">
+                Security Dashboard
+              </h3>
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-ink-400">
               Deployment posture, auth limits, Google sync health, and Vercel edge protection
               status.
             </p>
@@ -217,11 +219,15 @@ const SecurityDashboard: React.FC = () => {
           {checks.map((item) => (
             <div
               key={item.label}
-              className="flex items-start justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50/60 p-4"
+              className="flex items-start justify-between gap-4 rounded-lg border border-gray-100 dark:border-white/[0.07] bg-gray-50/60 dark:bg-ink-900/60 p-4"
             >
               <div>
-                <div className="text-sm font-semibold text-gray-900">{item.label}</div>
-                <div className="mt-1 text-xs leading-5 text-gray-500">{item.detail}</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-ink-50">
+                  {item.label}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-ink-400">
+                  {item.detail}
+                </div>
               </div>
               <span
                 className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[item.status]}`}
@@ -297,7 +303,9 @@ const SecurityDashboard: React.FC = () => {
         </Panel>
       </div>
 
-      <p className="text-xs text-gray-400">Last checked {formatDateTime(data.checked_at)}.</p>
+      <p className="text-xs text-gray-400 dark:text-ink-500">
+        Last checked {formatDateTime(data.checked_at)}.
+      </p>
     </div>
   );
 };
@@ -312,9 +320,11 @@ const Metric = ({
   tone: 'emerald' | 'amber' | 'red';
 }) => {
   const classes = {
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-    red: 'bg-red-50 text-red-700 border-red-100',
+    emerald:
+      'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20',
+    amber:
+      'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20',
+    red: 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-100 dark:border-red-500/20',
   }[tone];
   return (
     <div className={`rounded-lg border p-4 ${classes}`}>
@@ -333,10 +343,10 @@ const Panel = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-    <div className="mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
-      <span className="text-sky-600">{icon}</span>
-      <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+  <div className="rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
+    <div className="mb-4 flex items-center gap-2 border-b border-gray-100 dark:border-white/[0.07] pb-3">
+      <span className="text-sky-600 dark:text-sky-300">{icon}</span>
+      <h4 className="text-sm font-semibold text-gray-900 dark:text-ink-50">{title}</h4>
     </div>
     <div className="space-y-2">{children}</div>
   </div>
@@ -352,9 +362,9 @@ const Info = ({
   danger?: boolean;
 }) => (
   <div className="flex items-start justify-between gap-3 text-sm">
-    <span className="text-gray-500">{label}</span>
+    <span className="text-gray-500 dark:text-ink-400">{label}</span>
     <span
-      className={`max-w-[65%] text-right font-medium ${danger ? 'text-red-600' : 'text-gray-900'}`}
+      className={`max-w-[65%] text-right font-medium ${danger ? 'text-red-600 dark:text-red-300' : 'text-gray-900 dark:text-ink-50'}`}
     >
       {value}
     </span>

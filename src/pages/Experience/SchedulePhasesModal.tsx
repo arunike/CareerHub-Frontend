@@ -175,9 +175,10 @@ const SchedulePhasesModal: React.FC<Props> = ({
     <Modal
       title={
         <div className="flex items-center gap-2">
-          <CalendarOutlined className="text-emerald-500" />
+          <CalendarOutlined className="text-emerald-500 dark:text-emerald-400" />
           <span>
-            Schedule Phases — <span className="font-normal text-gray-500">{experienceName}</span>
+            Schedule Phases —{' '}
+            <span className="font-normal text-gray-500 dark:text-ink-400">{experienceName}</span>
           </span>
         </div>
       }
@@ -248,7 +249,7 @@ const SchedulePhasesModal: React.FC<Props> = ({
 
         {/* Phase list */}
         {local.length === 0 && !isFormEditing && !showQuickImport && (
-          <div className="text-center py-10 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+          <div className="text-center py-10 text-gray-400 dark:text-ink-500 text-sm border border-dashed border-gray-200 dark:border-white/[0.08] rounded-xl">
             No schedule phases. The global role schedule applies. Click "Quick Import" or "Add
             Phase" to split the schedule.
           </div>

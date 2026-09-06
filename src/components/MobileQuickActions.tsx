@@ -151,14 +151,19 @@ const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuic
       styles={{ body: { padding: 0 } }}
     >
       <div className="mx-auto w-full max-w-xl px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-3">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-300" aria-hidden="true" />
+        <div
+          className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-300 dark:bg-ink-700"
+          aria-hidden="true"
+        />
         <div className="mb-4 flex items-center gap-3 px-1">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300">
             <HeaderIcon />
           </span>
           <div>
-            <h2 className="text-base font-bold text-slate-900">{sourceItem.label} actions</h2>
-            <p className="text-sm text-slate-600">{actionGroup.description}</p>
+            <h2 className="text-base font-bold text-slate-900 dark:text-ink-50">
+              {sourceItem.label} actions
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-ink-200">{actionGroup.description}</p>
           </div>
         </div>
 
@@ -170,14 +175,16 @@ const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuic
                 key={action.key}
                 type="button"
                 onClick={() => onNavigate(action.destination)}
-                className="group flex min-h-[76px] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
+                className="group flex min-h-[76px] items-center gap-3 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-base text-slate-700 transition-colors group-hover:bg-white group-hover:text-blue-600">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-ink-800 text-base text-slate-700 dark:text-ink-100 transition-colors group-hover:bg-white group-hover:text-blue-600">
                   <Icon />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold text-slate-900">{action.label}</span>
-                  <span className="mt-0.5 block text-xs leading-4 text-slate-600">
+                  <span className="block text-sm font-bold text-slate-900 dark:text-ink-50">
+                    {action.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-4 text-slate-600 dark:text-ink-200">
                     {action.description}
                   </span>
                 </span>

@@ -52,11 +52,11 @@ const Field = ({
   children: React.ReactNode;
 }) => (
   <label className="block">
-    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
       {label}
       {hint ? (
         <Tooltip title={hint}>
-          <InfoCircleOutlined className="text-slate-400" />
+          <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
         </Tooltip>
       ) : null}
     </span>
@@ -103,19 +103,19 @@ export const VestingForm = ({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div>
-          <p className="text-xs leading-relaxed text-slate-500">
+          <p className="text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             Off by default, because vesting terms vary too much to guess. Turn it on to set the
             cadence your company actually uses, or leave it off and enter each vest by hand.
           </p>
         </div>
-        <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-slate-600">
+        <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-slate-600 dark:text-ink-200">
           <Switch size="small" checked={includeVestEvents} onChange={onIncludeChange} />
           Generate from terms
         </label>
       </div>
 
       {!includeVestEvents ? (
-        <p className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+        <p className="mt-4 rounded-lg bg-slate-50 dark:bg-ink-900 px-4 py-3 text-xs leading-relaxed text-slate-600 dark:text-ink-200">
           No vest income is included, so every figure on this page is salary only. Turn on
           <span className="font-medium"> Generate from terms </span>
           to set your grant, cadence and cliff, or add individual vests below.
@@ -179,12 +179,12 @@ export const VestingForm = ({
       ) : null}
 
       {includeVestEvents ? (
-        <div className="mt-5 rounded-lg bg-slate-50 px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="mt-5 rounded-lg bg-slate-50 dark:bg-ink-900 px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Vests landing this year
           </div>
           {generatedVests.length === 0 ? (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-500 dark:text-ink-400">
               None — the cliff or the grant date puts every vest outside this year.
             </p>
           ) : (
@@ -192,17 +192,17 @@ export const VestingForm = ({
               {generatedVests.map((event) => (
                 <li
                   key={event.id}
-                  className="flex items-baseline justify-between gap-3 text-sm text-slate-700"
+                  className="flex items-baseline justify-between gap-3 text-sm text-slate-700 dark:text-ink-100"
                 >
                   <span>{event.label}</span>
-                  <span className="tabular-nums font-medium text-slate-900">
+                  <span className="tabular-nums font-medium text-slate-900 dark:text-ink-50">
                     {moneyCents(event.amount)}
                   </span>
                 </li>
               ))}
-              <li className="flex items-baseline justify-between gap-3 border-t border-slate-200 pt-1.5 text-sm">
-                <span className="font-medium text-slate-600">Total</span>
-                <span className="tabular-nums font-semibold text-slate-900">
+              <li className="flex items-baseline justify-between gap-3 border-t border-slate-200 dark:border-white/[0.08] pt-1.5 text-sm">
+                <span className="font-medium text-slate-600 dark:text-ink-200">Total</span>
+                <span className="tabular-nums font-semibold text-slate-900 dark:text-ink-50">
                   {money(generatedVests.reduce((sum, event) => sum + event.amount, 0))}
                 </span>
               </li>
@@ -212,8 +212,8 @@ export const VestingForm = ({
       ) : null}
 
       <div className="mt-5">
-        <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-white/[0.07] pt-5">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Extra income events
           </span>
           <Button size="small" icon={<PlusOutlined />} onClick={addEvent}>
@@ -222,7 +222,7 @@ export const VestingForm = ({
         </div>
 
         {manualEvents.length === 0 ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             A one-off bonus, an off-cycle vest, or a refresh grant.
           </p>
         ) : (
@@ -263,7 +263,7 @@ export const VestingForm = ({
         )}
       </div>
 
-      <p className="mt-5 text-xs leading-relaxed text-slate-500">
+      <p className="mt-5 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
         Vesting is the taxable event, so it is what drives a paycheck. When you can sell — a trading
         window twice a year, say — changes your capital gains, not this withholding.
       </p>

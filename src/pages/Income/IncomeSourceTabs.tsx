@@ -185,20 +185,22 @@ const IncomeSourceTabs = ({
               <SegmentedToggle
                 value={view}
                 onChange={setView}
-                wrapperClassName="w-full rounded-xl border border-slate-200 bg-white p-1 sm:w-max"
+                wrapperClassName="w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-1 sm:w-max"
                 buttonClassName="min-w-0 flex-1 px-3.5 py-1.5 sm:flex-none"
                 options={[
                   {
                     value: 'paycheck',
                     label: 'One paycheck',
                     icon: <CreditCardOutlined />,
-                    activeClassName: 'bg-blue-50 text-blue-700',
+                    activeClassName:
+                      'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
                   },
                   {
                     value: 'year',
                     label: 'Whole year',
                     icon: <TableOutlined />,
-                    activeClassName: 'bg-blue-50 text-blue-700',
+                    activeClassName:
+                      'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
                   },
                 ]}
               />
@@ -209,12 +211,14 @@ const IncomeSourceTabs = ({
                   { label: 'take-home', value: ledger.totals.net },
                 ].map((total, index) => (
                   <span key={total.label} className="flex items-baseline gap-x-3">
-                    {index > 0 ? <span className="hidden text-slate-300 sm:inline">·</span> : null}
+                    {index > 0 ? (
+                      <span className="hidden text-slate-300 dark:text-ink-600 sm:inline">·</span>
+                    ) : null}
                     <span className="whitespace-nowrap">
-                      <span className="font-semibold tabular-nums text-slate-700">
+                      <span className="font-semibold tabular-nums text-slate-700 dark:text-ink-100">
                         {amount(total.value)}
                       </span>{' '}
-                      <span className="text-slate-500">{total.label}</span>
+                      <span className="text-slate-500 dark:text-ink-400">{total.label}</span>
                     </span>
                   </span>
                 ))}
@@ -264,12 +268,12 @@ const IncomeSourceTabs = ({
             ) : (
               <>
                 <div className="enterprise-card overflow-hidden">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-white/[0.07] px-4 py-3">
                     <span
                       className={
                         selectedKeys.length > 0
-                          ? 'text-xs font-semibold text-slate-700'
-                          : 'text-xs text-slate-500'
+                          ? 'text-xs font-semibold text-slate-700 dark:text-ink-100'
+                          : 'text-xs text-slate-500 dark:text-ink-400'
                       }
                     >
                       {selectedKeys.length > 0

@@ -45,15 +45,17 @@ const ScorecardCategoryList = ({
               <HelpTooltipTrigger
                 title={tooltips[category.key]}
                 ariaLabel={`Explain ${category.label} score`}
-                className="font-semibold text-slate-700"
+                className="font-semibold text-slate-700 dark:text-ink-100"
               >
                 {category.label}
               </HelpTooltipTrigger>
-              <span className="font-bold text-slate-900">{Math.round(category.score)}</span>
+              <span className="font-bold text-slate-900 dark:text-ink-50">
+                {Math.round(category.score)}
+              </span>
             </div>
 
             {/* Compact Progress Bar */}
-            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
                   category.key === 'financial' ? 'bg-emerald-500' : 'bg-sky-500'
@@ -61,7 +63,7 @@ const ScorecardCategoryList = ({
                 style={{ width: `${barWidth}%` }}
               />
             </div>
-            <p className="mt-2 text-[10px] font-medium text-slate-500 line-clamp-1">
+            <p className="mt-2 text-[10px] font-medium text-slate-500 dark:text-ink-400 line-clamp-1">
               {category.detail}
             </p>
           </div>
@@ -88,12 +90,12 @@ const ScorecardCategoryList = ({
               <HelpTooltipTrigger
                 title={tooltips[category.key]}
                 ariaLabel={`Explain ${category.label} score`}
-                className="font-semibold text-slate-700"
+                className="font-semibold text-slate-700 dark:text-ink-100"
               >
                 {category.label}
               </HelpTooltipTrigger>
               <span
-                className={`font-bold ${category.isScored ? 'text-slate-900' : 'text-slate-400'}`}
+                className={`font-bold ${category.isScored ? 'text-slate-900 dark:text-ink-50' : 'text-slate-400 dark:text-ink-500'}`}
               >
                 {category.isScored ? Math.round(category.score) : '--'}
               </span>
@@ -124,9 +126,11 @@ const ScorecardCategoryList = ({
         return (
           <div key={category.key} className="flex flex-col">
             <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700">{category.label}</span>
+              <span className="font-semibold text-slate-700 dark:text-ink-100">
+                {category.label}
+              </span>
               <span
-                className={`font-bold ${category.isScored ? 'text-slate-900' : 'text-slate-400'}`}
+                className={`font-bold ${category.isScored ? 'text-slate-900 dark:text-ink-50' : 'text-slate-400 dark:text-ink-500'}`}
               >
                 {category.isScored ? Math.round(category.score) : '--'}
               </span>
@@ -147,9 +151,9 @@ const ScorecardCategoryList = ({
                 value: option.value,
                 label: option.label,
               }))}
-              className="w-full rounded-lg border border-slate-100 bg-slate-50 text-xs transition-colors hover:bg-slate-100 [&_.ant-select-selector]:!bg-transparent"
+              className="w-full rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 text-xs transition-colors hover:bg-slate-100 [&_.ant-select-selector]:!bg-transparent"
             />
-            <p className="mt-1.5 text-[10px] leading-4 text-slate-400">
+            <p className="mt-1.5 text-[10px] leading-4 text-slate-400 dark:text-ink-500">
               {selectedImmigrationOption?.description ||
                 'Only score this when immigration support matters to the decision.'}
             </p>

@@ -63,14 +63,16 @@ const CompensationBreakdownModal: React.FC<Props> = ({
       footer={null}
       title={
         <div className="flex items-center gap-2">
-          <DollarCircleOutlined className="text-emerald-500" />
+          <DollarCircleOutlined className="text-emerald-500 dark:text-emerald-400" />
           <span>
             {titleText ??
               (snapshot.kind === 'hourly'
                 ? 'Internship Earnings Breakdown'
                 : 'Pay Structure Breakdown')}
             {resolvedContextLabel && (
-              <span className="ml-2 font-normal text-gray-500">{resolvedContextLabel}</span>
+              <span className="ml-2 font-normal text-gray-500 dark:text-ink-400">
+                {resolvedContextLabel}
+              </span>
             )}
           </span>
         </div>

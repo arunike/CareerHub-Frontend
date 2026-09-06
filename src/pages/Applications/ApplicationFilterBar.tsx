@@ -64,8 +64,8 @@ const ApplicationFilterBar = ({
           <div className="enterprise-filter-bar p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Filters</div>
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="text-sm font-semibold text-slate-900 dark:text-ink-50">Filters</div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">
                   {activeFilterCount > 0
                     ? `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active`
                     : 'Search, status, and type'}
@@ -87,7 +87,7 @@ const ApplicationFilterBar = ({
                   size="large"
                   aria-label="Search applications by company or role"
                   placeholder="Search company or role"
-                  prefix={<SearchOutlined className="text-gray-400" />}
+                  prefix={<SearchOutlined className="text-gray-400 dark:text-ink-500" />}
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   allowClear
@@ -130,7 +130,7 @@ const ApplicationFilterBar = ({
                   placeholder="Location"
                   value={locationFilter === 'ALL' ? '' : locationFilter}
                   onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
-                  prefix={<GlobalOutlined className="text-gray-400" />}
+                  prefix={<GlobalOutlined className="text-gray-400 dark:text-ink-500" />}
                   allowClear
                 />
                 <div className="flex items-center justify-between gap-3 pt-2">
@@ -143,7 +143,7 @@ const ApplicationFilterBar = ({
                       size="small"
                       type="link"
                       onClick={clearApplicationFilters}
-                      className="flex items-center gap-1.5 !text-slate-500 hover:!text-sky-600 !p-0"
+                      className="flex items-center gap-1.5 !text-slate-500 dark:!text-ink-400 hover:!text-sky-600 dark:hover:!text-sky-300 !p-0"
                     >
                       Clear filters
                     </Button>
@@ -159,7 +159,7 @@ const ApplicationFilterBar = ({
             size="large"
             aria-label="Search applications by company or role"
             placeholder="Search company or role"
-            prefix={<SearchOutlined className="text-gray-400" />}
+            prefix={<SearchOutlined className="text-gray-400 dark:text-ink-500" />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ maxWidth: 340 }}
@@ -206,7 +206,7 @@ const ApplicationFilterBar = ({
             value={locationFilter === 'ALL' ? '' : locationFilter}
             style={{ width: 200 }}
             onChange={(event) => setLocationFilter(event.target.value || 'ALL')}
-            prefix={<GlobalOutlined className="text-gray-400" />}
+            prefix={<GlobalOutlined className="text-gray-400 dark:text-ink-500" />}
             allowClear
           />
           {(searchText ||
@@ -222,7 +222,7 @@ const ApplicationFilterBar = ({
                 size="small"
                 type="link"
                 onClick={clearApplicationFilters}
-                className="flex items-center gap-1.5 !text-slate-500 hover:!text-sky-600 !p-0"
+                className="flex items-center gap-1.5 !text-slate-500 dark:!text-ink-400 hover:!text-sky-600 dark:hover:!text-sky-300 !p-0"
               >
                 Clear filters
               </Button>

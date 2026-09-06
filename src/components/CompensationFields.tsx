@@ -185,7 +185,7 @@ const CompensationFields: React.FC<Props> = ({
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className={FIELD_LABEL_CLASS}>Vesting schedule</div>
-              <div className="mt-0.5 text-[11px] text-gray-400">
+              <div className="mt-0.5 text-[11px] text-gray-400 dark:text-ink-500">
                 Total {formatPct(vestingTotalPct)}% · Y1 ${yearOneEquity.toLocaleString()}
               </div>
             </div>
@@ -193,7 +193,7 @@ const CompensationFields: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={resetVestingToFull}
-                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50"
+                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
               >
                 Reset 100%
               </button>
@@ -202,7 +202,7 @@ const CompensationFields: React.FC<Props> = ({
           <div className="grid grid-cols-2 gap-2">
             {vestingSchedule.map((pct, index) => (
               <label key={index} className="flex min-w-0 items-center gap-2">
-                <span className="w-6 shrink-0 text-[11px] font-bold uppercase text-gray-500">
+                <span className="w-6 shrink-0 text-[11px] font-bold uppercase text-gray-500 dark:text-ink-400">
                   Y{index + 1}
                 </span>
                 <UnitNumberInput
@@ -220,15 +220,21 @@ const CompensationFields: React.FC<Props> = ({
       )}
 
       {showEquityRefresh && (
-        <div className={equityMode === 'total' ? 'border-t border-gray-100 pt-3' : undefined}>
+        <div
+          className={
+            equityMode === 'total'
+              ? 'border-t border-gray-100 dark:border-white/[0.07] pt-3'
+              : undefined
+          }
+        >
           <div className={FIELD_LABEL_CLASS}>Annual refresh</div>
-          <p className="mt-0.5 mb-2 text-[11px] leading-4 text-gray-400">
+          <p className="mt-0.5 mb-2 text-[11px] leading-4 text-gray-400 dark:text-ink-500">
             A new grant each year, vesting evenly over four years so they stack. Leave at 0 to model
             the initial grant only.
           </p>
           <div className="grid grid-cols-2 gap-2">
             <label className="min-w-0">
-              <span className="mb-1 block text-[10px] font-semibold uppercase text-gray-400">
+              <span className="mb-1 block text-[10px] font-semibold uppercase text-gray-400 dark:text-ink-500">
                 Grant value
               </span>
               <UnitNumberInput
@@ -240,7 +246,7 @@ const CompensationFields: React.FC<Props> = ({
               />
             </label>
             <label className="min-w-0">
-              <span className="mb-1 block text-[10px] font-semibold uppercase text-gray-400">
+              <span className="mb-1 block text-[10px] font-semibold uppercase text-gray-400 dark:text-ink-500">
                 Starts
               </span>
               <select
@@ -259,11 +265,11 @@ const CompensationFields: React.FC<Props> = ({
         </div>
       )}
 
-      <div className="flex justify-end border-t border-gray-100 pt-2">
+      <div className="flex justify-end border-t border-gray-100 dark:border-white/[0.07] pt-2">
         <button
           type="button"
           onClick={() => setIsVestingOpen(false)}
-          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 hover:bg-gray-50"
+          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-ink-400 hover:bg-gray-50"
         >
           Done
         </button>
@@ -333,7 +339,7 @@ const CompensationFields: React.FC<Props> = ({
             placeholder="e.g. 20000"
           />
         )}
-        <div className={`${FIELD_HINT_CLASS} text-gray-400`}>
+        <div className={`${FIELD_HINT_CLASS} text-gray-400 dark:text-ink-500`}>
           {bonusMode === '%' && bonus != null && (
             <span className="truncate">= ${Math.round(bonus).toLocaleString()}/yr</span>
           )}
@@ -375,7 +381,7 @@ const CompensationFields: React.FC<Props> = ({
             placeholder="Annual value"
           />
         )}
-        <div className={`${FIELD_HINT_CLASS} text-gray-400`}>
+        <div className={`${FIELD_HINT_CLASS} text-gray-400 dark:text-ink-500`}>
           {showConfigure ? (
             <>
               <span className="min-w-0 truncate">{equityHint}</span>
@@ -388,7 +394,7 @@ const CompensationFields: React.FC<Props> = ({
               >
                 <button
                   type="button"
-                  className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 hover:bg-blue-50"
+                  className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
                 >
                   Configure
                 </button>

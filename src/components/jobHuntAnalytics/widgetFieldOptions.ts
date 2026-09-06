@@ -31,12 +31,48 @@ export type ValidationResult = {
 export const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#60a5fa', '#ec4899'];
 
 export const COLOR_THEMES = [
-  { name: 'blue', bg: 'bg-blue-100', text: 'text-blue-600', fill: '#2563eb', hex: '#3b82f6' },
-  { name: 'green', bg: 'bg-green-100', text: 'text-green-600', fill: '#10b981', hex: '#22c55e' },
-  { name: 'amber', bg: 'bg-amber-100', text: 'text-amber-600', fill: '#f59e0b', hex: '#f59e0b' },
-  { name: 'red', bg: 'bg-red-100', text: 'text-red-600', fill: '#ef4444', hex: '#ef4444' },
-  { name: 'purple', bg: 'bg-purple-100', text: 'text-purple-600', fill: '#60a5fa', hex: '#a855f7' },
-  { name: 'pink', bg: 'bg-pink-100', text: 'text-pink-600', fill: '#ec4899', hex: '#ec4899' },
+  {
+    name: 'blue',
+    bg: 'bg-blue-100 dark:bg-blue-500/15',
+    text: 'text-blue-600 dark:text-blue-300',
+    fill: '#2563eb',
+    hex: '#3b82f6',
+  },
+  {
+    name: 'green',
+    bg: 'bg-green-100 dark:bg-green-500/15',
+    text: 'text-green-600 dark:text-green-300',
+    fill: '#10b981',
+    hex: '#22c55e',
+  },
+  {
+    name: 'amber',
+    bg: 'bg-amber-100 dark:bg-amber-500/15',
+    text: 'text-amber-600 dark:text-amber-300',
+    fill: '#f59e0b',
+    hex: '#f59e0b',
+  },
+  {
+    name: 'red',
+    bg: 'bg-red-100 dark:bg-red-500/15',
+    text: 'text-red-600 dark:text-red-300',
+    fill: '#ef4444',
+    hex: '#ef4444',
+  },
+  {
+    name: 'purple',
+    bg: 'bg-purple-100 dark:bg-purple-500/15',
+    text: 'text-purple-600 dark:text-purple-300',
+    fill: '#60a5fa',
+    hex: '#a855f7',
+  },
+  {
+    name: 'pink',
+    bg: 'bg-pink-100 dark:bg-pink-500/15',
+    text: 'text-pink-600 dark:text-pink-300',
+    fill: '#ec4899',
+    hex: '#ec4899',
+  },
 ];
 
 export const AVAILABLE_ICONS = [

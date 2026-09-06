@@ -57,7 +57,7 @@ export const PayPie = ({ groups, empty }: { groups: NestedGroup[]; empty: string
 
   if (slices.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white/80 text-sm text-gray-400">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-white/[0.08] bg-white/80 dark:bg-ink-900/80 text-sm text-gray-400 dark:text-ink-500">
         {empty}
       </div>
     );
@@ -106,7 +106,7 @@ export const PayStackedBar = ({ parts, total }: { parts: PayPart[]; total: numbe
   if (shown.length === 0 || total <= 0) return null;
 
   return (
-    <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+    <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
       {shown.map((part) => (
         <div
           key={part.key}

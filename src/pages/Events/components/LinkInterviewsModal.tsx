@@ -10,9 +10,9 @@ import {
 import { getApiErrorMessage } from '../../../utils/apiError';
 
 const CONFIDENCE_STYLE: Record<EventLinkSuggestion['confidence'], string> = {
-  high: 'bg-emerald-50 text-emerald-700',
-  medium: 'bg-amber-50 text-amber-700',
-  low: 'bg-slate-100 text-slate-600',
+  high: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  medium: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  low: 'bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200',
 };
 
 const CONFIDENCE_NOTE: Record<EventLinkSuggestion['confidence'], string> = {
@@ -86,7 +86,7 @@ const LinkInterviewsModal = ({ open, onClose, onLinked }: Props) => {
       title="Link interviews to applications"
       footer={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-400 dark:text-ink-500">
             {accepted.length} of {suggestions.length} selected
           </span>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
@@ -108,14 +108,14 @@ const LinkInterviewsModal = ({ open, onClose, onLinked }: Props) => {
           <Spin />
         </div>
       ) : suggestions.length === 0 ? (
-        <p className="py-8 text-center text-sm text-slate-400">
+        <p className="py-8 text-center text-sm text-slate-400 dark:text-ink-500">
           Nothing to suggest. {unlinkedTotal} unlinked{' '}
           {unlinkedTotal === 1 ? 'event has' : 'events have'} no matching application — link those
           from the event itself.
         </p>
       ) : (
         <>
-          <p className="mb-3 text-xs leading-5 text-slate-500">
+          <p className="mb-3 text-xs leading-5 text-slate-500 dark:text-ink-400">
             Matched by company name in the event title. {unlinkedTotal - suggestions.length} other
             unlinked {unlinkedTotal - suggestions.length === 1 ? 'event' : 'events'} had no matching
             application and {unlinkedTotal - suggestions.length === 1 ? 'is' : 'are'} left alone.
@@ -127,18 +127,23 @@ const LinkInterviewsModal = ({ open, onClose, onLinked }: Props) => {
                 <li
                   key={row.event}
                   className={`rounded-lg border px-3 py-2.5 transition ${
-                    isSkipped ? 'border-slate-200 bg-slate-50 opacity-60' : 'border-slate-200'
+                    isSkipped
+                      ? 'border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 opacity-60'
+                      : 'border-slate-200 dark:border-white/[0.08]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-ink-50">
                         {row.event_name}
                       </p>
-                      <p className="mt-0.5 truncate text-xs text-slate-500">
+                      <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-ink-400">
                         {row.event_date && `${dayjs(row.event_date).format('MMM D, YYYY')} · `}
                         {row.company_name} · {row.role_title}
-                        <span className="text-slate-400"> ({row.application_status})</span>
+                        <span className="text-slate-400 dark:text-ink-500">
+                          {' '}
+                          ({row.application_status})
+                        </span>
                       </p>
                       <span
                         title={CONFIDENCE_NOTE[row.confidence]}

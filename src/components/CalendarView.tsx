@@ -304,8 +304,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
       <div className="relative">
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/70 backdrop-blur-[1px]">
-            <div className="rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/70 dark:bg-ink-900/70 backdrop-blur-[1px]">
+            <div className="rounded-full border border-blue-100 dark:border-blue-500/20 bg-white dark:bg-ink-900 px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 shadow-sm">
               Loading calendar data...
             </div>
           </div>

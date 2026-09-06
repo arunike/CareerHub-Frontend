@@ -61,11 +61,11 @@ const Field = ({
   children: React.ReactNode;
 }) => (
   <label className="block">
-    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
       {label}
       {hint ? (
         <Tooltip title={hint}>
-          <InfoCircleOutlined className="text-slate-400" />
+          <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
         </Tooltip>
       ) : null}
     </span>
@@ -81,7 +81,7 @@ const SectionLabel = ({
   trailing?: React.ReactNode;
 }) => (
   <div className="flex items-baseline justify-between gap-3">
-    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
       {children}
     </span>
     {trailing}
@@ -133,19 +133,19 @@ export const BonusForm = ({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div>
-          <p className="text-xs leading-relaxed text-slate-500">
+          <p className="text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             The target comes from your offer. Multipliers, extras and payout timing are yours to
             set.
           </p>
         </div>
-        <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-slate-600">
+        <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-slate-600 dark:text-ink-200">
           <Switch size="small" checked={includeBonus} onChange={onIncludeChange} />
           Include bonus
         </label>
       </div>
 
       {!includeBonus ? (
-        <p className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+        <p className="mt-4 rounded-lg bg-slate-50 dark:bg-ink-900 px-4 py-3 text-xs leading-relaxed text-slate-600 dark:text-ink-200">
           No bonus is included, so take-home reflects base salary only. Your offer records a target
           of <span className="font-medium">{money(offerBonus)}</span>
           {annualSalary > 0 ? (
@@ -190,7 +190,7 @@ export const BonusForm = ({
               />
             </Field>
             <div className="flex items-end pb-1">
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-ink-400">
                 Total bonus
                 <FigureMath
                   label="Total bonus"
@@ -204,19 +204,19 @@ export const BonusForm = ({
                     bonusTotal,
                   })}
                 />
-                <span className="ml-0.5 text-base font-semibold tabular-nums text-slate-900">
+                <span className="ml-0.5 text-base font-semibold tabular-nums text-slate-900 dark:text-ink-50">
                   {money(bonusTotal)}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
+          <div className="mt-4 rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-ink-900/60 px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
                 Performance year
                 <Tooltip title="A bonus is usually earned in one year and paid in the next, so proration is measured against the year it was earned, not the year the money arrives. Defaults to the year before this one.">
-                  <InfoCircleOutlined className="text-slate-400" />
+                  <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
                 </Tooltip>
               </span>
               <Select
@@ -232,17 +232,17 @@ export const BonusForm = ({
               />
             </div>
 
-            <label className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-200/70 pt-2.5">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+            <label className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-200/70 dark:border-white/[0.08] pt-2.5">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
                 Prorate for time worked
                 <Tooltip title="A target bonus is earned across the performance year, so a part year earns part of it. Extra bonuses are never prorated.">
-                  <InfoCircleOutlined className="text-slate-400" />
+                  <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
                 </Tooltip>
               </span>
               <Switch size="small" checked={prorated} onChange={onProratedChange} />
             </label>
 
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
               {prorationFactor === 0 ? (
                 <>
                   This role was not held during {performanceYear}, so a prorated bonus comes to
@@ -252,12 +252,15 @@ export const BonusForm = ({
                 prorated ? (
                   <>
                     Held{' '}
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-slate-700 dark:text-ink-100">
                       {prorationDays.daysHeld} of {prorationDays.daysInYear} days
                     </span>{' '}
                     in {performanceYear}, so {money(targetBonus)} ×{' '}
                     {(prorationFactor * 100).toFixed(1)}% ={' '}
-                    <span className="font-medium text-slate-700">{money(proratedTarget)}</span>.
+                    <span className="font-medium text-slate-700 dark:text-ink-100">
+                      {money(proratedTarget)}
+                    </span>
+                    .
                   </>
                 ) : (
                   <>
@@ -272,12 +275,12 @@ export const BonusForm = ({
             </p>
           </div>
 
-          <div className="mt-5 border-t border-slate-100 pt-5">
+          <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-5">
             <div className="flex items-center justify-between gap-3">
               <SectionLabel
                 trailing={
                   extras.length > 0 ? (
-                    <span className="text-xs font-medium tabular-nums text-slate-600">
+                    <span className="text-xs font-medium tabular-nums text-slate-600 dark:text-ink-200">
                       {money(extrasTotal(extras))}
                     </span>
                   ) : undefined
@@ -297,7 +300,7 @@ export const BonusForm = ({
             </div>
 
             {extras.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-slate-400 dark:text-ink-500">
                 Stacked on top of the target: exceeding expectations, a spot award, a retention
                 bonus.
               </p>
@@ -338,7 +341,7 @@ export const BonusForm = ({
             )}
           </div>
 
-          <div className="mt-5 border-t border-slate-100 pt-5">
+          <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-5">
             <div className="flex items-center justify-between gap-3">
               <SectionLabel>Payout schedule</SectionLabel>
               <Button
@@ -361,7 +364,7 @@ export const BonusForm = ({
 
             {payouts.length === 0 ? (
               <div className="mt-2">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-400 dark:text-ink-500">
                   Nothing scheduled yet, so no bonus lands on any paycheck.
                 </p>
                 <Button
@@ -380,13 +383,13 @@ export const BonusForm = ({
                   return (
                     <div
                       key={payout.id}
-                      className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5"
+                      className="rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-ink-900/60 px-3 py-2.5"
                     >
                       <div className="flex items-center justify-between gap-2">
                         {/* antd's Segmented track is the same tint as this panel, so the active pill floats on nothing. */}
                         <SegmentedToggle
                           value={offCycle ? 'own' : 'paycheck'}
-                          wrapperClassName="bg-white"
+                          wrapperClassName="bg-white dark:bg-ink-900"
                           buttonClassName="!min-h-0 px-2.5 py-1 text-xs"
                           onChange={(value) =>
                             patchPayout(
@@ -483,16 +486,16 @@ export const BonusForm = ({
                   );
                 })}
 
-                <div className="flex items-baseline justify-between gap-3 border-t border-slate-100 pt-2 text-xs">
-                  <span className="text-slate-500">
+                <div className="flex items-baseline justify-between gap-3 border-t border-slate-100 dark:border-white/[0.07] pt-2 text-xs">
+                  <span className="text-slate-500 dark:text-ink-400">
                     Scheduled {sharesTotal.toFixed(0)}% of the bonus
                   </span>
-                  <span className="font-medium tabular-nums text-slate-700">
+                  <span className="font-medium tabular-nums text-slate-700 dark:text-ink-100">
                     {moneyCents(scheduled)}
                   </span>
                 </div>
                 {sharesTotal !== 100 ? (
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-amber-600 dark:text-amber-300">
                     {sharesTotal < 100
                       ? `${(100 - sharesTotal).toFixed(0)}% of the bonus is not scheduled to any paycheck.`
                       : `The schedule adds up to ${sharesTotal.toFixed(0)}%, more than the full bonus.`}
@@ -502,7 +505,7 @@ export const BonusForm = ({
             )}
           </div>
 
-          <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-relaxed text-slate-400">
+          <p className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4 text-xs leading-relaxed text-slate-400 dark:text-ink-500">
             A bonus is withheld at the flat 22% supplemental rate. Paid on its own date it carries
             no salary and no recurring deductions, so the whole amount is supplemental.
           </p>

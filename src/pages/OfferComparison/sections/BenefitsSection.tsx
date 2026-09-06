@@ -238,7 +238,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Dental Plan Name
               </label>
               <input
@@ -250,7 +250,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Dental Premium per Paycheck
               </label>
               <UnitNumberInput
@@ -263,13 +263,13 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
                 }}
                 placeholder="e.g. 10"
               />
-              <p className="text-[11px] text-gray-400 mt-1">
+              <p className="text-[11px] text-gray-400 dark:text-ink-500 mt-1">
                 = ${Math.round(annualDentalPremium).toLocaleString()}/yr
               </p>
             </div>
             {hasDependents && (
               <div>
-                <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">
+                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide mb-1">
                   Dependent Dental Add-on per Paycheck
                 </label>
                 <UnitNumberInput
@@ -282,7 +282,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               </div>
             )}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Annual Max Benefit
               </label>
               <UnitNumberInput
@@ -294,7 +294,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Deductible
               </label>
               <UnitNumberInput
@@ -314,7 +314,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Vision Plan Name
               </label>
               <input
@@ -326,7 +326,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Vision Premium per Paycheck
               </label>
               <UnitNumberInput
@@ -339,13 +339,13 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
                 }}
                 placeholder="e.g. 4"
               />
-              <p className="text-[11px] text-gray-400 mt-1">
+              <p className="text-[11px] text-gray-400 dark:text-ink-500 mt-1">
                 = ${Math.round(annualVisionPremium).toLocaleString()}/yr
               </p>
             </div>
             {hasDependents && (
               <div>
-                <label className="block text-xs font-semibold text-indigo-900 uppercase tracking-wide mb-1">
+                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide mb-1">
                   Dependent Vision Add-on per Paycheck
                 </label>
                 <UnitNumberInput
@@ -358,7 +358,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               </div>
             )}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Frames Allowance
               </label>
               <UnitNumberInput
@@ -370,7 +370,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Contacts Allowance
               </label>
               <UnitNumberInput
@@ -390,7 +390,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Employer Match
               </label>
               <UnitNumberInput
@@ -403,7 +403,7 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
                 Max Employee Contribution Matched
               </label>
               <UnitNumberInput

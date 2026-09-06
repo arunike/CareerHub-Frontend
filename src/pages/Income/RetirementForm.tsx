@@ -58,23 +58,23 @@ const Row = ({
   tone?: 'good' | 'bad';
 }) => (
   <div className="flex items-baseline justify-between gap-3 py-2">
-    <span className="flex items-center gap-1.5 text-sm text-slate-600">
+    <span className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-ink-200">
       {label}
       {hint ? (
         <Tooltip title={hint}>
-          <InfoCircleOutlined className="text-[11px] text-slate-300" />
+          <InfoCircleOutlined className="text-[11px] text-slate-300 dark:text-ink-600" />
         </Tooltip>
       ) : null}
     </span>
     <span
       className={`tabular-nums text-sm ${
         tone === 'good'
-          ? 'font-semibold text-emerald-600'
+          ? 'font-semibold text-emerald-600 dark:text-emerald-300'
           : tone === 'bad'
-            ? 'font-semibold text-rose-600'
+            ? 'font-semibold text-rose-600 dark:text-rose-300'
             : emphasis
-              ? 'font-semibold text-slate-900'
-              : 'text-slate-700'
+              ? 'font-semibold text-slate-900 dark:text-ink-50'
+              : 'text-slate-700 dark:text-ink-100'
       }`}
     >
       {value}
@@ -92,11 +92,11 @@ const Field = ({
   children: React.ReactNode;
 }) => (
   <label className="block">
-    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+    <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
       {label}
       {hint ? (
         <Tooltip title={hint}>
-          <InfoCircleOutlined className="text-slate-400" />
+          <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
         </Tooltip>
       ) : null}
     </span>
@@ -136,13 +136,13 @@ export const RetirementForm = ({
 
   return (
     <div>
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed text-slate-500 dark:text-ink-400">
         The employer match is pay you receive without it passing through your paycheck. Add balances
         to separate what you put in from what the market did.
       </p>
 
       <div className="mt-5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           Your contribution
         </span>
         <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
@@ -163,7 +163,7 @@ export const RetirementForm = ({
           </Field>
         </div>
 
-        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="mt-3 rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2.5">
           <Field
             label="Deferred and matched on"
             hint="Check your payslip: divide the contribution by your rate and see whether it lands on your gross or on something lower."
@@ -180,25 +180,30 @@ export const RetirementForm = ({
               optionRender={(option) => (
                 <span className="flex flex-col">
                   <span>{DEFERRAL_BASE_LABELS[option.data.value as DeferralBase]}</span>
-                  <span className="text-[11px] leading-snug text-slate-400">
+                  <span className="text-[11px] leading-snug text-slate-400 dark:text-ink-500">
                     {DEFERRAL_BASE_HINTS[option.data.value as DeferralBase]}
                   </span>
                 </span>
               )}
             />
           </Field>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-ink-400">
             {excludableTotal > 0.005 ? (
               <>
                 {DEFERRAL_BASE_HINTS[deferralBase]}{' '}
                 {deferralBase === 'ALL' ? (
                   <>
-                    <span className="font-medium text-slate-600">{money(excludableTotal)}</span> of
-                    this year&rsquo;s pay could be carved out.
+                    <span className="font-medium text-slate-600 dark:text-ink-200">
+                      {money(excludableTotal)}
+                    </span>{' '}
+                    of this year&rsquo;s pay could be carved out.
                   </>
                 ) : (
                   <>
-                    Keeps <span className="font-medium text-slate-600">{money(excludedTotal)}</span>{' '}
+                    Keeps{' '}
+                    <span className="font-medium text-slate-600 dark:text-ink-200">
+                      {money(excludedTotal)}
+                    </span>{' '}
                     out of the base this year.
                   </>
                 )}
@@ -213,20 +218,20 @@ export const RetirementForm = ({
         </div>
       </div>
 
-      <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-3">
+      <div className="mt-5 rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-ink-900/60 px-3 py-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
             Toward the {taxYear} limit
             <Tooltip title="The 402(g) elective deferral limit covers your traditional and Roth contributions together. The employer match does not count against it.">
-              <InfoCircleOutlined className="text-slate-400" />
+              <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
             </Tooltip>
           </span>
-          <span className="text-xs tabular-nums text-slate-500">
+          <span className="text-xs tabular-nums text-slate-500 dark:text-ink-400">
             {money(summary.employeeTotal)} of {money(summary.electiveLimit)}
           </span>
         </div>
 
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200/70">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-ink-800/70">
           <div
             className={`h-full rounded-full ${
               summary.percentOfLimit >= 1 ? 'bg-emerald-500' : 'bg-sky-500'
@@ -236,27 +241,29 @@ export const RetirementForm = ({
         </div>
 
         <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
-          <span className="font-medium tabular-nums text-slate-700">
+          <span className="font-medium tabular-nums text-slate-700 dark:text-ink-100">
             {percent(summary.percentOfLimit, 1)} used
           </span>
-          <span className="tabular-nums text-slate-500">
+          <span className="tabular-nums text-slate-500 dark:text-ink-400">
             {summary.remainingToLimit > 0 ? (
               <>
-                <span className="font-medium text-slate-700">
+                <span className="font-medium text-slate-700 dark:text-ink-100">
                   {money(summary.remainingToLimit)}
                 </span>{' '}
                 left to contribute
               </>
             ) : (
-              <span className="font-medium text-emerald-600">Limit reached</span>
+              <span className="font-medium text-emerald-600 dark:text-emerald-300">
+                Limit reached
+              </span>
             )}
           </span>
         </div>
 
         {summary.limitReachedOnPeriod !== null ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             At this rate you reach the limit on{' '}
-            <span className="font-medium text-slate-700">
+            <span className="font-medium text-slate-700 dark:text-ink-100">
               {summary.limitReachedOnDate
                 ? formatPayDate(summary.limitReachedOnDate)
                 : `paycheck ${summary.limitReachedOnPeriod}`}
@@ -264,27 +271,27 @@ export const RetirementForm = ({
             , and contributions stop for the rest of the year.
           </p>
         ) : summary.remainingToLimit > 0 && summary.employeeTotal > 0 ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             At this rate you finish the year {money(summary.remainingToLimit)} under the limit.
             Raising your percentage puts more in before the year closes.
           </p>
         ) : null}
       </div>
 
-      <div className="mt-6 border-t border-slate-100 pt-5">
+      <div className="mt-6 border-t border-slate-100 dark:border-white/[0.07] pt-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Contributed in {taxYear}
           </span>
           {/* A year still running is reporting a subtotal, so it has to say where it stops. */}
           {summary.hasUnpaidPeriods && summary.paidThroughDate ? (
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-400 dark:text-ink-500">
               through {dayjs(summary.paidThroughDate).format('MMM D')} · {summary.paidPeriodsToDate}{' '}
               of {summary.periodCount} paychecks
             </span>
           ) : null}
         </div>
-        <div className="mt-2 divide-y divide-slate-100">
+        <div className="mt-2 divide-y divide-slate-100 dark:divide-white/[0.07]">
           <Row label="Your traditional 401(k)" value={money(summary.employeePretaxToDate)} />
           <Row label="Your Roth 401(k)" value={money(summary.employeeRothToDate)} />
           <Row
@@ -296,34 +303,37 @@ export const RetirementForm = ({
         </div>
 
         {summary.hasUnpaidPeriods ? (
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400 dark:text-ink-500">
             Paid in so far. On the current rate the year finishes at{' '}
-            <span className="font-medium text-slate-500">{money(summary.totalContributed)}</span>.
+            <span className="font-medium text-slate-500 dark:text-ink-400">
+              {money(summary.totalContributed)}
+            </span>
+            .
           </p>
         ) : null}
 
-        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="mt-3 rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2.5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
-            <span className="text-slate-500">Match formula</span>
-            <span className="max-w-[60%] text-right font-medium text-slate-700">
+            <span className="text-slate-500 dark:text-ink-400">Match formula</span>
+            <span className="max-w-[60%] text-right font-medium text-slate-700 dark:text-ink-100">
               {describeFormula(formula)}
             </span>
           </div>
           <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
-            <span className="text-slate-500">
+            <span className="text-slate-500 dark:text-ink-400">
               At your {pretaxPercent + rothPercent}% deferral you earn
             </span>
-            <span className="font-medium tabular-nums text-slate-700">
+            <span className="font-medium tabular-nums text-slate-700 dark:text-ink-100">
               {employerPercentOfPay(pretaxPercent + rothPercent, formula).toFixed(2)}% of pay
-              <span className="text-slate-400">
+              <span className="text-slate-400 dark:text-ink-500">
                 {' '}
                 of {maxEmployerPercentOfPay(formula).toFixed(2)}% available
               </span>
             </span>
           </div>
           <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
-            <span className="text-slate-500">Per paycheck</span>
-            <span className="tabular-nums font-medium text-slate-700">
+            <span className="text-slate-500 dark:text-ink-400">Per paycheck</span>
+            <span className="tabular-nums font-medium text-slate-700 dark:text-ink-100">
               {moneyCents(perPeriodMatch)} × {paidPeriodCount} paychecks
             </span>
           </div>
@@ -350,7 +360,7 @@ export const RetirementForm = ({
 
         <div className="mt-4">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               Match bands
             </span>
             <Button
@@ -366,17 +376,19 @@ export const RetirementForm = ({
               Add band
             </Button>
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-slate-400">
+          <p className="mt-1 text-xs leading-relaxed text-slate-400 dark:text-ink-500">
             Each band matches only the deferral above the one before it. Two bands express
             &ldquo;100% of the first 3%, then 50% of the next 2%&rdquo;.
           </p>
           {matchTiers.length === 0 ? (
-            <p className="mt-2 text-xs text-slate-500">No employer match on this role.</p>
+            <p className="mt-2 text-xs text-slate-500 dark:text-ink-400">
+              No employer match on this role.
+            </p>
           ) : (
             <div className="mt-3 space-y-2">
               {matchTiers.map((tier, index) => (
                 <div key={tier.id} className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-500">match</span>
+                  <span className="text-xs text-slate-500 dark:text-ink-400">match</span>
                   <PercentInput
                     size="small"
                     max={300}
@@ -391,7 +403,7 @@ export const RetirementForm = ({
                       )
                     }
                   />
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-ink-400">
                     {index === 0 ? 'up to' : 'up to a cumulative'}
                   </span>
                   <PercentInput
@@ -408,7 +420,7 @@ export const RetirementForm = ({
                       )
                     }
                   />
-                  <span className="text-xs text-slate-400">of pay</span>
+                  <span className="text-xs text-slate-400 dark:text-ink-500">of pay</span>
                   <Button
                     size="small"
                     type="text"
@@ -424,15 +436,15 @@ export const RetirementForm = ({
         </div>
 
         {summary.unclaimedMatch > 0.5 ? (
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
+          <p className="mt-3 rounded-lg border border-amber-200 dark:border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
             You left <span className="font-semibold">{money(summary.unclaimedMatch)}</span> of match
             unclaimed by deferring below the matched percent. Raising your contribution captures it.
           </p>
         ) : null}
       </div>
 
-      <div className="mt-6 border-t border-slate-100 pt-5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="mt-6 border-t border-slate-100 dark:border-white/[0.07] pt-5">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
           Account value
         </span>
         <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
@@ -461,12 +473,12 @@ export const RetirementForm = ({
         </div>
 
         {summary.gains === null ? (
-          <p className="mt-3 text-xs leading-relaxed text-slate-400">
+          <p className="mt-3 text-xs leading-relaxed text-slate-400 dark:text-ink-500">
             Enter both balances and the gain appears here. Contributions alone say nothing about how
             the investments performed.
           </p>
         ) : (
-          <div className="mt-4 divide-y divide-slate-100">
+          <div className="mt-4 divide-y divide-slate-100 dark:divide-white/[0.07]">
             <Row
               label="Balance growth"
               value={money(summary.currentValue! - summary.startingBalance!)}
@@ -487,7 +499,7 @@ export const RetirementForm = ({
           </div>
         )}
 
-        <p className="mt-4 text-xs leading-relaxed text-slate-400">
+        <p className="mt-4 text-xs leading-relaxed text-slate-400 dark:text-ink-500">
           This is a simple return, not time-weighted. Contributions arrive through the year, so
           money paid in during December has had far less time to grow than January&rsquo;s.
         </p>

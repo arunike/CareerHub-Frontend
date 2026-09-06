@@ -174,7 +174,7 @@ const RelationshipEditorModal = ({
               ? `Add a connection for ${sourceContact.name}`
               : 'Add relationship'}
           <Tooltip title={DIRECTION_HELP}>
-            <QuestionCircleOutlined className="text-sm text-slate-400" />
+            <QuestionCircleOutlined className="text-sm text-slate-400 dark:text-ink-500" />
           </Tooltip>
         </span>
       }
@@ -246,7 +246,7 @@ const RelationshipEditorModal = ({
             </Form.Item>
           )}
         </div>
-        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
+        <p className="rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
           {DIRECTION_HELP} Only the relationship you specify is saved — CareerHub will not infer
           reporting lines from it.
         </p>

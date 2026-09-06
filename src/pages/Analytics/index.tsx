@@ -143,12 +143,14 @@ const Analytics: React.FC = () => {
               {
                 value: 'availability',
                 label: 'Availability',
-                activeClassName: 'bg-white text-gray-900 shadow-sm',
+                activeClassName:
+                  'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm',
               },
               {
                 value: 'career',
                 label: 'Job Search',
-                activeClassName: 'bg-white text-blue-600 shadow-sm',
+                activeClassName:
+                  'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm',
               },
             ]}
           />

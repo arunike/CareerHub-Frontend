@@ -145,22 +145,22 @@ const Row = ({
   const { moneyCents } = useMoney();
   return (
     <div className="flex items-baseline justify-between gap-3 py-2">
-      <span className="flex min-w-0 items-center gap-1.5 text-sm text-slate-600">
+      <span className="flex min-w-0 items-center gap-1.5 text-sm text-slate-600 dark:text-ink-200">
         <span className="truncate">{label}</span>
         {hint ? (
           <Tooltip title={hint}>
-            <InfoCircleOutlined className="shrink-0 text-[11px] text-slate-300" />
+            <InfoCircleOutlined className="shrink-0 text-[11px] text-slate-300 dark:text-ink-600" />
           </Tooltip>
         ) : null}
         {balanced ? (
           <Tooltip title="Scaled so the lines add up to your recorded take-home. Social Security and Medicare are statutory, so the difference is attributed to income tax.">
-            <span className="shrink-0 rounded bg-amber-50 px-1 text-[10px] font-semibold uppercase text-amber-700">
+            <span className="shrink-0 rounded bg-amber-50 dark:bg-amber-500/10 px-1 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-300">
               balanced
             </span>
           </Tooltip>
         ) : null}
       </span>
-      <span className="shrink-0 tabular-nums text-sm text-slate-700">
+      <span className="shrink-0 tabular-nums text-sm text-slate-700 dark:text-ink-100">
         {negative && amount >= 0 ? '−' : ''}
         {negative && amount < 0 ? '+' : ''}
         {moneyCents(Math.abs(amount))}
@@ -214,16 +214,18 @@ export const PaycheckWaterfall = ({
     <div className="enterprise-card px-6 py-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             {row.isOffCycle
               ? 'Off-cycle payment'
               : `Paycheck ${row.periodIndex} of ${periodsPerYear}`}
           </p>
-          <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-900">
+          <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-ink-50">
             {row.payDate ? formatPayDate(row.payDate) : `Paycheck ${row.periodIndex}`}
           </h3>
           {row.isAdjustedDate ? (
-            <p className="mt-1 text-[11px] text-blue-600">Pay date moved from the schedule</p>
+            <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-300">
+              Pay date moved from the schedule
+            </p>
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -268,17 +270,19 @@ export const PaycheckWaterfall = ({
 
       <div className="mt-5 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             Take-home
           </p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
+          <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-ink-50">
             {moneyCents(row.net)}
           </p>
         </div>
         <div className="pb-1 text-right">
-          <p className="text-xs text-slate-500">of {moneyCents(row.gross)} gross</p>
-          <p className="mt-1 text-xs text-slate-500">
-            <span className="font-medium text-slate-700">
+          <p className="text-xs text-slate-500 dark:text-ink-400">
+            of {moneyCents(row.gross)} gross
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-ink-400">
+            <span className="font-medium text-slate-700 dark:text-ink-100">
               {((row.taxTotal / gross) * 100).toFixed(1)}%
             </span>{' '}
             tax rate
@@ -286,7 +290,7 @@ export const PaycheckWaterfall = ({
         </div>
       </div>
 
-      <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
         {segments.map((segment, index) => (
           <div key={index} className={segment.tone} style={{ width: `${segment.width}%` }} />
         ))}
@@ -324,43 +328,50 @@ export const PaycheckWaterfall = ({
         </div>
       ) : null}
 
-      <div className="mt-6 border-t border-slate-100 pt-1">
+      <div className="mt-6 border-t border-slate-100 dark:border-white/[0.07] pt-1">
         <div className="flex items-baseline justify-between gap-3 py-2">
-          <span className="flex items-center gap-1.5 text-sm font-medium text-slate-900">
+          <span className="flex items-center gap-1.5 text-sm font-medium text-slate-900 dark:text-ink-50">
             Gross pay
             {row.actualFields.includes('gross') ? (
-              <span className="rounded bg-emerald-50 px-1 text-[10px] font-semibold uppercase text-emerald-700">
+              <span className="rounded bg-emerald-50 dark:bg-emerald-500/10 px-1 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">
                 actual
               </span>
             ) : null}
           </span>
-          <span className="tabular-nums text-sm font-medium text-slate-900">
+          <span className="tabular-nums text-sm font-medium text-slate-900 dark:text-ink-50">
             {moneyCents(row.gross)}
           </span>
         </div>
         {row.supplementalGross > 0 ? (
           <div className="flex items-baseline justify-between gap-3 pb-2 pl-3">
-            <span className="text-xs text-slate-500">including bonus or vest</span>
-            <span className="tabular-nums text-xs text-slate-500">
+            <span className="text-xs text-slate-500 dark:text-ink-400">
+              including bonus or vest
+            </span>
+            <span className="tabular-nums text-xs text-slate-500 dark:text-ink-400">
               {moneyCents(row.supplementalGross)}
             </span>
           </div>
         ) : null}
         {row.taxableAllowance > 0 ? (
           <div className="flex items-baseline justify-between gap-3 pb-2 pl-3">
-            <span className="text-xs text-slate-500">including taxable allowances</span>
-            <span className="tabular-nums text-xs text-slate-500">
+            <span className="text-xs text-slate-500 dark:text-ink-400">
+              including taxable allowances
+            </span>
+            <span className="tabular-nums text-xs text-slate-500 dark:text-ink-400">
               {moneyCents(row.taxableAllowance)}
             </span>
           </div>
         ) : null}
 
         {sections.map((section) => (
-          <div key={section.title} className="mt-2 border-t border-slate-100 pt-2">
+          <div
+            key={section.title}
+            className="mt-2 border-t border-slate-100 dark:border-white/[0.07] pt-2"
+          >
             <div className="flex items-center justify-between gap-2 py-1">
               <span className="flex items-center gap-2">
                 <span className={`h-1.5 w-1.5 rounded-full ${section.tone}`} />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
                   {section.title}
                 </span>
               </span>
@@ -370,7 +381,7 @@ export const PaycheckWaterfall = ({
                     size="small"
                     type="text"
                     icon={<EditOutlined />}
-                    className="!h-6 !text-slate-400 hover:!text-slate-700"
+                    className="!h-6 !text-slate-400 dark:!text-ink-500 hover:!text-slate-700 dark:hover:!text-ink-100"
                     onClick={() => setEditing(true)}
                   >
                     <span className="text-xs">Edit</span>
@@ -392,10 +403,10 @@ export const PaycheckWaterfall = ({
         ))}
 
         {row.taxFreeAllowance > 0 ? (
-          <div className="mt-2 border-t border-slate-100 pt-2">
+          <div className="mt-2 border-t border-slate-100 dark:border-white/[0.07] pt-2">
             <div className="flex items-center gap-2 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
                 Added after tax
               </span>
             </div>
@@ -407,16 +418,16 @@ export const PaycheckWaterfall = ({
           </div>
         ) : null}
 
-        <div className="mt-3 flex items-baseline justify-between gap-3 rounded-lg bg-emerald-50/70 px-3 py-2.5">
-          <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+        <div className="mt-3 flex items-baseline justify-between gap-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-500/10 px-3 py-2.5">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-ink-50">
             Take-home
             {row.actualFields.includes('net') ? (
-              <span className="rounded bg-white px-1 text-[10px] font-semibold uppercase text-emerald-700">
+              <span className="rounded bg-white dark:bg-ink-900 px-1 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">
                 actual
               </span>
             ) : null}
           </span>
-          <span className="tabular-nums text-base font-semibold text-slate-900">
+          <span className="tabular-nums text-base font-semibold text-slate-900 dark:text-ink-50">
             {moneyCents(row.net)}
           </span>
         </div>
@@ -437,24 +448,24 @@ export const PaycheckWaterfall = ({
       />
 
       {row.employerMatch401k > 0 ? (
-        <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
+        <div className="mt-4 rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-ink-900/60 px-3 py-2.5">
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               Paid by your employer
             </span>
             <Tooltip title="Real compensation, but it goes straight to your 401(k) rather than through your paycheck, so it is not part of take-home.">
-              <InfoCircleOutlined className="text-[11px] text-slate-300" />
+              <InfoCircleOutlined className="text-[11px] text-slate-300 dark:text-ink-600" />
             </Tooltip>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between gap-3">
-            <span className="text-sm text-slate-600">401(k) match</span>
-            <span className="tabular-nums text-sm font-medium text-slate-800">
+            <span className="text-sm text-slate-600 dark:text-ink-200">401(k) match</span>
+            <span className="tabular-nums text-sm font-medium text-slate-800 dark:text-ink-50">
               {moneyCents(row.employerMatch401k)}
             </span>
           </div>
           {/* What you put in, what the employer added, and how much of the deferral was eligible. */}
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-400 dark:text-ink-500">
             {contributed > 0 ? (
               <>
                 <span className="tabular-nums">
@@ -478,7 +489,9 @@ export const PaycheckWaterfall = ({
             ) : null}
             {row.isMatchAdjusted ? ' · recorded, not from the formula' : ''}
           </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-300">{matchFormulaLabel}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-300 dark:text-ink-600">
+            {matchFormulaLabel}
+          </p>
         </div>
       ) : null}
     </div>

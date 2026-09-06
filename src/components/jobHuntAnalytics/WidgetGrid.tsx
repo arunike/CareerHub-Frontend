@@ -121,7 +121,7 @@ export const WidgetGrid = ({
           <div ref={measureRef(id)} className="group relative">
             <div
               aria-label={`Move ${id} widget`}
-              className="widget-drag-handle absolute right-2 top-2 z-10 inline-flex min-h-11 min-w-11 cursor-grab items-center justify-center rounded-xl border border-slate-200/80 bg-white/90 text-gray-400 shadow-sm transition-opacity hover:text-gray-600 active:cursor-grabbing md:min-h-0 md:min-w-0 md:border-0 md:bg-white/50 md:p-1 md:opacity-0 md:shadow-none md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+              className="widget-drag-handle absolute right-2 top-2 z-10 inline-flex min-h-11 min-w-11 cursor-grab items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-ink-900/90 text-gray-400 dark:text-ink-500 shadow-sm transition-opacity hover:text-gray-600 active:cursor-grabbing md:min-h-0 md:min-w-0 md:border-0 md:bg-white/50 md:p-1 md:opacity-0 md:shadow-none md:group-hover:opacity-100 md:group-focus-within:opacity-100"
             >
               <HolderOutlined className="h-4 w-4" />
             </div>

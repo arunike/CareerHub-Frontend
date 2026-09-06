@@ -167,7 +167,7 @@ const CompensationSection = ({
         </div>
       )}
 
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+      <p className="rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2 text-xs leading-5 text-slate-600 dark:text-ink-200">
         {equityLiquidity === 'LIQUID'
           ? 'The full annual equity value is included in compensation and financial scoring.'
           : equityLiquidity === 'BUYBACK'

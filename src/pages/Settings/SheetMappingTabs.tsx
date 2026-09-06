@@ -60,11 +60,13 @@ const SheetMappingTabs = ({
         key: 'mapping',
         label: 'Column Mapping',
         children: (
-          <div className="rounded-xl border border-gray-200 overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="rounded-xl border border-gray-200 dark:border-white/[0.08] overflow-hidden">
+            <div className="bg-gray-50 dark:bg-ink-900 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
-                <TableOutlined className="text-gray-500" />
-                <span className="text-sm font-semibold text-gray-800">Column Mapping</span>
+                <TableOutlined className="text-gray-500 dark:text-ink-400" />
+                <span className="text-sm font-semibold text-gray-800 dark:text-ink-50">
+                  Column Mapping
+                </span>
               </div>
               <Button
                 size="small"
@@ -80,8 +82,8 @@ const SheetMappingTabs = ({
               </Button>
             </div>
             {requiredFields.length > 0 && (
-              <div className="border-t border-gray-200 bg-amber-50/60 px-4 py-3">
-                <div className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+              <div className="border-t border-gray-200 dark:border-white/[0.08] bg-amber-50/60 dark:bg-amber-500/10 px-4 py-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
                   Required mappings
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -92,8 +94,8 @@ const SheetMappingTabs = ({
                         key={field.key}
                         className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                           mappedHeader
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-white text-amber-800 ring-1 ring-amber-200'
+                            ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-200'
+                            : 'bg-white dark:bg-ink-900 text-amber-800 dark:text-amber-200 ring-1 ring-amber-200 dark:ring-amber-500/25'
                         }`}
                       >
                         {field.label}: {mappedHeader || 'needs column'}
@@ -104,7 +106,7 @@ const SheetMappingTabs = ({
               </div>
             )}
             {sheetMappingHeaders.length > 0 ? (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-white/[0.07]">
                 {sheetMappingHeaders.map((sheetHeader) => {
                   const selectedField = fieldForSheetHeader(sheetHeader);
                   const availableFields = fields.filter(
@@ -119,21 +121,23 @@ const SheetMappingTabs = ({
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
+                          <div className="text-sm font-medium text-gray-900 dark:text-ink-50 truncate">
                             {sheetHeader}
                           </div>
                           {selectedField &&
                             fields.find((field) => field.key === selectedField)?.required && (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                              <span className="rounded-full bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200">
                                 Required
                               </span>
                             )}
                         </div>
-                        <div className="text-xs text-gray-500">Google Sheet column</div>
+                        <div className="text-xs text-gray-500 dark:text-ink-400">
+                          Google Sheet column
+                        </div>
                       </div>
                       <select
                         aria-label={`Import destination for ${sheetHeader}`}
-                        className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        className="min-h-11 w-full rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                         value={selectedField}
                         onChange={(event) =>
                           updateSheetColumnMapping(sheetHeader, event.target.value)
@@ -147,7 +151,7 @@ const SheetMappingTabs = ({
                           </option>
                         ))}
                       </select>
-                      <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 truncate min-h-[38px] flex items-center">
+                      <div className="rounded-lg bg-gray-50 dark:bg-ink-900 px-3 py-2 text-xs text-gray-600 dark:text-ink-200 truncate min-h-[38px] flex items-center">
                         {sampleForHeader(sheetHeader) || 'No sample value'}
                       </div>
                       <Button
@@ -167,11 +171,11 @@ const SheetMappingTabs = ({
                 })}
               </div>
             ) : visibleMappingFields.length === 0 ? (
-              <div className="px-4 py-5 text-sm text-gray-500">
+              <div className="px-4 py-5 text-sm text-gray-500 dark:text-ink-400">
                 Save and test the sheet to generate the mapping from its column headers.
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-white/[0.07]">
                 {visibleMappingFields.map((field) => (
                   <div
                     key={field.key}
@@ -179,14 +183,16 @@ const SheetMappingTabs = ({
                   >
                     <label
                       htmlFor={`google-sheet-mapping-${field.key}`}
-                      className="text-sm text-gray-700"
+                      className="text-sm text-gray-700 dark:text-ink-100"
                     >
                       {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                      {field.required && (
+                        <span className="text-red-500 dark:text-red-400 ml-1">*</span>
+                      )}
                     </label>
                     <select
                       id={`google-sheet-mapping-${field.key}`}
-                      className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      className="min-h-11 w-full rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                       value={draft.column_mapping[field.key] || ''}
                       onChange={(event) => updateMapping(field.key, event.target.value)}
                     >
@@ -223,10 +229,10 @@ const SheetMappingTabs = ({
               </div>
             )}
             {unmappedFields.length > 0 && (
-              <div className="bg-white px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
+              <div className="bg-white dark:bg-ink-900 px-4 py-3 border-t border-gray-200 dark:border-white/[0.08] flex flex-col sm:flex-row gap-2">
                 <select
                   aria-label="Field to add"
-                  className="min-h-11 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="min-h-11 flex-1 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={fieldToAdd}
                   onChange={(event) => setFieldToAdd(event.target.value)}
                 >
@@ -243,7 +249,7 @@ const SheetMappingTabs = ({
               </div>
             )}
             {preview?.headers.length ? (
-              <div className="bg-slate-50 border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
+              <div className="bg-slate-50 dark:bg-ink-900 border-t border-gray-200 dark:border-white/[0.08] px-4 py-3 text-xs text-gray-500 dark:text-ink-400">
                 Showing {preview.headers.filter((header) => header.trim()).length} sheet columns.
                 Columns set to "Do not import" are ignored during sync.
               </div>
@@ -255,19 +261,21 @@ const SheetMappingTabs = ({
         key: 'strategy',
         label: 'Overwrite Strategy',
         children: (
-          <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              <p className="text-sm text-gray-600">
+          <div className="rounded-xl border border-gray-200 dark:border-white/[0.08] overflow-hidden bg-white dark:bg-ink-900">
+            <div className="bg-gray-50 dark:bg-ink-900 px-4 py-3 border-b border-gray-200 dark:border-white/[0.08]">
+              <p className="text-sm text-gray-600 dark:text-ink-200">
                 Choose how we handle fields when an application already exists.
               </p>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-white/[0.07]">
               {visibleMappingFields.map((field) => (
                 <div
                   key={field.key}
                   className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-4 px-4 py-3 items-center"
                 >
-                  <label className="text-sm font-medium text-gray-700">{field.label}</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-ink-100">
+                    {field.label}
+                  </label>
                   <Segmented
                     aria-label={`${field.label} overwrite strategy`}
                     options={[

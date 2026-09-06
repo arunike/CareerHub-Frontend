@@ -19,7 +19,7 @@ const SheetSyncBehaviorFields = ({
     <div className="sm:col-span-2">
       <label
         htmlFor="google-sheet-sync-worksheet"
-        className="block text-sm font-medium text-gray-700 mb-1"
+        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
       >
         Worksheet Tab
       </label>
@@ -27,7 +27,7 @@ const SheetSyncBehaviorFields = ({
         <>
           <select
             id="google-sheet-sync-worksheet"
-            className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-h-11 w-full rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             value={draft.worksheet_name || worksheetTabs[0]?.title || ''}
             onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
             disabled={worksheetTabsLoading}
@@ -38,7 +38,7 @@ const SheetSyncBehaviorFields = ({
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-ink-400 mt-1">
             {worksheetTabs.length === 1
               ? 'Using the only worksheet tab in this spreadsheet.'
               : `${worksheetTabs.length} worksheet tabs found. Pick the one to sync.`}
@@ -47,7 +47,7 @@ const SheetSyncBehaviorFields = ({
       ) : (
         <input
           id="google-sheet-sync-worksheet"
-          className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-h-11 w-full rounded-lg border border-gray-300 dark:border-white/[0.12] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           value={draft.worksheet_name}
           onChange={(event) => updateDraft({ worksheet_name: event.target.value })}
           placeholder={worksheetTabsLoading ? 'Loading tabs...' : 'Sheet1'}
@@ -57,7 +57,7 @@ const SheetSyncBehaviorFields = ({
     <div>
       <label
         htmlFor="google-sheet-sync-header-row"
-        className="block text-sm font-medium text-gray-700 mb-1"
+        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
       >
         Header Row
       </label>

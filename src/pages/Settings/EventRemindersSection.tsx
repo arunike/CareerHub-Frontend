@@ -18,7 +18,7 @@ const EventRemindersSection = ({ patchReminders, reminderSettings }: Props) => (
       <div>
         <label
           htmlFor="settings-reminder-start"
-          className="mb-1 block text-sm font-medium text-gray-700"
+          className="mb-1 block text-sm font-medium text-gray-700 dark:text-ink-100"
         >
           Start reminding, days before
         </label>
@@ -34,7 +34,7 @@ const EventRemindersSection = ({ patchReminders, reminderSettings }: Props) => (
       <div>
         <label
           htmlFor="settings-reminder-repeat"
-          className="mb-1 block text-sm font-medium text-gray-700"
+          className="mb-1 block text-sm font-medium text-gray-700 dark:text-ink-100"
         >
           Remind again after
         </label>
@@ -46,12 +46,14 @@ const EventRemindersSection = ({ patchReminders, reminderSettings }: Props) => (
           value={reminderSettings.repeatEveryDays}
           onChange={(value) => patchReminders({ repeatEveryDays: value ?? 1 })}
         />
-        <p className="mt-1 text-xs text-gray-400">How long a dismissed reminder stays hidden.</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-ink-500">
+          How long a dismissed reminder stays hidden.
+        </p>
       </div>
       <div>
         <label
           htmlFor="settings-reminder-duration"
-          className="mb-1 block text-sm font-medium text-gray-700"
+          className="mb-1 block text-sm font-medium text-gray-700 dark:text-ink-100"
         >
           Popup stays for
         </label>
@@ -63,11 +65,13 @@ const EventRemindersSection = ({ patchReminders, reminderSettings }: Props) => (
           value={reminderSettings.toastDurationSeconds}
           onChange={(value) => patchReminders({ toastDurationSeconds: value ?? 0 })}
         />
-        <p className="mt-1 text-xs text-gray-400">Use 0 to keep it on screen until you close it.</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-ink-500">
+          Use 0 to keep it on screen until you close it.
+        </p>
       </div>
     </div>
 
-    <label className="flex items-start gap-2 text-sm text-gray-700">
+    <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-ink-100">
       <input
         type="checkbox"
         className="mt-0.5"
@@ -76,7 +80,7 @@ const EventRemindersSection = ({ patchReminders, reminderSettings }: Props) => (
       />
       <span>
         Offer &ldquo;Never remind me&rdquo;
-        <span className="block text-xs text-gray-400">
+        <span className="block text-xs text-gray-400 dark:text-ink-500">
           Adds a permanent mute alongside Dismiss on each reminder.
         </span>
       </span>

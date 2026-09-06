@@ -13,10 +13,12 @@ type Props = {
 };
 
 const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }: Props) => (
-  <div className="border border-emerald-200 rounded-xl bg-emerald-50/40 p-4 space-y-4">
+  <div className="border border-emerald-200 dark:border-emerald-500/25 rounded-xl bg-emerald-50/40 dark:bg-emerald-500/10 p-4 space-y-4">
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Phase Name *</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+          Phase Name *
+        </label>
         <Input
           placeholder="e.g. Full-time Summer Phase"
           value={form.name}
@@ -25,7 +27,7 @@ const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }:
         />
       </div>
       <div className="flex flex-col">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
           Currently in this phase
         </label>
         <div className="flex items-center gap-2 h-8">
@@ -36,14 +38,18 @@ const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }:
               setForm((f) => ({ ...f, is_current: v, end_date: v ? null : f.end_date }))
             }
           />
-          <span className="text-sm text-gray-500">{form.is_current ? 'Yes' : 'No'}</span>
+          <span className="text-sm text-gray-500 dark:text-ink-400">
+            {form.is_current ? 'Yes' : 'No'}
+          </span>
         </div>
       </div>
     </div>
 
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+          Start Date
+        </label>
         <DatePicker
           className="w-full"
           value={form.start_date ? dayjs(form.start_date) : null}
@@ -52,7 +58,9 @@ const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }:
       </div>
       {!form.is_current && (
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">End Date</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+            End Date
+          </label>
           <DatePicker
             className="w-full"
             value={form.end_date ? dayjs(form.end_date) : null}
@@ -64,9 +72,11 @@ const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }:
       )}
     </div>
 
-    <div className="grid grid-cols-1 gap-3 border-t border-emerald-100 pt-3 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 border-t border-emerald-100 dark:border-emerald-500/20 pt-3 sm:grid-cols-3">
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Hourly Rate</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+          Hourly Rate
+        </label>
         <UnitNumberInput
           unit="$"
           placeholder="e.g. 45"
@@ -75,7 +85,9 @@ const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }:
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Hours / Day</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+          Hours / Day
+        </label>
         <UnitNumberInput
           unit="hrs"
           placeholder="e.g. 8"
@@ -84,7 +96,9 @@ const SchedulePhaseForm = ({ cancelEdit, commitEdit, editingId, form, setForm }:
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Days / Week</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-ink-200 mb-1">
+          Days / Week
+        </label>
         <UnitNumberInput
           unit="days"
           placeholder="e.g. 5"

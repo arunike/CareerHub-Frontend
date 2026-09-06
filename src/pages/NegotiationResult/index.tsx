@@ -42,7 +42,7 @@ const Section = ({ icon, label, color, bg, border, items }: SectionProps) => (
       >
         <span style={{ color, fontSize: 14 }}>{icon}</span>
       </div>
-      <span className="font-semibold text-gray-800 text-sm">{label}</span>
+      <span className="font-semibold text-gray-800 dark:text-ink-50 text-sm">{label}</span>
       <span
         className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full border"
         style={{ color, borderColor: `${color}44`, background: 'white' }}
@@ -52,7 +52,7 @@ const Section = ({ icon, label, color, bg, border, items }: SectionProps) => (
     </div>
     <ul className="m-0 pl-4 flex flex-col gap-2">
       {items.map((item, i) => (
-        <li key={i} className="text-sm text-gray-700 leading-relaxed">
+        <li key={i} className="text-sm text-gray-700 dark:text-ink-100 leading-relaxed">
           {item}
         </li>
       ))}
@@ -89,7 +89,7 @@ const NegotiationResultPage: React.FC = () => {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-16 sm:px-6">
+      <div className="min-h-screen bg-slate-50 dark:bg-ink-900 px-4 py-16 sm:px-6">
         <PageState
           title="Negotiation result not found"
           description="This result may have been deleted or is no longer available in this account."
@@ -123,7 +123,7 @@ const NegotiationResultPage: React.FC = () => {
       />
 
       {/* Page */}
-      <div className="min-h-screen bg-slate-50/50 px-4 py-6 shadow-inner sm:py-12">
+      <div className="min-h-screen bg-slate-50/50 dark:bg-ink-900/50 px-4 py-6 shadow-inner sm:py-12">
         <div className="mx-auto flex max-w-4xl flex-col gap-5 sm:gap-8">
           {/* Header */}
           <ArtifactHeaderCard
@@ -136,12 +136,14 @@ const NegotiationResultPage: React.FC = () => {
           />
 
           {/* Offer snapshot */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-2xl border border-gray-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center">
-                <DollarOutlined className="text-gray-500 text-sm" />
+              <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-ink-800 flex items-center justify-center">
+                <DollarOutlined className="text-gray-500 dark:text-ink-400 text-sm" />
               </div>
-              <span className="font-semibold text-gray-800 text-sm">Offer Snapshot</span>
+              <span className="font-semibold text-gray-800 dark:text-ink-50 text-sm">
+                Offer Snapshot
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
               {[
@@ -171,7 +173,7 @@ const NegotiationResultPage: React.FC = () => {
                 .map(({ label, value }) => (
                   <div
                     key={label}
-                    className="flex min-w-0 flex-col items-center rounded-xl border border-gray-100 bg-gray-50 px-3 py-3 sm:min-w-[90px] sm:px-4"
+                    className="flex min-w-0 flex-col items-center rounded-xl border border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 px-3 py-3 sm:min-w-[90px] sm:px-4"
                   >
                     <Text type="secondary" className="text-[10px] uppercase tracking-wider mb-1">
                       {label}
@@ -186,12 +188,14 @@ const NegotiationResultPage: React.FC = () => {
 
           {/* Suggested Counter-Ask */}
           {ask && (
-            <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:p-6">
+            <div className="rounded-2xl border border-sky-100 dark:border-sky-500/20 bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
-                  <DollarOutlined className="text-sky-600 text-sm" />
+                <div className="w-7 h-7 rounded-lg bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center">
+                  <DollarOutlined className="text-sky-600 dark:text-sky-300 text-sm" />
                 </div>
-                <span className="font-semibold text-sky-700 text-sm">Suggested Counter-Ask</span>
+                <span className="font-semibold text-sky-700 dark:text-sky-300 text-sm">
+                  Suggested Counter-Ask
+                </span>
               </div>
               <div className="mb-3 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
                 {[
@@ -204,7 +208,7 @@ const NegotiationResultPage: React.FC = () => {
                   .map(({ label, value }) => (
                     <div
                       key={label}
-                      className="flex min-w-0 flex-col items-center rounded-xl border border-sky-100 bg-sky-50 px-3 py-3 sm:min-w-[90px] sm:px-4"
+                      className="flex min-w-0 flex-col items-center rounded-xl border border-sky-100 dark:border-sky-500/20 bg-sky-50 dark:bg-sky-500/10 px-3 py-3 sm:min-w-[90px] sm:px-4"
                     >
                       <Text type="secondary" className="text-[10px] uppercase tracking-wider mb-1">
                         {label}
@@ -220,7 +224,9 @@ const NegotiationResultPage: React.FC = () => {
                   ))}
               </div>
               {ask.notes && (
-                <p className="text-gray-500 text-xs m-0 leading-relaxed">{ask.notes}</p>
+                <p className="text-gray-500 dark:text-ink-400 text-xs m-0 leading-relaxed">
+                  {ask.notes}
+                </p>
               )}
             </div>
           )}
@@ -259,7 +265,9 @@ const NegotiationResultPage: React.FC = () => {
             />
           )}
 
-          <p className="text-center text-xs text-gray-400 pb-4">CareerHub AI · {date}</p>
+          <p className="text-center text-xs text-gray-400 dark:text-ink-500 pb-4">
+            CareerHub AI · {date}
+          </p>
         </div>
       </div>
     </>

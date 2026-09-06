@@ -47,7 +47,7 @@ const IdentityAvatar = ({
   return (
     <div
       className={clsx(
-        'shrink-0 overflow-hidden border border-slate-200 bg-slate-50 transition-colors duration-200',
+        'shrink-0 overflow-hidden border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 transition-colors duration-200',
         sizeClassNames[size],
         className
       )}
@@ -61,11 +61,13 @@ const IdentityAvatar = ({
       ) : (
         <div
           className={clsx(
-            'flex h-full w-full items-center justify-center bg-slate-100',
+            'flex h-full w-full items-center justify-center bg-slate-100 dark:bg-ink-800',
             innerRadius
           )}
         >
-          <span className="font-black text-slate-950">{getIdentityInitials(name, email)}</span>
+          <span className="font-black text-slate-950 dark:text-ink-50">
+            {getIdentityInitials(name, email)}
+          </span>
         </div>
       )}
     </div>

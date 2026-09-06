@@ -106,10 +106,10 @@ const EditOfferModal = ({
         titleNode={
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-base font-semibold text-slate-950 sm:text-lg">
+              <span className="truncate text-base font-semibold text-slate-950 dark:text-ink-50 sm:text-lg">
                 {offerModalMode === 'view' ? 'Offer details' : 'Edit offer'}
               </span>
-              <span className="hidden rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600 sm:inline-flex">
+              <span className="hidden rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-ink-200 sm:inline-flex">
                 {offerModalMode === 'view'
                   ? 'Read only'
                   : hasChanges
@@ -117,7 +117,7 @@ const EditOfferModal = ({
                     : 'Editing'}
               </span>
             </div>
-            <p className="mt-0.5 truncate text-xs font-normal text-slate-500">
+            <p className="mt-0.5 truncate text-xs font-normal text-slate-500 dark:text-ink-400">
               {[editingApp?.company_name, editingApp?.role_title].filter(Boolean).join(' · ') ||
                 'Offer record'}
             </p>
@@ -125,10 +125,10 @@ const EditOfferModal = ({
         }
         onClose={requestClose}
         maxWidthClass="max-w-6xl"
-        bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50"
-        headerClassName="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4"
+        bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50 dark:bg-ink-900"
+        headerClassName="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 sm:px-6 sm:py-4"
         titleClassName="min-w-0 flex-1 pr-4"
-        footerClassName="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:px-6 sm:py-3"
+        footerClassName="flex flex-col-reverse justify-end gap-3 border-t border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:px-6 sm:py-3"
         footer={
           <OfferFormModalFooter
             mode={offerModalMode}

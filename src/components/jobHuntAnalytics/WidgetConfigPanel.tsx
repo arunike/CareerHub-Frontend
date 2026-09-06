@@ -91,27 +91,27 @@ const WidgetConfigPanel = ({
         value={queryType}
         onChange={(val) => setQueryType(val as 'visual' | 'ai')}
         block
-        className="w-full rounded-xl bg-slate-100 p-1 sm:w-auto"
+        className="w-full rounded-xl bg-slate-100 dark:bg-ink-800 p-1 sm:w-auto"
       />
     </div>
 
     {/* Widget Name */}
     <div>
-      <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+      <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
         Widget Title
       </Text>
       <Input
         placeholder="e.g., Target Applications, Interview Rate"
         value={widgetName}
         onChange={(e) => setWidgetName(e.target.value)}
-        className="rounded-xl px-4 py-2 text-sm border-slate-200 hover:border-blue-400 focus:border-blue-400"
+        className="rounded-xl px-4 py-2 text-sm border-slate-200 dark:border-white/[0.08] hover:border-blue-400 focus:border-blue-400"
       />
     </div>
 
     {/* Theme aesthetics */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+        <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
           Theme Color
         </Text>
         <div className="flex gap-2 flex-wrap">
@@ -120,7 +120,7 @@ const WidgetConfigPanel = ({
               key={theme.name}
               type="button"
               onClick={() => setNewWidgetColor(theme.name)}
-              className={`h-11 w-11 rounded-full border border-slate-200 transition-all sm:h-8 sm:w-8 ${
+              className={`h-11 w-11 rounded-full border border-slate-200 dark:border-white/[0.08] transition-all sm:h-8 sm:w-8 ${
                 newWidgetColor === theme.name
                   ? 'ring-2 ring-offset-2 ring-blue-500 scale-110'
                   : 'hover:scale-105'
@@ -134,10 +134,10 @@ const WidgetConfigPanel = ({
       </div>
 
       <div>
-        <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+        <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
           Widget Icon
         </Text>
-        <div className="flex gap-2 flex-wrap max-h-[85px] overflow-y-auto p-1 border border-slate-100 rounded-xl bg-slate-50/50">
+        <div className="flex gap-2 flex-wrap max-h-[85px] overflow-y-auto p-1 border border-slate-100 dark:border-white/[0.07] rounded-xl bg-slate-50/50 dark:bg-ink-900/50">
           {AVAILABLE_ICONS.map((iconData) => {
             const CurrentIcon = iconData.icon;
             return (
@@ -147,8 +147,8 @@ const WidgetConfigPanel = ({
                 onClick={() => setNewWidgetIcon(iconData.name)}
                 className={`p-2 rounded-lg border text-sm transition-all ${
                   newWidgetIcon === iconData.name
-                    ? 'border-blue-500 bg-blue-50 text-blue-600 scale-105 font-bold shadow-sm'
-                    : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 scale-105 font-bold shadow-sm'
+                    : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400 hover:bg-slate-50 hover:text-slate-700'
                 }`}
               >
                 <CurrentIcon />
@@ -161,11 +161,11 @@ const WidgetConfigPanel = ({
 
     {queryType === 'visual' ? (
       // VISUAL CUSTOM BUILDER
-      <div className="space-y-5 pt-3 border-t border-slate-100">
+      <div className="space-y-5 pt-3 border-t border-slate-100 dark:border-white/[0.07]">
         {/* Display Component & Data Source */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+            <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
               Display Component
             </Text>
             <div className="grid grid-cols-2 gap-2">
@@ -174,8 +174,8 @@ const WidgetConfigPanel = ({
                 onClick={() => setVisualConfig((prev) => ({ ...prev, type: 'metric' }))}
                 className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                   visualConfig.type === 'metric'
-                    ? 'border-blue-500 bg-blue-50/50 text-blue-600 font-semibold'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-500'
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 font-semibold'
+                    : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 text-slate-500 dark:text-ink-400'
                 }`}
               >
                 <NumberOutlined className="text-lg mb-1" />
@@ -186,8 +186,8 @@ const WidgetConfigPanel = ({
                 onClick={() => setVisualConfig((prev) => ({ ...prev, type: 'chart' }))}
                 className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                   visualConfig.type === 'chart'
-                    ? 'border-blue-500 bg-blue-50/50 text-blue-600 font-semibold'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-500'
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 font-semibold'
+                    : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 text-slate-500 dark:text-ink-400'
                 }`}
               >
                 <BarChartOutlined className="text-lg mb-1" />
@@ -197,7 +197,7 @@ const WidgetConfigPanel = ({
           </div>
 
           <div>
-            <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+            <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
               Data Source
             </Text>
             <div className="grid grid-cols-2 gap-2">
@@ -206,8 +206,8 @@ const WidgetConfigPanel = ({
                 onClick={() => handleDataSourceChange('applications')}
                 className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                   visualConfig.dataSource === 'applications'
-                    ? 'border-blue-500 bg-blue-50/50 text-blue-600 font-semibold'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-500'
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 font-semibold'
+                    : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 text-slate-500 dark:text-ink-400'
                 }`}
               >
                 <DatabaseOutlined className="text-lg mb-1" />
@@ -218,8 +218,8 @@ const WidgetConfigPanel = ({
                 onClick={() => handleDataSourceChange('events')}
                 className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
                   visualConfig.dataSource === 'events'
-                    ? 'border-blue-500 bg-blue-50/50 text-blue-600 font-semibold'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-500'
+                    ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 font-semibold'
+                    : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 text-slate-500 dark:text-ink-400'
                 }`}
               >
                 <CalendarOutlined className="text-lg mb-1" />
@@ -230,9 +230,9 @@ const WidgetConfigPanel = ({
         </div>
 
         {/* Dynamic Filter Section */}
-        <div className="border border-slate-100 bg-slate-50/30 rounded-2xl p-4">
+        <div className="border border-slate-100 dark:border-white/[0.07] bg-slate-50/30 dark:bg-ink-900/30 rounded-2xl p-4">
           <div className="flex justify-between items-center mb-3">
-            <Text className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+            <Text className="text-xs font-bold text-slate-600 dark:text-ink-200 uppercase tracking-wide">
               <FilterOutlined className="mr-1" />
               Query Filters
             </Text>
@@ -248,7 +248,7 @@ const WidgetConfigPanel = ({
           </div>
 
           {filters.length === 0 ? (
-            <div className="text-center py-6 text-slate-400 text-xs font-medium">
+            <div className="text-center py-6 text-slate-400 dark:text-ink-500 text-xs font-medium">
               No custom filters set (retrieves all records).
             </div>
           ) : (
@@ -300,7 +300,7 @@ const WidgetConfigPanel = ({
           {visualConfig.type === 'metric' && (
             <>
               <div>
-                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                   Metric Calculation
                 </Text>
                 <Select
@@ -334,7 +334,7 @@ const WidgetConfigPanel = ({
 
               {visualConfig.metricCalculation === 'average' && (
                 <div>
-                  <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                  <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                     Average Field Target
                   </Text>
                   <Select
@@ -357,7 +357,7 @@ const WidgetConfigPanel = ({
               )}
 
               <div>
-                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                   Custom Unit Label
                 </Text>
                 <Input
@@ -376,7 +376,7 @@ const WidgetConfigPanel = ({
           {visualConfig.type === 'chart' && (
             <>
               <div>
-                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                   Group By (Dimension)
                 </Text>
                 <Select
@@ -393,7 +393,7 @@ const WidgetConfigPanel = ({
               </div>
 
               <div>
-                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                   Chart Type
                 </Text>
                 <div className="grid grid-cols-2 gap-2">
@@ -402,8 +402,8 @@ const WidgetConfigPanel = ({
                     onClick={() => setVisualConfig((prev) => ({ ...prev, chartType: 'bar' }))}
                     className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-center transition-all ${
                       visualConfig.chartType === 'bar'
-                        ? 'border-blue-500 bg-blue-50 text-blue-600 font-semibold'
-                        : 'border-slate-200 text-slate-500'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 font-semibold'
+                        : 'border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-ink-400'
                     }`}
                   >
                     <BarChartOutlined />
@@ -414,8 +414,8 @@ const WidgetConfigPanel = ({
                     onClick={() => setVisualConfig((prev) => ({ ...prev, chartType: 'pie' }))}
                     className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg border text-center transition-all ${
                       visualConfig.chartType === 'pie'
-                        ? 'border-blue-500 bg-blue-50 text-blue-600 font-semibold'
-                        : 'border-slate-200 text-slate-500'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 font-semibold'
+                        : 'border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-ink-400'
                     }`}
                   >
                     <PieChartOutlined />
@@ -425,7 +425,7 @@ const WidgetConfigPanel = ({
               </div>
 
               <div>
-                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                   Sort Order
                 </Text>
                 <Select
@@ -442,7 +442,7 @@ const WidgetConfigPanel = ({
               </div>
 
               <div>
-                <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
                   Max Groupings Limit
                 </Text>
                 <Select
@@ -466,7 +466,7 @@ const WidgetConfigPanel = ({
 
           {/* Common Date Range */}
           <div>
-            <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+            <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
               Date Applied Range
             </Text>
             <Select
@@ -484,9 +484,9 @@ const WidgetConfigPanel = ({
       </div>
     ) : (
       // AI BUILDER INPUT FIELD
-      <div className="space-y-4 pt-2 border-t border-slate-100">
+      <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-white/[0.07]">
         <div>
-          <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+          <Text className="text-xs font-semibold text-slate-500 dark:text-ink-400 uppercase tracking-wider block mb-2">
             What would you like to see?
           </Text>
           <Input.TextArea
@@ -494,7 +494,7 @@ const WidgetConfigPanel = ({
             value={newWidgetQuery}
             onChange={(e) => setNewWidgetQuery(e.target.value)}
             rows={4}
-            className="rounded-xl border-slate-200"
+            className="rounded-xl border-slate-200 dark:border-white/[0.08]"
           />
         </div>
 
@@ -503,7 +503,7 @@ const WidgetConfigPanel = ({
             Try charts:
           </Text>
           <Tag
-            className="cursor-pointer hover:border-blue-500 rounded-full px-3 py-0.5 bg-slate-50"
+            className="cursor-pointer hover:border-blue-500 rounded-full px-3 py-0.5 bg-slate-50 dark:bg-ink-900"
             onClick={() => {
               setNewWidgetQuery('Applications by status');
               setNewWidgetIcon('BarChartOutlined');
@@ -513,7 +513,7 @@ const WidgetConfigPanel = ({
           </Tag>
         </div>
 
-        <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-3">
+        <div className="flex justify-between items-center mt-2 border-t border-slate-50 dark:border-white/[0.07] pt-3">
           <Button
             onClick={handleTestQuery}
             loading={isValidating}

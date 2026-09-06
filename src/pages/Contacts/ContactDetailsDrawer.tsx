@@ -28,27 +28,31 @@ interface Props {
 }
 
 const SectionHeading = ({ children }: { children: string }) => (
-  <h3 className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+  <h3 className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-ink-500">
     {children}
   </h3>
 );
 
 const relationshipTone = (label: string) => {
   const value = label.toLocaleLowerCase();
-  if (value.includes('manager')) return 'border-amber-200 bg-amber-50 text-amber-800';
-  if (value.includes('recruiter')) return 'border-sky-200 bg-sky-50 text-sky-800';
-  if (value.includes('interviewer')) return 'border-violet-200 bg-violet-50 text-violet-800';
+  if (value.includes('manager'))
+    return 'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200';
+  if (value.includes('recruiter'))
+    return 'border-sky-200 dark:border-sky-500/25 bg-sky-50 dark:bg-sky-500/10 text-sky-800 dark:text-sky-200';
+  if (value.includes('interviewer'))
+    return 'border-violet-200 dark:border-violet-500/25 bg-violet-50 dark:bg-violet-500/10 text-violet-800 dark:text-violet-200';
   if (value.includes('coworker') || value.includes('teammate')) {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+    return 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-200';
   }
-  return 'border-blue-200 bg-blue-50 text-blue-800';
+  return 'border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 text-blue-800 dark:text-blue-200';
 };
 
 const statusTone = (status: string) => {
   const value = status.toLocaleUpperCase();
-  if (value === 'ACCEPTED' || value === 'CURRENT') return 'bg-emerald-50 text-emerald-700';
-  if (value === 'OFFER') return 'bg-blue-50 text-blue-700';
-  return 'bg-slate-100 text-slate-600';
+  if (value === 'ACCEPTED' || value === 'CURRENT')
+    return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+  if (value === 'OFFER') return 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300';
+  return 'bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200';
 };
 
 const ContactDetailsDrawer = ({
@@ -104,15 +108,15 @@ const ContactDetailsDrawer = ({
       styles={{ body: { padding: 0 }, header: { display: 'none' } }}
     >
       {contact && (
-        <div className="flex min-h-full flex-col bg-white">
-          <div className="border-b border-slate-200 bg-slate-50/60 px-5 pb-5 pt-5 sm:px-6">
+        <div className="flex min-h-full flex-col bg-white dark:bg-ink-900">
+          <div className="border-b border-slate-200 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 px-5 pb-5 pt-5 sm:px-6">
             <div className="flex items-start gap-3.5">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-semibold tracking-wide text-white shadow-sm">
                 {contactInitials(contact.name)}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
-                  <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950">
+                  <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950 dark:text-ink-50">
                     {contact.name}
                   </h2>
                   <Button
@@ -120,19 +124,19 @@ const ContactDetailsDrawer = ({
                     size="small"
                     aria-label="Close contact details"
                     onClick={onClose}
-                    className="!-mr-2 !-mt-1 !text-slate-400 hover:!bg-slate-200/70 hover:!text-slate-700"
+                    className="!-mr-2 !-mt-1 !text-slate-400 dark:!text-ink-500 hover:!bg-slate-200/70 dark:hover:!bg-ink-800/70 hover:!text-slate-700 dark:hover:!text-ink-100"
                   >
                     <CloseOutlined />
                   </Button>
                 </div>
                 {(jobTitle || company) && (
-                  <p className="mt-0.5 truncate text-sm text-slate-500">
+                  <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-ink-400">
                     {[jobTitle, company].filter(Boolean).join(' at ')}
                   </p>
                 )}
                 {myLabels.length > 0 && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] text-slate-400">To you:</span>
+                    <span className="text-[11px] text-slate-400 dark:text-ink-500">To you:</span>
                     {myLabels.map((label) => (
                       <span
                         key={label}
@@ -171,35 +175,41 @@ const ContactDetailsDrawer = ({
           <div className="flex-1 space-y-7 px-5 py-6 sm:px-6">
             <section>
               <SectionHeading>Contact details</SectionHeading>
-              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900">
                 <div className="flex min-w-0 items-center gap-3 px-3.5 py-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-ink-800 text-slate-500 dark:text-ink-400">
                     <MailOutlined />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-medium text-slate-400">Email</p>
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-ink-500">
+                      Email
+                    </p>
                     {contact.email ? (
                       <a
-                        className="block truncate text-sm font-medium text-slate-700 hover:text-blue-600"
+                        className="block truncate text-sm font-medium text-slate-700 dark:text-ink-100 hover:text-blue-600"
                         href={`mailto:${contact.email}`}
                       >
                         {contact.email}
                       </a>
                     ) : (
-                      <p className="text-sm text-slate-400">Not added</p>
+                      <p className="text-sm text-slate-400 dark:text-ink-500">Not added</p>
                     )}
                   </div>
                 </div>
-                <div className="flex min-w-0 items-center gap-3 border-t border-slate-100 px-3.5 py-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                <div className="flex min-w-0 items-center gap-3 border-t border-slate-100 dark:border-white/[0.07] px-3.5 py-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-ink-800 text-slate-500 dark:text-ink-400">
                     <BankOutlined />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-medium text-slate-400">Work</p>
-                    <p className="truncate text-sm font-medium text-slate-700">
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-ink-500">Work</p>
+                    <p className="truncate text-sm font-medium text-slate-700 dark:text-ink-100">
                       {company || 'Company not added'}
                     </p>
-                    {jobTitle && <p className="truncate text-xs text-slate-500">{jobTitle}</p>}
+                    {jobTitle && (
+                      <p className="truncate text-xs text-slate-500 dark:text-ink-400">
+                        {jobTitle}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -208,11 +218,11 @@ const ContactDetailsDrawer = ({
             <section>
               <div className="flex items-center justify-between gap-3">
                 <SectionHeading>Relationships</SectionHeading>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-400 dark:text-ink-500">
                   {connections.length} {connections.length === 1 ? 'connection' : 'connections'}
                 </span>
               </div>
-              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
                 {connections.length ? (
                   connections.map((connection) => {
                     const arrow = connection.twoWay ? '↔' : connection.outgoing ? '→' : '←';
@@ -224,14 +234,16 @@ const ContactDetailsDrawer = ({
                     return (
                       <div
                         key={connection.otherId}
-                        className="group flex items-center gap-3 border-b border-slate-100 px-3.5 py-3 last:border-0"
+                        className="group flex items-center gap-3 border-b border-slate-100 dark:border-white/[0.07] px-3.5 py-3 last:border-0"
                       >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-500">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-ink-800 text-xs font-semibold text-slate-500 dark:text-ink-400">
                           <UserOutlined />
                         </span>
                         <div className="flex min-w-0 items-center gap-1.5" title={direction}>
-                          <span className="shrink-0 text-sm text-slate-300">{arrow}</span>
-                          <p className="truncate text-sm font-medium text-slate-800">
+                          <span className="shrink-0 text-sm text-slate-300 dark:text-ink-600">
+                            {arrow}
+                          </span>
+                          <p className="truncate text-sm font-medium text-slate-800 dark:text-ink-50">
                             {connection.name}
                           </p>
                         </div>
@@ -273,7 +285,7 @@ const ContactDetailsDrawer = ({
                     );
                   })
                 ) : (
-                  <div className="px-3.5 py-4 text-sm text-slate-400">
+                  <div className="px-3.5 py-4 text-sm text-slate-400 dark:text-ink-500">
                     No connections to other people yet.
                   </div>
                 )}
@@ -286,21 +298,21 @@ const ContactDetailsDrawer = ({
                   ? 'Linked records'
                   : 'Linked applications'}
               </SectionHeading>
-              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
                 {contact.contexts?.length ? (
                   contact.contexts.map((context) => (
                     <div
                       key={context.id}
-                      className="border-b border-slate-100 px-3.5 py-3.5 last:border-0"
+                      className="border-b border-slate-100 dark:border-white/[0.07] px-3.5 py-3.5 last:border-0"
                     >
                       <div className="flex items-start justify-between gap-2">
                         {/* The role here is the job you applied for, not this person's title. */}
-                        <p className="min-w-0 text-sm font-medium text-slate-800">
+                        <p className="min-w-0 text-sm font-medium text-slate-800 dark:text-ink-50">
                           {[context.summary.role, context.summary.company]
                             .filter(Boolean)
                             .join(' at ')}
                         </p>
-                        <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        <span className="shrink-0 rounded-md bg-slate-100 dark:bg-ink-800 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400">
                           {context.summary.type === 'APPLICATION' ? 'Application' : 'Experience'}
                         </span>
                       </div>
@@ -314,7 +326,7 @@ const ContactDetailsDrawer = ({
                     </div>
                   ))
                 ) : (
-                  <div className="px-3.5 py-4 text-sm text-slate-400">
+                  <div className="px-3.5 py-4 text-sm text-slate-400 dark:text-ink-500">
                     Not linked to an application yet.
                   </div>
                 )}
@@ -324,14 +336,14 @@ const ContactDetailsDrawer = ({
             {contact.notes && (
               <section>
                 <SectionHeading>Notes</SectionHeading>
-                <p className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-600">
+                <p className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 dark:bg-ink-900 px-3.5 py-3 text-sm leading-relaxed text-slate-600 dark:text-ink-200">
                   {contact.notes}
                 </p>
               </section>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6">
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 px-5 py-4 sm:px-6">
             {contact.possible_duplicate ? (
               <Button size="small" icon={<MergeOutlined />} onClick={() => onMerge(contact)}>
                 Merge duplicate

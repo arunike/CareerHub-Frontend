@@ -54,18 +54,25 @@ export const PayPartsPanel = ({
       {parts.map((part) => {
         const share = total > 0 ? (part.total / total) * 100 : 0;
         return (
-          <div key={part.key} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div
+            key={part.key}
+            className="rounded-2xl border border-gray-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 p-4 shadow-sm"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: part.color }}
                 />
-                <span className="text-sm font-semibold text-gray-800">{part.label}</span>
+                <span className="text-sm font-semibold text-gray-800 dark:text-ink-50">
+                  {part.label}
+                </span>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-gray-900">{money(part.total)}</div>
-                <div className="text-xs text-gray-400">
+                <div className="text-lg font-bold text-gray-900 dark:text-ink-50">
+                  {money(part.total)}
+                </div>
+                <div className="text-xs text-gray-400 dark:text-ink-500">
                   {part.total > 0 ? `${share.toFixed(1)}% of pay` : 'Not included'}
                 </div>
               </div>
@@ -84,24 +91,27 @@ export const PayPartsPanel = ({
             </div>
 
             {part.members.length > 0 && (
-              <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+              <div className="mt-3 space-y-2 border-t border-gray-100 dark:border-white/[0.07] pt-3">
                 {part.members.map((member) => {
                   const memberShare = part.total > 0 ? (member.value / part.total) * 100 : 0;
                   return (
                     <div key={member.key} className="flex items-baseline justify-between gap-3">
-                      <span className="flex min-w-0 items-center gap-2 truncate text-sm text-gray-700">
+                      <span className="flex min-w-0 items-center gap-2 truncate text-sm text-gray-700 dark:text-ink-100">
                         <span
                           className="inline-block h-2 w-2 shrink-0 rounded-full"
                           style={{ backgroundColor: member.color }}
                         />
                         {member.label}
                         {member.sublabel && (
-                          <span className="text-gray-400"> · {member.sublabel}</span>
+                          <span className="text-gray-400 dark:text-ink-500">
+                            {' '}
+                            · {member.sublabel}
+                          </span>
                         )}
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-gray-900">
+                      <span className="shrink-0 text-sm font-semibold text-gray-900 dark:text-ink-50">
                         {money(member.value)}
-                        <span className="ml-1.5 text-xs font-normal text-gray-400">
+                        <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-ink-500">
                           {memberShare.toFixed(0)}%
                         </span>
                       </span>
@@ -112,7 +122,7 @@ export const PayPartsPanel = ({
             )}
 
             {part.total > 0 && part.members.length === 0 && (
-              <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-400">
+              <p className="mt-3 border-t border-gray-100 dark:border-white/[0.07] pt-3 text-xs text-gray-400 dark:text-ink-500">
                 No {memberNoun} breakdown available.
               </p>
             )}

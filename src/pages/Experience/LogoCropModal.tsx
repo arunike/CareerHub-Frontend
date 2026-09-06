@@ -229,13 +229,13 @@ export const LogoCropModal: React.FC<LogoCropModalProps> = ({
       destroyOnClose
     >
       <div className="flex flex-col items-center py-2">
-        <p className="text-xs text-gray-500 mb-3 text-center">
+        <p className="text-xs text-gray-500 dark:text-ink-400 mb-3 text-center">
           Drag to position logo. Scroll mouse wheel or use zoom controls to scale inside avatar.
         </p>
 
         {/* Viewport Box */}
         <div
-          className="relative overflow-hidden rounded-2xl border-2 border-gray-200 select-none cursor-grab active:cursor-grabbing shadow-inner flex items-center justify-center transition-colors"
+          className="relative overflow-hidden rounded-2xl border-2 border-gray-200 dark:border-white/[0.08] select-none cursor-grab active:cursor-grabbing shadow-inner flex items-center justify-center transition-colors"
           style={{ width: containerSize, height: containerSize, ...getBgStyle() }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -279,7 +279,7 @@ export const LogoCropModal: React.FC<LogoCropModalProps> = ({
 
           {/* Circular border guideline */}
           <div
-            className="absolute rounded-full border-2 border-blue-500 pointer-events-none shadow-sm ring-4 ring-blue-100"
+            className="absolute rounded-full border-2 border-blue-500 pointer-events-none shadow-sm ring-4 ring-blue-100 dark:ring-blue-500/20"
             style={{ width: circleRadius * 2, height: circleRadius * 2 }}
           />
 
@@ -293,7 +293,7 @@ export const LogoCropModal: React.FC<LogoCropModalProps> = ({
                 e.stopPropagation();
                 cycleBgMode();
               }}
-              className="absolute top-2 right-2 z-20 bg-white/80 backdrop-blur-sm border-gray-300 shadow-sm"
+              className="absolute top-2 right-2 z-20 bg-white/80 dark:bg-ink-900/80 backdrop-blur-sm border-gray-300 dark:border-white/[0.12] shadow-sm"
             />
           </Tooltip>
         </div>
