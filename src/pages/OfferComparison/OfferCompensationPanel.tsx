@@ -35,7 +35,6 @@ const OfferCompensationPanel = ({
   onAnnualRefreshValueChange,
   onBaseSalaryChange,
   onBonusChange,
-  onEquityBuybackValueChange,
   onEquityChange,
   onEquityLiquidityChange,
   onEquityTotalGrantChange,
@@ -71,7 +70,6 @@ const OfferCompensationPanel = ({
         equityLiquidity={equityLiquidity}
         onEquityLiquidityChange={onEquityLiquidityChange}
         equityBuybackValue={equityBuybackValue}
-        onEquityBuybackValueChange={onEquityBuybackValueChange}
         equityTotalGrant={equityTotalGrant}
         equityTicker={equityTicker}
         onEquityTickerChange={onEquityTickerChange}

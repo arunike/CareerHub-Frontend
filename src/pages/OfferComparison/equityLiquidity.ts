@@ -3,7 +3,6 @@ export type EquityLiquidity = 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
 export type EquityLiquidityOffer = {
   equity?: number | string | null;
   equity_liquidity?: EquityLiquidity | string | null;
-  equity_buyback_value?: number | string | null;
 };
 
 export const normalizeEquityLiquidity = (value: unknown): EquityLiquidity => {
@@ -11,10 +10,10 @@ export const normalizeEquityLiquidity = (value: unknown): EquityLiquidity => {
   return 'LIQUID';
 };
 
+// A buyback realises the same annual value a listed grant would; only ILLIQUID counts nothing.
 export const getRealizableEquity = (offer: EquityLiquidityOffer) => {
   const liquidity = normalizeEquityLiquidity(offer.equity_liquidity);
   if (liquidity === 'ILLIQUID') return 0;
-  if (liquidity === 'BUYBACK') return Math.max(0, Number(offer.equity_buyback_value) || 0);
   return Math.max(0, Number(offer.equity) || 0);
 };
 
@@ -34,7 +33,7 @@ export const getEquityLiquidityCopy = (offer: EquityLiquidityOffer) => {
   if (liquidity === 'BUYBACK') {
     return {
       label: 'Company buyback',
-      detail: `${realizable.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} realizable / yr`,
+      detail: `${realizable.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} realizable / yr at the buyback price`,
       granted,
       realizable,
     };

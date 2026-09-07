@@ -91,9 +91,9 @@ describe('buyback equity', () => {
     equity_grant_price: 20,
   };
 
-  it('reprices a private buyback the same way as a listed grant', () => {
-    const result = withCurrentEquity(buyback, { ACME: 25 });
-    expect(result.equity_buyback_value).toBeCloseTo(50000);
+  it('leaves the stored buyback figure alone, since nothing reads a repriced copy', () => {
+    const result = withCurrentEquity({ ...buyback, equity: 10000 }, { ACME: 25 });
+    expect(result.equity_buyback_value).toBe(buyback.equity_buyback_value);
   });
 
   it('derives the grant price from a buyback value when only shares are given', () => {
@@ -105,10 +105,9 @@ describe('buyback equity', () => {
     expect(ratio).toBeCloseTo(1.25);
   });
 
-  it('scales the annual value and the buyback together', () => {
+  it('reprices the annual figure, which is what a buyback now realises', () => {
     const result = withCurrentEquity({ ...buyback, equity: 10000 }, { ACME: 25 });
     expect(result.equity).toBeCloseTo(12500);
-    expect(result.equity_buyback_value).toBeCloseTo(50000);
   });
 
   it('leaves a buyback alone when no price is known for its symbol', () => {
@@ -147,5 +146,31 @@ describe('impliedShares', () => {
 
   it('is null when there is nothing to divide', () => {
     expect(impliedShares(base)).toBeNull();
+  });
+});
+
+describe('private pricing without a ticker', () => {
+  const priv = {
+    equity: 40000,
+    equity_total_grant: 160000,
+    equity_ticker: '',
+    equity_shares: null,
+    equity_grant_price: 20,
+    equity_current_price: 25,
+  };
+
+  it('uses the price stored on the offer when there is no symbol', () => {
+    expect(priceRatio(priv, {})).toBeCloseTo(1.25);
+    expect(withCurrentEquity(priv, {}).equity).toBeCloseTo(50000);
+  });
+
+  it('prefers the offer price over a shared quote for the same symbol', () => {
+    const both = { ...priv, equity_ticker: 'GOOG' };
+    expect(priceRatio(both, { GOOG: 100 })).toBeCloseTo(1.25);
+  });
+
+  it('falls back to the shared quote when the offer has no price of its own', () => {
+    const listed = { ...priv, equity_ticker: 'GOOG', equity_current_price: null };
+    expect(priceRatio(listed, { GOOG: 30 })).toBeCloseTo(1.5);
   });
 });

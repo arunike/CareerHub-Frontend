@@ -5,6 +5,7 @@ interface EquityFields {
   equity_ticker?: string | null;
   equity_shares?: number | null;
   equity_grant_price?: number | null;
+  equity_current_price?: number | null;
 }
 
 export type PriceBySymbol = Record<string, number>;
@@ -18,10 +19,17 @@ export const normalizeSymbol = (value: unknown) =>
 const grantValueOf = (offer: EquityFields) =>
   num(offer.equity_total_grant) || num(offer.equity) || num(offer.equity_buyback_value);
 
+// A private company has no ticker, so its price lives on the offer; a listed one shares a quote.
+export const currentPriceOf = (offer: EquityFields, prices: PriceBySymbol): number => {
+  const own = num(offer.equity_current_price);
+  if (own > 0) return own;
+  const symbol = normalizeSymbol(offer.equity_ticker);
+  return symbol ? num(prices[symbol]) : 0;
+};
+
 // A ratio rather than a rebuilt grant, so vesting, cliffs and refresh schedules stay untouched.
 export const priceRatio = (offer: EquityFields, prices: PriceBySymbol): number => {
-  const symbol = normalizeSymbol(offer.equity_ticker);
-  const current = symbol ? num(prices[symbol]) : 0;
+  const current = currentPriceOf(offer, prices);
   if (current <= 0) return 1;
 
   const grantPrice = num(offer.equity_grant_price);
@@ -50,12 +58,11 @@ export const withCurrentEquity = <T extends EquityFields>(offer: T, prices: Pric
   const ratio = priceRatio(offer, prices);
   if (ratio === 1) return offer;
   const scaled = (value: number | null | undefined) => (value == null ? value : num(value) * ratio);
+  // equity_buyback_value is left alone: nothing reads a repriced copy, and scaling it made a float
   return {
     ...offer,
     equity: num(offer.equity) * ratio,
     equity_total_grant: scaled(offer.equity_total_grant),
-    // A buyback is realized at the current internal price, so it moves with the ratio as well.
-    equity_buyback_value: scaled(offer.equity_buyback_value),
   };
 };
 

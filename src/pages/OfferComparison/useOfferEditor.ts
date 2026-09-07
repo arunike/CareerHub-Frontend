@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type React from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
 import { updateApplication, updateOffer } from '../../api';
+import { roundOfferDecimals } from './offerPrecision';
 import {
   type ApplicationLike as Application,
   type BenefitItem,
@@ -163,11 +164,14 @@ export const useOfferEditor = ({
         };
       }
 
-      const offerResponse = await updateOffer(editingOffer.id!, {
-        ...editingOffer,
-        benefit_items: editingBenefitItems,
-        benefits_value: computeBenefitsTotal(editingBenefitItems),
-      });
+      const offerResponse = await updateOffer(
+        editingOffer.id!,
+        roundOfferDecimals({
+          ...editingOffer,
+          benefit_items: editingBenefitItems,
+          benefits_value: computeBenefitsTotal(editingBenefitItems),
+        })
+      );
       const updatedOffer = offerResponse.data as Partial<Offer>;
 
       if (updatedApplication && editingApp) {

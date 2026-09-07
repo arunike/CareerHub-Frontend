@@ -51,7 +51,10 @@ export type DecisionRow = {
   workModeLabel: string;
   financialValue: number;
   hasImmigrationSignal: boolean;
+  // Repriced, so every figure on the card reflects today's share price.
   offer: Offer | SimulatedOffer;
+  // The record as stored. Anything that saves must use this, or it writes derived figures back.
+  storedOffer: Offer | SimulatedOffer;
   isSimulated: boolean;
 };
 

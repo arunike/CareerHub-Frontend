@@ -67,9 +67,16 @@ const EditOfferModal = ({
   const [savedSharePrice, setSavedSharePrice] = useState<number | null>(null);
 
   const symbol = normalizeSymbol(editingOffer?.equity_ticker);
+  const isListedEquity = normalizeEquityLiquidity(editingOffer?.equity_liquidity) === 'LIQUID';
 
   // Prefill from whatever price is already stored for this symbol, so it is not re-typed.
   useEffect(() => {
+    if (!isListedEquity) {
+      const own = Number(editingOffer?.equity_current_price) || null;
+      setCurrentSharePrice(own);
+      setSavedSharePrice(own);
+      return;
+    }
     if (!symbol) {
       setCurrentSharePrice(null);
       setSavedSharePrice(null);
@@ -88,7 +95,7 @@ const EditOfferModal = ({
     return () => {
       cancelled = true;
     };
-  }, [symbol]);
+  }, [symbol, isListedEquity, editingOffer?.equity_current_price]);
   const missingCompanyName = !editingApp?.company_name?.trim();
   const missingRoleTitle = !editingApp?.role_title?.trim();
 
@@ -109,8 +116,13 @@ const EditOfferModal = ({
       }
       return;
     }
-    // The price belongs to the symbol, not the offer, so it is saved alongside rather than within.
-    if (symbol && currentSharePrice !== null && currentSharePrice !== savedSharePrice) {
+    // A listed price belongs to the symbol and is shared; a private one lives on the offer.
+    if (
+      isListedEquity &&
+      symbol &&
+      currentSharePrice !== null &&
+      currentSharePrice !== savedSharePrice
+    ) {
       saveStockPrice({
         symbol,
         price: currentSharePrice,
@@ -233,9 +245,6 @@ const EditOfferModal = ({
             equityLiquidity={normalizeEquityLiquidity(editingOffer.equity_liquidity)}
             onEquityLiquidityChange={(value) => setEditingOfferField('equity_liquidity', value)}
             equityBuybackValue={Number(editingOffer.equity_buyback_value) || 0}
-            onEquityBuybackValueChange={(value) =>
-              setEditingOfferField('equity_buyback_value', value)
-            }
             equityTotalGrant={Number(editingOffer.equity_total_grant ?? 0)}
             onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
             equityTicker={editingOffer.equity_ticker ?? ''}
@@ -245,7 +254,10 @@ const EditOfferModal = ({
             equityGrantPrice={editingOffer.equity_grant_price ?? null}
             onEquityGrantPriceChange={(value) => setEditingOfferField('equity_grant_price', value)}
             currentSharePrice={currentSharePrice}
-            onCurrentSharePriceChange={setCurrentSharePrice}
+            onCurrentSharePriceChange={(value) => {
+              setCurrentSharePrice(value);
+              if (!isListedEquity) setEditingOfferField('equity_current_price', value);
+            }}
             equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}
             onEquityVestingPercentChange={(value) =>
               setEditingOfferField('equity_vesting_percent', value)

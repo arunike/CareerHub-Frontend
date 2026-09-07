@@ -49,6 +49,8 @@ export interface SimulatedOffer {
   equity_ticker?: string;
   equity_shares?: number | null;
   equity_grant_price?: number | null;
+  // Only for a company with no ticker; a listed price lives in StockPrice, shared across offers.
+  equity_current_price?: number | null;
   sign_on: number;
   // Per-year amounts; empty means the whole sign-on lands in year 1.
   sign_on_schedule?: number[];
@@ -146,6 +148,8 @@ export interface OfferLike {
   equity_ticker?: string;
   equity_shares?: number | null;
   equity_grant_price?: number | null;
+  // Only for a company with no ticker; a listed price lives in StockPrice, shared across offers.
+  equity_current_price?: number | null;
   annual_refresh_value?: number;
   refresh_starts_year?: number;
   sign_on: number;

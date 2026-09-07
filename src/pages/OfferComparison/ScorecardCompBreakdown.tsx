@@ -127,7 +127,8 @@ const ScorecardCompBreakdown = ({
               Equity / Yr
             </HelpTooltipTrigger>
             <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
-              ${Number(row.offer.equity).toLocaleString()}
+              {/* Repricing yields fractions of a cent, which have no place on a summary card. */}$
+              {Number(row.offer.equity).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
             {showDeltas && currentOffer && baselineLabel && (
               <ComponentDelta

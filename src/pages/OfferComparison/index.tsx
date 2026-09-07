@@ -358,6 +358,7 @@ const OfferComparison = () => {
           />
         }
         filteredOffers={displayOffers}
+        rawOffers={offers}
         applicationsById={applicationsById}
         adjustedByOfferId={adjustedByOfferId}
         simulatedOffers={displaySimulatedOffers}
@@ -433,7 +434,7 @@ const OfferComparison = () => {
             console.error(error);
           }
         }}
-        offers={offers}
+        offers={comparisonOffers}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         rejectedOffersCount={rejectedOffersCount}

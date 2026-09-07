@@ -19,7 +19,6 @@ type CompensationSectionProps = {
   equityLiquidity: EquityLiquidity;
   onEquityLiquidityChange: (value: EquityLiquidity) => void;
   equityBuybackValue: number;
-  onEquityBuybackValueChange: (value: number) => void;
   equityTotalGrant?: number;
   onEquityTotalGrantChange?: (value: number) => void;
   effectiveEquityVestingPercent: number;
@@ -67,7 +66,6 @@ const CompensationSection = ({
   equityLiquidity,
   onEquityLiquidityChange,
   equityBuybackValue,
-  onEquityBuybackValueChange,
   equityTotalGrant,
   onEquityTotalGrantChange,
   effectiveEquityVestingPercent,
@@ -111,7 +109,36 @@ const CompensationSection = ({
         : null;
   const ratio =
     basisPrice && Number(currentSharePrice) > 0 ? Number(currentSharePrice) / basisPrice : null;
-  const showPricing = Boolean(onEquityTickerChange) && grantValue > 0;
+  // Nothing to reprice when the grant cannot be sold: it is counted as $0 either way.
+  const showPricing =
+    Boolean(onEquityTickerChange) && grantValue > 0 && equityLiquidity !== 'ILLIQUID';
+  // A private buyback has no ticker; its price is per-offer rather than a shared market quote.
+  const isListed = equityLiquidity === 'LIQUID';
+
+  // The pair multiplies to the total grant, never the annual figure, so only the total anchors it.
+  const linkAnchor = Number(equityTotalGrant) || 0;
+  // Whole-share rounding puts the pair slightly off the total, so the hint shows the real product.
+  const pairedTotal =
+    Number(equityShares) > 0 && Number(equityGrantPrice) > 0
+      ? Number(equityShares) * Number(equityGrantPrice)
+      : null;
+
+  // Share pricing only reads the equity total: describing a grant must not edit what you were paid.
+  const typedShares = (value: number | null) => {
+    onEquitySharesChange?.(value);
+    const count = Number(value);
+    if (count > 0 && linkAnchor > 0) {
+      onEquityGrantPriceChange?.(Math.round((linkAnchor / count) * 100) / 100);
+    }
+  };
+
+  const typedGrantPrice = (value: number | null) => {
+    onEquityGrantPriceChange?.(value);
+    const price = Number(value);
+    if (price > 0 && linkAnchor > 0) {
+      onEquitySharesChange?.(Math.round(linkAnchor / price));
+    }
+  };
   return (
     <div className="space-y-4">
       <CompensationFields
@@ -192,45 +219,33 @@ const CompensationSection = ({
         </div>
       </div>
 
-      {equityLiquidity === 'BUYBACK' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-3">
-          <div className="min-w-0">
-            <div className={FIELD_HEADER_CLASS}>
-              <label className={FIELD_LABEL_CLASS}>Annual buyback value</label>
-            </div>
-            <UnitNumberInput
-              unit="$"
-              min={0}
-              value={equityBuybackValue === 0 ? null : equityBuybackValue}
-              placeholder="0"
-              onChange={(value) => onEquityBuybackValueChange(value ?? 0)}
-            />
-          </div>
-        </div>
-      )}
-
       {showPricing && (
         <div className="rounded-lg border border-slate-200 p-3 dark:border-white/[0.08]">
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
             <label className={FIELD_LABEL_CLASS}>Share pricing</label>
             <span className="text-[11px] text-slate-400 dark:text-ink-500">
-              Optional. Revalues this grant at today&rsquo;s price — a private buyback works the
-              same way, using its internal price.
+              {isListed
+                ? 'Optional. Revalues this grant at the latest price for the symbol.'
+                : 'Optional. Revalues this grant, and what the buyback realises, at the internal price per share.'}
             </span>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <div className="min-w-0">
-              <div className={FIELD_HEADER_CLASS}>
-                <label className={FIELD_LABEL_CLASS}>Symbol</label>
+          <div
+            className={`grid grid-cols-1 gap-3 ${isListed ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}
+          >
+            {isListed && (
+              <div className="min-w-0">
+                <div className={FIELD_HEADER_CLASS}>
+                  <label className={FIELD_LABEL_CLASS}>Symbol</label>
+                </div>
+                <input
+                  value={equityTicker ?? ''}
+                  placeholder="GOOG"
+                  onChange={(event) => onEquityTickerChange?.(event.target.value.toUpperCase())}
+                  className={CONTROL_CLASS}
+                />
+                <div className={FIELD_HINT_CLASS} />
               </div>
-              <input
-                value={equityTicker ?? ''}
-                placeholder="GOOG"
-                onChange={(event) => onEquityTickerChange?.(event.target.value.toUpperCase())}
-                className={CONTROL_CLASS}
-              />
-              <div className={FIELD_HINT_CLASS} />
-            </div>
+            )}
             <div className="min-w-0">
               <div className={FIELD_HEADER_CLASS}>
                 <label className={FIELD_LABEL_CLASS}>Shares</label>
@@ -239,12 +254,14 @@ const CompensationSection = ({
                 min={0}
                 value={equityShares ?? null}
                 placeholder="0"
-                onChange={(value) => onEquitySharesChange?.(value ?? null)}
+                onChange={(value) => typedShares(value ?? null)}
               />
               <div className={FIELD_HINT_CLASS}>
                 {!Number(equityShares) && shares
                   ? `≈ ${Math.round(shares).toLocaleString()} implied`
-                  : ''}
+                  : linkAnchor > 0
+                    ? 'Floats with the grant price'
+                    : ''}
               </div>
             </div>
             <div className="min-w-0">
@@ -256,12 +273,14 @@ const CompensationSection = ({
                 min={0}
                 value={equityGrantPrice ?? null}
                 placeholder="0"
-                onChange={(value) => onEquityGrantPriceChange?.(value ?? null)}
+                onChange={(value) => typedGrantPrice(value ?? null)}
               />
               <div className={FIELD_HINT_CLASS}>
                 {!Number(equityGrantPrice) && basisPrice
                   ? `≈ $${basisPrice.toFixed(2)} implied`
-                  : ''}
+                  : pairedTotal
+                    ? `x ${Number(equityShares).toLocaleString()} shares = ${usd(pairedTotal)}`
+                    : ''}
               </div>
             </div>
             <div className="min-w-0">
@@ -276,7 +295,11 @@ const CompensationSection = ({
                 onChange={(value) => onCurrentSharePriceChange?.(value ?? null)}
               />
               <div className={FIELD_HINT_CLASS}>
-                {equityTicker ? `Saved against ${equityTicker}` : 'Needs a symbol'}
+                {!isListed
+                  ? 'Internal price per share'
+                  : equityTicker
+                    ? `Saved against ${equityTicker}`
+                    : 'Needs a symbol'}
               </div>
             </div>
           </div>
@@ -294,12 +317,11 @@ const CompensationSection = ({
               </span>{' '}
               at this price:{' '}
               {[
-                Number(equity) > 0 ? `${usd(Number(equity) * ratio)} a year` : '',
+                Number(equity) > 0
+                  ? `${usd(Number(equity) * ratio)} a year${isListed ? '' : ' through the buyback'}`
+                  : '',
                 Number(equityTotalGrant) > 0
                   ? `${usd(Number(equityTotalGrant) * ratio)} total`
-                  : '',
-                Number(equityBuybackValue) > 0
-                  ? `${usd(Number(equityBuybackValue) * ratio)} buyback`
                   : '',
               ]
                 .filter(Boolean)
@@ -313,7 +335,7 @@ const CompensationSection = ({
         {equityLiquidity === 'LIQUID'
           ? 'The full annual equity value is included in compensation and financial scoring.'
           : equityLiquidity === 'BUYBACK'
-            ? `Only the ${equityBuybackValue.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })} annual buyback value is counted.`
+            ? 'The annual equity value is counted, priced at the buyback price above.'
             : 'The grant is shown as paper equity, but $0 is counted until it becomes sellable.'}
       </p>
     </div>

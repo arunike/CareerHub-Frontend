@@ -26,6 +26,8 @@ import { ScoreBreakdownContent } from './ScoreBreakdown';
 
 type Props = {
   filteredOffers: Offer[];
+  // Untouched by repricing, so a row hands back the record rather than a derived copy.
+  rawOffers: Offer[];
   offers: Offer[];
   applicationsById: Record<number, Application | undefined>;
   adjustedByOfferId: Record<number, AdjustedOfferMetrics>;
@@ -58,6 +60,7 @@ type Props = {
 
 const OfferDecisionScorecard = ({
   filteredOffers,
+  rawOffers,
   offers,
   applicationsById,
   adjustedByOfferId,
@@ -135,9 +138,19 @@ const OfferDecisionScorecard = ({
         adjustedByOfferId,
         weights,
         simulatedOffers,
-        scenarioRows
+        scenarioRows,
+        undefined,
+        rawOffers
       ),
-    [adjustedByOfferId, applicationsById, filteredOffers, weights, simulatedOffers, scenarioRows]
+    [
+      adjustedByOfferId,
+      applicationsById,
+      filteredOffers,
+      weights,
+      simulatedOffers,
+      scenarioRows,
+      rawOffers,
+    ]
   );
 
   useEffect(() => {

@@ -38,8 +38,12 @@ export const buildRows = (
   weights: Record<CategoryKey, number>,
   simulatedOffers: SimulatedOffer[],
   scenarioRows: ScenarioRow[],
-  todayIso = new Date().toISOString().slice(0, 10)
+  todayIso = new Date().toISOString().slice(0, 10),
+  // Scores read the repriced copies, but every row action must hand back the stored record.
+  rawOffers: Offer[] = []
 ) => {
+  const rawById = new Map(rawOffers.map((offer) => [offer.id, offer]));
+  const storedOffer = (offer: Offer) => (offer.id != null && rawById.get(offer.id)) || offer;
   // Resigning before the bonus lands forfeits what has accrued since it was last paid.
   const currentRole = filteredOffers.find((offer) => offer.is_current);
   const bonusYearShare = bonusYearElapsed(todayIso);
@@ -216,6 +220,7 @@ export const buildRows = (
       financialValue,
       hasImmigrationSignal: shouldScoreImmigration,
       offer,
+      storedOffer: storedOffer(offer),
       isSimulated: false,
     } satisfies DecisionRow;
   });
@@ -393,6 +398,8 @@ export const buildRows = (
       financialValue,
       hasImmigrationSignal: shouldScoreImmigration,
       offer,
+      // A scenario is never repriced, so the record and the displayed figures are the same object.
+      storedOffer: offer,
       isSimulated: true,
     } satisfies DecisionRow;
   });

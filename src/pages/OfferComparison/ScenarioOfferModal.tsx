@@ -228,9 +228,6 @@ const ScenarioOfferModal = ({
               equityLiquidity={normalizeEquityLiquidity(newScenario.equity_liquidity)}
               onEquityLiquidityChange={(value) => setNewScenarioField('equity_liquidity', value)}
               equityBuybackValue={Number(newScenario.equity_buyback_value) || 0}
-              onEquityBuybackValueChange={(value) =>
-                setNewScenarioField('equity_buyback_value', value)
-              }
               equityTotalGrant={Number(newScenario.equity_total_grant ?? 0)}
               onEquityTotalGrantChange={(value) => setNewScenarioField('equity_total_grant', value)}
               equityVestingPercent={Number(newScenario.equity_vesting_percent ?? 25)}

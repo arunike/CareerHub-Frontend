@@ -65,7 +65,6 @@ export interface OfferFormFieldsProps {
   equityLiquidity: EquityLiquidity;
   onEquityLiquidityChange: (value: EquityLiquidity) => void;
   equityBuybackValue: number;
-  onEquityBuybackValueChange: (value: number) => void;
   equityTotalGrant?: number;
   equityTicker?: string;
   onEquityTickerChange?: (value: string) => void;

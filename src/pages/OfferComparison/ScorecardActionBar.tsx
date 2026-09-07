@@ -72,26 +72,26 @@ const ScorecardActionBar = ({
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
-            onClick={() => onEditClick(row.offer as Offer)}
+            onClick={() => onEditClick(row.storedOffer as Offer)}
             className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
           >
             Edit
           </button>
           <button
             type="button"
-            onClick={() => onToggleCurrent(row.offer as Offer)}
+            onClick={() => onToggleCurrent(row.storedOffer as Offer)}
             className={clsx(
               'min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-9 sm:rounded-lg',
-              (row.offer as Offer).is_current
+              (row.storedOffer as Offer).is_current
                 ? 'text-slate-400 dark:text-ink-500 hover:bg-slate-50'
                 : 'text-slate-600 dark:text-ink-200 hover:bg-slate-50'
             )}
           >
-            {(row.offer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
+            {(row.storedOffer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
           </button>
           <button
             type="button"
-            onClick={() => onSnapshotsClick(row.offer as Offer)}
+            onClick={() => onSnapshotsClick(row.storedOffer as Offer)}
             className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300 transition-colors hover:bg-emerald-50 sm:min-h-9 sm:rounded-lg"
           >
             Snapshots
@@ -103,15 +103,15 @@ const ScorecardActionBar = ({
               <div className="flex w-44 flex-col py-1">
                 <button
                   type="button"
-                  onClick={() => onSaveSnapshotClick(row.offer as Offer, row)}
+                  onClick={() => onSaveSnapshotClick(row.storedOffer as Offer, row)}
                   className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
                 >
                   Save Snapshot
                 </button>
-                {(row.offer as Offer).is_current ? (
+                {(row.storedOffer as Offer).is_current ? (
                   <button
                     type="button"
-                    onClick={() => onRaiseHistoryClick(row.offer as Offer)}
+                    onClick={() => onRaiseHistoryClick(row.storedOffer as Offer)}
                     className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50"
                   >
                     Raise History
@@ -119,7 +119,7 @@ const ScorecardActionBar = ({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => onNegotiateClick(row.offer as Offer)}
+                    onClick={() => onNegotiateClick(row.storedOffer as Offer)}
                     className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-50"
                   >
                     Negotiate
@@ -128,7 +128,7 @@ const ScorecardActionBar = ({
                 {onNegotiationLogClick && !row.isSimulated && (
                   <button
                     type="button"
-                    onClick={() => onNegotiationLogClick(row.offer as Offer)}
+                    onClick={() => onNegotiationLogClick(row.storedOffer as Offer)}
                     className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50"
                   >
                     Negotiation Log
@@ -136,7 +136,7 @@ const ScorecardActionBar = ({
                 )}
                 <button
                   type="button"
-                  onClick={() => onToggleRejected?.(row.offer as Offer)}
+                  onClick={() => onToggleRejected?.(row.storedOffer as Offer)}
                   className={clsx(
                     'min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold',
                     isRowRejected
@@ -159,7 +159,7 @@ const ScorecardActionBar = ({
                     okText="Delete"
                     cancelText="Cancel"
                     okButtonProps={{ danger: true }}
-                    onConfirm={() => onDeleteClick(row.offer as Offer)}
+                    onConfirm={() => onDeleteClick(row.storedOffer as Offer)}
                   >
                     <button
                       type="button"

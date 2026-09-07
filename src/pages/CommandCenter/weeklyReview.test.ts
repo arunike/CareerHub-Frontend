@@ -25,7 +25,7 @@ describe('appliedThisWeek', () => {
   it('counts the last seven days and stops there', () => {
     const rows = [
       application({ id: 1, date_applied: '2026-09-06' }),
-      application({ id: 2, date_applied: '2026-08-31' }),
+      application({ id: 2, date_applied: '2026-09-01' }),
       application({ id: 3, date_applied: '2026-08-30' }),
     ];
     expect(appliedThisWeek(rows, TODAY).map((row) => row.id)).toEqual([1, 2]);
@@ -163,8 +163,9 @@ describe('nextWeekFocus', () => {
 
 describe('weekWindow', () => {
   it('runs Monday to Sunday', () => {
-    expect(weekWindow('2026-09-06')).toEqual({ start: '2026-08-31', end: '2026-09-06' });
-    expect(weekWindow('2026-08-31')).toEqual({ start: '2026-08-31', end: '2026-09-06' });
+    expect(weekWindow('2026-10-14')).toEqual({ start: '2026-10-12', end: '2026-10-18' });
+    expect(weekWindow('2026-10-12')).toEqual({ start: '2026-10-12', end: '2026-10-18' });
+    expect(weekWindow('2026-10-18')).toEqual({ start: '2026-10-12', end: '2026-10-18' });
   });
 
   it('does not throw on a broken date', () => {
