@@ -15,9 +15,3 @@ export const getEffectiveTaxLocation = (source?: LocationSource | null) =>
 
 export const getPrimaryApplicationLocation = (source?: LocationSource | null) =>
   getOfficeLocation(source) || getHomeLocation(source);
-
-export const hasDistinctOfficeLocation = (source?: LocationSource | null) => {
-  const home = getHomeLocation(source);
-  const office = getOfficeLocation(source);
-  return Boolean(home && office && home !== office);
-};

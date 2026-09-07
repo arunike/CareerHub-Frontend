@@ -13,7 +13,7 @@ import {
   PROMOTION_REVIEW_SYSTEM_PROMPT,
   SKILL_REFINEMENT_SYSTEM_PROMPT,
 } from './aiPrompts';
-import { sanitizePromotionReviewResult, sanitizePromotionText } from './promotionSanitizer';
+import { sanitizePromotionText } from './promotionSanitizer';
 import {
   buildPromotionExperienceContext,
   buildResumeContext,
@@ -291,20 +291,6 @@ ${formatOptionalPromotionContext(context)}`,
       question: question.question.trim(),
       why: question.why?.trim() || 'This helps calibrate the promotion evidence.',
     }));
-};
-
-export const generatePromotionReviewWithBrowserAI = async ({
-  experience,
-  context,
-}: {
-  experience: Experience;
-  context?: PromotionReviewContext;
-}) => {
-  const result = await requestJsonCompletion<PromotionReviewResult>({
-    temperature: 0.25,
-    messages: buildPromotionReviewMessages({ experience, context }),
-  });
-  return sanitizePromotionReviewResult(result);
 };
 
 export const answerPromotionReviewFollowUp = async ({

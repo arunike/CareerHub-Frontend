@@ -1,4 +1,11 @@
-import { summariseCommute, type CommuteOption } from './commute';
+import {
+  MAX_TIME_PENALTY,
+  TIME_PENALTY_HALF_HOURS,
+  commuteTimeCost,
+  commuteTimePenalty,
+  summariseCommute,
+  type CommuteOption,
+} from './commute';
 import {
   annualizeAmount,
   computeNonTaxableBenefitsTotal,
@@ -14,7 +21,13 @@ import { getCountedSickLeaveDays } from '../../utils/offerTimeOff';
 import { getEquityLiquidityCopy, getRealizableEquity } from './equityLiquidity';
 import { FINANCIAL_SCORE_LOG_SCALE, FINANCIAL_SCORE_REFERENCE_VALUE } from './financialScore';
 
-export type CategoryKey = 'financial' | 'workLife' | 'growth' | 'location' | 'brand' | 'team';
+export type CategoryKey =
+  | 'financial'
+  | 'benefits'
+  | 'workLife'
+  | 'trajectory'
+  | 'location'
+  | 'brand';
 
 export type CategoryScore = {
   key: CategoryKey | 'visa';
@@ -42,28 +55,33 @@ export type DecisionRow = {
   isSimulated: boolean;
 };
 
+// Benefits carries its own weight: a 401(k) match and cheap cover trade off against cash pay.
 export const DEFAULT_WEIGHTS: Record<CategoryKey, number> = {
-  financial: 44,
+  financial: 34,
+  benefits: 10,
   workLife: 19,
-  growth: 15,
+  trajectory: 21,
   location: 10,
   brand: 6,
-  team: 6,
 };
 
 export const CATEGORY_KEYS: CategoryKey[] = [
   'financial',
+  'benefits',
   'workLife',
-  'growth',
+  'trajectory',
   'location',
   'brand',
-  'team',
 ];
 
 export const normalizeScoreWeights = (value: unknown): Record<CategoryKey, number> => {
   if (!value || typeof value !== 'object') return DEFAULT_WEIGHTS;
 
-  const raw = value as Record<string, unknown>;
+  const raw = { ...(value as Record<string, unknown>) };
+  // Growth and Team were one thing measured twice; their weights add rather than being discarded.
+  if (raw.trajectory === undefined && (raw.growth !== undefined || raw.team !== undefined)) {
+    raw.trajectory = (Number(raw.growth) || 0) + (Number(raw.team) || 0);
+  }
   const next = CATEGORY_KEYS.reduce(
     (acc, key) => {
       const parsed = Number(raw[key]);
@@ -80,10 +98,10 @@ export const normalizeScoreWeights = (value: unknown): Record<CategoryKey, numbe
       return sum + (Number.isFinite(parsed) ? Math.max(0, parsed) : 0);
     }, 0);
 
-  if (ignoredWeight <= 0) return next;
-
   const validTotal = CATEGORY_KEYS.reduce((sum, key) => sum + next[key], 0);
   if (validTotal <= 0) return DEFAULT_WEIGHTS;
+  // Weights saved before a category existed do not add up any more, so they are rescaled to 100.
+  if (ignoredWeight <= 0 && validTotal === 100) return next;
 
   let remaining = 100;
   return CATEGORY_KEYS.reduce(
@@ -103,12 +121,12 @@ export const VISA_OVERLAY_WEIGHT = 20;
 
 export const CATEGORY_LABELS: Record<CategoryKey | 'visa', string> = {
   financial: 'Financial',
+  benefits: 'Benefits',
   visa: 'Immigration',
   workLife: 'WLB',
-  growth: 'Growth',
+  trajectory: 'Trajectory',
   location: 'Location',
   brand: 'Brand',
-  team: 'Team',
 };
 
 export const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
@@ -126,6 +144,44 @@ export const normalizeManualScore = (value: unknown) => {
 export const scoreFromManual = (value: unknown) => {
   const manual = normalizeManualScore(value);
   return manual ? manual * 20 : null;
+};
+
+// Growth and the team producing it are one judgement made twice, so they average into one score.
+export const scoreTrajectory = (app?: Application) => {
+  const growth = normalizeManualScore(app?.growth_score);
+  const team = normalizeManualScore(app?.team_score);
+  const given = [growth, team].filter((value): value is number => value != null);
+
+  if (given.length === 0) {
+    return {
+      score: 0,
+      isScored: false,
+      detail: 'Skipped until Growth or Team is rated',
+      calculationLines: [
+        'Neither Growth nor Team has been rated, so Trajectory is left out of the total',
+      ],
+    };
+  }
+
+  const average = given.reduce((sum, value) => sum + value, 0) / given.length;
+  const parts = [
+    growth != null ? `${growth}/5 growth` : 'growth not rated',
+    team != null ? `${team}/5 team` : 'team not rated',
+  ];
+
+  return {
+    score: average * 20,
+    isScored: true,
+    detail: parts.join(' · '),
+    calculationLines: [
+      `Growth: ${growth != null ? `${growth}/5` : 'not rated'}`,
+      `Team: ${team != null ? `${team}/5` : 'not rated'}`,
+      given.length === 1
+        ? 'Only one of the two was rated, so it carries the category on its own'
+        : `Average of the two: (${growth} + ${team}) / 2 = ${average.toFixed(1)}/5`,
+      `Trajectory score: ${average.toFixed(1)} x 20 = ${Math.round(average * 20)}`,
+    ],
+  };
 };
 
 export const scoreTimeOff = (offer: Offer | SimulatedOffer) => {
@@ -302,12 +358,10 @@ export const buildFinancialCalculationLines = ({
   offer,
   metrics,
   financialValue,
-  financialScore,
 }: {
   offer: Offer | SimulatedOffer;
   metrics?: Partial<AdjustedOfferMetrics>;
   financialValue: number;
-  financialScore: number;
 }) => {
   const base = asNumber(offer.base_salary);
   const bonus = asNumber(offer.bonus);
@@ -402,15 +456,57 @@ export const buildFinancialCalculationLines = ({
     `Adjusted value: ${formatCurrency(purchasingPowerAdjusted)} + ${formatCurrency(
       cashAdjustment
     )} - ${formatCurrency(rentAnnual)} = ${formatCurrency(financialValue)}`,
-    `Financial score: 100 x ln(1 + ${formatCurrency(
-      financialValue
-    )} / ${formatCurrency(FINANCIAL_SCORE_LOG_SCALE)}) / ln(1 + ${formatCurrency(
-      FINANCIAL_SCORE_REFERENCE_VALUE
-    )} / ${formatCurrency(FINANCIAL_SCORE_LOG_SCALE)}) = ${Math.round(
-      financialScore
-    )} (${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} benchmark = 100; uncapped logarithmic score)`,
   ];
 };
+
+// Landmarks beat a logarithm: seeing what $100k and $200k score explains the curve immediately.
+const SCORE_LADDER = [50000, 100000, 200000, 300000, 500000];
+
+const scoreForLadder = (value: number) =>
+  (100 * Math.log1p(value / FINANCIAL_SCORE_LOG_SCALE)) /
+  Math.log1p(FINANCIAL_SCORE_REFERENCE_VALUE / FINANCIAL_SCORE_LOG_SCALE);
+
+// The score runs on a different number from the adjusted value, so the gap is spelled out in full.
+export const buildScoreValueLines = ({
+  financialValue,
+  benefitsPortion,
+  oneTimeRemoved,
+  oneTimeCounted,
+  scoreValue,
+  financialScore,
+}: {
+  financialValue: number;
+  benefitsPortion: number;
+  oneTimeRemoved: number;
+  oneTimeCounted: number;
+  scoreValue: number;
+  financialScore: number;
+}) => [
+  `Step 1 - start from adjusted value: ${formatCurrency(financialValue)}`,
+  `Step 2 - take out benefits, scored in their own category: ${formatCurrency(
+    financialValue
+  )} - ${formatCurrency(benefitsPortion)} = ${formatCurrency(financialValue - benefitsPortion)}`,
+  `Step 3 - take out sign-on and relocation at full value: ${formatCurrency(
+    financialValue - benefitsPortion
+  )} - ${formatCurrency(oneTimeRemoved + oneTimeCounted)} = ${formatCurrency(
+    financialValue - benefitsPortion - oneTimeRemoved - oneTimeCounted
+  )}`,
+  `Step 4 - add back this year's quarter of them: ${formatCurrency(
+    financialValue - benefitsPortion - oneTimeRemoved - oneTimeCounted
+  )} + ${formatCurrency(oneTimeCounted)} = ${formatCurrency(scoreValue)}`,
+  `Step 5 - turn that into a score out of 100: ${formatCurrency(
+    scoreValue
+  )} scores ${Math.round(financialScore)}`,
+  `${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} is the benchmark that scores 100. The scale is not a straight line: the first dollars move the score much more than the last, because doubling a small package changes your life more than doubling a large one. Nothing is capped, so an exceptional offer can score above 100`,
+  `For scale: ${SCORE_LADDER.map(
+    (value) => `${formatCurrency(value)} = ${Math.round(scoreForLadder(value))}`
+  ).join(', ')}`,
+  `Exact formula, if you want it: 100 x ln(1 + value / ${formatCurrency(
+    FINANCIAL_SCORE_LOG_SCALE
+  )}) / ln(1 + ${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} / ${formatCurrency(
+    FINANCIAL_SCORE_LOG_SCALE
+  )})`,
+];
 
 export const scoreVisa = (app?: Application) => {
   const sponsorship =
@@ -440,7 +536,7 @@ export const hasImmigrationSignal = (app?: Application) =>
     (app?.day_one_gc && app.day_one_gc !== 'UNKNOWN')
   );
 
-export const scoreLocationWithBreakdown = (app?: Application) => {
+export const scoreLocationWithBreakdown = (app?: Application, baseSalary = 0) => {
   const workMode = getWorkMode(app);
   const rtoDays = clamp(
     asNumber(app?.rto_days_per_week, workMode === 'ONSITE' ? 5 : workMode === 'REMOTE' ? 0 : 3),
@@ -470,7 +566,8 @@ export const scoreLocationWithBreakdown = (app?: Application) => {
   const commutePenalty = clamp(commuteAnnual / 1000, 0, 18);
   // Replaces the days-per-week proxy rather than stacking, so one commute is not punished twice.
   const hasTime = !!commute.primary && commute.annualHours > 0;
-  const timePenalty = hasTime ? clamp(commute.annualHours / 15, 0, 20) : 0;
+  const timePenalty = hasTime ? commuteTimePenalty(commute.annualHours) : 0;
+  const timeCost = hasTime ? commuteTimeCost(commute.annualHours, baseSalary) : 0;
   const rtoPenalty = hasTime || workMode === 'REMOTE' ? 0 : Math.max(0, rtoDays - 2) * 2;
   const score = clamp(base - commutePenalty - rtoPenalty - timePenalty);
 
@@ -482,12 +579,18 @@ export const scoreLocationWithBreakdown = (app?: Application) => {
         1
       )}, capped at 18`,
       hasTime
-        ? `Commute time penalty: ${Math.round(commute.annualHours)} hrs/yr / 15 = ${timePenalty.toFixed(1)}, capped at 20`
+        ? `Commute time: ${Math.round(commute.annualHours)} hrs/yr (${Math.round(commute.annualHours / commute.officeDays / 2 || 0)} min each way x ${commute.officeDays} office days)`
         : `RTO penalty: max(0, ${rtoDays} days - 2) x 2 = ${rtoPenalty.toFixed(1)}`,
+      hasTime
+        ? `Commute time penalty: ${MAX_TIME_PENALTY} x ${Math.round(commute.annualHours)} / (${Math.round(commute.annualHours)} + ${TIME_PENALTY_HALF_HOURS}) = ${timePenalty.toFixed(1)}`
+        : '',
+      hasTime && timeCost > 0
+        ? `Those hours are worth ${formatCurrency(timeCost)} a year at half your hourly rate. Shown for scale; only the cash cost is taken off adjusted value.`
+        : '',
       `Location score: ${base} - ${commutePenalty.toFixed(1)} - ${(hasTime
         ? timePenalty
         : rtoPenalty
       ).toFixed(1)} = ${Math.round(score)}`,
-    ],
+    ].filter(Boolean),
   };
 };

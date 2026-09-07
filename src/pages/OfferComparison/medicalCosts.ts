@@ -50,12 +50,6 @@ export function computeTotalAnnualHealthPremiums(
   return medicalAnnual + dentalAnnual + visionAnnual;
 }
 
-export function computeNetAnnualHealthCost(offer: Partial<SimulatedOffer | OfferLike>): number {
-  const totalPremiums = computeTotalAnnualHealthPremiums(offer);
-  const hsa = Number(offer.hsa_employer_contribution) || 0;
-  return Math.max(0, totalPremiums - hsa);
-}
-
 export function computeMedicalWorstCaseRisk(offer: Partial<SimulatedOffer | OfferLike>): number {
   const totalPremiums = computeTotalAnnualHealthPremiums(offer);
   const oopMax = offer.has_dependents

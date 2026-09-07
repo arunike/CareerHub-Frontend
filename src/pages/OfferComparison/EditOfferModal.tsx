@@ -1,5 +1,5 @@
 import type { CommuteOption, DrivingDefaults } from './commute';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { message } from 'antd';
 import ConfirmModal from '../../components/ConfirmModal';
 import ModalShell from '../../components/ModalShell';
@@ -14,6 +14,8 @@ import {
 } from './calculations';
 import type { AdjustedOfferMetrics } from './types';
 import { normalizeEquityLiquidity } from './equityLiquidity';
+import { getStockPrices, saveStockPrice } from '../../api';
+import { normalizeSymbol } from './equityPricing';
 
 type Props = {
   editingOffer: Offer | null;
@@ -61,6 +63,32 @@ const EditOfferModal = ({
 
   // Errors appear only after a save attempt, so an empty new form is not pre-reddened.
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const [currentSharePrice, setCurrentSharePrice] = useState<number | null>(null);
+  const [savedSharePrice, setSavedSharePrice] = useState<number | null>(null);
+
+  const symbol = normalizeSymbol(editingOffer?.equity_ticker);
+
+  // Prefill from whatever price is already stored for this symbol, so it is not re-typed.
+  useEffect(() => {
+    if (!symbol) {
+      setCurrentSharePrice(null);
+      setSavedSharePrice(null);
+      return;
+    }
+    let cancelled = false;
+    getStockPrices()
+      .then((response) => {
+        if (cancelled) return;
+        const match = response.data.find((row) => normalizeSymbol(row.symbol) === symbol);
+        const price = match ? Number(match.price) : null;
+        setCurrentSharePrice(price);
+        setSavedSharePrice(price);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol]);
   const missingCompanyName = !editingApp?.company_name?.trim();
   const missingRoleTitle = !editingApp?.role_title?.trim();
 
@@ -80,6 +108,14 @@ const EditOfferModal = ({
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       return;
+    }
+    // The price belongs to the symbol, not the offer, so it is saved alongside rather than within.
+    if (symbol && currentSharePrice !== null && currentSharePrice !== savedSharePrice) {
+      saveStockPrice({
+        symbol,
+        price: currentSharePrice,
+        as_of: new Date().toISOString().slice(0, 10),
+      }).catch(() => message.error('The offer saved, but its share price did not.'));
     }
     onSave();
   };
@@ -202,6 +238,14 @@ const EditOfferModal = ({
             }
             equityTotalGrant={Number(editingOffer.equity_total_grant ?? 0)}
             onEquityTotalGrantChange={(value) => setEditingOfferField('equity_total_grant', value)}
+            equityTicker={editingOffer.equity_ticker ?? ''}
+            onEquityTickerChange={(value) => setEditingOfferField('equity_ticker', value)}
+            equityShares={editingOffer.equity_shares ?? null}
+            onEquitySharesChange={(value) => setEditingOfferField('equity_shares', value)}
+            equityGrantPrice={editingOffer.equity_grant_price ?? null}
+            onEquityGrantPriceChange={(value) => setEditingOfferField('equity_grant_price', value)}
+            currentSharePrice={currentSharePrice}
+            onCurrentSharePriceChange={setCurrentSharePrice}
             equityVestingPercent={Number(editingOffer.equity_vesting_percent ?? 25)}
             onEquityVestingPercentChange={(value) =>
               setEditingOfferField('equity_vesting_percent', value)

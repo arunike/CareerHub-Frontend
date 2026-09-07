@@ -7,7 +7,12 @@ export const MOBILE_NAVIGATION_RECENT_STORAGE_KEY = 'careerhub.mobileNav.recent.
 // Derived, not restated: a tab added to NAV_REGISTRY is pinnable the moment it exists.
 export const MOBILE_NAVIGATION_ITEMS = NAV_REGISTRY;
 
-export const DEFAULT_MOBILE_TOOLBAR_KEYS = ['/', '/applications', '/offers', '/analytics'] as const;
+export const DEFAULT_MOBILE_TOOLBAR_KEYS = [
+  '/command-center',
+  '/applications',
+  '/offers',
+  '/analytics',
+] as const;
 
 export type MobileNavigationItem = (typeof MOBILE_NAVIGATION_ITEMS)[number];
 export type MobileNavigationKey = MobileNavigationItem['key'];
@@ -49,7 +54,7 @@ const CONTEXTUAL_SMART_KEYS: Array<[string, string]> = [
   ['/contacts', '/tasks'],
   ['/jd-reports', '/ai-tools?tab=cover-letters'],
   ['/analytics', '/applications'],
-  ['/', '/events'],
+  ['/command-center', '/events'],
 ];
 
 export const normalizeMobileToolbarKeys = (keys?: string[]) => {

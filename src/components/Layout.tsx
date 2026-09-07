@@ -1,21 +1,9 @@
 import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import type { ComponentType } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Grid, ConfigProvider } from 'antd';
-import {
-  DashboardOutlined,
-  CalendarOutlined,
-  ScheduleOutlined,
-  LineChartOutlined,
-  SolutionOutlined,
-  DollarOutlined,
-  WalletOutlined,
-  FileTextOutlined,
-  CheckSquareOutlined,
-  TrophyOutlined,
-  RobotOutlined,
-  ThunderboltOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
+import { ThunderboltOutlined } from '@ant-design/icons';
+import { NAV_GROUPS, applyNavOrder, navLabel } from '../constants/navigationItems';
 import { getUserSettings } from '../api/availability';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -26,7 +14,6 @@ import {
   recordMobileNavigationUse,
 } from '../constants/mobileNavigation';
 import MobileQuickActions, { hasMobileQuickActionsForSource } from './MobileQuickActions';
-import { applyNavOrder, navLabel } from '../constants/navigationItems';
 import MobileBottomNav from './MobileBottomNav';
 import SidebarHeader from './SidebarHeader';
 import SidebarFooter from './SidebarFooter';
@@ -137,71 +124,27 @@ const LayoutInner = ({ children }: { children: React.ReactNode }) => {
     if (currentItem) recordMobileNavigationUse(currentItem.key);
   }, [location.pathname, location.search]);
 
-  const menuItems = [
-    {
-      key: 'grp-1',
-      label: 'Schedule',
-      type: 'group' as const,
-      children: [
-        {
-          key: '/',
-          icon: <DashboardOutlined />,
-          label: 'Availability',
-        },
-        {
-          key: '/events',
-          icon: <CalendarOutlined />,
-          label: 'Events',
-        },
-        {
-          key: '/holidays',
-          icon: <ScheduleOutlined />,
-          label: 'Holidays',
-        },
-      ],
-    },
-    {
-      key: 'grp-2',
-      label: 'Career & Growth',
-      type: 'group' as const,
-      children: [
-        {
-          key: '/applications',
-          icon: <SolutionOutlined />,
-          label: 'Applications',
-        },
-        { key: '/offers', icon: <DollarOutlined />, label: 'Offers' },
-        { key: '/income', icon: <WalletOutlined />, label: 'Income' },
-        { key: '/documents', icon: <FileTextOutlined />, label: 'Documents' },
-        { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Action Items' },
-        { key: '/experience', icon: <TrophyOutlined />, label: 'Experience' },
-        { key: '/contacts', icon: <TeamOutlined />, label: 'Contacts' },
-        {
-          key: 'intelligence',
-          icon: <RobotOutlined />,
-          label: 'Intelligence',
-          children: [
-            { key: '/jd-reports', label: 'JD Reports' },
-            { key: '/ai-tools?tab=cover-letters', label: 'Cover Letters' },
-            { key: '/ai-tools?tab=negotiation-results', label: 'Negotiation Results' },
-            { key: '/ai-tools?tab=promotion-reviews', label: 'Promotion Reviews' },
-          ],
-        },
-      ],
-    },
-    {
-      key: 'grp-3',
-      label: 'Insights',
-      type: 'group' as const,
-      children: [
-        {
-          key: '/analytics',
-          icon: <LineChartOutlined />,
-          label: 'Analytics',
-        },
-      ],
-    },
-  ];
+  const icon = (Icon?: ComponentType) => (Icon ? <Icon /> : undefined);
+
+  const menuItems = NAV_GROUPS.map((group) => ({
+    key: group.key,
+    label: group.label,
+    type: 'group' as const,
+    children: group.items.map((item) =>
+      item.children
+        ? {
+            key: item.key,
+            icon: icon(item.icon),
+            label: item.label,
+            children: item.children.map((child) => ({
+              key: child.key,
+              icon: icon(child.icon),
+              label: child.label,
+            })),
+          }
+        : { key: item.key, icon: icon(item.icon), label: item.label }
+    ),
+  }));
 
   const isVisible = (key: string) => location.pathname === key || !hiddenNavItems.includes(key);
 

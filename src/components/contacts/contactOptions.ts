@@ -17,11 +17,6 @@ export const CONTACT_RELATIONSHIP_OPTIONS: Array<{
   { value: 'CUSTOM', label: 'Custom relationship' },
 ];
 
-export const relationshipLabel = (kind: ContactRelationshipKind, customLabel?: string) =>
-  kind === 'CUSTOM'
-    ? customLabel || 'Custom'
-    : CONTACT_RELATIONSHIP_OPTIONS.find((option) => option.value === kind)?.label || kind;
-
 export const withoutGenericContact = <T extends { kind: string }>(group: T[]): T[] => {
   const specific = group.filter((relationship) => relationship.kind !== 'CONTACT');
   return specific.length ? specific : group;

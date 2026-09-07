@@ -269,6 +269,16 @@ const Applications = () => {
     refresh: fetchApplications,
   });
 
+  // Deep link from Today: open the record rather than dropping the reader on the list.
+  useEffect(() => {
+    const requested = new URLSearchParams(location.search).get('open');
+    if (!requested) return;
+    const match = applications.find((item) => String(item.id) === requested);
+    if (!match) return;
+    openDetailDrawer(match);
+    navigate('/applications', { replace: true });
+  }, [location.search, applications, openDetailDrawer, navigate]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const action = params.get('action');

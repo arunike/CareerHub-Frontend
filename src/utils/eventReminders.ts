@@ -93,19 +93,6 @@ export const dueReminders = (
     return toDay(today) >= until;
   });
 
-// Ignores a day-level dismissal on purpose: only a permanent mute stops the bell.
-export const urgentReminders = (
-  events: Event[],
-  settings: ReminderSettings,
-  state: ReminderState,
-  today: Date = new Date()
-): Event[] =>
-  events.filter((event) => {
-    const away = daysUntil(event.date, today);
-    if (away < 0 || away > settings.startDaysBefore) return false;
-    return state[String(event.id)] !== 'forever';
-  });
-
 export const dismissUntil = (settings: ReminderSettings, today: Date = new Date()) => {
   const next = new Date(today.getTime());
   next.setDate(next.getDate() + Math.max(1, settings.repeatEveryDays));

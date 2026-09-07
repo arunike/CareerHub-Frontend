@@ -66,12 +66,3 @@ export const buildAIProviderSettingsPatch = (
 
   return patch;
 };
-
-export const hasConfiguredAIProviderSettings = (
-  settings: AIProviderSettings = DEFAULT_AI_PROVIDER_SETTINGS
-) =>
-  Boolean(
-    settings.endpoint.trim() &&
-    settings.model.trim() &&
-    (settings.apiKey.trim() || settings.apiKeyConfigured)
-  );

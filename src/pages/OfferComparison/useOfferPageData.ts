@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
-import { getApplications, getOffers } from '../../api';
+import { getApplications, getOffers, getStockPrices } from '../../api';
 import { getAvailableYears, filterByYear } from '../../utils/yearFilter';
 import { loadUsCityOptions } from '../../lib/usCityOptions';
 import {
@@ -10,6 +10,9 @@ import {
   isPastRole,
 } from './calculations';
 import { isOfferRejected } from './useOfferMutations';
+import { isUnfilledOffer, withCurrentPay } from './currentPay';
+import { pricesBySymbol, withCurrentEquity } from './equityPricing';
+import type { PriceBySymbol } from './equityPricing';
 
 export const useOfferPageData = ({
   messageApi,
@@ -25,6 +28,7 @@ export const useOfferPageData = ({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [allUsCityOptions, setAllUsCityOptions] = useState<string[]>([]);
+  const [stockPrices, setStockPrices] = useState<PriceBySymbol>({});
 
   const fetchData = useCallback(async () => {
     try {
@@ -32,6 +36,10 @@ export const useOfferPageData = ({
       const offersResp = await getOffers();
       const offersData = offersResp.data || [];
       setOffers(offersData);
+
+      // A missing price list must not blank the page; every offer just keeps its stored value.
+      const priceResp = await getStockPrices().catch(() => null);
+      setStockPrices(pricesBySymbol(priceResp?.data ?? []));
 
       const linkedAppIds = Array.from(
         new Set(offersData.map((offer: Offer) => offer.application).filter(Boolean))
@@ -106,14 +114,20 @@ export const useOfferPageData = ({
     [applicationsById]
   );
 
+  // Raw `offers` is what you edit; this restates it at today's pay, then at today's share price.
+  const comparisonOffers = useMemo(
+    () => offers.map((offer) => withCurrentEquity(withCurrentPay(offer), stockPrices)),
+    [offers, stockPrices]
+  );
+
   const availableYears = useMemo(
-    () => getAvailableYears(offers, offerYearDate),
-    [offers, offerYearDate]
+    () => getAvailableYears(comparisonOffers, offerYearDate),
+    [comparisonOffers, offerYearDate]
   );
 
   const filteredByYear = useMemo(
-    () => filterByYear(offers, selectedYear, offerYearDate),
-    [offers, selectedYear, offerYearDate]
+    () => filterByYear(comparisonOffers, selectedYear, offerYearDate),
+    [comparisonOffers, selectedYear, offerYearDate]
   );
 
   const rejectedOffersCount = useMemo(
@@ -131,9 +145,16 @@ export const useOfferPageData = ({
     [offers, applicationsById]
   );
 
+  // Kept out of the comparison but not hidden from the user; the page names them instead.
+  const unfilledOffers = useMemo(
+    () => comparisonOffers.filter(isUnfilledOffer),
+    [comparisonOffers]
+  );
+
   const filteredOffers = useMemo(
     () =>
       filteredByYear.filter((offer) => {
+        if (isUnfilledOffer(offer)) return false;
         const app = applicationsById[offer.application];
         const rejected = isOfferRejected(offer, app);
         const past = !rejected && isPastRole(offer);
@@ -152,8 +173,17 @@ export const useOfferPageData = ({
     });
   }, []);
 
+  const refreshStockPrices = useCallback(async () => {
+    const resp = await getStockPrices().catch(() => null);
+    setStockPrices(pricesBySymbol(resp?.data ?? []));
+  }, []);
+
   return {
     offers,
+    comparisonOffers,
+    unfilledOffers,
+    stockPrices,
+    refreshStockPrices,
     setOffers,
     applications,
     setApplications,

@@ -45,6 +45,10 @@ export interface SimulatedOffer {
   equity_vesting_schedule?: number[];
   equity_liquidity?: 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
   equity_buyback_value?: number;
+  // Set these and the comparison revalues the grant at the latest price for the ticker.
+  equity_ticker?: string;
+  equity_shares?: number | null;
+  equity_grant_price?: number | null;
   sign_on: number;
   // Per-year amounts; empty means the whole sign-on lands in year 1.
   sign_on_schedule?: number[];
@@ -138,6 +142,10 @@ export interface OfferLike {
   equity_vesting_schedule?: number[];
   equity_liquidity?: 'LIQUID' | 'BUYBACK' | 'ILLIQUID';
   equity_buyback_value?: number;
+  // Set these and the comparison revalues the grant at the latest price for the ticker.
+  equity_ticker?: string;
+  equity_shares?: number | null;
+  equity_grant_price?: number | null;
   annual_refresh_value?: number;
   refresh_starts_year?: number;
   sign_on: number;

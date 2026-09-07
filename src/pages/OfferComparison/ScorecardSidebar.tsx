@@ -218,7 +218,7 @@ const ScorecardSidebar = ({
               {(Object.entries(weights) as [CategoryKey, number][])
                 .sort((a, b) => b[1] - a[1])
                 .map(([key, weight]) => {
-                  const isOptional = ['workLife', 'growth', 'brand', 'team'].includes(key);
+                  const isOptional = ['workLife', 'trajectory', 'brand'].includes(key);
                   return (
                     <div
                       key={key}

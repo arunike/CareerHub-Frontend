@@ -1,5 +1,3 @@
-import { officeDaysPerYear, type OfficeDayInputs } from './commute';
-
 export type MealKey = 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACKS';
 
 export const MEAL_LABELS: Record<MealKey, string> = {
@@ -98,5 +96,3 @@ export const annualFreeFoodValue = ({
   legacyValuePerMeal?: number;
   legacyAnnualValue?: number;
 }) => freeFoodBreakdown({ meals, officeDays, legacyValuePerMeal })?.netAnnual ?? legacyAnnualValue;
-
-export const foodOfficeDays = (inputs: OfficeDayInputs) => officeDaysPerYear(inputs);

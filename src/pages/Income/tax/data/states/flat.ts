@@ -15,6 +15,3 @@ export const flatStateTable = (
   payrollTaxes: [],
   source: 'CareerHub reference data STATE_TAX_RATE',
 });
-
-export const NO_STATE_TAX = (year: number): JurisdictionTable =>
-  flatStateTable('none', 0, year, 'none');

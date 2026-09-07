@@ -7,15 +7,24 @@ import type { AdjustedOfferMetrics } from './types';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { getImmigrationSignalLabel } from './immigrationSignal';
 import { computeIndependentFinancialScore } from './financialScore';
+import { benefitsBreakdown, scoreBenefitsWithBreakdown } from './benefitsScore';
+import {
+  ONE_TIME_HORIZON_YEARS,
+  bonusYearElapsed,
+  financialScoreValue,
+  forfeitedBonus,
+} from './financialScore';
 import {
   CATEGORY_LABELS,
   VISA_OVERLAY_WEIGHT,
   buildFinancialCalculationLines,
+  buildScoreValueLines,
   formatCurrency,
   getWorkMode,
   hasImmigrationSignal,
   scoreFromManual,
   scoreLocationWithBreakdown,
+  scoreTrajectory,
   scoreVisa,
   scoreWorkLife,
   totalAnnualComp,
@@ -28,8 +37,15 @@ export const buildRows = (
   adjustedByOfferId: Record<number, AdjustedOfferMetrics>,
   weights: Record<CategoryKey, number>,
   simulatedOffers: SimulatedOffer[],
-  scenarioRows: ScenarioRow[]
+  scenarioRows: ScenarioRow[],
+  todayIso = new Date().toISOString().slice(0, 10)
 ) => {
+  // Resigning before the bonus lands forfeits what has accrued since it was last paid.
+  const currentRole = filteredOffers.find((offer) => offer.is_current);
+  const bonusYearShare = bonusYearElapsed(todayIso);
+  const grossForfeitedBonus = currentRole
+    ? forfeitedBonus(Number(currentRole.bonus) || 0, todayIso)
+    : 0;
   const financialValues = filteredOffers.map((offer) =>
     offer.id && adjustedByOfferId[offer.id]?.adjustedValue != null
       ? adjustedByOfferId[offer.id].adjustedValue
@@ -48,9 +64,19 @@ export const buildRows = (
     const workMode = getWorkMode(app, offer);
     const shouldScoreImmigration = hasImmigrationSignal(app);
     const workLifeScore = scoreWorkLife(offer, app);
-    const growthScore = scoreFromManual(app?.growth_score);
     const brandScore = scoreFromManual(app?.brand_score);
-    const teamScore = scoreFromManual(app?.team_score);
+    const trajectory = scoreTrajectory(app);
+    const baseTaxRate = Number(financialMetrics?.usedBaseTaxRate) || 0;
+    const benefits = scoreBenefitsWithBreakdown(offer, baseTaxRate);
+    // Cost of living scales the whole adjusted value, so the slice being removed is scaled too.
+    const colIndex = Number(financialMetrics?.costOfLivingIndex) || 100;
+    const parts = benefitsBreakdown(offer, baseTaxRate);
+    const benefitsPortion =
+      (parts.retirementMatch + parts.hsa + parts.perks) * (100 / Math.max(colIndex, 1));
+    // Staying put forfeits nothing, so the current role is never charged for leaving itself.
+    const lostBonus = offer.is_current
+      ? 0
+      : grossForfeitedBonus * (1 - (Number(financialMetrics?.usedBonusTaxRate) || 0) / 100);
 
     const baseWeightScale = shouldScoreImmigration ? (100 - VISA_OVERLAY_WEIGHT) / 100 : 1;
 
@@ -62,18 +88,51 @@ export const buildRows = (
           weight: Math.round(weight * baseWeightScale),
         };
 
+        if (category.key === 'benefits') {
+          return {
+            ...category,
+            score: benefits.score,
+            detail: benefits.detail,
+            calculationLines: benefits.calculationLines,
+            isScored: true,
+          };
+        }
         if (category.key === 'financial') {
-          const financialScore = computeIndependentFinancialScore(financialValue);
+          // Benefits are scored on their own now, so cash is not judged with them counted twice.
+          const scoreParts = financialScoreValue({
+            adjustedValue: financialValue,
+            benefitsPortion,
+            afterTaxSignOn: Number(financialMetrics?.afterTaxSignOn) || 0,
+            afterTaxRelocation: Number(financialMetrics?.afterTaxRelocation) || 0,
+            forfeitedBonus: lostBonus,
+            colIndex,
+          });
+          const cashOnlyValue = scoreParts.value;
+          const financialScore = computeIndependentFinancialScore(cashOnlyValue);
           return {
             ...category,
             score: financialScore,
-            detail: `${formatCurrency(financialValue)} adjusted value`,
-            calculationLines: buildFinancialCalculationLines({
-              offer,
-              metrics: financialMetrics,
-              financialValue,
-              financialScore,
-            }),
+            detail: `${formatCurrency(cashOnlyValue)} recurring, after tax and cost of living`,
+            calculationLines: [
+              ...buildFinancialCalculationLines({
+                offer,
+                metrics: financialMetrics,
+                financialValue,
+              }),
+              `Benefits taken out: ${formatCurrency(benefitsPortion)} of that adjusted value is 401(k) match, HSA and perks, scored under Benefits instead`,
+              `One-time money over ${ONE_TIME_HORIZON_YEARS} years: sign-on ${formatCurrency(Number(financialMetrics?.afterTaxSignOn) || 0)} + relocation ${formatCurrency(Number(financialMetrics?.afterTaxRelocation) || 0)}${lostBonus > 0 ? ` - bonus you would forfeit ${formatCurrency(lostBonus)}` : ''} = ${formatCurrency((Number(financialMetrics?.afterTaxSignOn) || 0) + (Number(financialMetrics?.afterTaxRelocation) || 0) - lostBonus)}, x 100 / ${colIndex} for cost of living = ${formatCurrency(scoreParts.oneTimeTotal)}, of which ${formatCurrency(scoreParts.oneTimeCounted)} counts this year`,
+              lostBonus > 0
+                ? `Bonus left behind: you are ${Math.round(bonusYearShare * 100)}% through the bonus year, so resigning now gives up ${formatCurrency(lostBonus)} after tax. Leave once it has been paid and this drops to nothing`
+                : '',
+              ...buildScoreValueLines({
+                financialValue,
+                benefitsPortion,
+                oneTimeRemoved: scoreParts.oneTimeRemoved,
+                oneTimeCounted: scoreParts.oneTimeCounted,
+                scoreValue: cashOnlyValue,
+                financialScore,
+              }),
+            ].filter(Boolean),
             isScored: true,
           };
         }
@@ -86,19 +145,17 @@ export const buildRows = (
             isScored: true,
           };
         }
-        if (category.key === 'growth') {
+        if (category.key === 'trajectory') {
           return {
             ...category,
-            score: growthScore ?? 0,
-            detail:
-              growthScore != null
-                ? `${app?.growth_score}/5 manual`
-                : 'Skipped until Growth Score is set',
-            isScored: growthScore != null,
+            score: trajectory.score,
+            detail: trajectory.detail,
+            calculationLines: trajectory.calculationLines,
+            isScored: trajectory.isScored,
           };
         }
         if (category.key === 'location') {
-          const locationScore = scoreLocationWithBreakdown(app);
+          const locationScore = scoreLocationWithBreakdown(app, Number(offer.base_salary) || 0);
           return {
             ...category,
             score: locationScore.score,
@@ -110,25 +167,14 @@ export const buildRows = (
             isScored: true,
           };
         }
-        if (category.key === 'brand') {
-          return {
-            ...category,
-            score: brandScore ?? 0,
-            detail:
-              brandScore != null
-                ? `${app?.brand_score}/5 manual`
-                : 'Skipped until Brand Score is set',
-            isScored: brandScore != null,
-          };
-        }
         return {
           ...category,
-          score: teamScore ?? 0,
+          score: brandScore ?? 0,
           detail:
-            teamScore != null
-              ? `${app?.team_score}/5 manual`
-              : 'Skipped until Manager / Team Score is set',
-          isScored: teamScore != null,
+            brandScore != null
+              ? `${app?.brand_score}/5 manual`
+              : 'Skipped until Brand Score is set',
+          isScored: brandScore != null,
         };
       }
     );
@@ -201,9 +247,14 @@ export const buildRows = (
     const workMode = getWorkMode(app, offer);
     const shouldScoreImmigration = hasImmigrationSignal(app);
     const workLifeScore = scoreWorkLife(offer, app);
-    const growthScore = scoreFromManual(app?.growth_score);
     const brandScore = scoreFromManual(app?.brand_score);
-    const teamScore = scoreFromManual(app?.team_score);
+    const trajectory = scoreTrajectory(app);
+    const simBaseTaxRate = Number(scenarioRow?.usedBaseTaxRate) || 0;
+    const benefits = scoreBenefitsWithBreakdown(offer, simBaseTaxRate);
+    const simColIndex = Number(scenarioRow?.colIndex) || 100;
+    const simParts = benefitsBreakdown(offer, simBaseTaxRate);
+    const benefitsPortion =
+      (simParts.retirementMatch + simParts.hsa + simParts.perks) * (100 / Math.max(simColIndex, 1));
 
     const baseWeightScale = shouldScoreImmigration ? (100 - VISA_OVERLAY_WEIGHT) / 100 : 1;
 
@@ -215,20 +266,50 @@ export const buildRows = (
           weight: Math.round(weight * baseWeightScale),
         };
 
+        if (category.key === 'benefits') {
+          return {
+            ...category,
+            score: benefits.score,
+            detail: benefits.detail,
+            calculationLines: benefits.calculationLines,
+            isScored: true,
+          };
+        }
         if (category.key === 'financial') {
-          const financialScore = computeIndependentFinancialScore(financialValue);
+          // Benefits are scored on their own now, so cash is not judged with them counted twice.
+          const scoreParts = financialScoreValue({
+            adjustedValue: financialValue,
+            benefitsPortion,
+            afterTaxSignOn: Number(scenarioRow?.afterTaxSignOn) || 0,
+            afterTaxRelocation: Number(scenarioRow?.afterTaxRelocation) || 0,
+            forfeitedBonus: 0,
+            colIndex: simColIndex,
+          });
+          const cashOnlyValue = scoreParts.value;
+          const financialScore = computeIndependentFinancialScore(cashOnlyValue);
           return {
             ...category,
             score: financialScore,
-            detail: `${formatCurrency(financialValue)} adjusted value`,
-            calculationLines: buildFinancialCalculationLines({
-              offer,
-              metrics: scenarioRow
-                ? { ...scenarioRow, costOfLivingIndex: scenarioRow.colIndex }
-                : undefined,
-              financialValue,
-              financialScore,
-            }),
+            detail: `${formatCurrency(cashOnlyValue)} recurring, after tax and cost of living`,
+            calculationLines: [
+              ...buildFinancialCalculationLines({
+                offer,
+                metrics: scenarioRow
+                  ? { ...scenarioRow, costOfLivingIndex: scenarioRow.colIndex }
+                  : undefined,
+                financialValue,
+              }),
+              `Benefits taken out: ${formatCurrency(benefitsPortion)} of that adjusted value is 401(k) match, HSA and perks, scored under Benefits instead`,
+              `One-time money over ${ONE_TIME_HORIZON_YEARS} years: ${formatCurrency(scoreParts.oneTimeTotal)} in total, of which ${formatCurrency(scoreParts.oneTimeCounted)} counts this year`,
+              ...buildScoreValueLines({
+                financialValue,
+                benefitsPortion,
+                oneTimeRemoved: scoreParts.oneTimeRemoved,
+                oneTimeCounted: scoreParts.oneTimeCounted,
+                scoreValue: cashOnlyValue,
+                financialScore,
+              }),
+            ],
             isScored: true,
           };
         }
@@ -241,19 +322,17 @@ export const buildRows = (
             isScored: true,
           };
         }
-        if (category.key === 'growth') {
+        if (category.key === 'trajectory') {
           return {
             ...category,
-            score: growthScore ?? 0,
-            detail:
-              growthScore != null
-                ? `${app?.growth_score}/5 manual`
-                : 'Skipped until Growth Score is set',
-            isScored: growthScore != null,
+            score: trajectory.score,
+            detail: trajectory.detail,
+            calculationLines: trajectory.calculationLines,
+            isScored: trajectory.isScored,
           };
         }
         if (category.key === 'location') {
-          const locationScore = scoreLocationWithBreakdown(app);
+          const locationScore = scoreLocationWithBreakdown(app, Number(offer.base_salary) || 0);
           return {
             ...category,
             score: locationScore.score,
@@ -265,25 +344,14 @@ export const buildRows = (
             isScored: true,
           };
         }
-        if (category.key === 'brand') {
-          return {
-            ...category,
-            score: brandScore ?? 0,
-            detail:
-              brandScore != null
-                ? `${app?.brand_score}/5 manual`
-                : 'Skipped until Brand Score is set',
-            isScored: brandScore != null,
-          };
-        }
         return {
           ...category,
-          score: teamScore ?? 0,
+          score: brandScore ?? 0,
           detail:
-            teamScore != null
-              ? `${app?.team_score}/5 manual`
-              : 'Skipped until Manager / Team Score is set',
-          isScored: teamScore != null,
+            brandScore != null
+              ? `${app?.brand_score}/5 manual`
+              : 'Skipped until Brand Score is set',
+          isScored: brandScore != null,
         };
       }
     );

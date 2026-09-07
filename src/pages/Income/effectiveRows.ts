@@ -1,8 +1,5 @@
 import type { NamedAmount, PeriodRow } from './tax/ledger';
 
-export const SOCIAL_SECURITY = 'Social Security';
-export const MEDICARE = 'Medicare';
-
 // Every line is optional: what you enter wins, the rest stays modelled.
 export interface PeriodActual {
   periodIndex: number;

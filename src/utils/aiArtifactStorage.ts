@@ -75,17 +75,6 @@ export const negotiationResultToArtifactPayload = (result: StoredNegotiationResu
   saved_at: result.savedAt,
 });
 
-export const promotionReviewToArtifactPayload = (review: StoredPromotionReview) => ({
-  artifact_type: 'PROMOTION_REVIEW' as AIArtifactType,
-  client_id: review.id,
-  title: review.title,
-  summary: review.review.readiness_verdict?.summary || '',
-  payload: review as unknown as Record<string, unknown>,
-  source_experience: review.sourceExperienceId,
-  is_locked: Boolean(review.isLocked),
-  saved_at: review.savedAt,
-});
-
 export const artifactToReport = (artifact: AIArtifact): StoredReport => {
   const payload = payloadOf(artifact) as unknown as StoredReport;
   return {
@@ -153,9 +142,6 @@ export const syncCoverLetterArtifact = async (letter: StoredCoverLetter) =>
 
 export const syncNegotiationResultArtifact = async (result: StoredNegotiationResult) =>
   createAIArtifact(negotiationResultToArtifactPayload(result));
-
-export const syncPromotionReviewArtifact = async (review: StoredPromotionReview) =>
-  createAIArtifact(promotionReviewToArtifactPayload(review));
 
 export const loadReportsFromArtifacts = async () => {
   await migrateLocalAIArtifacts();

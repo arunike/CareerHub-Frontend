@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAV_GROUPS, applyNavOrder, navLabel } from './navigationItems';
+import { NAV_GROUPS, NAV_REGISTRY, applyNavOrder, navLabel } from './navigationItems';
 
 describe('navLabel', () => {
   it('falls back to the built-in name', () => {
@@ -87,5 +87,28 @@ describe('a tab added after the order was saved', () => {
       'b',
       'a',
     ]);
+  });
+});
+
+describe('Today entry', () => {
+  it('is offered as its own route, not as /', () => {
+    const keys = NAV_REGISTRY.map((entry) => entry.key);
+    expect(keys).toContain('/command-center');
+    expect(keys).toContain('/availability');
+    // '/' only redirects now; a nav entry on it would inherit any saved hidden state.
+    expect(keys).not.toContain('/');
+  });
+
+  it('survives a saved preference that hid the old landing route', () => {
+    const hidden = ['/'];
+    const visible = NAV_REGISTRY.filter((entry) => !hidden.includes(entry.key)).map((e) => e.key);
+    expect(visible).toContain('/command-center');
+  });
+
+  it('keeps its place when a saved order predates it', () => {
+    const items = NAV_REGISTRY.map((entry) => ({ key: entry.key }));
+    const savedOrderWithoutToday = ['/events', '/applications', '/tasks'];
+    const ordered = applyNavOrder(items, savedOrderWithoutToday).map((item) => item.key);
+    expect(ordered).toContain('/command-center');
   });
 });

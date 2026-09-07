@@ -26,32 +26,3 @@ export const getCountedSickLeaveDays = ({
   if (isUnlimitedPto && sickLeaveIncludedInUnlimitedPto) return 0;
   return Math.max(0, normalizeDayCount(sickLeaveDays));
 };
-
-export const formatTimeOffSummary = ({
-  ptoDays,
-  sickLeaveDays,
-  holidayDays,
-  isUnlimitedPto = false,
-  sickLeaveIncludedInUnlimitedPto = true,
-}: {
-  ptoDays: number | string | null | undefined;
-  sickLeaveDays?: number | string | null;
-  holidayDays: number | string | null | undefined;
-  isUnlimitedPto?: boolean;
-  sickLeaveIncludedInUnlimitedPto?: boolean;
-}) => {
-  const holidays = normalizeDayCount(holidayDays);
-  const sickDays = getCountedSickLeaveDays({
-    sickLeaveDays,
-    isUnlimitedPto,
-    sickLeaveIncludedInUnlimitedPto,
-  });
-  if (isUnlimitedPto) {
-    const sickLabel = sickLeaveIncludedInUnlimitedPto
-      ? 'sick leave included'
-      : `${sickDays} sick days`;
-    return `Unlimited PTO + ${sickLabel} + ${holidays} holidays`;
-  }
-  const days = normalizeDayCount(ptoDays);
-  return `${days} PTO days + ${sickDays} sick days + ${holidays} holidays`;
-};

@@ -67,6 +67,14 @@ export interface OfferFormFieldsProps {
   equityBuybackValue: number;
   onEquityBuybackValueChange: (value: number) => void;
   equityTotalGrant?: number;
+  equityTicker?: string;
+  onEquityTickerChange?: (value: string) => void;
+  equityShares?: number | null;
+  onEquitySharesChange?: (value: number | null) => void;
+  equityGrantPrice?: number | null;
+  onEquityGrantPriceChange?: (value: number | null) => void;
+  currentSharePrice?: number | null;
+  onCurrentSharePriceChange?: (value: number | null) => void;
   annualRefreshValue?: number;
   onAnnualRefreshValueChange?: (value: number) => void;
   refreshStartsYear?: number;

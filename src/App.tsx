@@ -1,5 +1,12 @@
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
@@ -17,9 +24,11 @@ import {
   SkeletonBlock,
   AvailabilityTextSkeleton,
 } from './components/SkeletonLoader';
+import { NAV_REGISTRY } from './constants/navigationItems';
 
 const HomePage = lazy(() => import('./pages/Home'));
 const Availability = lazy(() => import('./pages/Availability'));
+const CommandCenterPage = lazy(() => import('./pages/CommandCenter'));
 const Events = lazy(() => import('./pages/Events'));
 const Holidays = lazy(() => import('./pages/Holidays'));
 const Analytics = lazy(() => import('./pages/Analytics'));
@@ -43,23 +52,19 @@ const PromotionReviewPage = lazy(() => import('./pages/Experience/PromotionRevie
 const Layout = lazy(() => import('./components/Layout'));
 const CareerHubThemeProvider = lazy(() => import('./components/CareerHubThemeProvider'));
 
-const getRouteTitle = (pathname: string, isAuthenticated: boolean) => {
-  if (pathname === '/') return isAuthenticated ? 'Availability | CareerHub' : 'CareerHub';
+const NAV_TITLES = new Map<string, string>(
+  NAV_REGISTRY.filter((entry) => !entry.key.includes('?')).map((entry) => [entry.key, entry.label])
+);
+
+export const getRouteTitle = (pathname: string, isAuthenticated: boolean) => {
+  if (pathname === '/') return isAuthenticated ? 'Command Center | CareerHub' : 'CareerHub';
+  // Titles follow the sidebar, so a tab added to NAV_REGISTRY cannot read "Page not found".
+  const navTitle = NAV_TITLES.get(pathname);
+  if (navTitle) return `${navTitle} | CareerHub`;
   if (pathname === '/login') return 'Sign in | CareerHub';
   if (pathname === '/privacy') return 'Privacy | CareerHub';
   if (pathname === '/terms') return 'Terms | CareerHub';
-  if (pathname === '/events') return 'Events | CareerHub';
-  if (pathname === '/holidays') return 'Holidays | CareerHub';
-  if (pathname === '/analytics') return 'Analytics | CareerHub';
   if (pathname === '/settings') return 'Settings | CareerHub';
-  if (pathname === '/applications') return 'Applications | CareerHub';
-  if (pathname === '/offers') return 'Offers | CareerHub';
-  if (pathname === '/income') return 'Income | CareerHub';
-  if (pathname === '/documents') return 'Documents | CareerHub';
-  if (pathname === '/tasks') return 'Tasks | CareerHub';
-  if (pathname === '/experience') return 'Experience | CareerHub';
-  if (pathname === '/contacts') return 'Contacts | CareerHub';
-  if (pathname === '/jd-reports') return 'Job match reports | CareerHub';
   if (pathname === '/cover-letters' || pathname === '/ai-tools') {
     return 'Intelligence | CareerHub';
   }
@@ -372,7 +377,10 @@ function AppRoutes() {
         <Layout>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
-              <Route path="/" element={<Availability />} />
+              {/* Its own key, so a hidden or renamed '/' preference cannot swallow the entry. */}
+              <Route path="/" element={<Navigate to="/command-center" replace />} />
+              <Route path="/command-center" element={<CommandCenterPage />} />
+              <Route path="/availability" element={<Availability />} />
               <Route path="/events" element={<Events />} />
               <Route path="/holidays" element={<Holidays />} />
               <Route path="/analytics" element={<Analytics />} />

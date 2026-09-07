@@ -2,8 +2,6 @@ import api from '../client';
 
 export const getOffers = () => api.get('/career/offers/');
 
-export const createOffer = (data: Record<string, unknown>) => api.post('/career/offers/', data);
-
 export const exportOffers = (format: string) =>
   api.get(`/career/offers/export/?fmt=${format}`, { responseType: 'blob' });
 
@@ -67,3 +65,25 @@ export interface NegotiationAdvice {
     notes: string;
   };
 }
+
+export interface StockPrice {
+  id: number;
+  symbol: string;
+  price: string;
+  as_of: string;
+  source: 'MANUAL' | 'API';
+  note: string;
+  updated_at: string;
+}
+
+export const getStockPrices = () => api.get<StockPrice[]>('/career/stock-prices/');
+
+// POST upserts on the server, so re-entering a ticker updates it rather than failing.
+export const saveStockPrice = (data: {
+  symbol: string;
+  price: number;
+  as_of: string;
+  note?: string;
+}) => api.post<StockPrice>('/career/stock-prices/', data);
+
+export const deleteStockPrice = (id: number) => api.delete(`/career/stock-prices/${id}/`);

@@ -4,11 +4,6 @@ export type FilingStatus =
   | 'MARRIED_FILING_SEPARATELY'
   | 'HEAD_OF_HOUSEHOLD';
 
-export interface FilingStatusOption {
-  code: FilingStatus;
-  label: string;
-}
-
 // Upper bound of the bracket; the top bracket uses Infinity.
 export interface TaxBracket {
   cap: number;

@@ -1,9 +1,9 @@
 import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { updateApplication } from '../../api';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, StockOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getCurrentYear } from '../../utils/yearFilter';
-import { message, Select, Spin } from 'antd';
+import { Button, message, Select, Spin } from 'antd';
 import { useOfferAdjustmentsPersistence } from './useOfferAdjustmentsPersistence';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import CareerTransitionAdvisor from './CareerTransitionAdvisor';
@@ -29,6 +29,7 @@ import {
 } from './calculations';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CommuteComparison from './CommuteComparison';
+import StockPricingModal from './StockPricingModal';
 import DrivingAssumptions from './DrivingAssumptions';
 import OfferModalStack from './OfferModalStack';
 
@@ -80,8 +81,12 @@ const OfferComparison = () => {
     }
   );
 
+  const [stockPricingOpen, setStockPricingOpen] = useState(false);
   const {
     offers,
+    comparisonOffers,
+    unfilledOffers,
+    refreshStockPrices,
     setOffers,
     applications,
     setApplications,
@@ -191,7 +196,7 @@ const OfferComparison = () => {
     stateTaxRate,
     stateNameToAbbr,
   } = useOfferComparisonRows({
-    offers,
+    offers: comparisonOffers,
     applications,
     filteredOffers,
     simulatedOffers,
@@ -262,9 +267,50 @@ const OfferComparison = () => {
         availableYears={availableYears}
         onExport={handleExportOffers}
         exportFilename="offers"
+        secondaryActions={
+          <Button icon={<StockOutlined />} onClick={() => setStockPricingOpen(true)}>
+            Equity prices
+          </Button>
+        }
         primaryActionIcon={<PlusOutlined />}
         singleRowDesktop
       />
+
+      <StockPricingModal
+        open={stockPricingOpen}
+        onClose={() => setStockPricingOpen(false)}
+        offers={offers}
+        offerLabel={(offer) =>
+          offer.application_details
+            ? `${offer.application_details.company} · ${offer.application_details.role_title}`
+            : getApplicationName(offer.application)
+        }
+        onSaved={() => {
+          void refreshStockPrices();
+          void fetchData();
+        }}
+      />
+
+      {/* Named rather than silently dropped: the stub is a prompt to fill it in, not a real offer. */}
+      {unfilledOffers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12.5px] text-amber-900 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200">
+          <span>
+            {unfilledOffers.length === 1
+              ? '1 offer has no compensation yet, so it is left out of the comparison:'
+              : `${unfilledOffers.length} offers have no compensation yet, so they are left out of the comparison:`}
+          </span>
+          {unfilledOffers.map((offer) => (
+            <Button
+              key={offer.id}
+              size="small"
+              onClick={() => handleEditClick(offers.find((row) => row.id === offer.id) ?? offer)}
+            >
+              Add figures for{' '}
+              {offer.application_details?.company ?? getApplicationName(offer.application)}
+            </Button>
+          ))}
+        </div>
+      )}
 
       <CompBreakdownSection
         chartData={chartData}

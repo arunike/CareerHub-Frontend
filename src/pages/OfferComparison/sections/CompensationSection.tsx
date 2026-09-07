@@ -38,6 +38,23 @@ type CompensationSectionProps = {
   onSignOnScheduleChange: (value: number[]) => void;
   relocationBonus?: number | string;
   onRelocationBonusChange?: (value: number | string) => void;
+  equityTicker?: string;
+  onEquityTickerChange?: (value: string) => void;
+  equityShares?: number | null;
+  onEquitySharesChange?: (value: number | null) => void;
+  equityGrantPrice?: number | null;
+  onEquityGrantPriceChange?: (value: number | null) => void;
+  currentSharePrice?: number | null;
+  onCurrentSharePriceChange?: (value: number | null) => void;
+};
+
+const usd = (value: number) =>
+  value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+// A half-percent move is real money on a grant, so it is not rounded away.
+const percentLabel = (ratio: number) => {
+  const percent = (ratio - 1) * 100;
+  return `${Math.abs(percent) < 10 ? percent.toFixed(1) : Math.round(percent)}%`;
 };
 
 const CompensationSection = ({
@@ -69,7 +86,32 @@ const CompensationSection = ({
   onSignOnScheduleChange,
   relocationBonus,
   onRelocationBonusChange,
+  equityTicker,
+  onEquityTickerChange,
+  equityShares,
+  onEquitySharesChange,
+  equityGrantPrice,
+  onEquityGrantPriceChange,
+  currentSharePrice,
+  onCurrentSharePriceChange,
 }: CompensationSectionProps) => {
+  const grantValue = Number(equityTotalGrant) || Number(equity) || Number(equityBuybackValue) || 0;
+  const shares =
+    Number(equityShares) > 0
+      ? Number(equityShares)
+      : Number(equityGrantPrice) > 0 && grantValue > 0
+        ? grantValue / Number(equityGrantPrice)
+        : null;
+  // Shares win over the recorded grant price, matching priceRatio, so the preview cannot disagree.
+  const basisPrice =
+    Number(equityGrantPrice) > 0
+      ? Number(equityGrantPrice)
+      : shares && grantValue > 0
+        ? grantValue / shares
+        : null;
+  const ratio =
+    basisPrice && Number(currentSharePrice) > 0 ? Number(currentSharePrice) / basisPrice : null;
+  const showPricing = Boolean(onEquityTickerChange) && grantValue > 0;
   return (
     <div className="space-y-4">
       <CompensationFields
@@ -164,6 +206,106 @@ const CompensationSection = ({
               onChange={(value) => onEquityBuybackValueChange(value ?? 0)}
             />
           </div>
+        </div>
+      )}
+
+      {showPricing && (
+        <div className="rounded-lg border border-slate-200 p-3 dark:border-white/[0.08]">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <label className={FIELD_LABEL_CLASS}>Share pricing</label>
+            <span className="text-[11px] text-slate-400 dark:text-ink-500">
+              Optional. Revalues this grant at today&rsquo;s price — a private buyback works the
+              same way, using its internal price.
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div className="min-w-0">
+              <div className={FIELD_HEADER_CLASS}>
+                <label className={FIELD_LABEL_CLASS}>Symbol</label>
+              </div>
+              <input
+                value={equityTicker ?? ''}
+                placeholder="GOOG"
+                onChange={(event) => onEquityTickerChange?.(event.target.value.toUpperCase())}
+                className={CONTROL_CLASS}
+              />
+              <div className={FIELD_HINT_CLASS} />
+            </div>
+            <div className="min-w-0">
+              <div className={FIELD_HEADER_CLASS}>
+                <label className={FIELD_LABEL_CLASS}>Shares</label>
+              </div>
+              <UnitNumberInput
+                min={0}
+                value={equityShares ?? null}
+                placeholder="0"
+                onChange={(value) => onEquitySharesChange?.(value ?? null)}
+              />
+              <div className={FIELD_HINT_CLASS}>
+                {!Number(equityShares) && shares
+                  ? `≈ ${Math.round(shares).toLocaleString()} implied`
+                  : ''}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className={FIELD_HEADER_CLASS}>
+                <label className={FIELD_LABEL_CLASS}>Grant price</label>
+              </div>
+              <UnitNumberInput
+                unit="$"
+                min={0}
+                value={equityGrantPrice ?? null}
+                placeholder="0"
+                onChange={(value) => onEquityGrantPriceChange?.(value ?? null)}
+              />
+              <div className={FIELD_HINT_CLASS}>
+                {!Number(equityGrantPrice) && basisPrice
+                  ? `≈ $${basisPrice.toFixed(2)} implied`
+                  : ''}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <div className={FIELD_HEADER_CLASS}>
+                <label className={FIELD_LABEL_CLASS}>Current price</label>
+              </div>
+              <UnitNumberInput
+                unit="$"
+                min={0}
+                value={currentSharePrice ?? null}
+                placeholder="0"
+                onChange={(value) => onCurrentSharePriceChange?.(value ?? null)}
+              />
+              <div className={FIELD_HINT_CLASS}>
+                {equityTicker ? `Saved against ${equityTicker}` : 'Needs a symbol'}
+              </div>
+            </div>
+          </div>
+          {ratio !== null && ratio !== 1 && (
+            <p className="mt-1 text-xs text-slate-600 dark:text-ink-200">
+              <span
+                className={
+                  ratio > 1
+                    ? 'font-semibold text-emerald-600 dark:text-emerald-300'
+                    : 'font-semibold text-rose-600 dark:text-rose-300'
+                }
+              >
+                {ratio > 1 ? '+' : ''}
+                {percentLabel(ratio)}
+              </span>{' '}
+              at this price:{' '}
+              {[
+                Number(equity) > 0 ? `${usd(Number(equity) * ratio)} a year` : '',
+                Number(equityTotalGrant) > 0
+                  ? `${usd(Number(equityTotalGrant) * ratio)} total`
+                  : '',
+                Number(equityBuybackValue) > 0
+                  ? `${usd(Number(equityBuybackValue) * ratio)} buyback`
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+          )}
         </div>
       )}
 

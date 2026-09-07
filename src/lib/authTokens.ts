@@ -38,12 +38,6 @@ export const storeAuthTokens = (tokens: AuthTokenPair) => {
   dispatchAuthTokenEvent({ type: 'updated' });
 };
 
-export const updateStoredAccessToken = (accessToken: string) => {
-  const refreshToken = getStoredRefreshToken();
-  if (!refreshToken) return;
-  storeAuthTokens({ access: accessToken, refresh: refreshToken });
-};
-
 export const clearAuthTokens = () => {
   const storage = safeStorage();
   if (!storage) return;

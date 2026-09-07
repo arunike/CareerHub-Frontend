@@ -1,13 +1,6 @@
 import type { CommuteSummary } from './commute';
 import type { LinkedExperience } from './calculations';
-import type {
-  ApplicationLike,
-  MaritalStatus,
-  MaritalStatusOption,
-  OfferLike,
-  SimulatedOffer,
-} from './calculations';
-import type { AdjustedOfferMetrics } from './types';
+import type { MaritalStatus, MaritalStatusOption, SimulatedOffer } from './calculations';
 
 export interface CareerReferenceData {
   marital_status_options?: MaritalStatusOption[];
@@ -78,14 +71,4 @@ export interface SavedOfferAdjustmentSettings {
   maritalStatus: MaritalStatus;
   simulatedOffers: SimulatedOffer[];
   savedAt: string;
-}
-
-export interface OfferAdjustmentsPanelProps {
-  isOpen: boolean;
-  filteredOffers: OfferLike[];
-  applications: ApplicationLike[];
-  getApplicationName: (appId: number) => string;
-  onViewRealOffer?: (offerId: number) => void;
-  onEditRealOffer?: (offerId: number) => void;
-  onRealAdjustedChange?: (data: Record<number, AdjustedOfferMetrics>) => void;
 }

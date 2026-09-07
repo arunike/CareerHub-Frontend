@@ -1,4 +1,6 @@
+import type { ComponentType } from 'react';
 import {
+  BulbOutlined,
   CalendarOutlined,
   CheckSquareOutlined,
   DashboardOutlined,
@@ -16,11 +18,13 @@ import {
 export interface NavChild {
   key: string;
   label: string;
+  icon?: ComponentType;
 }
 
 export interface NavItem {
   key: string;
   label: string;
+  icon?: ComponentType;
   children?: NavChild[];
 }
 
@@ -32,7 +36,20 @@ export interface NavGroup {
 
 // One entry per tab; the sidebar tree and the mobile toolbar are both derived from this.
 export const NAV_REGISTRY = [
-  { key: '/', group: 'grp-1', label: 'Availability', shortLabel: 'Home', icon: DashboardOutlined },
+  {
+    key: '/command-center',
+    group: 'grp-1',
+    label: 'Command Center',
+    shortLabel: 'Home',
+    icon: DashboardOutlined,
+  },
+  {
+    key: '/availability',
+    group: 'grp-1',
+    label: 'Availability',
+    shortLabel: 'Hours',
+    icon: ScheduleOutlined,
+  },
   { key: '/events', group: 'grp-1', label: 'Events', shortLabel: 'Events', icon: CalendarOutlined },
   {
     key: '/holidays',
@@ -119,8 +136,6 @@ export const NAV_REGISTRY = [
   },
 ] as const;
 
-export type NavEntry = (typeof NAV_REGISTRY)[number];
-
 const GROUP_LABELS: Record<string, string> = {
   'grp-1': 'Schedule',
   'grp-2': 'Career & Growth',
@@ -128,6 +143,7 @@ const GROUP_LABELS: Record<string, string> = {
 };
 
 const PARENT_LABELS: Record<string, string> = { intelligence: 'Intelligence' };
+const PARENT_ICONS: Record<string, ComponentType> = { intelligence: BulbOutlined };
 
 // A parent takes the position of its first child, so nesting needs no separate ordering.
 const buildGroups = (): NavGroup[] =>
@@ -139,16 +155,21 @@ const buildGroups = (): NavGroup[] =>
       if (entry.group !== groupKey) continue;
       const parentKey = 'parent' in entry ? entry.parent : undefined;
       if (!parentKey) {
-        items.push({ key: entry.key, label: entry.label });
+        items.push({ key: entry.key, label: entry.label, icon: entry.icon });
         continue;
       }
       let parent = parents.get(parentKey);
       if (!parent) {
-        parent = { key: parentKey, label: PARENT_LABELS[parentKey] ?? parentKey, children: [] };
+        parent = {
+          key: parentKey,
+          label: PARENT_LABELS[parentKey] ?? parentKey,
+          icon: PARENT_ICONS[parentKey],
+          children: [],
+        };
         parents.set(parentKey, parent);
         items.push(parent);
       }
-      parent.children!.push({ key: entry.key, label: entry.label });
+      parent.children!.push({ key: entry.key, label: entry.label, icon: entry.icon });
     }
 
     return { key: groupKey, label, items };

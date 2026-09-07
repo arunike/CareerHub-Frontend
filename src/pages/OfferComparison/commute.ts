@@ -207,12 +207,26 @@ export const summariseCommute = (
   };
 };
 
-const COMMUTE_HOURS_FLOOR = 300;
+// Approached, never reached, so a longer commute always scores worse than a shorter one.
+export const MAX_TIME_PENALTY = 28;
+// Hours at which half the maximum penalty applies: roughly 30 minutes each way, five days a week.
+export const TIME_PENALTY_HALF_HOURS = 250;
 
-export const commuteBurdenScore = (annualHours: number) => {
-  if (!Number.isFinite(annualHours) || annualHours <= 0) return 100;
-  const ratio = Math.min(1, annualHours / COMMUTE_HOURS_FLOOR);
-  return Math.round((1 - ratio) * 100);
+// A hard cap scored every commute past ~45 minutes each way the same, where the choice is hardest.
+export const commuteTimePenalty = (annualHours: number) => {
+  if (!Number.isFinite(annualHours) || annualHours <= 0) return 0;
+  return (MAX_TIME_PENALTY * annualHours) / (annualHours + TIME_PENALTY_HALF_HOURS);
+};
+
+export const WORK_HOURS_PER_YEAR = 2080;
+// Half pay is the transport-economics convention: worth less than working time, far more than nil.
+export const COMMUTE_TIME_WAGE_FRACTION = 0.5;
+
+// What the hours are worth in money. Shown to explain the penalty, not subtracted from pay.
+export const commuteTimeCost = (annualHours: number, baseSalary: number) => {
+  const hourly = (Number(baseSalary) || 0) / WORK_HOURS_PER_YEAR;
+  if (hourly <= 0 || !Number.isFinite(annualHours) || annualHours <= 0) return 0;
+  return annualHours * hourly * COMMUTE_TIME_WAGE_FRACTION;
 };
 
 export const formatHours = (hours: number) =>

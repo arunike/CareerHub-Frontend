@@ -5,16 +5,29 @@ interface Thumb {
   width: number;
 }
 
+// Default sits beside an input; lg is for a page-level view switch, where 10px reads as a mistake.
+const SIZES = {
+  sm: {
+    track: 'p-0.5',
+    button: 'min-h-8 px-2 text-[10px] sm:min-h-0 sm:py-1',
+    thumb: 'inset-y-0.5',
+  },
+  lg: { track: 'p-1', button: 'min-h-9 px-4 text-[13px]', thumb: 'inset-y-1' },
+};
+
 // Segmented control with a thumb that slides between options rather than blinking to the new one.
 const ModeToggle = <T extends string>({
   options,
   value,
   onChange,
+  size = 'sm',
 }: {
   options: { label: string; value: T }[];
   value: T;
   onChange: (next: T) => void;
+  size?: keyof typeof SIZES;
 }) => {
+  const scale = SIZES[size];
   const [thumb, setThumb] = useState<Thumb | null>(null);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
 
@@ -46,12 +59,12 @@ const ModeToggle = <T extends string>({
     <div
       ref={trackRef}
       role="radiogroup"
-      className="relative inline-flex items-center rounded-lg bg-slate-100 dark:bg-ink-800 p-0.5 ring-1 ring-inset ring-slate-900/[0.04]"
+      className={`relative inline-flex items-center rounded-lg bg-slate-100 ring-1 ring-inset ring-slate-900/[0.04] dark:bg-ink-800 ${scale.track}`}
     >
       {thumb && (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-y-0.5 rounded-[7px] bg-white dark:bg-ink-900 shadow-[0_1px_2px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.04)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className={`pointer-events-none absolute rounded-[7px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.04)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-ink-900 ${scale.thumb}`}
           style={{ width: thumb.width, transform: `translateX(${thumb.left}px)`, left: 0 }}
         />
       )}
@@ -66,7 +79,7 @@ const ModeToggle = <T extends string>({
             else buttons.current.delete(option.value);
           }}
           onClick={() => onChange(option.value)}
-          className={`relative z-10 min-h-8 rounded-[7px] px-2 text-center text-[10px] font-semibold transition-colors duration-150 sm:min-h-0 sm:py-1 ${
+          className={`relative z-10 rounded-[7px] text-center font-semibold transition-colors duration-150 ${scale.button} ${
             value === option.value
               ? 'text-blue-600 dark:text-blue-300'
               : 'text-slate-500 dark:text-ink-400 hover:text-slate-700'

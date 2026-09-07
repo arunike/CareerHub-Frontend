@@ -222,11 +222,3 @@ export const createIncomeYear = (data: IncomeYearPayload) =>
 
 export const updateIncomeYear = (id: number, data: Partial<IncomeYearPayload>) =>
   api.patch<IncomeYearPayload>(`/career/income-years/${id}/`, data);
-
-export const createPaycheckActual = (data: PaycheckActualPayload) =>
-  api.post<PaycheckActualPayload>('/career/paycheck-actuals/', data);
-
-export const updatePaycheckActual = (id: number, data: Partial<PaycheckActualPayload>) =>
-  api.patch<PaycheckActualPayload>(`/career/paycheck-actuals/${id}/`, data);
-
-export const deletePaycheckActual = (id: number) => api.delete(`/career/paycheck-actuals/${id}/`);

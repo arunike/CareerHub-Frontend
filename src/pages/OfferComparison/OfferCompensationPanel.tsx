@@ -18,6 +18,14 @@ const OfferCompensationPanel = ({
   annualRefreshValue,
   baseSalary,
   bonus,
+  equityTicker,
+  onEquityTickerChange,
+  equityShares,
+  onEquitySharesChange,
+  equityGrantPrice,
+  onEquityGrantPriceChange,
+  currentSharePrice,
+  onCurrentSharePriceChange,
   defaultEquityMode,
   equity,
   equityBuybackValue,
@@ -65,6 +73,14 @@ const OfferCompensationPanel = ({
         equityBuybackValue={equityBuybackValue}
         onEquityBuybackValueChange={onEquityBuybackValueChange}
         equityTotalGrant={equityTotalGrant}
+        equityTicker={equityTicker}
+        onEquityTickerChange={onEquityTickerChange}
+        equityShares={equityShares}
+        onEquitySharesChange={onEquitySharesChange}
+        equityGrantPrice={equityGrantPrice}
+        onEquityGrantPriceChange={onEquityGrantPriceChange}
+        currentSharePrice={currentSharePrice}
+        onCurrentSharePriceChange={onCurrentSharePriceChange}
         annualRefreshValue={annualRefreshValue}
         onAnnualRefreshValueChange={onAnnualRefreshValueChange}
         refreshStartsYear={refreshStartsYear}
