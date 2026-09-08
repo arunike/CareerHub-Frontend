@@ -15,6 +15,7 @@ const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'))
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const ActivityChart = lazy(() => import('./ActivityChart'));
 const ResumeVersionAnalytics = lazy(() => import('./ResumeVersionAnalytics'));
+const DecisionOutcomeInsights = lazy(() => import('./DecisionOutcomeInsights'));
 
 const SectionFallback = () => (
   <div className="w-full space-y-6">
@@ -209,6 +210,10 @@ const Analytics: React.FC = () => {
 
               <Suspense fallback={<SectionFallback />}>
                 <ResumeVersionAnalytics selectedYear={selectedYear} />
+              </Suspense>
+
+              <Suspense fallback={<SectionFallback />}>
+                <DecisionOutcomeInsights />
               </Suspense>
 
               <Suspense fallback={<SectionFallback />}>

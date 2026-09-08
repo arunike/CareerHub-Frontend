@@ -1,5 +1,6 @@
 import type {
   ApplicationTimelineEntry,
+  DecisionOutcomeInsightsData,
   ResumeVersionAnalyticsData,
   ApplicationStats,
   ApplicationTimelineAnalytics,
@@ -104,6 +105,9 @@ export const getApplicationStats = (year?: number | 'all') =>
   api.get<ApplicationStats>('/career/application-stats/', {
     params: year && year !== 'all' ? { year } : undefined,
   });
+
+export const getDecisionOutcomeInsights = () =>
+  api.get<DecisionOutcomeInsightsData>('/career/decision-outcome-insights/');
 
 export const getResumeVersionAnalytics = (year?: number | 'all') =>
   api.get<ResumeVersionAnalyticsData>('/career/resume-version-analytics/', {

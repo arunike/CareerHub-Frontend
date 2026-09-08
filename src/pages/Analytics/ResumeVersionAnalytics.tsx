@@ -95,7 +95,7 @@ const VersionCard = ({
   const delta = rateDelta(version, data, rate);
   return (
     <article
-      className={`enterprise-card p-4 sm:p-5 ${
+      className={`enterprise-card p-4 sm:p-6 ${
         isBest ? 'ring-1 ring-inset ring-emerald-300 dark:ring-emerald-400/30' : ''
       }`}
     >
@@ -154,7 +154,7 @@ const VersionCard = ({
 
       {/* The warning sits with the numbers rather than in a footnote nobody reads. */}
       {warning ? (
-        <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11.5px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+        <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2.5 text-[11.5px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
           <WarningOutlined className="text-[11px]" />
           {warning}
         </p>

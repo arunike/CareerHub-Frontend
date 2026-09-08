@@ -219,3 +219,41 @@ export interface ResumeVersionAnalyticsData {
   untracked_applications: number;
   overall: Omit<ResumeGroupStats, 'key' | 'label'>;
 }
+
+export type DecisionCriterion =
+  | 'financial'
+  | 'benefits'
+  | 'workLife'
+  | 'trajectory'
+  | 'location'
+  | 'brand'
+  | 'visa';
+
+export interface RealisedConcern {
+  journal_id: number;
+  company_name: string;
+  decision: 'ACCEPTED' | 'DECLINED';
+  decided_on: string;
+  text: string;
+}
+
+export interface CriterionOutcomeRow {
+  key: DecisionCriterion;
+  label: string;
+  chosen_count: number;
+  judged_count: number;
+  better: number;
+  as_expected: number;
+  worse: number;
+  below_minimum_sample: boolean;
+}
+
+export interface DecisionOutcomeInsightsData {
+  minimum_decisions_for_pattern: number;
+  journal_count: number;
+  reviewed_count: number;
+  concerns_raised: number;
+  concerns_resolved: number;
+  concerns_became_real: RealisedConcern[];
+  criteria: CriterionOutcomeRow[];
+}

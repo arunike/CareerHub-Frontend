@@ -92,14 +92,14 @@ export interface OfferDecisionJournalPayload {
   decided_on: string;
   started_on?: string | null;
   reasons?: string;
-  concerns?: string;
-  confidence?: number;
+  concerns?: Array<{ id: string; text: string; outcome?: string | null }>;
+  criteria?: string[];
   reviews?: Array<{
     milestone: number;
     completed_on?: string | null;
     verdict?: string | null;
     notes?: string;
-    confidence?: number | null;
+    criteria_verdicts?: Record<string, string | null | undefined>;
   }>;
 }
 

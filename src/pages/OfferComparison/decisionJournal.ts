@@ -1,3 +1,5 @@
+import type { DecisionCriterion } from '../../types/career';
+
 export type JournalDecision = 'ACCEPTED' | 'DECLINED';
 
 export interface JournalReview {
@@ -5,6 +7,52 @@ export interface JournalReview {
   completed_on?: string | null;
   verdict?: 'HELD_UP' | 'MIXED' | 'WRONG' | null;
   notes?: string;
+  criteria_verdicts?: Partial<Record<DecisionCriterion, CriterionVerdict | null>>;
+}
+
+// The scorecard's own categories, so "what mattered" lines up with the weights already set.
+export const DECISION_CRITERIA: readonly DecisionCriterion[] = [
+  'financial',
+  'benefits',
+  'workLife',
+  'trajectory',
+  'location',
+  'brand',
+  'visa',
+];
+
+export type { DecisionCriterion } from '../../types/career';
+
+export const CRITERION_LABELS: Record<DecisionCriterion, string> = {
+  financial: 'Financial',
+  benefits: 'Benefits',
+  workLife: 'Work-life balance',
+  trajectory: 'Trajectory',
+  location: 'Location',
+  brand: 'Brand',
+  visa: 'Immigration',
+};
+
+export type CriterionVerdict = 'BETTER' | 'AS_EXPECTED' | 'WORSE';
+
+export const CRITERION_VERDICT_LABELS: Record<CriterionVerdict, string> = {
+  BETTER: 'Better',
+  AS_EXPECTED: 'As expected',
+  WORSE: 'Worse',
+};
+
+export type ConcernOutcome = 'REAL' | 'AVOIDED' | 'UNCLEAR';
+
+export const CONCERN_OUTCOME_LABELS: Record<ConcernOutcome, string> = {
+  REAL: 'Became real',
+  AVOIDED: 'Never happened',
+  UNCLEAR: 'Still unclear',
+};
+
+export interface JournalConcern {
+  id: string;
+  text: string;
+  outcome?: ConcernOutcome | null;
 }
 
 export interface DecisionJournalEntry {
@@ -16,7 +64,8 @@ export interface DecisionJournalEntry {
   decided_on: string;
   started_on?: string | null;
   reasons?: string;
-  concerns?: string;
+  concerns?: JournalConcern[];
+  criteria?: DecisionCriterion[];
   reviews?: JournalReview[];
 }
 
@@ -144,4 +193,12 @@ export const defaultDecidedOn = ({
     return (deadline as string).slice(0, 10);
   }
   return todayIso;
+};
+
+// Ids only have to be unique inside one journal, and a look-back marks a concern by its id.
+export const newConcernId = (existing: JournalConcern[]) => {
+  const used = new Set(existing.map((concern) => concern.id));
+  let index = existing.length + 1;
+  while (used.has(`c${index}`)) index += 1;
+  return `c${index}`;
 };

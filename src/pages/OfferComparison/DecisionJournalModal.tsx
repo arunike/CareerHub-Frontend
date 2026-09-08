@@ -1,20 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, DatePicker, Input, Segmented, Tag, message } from 'antd';
-import { LockOutlined } from '@ant-design/icons';
+import { Button, DatePicker, Input, Popconfirm, Segmented, Select, Tag, message } from 'antd';
+import { DeleteOutlined, LockOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import ModalShell from '../../components/ModalShell';
 import {
   createOfferDecisionJournal,
+  deleteOfferDecisionJournal,
   getApplicationTimeline,
   getOfferDecisionJournal,
   updateOfferDecisionJournal,
 } from '../../api';
 import {
+  CONCERN_OUTCOME_LABELS,
+  CRITERION_LABELS,
+  CRITERION_VERDICT_LABELS,
+  DECISION_CRITERIA,
   decisionFromOffer,
   defaultDecidedOn,
   journalOutcome,
+  newConcernId,
   reviewSchedule,
+  type ConcernOutcome,
+  type CriterionVerdict,
+  type DecisionCriterion,
   type DecisionJournalEntry,
+  type JournalConcern,
   type JournalDecision,
   type JournalReview,
   type TimelineDate,
@@ -46,6 +56,7 @@ const DecisionJournalModal = ({
 }) => {
   const [entry, setEntry] = useState<DecisionJournalEntry | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const todayIso = dayjs().format('YYYY-MM-DD');
 
   const load = useCallback(async () => {
@@ -75,7 +86,8 @@ const DecisionJournalModal = ({
       }),
       started_on: offer.linked_experience?.start_date ?? null,
       reasons: '',
-      concerns: '',
+      concerns: [],
+      criteria: [],
       reviews: [],
     });
   }, [offer, todayIso]);
@@ -106,6 +118,54 @@ const DecisionJournalModal = ({
     }
   };
 
+  const patchConcern = (id: string, updates: Partial<JournalConcern>) =>
+    setEntry((current) =>
+      current
+        ? {
+            ...current,
+            concerns: (current.concerns ?? []).map((concern) =>
+              concern.id === id ? { ...concern, ...updates } : concern
+            ),
+          }
+        : current
+    );
+
+  const recordCriterionVerdict = (
+    milestone: number,
+    criterion: DecisionCriterion,
+    verdict: CriterionVerdict
+  ) =>
+    setEntry((current) => {
+      if (!current) return current;
+      const reviews = current.reviews ?? [];
+      const existing = reviews.find((review) => review.milestone === milestone);
+      const merged: JournalReview = {
+        ...(existing ?? { milestone }),
+        completed_on: existing?.completed_on ?? todayIso,
+        criteria_verdicts: { ...(existing?.criteria_verdicts ?? {}), [criterion]: verdict },
+      };
+      return {
+        ...current,
+        reviews: existing
+          ? reviews.map((review) => (review.milestone === milestone ? merged : review))
+          : [...reviews, merged],
+      };
+    });
+
+  const remove = async () => {
+    if (!entry?.id) return;
+    setDeleting(true);
+    try {
+      await deleteOfferDecisionJournal(entry.id);
+      message.success('Decision journal deleted');
+      onClose();
+    } catch {
+      message.error('Could not delete the decision journal');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Recording a review replaces that milestone rather than appending a second one for it.
   const recordReview = (milestone: number, updates: Partial<JournalReview>) =>
     setEntry((current) => {
@@ -122,7 +182,10 @@ const DecisionJournalModal = ({
     });
 
   if (!entry) return null;
+  const concerns = entry.concerns ?? [];
+  const criteria = entry.criteria ?? [];
   const schedule = reviewSchedule(entry, todayIso);
+  const everyLookBackLocked = schedule.every((slot) => slot.status === 'upcoming');
   const outcome = journalOutcome(entry, todayIso);
   const isDeclined = entry.decision === 'DECLINED';
 
@@ -134,11 +197,30 @@ const DecisionJournalModal = ({
       maxWidthClass="max-w-[680px]"
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
       footer={
-        <div className="flex justify-end gap-2">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" loading={saving} onClick={() => void save()}>
-            Save
-          </Button>
+        <div className="flex w-full items-center justify-between gap-2">
+          {/* Only a saved entry can be removed; an unsaved one is discarded by Cancel. */}
+          {entry.id ? (
+            <Popconfirm
+              title="Delete this decision journal?"
+              description="The reasons, concerns and look-backs are removed, and it stops counting towards Decision outcomes."
+              okText="Delete"
+              cancelText="Keep"
+              okButtonProps={{ danger: true }}
+              onConfirm={() => void remove()}
+            >
+              <Button danger type="text" loading={deleting}>
+                Delete
+              </Button>
+            </Popconfirm>
+          ) : (
+            <span />
+          )}
+          <div className="flex gap-2">
+            <Button onClick={onClose}>Cancel</Button>
+            <Button type="primary" loading={saving} onClick={() => void save()}>
+              Save
+            </Button>
+          </div>
         </div>
       }
     >
@@ -200,17 +282,68 @@ const DecisionJournalModal = ({
           />
         </label>
 
-        <label className="block">
+        <div>
           <span className="mb-1 block text-xs font-semibold text-slate-500 dark:text-ink-400">
-            What worried you
+            What mattered most
           </span>
-          <Input.TextArea
-            rows={2}
-            value={entry.concerns ?? ''}
-            onChange={(event) => patch({ concerns: event.target.value })}
-            placeholder="The risks you accepted, so the look-back has something to check"
+          <Select
+            mode="multiple"
+            className="w-full"
+            value={entry.criteria ?? []}
+            onChange={(value) => patch({ criteria: value as DecisionCriterion[] })}
+            placeholder="The categories this call actually rested on"
+            options={DECISION_CRITERIA.map((key) => ({ value: key, label: CRITERION_LABELS[key] }))}
           />
-        </label>
+          <span className="mt-1 block text-[11px] text-slate-400 dark:text-ink-500">
+            The scorecard's own categories, so a look-back can grade each one later.
+          </span>
+        </div>
+
+        {/* One row per worry rather than a paragraph, so each can be marked real or not on its own. */}
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-ink-400">
+              What worried you
+            </span>
+            <Button
+              size="small"
+              type="text"
+              icon={<PlusOutlined />}
+              onClick={() =>
+                patch({
+                  concerns: [...concerns, { id: newConcernId(concerns), text: '', outcome: null }],
+                })
+              }
+            >
+              Add
+            </Button>
+          </div>
+          {concerns.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-[12px] text-slate-400 dark:border-white/[0.08] dark:text-ink-500">
+              Add the risks you accepted, one per line, so the look-back has something to check.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {concerns.map((concern) => (
+                <div key={concern.id} className="flex items-center gap-2">
+                  <Input
+                    value={concern.text}
+                    onChange={(event) => patchConcern(concern.id, { text: event.target.value })}
+                    placeholder="A risk you accepted"
+                  />
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={() =>
+                      patch({ concerns: concerns.filter((item) => item.id !== concern.id) })
+                    }
+                    aria-label="Remove concern"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <section>
           <p className="mb-2 text-xs font-semibold text-slate-500 dark:text-ink-400">Look back</p>
@@ -301,11 +434,79 @@ const DecisionJournalModal = ({
                           : 'What actually happened against what you expected'
                       }
                     />
+
+                    {/* Grading the named criteria is what makes a pattern readable later. */}
+                    {criteria.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500">
+                          How each one turned out
+                        </p>
+                        {criteria.map((criterion) => (
+                          <div key={criterion} className="flex flex-wrap items-center gap-2">
+                            <span className="w-32 shrink-0 text-[12px] text-slate-600 dark:text-ink-200">
+                              {CRITERION_LABELS[criterion]}
+                            </span>
+                            <Segmented
+                              size="small"
+                              disabled={locked}
+                              value={slot.review?.criteria_verdicts?.[criterion] ?? undefined}
+                              onChange={(value) =>
+                                recordCriterionVerdict(
+                                  slot.milestone,
+                                  criterion,
+                                  value as CriterionVerdict
+                                )
+                              }
+                              options={(
+                                Object.keys(CRITERION_VERDICT_LABELS) as CriterionVerdict[]
+                              ).map((key) => ({
+                                value: key,
+                                label: CRITERION_VERDICT_LABELS[key],
+                              }))}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Concern outcomes sit outside the milestones: a worry becomes real once, not twice. */}
+          {concerns.length > 0 && (
+            <div className="mt-3 rounded-xl border border-slate-200 p-4 dark:border-white/[0.08]">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500">
+                Did what worried you happen?
+              </p>
+              <div className="space-y-2">
+                {concerns.map((concern) => (
+                  <div key={concern.id} className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[12px] text-slate-600 dark:text-ink-200">
+                      {concern.text || 'Untitled concern'}
+                    </span>
+                    <Segmented
+                      size="small"
+                      disabled={everyLookBackLocked}
+                      value={concern.outcome ?? undefined}
+                      onChange={(value) =>
+                        patchConcern(concern.id, { outcome: value as ConcernOutcome })
+                      }
+                      options={(Object.keys(CONCERN_OUTCOME_LABELS) as ConcernOutcome[]).map(
+                        (key) => ({ value: key, label: CONCERN_OUTCOME_LABELS[key] })
+                      )}
+                    />
+                  </div>
+                ))}
+              </div>
+              {everyLookBackLocked && (
+                <p className="mt-2 text-[11px] text-slate-400 dark:text-ink-500">
+                  Opens with the first look-back.
+                </p>
+              )}
+            </div>
+          )}
         </section>
       </div>
     </ModalShell>
