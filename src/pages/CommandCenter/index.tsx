@@ -2,13 +2,21 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { Skeleton } from 'antd';
-import { getApplications, getEvents, getOffers, getTasks, getUserSettings } from '../../api';
+import {
+  getApplications,
+  getEvents,
+  getOfferDecisionJournal,
+  getOffers,
+  getTasks,
+  getUserSettings,
+} from '../../api';
 import ModeToggle from '../../components/ModeToggle';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import type { ApplicationStage } from '../../constants/applicationStages';
 import TodayView from './TodayView';
 import WeekView from './WeekView';
 import type { CommandApplication, CommandEvent, CommandOffer, CommandTask } from './commandCenter';
+import type { DecisionJournalEntry } from '../OfferComparison/decisionJournal';
 
 const list = <T,>(payload: unknown): T[] => {
   if (Array.isArray(payload)) return payload as T[];
@@ -29,6 +37,7 @@ export default function CommandCenterPage() {
   const [applications, setApplications] = useState<CommandApplication[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [offers, setOffers] = useState<CommandOffer[]>([]);
+  const [journals, setJournals] = useState<DecisionJournalEntry[]>([]);
   // Stage labels are user-configurable; the defaults are only a fallback.
   const [stages, setStages] = useState<ApplicationStage[]>(DEFAULT_APPLICATION_STAGES);
   // In the URL, so a reload or a shared link lands on the same view.
@@ -41,19 +50,26 @@ export default function CommandCenterPage() {
     let cancelled = false;
     const load = async () => {
       // One failing source should not blank the page; each card degrades on its own.
-      const [eventRes, applicationRes, taskRes, offerRes, settingsRes] = await Promise.allSettled([
-        getEvents({ start_date: todayIso, end_date: dayjs().add(90, 'day').format('YYYY-MM-DD') }),
-        getApplications({ page_size: 200 }),
-        getTasks(),
-        getOffers(),
-        getUserSettings(),
-      ]);
+      const [eventRes, applicationRes, taskRes, offerRes, settingsRes, journalRes] =
+        await Promise.allSettled([
+          getEvents({
+            start_date: todayIso,
+            end_date: dayjs().add(90, 'day').format('YYYY-MM-DD'),
+          }),
+          getApplications({ page_size: 200 }),
+          getTasks(),
+          getOffers(),
+          getUserSettings(),
+          getOfferDecisionJournal(),
+        ]);
       if (cancelled) return;
       if (eventRes.status === 'fulfilled') setEvents(list<CommandEvent>(eventRes.value.data));
       if (applicationRes.status === 'fulfilled')
         setApplications(list<CommandApplication>(applicationRes.value.data));
       if (taskRes.status === 'fulfilled') setTasks(list<CommandTask>(taskRes.value.data));
       if (offerRes.status === 'fulfilled') setOffers(list<CommandOffer>(offerRes.value.data));
+      if (journalRes.status === 'fulfilled')
+        setJournals(list<DecisionJournalEntry>(journalRes.value.data));
       if (settingsRes.status === 'fulfilled') {
         const configured = settingsRes.value.data.application_stages;
         if (configured?.length) setStages(configured);
@@ -66,7 +82,7 @@ export default function CommandCenterPage() {
     };
   }, [todayIso]);
 
-  const data = { events, applications, tasks, offers, stages, todayIso };
+  const data = { events, applications, tasks, offers, journals, stages, todayIso };
 
   return (
     <div className="space-y-5">

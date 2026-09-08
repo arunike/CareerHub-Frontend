@@ -9,6 +9,7 @@ type Props = {
   applicationsById: Record<number, Application | undefined>;
   isRowRejected: boolean;
   onDeleteClick: (offer: Offer) => void;
+  onDecisionJournalClick: (offer: Offer) => void;
   onDeleteScenario: (id: string) => void;
   onEditClick: (offer: Offer) => void;
   onEditScenario: (id: string) => void;
@@ -25,6 +26,7 @@ type Props = {
 const ScorecardActionBar = ({
   applicationsById,
   isRowRejected,
+  onDecisionJournalClick,
   onDeleteClick,
   onDeleteScenario,
   onEditClick,
@@ -95,6 +97,13 @@ const ScorecardActionBar = ({
             className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300 transition-colors hover:bg-emerald-50 sm:min-h-9 sm:rounded-lg"
           >
             Snapshots
+          </button>
+          <button
+            type="button"
+            onClick={() => onDecisionJournalClick(row.storedOffer as Offer)}
+            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-violet-600 dark:text-violet-300 transition-colors hover:bg-violet-50 sm:min-h-9 sm:rounded-lg"
+          >
+            Journal
           </button>
           <Popover
             trigger="click"

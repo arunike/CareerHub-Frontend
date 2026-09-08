@@ -14,6 +14,7 @@ import {
 } from './calculations';
 import type { AdjustedOfferMetrics } from './types';
 import { normalizeEquityLiquidity } from './equityLiquidity';
+import { DEFAULT_UNLIMITED_PTO_DAYS } from './decisionScoring';
 import { getStockPrices, saveStockPrice } from '../../api';
 import { normalizeSymbol } from './equityPricing';
 
@@ -33,6 +34,7 @@ type Props = {
   removeEditingBenefitItem: (id: string) => void;
   onClose: () => void;
   onSave: () => void;
+  onSharePriceSaved?: () => void;
   drivingDefaults?: Partial<DrivingDefaults> | null;
 };
 
@@ -50,6 +52,7 @@ const EditOfferModal = ({
   removeEditingBenefitItem,
   onClose,
   onSave,
+  onSharePriceSaved,
   drivingDefaults,
 }: Props) => {
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
@@ -127,7 +130,9 @@ const EditOfferModal = ({
         symbol,
         price: currentSharePrice,
         as_of: new Date().toISOString().slice(0, 10),
-      }).catch(() => message.error('The offer saved, but its share price did not.'));
+      })
+        .then(() => onSharePriceSaved?.())
+        .catch(() => message.error('The offer saved, but its share price did not.'));
     }
     onSave();
   };
@@ -339,6 +344,12 @@ const EditOfferModal = ({
             ptoDays={Number(editingOffer.pto_days) || 0}
             onPtoDaysChange={(value) => setEditingOfferField('pto_days', value)}
             isUnlimitedPto={!!editingOffer.is_unlimited_pto}
+            unlimitedPtoPlanningDays={
+              editingOffer.unlimited_pto_planning_days ?? DEFAULT_UNLIMITED_PTO_DAYS
+            }
+            onUnlimitedPtoPlanningDaysChange={(value) =>
+              setEditingOfferField('unlimited_pto_planning_days', value)
+            }
             onIsUnlimitedPtoChange={(value) => setEditingOfferField('is_unlimited_pto', value)}
             sickLeaveDays={Number(editingOffer.sick_leave_days) || 0}
             onSickLeaveDaysChange={(value) => setEditingOfferField('sick_leave_days', value)}

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { OfferLike as Offer } from './calculations';
 
-// The four modals that target a single offer, plus a way to drop a deleted one.
+// The modals that target a single offer, plus a way to drop a deleted one.
 export const useOfferDialogs = () => {
   const [negotiatingOffer, setNegotiatingOffer] = useState<Offer | null>(null);
   const [negotiationLogOffer, setNegotiationLogOffer] = useState<Offer | null>(null);
   const [raiseHistoryOffer, setRaiseHistoryOffer] = useState<Offer | null>(null);
   const [snapshotOffer, setSnapshotOffer] = useState<Offer | null>(null);
+  const [journalOffer, setJournalOffer] = useState<Offer | null>(null);
 
   const forgetOffer = (offerId?: number | string) => {
     const matches = (offer: Offer | null) => offer?.id === offerId;
@@ -14,6 +15,7 @@ export const useOfferDialogs = () => {
     setNegotiationLogOffer((prev) => (matches(prev) ? null : prev));
     setRaiseHistoryOffer((prev) => (matches(prev) ? null : prev));
     setSnapshotOffer((prev) => (matches(prev) ? null : prev));
+    setJournalOffer((prev) => (matches(prev) ? null : prev));
   };
 
   const applyUpdatedOffer = (updated: Offer) => {
@@ -31,6 +33,8 @@ export const useOfferDialogs = () => {
     setRaiseHistoryOffer,
     snapshotOffer,
     setSnapshotOffer,
+    journalOffer,
+    setJournalOffer,
     forgetOffer,
     applyUpdatedOffer,
   };

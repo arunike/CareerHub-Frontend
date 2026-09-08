@@ -9,6 +9,7 @@ import { computeBenefitsTotal } from './calculations';
 import { buildScenarioFromLinkedApplication } from './scenarioDraft';
 import { getApplication } from '../../api';
 import { normalizeEquityLiquidity } from './equityLiquidity';
+import { DEFAULT_UNLIMITED_PTO_DAYS } from './decisionScoring';
 
 type Props = {
   isOpen: boolean;
@@ -269,6 +270,12 @@ const ScenarioOfferModal = ({
               ptoDays={Number(newScenario.pto_days) || 0}
               onPtoDaysChange={(value) => setNewScenarioField('pto_days', value)}
               isUnlimitedPto={!!newScenario.is_unlimited_pto}
+              unlimitedPtoPlanningDays={
+                Number(newScenario.unlimited_pto_planning_days) || DEFAULT_UNLIMITED_PTO_DAYS
+              }
+              onUnlimitedPtoPlanningDaysChange={(value) =>
+                setNewScenarioField('unlimited_pto_planning_days', value)
+              }
               onIsUnlimitedPtoChange={(value) => setNewScenarioField('is_unlimited_pto', value)}
               sickLeaveDays={Number(newScenario.sick_leave_days) || 0}
               onSickLeaveDaysChange={(value) => setNewScenarioField('sick_leave_days', value)}

@@ -1,4 +1,5 @@
 import UnitNumberInput from '../../../components/UnitNumberInput';
+import { DEFAULT_UNLIMITED_PTO_DAYS } from '../decisionScoring';
 type TimeOffSectionProps = {
   ptoDays?: number;
   onPtoDaysChange?: (value: number) => void;
@@ -10,6 +11,8 @@ type TimeOffSectionProps = {
   onSickLeaveIncludedInUnlimitedPtoChange?: (value: boolean) => void;
   holidayDays?: number;
   onHolidayDaysChange?: (value: number) => void;
+  unlimitedPtoPlanningDays?: number;
+  onUnlimitedPtoPlanningDaysChange?: (value: number) => void;
 };
 
 const TimeOffSection = ({
@@ -23,6 +26,8 @@ const TimeOffSection = ({
   onSickLeaveIncludedInUnlimitedPtoChange,
   holidayDays,
   onHolidayDaysChange,
+  unlimitedPtoPlanningDays,
+  onUnlimitedPtoPlanningDaysChange,
 }: TimeOffSectionProps) => {
   const showSeparateSickLeave = !isUnlimitedPto || !sickLeaveIncludedInUnlimitedPto;
 
@@ -67,6 +72,26 @@ const TimeOffSection = ({
             <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-ink-200">
               Sick leave is included and is not counted again.
             </p>
+          )}
+          {isUnlimitedPto && onUnlimitedPtoPlanningDaysChange && (
+            <div className="mt-3">
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-ink-100">
+                Days you would actually take
+              </label>
+              <UnitNumberInput
+                unit="days"
+                min={0}
+                max={60}
+                value={unlimitedPtoPlanningDays ?? null}
+                placeholder={String(DEFAULT_UNLIMITED_PTO_DAYS)}
+                onChange={(value) =>
+                  onUnlimitedPtoPlanningDaysChange(value ?? DEFAULT_UNLIMITED_PTO_DAYS)
+                }
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-ink-400">
+                Unlimited is scored on what you would really book, not what the policy allows.
+              </p>
+            </div>
           )}
         </div>
       )}

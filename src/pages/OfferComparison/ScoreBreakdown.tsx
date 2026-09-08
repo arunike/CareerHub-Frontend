@@ -1,14 +1,27 @@
 import clsx from 'clsx';
 import type { DecisionRow } from './decisionScoring';
 
-export const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
+export const ScoreBreakdownContent = ({
+  row,
+  // A popover has to size and scroll itself; a sheet is already sized by its container.
+  variant = 'popover',
+}: {
+  row: DecisionRow;
+  variant?: 'popover' | 'sheet';
+}) => {
   const scored = row.categories.filter((c) => c.isScored);
   const skipped = row.categories.filter((c) => !c.isScored);
   const activeWeightTotal = scored.reduce((s, c) => s + c.weight, 0) || 1;
   const rawSum = scored.reduce((s, c) => s + c.score * c.weight, 0);
 
   return (
-    <div className="w-[min(360px,calc(100vw-32px))] text-xs">
+    <div
+      className={
+        variant === 'sheet'
+          ? 'w-full text-xs'
+          : 'max-h-[min(70vh,640px)] w-[min(560px,calc(100vw-32px))] overflow-y-auto text-xs'
+      }
+    >
       {/* Step 1 */}
       <div className="mb-3">
         <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500 mb-2">
@@ -32,41 +45,54 @@ export const ScoreBreakdownContent = ({ row }: { row: DecisionRow }) => {
                   {c.detail}
                 </div>
                 {c.calculationLines && c.calculationLines.length > 0 && (
-                  <dl className="mt-1.5 divide-y divide-slate-200/70 dark:divide-white/[0.08] overflow-hidden rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900">
-                    {c.calculationLines.map((line, index) => {
-                      const split = line.indexOf(': ');
-                      const label = split > 0 ? line.slice(0, split) : null;
-                      const value = split > 0 ? line.slice(split + 2) : line;
-                      const isResult = index === c.calculationLines!.length - 1;
-                      return (
-                        <div
-                          key={`${index}-${line}`}
-                          className={`px-2.5 py-1.5 ${isResult ? 'bg-white/80 dark:bg-ink-900/80' : ''}`}
-                        >
-                          {label ? (
-                            <dt
-                              className={`text-[11px] leading-5 ${
-                                isResult
-                                  ? 'font-bold text-slate-700 dark:text-ink-100'
-                                  : 'font-semibold text-slate-500 dark:text-ink-400'
-                              }`}
-                            >
-                              {label}
-                            </dt>
-                          ) : null}
-                          <dd
-                            className={`m-0 whitespace-normal break-words text-[11px] leading-5 tabular-nums ${
-                              isResult
-                                ? 'font-semibold text-slate-800 dark:text-ink-50'
-                                : 'text-slate-600 dark:text-ink-200'
+                  // Collapsed by default: six categories of working at once is a wall of text.
+                  <details className="group mt-1.5">
+                    <summary className="cursor-pointer list-none text-[11px] font-semibold text-blue-600 hover:underline dark:text-blue-300">
+                      <span className="group-open:hidden">
+                        Show the maths ({c.calculationLines.length} steps)
+                      </span>
+                      <span className="hidden group-open:inline">Hide the maths</span>
+                    </summary>
+                    <dl className="mt-1.5 divide-y divide-slate-200/70 overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50 dark:divide-white/[0.08] dark:border-white/[0.08] dark:bg-ink-900">
+                      {c.calculationLines.map((line, index) => {
+                        const split = line.indexOf(': ');
+                        const label = split > 0 ? line.slice(0, split) : null;
+                        const value = split > 0 ? line.slice(split + 2) : line;
+                        const isResult = index === c.calculationLines!.length - 1;
+                        return (
+                          <div
+                            key={`${index}-${line}`}
+                            className={`gap-x-3 px-2.5 py-1.5 sm:grid sm:grid-cols-[8.5rem_1fr] ${
+                              isResult ? 'bg-white/80 dark:bg-ink-900/80' : ''
                             }`}
                           >
-                            {value}
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
+                            {label ? (
+                              <dt
+                                className={`text-[11px] leading-5 ${
+                                  isResult
+                                    ? 'font-bold text-slate-700 dark:text-ink-100'
+                                    : 'font-semibold text-slate-500 dark:text-ink-400'
+                                }`}
+                              >
+                                {label}
+                              </dt>
+                            ) : (
+                              <dt className="hidden sm:block" />
+                            )}
+                            <dd
+                              className={`m-0 whitespace-normal break-words text-[11px] leading-5 tabular-nums ${
+                                isResult
+                                  ? 'font-semibold text-slate-800 dark:text-ink-50'
+                                  : 'text-slate-600 dark:text-ink-200'
+                              }`}
+                            >
+                              {value}
+                            </dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                  </details>
                 )}
               </div>
             );

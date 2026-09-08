@@ -78,15 +78,22 @@ export const useOfferComparisonRows = ({
     drivingDefaults,
   });
 
-  const displayOffers =
-    visibleOfferIds.length > 0
-      ? filteredOffers.filter((offer) => visibleOfferIds.includes(`real-${offer.id}`))
-      : filteredOffers;
+  // Memoised: once anything is selected, filter() would hand back a new array every render.
+  const displayOffers = useMemo(
+    () =>
+      visibleOfferIds.length > 0
+        ? filteredOffers.filter((offer) => visibleOfferIds.includes(`real-${offer.id}`))
+        : filteredOffers,
+    [filteredOffers, visibleOfferIds]
+  );
 
-  const displaySimulatedOffers =
-    visibleOfferIds.length > 0
-      ? simulatedOffers.filter((offer) => visibleOfferIds.includes(`sim-${offer.id}`))
-      : simulatedOffers;
+  const displaySimulatedOffers = useMemo(
+    () =>
+      visibleOfferIds.length > 0
+        ? simulatedOffers.filter((offer) => visibleOfferIds.includes(`sim-${offer.id}`))
+        : simulatedOffers,
+    [simulatedOffers, visibleOfferIds]
+  );
 
   const displayScenarioRows = useMemo(() => {
     if (visibleOfferIds.length === 0) return scenarioRows;

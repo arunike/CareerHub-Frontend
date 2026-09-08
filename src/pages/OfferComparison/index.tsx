@@ -1,6 +1,6 @@
-import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { updateApplication } from '../../api';
-import { PlusOutlined, StockOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import PageActionToolbar from '../../components/PageActionToolbar';
 import { getCurrentYear } from '../../utils/yearFilter';
 import { Button, message, Select, Spin } from 'antd';
@@ -29,7 +29,6 @@ import {
 } from './calculations';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CommuteComparison from './CommuteComparison';
-import StockPricingModal from './StockPricingModal';
 import DrivingAssumptions from './DrivingAssumptions';
 import OfferModalStack from './OfferModalStack';
 
@@ -81,7 +80,6 @@ const OfferComparison = () => {
     }
   );
 
-  const [stockPricingOpen, setStockPricingOpen] = useState(false);
   const {
     offers,
     comparisonOffers,
@@ -106,8 +104,13 @@ const OfferComparison = () => {
   const editor = useOfferEditor({ applications, setOffers, setApplications, messageApi });
   const { handleEditClick } = editor;
   const dialogs = useOfferDialogs();
-  const { setNegotiatingOffer, setNegotiationLogOffer, setRaiseHistoryOffer, setSnapshotOffer } =
-    dialogs;
+  const {
+    setNegotiatingOffer,
+    setNegotiationLogOffer,
+    setRaiseHistoryOffer,
+    setSnapshotOffer,
+    setJournalOffer,
+  } = dialogs;
   const {
     toggleCurrent,
     persistOfferUpdates,
@@ -247,11 +250,20 @@ const OfferComparison = () => {
     getApplicationName,
   });
 
-  const compareOptions = buildCompareOptions({
-    filteredOffers,
-    simulatedOffers,
-    getApplicationName,
-  });
+  // Stable, so the scorecard's order effect does not re-fire on every render.
+  const handleDecisionOrderChange = useCallback((orderedIds: string[]) => {
+    setDecisionOrderIds((current) =>
+      current.length === orderedIds.length && current.every((id, i) => id === orderedIds[i])
+        ? current
+        : orderedIds
+    );
+  }, []);
+
+  // A fresh options array on every render makes the open dropdown rebuild itself.
+  const compareOptions = useMemo(
+    () => buildCompareOptions({ filteredOffers, simulatedOffers, getApplicationName }),
+    [filteredOffers, simulatedOffers, getApplicationName]
+  );
 
   if (loading)
     return <div className="p-8 text-center text-gray-500 dark:text-ink-400">Loading offers...</div>;
@@ -267,28 +279,8 @@ const OfferComparison = () => {
         availableYears={availableYears}
         onExport={handleExportOffers}
         exportFilename="offers"
-        secondaryActions={
-          <Button icon={<StockOutlined />} onClick={() => setStockPricingOpen(true)}>
-            Equity prices
-          </Button>
-        }
         primaryActionIcon={<PlusOutlined />}
         singleRowDesktop
-      />
-
-      <StockPricingModal
-        open={stockPricingOpen}
-        onClose={() => setStockPricingOpen(false)}
-        offers={offers}
-        offerLabel={(offer) =>
-          offer.application_details
-            ? `${offer.application_details.company} · ${offer.application_details.role_title}`
-            : getApplicationName(offer.application)
-        }
-        onSaved={() => {
-          void refreshStockPrices();
-          void fetchData();
-        }}
       />
 
       {/* Named rather than silently dropped: the stub is a prompt to fill it in, not a real offer. */}
@@ -352,7 +344,10 @@ const OfferComparison = () => {
             value={visibleOfferIds}
             onChange={setVisibleOfferIds}
             style={{ minWidth: 280, maxWidth: 450 }}
-            maxTagCount="responsive"
+            // Fixed, not "responsive": that mode measures tags and oscillated on an over-wide label.
+            maxTagCount={1}
+            maxTagTextLength={22}
+            maxTagPlaceholder={(rest) => `+${rest.length} more`}
             allowClear
             options={compareOptions}
           />
@@ -397,14 +392,7 @@ const OfferComparison = () => {
           setScenarioModalMode('add');
           setIsAddScenarioOpen(true);
         }}
-        onDecisionOrderChange={(orderedIds) => {
-          setDecisionOrderIds((current) =>
-            current.length === orderedIds.length &&
-            current.every((id, index) => id === orderedIds[index])
-              ? current
-              : orderedIds
-          );
-        }}
+        onDecisionOrderChange={handleDecisionOrderChange}
         onScoreUpdate={async (appId, patch) => {
           try {
             const response = await updateApplication(appId, patch);
@@ -448,6 +436,9 @@ const OfferComparison = () => {
         onSaveSnapshotClick={handleSaveDecisionSnapshot}
         onSnapshotsClick={(offer) => {
           setSnapshotOffer(offer);
+        }}
+        onDecisionJournalClick={(offer) => {
+          setJournalOffer(offer);
         }}
         onDeleteClick={handleDeleteOffer}
       />
@@ -497,6 +488,7 @@ const OfferComparison = () => {
         stateNameToAbbr={stateNameToAbbr}
         stateTaxRate={stateTaxRate}
         handleRestoreDecisionSnapshot={handleRestoreDecisionSnapshot}
+        refreshStockPrices={refreshStockPrices}
       />
     </div>
   );

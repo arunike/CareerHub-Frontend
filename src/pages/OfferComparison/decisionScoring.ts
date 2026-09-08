@@ -187,10 +187,15 @@ export const scoreTrajectory = (app?: Application) => {
   };
 };
 
+export const DEFAULT_UNLIMITED_PTO_DAYS = 20;
+
 export const scoreTimeOff = (offer: Offer | SimulatedOffer) => {
   const isUnlimited = Boolean(offer.is_unlimited_pto);
   const sickLeaveIncluded = isUnlimited && offer.sick_leave_included_in_unlimited_pto !== false;
-  const ptoDays = isUnlimited ? 25 : clamp(asNumber(offer.pto_days), 0, 60);
+  // What you would realistically take, not what the policy nominally allows: nobody books 25.
+  const ptoDays = isUnlimited
+    ? clamp(asNumber(offer.unlimited_pto_planning_days, DEFAULT_UNLIMITED_PTO_DAYS), 0, 60)
+    : clamp(asNumber(offer.pto_days), 0, 60);
   const sickLeaveDays = clamp(
     getCountedSickLeaveDays({
       sickLeaveDays: offer.sick_leave_days,

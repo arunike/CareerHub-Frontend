@@ -86,4 +86,32 @@ export const saveStockPrice = (data: {
   note?: string;
 }) => api.post<StockPrice>('/career/stock-prices/', data);
 
-export const deleteStockPrice = (id: number) => api.delete(`/career/stock-prices/${id}/`);
+export interface OfferDecisionJournalPayload {
+  offer: number;
+  decision: 'ACCEPTED' | 'DECLINED';
+  decided_on: string;
+  started_on?: string | null;
+  reasons?: string;
+  concerns?: string;
+  confidence?: number;
+  reviews?: Array<{
+    milestone: number;
+    completed_on?: string | null;
+    verdict?: string | null;
+    notes?: string;
+    confidence?: number | null;
+  }>;
+}
+
+export const getOfferDecisionJournal = () => api.get('/career/offer-decision-journal/');
+
+export const createOfferDecisionJournal = (data: OfferDecisionJournalPayload) =>
+  api.post('/career/offer-decision-journal/', data);
+
+export const updateOfferDecisionJournal = (
+  id: number,
+  data: Partial<OfferDecisionJournalPayload>
+) => api.patch(`/career/offer-decision-journal/${id}/`, data);
+
+export const deleteOfferDecisionJournal = (id: number) =>
+  api.delete(`/career/offer-decision-journal/${id}/`);

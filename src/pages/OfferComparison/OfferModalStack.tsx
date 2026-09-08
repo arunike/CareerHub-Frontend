@@ -9,6 +9,7 @@ const NegotiationAdvisorModal = lazy(() => import('./NegotiationAdvisorModal'));
 const NegotiationLogModal = lazy(() => import('./NegotiationLogModal'));
 const RaiseHistoryModal = lazy(() => import('./RaiseHistoryModal'));
 const OfferDecisionSnapshotsModal = lazy(() => import('./OfferDecisionSnapshotsModal'));
+const DecisionJournalModal = lazy(() => import('./DecisionJournalModal'));
 
 type Props = {
   editor: ReturnType<typeof useOfferEditor>;
@@ -32,6 +33,7 @@ type Props = {
   stateNameToAbbr: any;
   stateTaxRate: any;
   handleRestoreDecisionSnapshot: any;
+  refreshStockPrices: () => void;
 };
 
 const OfferModalStack = ({
@@ -56,6 +58,7 @@ const OfferModalStack = ({
   stateNameToAbbr,
   stateTaxRate,
   handleRestoreDecisionSnapshot,
+  refreshStockPrices,
 }: Props) => {
   const {
     editingOffer,
@@ -78,6 +81,8 @@ const OfferModalStack = ({
     setNegotiationLogOffer,
     raiseHistoryOffer,
     setRaiseHistoryOffer,
+    journalOffer,
+    setJournalOffer,
     snapshotOffer,
     setSnapshotOffer,
   } = dialogs;
@@ -121,6 +126,7 @@ const OfferModalStack = ({
               setOfferModalMode('edit');
             }}
             onSave={handleSaveEdit}
+            onSharePriceSaved={refreshStockPrices}
           />
         </Suspense>
       ) : null}
@@ -149,6 +155,17 @@ const OfferModalStack = ({
             onClose={() => {
               setSnapshotOffer(null);
             }}
+          />
+        </Suspense>
+      )}
+
+      {journalOffer && (
+        <Suspense fallback={null}>
+          <DecisionJournalModal
+            open={!!journalOffer}
+            offer={journalOffer}
+            offerLabel={applicationsById[journalOffer.application]?.company_name ?? 'this offer'}
+            onClose={() => setJournalOffer(null)}
           />
         </Suspense>
       )}

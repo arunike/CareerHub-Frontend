@@ -5,6 +5,7 @@ import {
   CalendarOutlined,
   CheckSquareOutlined,
   DollarOutlined,
+  HistoryOutlined,
   SolutionOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -20,6 +21,8 @@ import {
   upcomingEvents,
 } from './commandCenter';
 import type { CommandApplication, CommandEvent, CommandOffer, CommandTask } from './commandCenter';
+import { dueReviews } from '../OfferComparison/decisionJournal';
+import type { DecisionJournalEntry } from '../OfferComparison/decisionJournal';
 
 const dayLabel = (days: number) =>
   days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`;
@@ -29,16 +32,26 @@ export interface ViewData {
   applications: CommandApplication[];
   tasks: CommandTask[];
   offers: CommandOffer[];
+  journals: DecisionJournalEntry[];
   stages: ApplicationStage[];
   todayIso: string;
 }
 
-const TodayView = ({ events, applications, tasks, offers, stages, todayIso }: ViewData) => {
+const TodayView = ({
+  events,
+  applications,
+  tasks,
+  offers,
+  journals,
+  stages,
+  todayIso,
+}: ViewData) => {
   const soonest = useMemo(() => nextEvent(events, todayIso), [events, todayIso]);
   const ahead = useMemo(() => upcomingEvents(events, todayIso), [events, todayIso]);
   const allTasks = useMemo(() => openTasks(tasks), [tasks]);
   const due = useMemo(() => tasksDue(tasks, todayIso), [tasks, todayIso]);
   const closing = useMemo(() => expiringOffers(offers, todayIso), [offers, todayIso]);
+  const lookBacks = useMemo(() => dueReviews(journals, todayIso), [journals, todayIso]);
   // Live conversations, longest untouched first. Not a count — the actual threads to work.
   const inRounds = useMemo(
     () =>
@@ -152,6 +165,33 @@ const TodayView = ({ events, applications, tasks, offers, stages, todayIso }: Vi
     />
   ) : null;
 
+  // A 30/90-day look-back has a date on it like anything else, so it belongs on Today once it lands.
+  const journalCard = lookBacks.length ? (
+    <SummaryCard
+      title="Decision reviews due"
+      icon={HistoryOutlined}
+      count={lookBacks.length}
+      seeAll={{ to: '/offers', label: 'Offers' }}
+      rows={lookBacks.slice(0, 5).map(
+        ({ entry, milestone, dueOn, daysAway }): SummaryRow => ({
+          id: `journal-${entry.id ?? entry.offer}-${milestone}`,
+          to: '/offers',
+          title: `${entry.company_name || 'An offer'} \u00b7 ${milestone}-day look-back`,
+          meta:
+            entry.decision === 'ACCEPTED'
+              ? `Accepted \u00b7 due ${dayjs(dueOn).format('D MMM')}`
+              : `Declined \u00b7 due ${dayjs(dueOn).format('D MMM')}`,
+          trailing: (
+            <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-300">
+              {daysAway === 0 ? 'Today' : `${Math.abs(daysAway)}d ago`}
+            </span>
+          ),
+        })
+      )}
+      footnote={lookBacks.length > 5 ? `${lookBacks.length - 5} more to look back on` : null}
+    />
+  ) : null;
+
   const taskCard = restOfTasks.length ? (
     <SummaryCard
       title="Open tasks"
@@ -203,7 +243,9 @@ const TodayView = ({ events, applications, tasks, offers, stages, todayIso }: Vi
   ) : null;
 
   // Two balanced columns rather than a fixed main and rail: on a quiet day the rail was just a void.
-  const cards = [nowCard, activeCard, scheduleCard, closingCard, taskCard].filter(Boolean);
+  const cards = [nowCard, activeCard, scheduleCard, closingCard, journalCard, taskCard].filter(
+    Boolean
+  );
   const main = cards.filter((_, index) => index % 2 === 0);
   const rail = cards.filter((_, index) => index % 2 === 1);
 

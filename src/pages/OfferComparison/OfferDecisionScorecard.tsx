@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { type ApplicationLike as Application, type OfferLike as Offer } from './calculations';
-import { Tooltip, Popover, Segmented } from 'antd';
+import { Tooltip, Popover, Segmented, Grid } from 'antd';
+import MobileModal from '../../components/MobileModal';
 import { CloseCircleOutlined, HistoryOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import type { AdjustedOfferMetrics } from './types';
@@ -44,6 +45,7 @@ type Props = {
   onRaiseHistoryClick: (offer: Offer) => void;
   onSaveSnapshotClick: (offer: Offer, row: DecisionRow) => void;
   onSnapshotsClick: (offer: Offer) => void;
+  onDecisionJournalClick: (offer: Offer) => void;
   onDeleteClick: (offer: Offer) => void;
 
   simulatedOffers: SimulatedOffer[];
@@ -56,6 +58,42 @@ type Props = {
   onDeleteScenario: (id: string) => void;
   onAddScenario: () => void;
   onDecisionOrderChange?: (orderedIds: string[]) => void;
+};
+
+// Never flip above the card, yet still slide sideways on a phone; shiftY stops antd re-enabling it.
+export const SCORE_POPOVER_OVERFLOW = { adjustX: 1, adjustY: 0, shiftY: true } as unknown as {
+  adjustX: 0 | 1;
+  adjustY: 0 | 1;
+};
+
+// A popover anchored to a score is unusable on a phone, so below md it opens as a sheet instead.
+const ScoreBreakdownTrigger = ({
+  row,
+  isMobile,
+  children,
+}: {
+  row: DecisionRow;
+  isMobile: boolean;
+  onOpenSheet: () => void;
+  children: React.ReactNode;
+}) => {
+  if (isMobile) return <>{children}</>;
+  return (
+    <Popover
+      content={<ScoreBreakdownContent row={row} />}
+      title={
+        <span className="text-sm font-bold text-slate-800 dark:text-ink-50">
+          How {row.company}'s score is calculated
+        </span>
+      }
+      trigger="click"
+      placement="bottomRight"
+      autoAdjustOverflow={SCORE_POPOVER_OVERFLOW}
+      overlayStyle={{ maxWidth: 'calc(100vw - 32px)' }}
+    >
+      {children}
+    </Popover>
+  );
 };
 
 const OfferDecisionScorecard = ({
@@ -77,6 +115,7 @@ const OfferDecisionScorecard = ({
   onRaiseHistoryClick,
   onSaveSnapshotClick,
   onSnapshotsClick,
+  onDecisionJournalClick,
   onDeleteClick,
   simulatedOffers,
   scenarioRows,
@@ -90,6 +129,11 @@ const OfferDecisionScorecard = ({
   onDecisionOrderChange,
   extraHeaderNode,
 }: Props & { extraHeaderNode?: React.ReactNode }) => {
+  const screens = Grid.useBreakpoint();
+  // antd's md is 768px, the same width MobileModal switches to a drawer at.
+  const isMobile = !screens.md;
+  const [breakdownRow, setBreakdownRow] = useState<DecisionRow | null>(null);
+
   const [weights, setWeights] = usePersistedState<Record<CategoryKey, number>>(
     'offerScoreWeights',
     DEFAULT_WEIGHTS,
@@ -158,8 +202,6 @@ const OfferDecisionScorecard = ({
       rows.map((row) => `${row.isSimulated ? 'sim' : 'real'}-${row.offer.id}`)
     );
   }, [onDecisionOrderChange, rows]);
-
-  if (rows.length === 0) return null;
 
   const financialBarMax = Math.max(
     100,
@@ -264,6 +306,12 @@ const OfferDecisionScorecard = ({
 
       <div className="grid items-start gap-6 p-4 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="grid gap-6 xl:grid-cols-2">
+          {/* Unmounting the card when nothing matches took the compare picker away with it. */}
+          {rows.length === 0 && (
+            <p className="text-sm text-slate-500 dark:text-ink-400">
+              No offers match the current filters. Clear the compare picker above to see them all.
+            </p>
+          )}
           {rows.map((row) => {
             const app = applicationsById[row.applicationId];
             const isRowRejected =
@@ -325,19 +373,14 @@ const OfferDecisionScorecard = ({
                       </p>
                     </div>
                     <div className="flex flex-col items-end text-right">
-                      <Popover
-                        content={<ScoreBreakdownContent row={row} />}
-                        title={
-                          <span className="text-sm font-bold text-slate-800 dark:text-ink-50">
-                            How {row.company}'s score is calculated
-                          </span>
-                        }
-                        trigger="click"
-                        placement="bottomRight"
-                        overlayStyle={{ maxWidth: 'calc(100vw - 32px)' }}
+                      <ScoreBreakdownTrigger
+                        row={row}
+                        isMobile={isMobile}
+                        onOpenSheet={() => setBreakdownRow(row)}
                       >
                         <button
                           type="button"
+                          onClick={isMobile ? () => setBreakdownRow(row) : undefined}
                           className="group flex min-h-11 cursor-pointer flex-col items-end justify-center text-right transition-opacity hover:opacity-80"
                           aria-label={`View score breakdown for ${row.company}`}
                         >
@@ -355,7 +398,7 @@ const OfferDecisionScorecard = ({
                             Total Score
                           </p>
                         </button>
-                      </Popover>
+                      </ScoreBreakdownTrigger>
                     </div>
                   </div>
 
@@ -530,6 +573,7 @@ const OfferDecisionScorecard = ({
                   onRaiseHistoryClick={onRaiseHistoryClick}
                   onSaveSnapshotClick={onSaveSnapshotClick}
                   onSnapshotsClick={onSnapshotsClick}
+                  onDecisionJournalClick={onDecisionJournalClick}
                   onDeleteClick={onDeleteClick}
                   onEditScenario={onEditScenario}
                   onDeleteScenario={onDeleteScenario}
@@ -552,6 +596,22 @@ const OfferDecisionScorecard = ({
           setIsWeightsExpanded={setIsWeightsExpanded}
         />
       </div>
+
+      {/* One sheet for the whole list rather than one per card. */}
+      <MobileModal
+        open={Boolean(breakdownRow)}
+        onCancel={() => setBreakdownRow(null)}
+        footer={null}
+        title={
+          breakdownRow ? (
+            <span className="text-sm font-bold text-slate-800 dark:text-ink-50">
+              How {breakdownRow.company}'s score is calculated
+            </span>
+          ) : null
+        }
+      >
+        {breakdownRow ? <ScoreBreakdownContent row={breakdownRow} variant="sheet" /> : null}
+      </MobileModal>
     </section>
   );
 };
