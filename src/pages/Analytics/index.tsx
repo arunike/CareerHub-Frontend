@@ -14,6 +14,7 @@ import { MetricCardsSkeleton, SkeletonBlock } from '../../components/SkeletonLoa
 const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
 const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
 const ActivityChart = lazy(() => import('./ActivityChart'));
+const ResumeVersionAnalytics = lazy(() => import('./ResumeVersionAnalytics'));
 
 const SectionFallback = () => (
   <div className="w-full space-y-6">
@@ -204,6 +205,10 @@ const Analytics: React.FC = () => {
                   selectedYear={selectedYear}
                   onDataChanged={() => void fetchCareerAnalytics()}
                 />
+              </Suspense>
+
+              <Suspense fallback={<SectionFallback />}>
+                <ResumeVersionAnalytics selectedYear={selectedYear} />
               </Suspense>
 
               <Suspense fallback={<SectionFallback />}>

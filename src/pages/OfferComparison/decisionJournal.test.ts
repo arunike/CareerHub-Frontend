@@ -5,7 +5,6 @@ import {
   defaultDecidedOn,
   dueReviews,
   journalOutcome,
-  nextReview,
   reviewAnchor,
   reviewSchedule,
   verdictLabel,
@@ -92,25 +91,6 @@ describe('dueReviews', () => {
       ],
     });
     expect(dueReviews([finished], '2026-12-01')).toEqual([]);
-  });
-});
-
-describe('nextReview', () => {
-  it('skips a completed milestone and offers the following one', () => {
-    const reviewed = entry({
-      reviews: [{ milestone: 30, completed_on: '2026-03-04', verdict: 'HELD_UP' }],
-    });
-    expect(nextReview(reviewed, '2026-03-10')?.milestone).toBe(90);
-  });
-
-  it('is null once nothing is left', () => {
-    const finished = entry({
-      reviews: [
-        { milestone: 30, completed_on: '2026-03-04' },
-        { milestone: 90, completed_on: '2026-05-03' },
-      ],
-    });
-    expect(nextReview(finished, '2026-12-01')).toBeNull();
   });
 });
 

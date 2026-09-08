@@ -1,5 +1,6 @@
 import type {
   ApplicationTimelineEntry,
+  ResumeVersionAnalyticsData,
   ApplicationStats,
   ApplicationTimelineAnalytics,
   Document,
@@ -101,6 +102,11 @@ export const deleteInterviewDebrief = (id: number) =>
 
 export const getApplicationStats = (year?: number | 'all') =>
   api.get<ApplicationStats>('/career/application-stats/', {
+    params: year && year !== 'all' ? { year } : undefined,
+  });
+
+export const getResumeVersionAnalytics = (year?: number | 'all') =>
+  api.get<ResumeVersionAnalyticsData>('/career/resume-version-analytics/', {
     params: year && year !== 'all' ? { year } : undefined,
   });
 

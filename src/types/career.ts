@@ -185,3 +185,37 @@ export interface Experience {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface ResumeGroupStats {
+  key: string;
+  label: string;
+  applications: number;
+  responded: number;
+  interviewed: number;
+  offers: number;
+  response_rate: number;
+  interview_rate: number;
+  offer_rate: number;
+  below_minimum_sample: boolean;
+}
+
+export interface ResumeVersionStats extends Omit<ResumeGroupStats, 'key'> {
+  document_id: number;
+  root_id: number;
+  title: string;
+  version_number: number;
+  is_current: boolean;
+  first_used: string | null;
+  last_used: string | null;
+  by_role_type: ResumeGroupStats[];
+  by_source: ResumeGroupStats[];
+}
+
+export interface ResumeVersionAnalyticsData {
+  minimum_sample_size: number;
+  versions: ResumeVersionStats[];
+  total_applications: number;
+  tracked_applications: number;
+  untracked_applications: number;
+  overall: Omit<ResumeGroupStats, 'key' | 'label'>;
+}

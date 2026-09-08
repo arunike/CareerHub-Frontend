@@ -82,9 +82,6 @@ export const dueReviews = (entries: DecisionJournalEntry[], todayIso: string): D
     })
     .sort((a, b) => a.dueOn.localeCompare(b.dueOn));
 
-export const nextReview = (entry: DecisionJournalEntry, todayIso: string): ScheduledReview | null =>
-  reviewSchedule(entry, todayIso).find((slot) => slot.status !== 'done') ?? null;
-
 const VERDICT_LABELS: Record<string, string> = {
   HELD_UP: 'Held up',
   MIXED: 'Mixed',
