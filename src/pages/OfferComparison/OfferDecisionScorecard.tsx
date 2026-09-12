@@ -13,8 +13,8 @@ import ScorecardCompBreakdown from './ScorecardCompBreakdown';
 import ScorecardCategoryList from './ScorecardCategoryList';
 import ScorecardEvidence from './ScorecardEvidence';
 import ScorecardActionBar from './ScorecardActionBar';
+import { totalCompFor } from './totalCompDiff';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import { getRealizableEquity } from './equityLiquidity';
 import {
   DEFAULT_WEIGHTS,
   formatCurrency,
@@ -223,12 +223,8 @@ const OfferDecisionScorecard = ({
 
   const currentOffer = offers.find((o) => o.is_current);
   const baselineLabel = currentOffer ? offerLabel(currentOffer) : null;
-  const currentTotal = currentOffer
-    ? Number(currentOffer.base_salary) +
-      Number(currentOffer.bonus) +
-      getRealizableEquity(currentOffer) +
-      Number(currentOffer.sign_on)
-    : 0;
+  // The same sum the diff is measured against, so the two sides cannot drift apart.
+  const currentTotal = currentOffer ? totalCompFor(currentOffer) : 0;
 
   const leader = rows[0];
 

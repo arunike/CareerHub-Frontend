@@ -75,6 +75,10 @@ export interface OfferFormFieldsProps {
   equityGrantPrice?: number | null;
   onEquityGrantPriceChange?: (value: number | null) => void;
   currentSharePrice?: number | null;
+  onFetchSharePrice?: () => void;
+  isFetchingSharePrice?: boolean;
+  sharePriceHistory?: Array<{ id: number; as_of: string; price: string; source: string }>;
+  sharePriceAsOf?: string | null;
   onCurrentSharePriceChange?: (value: number | null) => void;
   annualRefreshValue?: number;
   onAnnualRefreshValueChange?: (value: number) => void;

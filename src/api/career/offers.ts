@@ -113,5 +113,27 @@ export const updateOfferDecisionJournal = (
   data: Partial<OfferDecisionJournalPayload>
 ) => api.patch(`/career/offer-decision-journal/${id}/`, data);
 
+export interface StockPriceHistoryRow {
+  id: number;
+  symbol: string;
+  price: string;
+  as_of: string;
+  source: string;
+  note: string;
+  recorded_at: string;
+}
+
+// Live prices: one ticker when named, otherwise every ticker already tracked.
+export const refreshStockPrice = (symbol?: string) =>
+  api.post<{ updated: StockPrice[]; failed: Array<{ symbol: string; detail: string }> }>(
+    '/career/stock-prices/refresh/',
+    symbol ? { symbol } : {}
+  );
+
+export const getStockPriceHistory = (symbol?: string) =>
+  api.get<StockPriceHistoryRow[]>('/career/stock-prices/history/', {
+    params: symbol ? { symbol } : undefined,
+  });
+
 export const deleteOfferDecisionJournal = (id: number) =>
   api.delete(`/career/offer-decision-journal/${id}/`);

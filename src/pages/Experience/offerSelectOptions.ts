@@ -22,7 +22,7 @@ export const buildOfferSelectOptions = (allOffers: Offer[]) => {
     const label =
       company && role
         ? `${company} — ${role}${level ? ` (${level})` : ''}${o.is_current ? ' (current)' : ''}`
-        : `Offer #${o.id} — $${Number(o.base_salary).toLocaleString()} base${o.is_current ? ' (current)' : ''}`;
+        : `Offer #${o.id} — $${Math.round(Number(o.base_salary)).toLocaleString()} base${o.is_current ? ' (current)' : ''}`;
 
     return {
       value: o.id as number,

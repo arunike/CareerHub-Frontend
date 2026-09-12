@@ -167,7 +167,7 @@ const ExperienceAnalyticsPanels = ({
                         </span>
                         <span className="text-[16px] font-bold leading-none text-slate-900 dark:text-ink-50">
                           {fullTimeCompSummary.trackedRoleCount > 0
-                            ? `$${fullTimeCompSummary.total.toLocaleString()}`
+                            ? `$${Math.round(fullTimeCompSummary.total).toLocaleString()}`
                             : 'No pay data'}
                         </span>
                       </div>
@@ -176,7 +176,7 @@ const ExperienceAnalyticsPanels = ({
                           <>
                             {fullTimeCompSummary.trackedRoleCount} tracked
                             {fullTimeCompSummary.base > 0 &&
-                              ` • Base $${fullTimeCompSummary.base.toLocaleString()}`}
+                              ` • Base $${Math.round(fullTimeCompSummary.base).toLocaleString()}`}
                             {fullTimeCompSummary.roleCount > fullTimeCompSummary.trackedRoleCount &&
                               ` • ${fullTimeCompSummary.roleCount - fullTimeCompSummary.trackedRoleCount} missing`}
                           </>

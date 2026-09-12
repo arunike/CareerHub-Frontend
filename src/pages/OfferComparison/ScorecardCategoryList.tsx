@@ -25,7 +25,7 @@ const ScorecardCategoryList = ({
   onScoreUpdate,
   row,
 }: Props) => (
-  <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+  <div className="@container grid gap-x-6 gap-y-5 @[26rem]:grid-cols-2">
     {row.categories.map((category) => {
       const app = applicationsById[row.applicationId];
 
@@ -114,7 +114,10 @@ const ScorecardCategoryList = ({
             </div>
             <div className="space-y-1.5">
               {pairs.map((pair) => (
-                <div key={pair.dbKey} className="flex items-center justify-between gap-2">
+                <div
+                  key={pair.dbKey}
+                  className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5"
+                >
                   <HelpTooltipTrigger
                     title={pair.tooltip}
                     ariaLabel={`Explain ${pair.label} rating`}

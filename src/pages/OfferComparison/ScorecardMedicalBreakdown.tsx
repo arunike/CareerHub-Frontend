@@ -32,7 +32,7 @@ const ScorecardMedicalBreakdown = ({
               </span>
               {med.worstCaseRisk > 0 && (
                 <span className="rounded-full bg-slate-200/80 dark:bg-ink-800/80 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:text-ink-100">
-                  Max Risk: ${med.worstCaseRisk.toLocaleString()}/yr
+                  Max Risk: ${Math.round(med.worstCaseRisk).toLocaleString()}/yr
                 </span>
               )}
             </div>
@@ -56,7 +56,7 @@ const ScorecardMedicalBreakdown = ({
                     Annual Premiums
                   </div>
                   <div className="mt-0.5 text-xs font-bold text-slate-900 dark:text-ink-50">
-                    ${med.totalAnnualPremiums.toLocaleString()}
+                    ${Math.round(med.totalAnnualPremiums).toLocaleString()}
                     <span className="text-[10px] font-normal text-slate-400 dark:text-ink-500">
                       /yr
                     </span>
@@ -67,7 +67,7 @@ const ScorecardMedicalBreakdown = ({
                     Worst-Case Exposure
                   </div>
                   <div className="mt-0.5 text-xs font-extrabold text-sky-900 dark:text-sky-200">
-                    ${med.worstCaseRisk.toLocaleString()}
+                    ${Math.round(med.worstCaseRisk).toLocaleString()}
                   </div>
                 </div>
                 <div>
@@ -75,7 +75,7 @@ const ScorecardMedicalBreakdown = ({
                     Out-of-Pocket Max
                   </div>
                   <div className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-ink-100">
-                    ${med.effectiveOopMax.toLocaleString()}
+                    ${Math.round(med.effectiveOopMax).toLocaleString()}
                   </div>
                 </div>
                 <div>
@@ -83,7 +83,7 @@ const ScorecardMedicalBreakdown = ({
                     HSA Employer Match
                   </div>
                   <div className="mt-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
-                    {med.hsaMatch > 0 ? `+$${med.hsaMatch.toLocaleString()}/yr` : '$0'}
+                    {med.hsaMatch > 0 ? `+$${Math.round(med.hsaMatch).toLocaleString()}/yr` : '$0'}
                   </div>
                 </div>
               </div>
@@ -109,7 +109,7 @@ const ScorecardMedicalBreakdown = ({
                       ${med.totalMedPaycheck} / check
                     </span>
                     <span className="block text-[10px] text-slate-400 dark:text-ink-500">
-                      (${med.annualMedPrem.toLocaleString()}/yr)
+                      (${Math.round(med.annualMedPrem).toLocaleString()}/yr)
                     </span>
                   </div>
                   <div>
@@ -117,11 +117,11 @@ const ScorecardMedicalBreakdown = ({
                       Out-of-Pocket Max
                     </span>
                     <span className="font-semibold text-slate-900 dark:text-ink-50">
-                      ${med.indOopMax.toLocaleString()}
+                      ${Math.round(med.indOopMax).toLocaleString()}
                     </span>
                     {med.famOopMax > 0 && (
                       <span className="block text-[10px] text-slate-400 dark:text-ink-500">
-                        (${med.famOopMax.toLocaleString()} Fam)
+                        (${Math.round(med.famOopMax).toLocaleString()} Fam)
                       </span>
                     )}
                   </div>
@@ -130,11 +130,11 @@ const ScorecardMedicalBreakdown = ({
                       Deductible
                     </span>
                     <span className="font-medium text-slate-900 dark:text-ink-50">
-                      ${med.indDeductible.toLocaleString()}
+                      ${Math.round(med.indDeductible).toLocaleString()}
                     </span>
                     {med.famDeductible > 0 && (
                       <span className="block text-[10px] text-slate-400 dark:text-ink-500">
-                        (${med.famDeductible.toLocaleString()} Fam)
+                        (${Math.round(med.famDeductible).toLocaleString()} Fam)
                       </span>
                     )}
                   </div>
@@ -167,7 +167,7 @@ const ScorecardMedicalBreakdown = ({
                       ${med.totalDenPaycheck} / check
                     </span>
                     <span className="block text-[10px] text-slate-400 dark:text-ink-500">
-                      (${med.annualDenPrem.toLocaleString()}/yr)
+                      (${Math.round(med.annualDenPrem).toLocaleString()}/yr)
                     </span>
                   </div>
                   {med.dentalAnnualMax > 0 && (
@@ -176,7 +176,7 @@ const ScorecardMedicalBreakdown = ({
                         Annual Max Benefit
                       </span>
                       <span className="font-semibold text-slate-900 dark:text-ink-50">
-                        ${med.dentalAnnualMax.toLocaleString()}
+                        ${Math.round(med.dentalAnnualMax).toLocaleString()}
                       </span>
                     </div>
                   )}
@@ -186,7 +186,7 @@ const ScorecardMedicalBreakdown = ({
                         Deductible
                       </span>
                       <span className="font-medium text-slate-900 dark:text-ink-50">
-                        ${med.dentalDeductible.toLocaleString()}
+                        ${Math.round(med.dentalDeductible).toLocaleString()}
                       </span>
                     </div>
                   )}
@@ -209,7 +209,7 @@ const ScorecardMedicalBreakdown = ({
                       ${med.totalVisPaycheck} / check
                     </span>
                     <span className="block text-[10px] text-slate-400 dark:text-ink-500">
-                      (${med.annualVisPrem.toLocaleString()}/yr)
+                      (${Math.round(med.annualVisPrem).toLocaleString()}/yr)
                     </span>
                   </div>
                   {(med.visionFramesAllowance > 0 || med.visionContactsAllowance > 0) && (

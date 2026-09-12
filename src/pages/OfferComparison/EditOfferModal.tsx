@@ -1,5 +1,5 @@
 import type { CommuteOption, DrivingDefaults } from './commute';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { message } from 'antd';
 import ConfirmModal from '../../components/ConfirmModal';
 import ModalShell from '../../components/ModalShell';
@@ -15,7 +15,9 @@ import {
 import type { AdjustedOfferMetrics } from './types';
 import { normalizeEquityLiquidity } from './equityLiquidity';
 import { DEFAULT_UNLIMITED_PTO_DAYS } from './decisionScoring';
-import { getStockPrices, saveStockPrice } from '../../api';
+import { getStockPriceHistory, getStockPrices, refreshStockPrice, saveStockPrice } from '../../api';
+import type { StockPriceHistoryRow } from '../../api/career/offers';
+import { isSharePriceStale } from './sharePriceFreshness';
 import { normalizeSymbol } from './equityPricing';
 
 type Props = {
@@ -67,10 +69,44 @@ const EditOfferModal = ({
   // Errors appear only after a save attempt, so an empty new form is not pre-reddened.
   const [saveAttempted, setSaveAttempted] = useState(false);
   const [currentSharePrice, setCurrentSharePrice] = useState<number | null>(null);
+  const [isFetchingSharePrice, setIsFetchingSharePrice] = useState(false);
+  const [sharePriceHistory, setSharePriceHistory] = useState<StockPriceHistoryRow[]>([]);
+  const [sharePriceAsOf, setSharePriceAsOf] = useState<string | null>(null);
   const [savedSharePrice, setSavedSharePrice] = useState<number | null>(null);
 
   const symbol = normalizeSymbol(editingOffer?.equity_ticker);
   const isListedEquity = normalizeEquityLiquidity(editingOffer?.equity_liquidity) === 'LIQUID';
+
+  // Fetched, recorded and shown in one step, so the price displayed is the one that was saved.
+  const fetchLatestSharePrice = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!symbol) return;
+      setIsFetchingSharePrice(true);
+      try {
+        const response = await refreshStockPrice(symbol);
+        const fetched = response.data.updated?.[0];
+        if (!fetched) throw new Error('no price');
+        const price = Number(fetched.price);
+        setCurrentSharePrice(price);
+        setSavedSharePrice(price);
+        setSharePriceAsOf(fetched.as_of ?? null);
+        void getStockPriceHistory(symbol)
+          .then((history) => setSharePriceHistory(history.data))
+          .catch(() => {});
+        if (!silent) {
+          message.success(
+            `${symbol} is ${price.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}`
+          );
+        }
+      } catch {
+        // A background refresh that fails is not the user's problem: the stored price stands.
+        if (!silent) message.error(`Could not fetch a price for ${symbol}.`);
+      } finally {
+        setIsFetchingSharePrice(false);
+      }
+    },
+    [symbol]
+  );
 
   // Prefill from whatever price is already stored for this symbol, so it is not re-typed.
   useEffect(() => {
@@ -83,6 +119,8 @@ const EditOfferModal = ({
     if (!symbol) {
       setCurrentSharePrice(null);
       setSavedSharePrice(null);
+      setSharePriceHistory([]);
+      setSharePriceAsOf(null);
       return;
     }
     let cancelled = false;
@@ -93,12 +131,22 @@ const EditOfferModal = ({
         const price = match ? Number(match.price) : null;
         setCurrentSharePrice(price);
         setSavedSharePrice(price);
+        setSharePriceAsOf(match?.as_of ?? null);
+        // Opening the offer refreshes a price that is not already today's, quietly: it is a
+        if (isSharePriceStale(match?.as_of, new Date().toISOString().slice(0, 10))) {
+          void fetchLatestSharePrice({ silent: true });
+        }
+      })
+      .catch(() => {});
+    getStockPriceHistory(symbol)
+      .then((response) => {
+        if (!cancelled) setSharePriceHistory(response.data);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [symbol, isListedEquity, editingOffer?.equity_current_price]);
+  }, [symbol, isListedEquity, editingOffer?.equity_current_price, fetchLatestSharePrice]);
   const missingCompanyName = !editingApp?.company_name?.trim();
   const missingRoleTitle = !editingApp?.role_title?.trim();
 
@@ -263,6 +311,10 @@ const EditOfferModal = ({
             equityGrantPrice={editingOffer.equity_grant_price ?? null}
             onEquityGrantPriceChange={(value) => setEditingOfferField('equity_grant_price', value)}
             currentSharePrice={currentSharePrice}
+            isFetchingSharePrice={isFetchingSharePrice}
+            sharePriceHistory={sharePriceHistory}
+            sharePriceAsOf={sharePriceAsOf}
+            onFetchSharePrice={() => void fetchLatestSharePrice()}
             onCurrentSharePriceChange={(value) => {
               setCurrentSharePrice(value);
               if (!isListedEquity) setEditingOfferField('equity_current_price', value);

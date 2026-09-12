@@ -44,6 +44,10 @@ type CompensationSectionProps = {
   equityGrantPrice?: number | null;
   onEquityGrantPriceChange?: (value: number | null) => void;
   currentSharePrice?: number | null;
+  onFetchSharePrice?: () => void;
+  isFetchingSharePrice?: boolean;
+  sharePriceHistory?: Array<{ id: number; as_of: string; price: string; source: string }>;
+  sharePriceAsOf?: string | null;
   onCurrentSharePriceChange?: (value: number | null) => void;
 };
 
@@ -91,6 +95,10 @@ const CompensationSection = ({
   equityGrantPrice,
   onEquityGrantPriceChange,
   currentSharePrice,
+  onFetchSharePrice,
+  isFetchingSharePrice = false,
+  sharePriceHistory = [],
+  sharePriceAsOf = null,
   onCurrentSharePriceChange,
 }: CompensationSectionProps) => {
   const grantValue = Number(equityTotalGrant) || Number(equity) || Number(equityBuybackValue) || 0;
@@ -286,6 +294,17 @@ const CompensationSection = ({
             <div className="min-w-0">
               <div className={FIELD_HEADER_CLASS}>
                 <label className={FIELD_LABEL_CLASS}>Current price</label>
+                {/* Only for a listed grant: a private buyback has no ticker to look up. */}
+                {isListed && onFetchSharePrice && (
+                  <button
+                    type="button"
+                    disabled={!equityTicker || isFetchingSharePrice}
+                    onClick={onFetchSharePrice}
+                    className="text-[11px] font-semibold text-blue-600 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-blue-300 dark:disabled:text-ink-600"
+                  >
+                    {isFetchingSharePrice ? 'Fetching…' : 'Fetch latest'}
+                  </button>
+                )}
               </div>
               <UnitNumberInput
                 unit="$"
@@ -298,11 +317,33 @@ const CompensationSection = ({
                 {!isListed
                   ? 'Internal price per share'
                   : equityTicker
-                    ? `Saved against ${equityTicker}`
+                    ? `${equityTicker}${sharePriceAsOf ? ` · as of ${sharePriceAsOf}` : ''}`
                     : 'Needs a symbol'}
               </div>
             </div>
           </div>
+          {/* Collapsed: a running price log is reference, not something to read every time. */}
+          {sharePriceHistory.length > 0 && (
+            <details className="mt-2">
+              <summary className="cursor-pointer list-none text-[11px] font-semibold text-blue-600 hover:underline dark:text-blue-300">
+                Price history ({sharePriceHistory.length})
+              </summary>
+              <dl className="mt-1.5 divide-y divide-slate-200/70 overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50 dark:divide-white/[0.08] dark:border-white/[0.08] dark:bg-ink-900">
+                {sharePriceHistory.slice(0, 12).map((row) => (
+                  <div key={row.id} className="flex justify-between px-3 py-2 text-[11px]">
+                    <dt className="text-slate-500 dark:text-ink-400">
+                      {row.as_of}
+                      {row.source === 'MANUAL' ? ' · entered by hand' : ''}
+                    </dt>
+                    <dd className="m-0 font-semibold tabular-nums text-slate-800 dark:text-ink-50">
+                      {usd(Number(row.price))}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          )}
+
           {ratio !== null && ratio !== 1 && (
             <p className="mt-1 text-xs text-slate-600 dark:text-ink-200">
               <span

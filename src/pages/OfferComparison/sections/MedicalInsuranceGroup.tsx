@@ -178,7 +178,7 @@ const MedicalInsuranceGroup = ({
             type="text"
             value={healthPlanType || ''}
             onChange={(e) => onHealthPlanTypeChange?.(e.target.value)}
-            placeholder="e.g. HealthSelect EPO, Kaiser HMO, HDHP"
+            placeholder="e.g. PPO, HMO, EPO, HDHP"
             className={CONTROL_CLASS}
           />
         </div>

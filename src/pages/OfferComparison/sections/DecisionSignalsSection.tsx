@@ -66,7 +66,7 @@ const DecisionSignalsSection = ({
         the scorecard rather than scored low.
       </p>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="@container grid grid-cols-1 gap-3 @[26rem]:grid-cols-2">
         {signals.map((signal) => (
           <div
             key={signal.label}

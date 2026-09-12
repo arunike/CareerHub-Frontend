@@ -9,8 +9,8 @@ type Props = {
 };
 
 const ScorecardEvidence = ({ row }: Props) => (
-  <div className="grid grid-cols-1 border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/40 dark:bg-ink-900/40 sm:grid-cols-3">
-    <div className="border-b border-slate-100 dark:border-white/[0.07] px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
+  <div className="@container grid grid-cols-1 border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/40 dark:bg-ink-900/40 @[30rem]:grid-cols-3">
+    <div className="border-b border-slate-100 dark:border-white/[0.07] px-4 py-3 @[30rem]:border-r @[30rem]:border-b-0 @[30rem]:px-5">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500">
         Adjusted value
       </p>
@@ -21,7 +21,7 @@ const ScorecardEvidence = ({ row }: Props) => (
         After tax, COL, rent, and lifestyle
       </p>
     </div>
-    <div className="border-b border-slate-100 dark:border-white/[0.07] px-4 py-3 sm:border-r sm:border-b-0 sm:px-5">
+    <div className="border-b border-slate-100 dark:border-white/[0.07] px-4 py-3 @[30rem]:border-r @[30rem]:border-b-0 @[30rem]:px-5">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500">
         Realizable equity
       </p>
@@ -33,7 +33,7 @@ const ScorecardEvidence = ({ row }: Props) => (
         {getEquityLiquidityCopy(row.offer).label}
       </p>
     </div>
-    <div className="px-4 py-3 sm:px-5">
+    <div className="px-4 py-3 @[30rem]:px-5">
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500">
         Time off
       </p>

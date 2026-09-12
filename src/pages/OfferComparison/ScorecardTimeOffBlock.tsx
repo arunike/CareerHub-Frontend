@@ -1,8 +1,8 @@
 import type { DecisionRow } from './decisionScoring';
 import { type OfferLike as Offer } from './calculations';
 import clsx from 'clsx';
+import { totalCompDiff } from './totalCompDiff';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
-import { getRealizableEquity } from './equityLiquidity';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
 
 type Props = {
@@ -41,27 +41,17 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
             Diff vs Current
           </HelpTooltipTrigger>
           {(() => {
-            const total =
-              Number(row.offer.base_salary) +
-              Number(row.offer.bonus) +
-              getRealizableEquity(row.offer) +
-              Number(row.offer.sign_on);
-            const diff = total - currentTotal;
-            const diffPercent = currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
+            const { amount, percent, isGain } = totalCompDiff(row.offer, currentTotal);
             return (
               <div
                 className={clsx(
                   'text-sm font-bold',
-                  diff >= 0
+                  isGain
                     ? 'text-emerald-600 dark:text-emerald-300'
                     : 'text-rose-500 dark:text-rose-400'
                 )}
               >
-                {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
-                <span className="text-[10px] font-medium ml-1">
-                  ({diff > 0 ? '+' : ''}
-                  {diffPercent}%)
-                </span>
+                {amount} <span className="text-[10px] font-medium ml-1">({percent})</span>
               </div>
             );
           })()}
@@ -78,27 +68,17 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
             Diff vs Current
           </HelpTooltipTrigger>
           {(() => {
-            const total =
-              Number(row.offer.base_salary) +
-              Number(row.offer.bonus) +
-              getRealizableEquity(row.offer) +
-              Number(row.offer.sign_on);
-            const diff = total - currentTotal;
-            const diffPercent = currentTotal > 0 ? ((diff / currentTotal) * 100).toFixed(1) : 0;
+            const { amount, percent, isGain } = totalCompDiff(row.offer, currentTotal);
             return (
               <div
                 className={clsx(
                   'text-sm font-bold',
-                  diff >= 0
+                  isGain
                     ? 'text-emerald-600 dark:text-emerald-300'
                     : 'text-rose-500 dark:text-rose-400'
                 )}
               >
-                {diff > 0 ? '+' : ''}${diff.toLocaleString()}{' '}
-                <span className="text-[10px] font-medium ml-1">
-                  ({diff > 0 ? '+' : ''}
-                  {diffPercent}%)
-                </span>
+                {amount} <span className="text-[10px] font-medium ml-1">({percent})</span>
               </div>
             );
           })()}
