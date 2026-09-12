@@ -59,7 +59,8 @@ const SummaryCard = ({
           {seeAll && (
             <Link
               to={seeAll.to}
-              className="text-[11px] font-semibold text-blue-600 hover:underline dark:text-blue-300"
+              // A 16px-tall link is not a target; the padding gives it a tappable box.
+              className="-mr-1.5 inline-flex min-h-9 items-center rounded-lg px-1.5 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 hover:underline dark:text-blue-300 dark:hover:bg-blue-500/10"
             >
               {seeAll.label}
             </Link>

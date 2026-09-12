@@ -10,7 +10,10 @@ type Props = {
   isDesktopSidebarCollapsed: any;
   isLoggingOut: boolean;
   logout: any;
-  navigate: any;
+  navigate: (to: string) => void;
+  // The post-logout redirect must not be guarded: the session is already gone by then.
+  navigateAfterLogout: (to: string, options?: { replace?: boolean }) => void;
+  confirmLeave: () => Promise<boolean>;
   notificationBell: any;
   profilePic: string | null;
   setIsLoggingOut: React.Dispatch<React.SetStateAction<boolean>>;
@@ -34,6 +37,8 @@ const SidebarFooter = ({
   isLoggingOut,
   logout,
   navigate,
+  navigateAfterLogout,
+  confirmLeave,
   notificationBell,
   profilePic,
   setIsLoggingOut,
@@ -92,10 +97,11 @@ const SidebarFooter = ({
               icon={<LogoutOutlined />}
               loading={isLoggingOut}
               onClick={async () => {
+                if (!(await confirmLeave())) return;
                 setIsLoggingOut(true);
                 try {
                   await logout();
-                  navigate('/login', { replace: true });
+                  navigateAfterLogout('/login', { replace: true });
                 } finally {
                   setIsLoggingOut(false);
                 }
@@ -156,10 +162,11 @@ const SidebarFooter = ({
                 loading={isLoggingOut}
                 onClick={async (e) => {
                   e.stopPropagation();
+                  if (!(await confirmLeave())) return;
                   setIsLoggingOut(true);
                   try {
                     await logout();
-                    navigate('/login', { replace: true });
+                    navigateAfterLogout('/login', { replace: true });
                   } finally {
                     setIsLoggingOut(false);
                   }

@@ -209,7 +209,7 @@ const DrivingAssumptions = ({
       title={step === 'edit' ? 'Driving assumptions' : 'Offers with their own figures'}
       content={step === 'edit' ? editStep : reviewStep}
     >
-      {/* Labelled and clickable: a bare "23 mpg · $5.2/gal" chip read as a setting kept elsewhere. */}
+      {/* Labelled and clickable: a bare "28 mpg · $4/gal" chip read as a setting kept elsewhere. */}
       <button
         type="button"
         aria-haspopup="dialog"

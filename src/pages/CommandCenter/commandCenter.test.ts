@@ -15,6 +15,8 @@ import {
 } from './commandCenter';
 import type { CommandApplication, CommandEvent, CommandTask } from './commandCenter';
 
+// Midnight, so a test that pins a date is not also pinning the hour it happens to run at.
+const DAY_START = 0;
 const TODAY = '2026-07-01';
 
 const event = (over: Partial<CommandEvent> = {}): CommandEvent => ({
@@ -70,7 +72,7 @@ describe('nextEvent', () => {
   });
 
   it('counts one happening today, which is the one that matters most', () => {
-    expect(nextEvent([event({ date: TODAY, application: 3 })], TODAY)?.daysAway).toBe(0);
+    expect(nextEvent([event({ date: TODAY, application: 3 })], TODAY, DAY_START)?.daysAway).toBe(0);
   });
 
   it('ignores interviews that have passed', () => {
@@ -78,16 +80,17 @@ describe('nextEvent', () => {
   });
 
   it('counts any upcoming event, not only interviews', () => {
-    expect(nextEvent([event({ name: 'Offer decision due' })], TODAY)?.event.name).toBe(
+    expect(nextEvent([event({ name: 'Offer decision due' })], TODAY, DAY_START)?.event.name).toBe(
       'Offer decision due'
     );
-    expect(nextEvent([event({ name: 'Dentist' })], TODAY)).not.toBeNull();
+    expect(nextEvent([event({ name: 'Dentist' })], TODAY, DAY_START)).not.toBeNull();
   });
 
   it('lists the whole run ahead, soonest first', () => {
     const all = upcomingEvents(
       [event({ id: 1, date: '2026-07-20' }), event({ id: 2, date: '2026-07-03' })],
-      TODAY
+      TODAY,
+      DAY_START
     );
     expect(all.map((entry) => entry.event.id)).toEqual([2, 1]);
   });
@@ -98,9 +101,39 @@ describe('nextEvent', () => {
         event({ id: 1, date: TODAY, start_time: '16:00', application: 1 }),
         event({ id: 2, date: TODAY, start_time: '09:00', application: 2 }),
       ],
-      TODAY
+      TODAY,
+      DAY_START
     );
     expect(found?.event.id).toBe(2);
+  });
+
+  // The clock, not just the date: an interview at 09:00 is not what is next at 18:00.
+  it('drops a timed event once its time has gone past', () => {
+    const morning = event({ id: 1, date: TODAY, start_time: '09:00' });
+    const evening = event({ id: 2, date: TODAY, start_time: '19:00' });
+    expect(nextEvent([morning, evening], TODAY, 8 * 60)?.event.id).toBe(1);
+    expect(nextEvent([morning, evening], TODAY, 18 * 60)?.event.id).toBe(2);
+    expect(nextEvent([morning], TODAY, 18 * 60)).toBeNull();
+  });
+
+  it('keeps an event that starts this very minute', () => {
+    const now = event({ id: 1, date: TODAY, start_time: '14:00' });
+    expect(nextEvent([now], TODAY, 14 * 60)?.event.id).toBe(1);
+  });
+
+  it('keeps an all-day event for the whole day, having no time to be past', () => {
+    const allDay = event({ id: 1, date: TODAY, start_time: null });
+    expect(nextEvent([allDay], TODAY, 23 * 60 + 59)?.event.id).toBe(1);
+  });
+
+  it('leaves a later day alone however late it is today', () => {
+    const tomorrow = event({ id: 1, date: '2026-07-04', start_time: '09:00' });
+    expect(nextEvent([tomorrow], TODAY, 23 * 60)?.event.id).toBe(1);
+  });
+
+  it('does not treat an unparseable time as elapsed', () => {
+    const odd = event({ id: 1, date: TODAY, start_time: 'noon' });
+    expect(nextEvent([odd], TODAY, 23 * 60)?.event.id).toBe(1);
   });
 });
 

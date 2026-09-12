@@ -19,6 +19,7 @@ type Props = {
   onCancel: () => void;
   submitLabel?: string;
   showActions?: boolean;
+  onValuesChange?: () => void;
 };
 
 const ApplicationFormFields = ({
@@ -32,12 +33,14 @@ const ApplicationFormFields = ({
   onCancel,
   submitLabel = 'Save',
   showActions = true,
+  onValuesChange,
 }: Props) => (
   <Form
     scrollToFirstError={SCROLL_TO_FIRST_ERROR}
     form={form}
     layout="vertical"
     onFinish={handleAddEdit}
+    onValuesChange={onValuesChange}
   >
     <Row gutter={16}>
       <Col xs={24} sm={12}>

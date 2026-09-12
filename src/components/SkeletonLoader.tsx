@@ -41,11 +41,19 @@ export const PageHeaderSkeleton: React.FC = () => {
   );
 };
 
-export const MetricCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
+export const MetricCardsSkeleton: React.FC<{ count?: number; label?: string }> = ({
+  count = 4,
+  // Announced, or a screen reader hears an empty page while the numbers are still coming.
+  label = 'Loading',
+}) => {
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
       className={`grid grid-cols-2 gap-3 mb-6 ${count === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
     >
+      <span className="sr-only">{label}</span>
       {Array.from({ length: count }).map((_, idx) => {
         // Vary the color block themes (blue, emerald, amber, slate)
         const tones = [

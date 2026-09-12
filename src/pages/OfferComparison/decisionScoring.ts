@@ -350,6 +350,13 @@ export const getWorkMode = (app?: Application, offer?: Offer | SimulatedOffer) =
   return 'HYBRID';
 };
 
+// The operation, not just the endpoints: "$24,750 - 41% = $14,603" says where a figure came from.
+export const lessTax = (gross: number, ratePercent: number, net: number) => {
+  const rate = Math.round(Number(ratePercent) || 0);
+  if (rate <= 0 || Math.round(gross) === Math.round(net)) return formatCurrency(net);
+  return `${formatCurrency(gross)} - ${rate}% = ${formatCurrency(net)}`;
+};
+
 export const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -443,13 +450,33 @@ export const buildFinancialCalculationLines = ({
     )}/mo pre-tax), HSA employer +${formatCurrency(hsaEmployerContribution)}/yr`,
     `401(k) retirement match: +${formatCurrency(fortyOneKMatchAnnual)}/yr (${matchPercent}% match up to ${maxMatch}%)`,
     `Tax rates: base ${baseTaxRate}%, W2 bonus/relocation ${bonusTaxRate}%, equity ${equityTaxRate}%; benefits split: taxable ${formatCurrency(taxableBenefitSum)} + tax-free ${formatCurrency(nonTaxableBenefitSum)}`,
-    `After tax: base ${formatCurrency(afterTaxBase)}, bonus ${formatCurrency(
-      afterTaxBonus
-    )}, sign-on ${formatCurrency(afterTaxSignOn)}, relocation ${formatCurrency(
-      afterTaxRelocation
-    )}, equity ${formatCurrency(afterTaxEquity)}, benefits ${formatCurrency(
-      afterTaxBenefits
-    )}, HSA +${formatCurrency(afterTaxHsa)}, 401(k) +${formatCurrency(fortyOneKMatchAnnual)}`,
+    // One row per component: eight figures on a single line gave no way to see which rate made
+    ...[
+      { label: 'Base after tax', gross: base, rate: baseTaxRate, net: afterTaxBase },
+      { label: 'Bonus after tax', gross: bonus, rate: bonusTaxRate, net: afterTaxBonus },
+      { label: 'Sign-on after tax', gross: signOn, rate: bonusTaxRate, net: afterTaxSignOn },
+      {
+        label: 'Relocation after tax',
+        gross: relocation,
+        rate: bonusTaxRate,
+        net: afterTaxRelocation,
+      },
+      { label: 'Equity after tax', gross: equity, rate: equityTaxRate, net: afterTaxEquity },
+      {
+        label: 'Benefits after tax',
+        gross: taxableBenefitSum + nonTaxableBenefitSum,
+        rate: baseTaxRate,
+        net: afterTaxBenefits,
+      },
+    ]
+      .filter((row) => Math.round(row.gross) !== 0 || Math.round(row.net) !== 0)
+      .map((row) => `${row.label}: ${lessTax(row.gross, row.rate, row.net)}`),
+    ...(Math.round(afterTaxHsa) !== 0
+      ? [`HSA employer: +${formatCurrency(afterTaxHsa)} (untaxed)`]
+      : []),
+    ...(Math.round(fortyOneKMatchAnnual) !== 0
+      ? [`401(k) match: +${formatCurrency(fortyOneKMatchAnnual)} (untaxed)`]
+      : []),
     `After-tax total: ${formatCurrency(afterTaxTotal)}`,
     `COL adjustment: ${formatCurrency(afterTaxTotal)} x 100 / ${colIndex} = ${formatCurrency(
       purchasingPowerAdjusted
@@ -474,7 +501,11 @@ const scoreForLadder = (value: number) =>
   (100 * Math.log1p(value / FINANCIAL_SCORE_LOG_SCALE)) /
   Math.log1p(FINANCIAL_SCORE_REFERENCE_VALUE / FINANCIAL_SCORE_LOG_SCALE);
 
+// Invisible separator: whatever follows it is explanation, rendered as a tooltip.
+export const LINE_NOTE = '\u241F';
+
 // The score runs on a different number from the adjusted value, so the gap is spelled out in full.
+
 export const buildScoreValueLines = ({
   financialValue,
   benefitsPortion,
@@ -489,32 +520,45 @@ export const buildScoreValueLines = ({
   oneTimeCounted: number;
   scoreValue: number;
   financialScore: number;
-}) => [
-  `Step 1 - start from adjusted value: ${formatCurrency(financialValue)}`,
-  `Step 2 - take out benefits, scored in their own category: ${formatCurrency(
-    financialValue
-  )} - ${formatCurrency(benefitsPortion)} = ${formatCurrency(financialValue - benefitsPortion)}`,
-  `Step 3 - take out sign-on and relocation at full value: ${formatCurrency(
-    financialValue - benefitsPortion
-  )} - ${formatCurrency(oneTimeRemoved + oneTimeCounted)} = ${formatCurrency(
-    financialValue - benefitsPortion - oneTimeRemoved - oneTimeCounted
-  )}`,
-  `Step 4 - add back this year's quarter of them: ${formatCurrency(
-    financialValue - benefitsPortion - oneTimeRemoved - oneTimeCounted
-  )} + ${formatCurrency(oneTimeCounted)} = ${formatCurrency(scoreValue)}`,
-  `Step 5 - turn that into a score out of 100: ${formatCurrency(
-    scoreValue
-  )} scores ${Math.round(financialScore)}`,
-  `${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} is the benchmark that scores 100. The scale is not a straight line: the first dollars move the score much more than the last, because doubling a small package changes your life more than doubling a large one. Nothing is capped, so an exceptional offer can score above 100`,
-  `For scale: ${SCORE_LADDER.map(
-    (value) => `${formatCurrency(value)} = ${Math.round(scoreForLadder(value))}`
-  ).join(', ')}`,
-  `Exact formula, if you want it: 100 x ln(1 + value / ${formatCurrency(
-    FINANCIAL_SCORE_LOG_SCALE
-  )}) / ln(1 + ${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} / ${formatCurrency(
-    FINANCIAL_SCORE_LOG_SCALE
-  )})`,
-];
+}) => {
+  const afterBenefits = financialValue - benefitsPortion;
+  const oneTimeTotal = oneTimeRemoved + oneTimeCounted;
+  // Nothing one-time means those two steps read "- $0" then "+ $0" and only had to be read past.
+  const hasOneTime = oneTimeTotal !== 0;
+  const steps = [
+    `start from adjusted value: ${formatCurrency(financialValue)}`,
+    `take out benefits, scored in their own category: ${formatCurrency(
+      financialValue
+    )} - ${formatCurrency(benefitsPortion)} = ${formatCurrency(afterBenefits)}`,
+    ...(hasOneTime
+      ? [
+          `take out the one-time payment at full value: ${formatCurrency(
+            afterBenefits
+          )} - ${formatCurrency(oneTimeTotal)} = ${formatCurrency(afterBenefits - oneTimeTotal)}`,
+          `add back this year's quarter of it: ${formatCurrency(
+            afterBenefits - oneTimeTotal
+          )} + ${formatCurrency(oneTimeCounted)} = ${formatCurrency(scoreValue)}`,
+        ]
+      : []),
+    `turn that into a score out of 100: ${formatCurrency(scoreValue)} scores ${Math.round(
+      financialScore
+    )}`,
+  ];
+
+  return [
+    // Numbered here rather than written in, so hiding a step does not leave a gap in the sequence.
+    ...steps.map((step, index) => `Step ${index + 1} - ${step}`),
+    `${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} is the benchmark that scores 100. The scale is not a straight line: the first dollars move the score much more than the last, because doubling a small package changes your life more than doubling a large one. Nothing is capped, so an exceptional offer can score above 100`,
+    `For scale: ${SCORE_LADDER.map(
+      (value) => `${formatCurrency(value)} = ${Math.round(scoreForLadder(value))}`
+    ).join(', ')}`,
+    `Exact formula, if you want it: 100 x ln(1 + value / ${formatCurrency(
+      FINANCIAL_SCORE_LOG_SCALE
+    )}) / ln(1 + ${formatCurrency(FINANCIAL_SCORE_REFERENCE_VALUE)} / ${formatCurrency(
+      FINANCIAL_SCORE_LOG_SCALE
+    )})`,
+  ];
+};
 
 export const scoreVisa = (app?: Application) => {
   const sponsorship =

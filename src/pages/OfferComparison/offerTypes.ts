@@ -27,8 +27,20 @@ export interface BenefitItem {
   label: string;
   amount: number;
   frequency: 'MONTHLY' | 'YEARLY';
+  // Absent on rows saved before the flag existed, which are all read as tax-free.
   is_taxable?: boolean;
 }
+
+// Most perks are taxable income; a reimbursement that is not is the exception worth marking.
+export const NEW_BENEFIT_IS_TAXABLE = true;
+
+export const newBenefitItem = (idPrefix: string, now: number): BenefitItem => ({
+  id: `${idPrefix}-${now}`,
+  label: '',
+  amount: 0,
+  frequency: 'MONTHLY',
+  is_taxable: NEW_BENEFIT_IS_TAXABLE,
+});
 
 export interface SimulatedOffer {
   id: string;
@@ -134,6 +146,8 @@ export interface OfferLike {
   application_details?: { company: string; role_title: string };
   // ISO date the offer expires, e.g. '2026-08-14'.
   deadline?: string | null;
+  // When you would start. The first bonus is pro-rated from here rather than from today.
+  expected_start_date?: string | null;
   negotiation_rounds?: NegotiationRound[];
   risk_notes?: string;
   final_decision_status?: FinalDecisionStatus;

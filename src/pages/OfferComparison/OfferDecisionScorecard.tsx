@@ -27,6 +27,8 @@ import { ScoreBreakdownContent } from './ScoreBreakdown';
 
 type Props = {
   filteredOffers: Offer[];
+  // Unfiltered, so the bonus given up does not depend on the current view.
+  allOffers: Offer[];
   // Untouched by repricing, so a row hands back the record rather than a derived copy.
   rawOffers: Offer[];
   offers: Offer[];
@@ -98,6 +100,7 @@ const ScoreBreakdownTrigger = ({
 
 const OfferDecisionScorecard = ({
   filteredOffers,
+  allOffers,
   rawOffers,
   offers,
   applicationsById,
@@ -184,12 +187,14 @@ const OfferDecisionScorecard = ({
         simulatedOffers,
         scenarioRows,
         undefined,
-        rawOffers
+        rawOffers,
+        allOffers
       ),
     [
       adjustedByOfferId,
       applicationsById,
       filteredOffers,
+      allOffers,
       weights,
       simulatedOffers,
       scenarioRows,
@@ -329,6 +334,8 @@ const OfferDecisionScorecard = ({
             return (
               <article
                 key={row.id}
+                // The anchor a ?offer=<id> deep link scrolls to.
+                id={`offer-card-${row.offer.id}`}
                 className={clsx(
                   'relative flex flex-col overflow-hidden rounded-3xl border shadow-sm transition-all hover:shadow-md',
                   isRowRejected

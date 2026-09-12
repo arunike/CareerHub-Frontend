@@ -9,7 +9,7 @@ describe('financial score derivation', () => {
     benefitsPortion: 12000,
     afterTaxSignOn: 30000,
     afterTaxRelocation: 0,
-    forfeitedBonus: 18000,
+    bonusNetOnMove: 18000,
     colIndex: 125,
   });
 

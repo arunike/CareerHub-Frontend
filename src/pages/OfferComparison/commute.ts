@@ -63,6 +63,24 @@ export const effectiveFuelInputs = (
 
 export const supportsFuelCosting = (mode: CommuteMode) => mode === 'CAR' || mode === 'OTHER';
 
+// A car costs miles and fuel, not a flat fare; Other keeps the option without the default.
+export const defaultCostModeFor = (mode: CommuteMode): CostMode =>
+  mode === 'CAR' ? 'FUEL' : 'FIXED';
+
+// FUEL on a train is a state the Cost select cannot display, so a mode change has to clear it.
+export const costPatchForMode = (
+  mode: CommuteMode,
+  option: Pick<CommuteOption, 'cost_mode' | 'distance_basis'>
+): Partial<CommuteOption> => {
+  if (!supportsFuelCosting(mode)) {
+    return option.cost_mode === 'FUEL' ? { cost_mode: 'FIXED' } : {};
+  }
+  if (mode === 'CAR' && option.cost_mode !== 'FUEL') {
+    return { cost_mode: 'FUEL', distance_basis: option.distance_basis || 'ONE_WAY' };
+  }
+  return {};
+};
+
 const WEEKS_PER_YEAR = 52;
 const FULL_TIME_DAYS_PER_YEAR = 260;
 const ONSITE_DAYS_PER_WEEK = 5;

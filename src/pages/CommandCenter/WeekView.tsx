@@ -129,7 +129,7 @@ const WeekView = ({ events, applications, offers, stages: appStages, todayIso }:
       icon={MessageOutlined}
       count={chase.length}
       tone="urgent"
-      seeAll={{ to: '/applications', label: 'All' }}
+      seeAll={{ to: '/applications', label: 'All applications' }}
       rows={chase.slice(0, 8).map(
         ({ application, daysQuiet }): SummaryRow => ({
           id: `chase-${application.id}`,
@@ -152,7 +152,7 @@ const WeekView = ({ events, applications, offers, stages: appStages, todayIso }:
       title="Next seven days"
       icon={AimOutlined}
       count={focus.length}
-      seeAll={{ to: '/events', label: 'Calendar' }}
+      seeAll={{ to: '/events', label: 'All events' }}
       rows={focus.map(
         (item): SummaryRow => ({
           id: item.id,
@@ -180,7 +180,7 @@ const WeekView = ({ events, applications, offers, stages: appStages, todayIso }:
       title="Sent this week"
       icon={SendOutlined}
       count={applied.length}
-      seeAll={{ to: '/applications', label: 'All' }}
+      seeAll={{ to: '/applications', label: 'All applications' }}
       rows={applied.slice(0, 8).map(
         (application): SummaryRow => ({
           id: `sent-${application.id}`,
@@ -199,7 +199,7 @@ const WeekView = ({ events, applications, offers, stages: appStages, todayIso }:
       title="Moved forward"
       icon={AimOutlined}
       count={moved.length}
-      seeAll={{ to: '/applications', label: 'All' }}
+      seeAll={{ to: '/applications', label: 'All applications' }}
       rows={moved.slice(0, 8).map(
         (application): SummaryRow => ({
           id: `moved-${application.id}`,
@@ -222,7 +222,7 @@ const WeekView = ({ events, applications, offers, stages: appStages, todayIso }:
       icon={SolutionOutlined}
       collapsible
       count={inPlay}
-      seeAll={{ to: '/applications', label: 'All' }}
+      seeAll={{ to: '/applications', label: 'All applications' }}
       rows={stages.map(
         (stage): SummaryRow => ({
           id: `stage-${stage.status}`,

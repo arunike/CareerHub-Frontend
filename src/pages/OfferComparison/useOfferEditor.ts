@@ -9,6 +9,7 @@ import {
   type OfferLike as Offer,
   computeBenefitsTotal,
 } from './calculations';
+import { newBenefitItem } from './offerTypes';
 import { useSafeNullableFormState } from './useSafeFormState';
 
 const normalizeDecisionScore = (value: unknown) => {
@@ -240,10 +241,7 @@ export const useOfferEditor = ({
   };
 
   const addEditingBenefitItem = () => {
-    updateEditingBenefits([
-      ...editingBenefitItems,
-      { id: `edit-benefit-${Date.now()}`, label: '', amount: 0, frequency: 'MONTHLY' },
-    ]);
+    updateEditingBenefits([...editingBenefitItems, newBenefitItem('edit-benefit', Date.now())]);
   };
 
   const updateEditingBenefitItem = (id: string, patch: Partial<BenefitItem>) => {

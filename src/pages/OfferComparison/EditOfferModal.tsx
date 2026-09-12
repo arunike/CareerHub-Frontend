@@ -210,6 +210,10 @@ const EditOfferModal = ({
             onLevelChange={(value) => patchEditingApp({ level: value })}
             deadline={editingOffer.deadline ?? null}
             onDeadlineChange={(value) => setEditingOfferField('deadline', value)}
+            expectedStartDate={editingOffer.expected_start_date ?? null}
+            onExpectedStartDateChange={(value) =>
+              setEditingOfferField('expected_start_date', value)
+            }
             location={editingApp?.location || ''}
             onLocationChange={(value) => patchEditingApp({ location: value })}
             officeLocation={editingApp?.office_location || ''}
@@ -461,7 +465,7 @@ const EditOfferModal = ({
             }
             travelFrequency={editingApp?.travel_frequency || 'UNKNOWN'}
             onTravelFrequencyChange={(value) => patchEditingApp({ travel_frequency: value })}
-            locationPlaceholder="e.g. San Jose, CA"
+            locationPlaceholder="e.g. Mountain View, CA"
             // Step 1 only: it belongs with the offer's identity, not on every step.
             documentsSlot={
               <OfferDocumentsPanel

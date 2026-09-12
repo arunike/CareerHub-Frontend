@@ -2,11 +2,24 @@ import { useMemo, useState } from 'react';
 import type React from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
 import { type BenefitItem, type SimulatedOffer, computeBenefitsTotal } from './calculations';
+import { newBenefitItem } from './offerTypes';
 import { useSafeFormState } from './useSafeFormState';
 
 const DEFAULT_SCENARIO_BENEFITS: BenefitItem[] = [
-  { id: 'benefit-gym', label: 'Gym Reimbursement', amount: 100, frequency: 'MONTHLY' },
-  { id: 'benefit-phone', label: 'Cellphone Reimbursement', amount: 100, frequency: 'MONTHLY' },
+  {
+    id: 'benefit-gym',
+    label: 'Gym Reimbursement',
+    amount: 100,
+    frequency: 'MONTHLY',
+    is_taxable: true,
+  },
+  {
+    id: 'benefit-phone',
+    label: 'Cellphone Reimbursement',
+    amount: 100,
+    frequency: 'MONTHLY',
+    is_taxable: true,
+  },
 ];
 
 export const defaultScenarioDraft = (): SimulatedOffer => ({
@@ -80,10 +93,7 @@ export const useScenarioDraft = ({
   };
 
   const addScenarioBenefitItem = () => {
-    setScenarioBenefitItems((prev) => [
-      ...prev,
-      { id: `scenario-benefit-${Date.now()}`, label: '', amount: 0, frequency: 'MONTHLY' },
-    ]);
+    setScenarioBenefitItems((prev) => [...prev, newBenefitItem('scenario-benefit', Date.now())]);
   };
 
   const updateScenarioBenefitItem = (id: string, patch: Partial<BenefitItem>) => {

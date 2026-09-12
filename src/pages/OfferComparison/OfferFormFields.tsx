@@ -45,6 +45,8 @@ export interface OfferFormFieldsProps {
   invalidRoleTitle?: boolean;
   deadline?: string | null;
   onDeadlineChange?: (value: string | null) => void;
+  expectedStartDate?: string | null;
+  onExpectedStartDateChange?: (value: string | null) => void;
   location: string;
   onLocationChange: (value: string) => void;
   officeLocation?: string;
@@ -267,7 +269,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
     onSickLeaveIncludedInUnlimitedPtoChange,
     holidayDays,
     onHolidayDaysChange,
-    locationPlaceholder = 'e.g. San Jose, CA, United States',
+    locationPlaceholder = 'e.g. Mountain View, CA, United States',
     flexibleHoursPolicy = 'UNKNOWN',
     onFlexibleHoursPolicyChange,
     travelFrequency = 'UNKNOWN',

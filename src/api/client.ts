@@ -6,6 +6,7 @@ import {
   storeAuthTokens,
 } from '../lib/authTokens';
 import { getApiBaseUrl } from '../lib/runtimeConfig';
+import { isSessionRejection } from './sessionExpiry';
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
@@ -103,7 +104,8 @@ api.interceptors.response.use(
       originalRequest.headers = headers;
       return api(originalRequest);
     } catch (refreshError) {
-      clearAuthTokens();
+      // Keep the tokens through a network blip: the next request can still succeed with them.
+      if (isSessionRejection(refreshError)) clearAuthTokens();
       return Promise.reject(refreshError);
     }
   }

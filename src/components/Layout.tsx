@@ -17,24 +17,12 @@ import MobileQuickActions, { hasMobileQuickActionsForSource } from './MobileQuic
 import MobileBottomNav from './MobileBottomNav';
 import SidebarHeader from './SidebarHeader';
 import SidebarFooter from './SidebarFooter';
-import Modal from './MobileModal';
+import { confirmLeaveDialog } from './confirmLeaveDialog';
 import { UnsavedChangesProvider, useUnsavedChangesApi } from '../hooks/useUnsavedChanges';
 
 const { Sider, Content } = AntLayout;
 
 // Asks before abandoning typed-but-unsaved work; resolves false to stay on the page.
-const confirmLeaveDialog = (label: string) =>
-  new Promise<boolean>((resolve) => {
-    Modal.confirm({
-      title: 'Leave without saving?',
-      content: `Your unsaved ${label} will be lost.`,
-      okText: 'Leave',
-      okButtonProps: { danger: true },
-      cancelText: 'Stay on this page',
-      onOk: () => resolve(true),
-      onCancel: () => resolve(false),
-    });
-  });
 const { useBreakpoint } = Grid;
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'careerhub.sidebar.collapsed';
 const NotificationBell = lazy(() => import('./NotificationBell'));
@@ -207,9 +195,14 @@ const LayoutInner = ({ children }: { children: React.ReactNode }) => {
       })
     : visibleMenuItems;
 
+  // Every route change the shell owns goes through here; a raw navigate discards drafts silently.
+  const guardedNavigate = async (to: string) => {
+    if (await unsaved.confirmLeave()) navigate(to);
+  };
+
   const handleMenuClick = async ({ key }: { key: string }) => {
     if (!key.startsWith('/')) return;
-    if (await unsaved.confirmLeave()) navigate(key);
+    void guardedNavigate(key);
   };
 
   const toggleDesktopSidebar = () => {
@@ -343,12 +336,14 @@ const LayoutInner = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <SidebarFooter
+        confirmLeave={unsaved.confirmLeave}
+        navigateAfterLogout={navigate}
         settingsActive={location.pathname === '/settings'}
         displayName={displayName}
         isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
         isLoggingOut={isLoggingOut}
         logout={logout}
-        navigate={navigate}
+        navigate={guardedNavigate}
         notificationBell={notificationBell}
         profilePic={profilePic}
         setIsLoggingOut={setIsLoggingOut}
@@ -415,7 +410,7 @@ const LayoutInner = ({ children }: { children: React.ReactNode }) => {
           currentMobileNavigationItem={currentMobileNavigationItem}
           matchesNavKey={matchesNavKey}
           mobilePrimaryNavItems={mobilePrimaryNavItems}
-          navigate={navigate}
+          navigate={guardedNavigate}
           openQuickActions={openQuickActions}
           setCollapsed={setCollapsed}
           startLongPress={startLongPress}

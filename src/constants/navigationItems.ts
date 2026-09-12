@@ -10,6 +10,7 @@ import {
   RobotOutlined,
   ScheduleOutlined,
   SolutionOutlined,
+  SunOutlined,
   TeamOutlined,
   TrophyOutlined,
   WalletOutlined,
@@ -56,7 +57,8 @@ export const NAV_REGISTRY = [
     group: 'grp-1',
     label: 'Holidays',
     shortLabel: 'Days',
-    icon: ScheduleOutlined,
+    // Not another calendar grid: three of those sat adjacent and read as one repeated item.
+    icon: SunOutlined,
   },
   {
     key: '/applications',

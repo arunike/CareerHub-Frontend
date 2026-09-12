@@ -18,7 +18,8 @@ const ResumeVersionAnalytics = lazy(() => import('./ResumeVersionAnalytics'));
 const DecisionOutcomeInsights = lazy(() => import('./DecisionOutcomeInsights'));
 
 const SectionFallback = () => (
-  <div className="w-full space-y-6">
+  <div className="w-full space-y-6" role="status" aria-live="polite" aria-busy="true">
+    <span className="sr-only">Loading analytics</span>
     <MetricCardsSkeleton count={3} />
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 enterprise-card p-4 sm:p-6 min-h-[360px] flex flex-col justify-between">

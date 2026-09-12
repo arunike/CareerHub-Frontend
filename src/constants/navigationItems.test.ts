@@ -112,3 +112,23 @@ describe('Today entry', () => {
     expect(ordered).toContain('/command-center');
   });
 });
+
+describe('every nav entry is told apart by its icon', () => {
+  // Two adjacent entries shared one glyph and the sidebar read as a repeated item.
+  it('gives no two entries in a group the same icon', () => {
+    const byGroup = new Map<string, string[]>();
+    for (const entry of NAV_REGISTRY) {
+      const name = entry.icon?.displayName ?? entry.icon?.name ?? entry.key;
+      byGroup.set(entry.group, [...(byGroup.get(entry.group) ?? []), name]);
+    }
+    for (const [group, icons] of byGroup) {
+      // The AI tools deliberately share one mark; they are one family under a parent.
+      const shareable = icons.filter((icon) => icon !== 'RobotOutlined');
+      expect(new Set(shareable).size, `duplicate icon in ${group}`).toBe(shareable.length);
+    }
+  });
+
+  it('gives every entry an icon at all', () => {
+    expect(NAV_REGISTRY.filter((entry) => !entry.icon)).toEqual([]);
+  });
+});

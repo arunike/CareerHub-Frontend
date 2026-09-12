@@ -23,6 +23,8 @@ const OfferBasicsPanel = ({
   linkedApplicationId = null,
   onCompanyNameChange,
   onDeadlineChange,
+  expectedStartDate,
+  onExpectedStartDateChange,
   onLevelChange,
   onLinkedApplicationChange,
   onRoleTitleChange,
@@ -55,6 +57,8 @@ const OfferBasicsPanel = ({
         invalidRoleTitle={invalidRoleTitle}
         deadline={deadline}
         onDeadlineChange={onDeadlineChange}
+        expectedStartDate={expectedStartDate}
+        onExpectedStartDateChange={onExpectedStartDateChange}
         onLevelChange={onLevelChange}
         companyPlaceholder={companyPlaceholder}
         rolePlaceholder={rolePlaceholder}

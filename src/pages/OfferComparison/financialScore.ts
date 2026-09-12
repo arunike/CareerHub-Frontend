@@ -16,28 +16,17 @@ export const ONE_TIME_HORIZON_YEARS = 4;
 // Most annual bonuses land at the end of the performance year and require you to still be there.
 export const BONUS_PAYOUT_MONTH = 12;
 
-// Share of the bonus year worked since the last payout: nil the day after, nearly all the day before.
-export const bonusYearElapsed = (todayIso: string, payoutMonth = BONUS_PAYOUT_MONTH) => {
-  const time = Date.parse(`${todayIso.slice(0, 10)}T00:00:00Z`);
-  if (Number.isNaN(time)) return 0;
-  const today = new Date(time);
-  const month = today.getUTCMonth() + 1;
-  const day = today.getUTCDate();
-  const daysInMonth = new Date(Date.UTC(today.getUTCFullYear(), month, 0)).getUTCDate();
-  // The payout lands at the end of its month, so accrual restarts with the month after it.
-  const monthsSince = ((month - payoutMonth - 1 + 24) % 12) + (day - 1) / daysInMonth;
-  return Math.min(1, monthsSince / 12);
-};
-
-// The accrued bonus you walk away from by resigning before it is paid.
-export const forfeitedBonus = (
-  currentBonus: number,
-  todayIso: string,
-  payoutMonth = BONUS_PAYOUT_MONTH
-) => {
-  const bonus = Number(currentBonus) || 0;
-  if (bonus <= 0) return 0;
-  return bonus * bonusYearElapsed(todayIso, payoutMonth);
+// The bonus clock runs from the day you start, not the day you happen to be comparing.
+export const bonusClockDate = (offer: unknown, todayIso: string) => {
+  const record = (offer ?? {}) as {
+    expected_start_date?: unknown;
+    linked_experience?: { start_date?: unknown } | null;
+  };
+  const expected = record.expected_start_date;
+  if (typeof expected === 'string' && expected.length >= 10) return expected.slice(0, 10);
+  const started = record.linked_experience?.start_date;
+  if (typeof started === 'string' && started.length >= 10) return started.slice(0, 10);
+  return todayIso;
 };
 
 export interface FinancialScoreInput {
@@ -46,8 +35,8 @@ export interface FinancialScoreInput {
   benefitsPortion: number;
   afterTaxSignOn: number;
   afterTaxRelocation: number;
-  // After tax; nothing when this is your current role, since staying forfeits nothing.
-  forfeitedBonus: number;
+  // After tax. The bonus given up by leaving, less what this offer's first pro-rated bonus pays.
+  bonusNetOnMove: number;
   colIndex: number;
 }
 
@@ -64,15 +53,15 @@ export const financialScoreValue = ({
   benefitsPortion,
   afterTaxSignOn,
   afterTaxRelocation,
-  forfeitedBonus: forfeited,
+  bonusNetOnMove: shortfall,
   colIndex,
 }: FinancialScoreInput): FinancialScoreValue => {
   const colFactor = 100 / Math.max(Number(colIndex) || 100, 1);
   const oneTimeTotal =
-    ((Number(afterTaxSignOn) || 0) + (Number(afterTaxRelocation) || 0) - (Number(forfeited) || 0)) *
+    ((Number(afterTaxSignOn) || 0) + (Number(afterTaxRelocation) || 0) - (Number(shortfall) || 0)) *
     colFactor;
   const oneTimeCounted = oneTimeTotal / ONE_TIME_HORIZON_YEARS;
-  // adjustedValue already holds sign-on and relocation in full; the lost bonus never entered it.
+  // adjustedValue holds sign-on and relocation in full; the shortfall was never part of it.
   const alreadyInside =
     ((Number(afterTaxSignOn) || 0) + (Number(afterTaxRelocation) || 0)) * colFactor;
   return {

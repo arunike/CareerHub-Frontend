@@ -14,21 +14,24 @@ const hasReplied = (application: CommandApplication) =>
 const text = (value: unknown) => (typeof value === 'string' ? value : '');
 const status = (application: CommandApplication) => text(application.status).toUpperCase();
 
-const within = (from: unknown, todayIso: string, days: number) => {
-  const gap = daysBetween(from, todayIso);
-  return gap !== null && gap >= 0 && gap < days;
+// The same Monday-to-Sunday window the view prints above these numbers.
+const inDisplayedWeek = (from: unknown, todayIso: string) => {
+  const day = text(from).slice(0, 10);
+  if (day.length < 10) return false;
+  const { start, end } = weekWindow(todayIso);
+  return day >= start && day <= end;
 };
 
 export const appliedThisWeek = (applications: CommandApplication[], todayIso: string) =>
   applications.filter((application) =>
-    within(application.date_applied ?? application.updated_at, todayIso, WEEK_DAYS)
+    inDisplayedWeek(application.date_applied ?? application.updated_at, todayIso)
   );
 
-// Touched in the last week and no longer sitting at Applied: something actually moved.
+// Touched this week and no longer sitting at Applied: something actually moved.
 export const movedThisWeek = (applications: CommandApplication[], todayIso: string) =>
   applications.filter(
     (application) =>
-      within(application.updated_at, todayIso, WEEK_DAYS) &&
+      inDisplayedWeek(application.updated_at, todayIso) &&
       status(application) !== 'APPLIED' &&
       status(application) !== ''
   );
@@ -112,7 +115,7 @@ export const nextWeekFocus = (
       detail: event.application_details?.company ?? 'Calendar',
       date: text(event.date),
       daysAway: away,
-      to: '/events',
+      to: `/events?event=${event.id}`,
     });
   }
 
@@ -127,7 +130,7 @@ export const nextWeekFocus = (
       detail: offer.application_details?.role ?? 'Offer deadline',
       date: text(offer.deadline),
       daysAway: away,
-      to: '/offers',
+      to: `/offers?offer=${offer.id}`,
     });
   }
 

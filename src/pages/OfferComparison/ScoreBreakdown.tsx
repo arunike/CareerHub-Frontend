@@ -1,5 +1,19 @@
 import clsx from 'clsx';
-import type { DecisionRow } from './decisionScoring';
+import { Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { LINE_NOTE, type DecisionRow } from './decisionScoring';
+
+// With nothing skipped there is no second step, so numbering the first one invents a sequence.
+export const stepOneHeading = (hasSkipped: boolean) =>
+  hasSkipped ? 'Step 1 — Weighted points per category' : 'Weighted points per category';
+
+// Dividing by 1 is not a calculation; with nothing skipped the only step left is the rounding.
+export const totalFormula = (rawSum: number, activeWeightTotal: number, score: number) => {
+  const points = (rawSum / 100).toFixed(2);
+  return activeWeightTotal === 100
+    ? `${points} pts rounded = ${score}`
+    : `${points} pts ÷ ${activeWeightTotal / 100} = ${score}`;
+};
 
 export const ScoreBreakdownContent = ({
   row,
@@ -25,7 +39,7 @@ export const ScoreBreakdownContent = ({
       {/* Step 1 */}
       <div className="mb-3">
         <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500 mb-2">
-          Step 1 — Weighted points per category
+          {stepOneHeading(skipped.length > 0)}
         </p>
         <div className="space-y-2">
           {scored.map((c) => {
@@ -55,9 +69,11 @@ export const ScoreBreakdownContent = ({
                     </summary>
                     <dl className="mt-1.5 divide-y divide-slate-200/70 overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50 dark:divide-white/[0.08] dark:border-white/[0.08] dark:bg-ink-900">
                       {c.calculationLines.map((line, index) => {
-                        const split = line.indexOf(': ');
-                        const label = split > 0 ? line.slice(0, split) : null;
-                        const value = split > 0 ? line.slice(split + 2) : line;
+                        // Anything after the separator is explanation, so it reads as a tooltip
+                        const [body, note] = line.split(LINE_NOTE);
+                        const split = body.indexOf(': ');
+                        const label = split > 0 ? body.slice(0, split) : null;
+                        const value = split > 0 ? body.slice(split + 2) : body;
                         const isResult = index === c.calculationLines!.length - 1;
                         return (
                           <div
@@ -75,6 +91,11 @@ export const ScoreBreakdownContent = ({
                                 }`}
                               >
                                 {label}
+                                {note && (
+                                  <Tooltip title={note}>
+                                    <InfoCircleOutlined className="ml-1 text-[10px] text-slate-400 dark:text-ink-500" />
+                                  </Tooltip>
+                                )}
                               </dt>
                             ) : (
                               <dt className="hidden sm:block" />
@@ -108,16 +129,12 @@ export const ScoreBreakdownContent = ({
         </div>
       </div>
 
-      {/* Step 2 */}
-      <div className="mb-3">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500 mb-1">
-          Step 2 — Normalise for skipped categories
-        </p>
-        {skipped.length === 0 ? (
-          <p className="text-[11px] text-slate-500 dark:text-ink-400">
-            All categories filled — no normalisation needed. Active weight = 100%.
+      {/* Step 2, only when there is something to normalise. */}
+      {skipped.length > 0 && (
+        <div className="mb-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500 mb-1">
+            Step 2 — Normalise for skipped categories
           </p>
-        ) : (
           <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-lg px-3 py-2 text-[11px] leading-5 text-amber-800 dark:text-amber-200">
             <p className="mb-1">
               <span className="font-semibold">{skipped.map((c) => c.label).join(', ')}</span> (
@@ -132,8 +149,8 @@ export const ScoreBreakdownContent = ({
               $300k benchmark.
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Final */}
       <div className="border-t border-slate-200 dark:border-white/[0.08] pt-2 bg-sky-50 dark:bg-sky-500/10 rounded-lg px-3 py-2.5">
@@ -141,7 +158,7 @@ export const ScoreBreakdownContent = ({
           <div>
             <p className="font-bold text-slate-800 dark:text-ink-50">Total Score</p>
             <p className="text-[10px] text-slate-500 dark:text-ink-400 font-mono mt-0.5">
-              {(rawSum / 100).toFixed(2)} pts ÷ {activeWeightTotal / 100} = {row.score}
+              {totalFormula(rawSum, activeWeightTotal, row.score)}
             </p>
           </div>
           <span className="text-2xl font-black text-sky-600 dark:text-sky-300">{row.score}</span>

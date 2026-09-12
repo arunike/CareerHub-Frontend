@@ -89,7 +89,7 @@ const LocationTaxSection = ({
             options={officeLocationOptions}
             onChange={onOfficeLocationChange}
             onSearch={onOfficeLocationChange}
-            placeholder="e.g. San Jose, CA"
+            placeholder="e.g. Mountain View, CA"
             allowClear
             filterOption={false}
           />

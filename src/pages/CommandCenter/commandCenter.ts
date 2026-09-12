@@ -2,8 +2,8 @@ export interface CommandEvent {
   id: number;
   name: string;
   date: string;
-  start_time?: string;
-  end_time?: string;
+  start_time?: string | null;
+  end_time?: string | null;
   location_type?: string;
   location?: string;
   meeting_link?: string;
@@ -127,10 +127,31 @@ export interface UpcomingEvent {
   applicationId: number | null;
 }
 
+// Filtering on the date alone left a 09:00 interview under "Next up" all afternoon.
+export const hasElapsed = (event: CommandEvent, todayIso: string, nowMinutes: number): boolean => {
+  const gap = daysBetween(todayIso, event.date);
+  if (gap === null) return false;
+  if (gap !== 0) return gap < 0;
+  const start = text(event.start_time).slice(0, 5);
+  if (!/^\d{2}:\d{2}$/.test(start)) return false;
+  const [hours, minutes] = start.split(':').map(Number);
+  return hours * 60 + minutes < nowMinutes;
+};
+
+// Minutes since local midnight, which is the clock the dates on these records are written against.
+export const minutesIntoDay = (now: Date = new Date()) => now.getHours() * 60 + now.getMinutes();
+
 // Everything still ahead, soonest first. Not just interviews: a deadline or a call matters too.
-export const upcomingEvents = (events: CommandEvent[], todayIso: string): UpcomingEvent[] => {
+export const upcomingEvents = (
+  events: CommandEvent[],
+  todayIso: string,
+  nowMinutes: number = minutesIntoDay()
+): UpcomingEvent[] => {
   const upcoming = events
-    .filter((event) => atLeast(daysBetween(todayIso, event.date), 0))
+    .filter(
+      (event) =>
+        atLeast(daysBetween(todayIso, event.date), 0) && !hasElapsed(event, todayIso, nowMinutes)
+    )
     .sort(
       (a, b) =>
         text(a.date).localeCompare(text(b.date)) ||
@@ -143,8 +164,11 @@ export const upcomingEvents = (events: CommandEvent[], todayIso: string): Upcomi
   }));
 };
 
-export const nextEvent = (events: CommandEvent[], todayIso: string): UpcomingEvent | null =>
-  upcomingEvents(events, todayIso)[0] ?? null;
+export const nextEvent = (
+  events: CommandEvent[],
+  todayIso: string,
+  nowMinutes: number = minutesIntoDay()
+): UpcomingEvent | null => upcomingEvents(events, todayIso, nowMinutes)[0] ?? null;
 
 const PRIORITY_RANK: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 

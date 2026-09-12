@@ -1,3 +1,4 @@
+import { confirmLeaveDialog } from '../../components/confirmLeaveDialog';
 import { useCallback, useEffect, useState } from 'react';
 import type { FormInstance } from 'antd';
 import type { MessageInstance } from 'antd/es/message/interface';
@@ -29,6 +30,8 @@ export const useApplicationEditor = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [detailApp, setDetailApp] = useState<CareerApplication | null>(null);
   const [detailDrawerMode, setDetailDrawerMode] = useState<'view' | 'edit'>('view');
+  // Typed-in changes only: setFieldsValue populating the form is not the user's work.
+  const [isEditorDirty, setIsEditorDirty] = useState(false);
 
   const populateApplicationForm = (app: CareerApplication) => {
     setEditingId(app.id);
@@ -64,6 +67,7 @@ export const useApplicationEditor = ({
     setEditingId(null);
     setDetailApp(null);
     setDetailDrawerMode('view');
+    setIsEditorDirty(false);
     form.resetFields();
     form.setFieldsValue({
       status: 'APPLIED',
@@ -172,6 +176,7 @@ export const useApplicationEditor = ({
       }
       form.resetFields();
       setEditingId(null);
+      setIsEditorDirty(false);
     } catch (error) {
       messageApi.error('Failed to save application');
       console.error(error);
@@ -205,26 +210,37 @@ export const useApplicationEditor = ({
   };
 
   const openEditDrawer = (app: CareerApplication) => {
+    setIsEditorDirty(false);
     populateApplicationForm(app);
     setIsAddModalOpen(false);
     setDetailApp(app);
     setDetailDrawerMode('edit');
   };
 
-  const closeDetailDrawer = () => {
+  // Closing used to reset the form whatever was in it, so a mistyped click discarded the lot.
+  const discardGuard = async () => !isEditorDirty || confirmLeaveDialog('application changes');
+
+  const closeDetailDrawer = async () => {
+    if (!(await discardGuard())) return;
     setDetailApp(null);
     setDetailDrawerMode('view');
     setEditingId(null);
+    setIsEditorDirty(false);
     form.resetFields();
   };
 
-  const cancelDrawerEdit = () => {
+  const cancelDrawerEdit = async () => {
+    if (!(await discardGuard())) return;
     setDetailDrawerMode('view');
     setEditingId(null);
+    setIsEditorDirty(false);
     form.resetFields();
   };
 
   return {
+    isEditorDirty,
+    markEditorDirty: () => setIsEditorDirty(true),
+    clearEditorDirty: () => setIsEditorDirty(false),
     isAddModalOpen,
     setIsAddModalOpen,
     detailApp,

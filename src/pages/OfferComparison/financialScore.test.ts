@@ -3,8 +3,7 @@ import {
   ONE_TIME_HORIZON_YEARS,
   computeIndependentFinancialScore,
   financialScoreValue,
-  bonusYearElapsed,
-  forfeitedBonus,
+  bonusClockDate,
 } from './financialScore';
 
 const input = (over: Partial<Parameters<typeof financialScoreValue>[0]> = {}) => ({
@@ -12,7 +11,7 @@ const input = (over: Partial<Parameters<typeof financialScoreValue>[0]> = {}) =>
   benefitsPortion: 0,
   afterTaxSignOn: 40000,
   afterTaxRelocation: 0,
-  forfeitedBonus: 0,
+  bonusNetOnMove: 0,
   colIndex: 100,
   ...over,
 });
@@ -40,14 +39,14 @@ describe('financialScoreValue', () => {
     expect(cheap.oneTimeCounted).toBeGreaterThan(dear.oneTimeCounted);
   });
 
-  it('nets the forfeited bonus off the sign-on', () => {
-    const withOffset = financialScoreValue(input({ forfeitedBonus: 40000 }));
+  it('nets the bonus effect off the sign-on', () => {
+    const withOffset = financialScoreValue(input({ bonusNetOnMove: 40000 }));
     expect(withOffset.oneTimeTotal).toBeCloseTo(0);
     expect(withOffset.value).toBeCloseTo(300000 - 40000);
   });
 
-  it('can turn a sign-on into a net loss when the bonus given up is bigger', () => {
-    const result = financialScoreValue(input({ forfeitedBonus: 80000 }));
+  it('can turn a sign-on into a net loss when the bonus effect is bigger', () => {
+    const result = financialScoreValue(input({ bonusNetOnMove: 80000 }));
     expect(result.oneTimeTotal).toBeLessThan(0);
     expect(result.value).toBeLessThan(financialScoreValue(input()).value);
   });
@@ -58,50 +57,55 @@ describe('financialScoreValue', () => {
   });
 });
 
-describe('bonusYearElapsed', () => {
-  it('is nothing right after the bonus lands', () => {
-    // Paid at the end of December, so the first of January has accrued nothing.
-    expect(bonusYearElapsed('2027-01-01')).toBeCloseTo(0, 2);
-  });
-
-  it('is almost the whole year the day before the next one lands', () => {
-    expect(bonusYearElapsed('2026-12-31')).toBeGreaterThan(0.99);
-  });
-
-  it('is about half way through the middle of the year', () => {
-    expect(bonusYearElapsed('2026-07-01')).toBeCloseTo(0.5, 1);
-  });
-
-  it('follows a payout month that is not December', () => {
-    // Paid at the end of March, so April has barely accrued and March is nearly a full year.
-    expect(bonusYearElapsed('2026-04-01', 3)).toBeCloseTo(0, 2);
-    expect(bonusYearElapsed('2026-03-30', 3)).toBeGreaterThan(0.99);
-  });
-
-  it('does not throw on an unreadable date', () => {
-    expect(bonusYearElapsed('nonsense')).toBe(0);
-  });
-});
-
-describe('forfeitedBonus', () => {
-  it('is the share of the year worked since the last payout', () => {
-    expect(forfeitedBonus(24000, '2026-07-01')).toBeCloseTo(12000, -2);
-  });
-
-  it('is nothing when you leave just after it is paid, which is the point', () => {
-    expect(forfeitedBonus(24000, '2027-01-01')).toBeCloseTo(0, 1);
-  });
-
-  it('is nothing without a bonus to lose', () => {
-    expect(forfeitedBonus(0, '2026-07-01')).toBe(0);
-  });
-});
-
 describe('computeIndependentFinancialScore', () => {
   it('still rewards a bigger number and refuses a negative one', () => {
     expect(computeIndependentFinancialScore(400000)).toBeGreaterThan(
       computeIndependentFinancialScore(300000)
     );
     expect(computeIndependentFinancialScore(-5)).toBe(0);
+  });
+});
+
+describe('bonusClockDate', () => {
+  it('prefers the start date you recorded on the offer', () => {
+    expect(bonusClockDate({ expected_start_date: '2027-01-01' }, '2026-09-11')).toBe('2027-01-01');
+  });
+
+  it('falls back to the day you actually started', () => {
+    expect(bonusClockDate({ linked_experience: { start_date: '2026-03-02' } }, '2026-09-11')).toBe(
+      '2026-03-02'
+    );
+  });
+
+  it('uses today only when the offer says nothing about starting', () => {
+    expect(bonusClockDate({}, '2026-09-11')).toBe('2026-09-11');
+    expect(bonusClockDate({ expected_start_date: null }, '2026-09-11')).toBe('2026-09-11');
+  });
+
+  it('reads a timestamp down to its date', () => {
+    expect(bonusClockDate({ expected_start_date: '2027-01-01T09:00:00Z' }, '2026-09-11')).toBe(
+      '2027-01-01'
+    );
+  });
+});
+
+describe('a net bonus loss lowers the score', () => {
+  it('subtracts it, rather than only shrinking the sign-on on paper', () => {
+    const without = financialScoreValue(input({ bonusNetOnMove: 0 }));
+    const withLoss = financialScoreValue(input({ bonusNetOnMove: 20000 }));
+    expect(withLoss.value).toBeLessThan(without.value);
+    // A quarter of it lands this year, matching how a sign-on is amortised.
+    expect(without.value - withLoss.value).toBeCloseTo(20000 / ONE_TIME_HORIZON_YEARS, 5);
+  });
+
+  it('raises the value when the new first bonus is the bigger of the two', () => {
+    const gain = financialScoreValue(input({ bonusNetOnMove: -8000 }));
+    expect(gain.value).toBeGreaterThan(financialScoreValue(input({ bonusNetOnMove: 0 })).value);
+  });
+
+  it('still subtracts when there is no sign-on to net it against', () => {
+    const result = financialScoreValue(input({ afterTaxSignOn: 0, bonusNetOnMove: 20000 }));
+    expect(result.oneTimeTotal).toBeCloseTo(-20000);
+    expect(result.value).toBeLessThan(financialScoreValue(input({ afterTaxSignOn: 0 })).value);
   });
 });

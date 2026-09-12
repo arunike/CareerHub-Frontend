@@ -21,6 +21,7 @@ import {
   upcomingEvents,
 } from './commandCenter';
 import type { CommandApplication, CommandEvent, CommandOffer, CommandTask } from './commandCenter';
+import { canSayAllClear, type CommandSource } from './commandCenterSources';
 import { dueReviews } from '../OfferComparison/decisionJournal';
 import type { DecisionJournalEntry } from '../OfferComparison/decisionJournal';
 
@@ -33,6 +34,7 @@ export interface ViewData {
   tasks: CommandTask[];
   offers: CommandOffer[];
   journals: DecisionJournalEntry[];
+  failed: CommandSource[];
   stages: ApplicationStage[];
   todayIso: string;
 }
@@ -43,6 +45,7 @@ const TodayView = ({
   tasks,
   offers,
   journals,
+  failed,
   stages,
   todayIso,
 }: ViewData) => {
@@ -73,7 +76,7 @@ const TodayView = ({
     ...alsoToday.map(
       ({ event }): SummaryRow => ({
         id: `now-event-${event.id}`,
-        to: '/events',
+        to: `/events?event=${event.id}`,
         title: event.application_details
           ? `${event.application_details.company} \u00b7 ${event.name}`
           : event.name,
@@ -84,7 +87,7 @@ const TodayView = ({
     ...due.map(
       (task): SummaryRow => ({
         id: `now-task-${task.id}`,
-        to: '/tasks',
+        to: `/tasks?taskId=${task.id}`,
         title: task.title,
         meta: task.due_date ? dayjs(task.due_date).format('D MMM') : undefined,
         leading: <CheckSquareOutlined className="text-[12px] text-amber-500" />,
@@ -113,11 +116,11 @@ const TodayView = ({
       title="Coming up"
       icon={CalendarOutlined}
       count={later.length}
-      seeAll={{ to: '/events', label: 'Calendar' }}
+      seeAll={{ to: '/events', label: 'All events' }}
       rows={later.slice(0, 6).map(
         ({ event, daysAway }): SummaryRow => ({
           id: `event-${event.id}`,
-          to: '/events',
+          to: `/events?event=${event.id}`,
           title: event.application_details
             ? `${event.application_details.company} \u00b7 ${event.name}`
             : event.name,
@@ -142,11 +145,11 @@ const TodayView = ({
       icon={DollarOutlined}
       tone="urgent"
       count={closing.length}
-      seeAll={{ to: '/offers', label: 'Compare' }}
+      seeAll={{ to: '/offers', label: 'All offers' }}
       rows={closing.map(
         ({ offer, daysLeft }): SummaryRow => ({
           id: `closing-${offer.id}`,
-          to: '/offers',
+          to: `/offers?offer=${offer.id}`,
           title: offer.application_details?.company ?? `Offer #${offer.id}`,
           meta: offer.application_details?.role,
           trailing: (
@@ -171,11 +174,11 @@ const TodayView = ({
       title="Decision reviews due"
       icon={HistoryOutlined}
       count={lookBacks.length}
-      seeAll={{ to: '/offers', label: 'Offers' }}
+      seeAll={{ to: '/offers', label: 'All offers' }}
       rows={lookBacks.slice(0, 5).map(
         ({ entry, milestone, dueOn, daysAway }): SummaryRow => ({
           id: `journal-${entry.id ?? entry.offer}-${milestone}`,
-          to: '/offers',
+          to: `/offers?offer=${entry.offer}`,
           title: `${entry.company_name || 'An offer'} \u00b7 ${milestone}-day look-back`,
           meta:
             entry.decision === 'ACCEPTED'
@@ -201,7 +204,7 @@ const TodayView = ({
       rows={restOfTasks.slice(0, 6).map(
         (task): SummaryRow => ({
           id: `task-${task.id}`,
-          to: '/tasks',
+          to: `/tasks?taskId=${task.id}`,
           title: task.title,
           meta: task.due_date ? `Due ${dayjs(task.due_date).format('D MMM')}` : 'No date',
           trailing:
@@ -221,7 +224,7 @@ const TodayView = ({
       title="In interview rounds"
       icon={SolutionOutlined}
       count={inRounds.length}
-      seeAll={{ to: '/applications', label: 'All' }}
+      seeAll={{ to: '/applications', label: 'All applications' }}
       rows={inRounds.slice(0, 6).map(
         (application): SummaryRow => ({
           id: `round-${application.id}`,
@@ -319,15 +322,43 @@ const TodayView = ({
         </div>
       )}
 
-      {!soonest && cards.length === 0 && (
+      {/* Reassurance only where every source answered; otherwise this is a gap, not a quiet day. */}
+      {!soonest && cards.length === 0 && canSayAllClear(failed) && (
         <section className="enterprise-card p-10 text-center">
-          <p className="text-[13px] text-slate-500 dark:text-ink-400">
-            Nothing needs you today. Check{' '}
-            <Link to="?view=week" className="font-semibold text-blue-600 dark:text-blue-300">
-              This week
-            </Link>{' '}
-            for how the search is going.
-          </p>
+          {applications.length === 0 ? (
+            // An empty account is not a quiet day; pointing it at weekly reporting gives it nothing.
+            <>
+              <p className="text-[15px] font-semibold text-slate-900 dark:text-ink-50">
+                Nothing is being tracked yet
+              </p>
+              <p className="mx-auto mt-1 max-w-md text-[13px] text-slate-500 dark:text-ink-400">
+                Add the first role you have applied for, and this page starts showing what needs you
+                each day.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Link
+                  to="/applications?action=create"
+                  className="inline-flex min-h-9 items-center rounded-lg bg-blue-600 px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  Add first application
+                </Link>
+                <Link
+                  to="/applications?action=job-import"
+                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700 dark:border-white/[0.10] dark:text-ink-100 dark:hover:border-blue-400/40"
+                >
+                  Import from a job link
+                </Link>
+              </div>
+            </>
+          ) : (
+            <p className="text-[13px] text-slate-500 dark:text-ink-400">
+              Nothing needs you today. Check{' '}
+              <Link to="?view=week" className="font-semibold text-blue-600 dark:text-blue-300">
+                This week
+              </Link>{' '}
+              for how the search is going.
+            </p>
+          )}
         </section>
       )}
     </div>

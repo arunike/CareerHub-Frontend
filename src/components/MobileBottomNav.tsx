@@ -16,7 +16,7 @@ type Props = {
   currentMobileNavigationItem: MobileNavigationItem | undefined;
   matchesNavKey: (key: string) => boolean;
   mobilePrimaryNavItems: ResolvedMobileToolbarItem[];
-  navigate: any;
+  navigate: (to: string) => void;
   openQuickActions: (sourceKey?: string) => void;
   setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   startLongPress: (pressKey: string, sourceKey?: string) => void;

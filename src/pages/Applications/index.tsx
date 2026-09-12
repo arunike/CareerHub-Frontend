@@ -44,6 +44,8 @@ import {
   summarizeApplications,
 } from './applicationTypes';
 import { useCompanyList } from '../../hooks/useCompanyList';
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
+import { confirmLeaveDialog } from '../../components/confirmLeaveDialog';
 
 const Applications = () => {
   const location = useLocation();
@@ -260,6 +262,9 @@ const Applications = () => {
     openEditDrawer,
     closeDetailDrawer,
     cancelDrawerEdit,
+    isEditorDirty,
+    markEditorDirty,
+    clearEditorDirty,
   } = useApplicationEditor({
     form,
     documents,
@@ -351,6 +356,19 @@ const Applications = () => {
     setSelectedRowKeys([]);
   };
 
+  // The shell asks before a route change; these ask before a close button throws the draft away.
+  useUnsavedChanges(isEditorDirty, 'application changes');
+
+  const closeAddModal = async (open: boolean) => {
+    if (open) {
+      setIsAddModalOpen(true);
+      return;
+    }
+    if (isEditorDirty && !(await confirmLeaveDialog('application changes'))) return;
+    clearEditorDirty();
+    setIsAddModalOpen(false);
+  };
+
   const renderApplicationForm = (props: {
     onCancel: () => void;
     submitLabel?: string;
@@ -364,6 +382,7 @@ const Applications = () => {
       editableStatusOptions={editableStatusOptions}
       companyListOptions={companyListOptions}
       companyListLoading={companyListLoading}
+      onValuesChange={markEditorDirty}
       {...props}
     />
   );
@@ -476,7 +495,7 @@ const Applications = () => {
       {/* Add Modal */}
       <ApplicationAddModal
         isAddModalOpen={isAddModalOpen}
-        setIsAddModalOpen={setIsAddModalOpen}
+        setIsAddModalOpen={closeAddModal}
         onSubmit={() => form.submit()}
         renderApplicationForm={renderApplicationForm}
       />

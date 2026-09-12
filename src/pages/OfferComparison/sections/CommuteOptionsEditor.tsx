@@ -8,7 +8,9 @@ import {
   COMMUTE_MODE_LABELS,
   annualCostFor,
   annualHoursFor,
+  costPatchForMode,
   dailyMilesFor,
+  defaultCostModeFor,
   effectiveFuelInputs,
   formatHours,
   fuelBreakdownFor,
@@ -31,13 +33,18 @@ interface Props {
 
 const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
-const newOption = (used: CommuteMode[]): CommuteOption => ({
-  mode: COMMUTE_MODES.find((mode) => !used.includes(mode)) ?? 'OTHER',
-  minutes_each_way: 30,
-  cost_value: 0,
-  cost_frequency: 'MONTHLY',
-  is_primary: used.length === 0,
-});
+const newOption = (used: CommuteMode[]): CommuteOption => {
+  const mode = COMMUTE_MODES.find((candidate) => !used.includes(candidate)) ?? 'OTHER';
+  return {
+    mode,
+    minutes_each_way: 30,
+    cost_value: 0,
+    cost_frequency: 'MONTHLY',
+    is_primary: used.length === 0,
+    cost_mode: defaultCostModeFor(mode),
+    ...(defaultCostModeFor(mode) === 'FUEL' ? { distance_basis: 'ONE_WAY' as const } : {}),
+  };
+};
 
 const Field = ({
   label,
@@ -205,7 +212,10 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                     <select
                       value={option.mode}
                       onChange={(event) =>
-                        patch(index, { mode: event.target.value as CommuteMode })
+                        patch(index, {
+                          mode: event.target.value as CommuteMode,
+                          ...costPatchForMode(event.target.value as CommuteMode, option),
+                        })
                       }
                       className={CONTROL_CLASS}
                       aria-label="Commute mode"

@@ -1,6 +1,4 @@
-import { SlidersOutlined } from '@ant-design/icons';
-import { useState } from 'react';
-import ModalShell from '../../../components/ModalShell';
+import { Rate } from 'antd';
 import type { DayOneGcStatus, VisaSponsorshipStatus } from '../calculations';
 import {
   getImmigrationSignalPatch,
@@ -8,6 +6,7 @@ import {
   immigrationSignalOptions,
   type ImmigrationSignalValue,
 } from '../immigrationSignal';
+import { SIGNAL_TIERS, scoreFromStars, signalTierLabel, starsFromScore } from './signalScore';
 
 type DecisionSignalsSectionProps = {
   visaSponsorship: VisaSponsorshipStatus;
@@ -24,22 +23,8 @@ type DecisionSignalsSectionProps = {
   onTeamScoreChange: (value: number | null) => void;
 };
 
-const scoreOptions = [
-  { value: '', label: 'Not scored' },
-  { value: 1, label: '1 - Weak' },
-  { value: 2, label: '2 - Below avg' },
-  { value: 3, label: '3 - Solid' },
-  { value: 4, label: '4 - Strong' },
-  { value: 5, label: '5 - Excellent' },
-];
-
-const toScore = (value: string) => {
-  const parsed = Number(value);
-  return parsed >= 1 && parsed <= 5 ? parsed : null;
-};
-
-const compactSignalCount = (values: Array<unknown>) =>
-  values.filter((value) => value != null && value !== '').length;
+const SELECT_CLASS =
+  'h-11 w-full rounded-xl border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 text-sm text-slate-900 dark:text-ink-50 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200';
 
 const DecisionSignalsSection = ({
   visaSponsorship,
@@ -55,15 +40,7 @@ const DecisionSignalsSection = ({
   teamScore,
   onTeamScoreChange,
 }: DecisionSignalsSectionProps) => {
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const immigrationSignalValue = getImmigrationSignalValue(visaSponsorship, dayOneGc);
-  const filledSignalCount = compactSignalCount([
-    immigrationSignalValue,
-    growthScore,
-    workLifeScore,
-    brandScore,
-    teamScore,
-  ]);
   const selectedImmigrationOption = immigrationSignalOptions.find(
     (option) => option.value === immigrationSignalValue
   );
@@ -74,152 +51,78 @@ const DecisionSignalsSection = ({
     onDayOneGcChange(patch.day_one_gc);
   };
 
+  const signals = [
+    { label: 'Growth', value: growthScore, onChange: onGrowthScoreChange },
+    { label: 'Work-life balance', value: workLifeScore, onChange: onWorkLifeScoreChange },
+    { label: 'Brand value', value: brandScore, onChange: onBrandScoreChange },
+    { label: 'Manager / team', value: teamScore, onChange: onTeamScoreChange },
+  ];
+
   return (
-    <>
-      <section className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-gradient-to-br from-white dark:from-ink-900 to-slate-50 dark:to-ink-900 p-4 shadow-sm">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-sky-100 dark:border-sky-500/20 bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 shadow-sm">
-                <SlidersOutlined />
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-slate-950 dark:text-ink-50">
-                  Advanced Decision Signals
-                </h3>
-                <p className="mt-0.5 max-w-xl text-xs leading-5 text-slate-500 dark:text-ink-400">
-                  Optional inputs for growth, work-life, team quality, brand value, and immigration
-                  support.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsEditorOpen(true)}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-sky-200 dark:border-sky-500/25 bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-sky-700 dark:text-sky-300 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 active:translate-y-px sm:h-9"
-            >
-              <SlidersOutlined />
-              Edit
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2 pl-12">
-            <span className="inline-flex rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-ink-200 shadow-sm">
-              {filledSignalCount} filled
-            </span>
-            {selectedImmigrationOption && (
-              <span className="inline-flex rounded-full border border-sky-100 dark:border-sky-500/20 bg-sky-50 dark:bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-700 dark:text-sky-300">
-                {selectedImmigrationOption.label}
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
+    <div className="space-y-4">
+      {/* No inner card: the parent section already carries the heading and the border. */}
+      <p className="text-xs leading-5 text-slate-500 dark:text-ink-400">
+        Leave a signal blank when you do not have enough evidence — a blank category is skipped in
+        the scorecard rather than scored low.
+      </p>
 
-      <ModalShell
-        isOpen={isEditorOpen}
-        title="Advanced Decision Signals"
-        onClose={() => setIsEditorOpen(false)}
-        maxWidthClass="max-w-3xl"
-        bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50 dark:bg-ink-900"
-        zIndex={1200}
-        footer={
-          <button
-            type="button"
-            onClick={() => setIsEditorOpen(false)}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-sky-200 dark:border-sky-500/25 bg-sky-50 dark:bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-700 dark:text-sky-300 transition hover:border-sky-300 hover:bg-sky-100 active:translate-y-px"
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {signals.map((signal) => (
+          <div
+            key={signal.label}
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.08] dark:bg-ink-900"
           >
-            Done
-          </button>
-        }
-      >
-        <div className="p-4 sm:p-6">
-          <section className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-4 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-start gap-3">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-ink-800 text-slate-700 dark:text-ink-100">
-                <SlidersOutlined />
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-ink-100">
+              {signal.label}
+            </span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {/* allowClear is what keeps blank reachable: clicking the set star blanks it again. */}
+              <Rate
+                allowClear
+                count={5}
+                tooltips={[...SIGNAL_TIERS]}
+                value={starsFromScore(signal.value)}
+                onChange={(stars) => signal.onChange(scoreFromStars(stars))}
+                aria-label={signal.label}
+              />
+              <span
+                className={`text-[11.5px] tabular-nums ${
+                  signal.value == null
+                    ? 'text-slate-400 dark:text-ink-500'
+                    : 'font-semibold text-slate-700 dark:text-ink-100'
+                }`}
+              >
+                {signalTierLabel(signal.value)}
               </span>
-              <div>
-                <h4 className="text-sm font-semibold text-slate-950 dark:text-ink-50">
-                  Offer quality signals
-                </h4>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-ink-400">
-                  Keep these blank when you do not have enough evidence. Blank values are skipped in
-                  the scorecard.
-                </p>
-              </div>
             </div>
+          </div>
+        ))}
+      </div>
 
-            <div className="space-y-5">
-              <label className="block rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 p-4">
-                <span className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-ink-100">
-                  Immigration support
-                </span>
-                <select
-                  value={immigrationSignalValue}
-                  onChange={(event) =>
-                    handleImmigrationChange(event.target.value as ImmigrationSignalValue)
-                  }
-                  className="h-11 w-full rounded-xl border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 text-sm text-slate-900 dark:text-ink-50 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                >
-                  <option value="">Leave blank for now</option>
-                  {immigrationSignalOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-ink-400">
-                  {selectedImmigrationOption?.description ||
-                    'Use this only when immigration support materially affects your decision.'}
-                </p>
-              </label>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {[
-                  {
-                    label: 'Growth',
-                    value: growthScore,
-                    onChange: onGrowthScoreChange,
-                  },
-                  {
-                    label: 'Work-life balance',
-                    value: workLifeScore,
-                    onChange: onWorkLifeScoreChange,
-                  },
-                  {
-                    label: 'Brand value',
-                    value: brandScore,
-                    onChange: onBrandScoreChange,
-                  },
-                  {
-                    label: 'Manager / team',
-                    value: teamScore,
-                    onChange: onTeamScoreChange,
-                  },
-                ].map((signal) => (
-                  <label key={signal.label} className="block">
-                    <span className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-ink-100">
-                      {signal.label}
-                    </span>
-                    <select
-                      value={signal.value ?? ''}
-                      onChange={(event) => signal.onChange(toScore(event.target.value))}
-                      className="h-11 w-full rounded-xl border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 text-sm text-slate-900 dark:text-ink-50 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                    >
-                      {scoreOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </section>
-        </div>
-      </ModalShell>
-    </>
+      <label className="block rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.08] dark:bg-ink-900">
+        <span className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-ink-100">
+          Immigration support
+        </span>
+        <select
+          value={immigrationSignalValue}
+          onChange={(event) =>
+            handleImmigrationChange(event.target.value as ImmigrationSignalValue)
+          }
+          className={SELECT_CLASS}
+        >
+          <option value="">Leave blank for now</option>
+          {immigrationSignalOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-ink-400">
+          {selectedImmigrationOption?.description ||
+            'Use this only when immigration support materially affects your decision.'}
+        </p>
+      </label>
+    </div>
   );
 };
 

@@ -20,6 +20,8 @@ type IdentitySectionProps = {
   invalidRoleTitle?: boolean;
   deadline?: string | null;
   onDeadlineChange?: (value: string | null) => void;
+  expectedStartDate?: string | null;
+  onExpectedStartDateChange?: (value: string | null) => void;
   companyPlaceholder: string;
   rolePlaceholder: string;
 };
@@ -39,6 +41,8 @@ const IdentitySection = ({
   invalidRoleTitle = false,
   deadline = null,
   onDeadlineChange,
+  expectedStartDate = null,
+  onExpectedStartDateChange,
   companyPlaceholder,
   rolePlaceholder,
 }: IdentitySectionProps) => {
@@ -132,6 +136,29 @@ const IdentitySection = ({
                   className={CONTROL_CLASS}
                   placeholder="e.g. L5, Senior, Staff, E5, IC3"
                 />
+              </div>
+            )}
+            {onExpectedStartDateChange !== undefined && (
+              <div>
+                <label
+                  className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
+                  htmlFor="offer-form-expected-start"
+                >
+                  Expected start date
+                </label>
+                <DatePicker
+                  id="offer-form-expected-start"
+                  className="w-full"
+                  value={expectedStartDate ? dayjs(expectedStartDate) : null}
+                  onChange={(date) =>
+                    onExpectedStartDateChange(date ? date.format('YYYY-MM-DD') : null)
+                  }
+                  placeholder="When you would start"
+                />
+                <p className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
+                  The first bonus is pro-rated from here. A start at the top of the bonus year loses
+                  none of it.
+                </p>
               </div>
             )}
             {onDeadlineChange !== undefined && (

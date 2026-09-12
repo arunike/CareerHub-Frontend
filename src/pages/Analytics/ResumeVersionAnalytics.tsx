@@ -216,7 +216,8 @@ const ResumeVersionAnalytics = ({ selectedYear }: { selectedYear: number | 'all'
 
   const best = useMemo(() => (data ? bestVersion(data) : null), [data]);
 
-  if (loading && !data) return <MetricCardsSkeleton count={2} />;
+  if (loading && !data)
+    return <MetricCardsSkeleton count={2} label="Loading resume version analytics" />;
   if (failed) {
     return (
       <PageState

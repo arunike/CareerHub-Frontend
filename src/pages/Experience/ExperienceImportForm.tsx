@@ -24,7 +24,7 @@ const ExperienceImportForm = ({ handleTextPaste, importForm }: Props) => (
     >
       <TextArea
         rows={10}
-        placeholder="Job Title&#10;Company Name&#10;San Jose, CA&#10;Start Date - End Date&#10;- Bullet point 1&#10;- Bullet point 2&#10;- Bullet point 3..."
+        placeholder="Job Title&#10;Company Name&#10;Mountain View, CA&#10;Start Date - End Date&#10;- Bullet point 1&#10;- Bullet point 2&#10;- Bullet point 3..."
         onChange={handleTextPaste}
       />
     </Form.Item>

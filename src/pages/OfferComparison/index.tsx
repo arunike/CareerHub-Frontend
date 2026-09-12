@@ -230,6 +230,22 @@ const OfferComparison = () => {
     resetScenarioDraft,
   } = scenario;
 
+  // ?offer=<id> scrolls that card into view and rings it, rather than dropping you at the top.
+  useEffect(() => {
+    const requested = new URLSearchParams(location.search).get('offer');
+    if (!requested || loading) return;
+    const card = document.getElementById(`offer-card-${requested}`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('ring-2', 'ring-sky-400', 'ring-offset-2');
+    const clear = window.setTimeout(
+      () => card.classList.remove('ring-2', 'ring-sky-400', 'ring-offset-2'),
+      2400
+    );
+    navigate('/offers', { replace: true });
+    return () => window.clearTimeout(clear);
+  }, [location.search, loading, navigate]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const action = params.get('action');
@@ -353,6 +369,7 @@ const OfferComparison = () => {
           />
         }
         filteredOffers={displayOffers}
+        allOffers={comparisonOffers}
         rawOffers={offers}
         applicationsById={applicationsById}
         adjustedByOfferId={adjustedByOfferId}

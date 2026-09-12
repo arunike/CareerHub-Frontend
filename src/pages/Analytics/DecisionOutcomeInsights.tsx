@@ -89,7 +89,7 @@ const DecisionOutcomeInsights = () => {
   const patterns = useMemo(() => (data ? decisionPatterns(data) : []), [data]);
   const criteria = useMemo(() => (data ? mostUsedCriteria(data) : []), [data]);
 
-  if (loading && !data) return <MetricCardsSkeleton count={2} />;
+  if (loading && !data) return <MetricCardsSkeleton count={2} label="Loading decision outcomes" />;
   if (failed) {
     return (
       <PageState

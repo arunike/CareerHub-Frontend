@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Typography, Space, Form, Input, Select, message, Button, Grid } from 'antd';
 import Modal from '../../components/MobileModal';
 import { LinkOutlined, PlusOutlined } from '@ant-design/icons';
@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import utc from 'dayjs/plugin/utc';
 import timezonePlugin from 'dayjs/plugin/timezone';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { Event } from '../../types';
 import { createCategory } from '../../api';
 import type { Holiday } from '../../types';
@@ -68,6 +69,8 @@ const Events = () => {
 
   // How the next save applies to a multi-day span, and which day was clicked.
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const eventDeepLink = useLocation();
+  const navigateEvents = useNavigate();
   const [viewingDay, setViewingDay] = useState<string | null>(null);
   const [isLinkInterviewsOpen, setIsLinkInterviewsOpen] = useState(false);
   const [pendingCalendarHoliday, setPendingCalendarHoliday] = useState<{
@@ -120,6 +123,16 @@ const Events = () => {
     setUserTimezone,
     messageApi,
   });
+
+  // ?event=<id> opens that event once the list has it, then clears the param.
+  useEffect(() => {
+    const requested = Number(new URLSearchParams(eventDeepLink.search).get('event'));
+    if (!requested) return;
+    const match = events.find((candidate) => candidate.id === requested);
+    if (!match) return;
+    setViewingEvent(match);
+    navigateEvents('/events', { replace: true });
+  }, [eventDeepLink.search, events, navigateEvents]);
 
   const paginatedEvents = events;
   const availableYears = useMemo(

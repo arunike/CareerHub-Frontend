@@ -200,3 +200,61 @@ describe('weekHeadline', () => {
     ).toContain('quiet week');
   });
 });
+
+// The heading prints Monday to Sunday; a rolling seven days disagreed with it six days out of seven.
+describe('the counted week is the week that is displayed', () => {
+  // 2026-07-01 is a Wednesday, so the displayed window is Mon 29 Jun to Sun 5 Jul.
+  const WEDNESDAY = '2026-07-01';
+
+  const applied = (date_applied: string, id: number) =>
+    ({ id, status: 'APPLIED', date_applied, updated_at: date_applied }) as CommandApplication;
+
+  it('counts from the Monday, not from seven days ago', () => {
+    const window = weekWindow(WEDNESDAY);
+    expect([window.start, window.end]).toEqual(['2026-06-29', '2026-07-05']);
+    const lastThursday = applied('2026-06-25', 1);
+    const thisMonday = applied('2026-06-29', 2);
+    const ids = appliedThisWeek([lastThursday, thisMonday], WEDNESDAY).map((row) => row.id);
+    expect(ids).toEqual([2]);
+  });
+
+  it('takes in the whole displayed week, including days still ahead', () => {
+    const friday = applied('2026-07-03', 1);
+    expect(appliedThisWeek([friday], WEDNESDAY).map((row) => row.id)).toEqual([1]);
+  });
+
+  it('excludes the Sunday before and the Monday after', () => {
+    const before = applied('2026-06-28', 1);
+    const after = applied('2026-07-06', 2);
+    expect(appliedThisWeek([before, after], WEDNESDAY)).toEqual([]);
+  });
+
+  it('applies the same window to what moved', () => {
+    const moved = {
+      id: 1,
+      status: 'ONSITE',
+      date_applied: '2026-05-01',
+      updated_at: '2026-06-30',
+    } as CommandApplication;
+    const older = { ...moved, id: 2, updated_at: '2026-06-25' };
+    expect(movedThisWeek([moved, older], WEDNESDAY).map((row) => row.id)).toEqual([1]);
+  });
+
+  it('reads a timestamp, not just a plain date', () => {
+    const withTime = {
+      id: 1,
+      status: 'ONSITE',
+      updated_at: '2026-06-30T14:32:00Z',
+    } as CommandApplication;
+    expect(movedThisWeek([withTime], WEDNESDAY).map((row) => row.id)).toEqual([1]);
+  });
+});
+
+describe('next week focus links to the record, not its list', () => {
+  it('names the event and the offer in the destination', () => {
+    const event = { id: 7, name: 'Onsite', date: '2026-07-03' } as CommandEvent;
+    const offer = { id: 9, deadline: '2026-07-04' } as CommandOffer;
+    const items = nextWeekFocus([event], [offer], '2026-07-01');
+    expect(items.map((item) => item.to)).toEqual(['/events?event=7', '/offers?offer=9']);
+  });
+});
