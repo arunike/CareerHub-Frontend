@@ -4,6 +4,7 @@ import type { totalsToDate } from './effectiveRows';
 import type { IncomeSource } from './incomeSources';
 import { formatPayDate } from './paySchedule';
 import { useMoney } from './amountPrivacy';
+import { INCOME_TOOLTIPS } from '../../content/tooltips';
 
 interface RoleOption {
   label: string;
@@ -105,7 +106,7 @@ export const IncomeSummary = ({
           <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
             <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               Role
-              <Tooltip title="Every role from your Experience page is listed here, alongside your current offer.">
+              <Tooltip title={INCOME_TOOLTIPS.rolesListed}>
                 <InfoCircleOutlined className="text-slate-300 dark:text-ink-600" />
               </Tooltip>
             </span>

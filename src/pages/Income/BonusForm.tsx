@@ -22,6 +22,7 @@ import { bonusBreakdown } from './mathBreakdown';
 import MoneyInput from './MoneyInput';
 import PercentInput from './PercentInput';
 import { useMoney } from './amountPrivacy';
+import { INCOME_TOOLTIPS } from '../../content/tooltips';
 
 interface Props {
   includeBonus: boolean;
@@ -215,7 +216,7 @@ export const BonusForm = ({
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
                 Performance year
-                <Tooltip title="A bonus is usually earned in one year and paid in the next, so proration is measured against the year it was earned, not the year the money arrives. Defaults to the year before this one.">
+                <Tooltip title={INCOME_TOOLTIPS.bonusEarnedYear}>
                   <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
                 </Tooltip>
               </span>
@@ -235,7 +236,7 @@ export const BonusForm = ({
             <label className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-200/70 dark:border-white/[0.08] pt-2.5">
               <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
                 Prorate for time worked
-                <Tooltip title="A target bonus is earned across the performance year, so a part year earns part of it. Extra bonuses are never prorated.">
+                <Tooltip title={INCOME_TOOLTIPS.bonusProration}>
                   <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
                 </Tooltip>
               </span>

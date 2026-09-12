@@ -18,6 +18,7 @@ import { formatPayDate } from './paySchedule';
 import { percent } from './format';
 import { useMoney } from './amountPrivacy';
 import { DEFERRAL_BASE_HINTS, DEFERRAL_BASE_LABELS, type DeferralBase } from './tax/ledger';
+import { INCOME_TOOLTIPS } from '../../content/tooltips';
 
 const DEFERRAL_BASE_ORDER: DeferralBase[] = ['ALL', 'NO_ALLOWANCES', 'SALARY_ONLY'];
 
@@ -222,7 +223,7 @@ export const RetirementForm = ({
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-ink-200">
             Toward the {taxYear} limit
-            <Tooltip title="The 402(g) elective deferral limit covers your traditional and Roth contributions together. The employer match does not count against it.">
+            <Tooltip title={INCOME_TOOLTIPS.deferralLimit}>
               <InfoCircleOutlined className="text-slate-400 dark:text-ink-500" />
             </Tooltip>
           </span>

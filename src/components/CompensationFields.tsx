@@ -299,7 +299,7 @@ const CompensationFields: React.FC<Props> = ({
           step={1000}
           value={base ?? null}
           onChange={(value) => handleBaseChange(value == null ? '' : String(value))}
-          placeholder="e.g. 150000"
+          placeholder="e.g. 165000"
         />
         <div className={FIELD_HINT_CLASS} />
       </div>
@@ -336,7 +336,7 @@ const CompensationFields: React.FC<Props> = ({
             step={1000}
             value={bonus ?? null}
             onChange={(value) => emit({ bonus: value })}
-            placeholder="e.g. 20000"
+            placeholder="e.g. 24750"
           />
         )}
         <div className={`${FIELD_HINT_CLASS} text-gray-400 dark:text-ink-500`}>

@@ -9,6 +9,7 @@ import LedgerFlagChip from './LedgerFlagChip';
 import PaycheckDetailPanel from './PaycheckDetailPanel';
 import { useMoney } from './amountPrivacy';
 import { ledgerRowView, type LedgerRowView } from './ledgerRowView';
+import { INCOME_TOOLTIPS } from '../../content/tooltips';
 
 interface Props {
   rows: EffectiveRow[];
@@ -99,7 +100,7 @@ export const YearLedgerTable = ({
     },
     {
       title: (
-        <Tooltip title="When the money lands. Adjust it when payday shifts, e.g. a federal holiday moving it earlier.">
+        <Tooltip title={INCOME_TOOLTIPS.payDate}>
           <span>{compact ? 'Date' : 'Pay date'}</span>
         </Tooltip>
       ),
@@ -215,7 +216,7 @@ export const YearLedgerTable = ({
     },
     {
       title: (
-        <Tooltip title="Tax as a share of gross pay.">
+        <Tooltip title={INCOME_TOOLTIPS.effectiveTaxRate}>
           <span>Rate</span>
         </Tooltip>
       ),
@@ -228,7 +229,7 @@ export const YearLedgerTable = ({
     },
     {
       title: (
-        <Tooltip title="What landed. Click a figure to record what your payslip actually says; clear it to go back to the modelled number.">
+        <Tooltip title={INCOME_TOOLTIPS.recordedActual}>
           <span>Take-home</span>
         </Tooltip>
       ),
@@ -252,7 +253,7 @@ export const YearLedgerTable = ({
     },
     {
       title: (
-        <Tooltip title="Employer 401(k) match. Paid on your behalf, so it is not part of take-home.">
+        <Tooltip title={INCOME_TOOLTIPS.ledgerEmployerMatch}>
           <span>Match</span>
         </Tooltip>
       ),
@@ -271,7 +272,7 @@ export const YearLedgerTable = ({
     },
     {
       title: (
-        <Tooltip title="Automatic flags for why a paycheck differs, plus any note you add.">
+        <Tooltip title={INCOME_TOOLTIPS.paycheckFlags}>
           <span>Notes</span>
         </Tooltip>
       ),

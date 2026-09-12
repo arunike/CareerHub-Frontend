@@ -1,6 +1,8 @@
 import SignOnScheduleEditor from './SignOnScheduleEditor';
 import CompensationFields from '../../../components/CompensationFields';
 import type { EquityLiquidity } from '../equityLiquidity';
+import FieldLabel from './FieldLabel';
+import { EQUITY_TOOLTIPS } from '../../../content/tooltips';
 import UnitNumberInput from '../../../components/UnitNumberInput';
 import {
   CONTROL_CLASS,
@@ -176,7 +178,9 @@ const CompensationSection = ({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-3">
         <div className="min-w-0">
           <div className={FIELD_HEADER_CLASS}>
-            <label className={FIELD_LABEL_CLASS}>Sign-On</label>
+            <FieldLabel className={FIELD_LABEL_CLASS} help={EQUITY_TOOLTIPS.signOn}>
+              Sign-On
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"
@@ -212,7 +216,9 @@ const CompensationSection = ({
 
         <div className="min-w-0">
           <div className={FIELD_HEADER_CLASS}>
-            <label className={FIELD_LABEL_CLASS}>Equity liquidity</label>
+            <FieldLabel className={FIELD_LABEL_CLASS} help={EQUITY_TOOLTIPS.equityLiquidity}>
+              Equity liquidity
+            </FieldLabel>
           </div>
           <select
             value={equityLiquidity}
@@ -243,7 +249,9 @@ const CompensationSection = ({
             {isListed && (
               <div className="min-w-0">
                 <div className={FIELD_HEADER_CLASS}>
-                  <label className={FIELD_LABEL_CLASS}>Symbol</label>
+                  <FieldLabel className={FIELD_LABEL_CLASS} help={EQUITY_TOOLTIPS.equityTicker}>
+                    Symbol
+                  </FieldLabel>
                 </div>
                 <input
                   value={equityTicker ?? ''}
@@ -256,7 +264,9 @@ const CompensationSection = ({
             )}
             <div className="min-w-0">
               <div className={FIELD_HEADER_CLASS}>
-                <label className={FIELD_LABEL_CLASS}>Shares</label>
+                <FieldLabel className={FIELD_LABEL_CLASS} help={EQUITY_TOOLTIPS.equityShares}>
+                  Shares
+                </FieldLabel>
               </div>
               <UnitNumberInput
                 min={0}
@@ -274,7 +284,9 @@ const CompensationSection = ({
             </div>
             <div className="min-w-0">
               <div className={FIELD_HEADER_CLASS}>
-                <label className={FIELD_LABEL_CLASS}>Grant price</label>
+                <FieldLabel className={FIELD_LABEL_CLASS} help={EQUITY_TOOLTIPS.equityGrantPrice}>
+                  Grant price
+                </FieldLabel>
               </div>
               <UnitNumberInput
                 unit="$"
@@ -293,7 +305,9 @@ const CompensationSection = ({
             </div>
             <div className="min-w-0">
               <div className={FIELD_HEADER_CLASS}>
-                <label className={FIELD_LABEL_CLASS}>Current price</label>
+                <FieldLabel className={FIELD_LABEL_CLASS} help={EQUITY_TOOLTIPS.equityCurrentPrice}>
+                  Current price
+                </FieldLabel>
                 {/* Only for a listed grant: a private buyback has no ticker to look up. */}
                 {isListed && onFetchSharePrice && (
                   <button

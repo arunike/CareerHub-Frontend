@@ -7,6 +7,7 @@ import {
   TrophyOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import { EXPERIENCE_TOOLTIPS } from '../../content/tooltips';
 
 // Two per row at 8px gap.
 const HALF = 'basis-[calc(50%-0.25rem)] sm:basis-auto';
@@ -36,7 +37,7 @@ const RoleActionRow = ({
   <div
     className={`experience-card-actions flex w-full min-w-0 flex-wrap items-center gap-2 lg:w-auto lg:max-w-[55%] lg:justify-end ${className}`}
   >
-    <Tooltip title="Evaluate promotion readiness for this role">
+    <Tooltip title={EXPERIENCE_TOOLTIPS.promotionReadiness}>
       <div className={`${HALF} ${REVEAL}`}>
         <Button
           size="small"
@@ -48,7 +49,7 @@ const RoleActionRow = ({
         </Button>
       </div>
     </Tooltip>
-    <Tooltip title="View / edit team norms for this role">
+    <Tooltip title={EXPERIENCE_TOOLTIPS.teamNorms}>
       <div className={`${HALF} ${REVEAL}`}>
         <Button
           size="small"
@@ -61,7 +62,7 @@ const RoleActionRow = ({
       </div>
     </Tooltip>
     {onContacts && (
-      <Tooltip title="People you worked with, plus anyone from the application that led here">
+      <Tooltip title={EXPERIENCE_TOOLTIPS.teamHistory}>
         <div className={`${HALF} ${REVEAL}`}>
           <Button
             size="small"
@@ -75,7 +76,7 @@ const RoleActionRow = ({
       </Tooltip>
     )}
     {onRaiseHistory ? (
-      <Tooltip title="View / edit raise history for this role">
+      <Tooltip title={EXPERIENCE_TOOLTIPS.raiseHistory}>
         <div className={`${HALF} ${REVEAL}`}>
           <Button
             size="small"
@@ -88,7 +89,7 @@ const RoleActionRow = ({
         </div>
       </Tooltip>
     ) : onLinkOffer ? (
-      <Tooltip title="Open Edit to link an offer and track raises">
+      <Tooltip title={EXPERIENCE_TOOLTIPS.linkOfferForRaises}>
         <div className={`${HALF} ${REVEAL}`}>
           <Button
             size="small"

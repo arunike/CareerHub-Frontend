@@ -11,6 +11,7 @@ import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
 import { clamp, normalizeManualScore } from './decisionScoring';
 
 import type { DecisionRow } from './decisionScoring';
+import { COMPENSATION_TOOLTIPS, DECISION_SIGNAL_TOOLTIPS } from '../../content/tooltips';
 
 type Props = {
   applicationsById: Record<number, Application | undefined>;
@@ -83,24 +84,14 @@ const ScorecardCategoryList = ({
       // Two ratings under one heading: Trajectory is scored from both, so both stay editable.
       if (category.key === 'trajectory') {
         const pairs = [
-          {
-            dbKey: 'growth_score',
-            label: 'Growth',
-            tooltip:
-              'How strong is the growth opportunity? Consider mentorship, promo velocity, scope, and learning. Rate 1-5 stars.',
-          },
-          {
-            dbKey: 'team_score',
-            label: 'Team',
-            tooltip:
-              'Your impression of the team, manager, and culture fit from interviews. Rate 1-5 stars.',
-          },
+          { dbKey: 'growth_score', label: 'Growth', tooltip: DECISION_SIGNAL_TOOLTIPS.growthScore },
+          { dbKey: 'team_score', label: 'Team', tooltip: DECISION_SIGNAL_TOOLTIPS.teamScore },
         ];
         return (
           <div key={category.key} className="flex flex-col">
             <div className="mb-1.5 flex items-center justify-between text-xs">
               <HelpTooltipTrigger
-                title="Growth and the team that produces it, averaged. They move together, so they share one weight rather than counting the same judgement twice."
+                title={COMPENSATION_TOOLTIPS.trajectoryPair}
                 ariaLabel={`Explain ${category.label} score`}
                 className="font-semibold text-slate-700 dark:text-ink-100"
               >
@@ -145,10 +136,8 @@ const ScorecardCategoryList = ({
         const rawValue = app ? app[dbKey as keyof Application] : null;
         const rateValue = normalizeManualScore(rawValue) || 0;
         const tooltips: Record<string, string> = {
-          workLife:
-            'Your subjective rating of work-life balance — hours, flexibility, on-call expectations, and culture. Rate 1–5 stars.',
-          brand:
-            'Company prestige and brand value for your resume. Consider FAANG/tier, public recognition, and industry reputation. Rate 1–5 stars.',
+          workLife: DECISION_SIGNAL_TOOLTIPS.workLifeScore,
+          brand: DECISION_SIGNAL_TOOLTIPS.brandScore,
         };
 
         return (

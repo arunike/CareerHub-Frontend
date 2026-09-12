@@ -12,6 +12,7 @@ import {
   UploadOutlined,
 } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
+import { ACCOUNT_TOOLTIPS } from '../../content/tooltips';
 
 type Props = {
   confirmPassword: string;
@@ -148,7 +149,7 @@ const ProfileSettingsForm = ({
           <LockOutlined />
         </div>
         <h3 className="text-base font-bold text-slate-800 dark:text-ink-50">Security & Privacy</h3>
-        <Tooltip title="Your password is encrypted using industry-standard hashing algorithms and is never stored in plain text.">
+        <Tooltip title={ACCOUNT_TOOLTIPS.passwordStorage}>
           <div className="ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-[10px] font-bold text-emerald-600 dark:text-emerald-300 cursor-help transition-all hover:bg-emerald-100">
             <SafetyOutlined className="text-[12px]" />
             ENCRYPTED

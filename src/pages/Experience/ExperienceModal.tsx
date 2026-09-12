@@ -16,6 +16,7 @@ import { parseResumeExperience } from './experienceResumeParse';
 import { useExperienceFormSync } from './useExperienceFormSync';
 import ExperienceImportForm from './ExperienceImportForm';
 import ExperienceDateFields from './ExperienceDateFields';
+import { EXPERIENCE_TOOLTIPS } from '../../content/tooltips';
 
 export interface OfferOption {
   value: number;
@@ -483,7 +484,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 <span className="flex items-center gap-1.5">
                   <LinkOutlined className="text-blue-400" />
                   Start from an offer
-                  <Tooltip title="Connect this role to its application and offer. The application stays in Applications and is marked Accepted.">
+                  <Tooltip title={EXPERIENCE_TOOLTIPS.linkApplication}>
                     <span className="text-gray-400 dark:text-ink-500 cursor-help text-xs">
                       (optional)
                     </span>

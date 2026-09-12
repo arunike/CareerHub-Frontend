@@ -12,6 +12,7 @@ import {
   formatStageDate,
   getStageColor,
 } from './widgetPrimitives';
+import { ACCOUNT_TOOLTIPS } from '../../content/tooltips';
 
 export const HeadlineNumbers = ({ stats }: { stats: JobHuntStats }) => {
   const analytics = stats.timelineAnalytics;
@@ -269,7 +270,7 @@ export const WatchListSection = ({
                   )}
                 </div>
                 {onGhost && (
-                  <Tooltip title="Mark as ghosted, so it leaves the pipeline and this list">
+                  <Tooltip title={ACCOUNT_TOOLTIPS.markGhosted}>
                     <button
                       type="button"
                       onClick={() => onGhost(item.application_id)}

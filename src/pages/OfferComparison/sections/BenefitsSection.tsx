@@ -3,6 +3,12 @@ import MedicalInsuranceGroup from './MedicalInsuranceGroup';
 import CustomBenefitsGroup from './CustomBenefitsGroup';
 import FreeFoodGroup from './FreeFoodGroup';
 import { computeTaxableBenefitsTotal, computeNonTaxableBenefitsTotal } from '../calculations';
+import FieldLabel from './FieldLabel';
+import {
+  DENTAL_VISION_TOOLTIPS,
+  HEALTH_TOOLTIPS,
+  RETIREMENT_TOOLTIPS,
+} from '../../../content/tooltips';
 import UnitNumberInput from '../../../components/UnitNumberInput';
 import CollapsibleGroup from './CollapsibleGroup';
 import { freeFoodBreakdown, normalizeMealEntries, type MealEntry } from '../freeFood';
@@ -245,14 +251,17 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
                 type="text"
                 value={dentalPlanName || ''}
                 onChange={(e) => onDentalPlanNameChange?.(e.target.value)}
-                placeholder="e.g. Delta Dental Plus"
+                placeholder="e.g. Dental PPO, high option"
                 className={CONTROL_CLASS}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={HEALTH_TOOLTIPS.premiumPerPaycheck}
+              >
                 Dental Premium per Paycheck
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="$"
                 min={0}
@@ -269,9 +278,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
             </div>
             {hasDependents && (
               <div>
-                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide mb-1">
+                <FieldLabel
+                  className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide mb-1"
+                  help={HEALTH_TOOLTIPS.dependentPremiumAddOn}
+                >
                   Dependent Dental Add-on per Paycheck
-                </label>
+                </FieldLabel>
                 <UnitNumberInput
                   unit="$"
                   min={0}
@@ -282,9 +294,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               </div>
             )}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={DENTAL_VISION_TOOLTIPS.dentalAnnualMax}
+              >
                 Annual Max Benefit
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="$"
                 min={0}
@@ -294,9 +309,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={DENTAL_VISION_TOOLTIPS.deductibleDental}
+              >
                 Deductible
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="$"
                 min={0}
@@ -321,14 +339,17 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
                 type="text"
                 value={visionPlanName || ''}
                 onChange={(e) => onVisionPlanNameChange?.(e.target.value)}
-                placeholder="e.g. VSP Vision Plus"
+                placeholder="e.g. Vision PPO, standard"
                 className={CONTROL_CLASS}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={HEALTH_TOOLTIPS.premiumPerPaycheck}
+              >
                 Vision Premium per Paycheck
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="$"
                 min={0}
@@ -345,9 +366,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
             </div>
             {hasDependents && (
               <div>
-                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide mb-1">
+                <FieldLabel
+                  className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide mb-1"
+                  help={HEALTH_TOOLTIPS.dependentPremiumAddOn}
+                >
                   Dependent Vision Add-on per Paycheck
-                </label>
+                </FieldLabel>
                 <UnitNumberInput
                   unit="$"
                   min={0}
@@ -358,9 +382,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               </div>
             )}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={DENTAL_VISION_TOOLTIPS.framesAllowance}
+              >
                 Frames Allowance
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="$"
                 min={0}
@@ -370,9 +397,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={DENTAL_VISION_TOOLTIPS.contactsAllowance}
+              >
                 Contacts Allowance
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="$"
                 min={0}
@@ -390,9 +420,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={RETIREMENT_TOOLTIPS.employerMatchRate}
+              >
                 Employer Match
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="%"
                 min={0}
@@ -403,9 +436,12 @@ const BenefitsSection = (props: BenefitsSectionProps) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1">
+              <FieldLabel
+                className="block text-xs font-semibold text-gray-500 dark:text-ink-400 uppercase tracking-wide mb-1"
+                help={RETIREMENT_TOOLTIPS.employerMatchCap}
+              >
                 Max Employee Contribution Matched
-              </label>
+              </FieldLabel>
               <UnitNumberInput
                 unit="%"
                 min={0}

@@ -1,4 +1,6 @@
 import type { BenefitsSectionProps } from './BenefitsSection';
+import FieldLabel from './FieldLabel';
+import { HEALTH_TOOLTIPS } from '../../../content/tooltips';
 import UnitNumberInput from '../../../components/UnitNumberInput';
 import CollapsibleGroup from './CollapsibleGroup';
 import { CONTROL_CLASS } from '../../../components/formControls';
@@ -144,9 +146,12 @@ const MedicalInsuranceGroup = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.premiumPerPaycheck}
+            >
               Medical Premium per Paycheck
-            </label>
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"
@@ -160,7 +165,7 @@ const MedicalInsuranceGroup = ({
                 Math.round(((numVal * numPaychecks) / 12) * 100) / 100
               );
             }}
-            placeholder="e.g. 54"
+            placeholder="e.g. 75"
           />
           <p className="text-[11px] text-gray-400 dark:text-ink-500 mt-1">
             = ${Math.round(annualHealthPremium).toLocaleString()}/yr ($
@@ -170,9 +175,12 @@ const MedicalInsuranceGroup = ({
 
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.healthPlanType}
+            >
               Plan Type / Name
-            </label>
+            </FieldLabel>
           </div>
           <input
             type="text"
@@ -188,9 +196,12 @@ const MedicalInsuranceGroup = ({
           <>
             <div className="md:col-span-1 flex flex-col">
               <div className="h-8 flex items-end mb-1">
-                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide">
+                <FieldLabel
+                  className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide"
+                  help={HEALTH_TOOLTIPS.coverageTier}
+                >
                   Coverage Tier
-                </label>
+                </FieldLabel>
               </div>
               <select
                 value={dependentCoverageTier || 'EMPLOYEE_SPOUSE'}
@@ -205,9 +216,12 @@ const MedicalInsuranceGroup = ({
 
             <div className="md:col-span-1 flex flex-col">
               <div className="h-8 flex items-end mb-1">
-                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide">
+                <FieldLabel
+                  className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide"
+                  help={HEALTH_TOOLTIPS.dependentPremiumAddOn}
+                >
                   Dependent Medical Premium Add-on per Paycheck
-                </label>
+                </FieldLabel>
               </div>
               <UnitNumberInput
                 unit="$"
@@ -215,7 +229,7 @@ const MedicalInsuranceGroup = ({
                 step={0.01}
                 value={toNum(dependentHealthPremiumPaycheck)}
                 onChange={(value) => onDependentHealthPremiumPaycheckChange?.(value ?? '')}
-                placeholder="e.g. 140"
+                placeholder="e.g. 100"
               />
             </div>
           </>
@@ -223,9 +237,12 @@ const MedicalInsuranceGroup = ({
 
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.deductibleIndividual}
+            >
               Individual / Base Deductible
-            </label>
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"
@@ -238,16 +255,19 @@ const MedicalInsuranceGroup = ({
 
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.outOfPocketMaxIndividual}
+            >
               Individual Out-of-Pocket Max
-            </label>
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"
             min={0}
             value={toNum(healthOopMax)}
             onChange={(value) => onHealthOopMaxChange?.(value ?? '')}
-            placeholder="e.g. 3300"
+            placeholder="e.g. 5000"
           />
         </div>
 
@@ -256,9 +276,12 @@ const MedicalInsuranceGroup = ({
           <>
             <div className="flex flex-col">
               <div className="h-8 flex items-end mb-1">
-                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide">
+                <FieldLabel
+                  className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide"
+                  help={HEALTH_TOOLTIPS.deductibleFamily}
+                >
                   Family Deductible
-                </label>
+                </FieldLabel>
               </div>
               <UnitNumberInput
                 unit="$"
@@ -271,16 +294,19 @@ const MedicalInsuranceGroup = ({
 
             <div className="flex flex-col">
               <div className="h-8 flex items-end mb-1">
-                <label className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide">
+                <FieldLabel
+                  className="block text-xs font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide"
+                  help={HEALTH_TOOLTIPS.outOfPocketMaxFamily}
+                >
                   Family Out-of-Pocket Max
-                </label>
+                </FieldLabel>
               </div>
               <UnitNumberInput
                 unit="$"
                 min={0}
                 value={toNum(healthFamilyOopMax)}
                 onChange={(value) => onHealthFamilyOopMaxChange?.(value ?? '')}
-                placeholder="e.g. 6600"
+                placeholder="e.g. 10000"
               />
             </div>
           </>
@@ -288,9 +314,12 @@ const MedicalInsuranceGroup = ({
 
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.hsaEmployerContribution}
+            >
               HSA Employer Contribution / yr
-            </label>
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"
@@ -303,9 +332,12 @@ const MedicalInsuranceGroup = ({
 
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.primaryCareCopay}
+            >
               Primary Care Copay
-            </label>
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"
@@ -318,9 +350,12 @@ const MedicalInsuranceGroup = ({
 
         <div className="flex flex-col">
           <div className="h-8 flex items-end mb-1">
-            <label className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide">
+            <FieldLabel
+              className="block text-xs font-semibold text-gray-700 dark:text-ink-100 uppercase tracking-wide"
+              help={HEALTH_TOOLTIPS.specialistCopay}
+            >
               Specialist Copay
-            </label>
+            </FieldLabel>
           </div>
           <UnitNumberInput
             unit="$"

@@ -14,6 +14,7 @@ import { buildGrossVestingYears, getEquityGrowth, type EquityPreset } from './ve
 import UnitNumberInput from '../../components/UnitNumberInput';
 import CompensationSimulatorMobile from './CompensationSimulatorMobile';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
+import { SIMULATOR_TOOLTIPS } from '../../content/tooltips';
 
 type OfferWithCompFields = ScenarioRow['offer'] & {
   base_salary?: number;
@@ -293,52 +294,31 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
               <th className="text-left font-bold px-5 py-3">Offer</th>
               <th className="text-right font-bold px-4 py-3">
                 Take-home/mo
-                <Explain
-                  label="monthly take-home"
-                  title="Main value is after tax: base cash + bonus + first-year equity vesting, divided by 12. The small line shows the pre-tax monthly equivalent and tax rates."
-                />
+                <Explain label="monthly take-home" title={SIMULATOR_TOOLTIPS.takeHomePerMonth} />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Year-1/mo
-                <Explain
-                  label="first-year monthly value"
-                  title="Take-home/mo plus sign-on spread across the first 12 months. Small line compares after-tax and pre-tax sign-on."
-                />
+                <Explain label="first-year monthly value" title={SIMULATOR_TOOLTIPS.withSignOn} />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Rent
-                <Explain
-                  label="monthly rent"
-                  title="Saved monthly rent estimate or your rent override. Saved estimates scale from the reference rent by local cost-of-living index."
-                />
+                <Explain label="monthly rent" title={SIMULATOR_TOOLTIPS.rent} />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Commute
-                <Explain
-                  label="monthly commute cost"
-                  title="Saved commute cost annualized from daily/monthly/yearly, then divided by 12, or your monthly override."
-                />
+                <Explain label="monthly commute cost" title={SIMULATOR_TOOLTIPS.commute} />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Food
-                <Explain
-                  label="monthly food cost"
-                  title="Monthly food budget minus the value of the meals the office provides. Meals you pay for yourself are already inside this budget, so they are counted in the offer score rather than added here. Never drops below $0."
-                />
+                <Explain label="monthly food cost" title={SIMULATOR_TOOLTIPS.food} />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 PTO value
-                <Explain
-                  label="PTO value"
-                  title="Estimated pre-tax PTO value: (base salary + bonus) divided by 260 workdays, multiplied by PTO days. Unlimited PTO is shown as Unlimited."
-                />
+                <Explain label="PTO value" title={SIMULATOR_TOOLTIPS.ptoValue} />
               </th>
               <th className="text-right font-bold px-4 py-3">
                 Leftover/mo
-                <Explain
-                  label="monthly leftover"
-                  title="Take-home/mo minus monthly rent, commute, and net food cost. This is cash-flow leftover before other personal expenses."
-                />
+                <Explain label="monthly leftover" title={SIMULATOR_TOOLTIPS.leftover} />
               </th>
             </tr>
           </thead>
@@ -453,30 +433,27 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
                 <th className="text-left font-bold py-2 pr-4">Offer</th>
                 <th className="text-right font-bold py-2 px-4">
                   Year 1
-                  <Explain
-                    label="Year 1 equity vesting"
-                    title="Year 1 vesting value after applying equity tax."
-                  />
+                  <Explain label="Year 1 equity vesting" title={SIMULATOR_TOOLTIPS.vestYearOne} />
                 </th>
                 <th className="text-right font-bold py-2 px-4">
                   Year 2
                   <Explain
                     label="Year 2 equity vesting"
-                    title="Year 2 vesting value after market scenario growth or decline and equity tax."
+                    title={SIMULATOR_TOOLTIPS.vestLaterYears}
                   />
                 </th>
                 <th className="text-right font-bold py-2 px-4">
                   Year 3
                   <Explain
                     label="Year 3 equity vesting"
-                    title="Year 3 vesting value after market scenario growth or decline and equity tax."
+                    title={SIMULATOR_TOOLTIPS.vestLaterYears}
                   />
                 </th>
                 <th className="text-right font-bold py-2 pl-4">
                   Year 4
                   <Explain
                     label="Year 4 equity vesting"
-                    title="Year 4 vesting value after market scenario growth or decline and equity tax."
+                    title={SIMULATOR_TOOLTIPS.vestLaterYears}
                   />
                 </th>
               </tr>

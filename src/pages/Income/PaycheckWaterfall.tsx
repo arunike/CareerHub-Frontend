@@ -20,6 +20,7 @@ import { resolveAllowances, type Allowance } from './allowances';
 import { formatPayDate } from './paySchedule';
 import { useMoney } from './amountPrivacy';
 import PaycheckAdjustModal from './PaycheckAdjustModal';
+import { INCOME_TOOLTIPS } from '../../content/tooltips';
 
 interface Props {
   row: EffectiveRow;
@@ -153,7 +154,7 @@ const Row = ({
           </Tooltip>
         ) : null}
         {balanced ? (
-          <Tooltip title="Scaled so the lines add up to your recorded take-home. Social Security and Medicare are statutory, so the difference is attributed to income tax.">
+          <Tooltip title={INCOME_TOOLTIPS.waterfallScaling}>
             <span className="shrink-0 rounded bg-amber-50 dark:bg-amber-500/10 px-1 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-300">
               balanced
             </span>
@@ -304,7 +305,7 @@ export const PaycheckWaterfall = ({
             </Tag>
           ) : null}
           {row.residual < -0.005 ? (
-            <Tooltip title="The recorded take-home is more than this gross can pay. Record the gross too, or check the role's salary.">
+            <Tooltip title={INCOME_TOOLTIPS.takeHomeExceedsGross}>
               <Tag color="red" className="!mr-0">
                 Gross looks too low
               </Tag>
@@ -376,7 +377,7 @@ export const PaycheckWaterfall = ({
                 </span>
               </span>
               {section.title === 'Pre-tax deductions' && !editing ? (
-                <Tooltip title="Change insurance, other deductions or 401(k) rates for this paycheck only">
+                <Tooltip title={INCOME_TOOLTIPS.paycheckOverrides}>
                   <Button
                     size="small"
                     type="text"
@@ -454,7 +455,7 @@ export const PaycheckWaterfall = ({
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               Paid by your employer
             </span>
-            <Tooltip title="Real compensation, but it goes straight to your 401(k) rather than through your paycheck, so it is not part of take-home.">
+            <Tooltip title={INCOME_TOOLTIPS.employerMatchNotTakeHome}>
               <InfoCircleOutlined className="text-[11px] text-slate-300 dark:text-ink-600" />
             </Tooltip>
           </div>

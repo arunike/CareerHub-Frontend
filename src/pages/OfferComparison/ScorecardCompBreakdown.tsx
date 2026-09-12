@@ -9,6 +9,7 @@ import ScorecardTimeOffBlock from './ScorecardTimeOffBlock';
 import type { DecisionRow } from './decisionScoring';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import type { AdjustedOfferMetrics } from './types';
+import { COMPENSATION_TOOLTIPS, EQUITY_TOOLTIPS } from '../../content/tooltips';
 
 type Props = {
   adjustedByOfferId: Record<number, AdjustedOfferMetrics>;
@@ -67,7 +68,7 @@ const ScorecardCompBreakdown = ({
         <div className="grid grid-cols-2 gap-x-6 gap-y-4">
           <div>
             <HelpTooltipTrigger
-              title="Your fixed annual salary before tax, the main guaranteed component of compensation. The after-tax amount applies your estimated tax rate."
+              title={COMPENSATION_TOOLTIPS.baseSalary}
               ariaLabel="Explain base salary"
               density="comfortable"
               className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -93,7 +94,7 @@ const ScorecardCompBreakdown = ({
           </div>
           <div>
             <HelpTooltipTrigger
-              title="Annual performance bonus, typically a percentage of base and treated as a target amount. The after-tax estimate uses the supplemental bonus rate."
+              title={COMPENSATION_TOOLTIPS.bonus}
               ariaLabel="Explain annual bonus"
               density="comfortable"
               className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -119,7 +120,7 @@ const ScorecardCompBreakdown = ({
           </div>
           <div>
             <HelpTooltipTrigger
-              title="Annualized grant value. Financial scoring counts the full value when it is tradable, the entered buyback value when a company buyback exists, and $0 while it is not sellable. Tax applies only to the realizable amount."
+              title={EQUITY_TOOLTIPS.annualGrantValue}
               ariaLabel="Explain annual equity"
               density="comfortable"
               className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -159,7 +160,7 @@ const ScorecardCompBreakdown = ({
           </div>
           <div>
             <HelpTooltipTrigger
-              title="One-time signing bonus paid when you join. Often subject to a clawback period (typically 1–2 years)."
+              title={COMPENSATION_TOOLTIPS.signOnClawback}
               ariaLabel="Explain sign-on bonus"
               density="comfortable"
               className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -205,7 +206,7 @@ const ScorecardCompBreakdown = ({
           {Number(row.offer.relocation_bonus || 0) > 0 && (
             <div>
               <HelpTooltipTrigger
-                title="One-time relocation or signing perk cash value. The after-tax estimate uses the supplemental W2 bonus rate."
+                title={COMPENSATION_TOOLTIPS.relocation}
                 ariaLabel="Explain relocation perk"
                 density="comfortable"
                 className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -229,7 +230,7 @@ const ScorecardCompBreakdown = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <HelpTooltipTrigger
-                  title="Monthly premium and annual HSA contribution details."
+                  title={COMPENSATION_TOOLTIPS.healthSummary}
                   ariaLabel="Explain health insurance"
                   density="comfortable"
                   className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -261,7 +262,7 @@ const ScorecardCompBreakdown = ({
               </div>
               <div>
                 <HelpTooltipTrigger
-                  title="401(k) Employer retirement match percentage and max contribution matched."
+                  title={COMPENSATION_TOOLTIPS.retirementSummary}
                   ariaLabel="Explain 401(k) matching"
                   density="comfortable"
                   className="text-xs font-medium text-slate-500 dark:text-ink-400"

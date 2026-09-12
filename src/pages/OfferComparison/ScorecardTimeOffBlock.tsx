@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { totalCompDiff } from './totalCompDiff';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
 import HelpTooltipTrigger from '../../components/HelpTooltipTrigger';
+import { COMPENSATION_TOOLTIPS } from '../../content/tooltips';
 
 type Props = {
   row: DecisionRow;
@@ -15,7 +16,7 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
     <div className="flex justify-between items-center">
       <div>
         <HelpTooltipTrigger
-          title="PTO covers vacation and personal time. Sick leave is tracked separately. Holidays are company-observed days off. Unlimited PTO policies vary by company culture."
+          title={COMPENSATION_TOOLTIPS.timeOff}
           ariaLabel="Explain time off"
           density="comfortable"
           className="text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -33,7 +34,7 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
       {!row.isSimulated && !(row.offer as Offer).is_current && (
         <div className="text-right">
           <HelpTooltipTrigger
-            title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On compared with your current job. Paper equity is excluded."
+            title={COMPENSATION_TOOLTIPS.diffVsCurrent}
             ariaLabel="Explain difference from current job"
             density="comfortable"
             className="justify-end text-xs font-medium text-slate-500 dark:text-ink-400"
@@ -60,7 +61,7 @@ const ScorecardTimeOffBlock = ({ row, currentTotal }: Props) => (
       {row.isSimulated && (
         <div className="text-right">
           <HelpTooltipTrigger
-            title="Total comp difference using Base + Bonus + Realizable Equity + Sign-On. Paper equity is excluded."
+            title={COMPENSATION_TOOLTIPS.diffVsCurrent}
             ariaLabel="Explain difference from current job"
             density="comfortable"
             className="justify-end text-xs font-medium text-slate-500 dark:text-ink-400"
