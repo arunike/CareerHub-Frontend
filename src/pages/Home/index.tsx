@@ -17,11 +17,11 @@ import {
   SolutionOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-import PublicHeader from '../../components/PublicHeader';
-import PublicFaq from './PublicFaq';
+import PublicHeader from '../../components/layout/PublicHeader';
+import PublicFaq from '../../components/Home/PublicFaq';
 import ThemeSwitch from '../../theme/ThemeSwitch';
 import { useTheme } from '../../theme/ThemeProvider';
-import WeekAtGlance from './WeekAtGlance';
+import WeekAtGlance from '../../components/Home/WeekAtGlance';
 
 const lifecycle = [
   {

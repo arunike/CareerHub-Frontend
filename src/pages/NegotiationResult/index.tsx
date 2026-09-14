@@ -12,9 +12,9 @@ import { getNegotiationResultById } from '../../utils/negotiationStorage';
 import type { StoredNegotiationResult } from '../../utils/negotiationStorage';
 import { getNegotiationArtifactByClientId } from '../../utils/aiArtifactStorage';
 import { formatPtoLabel } from '../../utils/offerTimeOff';
-import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
-import ArtifactPageToolbar from '../../components/ArtifactPageToolbar';
-import { PageState, PanelSkeleton } from '../../components/PageState';
+import ArtifactHeaderCard from '../../components/artifacts/ArtifactHeaderCard';
+import ArtifactPageToolbar from '../../components/artifacts/ArtifactPageToolbar';
+import { PageState, PanelSkeleton } from '../../components/feedback/PageState';
 
 const { Text } = Typography;
 

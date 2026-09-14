@@ -1,35 +1,35 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Form, message, Grid } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-import { MetricCardsSkeleton, TableSkeleton } from '../../components/SkeletonLoader';
+import { MetricCardsSkeleton, TableSkeleton } from '../../components/feedback/SkeletonLoader';
 import type { TableProps } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getApplications, getDocuments } from '../../api';
 import { getUserSettings } from '../../api/availability';
 import type { Document, EmploymentType } from '../../types';
 import type { CareerApplication } from '../../types/application';
-import { PageState } from '../../components/PageState';
-import CoverLetterModal from './CoverLetterModal';
-import ApplicationDetailDrawer from './ApplicationDetailDrawer';
-import ApplicationFilterBar from './ApplicationFilterBar';
-import ApplicationBulkBar from './ApplicationBulkBar';
-import ApplicationsToolbar from './ApplicationsToolbar';
-import ApplicationTable from './ApplicationTable';
-import ApplicationEmptyState from './ApplicationEmptyState';
-import { orderingFromSorter } from './applicationSorting';
-import ApplicationAddModal from './ApplicationAddModal';
-import ApplicationMobileList from './ApplicationMobileList';
-import ApplicationMetricCards from './ApplicationMetricCards';
-import { useApplicationFilters } from './useApplicationFilters';
-import { useApplicationImport } from './useApplicationImport';
-import { useJobBoardImport } from './useJobBoardImport';
-import { useApplicationActions } from './useApplicationActions';
-import { useApplicationEditor } from './useApplicationEditor';
-import ApplicationImportModal from './ApplicationImportModal';
-import JobBoardImportModal from './JobBoardImportModal';
-import ApplicationFormFields from './ApplicationFormFields';
-import { buildApplicationColumns } from './applicationColumns';
-import { buildApplicationMetrics } from './applicationMetrics';
+import { PageState } from '../../components/feedback/PageState';
+import CoverLetterModal from '../../components/Applications/CoverLetterModal';
+import ApplicationDetailDrawer from '../../components/Applications/ApplicationDetailDrawer';
+import ApplicationFilterBar from '../../components/Applications/ApplicationFilterBar';
+import ApplicationBulkBar from '../../components/Applications/ApplicationBulkBar';
+import ApplicationsToolbar from '../../components/Applications/ApplicationsToolbar';
+import ApplicationTable from '../../components/Applications/ApplicationTable';
+import ApplicationEmptyState from '../../components/Applications/ApplicationEmptyState';
+import { orderingFromSorter } from '../../utils/Applications/applicationSorting';
+import ApplicationAddModal from '../../components/Applications/ApplicationAddModal';
+import ApplicationMobileList from '../../components/Applications/ApplicationMobileList';
+import ApplicationMetricCards from '../../components/Applications/ApplicationMetricCards';
+import { useApplicationFilters } from '../../hooks/Applications/useApplicationFilters';
+import { useApplicationImport } from '../../hooks/Applications/useApplicationImport';
+import { useJobBoardImport } from '../../hooks/Applications/useJobBoardImport';
+import { useApplicationActions } from '../../hooks/Applications/useApplicationActions';
+import { useApplicationEditor } from '../../hooks/Applications/useApplicationEditor';
+import ApplicationImportModal from '../../components/Applications/ApplicationImportModal';
+import JobBoardImportModal from '../../components/Applications/JobBoardImportModal';
+import ApplicationFormFields from '../../components/Applications/ApplicationFormFields';
+import { buildApplicationColumns } from '../../components/Applications/applicationColumns';
+import { buildApplicationMetrics } from '../../utils/Applications/applicationMetrics';
 import {
   getApplicationStatusEditOptions,
   getApplicationStatusFilterOptions,
@@ -42,10 +42,10 @@ import {
   isPaginatedApplicationsResponse,
   type PaginatedApplicationsResponse,
   summarizeApplications,
-} from './applicationTypes';
+} from '../../utils/Applications/applicationTypes';
 import { useCompanyList } from '../../hooks/useCompanyList';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
-import { confirmLeaveDialog } from '../../components/confirmLeaveDialog';
+import { confirmLeaveDialog } from '../../components/modals/confirmLeaveDialog';
 
 const Applications = () => {
   const location = useLocation();

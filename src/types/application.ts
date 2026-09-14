@@ -1,4 +1,4 @@
-import type { DayOneGcStatus, VisaSponsorshipStatus } from '../pages/OfferComparison/calculations';
+import type { DayOneGcStatus, VisaSponsorshipStatus } from '../utils/OfferComparison/calculations';
 
 export interface CareerApplication {
   id: number;

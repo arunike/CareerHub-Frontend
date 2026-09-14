@@ -5,7 +5,7 @@ import {
   LockOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons';
-import PublicHeader from '../../components/PublicHeader';
+import PublicHeader from '../../components/layout/PublicHeader';
 
 type LegalPageProps = {
   type: 'privacy' | 'terms';

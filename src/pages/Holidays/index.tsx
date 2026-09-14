@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Space, Form, Input, message } from 'antd';
-import Modal from '../../components/MobileModal';
+import Modal from '../../components/modals/MobileModal';
 import { deleteHoliday } from '../../api';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import CalendarView from '../../components/CalendarView';
-import RecurrenceModal from '../../components/RecurrenceModal';
-import SegmentedToggle from '../../components/SegmentedToggle';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import CalendarView from '../../components/CalendarView/CalendarView';
+import RecurrenceModal from '../../components/modals/RecurrenceModal';
+import SegmentedToggle from '../../components/inputs/SegmentedToggle';
 import { getCurrentYear } from '../../utils/yearFilter';
-import HolidayAddForm from './HolidayAddForm';
-import { useHolidayEvents } from './useHolidayEvents';
-import { useHolidaySelection } from './useHolidaySelection';
-import { useFederalHolidays } from './useFederalHolidays';
-import { useCalendarHolidays } from './useCalendarHolidays';
-import { useHolidayCrud } from './useHolidayCrud';
-import { useHolidayData } from './useHolidayData';
-import FederalHolidayModal from './FederalHolidayModal';
-import HolidayEditModal from './HolidayEditModal';
-import HolidayListCard from './HolidayListCard';
+import HolidayAddForm from '../../components/Holidays/HolidayAddForm';
+import { useHolidayEvents } from '../../hooks/Holidays/useHolidayEvents';
+import { useHolidaySelection } from '../../hooks/Holidays/useHolidaySelection';
+import { useFederalHolidays } from '../../hooks/Holidays/useFederalHolidays';
+import { useCalendarHolidays } from '../../hooks/Holidays/useCalendarHolidays';
+import { useHolidayCrud } from '../../hooks/Holidays/useHolidayCrud';
+import { useHolidayData } from '../../hooks/Holidays/useHolidayData';
+import FederalHolidayModal from '../../components/Holidays/FederalHolidayModal';
+import HolidayEditModal from '../../components/Holidays/HolidayEditModal';
+import HolidayListCard from '../../components/Holidays/HolidayListCard';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import {
   FEDERAL_HOLIDAY_LABEL,
@@ -24,14 +24,14 @@ import {
   getFederalHolidayColor,
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
-import EventEditorModal from '../Events/components/EventEditorModal';
-import EventViewModal from '../Events/components/EventViewModal';
-import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
-import { PageState } from '../../components/PageState';
+import EventEditorModal from '../../components/Events/EventEditorModal';
+import EventViewModal from '../../components/Events/EventViewModal';
+import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
+import { PageState } from '../../components/feedback/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
-import YearFilter from '../../components/YearFilter';
-import FederalHolidayTabPanel from './FederalHolidayTabPanel';
-import { holidayGroupMembers } from './holidayGrouping';
+import YearFilter from '../../components/inputs/YearFilter';
+import FederalHolidayTabPanel from '../../components/Holidays/FederalHolidayTabPanel';
+import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
 
 const Holidays = () => {
   const location = useLocation();

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, Form, Grid, Input, Select, Table, Tag, message } from 'antd';
-import Modal from '../../components/MobileModal';
+import Modal from '../../components/modals/MobileModal';
 import {
   PlusOutlined,
   FilePdfOutlined,
@@ -18,19 +18,19 @@ import {
   createDocumentVersion,
 } from '../../api';
 import type { Document } from '../../types';
-import UploadDocumentModal from './UploadDocumentModal';
-import PageActionToolbar from '../../components/PageActionToolbar';
+import UploadDocumentModal from '../../components/Documents/UploadDocumentModal';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
 import { getCurrentYear } from '../../utils/yearFilter';
-import RowActions from '../../components/RowActions';
-import { PageState } from '../../components/PageState';
+import RowActions from '../../components/actions/RowActions';
+import { PageState } from '../../components/feedback/PageState';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
-import ApplicationSelect from '../../components/ApplicationSelect';
+import ApplicationSelect from '../../components/inputs/ApplicationSelect';
 import { openDocumentInNewTab } from '../../utils/openDocument';
-import DocumentMobileList from './DocumentMobileList';
-import DocumentPreviewBody from './DocumentPreviewBody';
+import DocumentMobileList from '../../components/Documents/DocumentMobileList';
+import DocumentPreviewBody from '../../components/Documents/DocumentPreviewBody';
 const MAX_DOCUMENT_FILE_BYTES = 4 * 1024 * 1024;
 const DOCUMENT_PAGE_SIZE = 10;
 type ApiError = { response?: { data?: { error?: string } }; errorFields?: unknown };

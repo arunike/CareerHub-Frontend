@@ -1,0 +1,435 @@
+import { useMemo } from 'react';
+import {
+  annualizeAmount,
+  calculateScenarioValue,
+  estimateColIndexFromCity,
+  estimateTaxRatesByIncomeType,
+  type ApplicationLike,
+  type MaritalStatus,
+  type OfferLike,
+  type SimulatedOffer,
+} from '../../utils/OfferComparison/calculations';
+import { annualFreeFoodValue } from '../../utils/OfferComparison/freeFood';
+import type { ScenarioRow } from '../../utils/OfferComparison/offerAdjustmentsTypes';
+import type { AdjustedOfferMetrics } from '../../utils/OfferComparison/types';
+import {
+  getEffectiveTaxLocation,
+  getPrimaryApplicationLocation,
+} from '../../utils/applicationLocation';
+import { getRealizableEquity } from '../../utils/OfferComparison/equityLiquidity';
+import { getCountedSickLeaveDays } from '../../utils/offerTimeOff';
+import {
+  summariseCommute,
+  type CommuteOption,
+  type DrivingDefaults,
+} from '../../utils/OfferComparison/commute';
+
+type Params = {
+  filteredOffers: OfferLike[];
+  applications: ApplicationLike[];
+  simulatedOffers: SimulatedOffer[];
+  getApplicationName: (appId: number) => string;
+  referenceColIndex: number;
+  effectiveMonthlyRent: number;
+  referenceLocation: string;
+  cityCostOfLiving: Record<string, number>;
+  stateColBase: Record<string, number>;
+  stateNameToAbbr: Record<string, string>;
+  maritalStatus: MaritalStatus;
+  stateTaxRate: Record<string, number>;
+  // Shared MPG and gas price, so every row prices fuel off the same assumptions.
+  drivingDefaults?: Partial<DrivingDefaults> | null;
+};
+
+export const useScenarioRows = ({
+  filteredOffers,
+  applications,
+  simulatedOffers,
+  getApplicationName,
+  referenceColIndex,
+  effectiveMonthlyRent,
+  referenceLocation,
+  cityCostOfLiving,
+  stateColBase,
+  stateNameToAbbr,
+  maritalStatus,
+  stateTaxRate,
+  drivingDefaults,
+}: Params) => {
+  const scenarioRows = useMemo<ScenarioRow[]>(() => {
+    const baselineColIndex = Math.max(1, referenceColIndex);
+    const baselineRent = Math.max(0, Number(effectiveMonthlyRent || 0));
+
+    const realRows = filteredOffers.map((offer) => {
+      const realizableEquity = getRealizableEquity(offer);
+      const countedSickLeaveDays = getCountedSickLeaveDays({
+        sickLeaveDays: offer.sick_leave_days,
+        isUnlimitedPto: !!offer.is_unlimited_pto,
+        sickLeaveIncludedInUnlimitedPto: offer.sick_leave_included_in_unlimited_pto !== false,
+      });
+      const app = applications.find((a) => a.id === offer.application);
+      const homeLocation = getEffectiveTaxLocation(app) || referenceLocation;
+      const rowCity = homeLocation;
+      const rowColIndex = estimateColIndexFromCity(
+        rowCity,
+        cityCostOfLiving,
+        stateColBase,
+        stateNameToAbbr
+      );
+      const rowMonthlyRent = Math.max(
+        0,
+        Number(
+          app?.monthly_rent_override ??
+            Math.round(baselineRent * (Math.max(1, rowColIndex) / baselineColIndex))
+        )
+      );
+      const workMode =
+        app?.rto_policy === 'REMOTE'
+          ? 'REMOTE'
+          : app?.rto_policy === 'ONSITE'
+            ? 'ONSITE'
+            : 'HYBRID';
+      const rtoDays =
+        typeof app?.rto_days_per_week === 'number'
+          ? app.rto_days_per_week
+          : workMode === 'REMOTE'
+            ? 0
+            : workMode === 'ONSITE'
+              ? 5
+              : 3;
+      const rowIncome =
+        Number(offer.base_salary) +
+        Number(offer.bonus) +
+        Number(offer.sign_on) +
+        Number(offer.benefits_value) +
+        realizableEquity +
+        Number(offer.relocation_bonus || 0) -
+        Number(offer.health_premium_monthly || 0) * 12;
+      const estimatedTax = estimateTaxRatesByIncomeType(
+        rowIncome,
+        maritalStatus,
+        rowCity,
+        stateTaxRate,
+        stateNameToAbbr
+      );
+      const rowTax = {
+        baseTaxRate: Number(app?.tax_base_rate ?? estimatedTax.baseTaxRate),
+        bonusTaxRate: Number(app?.tax_bonus_rate ?? estimatedTax.bonusTaxRate),
+        equityTaxRate: Number(app?.tax_equity_rate ?? estimatedTax.equityTaxRate),
+      };
+
+      // One office-day count for both, so a hybrid role is never charged five days.
+      const commute = summariseCommute(
+        app?.commute_options as CommuteOption[] | undefined,
+        {
+          workMode: app?.work_mode,
+          rtoDaysPerWeek: app?.rto_days_per_week,
+          ptoDays: Number(offer.pto_days ?? 0),
+          holidayDays: Number(offer.holiday_days ?? 0),
+        },
+        drivingDefaults
+      );
+      // Meals share the commute's office-day count; falls back to the legacy flat amount.
+      const freeFoodAnnualValue = annualFreeFoodValue({
+        meals: app?.free_food_meals,
+        legacyValuePerMeal: Number(app?.free_food_value_per_meal) || 0,
+        officeDays: commute.officeDays,
+        legacyAnnualValue: annualizeAmount(
+          Number(app?.free_food_perk_value || 0),
+          (app?.free_food_perk_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'YEARLY'
+        ),
+      });
+      const commuteAnnualCost = commute.primary
+        ? commute.annualCost
+        : (app?.commute_cost_frequency ?? 'MONTHLY') === 'DAILY'
+          ? Number(app?.commute_cost_value || 0) * commute.officeDays
+          : annualizeAmount(
+              Number(app?.commute_cost_value || 0),
+              (app?.commute_cost_frequency as 'DAILY' | 'MONTHLY' | 'YEARLY') || 'MONTHLY'
+            );
+
+      const scenarioCalc = calculateScenarioValue({
+        base_salary: Number(offer.base_salary),
+        bonus: Number(offer.bonus),
+        sign_on: Number(offer.sign_on),
+        benefits_value: Number(offer.benefits_value),
+        equity: realizableEquity,
+        freeFoodPerkAnnual: freeFoodAnnualValue,
+        commuteAnnualCost,
+        baseTaxRate: rowTax.baseTaxRate,
+        bonusTaxRate: rowTax.bonusTaxRate,
+        equityTaxRate: rowTax.equityTaxRate,
+        costOfLivingIndex: rowColIndex,
+        health_premium_monthly: Number(offer.health_premium_monthly || 0),
+        hsa_employer_contribution: Number(offer.hsa_employer_contribution || 0),
+        forty_one_k_match_percent: Number(offer.forty_one_k_match_percent || 0),
+        forty_one_k_max_match: Number(offer.forty_one_k_max_match || 0),
+        relocation_bonus: Number(offer.relocation_bonus || 0),
+      });
+      const isUnlimitedPto = !!offer.is_unlimited_pto;
+
+      return {
+        kind: 'real' as const,
+        offer,
+        appName: getApplicationName(offer.application),
+        locationLabel: getPrimaryApplicationLocation(app) || '-',
+        homeLocationLabel: homeLocation || '-',
+        colIndex: rowColIndex,
+        monthlyRent: rowMonthlyRent,
+        work_mode: workMode,
+        rto_days_per_week: rtoDays,
+        pto_days: Number(offer.pto_days || 0),
+        is_unlimited_pto: isUnlimitedPto,
+        sick_leave_days: Number(offer.sick_leave_days || 0),
+        sick_leave_included_in_unlimited_pto: offer.sick_leave_included_in_unlimited_pto !== false,
+        holiday_days: Number(offer.holiday_days ?? 11),
+        pto_holiday_days: isUnlimitedPto
+          ? null
+          : Number(offer.pto_days || 0) + countedSickLeaveDays + Number(offer.holiday_days ?? 11),
+        total_comp:
+          Number(offer.base_salary) +
+          Number(offer.bonus) +
+          realizableEquity +
+          Number(offer.sign_on) +
+          Number(offer.relocation_bonus || 0) +
+          (scenarioCalc.breakdown.fortyOneKMatchValue || 0) +
+          (scenarioCalc.breakdown.taxedHsa || 0) -
+          Number(offer.health_premium_monthly || 0) * 12,
+        adjustedValue: scenarioCalc.adjustedValue - rowMonthlyRent * 12,
+        cashAdjustment: scenarioCalc.cashAdjustment,
+        deltaTotalComp: 0,
+        deltaBaseAfterTax: 0,
+        deltaBonusAfterTax: 0,
+        deltaEquityAfterTax: 0,
+        deltaPtoHolidayDays: 0,
+        afterTaxBase: scenarioCalc.breakdown.taxedBase,
+        afterTaxBonus: scenarioCalc.breakdown.taxedBonus,
+        afterTaxSignOn: scenarioCalc.breakdown.taxedSignOn,
+        afterTaxRelocation: scenarioCalc.breakdown.taxedRelocation,
+        afterTaxHsa: scenarioCalc.breakdown.taxedHsa,
+        fortyOneKMatchValue: scenarioCalc.breakdown.fortyOneKMatchValue,
+        afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
+        commuteAnnualCost,
+        commute,
+        freeFoodAnnualValue,
+        usedBaseTaxRate: rowTax.baseTaxRate,
+        usedBonusTaxRate: rowTax.bonusTaxRate,
+        usedEquityTaxRate: rowTax.equityTaxRate,
+      };
+    });
+
+    const simulatedRows = simulatedOffers.map((offer) => {
+      const realizableEquity = getRealizableEquity(offer);
+      const countedSickLeaveDays = getCountedSickLeaveDays({
+        sickLeaveDays: offer.sick_leave_days,
+        isUnlimitedPto: !!offer.is_unlimited_pto,
+        sickLeaveIncludedInUnlimitedPto: offer.sick_leave_included_in_unlimited_pto !== false,
+      });
+      const homeLocation = getEffectiveTaxLocation(offer) || referenceLocation;
+      const rowCity = homeLocation;
+      const rowColIndex = estimateColIndexFromCity(
+        rowCity,
+        cityCostOfLiving,
+        stateColBase,
+        stateNameToAbbr
+      );
+      const estimatedMonthlyRent = Math.round(
+        baselineRent * (Math.max(1, rowColIndex) / baselineColIndex)
+      );
+      const rowMonthlyRent = Math.max(0, Number(offer.monthly_rent ?? estimatedMonthlyRent));
+      const rowIncome =
+        Number(offer.base_salary) +
+        Number(offer.bonus) +
+        Number(offer.sign_on) +
+        Number(offer.benefits_value) +
+        realizableEquity +
+        Number(offer.relocation_bonus || 0) -
+        Number(offer.health_premium_monthly || 0) * 12;
+      const estimatedTax = estimateTaxRatesByIncomeType(
+        rowIncome,
+        maritalStatus,
+        rowCity,
+        stateTaxRate,
+        stateNameToAbbr
+      );
+      const rowTax = {
+        baseTaxRate: Number(offer.tax_base_rate ?? estimatedTax.baseTaxRate),
+        bonusTaxRate: Number(offer.tax_bonus_rate ?? estimatedTax.bonusTaxRate),
+        equityTaxRate: Number(offer.tax_equity_rate ?? estimatedTax.equityTaxRate),
+      };
+      const scenarioCommute = summariseCommute(
+        offer.commute_options as CommuteOption[] | undefined,
+        {
+          workMode: offer.work_mode,
+          rtoDaysPerWeek: offer.rto_days_per_week,
+          ptoDays: Number(offer.pto_days ?? 0),
+          holidayDays: Number(offer.holiday_days ?? 0),
+        },
+        drivingDefaults
+      );
+      const freeFoodAnnualValue = annualFreeFoodValue({
+        meals: offer.free_food_meals,
+        legacyValuePerMeal: Number(offer.free_food_value_per_meal) || 0,
+        officeDays: scenarioCommute.officeDays,
+        legacyAnnualValue: annualizeAmount(
+          Number(offer.free_food_perk_value || 0),
+          offer.free_food_perk_frequency || 'YEARLY'
+        ),
+      });
+      const commuteAnnualCost = scenarioCommute.primary
+        ? scenarioCommute.annualCost
+        : (offer.commute_cost_frequency || 'MONTHLY') === 'DAILY'
+          ? Number(offer.commute_cost_value || 0) * scenarioCommute.officeDays
+          : annualizeAmount(
+              Number(offer.commute_cost_value || 0),
+              offer.commute_cost_frequency || 'MONTHLY'
+            );
+      const scenarioCalc = calculateScenarioValue({
+        base_salary: Number(offer.base_salary),
+        bonus: Number(offer.bonus),
+        sign_on: Number(offer.sign_on),
+        benefits_value: Number(offer.benefits_value),
+        equity: realizableEquity,
+        freeFoodPerkAnnual: freeFoodAnnualValue,
+        commuteAnnualCost,
+        baseTaxRate: rowTax.baseTaxRate,
+        bonusTaxRate: rowTax.bonusTaxRate,
+        equityTaxRate: rowTax.equityTaxRate,
+        costOfLivingIndex: rowColIndex,
+        health_premium_monthly: Number(offer.health_premium_monthly || 0),
+        hsa_employer_contribution: Number(offer.hsa_employer_contribution || 0),
+        forty_one_k_match_percent: Number(offer.forty_one_k_match_percent || 0),
+        forty_one_k_max_match: Number(offer.forty_one_k_max_match || 0),
+        relocation_bonus: Number(offer.relocation_bonus || 0),
+      });
+      const isUnlimitedPto = !!offer.is_unlimited_pto;
+
+      const appName =
+        offer.application && applications.find((a) => a.id === offer.application)
+          ? getApplicationName(offer.application)
+          : `${offer.custom_company_name || 'Custom Company'} - ${offer.custom_role_title || 'Custom Role'}`;
+
+      return {
+        kind: 'simulated' as const,
+        offer: { ...offer, is_current: false },
+        appName,
+        locationLabel: getPrimaryApplicationLocation(offer) || '-',
+        homeLocationLabel: homeLocation || '-',
+        colIndex: rowColIndex,
+        monthlyRent: rowMonthlyRent,
+        work_mode: offer.work_mode,
+        rto_days_per_week: offer.rto_days_per_week,
+        pto_days: Number(offer.pto_days || 0),
+        is_unlimited_pto: isUnlimitedPto,
+        sick_leave_days: Number(offer.sick_leave_days || 0),
+        sick_leave_included_in_unlimited_pto: offer.sick_leave_included_in_unlimited_pto !== false,
+        holiday_days: Number(offer.holiday_days ?? 11),
+        pto_holiday_days: isUnlimitedPto
+          ? null
+          : Number(offer.pto_days || 0) + countedSickLeaveDays + Number(offer.holiday_days ?? 11),
+        total_comp:
+          Number(offer.base_salary) +
+          Number(offer.bonus) +
+          realizableEquity +
+          Number(offer.sign_on) +
+          Number(offer.relocation_bonus || 0) +
+          (scenarioCalc.breakdown.fortyOneKMatchValue || 0) +
+          (scenarioCalc.breakdown.taxedHsa || 0) -
+          Number(offer.health_premium_monthly || 0) * 12,
+        adjustedValue: scenarioCalc.adjustedValue - rowMonthlyRent * 12,
+        cashAdjustment: scenarioCalc.cashAdjustment,
+        deltaTotalComp: 0,
+        deltaBaseAfterTax: 0,
+        deltaBonusAfterTax: 0,
+        deltaEquityAfterTax: 0,
+        deltaPtoHolidayDays: 0,
+        afterTaxBase: scenarioCalc.breakdown.taxedBase,
+        afterTaxBonus: scenarioCalc.breakdown.taxedBonus,
+        afterTaxSignOn: scenarioCalc.breakdown.taxedSignOn,
+        afterTaxRelocation: scenarioCalc.breakdown.taxedRelocation,
+        afterTaxHsa: scenarioCalc.breakdown.taxedHsa,
+        fortyOneKMatchValue: scenarioCalc.breakdown.fortyOneKMatchValue,
+        afterTaxEquity: scenarioCalc.breakdown.taxedEquity,
+        commuteAnnualCost,
+        commute: scenarioCommute,
+        freeFoodAnnualValue,
+        usedBaseTaxRate: rowTax.baseTaxRate,
+        usedBonusTaxRate: rowTax.bonusTaxRate,
+        usedEquityTaxRate: rowTax.equityTaxRate,
+      };
+    });
+
+    const rows = [...realRows, ...simulatedRows];
+    const current = rows.find((r) => r.offer.is_current);
+    const currentValue = current?.adjustedValue || 0;
+    const currentBaseAfterTax = current?.afterTaxBase || 0;
+    const currentBonusAfterTax = current?.afterTaxBonus || 0;
+    const currentEquityAfterTax = current?.afterTaxEquity || 0;
+    const currentPtoHolidayDays = current?.pto_holiday_days ?? 0;
+    const currentHasUnlimitedPto = !!current?.is_unlimited_pto;
+    const currentTotalComp = current?.total_comp || 0;
+
+    return rows
+      .map((row) => ({
+        ...row,
+        deltaVsCurrent: row.offer.is_current ? 0 : row.adjustedValue - currentValue,
+        deltaTotalComp: row.offer.is_current ? 0 : row.total_comp - currentTotalComp,
+        deltaBaseAfterTax: row.offer.is_current ? 0 : row.afterTaxBase - currentBaseAfterTax,
+        deltaBonusAfterTax: row.offer.is_current ? 0 : row.afterTaxBonus - currentBonusAfterTax,
+        deltaEquityAfterTax: row.offer.is_current ? 0 : row.afterTaxEquity - currentEquityAfterTax,
+        deltaPtoHolidayDays:
+          row.offer.is_current ||
+          row.is_unlimited_pto ||
+          currentHasUnlimitedPto ||
+          row.pto_holiday_days == null
+            ? null
+            : row.pto_holiday_days - currentPtoHolidayDays,
+      }))
+      .sort((a, b) => b.adjustedValue - a.adjustedValue);
+  }, [
+    filteredOffers,
+    applications,
+    simulatedOffers,
+    getApplicationName,
+    referenceColIndex,
+    effectiveMonthlyRent,
+    referenceLocation,
+    cityCostOfLiving,
+    stateColBase,
+    stateNameToAbbr,
+    maritalStatus,
+    stateTaxRate,
+    drivingDefaults,
+  ]);
+
+  const realAdjustedByOfferId = useMemo(() => {
+    const realAdjusted: Record<number, AdjustedOfferMetrics> = {};
+    scenarioRows.forEach((row) => {
+      if (row.kind !== 'real') return;
+      const id = Number(row.offer.id);
+      if (!Number.isFinite(id)) return;
+      realAdjusted[id] = {
+        adjustedValue: row.adjustedValue,
+        adjustedDiff: row.deltaVsCurrent,
+        afterTaxBase: row.afterTaxBase,
+        afterTaxBonus: row.afterTaxBonus,
+        afterTaxSignOn: row.afterTaxSignOn,
+        afterTaxRelocation: row.afterTaxRelocation,
+        afterTaxHsa: row.afterTaxHsa,
+        fortyOneKMatchValue: row.fortyOneKMatchValue,
+        afterTaxEquity: row.afterTaxEquity,
+        usedBaseTaxRate: row.usedBaseTaxRate,
+        usedBonusTaxRate: row.usedBonusTaxRate,
+        usedEquityTaxRate: row.usedEquityTaxRate,
+        monthlyRent: row.monthlyRent,
+        commuteAnnualCost: row.commuteAnnualCost,
+        freeFoodAnnualValue: row.freeFoodAnnualValue,
+        cashAdjustment: row.cashAdjustment,
+        costOfLivingIndex: row.colIndex,
+      };
+    });
+    return realAdjusted;
+  }, [scenarioRows]);
+
+  return { scenarioRows, realAdjustedByOfferId };
+};

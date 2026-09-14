@@ -11,14 +11,23 @@ import {
   getTasks,
   getUserSettings,
 } from '../../api';
-import ModeToggle from '../../components/ModeToggle';
+import ModeToggle from '../../components/inputs/ModeToggle';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import type { ApplicationStage } from '../../constants/applicationStages';
-import TodayView from './TodayView';
-import WeekView from './WeekView';
-import type { CommandApplication, CommandEvent, CommandOffer, CommandTask } from './commandCenter';
-import type { DecisionJournalEntry } from '../OfferComparison/decisionJournal';
-import { SOURCE_LABELS, unavailableMessage, type CommandSource } from './commandCenterSources';
+import TodayView from '../../components/CommandCenter/TodayView';
+import WeekView from '../../components/CommandCenter/WeekView';
+import type {
+  CommandApplication,
+  CommandEvent,
+  CommandOffer,
+  CommandTask,
+} from '../../utils/CommandCenter/commandCenter';
+import type { DecisionJournalEntry } from '../../utils/OfferComparison/decisionJournal';
+import {
+  SOURCE_LABELS,
+  unavailableMessage,
+  type CommandSource,
+} from '../../utils/CommandCenter/commandCenterSources';
 
 const list = <T,>(payload: unknown): T[] => {
   if (Array.isArray(payload)) return payload as T[];

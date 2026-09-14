@@ -1,10 +1,10 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import IntelligenceSectionPicker from '../../components/IntelligenceSectionPicker';
-import type { IntelligenceSection } from '../../components/IntelligenceSectionPicker';
-import CoverLettersTab from './CoverLettersTab';
-import NegotiationResultsTab from './NegotiationResultsTab';
-import PromotionReviewsTab from './PromotionReviewsTab';
+import IntelligenceSectionPicker from '../../components/dashboard/IntelligenceSectionPicker';
+import type { IntelligenceSection } from '../../components/dashboard/IntelligenceSectionPicker';
+import CoverLettersTab from '../../components/AITools/CoverLettersTab';
+import NegotiationResultsTab from '../../components/AITools/NegotiationResultsTab';
+import PromotionReviewsTab from '../../components/AITools/PromotionReviewsTab';
 
 const AIToolsPage: React.FC = () => {
   const [searchParams] = useSearchParams();

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from './theme/ThemeProvider';
 import './index.css';
 import App from './App.tsx';
-import AppErrorBoundary from './components/AppErrorBoundary.tsx';
+import AppErrorBoundary from './components/layout/AppErrorBoundary';
 
 const PRELOAD_RECOVERY_KEY = 'careerhub.preload-recovery';
 const PRELOAD_RECOVERY_WINDOW_MS = 60_000;

@@ -7,7 +7,7 @@ import {
   SearchOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
-import SegmentedToggle from '../../components/SegmentedToggle';
+import SegmentedToggle from '../../components/inputs/SegmentedToggle';
 import {
   deleteContact,
   deleteContactRelationship,
@@ -17,18 +17,18 @@ import {
 } from '../../api/career';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { ApplicationContact, ContactRelationship, ContactRelationshipKind } from '../../types';
-import { ListSkeleton, PageHeaderSkeleton } from '../../components/SkeletonLoader';
-import { PageState } from '../../components/PageState';
-import Modal from '../../components/MobileModal';
-import ContactEditorModal from '../../components/contacts/ContactEditorModal';
-import RelationshipEditorModal from '../../components/contacts/RelationshipEditorModal';
+import { ListSkeleton, PageHeaderSkeleton } from '../../components/feedback/SkeletonLoader';
+import { PageState } from '../../components/feedback/PageState';
+import Modal from '../../components/modals/MobileModal';
+import ContactEditorModal from '../../components/Contacts/ContactEditorModal';
+import RelationshipEditorModal from '../../components/Contacts/RelationshipEditorModal';
 import {
   CONTACT_RELATIONSHIP_OPTIONS,
   withoutGenericContact,
-} from '../../components/contacts/contactOptions';
-import ContactDetailsDrawer from './ContactDetailsDrawer';
-import ContactList from './ContactList';
-import ContactNetwork from './ContactNetwork';
+} from '../../components/Contacts/contactOptions';
+import ContactDetailsDrawer from '../../components/Contacts/ContactDetailsDrawer';
+import ContactList from '../../components/Contacts/ContactList';
+import ContactNetwork from '../../components/Contacts/ContactNetwork';
 
 type ViewMode = 'list' | 'network';
 type ContextFilter = 'ALL' | 'APPLICATION' | 'EXPERIENCE';

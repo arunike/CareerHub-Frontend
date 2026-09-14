@@ -10,13 +10,13 @@ import {
 import type { UserSettings } from '../../types';
 import { SaveOutlined } from '@ant-design/icons';
 import { message } from 'antd';
-import Modal from '../../components/MobileModal';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import { PageState } from '../../components/PageState';
-import { SettingsSkeleton } from '../../components/SkeletonLoader';
+import Modal from '../../components/modals/MobileModal';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import { PageState } from '../../components/feedback/PageState';
+import { SettingsSkeleton } from '../../components/feedback/SkeletonLoader';
 import { useAuth } from '../../context/AuthContext';
-import ProfilePreviewCard from './ProfilePreviewCard';
-import ProfileSettingsForm from './ProfileSettingsForm';
+import ProfilePreviewCard from '../../components/Profile/ProfilePreviewCard';
+import ProfileSettingsForm from '../../components/Profile/ProfileSettingsForm';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (

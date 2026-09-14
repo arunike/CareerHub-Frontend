@@ -8,7 +8,7 @@ import {
   reschedulePublicBooking,
 } from '../../api';
 import { message } from 'antd';
-import { PageState } from '../../components/PageState';
+import { PageState } from '../../components/feedback/PageState';
 import type {
   BookingDayAvailability,
   BookingIntakeQuestion,
@@ -18,10 +18,10 @@ import type {
 import { todayDateOnlyLocal } from '../../utils/dateOnly';
 import { getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 
-import BookingDetailsForm from './BookingDetailsForm';
-import BookingSlotPicker from './BookingSlotPicker';
-import CurrentBookingCard from './CurrentBookingCard';
-import BookingHeaderCard from './BookingHeaderCard';
+import BookingDetailsForm from '../../components/PublicBooking/BookingDetailsForm';
+import BookingSlotPicker from '../../components/PublicBooking/BookingSlotPicker';
+import CurrentBookingCard from '../../components/PublicBooking/CurrentBookingCard';
+import BookingHeaderCard from '../../components/PublicBooking/BookingHeaderCard';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

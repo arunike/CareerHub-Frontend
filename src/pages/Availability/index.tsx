@@ -5,14 +5,14 @@ import type { Availability as AvailabilityType } from '../../types';
 import { format } from 'date-fns';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import CalendarView from '../../components/CalendarView';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import { PageState, PanelSkeleton } from '../../components/PageState';
+import CalendarView from '../../components/CalendarView/CalendarView';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import { PageState, PanelSkeleton } from '../../components/feedback/PageState';
 import { message } from 'antd';
-import CalendarHolidayModal from '../../components/calendarView/CalendarHolidayModal';
-import RecurrenceModal from '../../components/RecurrenceModal';
-import EventEditorModal from '../Events/components/EventEditorModal';
-import EventViewModal from '../Events/components/EventViewModal';
+import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
+import RecurrenceModal from '../../components/modals/RecurrenceModal';
+import EventEditorModal from '../../components/Events/EventEditorModal';
+import EventViewModal from '../../components/Events/EventViewModal';
 import {
   AvailabilityBookingCard,
   AvailabilityGeneratorCard,
@@ -20,17 +20,17 @@ import {
   AvailabilityTextControls,
   AvailabilityViewToggle,
   PublicBookingManager,
-} from './components';
+} from '../../utils/Availability';
 import { useAuth } from '../../context/AuthContext';
 import { getBrowserTimeZone } from '../../lib/timezones';
-import { useAvailabilityCalendar } from './useAvailabilityCalendar';
-import { useShareLinks } from './useShareLinks';
-import { holidayGroupMembers } from '../Holidays/holidayGrouping';
+import { useAvailabilityCalendar } from '../../hooks/Availability/useAvailabilityCalendar';
+import { useShareLinks } from '../../hooks/Availability/useShareLinks';
+import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
 import {
   buildAvailabilityCopyText,
   groupAvailabilityByWeek,
   processGroupItems,
-} from './availabilityText';
+} from '../../utils/Availability/availabilityText';
 
 dayjs.extend(customParseFormat);
 

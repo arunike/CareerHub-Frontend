@@ -1,4 +1,4 @@
-import { DEFAULT_STATE_NAME_TO_ABBR } from '../pages/OfferComparison/calculations';
+import { DEFAULT_STATE_NAME_TO_ABBR } from '../utils/OfferComparison/calculations';
 
 let cachedUsCityOptions: string[] | null = null;
 

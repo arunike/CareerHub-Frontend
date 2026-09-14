@@ -11,13 +11,13 @@ export interface ContactQuery {
 }
 
 export const getContacts = (params: ContactQuery = {}) =>
-  api.get<ApplicationContact[]>('/career/contacts/', { params });
+  api.get<ApplicationContact[]>('/career/Contacts/', { params });
 
 export const createContact = (data: Record<string, unknown>) =>
-  api.post<ApplicationContact>('/career/contacts/', data);
+  api.post<ApplicationContact>('/career/Contacts/', data);
 
 export const updateContact = (id: number, data: Record<string, unknown>) =>
-  api.patch<ApplicationContact>(`/career/contacts/${id}/`, data);
+  api.patch<ApplicationContact>(`/career/Contacts/${id}/`, data);
 
 export const deleteContact = (id: number, scope?: { application?: number; experience?: number }) =>
   api.delete(`/career/contacts/${id}/`, { params: scope });

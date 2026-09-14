@@ -12,17 +12,22 @@ import {
   reorderTasks,
   updateTask,
 } from '../../api';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import RowActions from '../../components/RowActions';
-import ModalShell from '../../components/ModalShell';
-import { PageState } from '../../components/PageState';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import RowActions from '../../components/actions/RowActions';
+import ModalShell from '../../components/modals/ModalShell';
+import { PageState } from '../../components/feedback/PageState';
 import { parseSmartReminder } from '../../utils/smartReminder';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { PRIORITY_COLOR, STATUS_META, TASKS_UPDATED_EVENT, type TaskStatus } from './taskMeta';
-import TaskFormFields from './TaskFormFields';
-import TaskKanbanBoard from './TaskKanbanBoard';
-import WeeklyReviewCard from './WeeklyReviewCard';
-import TaskFilterBar from './TaskFilterBar';
+import {
+  PRIORITY_COLOR,
+  STATUS_META,
+  TASKS_UPDATED_EVENT,
+  type TaskStatus,
+} from '../../utils/Tasks/taskMeta';
+import TaskFormFields from '../../components/Tasks/TaskFormFields';
+import TaskKanbanBoard from '../../components/Tasks/TaskKanbanBoard';
+import WeeklyReviewCard from '../../components/Tasks/WeeklyReviewCard';
+import TaskFilterBar from '../../components/Tasks/TaskFilterBar';
 
 type ApiError = { errorFields?: unknown; response?: { data?: { error?: string } } };
 

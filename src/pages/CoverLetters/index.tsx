@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Tooltip, Input, Typography, Checkbox, message, Space } from 'antd';
-import Modal from '../../components/MobileModal';
+import Modal from '../../components/modals/MobileModal';
 import {
   FileTextOutlined,
   DeleteOutlined,
@@ -11,9 +11,9 @@ import {
   CopyOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import BulkActionHeader from '../../components/BulkActionHeader';
-import RowActions from '../../components/RowActions';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import BulkActionHeader from '../../components/actions/BulkActionHeader';
+import RowActions from '../../components/actions/RowActions';
 import {
   getAllCoverLetters,
   deleteCoverLetter,

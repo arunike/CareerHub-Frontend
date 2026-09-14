@@ -2,24 +2,26 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Tooltip, message } from 'antd';
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import { SkeletonBlock } from '../../components/SkeletonLoader';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import { SkeletonBlock } from '../../components/feedback/SkeletonLoader';
 import type { FilingStatus } from '../../types/tax';
-import BonusForm from './BonusForm';
-import ElectionsForm from './ElectionsForm';
-import OverrideConflictModal, { type OverrideConflict } from './OverrideConflictModal';
-import RetirementForm from './RetirementForm';
-import VestingForm from './VestingForm';
-import { mostRecentPaidRow } from './effectiveRows';
-import { toIsoDate } from './paySchedule';
-import UnsavedChangesActions from '../../components/UnsavedChangesActions';
+import BonusForm from '../../components/Income/BonusForm';
+import ElectionsForm from '../../components/Income/ElectionsForm';
+import OverrideConflictModal, {
+  type OverrideConflict,
+} from '../../components/Income/OverrideConflictModal';
+import RetirementForm from '../../components/Income/RetirementForm';
+import VestingForm from '../../components/Income/VestingForm';
+import { mostRecentPaidRow } from '../../utils/Income/effectiveRows';
+import { toIsoDate } from '../../utils/Income/paySchedule';
+import UnsavedChangesActions from '../../components/modals/UnsavedChangesActions';
 import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
-import { clearFieldFromOverrides, periodsOverriding } from './periodDeductions';
-import { compareRates } from './taxRates';
-import { useIncomeYear } from './useIncomeYear';
-import { money as plainMoney } from './format';
-import { AmountPrivacyProvider } from './amountPrivacy';
-import IncomeSourceTabs from './IncomeSourceTabs';
+import { clearFieldFromOverrides, periodsOverriding } from '../../utils/Income/periodDeductions';
+import { compareRates } from '../../utils/Income/taxRates';
+import { useIncomeYear } from '../../hooks/Income/useIncomeYear';
+import { money as plainMoney } from '../../utils/Income/format';
+import { AmountPrivacyProvider } from '../../components/Income/amountPrivacy';
+import IncomeSourceTabs from '../../components/Income/IncomeSourceTabs';
 
 const Notice = ({ tone, children }: { tone: 'info' | 'warn'; children: React.ReactNode }) => (
   <div

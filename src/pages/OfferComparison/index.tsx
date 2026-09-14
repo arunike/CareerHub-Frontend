@@ -1,38 +1,40 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { updateApplication } from '../../api';
 import { PlusOutlined } from '@ant-design/icons';
-import PageActionToolbar from '../../components/PageActionToolbar';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
 import { getCurrentYear } from '../../utils/yearFilter';
 import { Button, message, Select, Spin } from 'antd';
-import { useOfferAdjustmentsPersistence } from './useOfferAdjustmentsPersistence';
+import { useOfferAdjustmentsPersistence } from '../../hooks/OfferComparison/useOfferAdjustmentsPersistence';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import CareerTransitionAdvisor from './CareerTransitionAdvisor';
-import OfferDecisionScorecard from './OfferDecisionScorecard';
-import { useDecisionSnapshots } from './useDecisionSnapshots';
-import { useOfferEditor } from './useOfferEditor';
-import { useOfferDialogs } from './useOfferDialogs';
-import { useOfferMutations } from './useOfferMutations';
-import { useOfferPageData } from './useOfferPageData';
-import { useTransitionAdvisor } from './useTransitionAdvisor';
-import { useScenarioDraft } from './useScenarioDraft';
-import { buildChartData, buildCompareOptions } from './offerChartData';
-import { useSharedDriving } from './useSharedDriving';
-import CompBreakdownSection from './CompBreakdownSection';
-import { useOfferComparisonRows } from './useOfferComparisonRows';
-import { normalizeSimulatedOffers } from './simulatedOfferNormalize';
-import { useScenarioApplications } from './useScenarioApplications';
+import CareerTransitionAdvisor from '../../components/OfferComparison/CareerTransitionAdvisor';
+import OfferDecisionScorecard from '../../components/OfferComparison/OfferDecisionScorecard';
+import { useDecisionSnapshots } from '../../hooks/OfferComparison/useDecisionSnapshots';
+import { useOfferEditor } from '../../hooks/OfferComparison/useOfferEditor';
+import { useOfferDialogs } from '../../hooks/OfferComparison/useOfferDialogs';
+import { useOfferMutations } from '../../hooks/OfferComparison/useOfferMutations';
+import { useOfferPageData } from '../../hooks/OfferComparison/useOfferPageData';
+import { useTransitionAdvisor } from '../../hooks/OfferComparison/useTransitionAdvisor';
+import { useScenarioDraft } from '../../hooks/OfferComparison/useScenarioDraft';
+import { buildChartData, buildCompareOptions } from '../../utils/OfferComparison/offerChartData';
+import { useSharedDriving } from '../../hooks/OfferComparison/useSharedDriving';
+import CompBreakdownSection from '../../components/OfferComparison/CompBreakdownSection';
+import { useOfferComparisonRows } from '../../hooks/OfferComparison/useOfferComparisonRows';
+import { normalizeSimulatedOffers } from '../../utils/OfferComparison/simulatedOfferNormalize';
+import { useScenarioApplications } from '../../hooks/OfferComparison/useScenarioApplications';
 import {
   OFFER_STATUS_FILTERS,
   type ApplicationLike as Application,
   type BenefitItem,
   type OfferStatusFilter,
-} from './calculations';
+} from '../../utils/OfferComparison/calculations';
 import { useLocation, useNavigate } from 'react-router-dom';
-import CommuteComparison from './CommuteComparison';
-import DrivingAssumptions from './DrivingAssumptions';
-import OfferModalStack from './OfferModalStack';
+import CommuteComparison from '../../components/OfferComparison/CommuteComparison';
+import DrivingAssumptions from '../../components/OfferComparison/DrivingAssumptions';
+import OfferModalStack from '../../components/OfferComparison/OfferModalStack';
 
-const CompensationSimulator = lazy(() => import('./CompensationSimulator'));
+const CompensationSimulator = lazy(
+  () => import('../../components/OfferComparison/CompensationSimulator')
+);
 
 const LazySectionFallback = () => (
   <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 shadow-sm">

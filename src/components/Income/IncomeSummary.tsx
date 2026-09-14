@@ -1,0 +1,180 @@
+import { Select, Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import type { totalsToDate } from '../../utils/Income/effectiveRows';
+import type { IncomeSource } from '../../utils/Income/incomeSources';
+import { formatPayDate } from '../../utils/Income/paySchedule';
+import { useMoney } from './amountPrivacy';
+import { INCOME_TOOLTIPS } from '../../content/tooltips';
+
+interface RoleOption {
+  label: string;
+  options: Array<{ value: string; label: string }>;
+}
+
+interface Props {
+  source: IncomeSource | null;
+  // Paid so far, so this card agrees with the year card and the Experience breakdown.
+  totals: ReturnType<typeof totalsToDate>;
+  paychecksPerYear: number;
+  stateAbbr: string;
+  stateLabel: string;
+  taxYear: number;
+  rates: { calculated: number; actual: number | null; comparedCount: number };
+  roleOptions: RoleOption[];
+  onSelectRole: (key: string) => void;
+}
+
+const LEGEND = [
+  { key: 'net', label: 'Take-home', tone: 'bg-emerald-500' },
+  { key: 'tax', label: 'Tax', tone: 'bg-rose-400' },
+  { key: 'pretax', label: 'Pre-tax', tone: 'bg-sky-500' },
+  { key: 'posttax', label: 'Post-tax', tone: 'bg-amber-400' },
+] as const;
+
+const Meta = ({ children }: { children: React.ReactNode }) => (
+  <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-ink-400">
+    {children}
+  </span>
+);
+
+export const IncomeSummary = ({
+  source,
+  totals,
+  paychecksPerYear,
+  stateAbbr,
+  stateLabel,
+  taxYear,
+  rates,
+  roleOptions,
+  onSelectRole,
+}: Props) => {
+  const { money } = useMoney();
+  const gross = Math.max(totals.gross, 1);
+  const preTax = totals.section125 + totals.hsa + totals.pretax401k + totals.pretaxIncomeOnly;
+  const salary = totals.gross - totals.supplemental - totals.taxableAllowance;
+  const shares = {
+    net: totals.net / gross,
+    tax: totals.taxTotal / gross,
+    pretax: preTax / gross,
+    posttax: totals.postTax / gross,
+  };
+
+  const window = source?.startDate
+    ? `${formatPayDate(source.startDate)} — ${source.endDate ? formatPayDate(source.endDate) : 'present'}`
+    : null;
+
+  return (
+    <div className="enterprise-card overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-50 dark:from-ink-900 to-white dark:to-ink-900 px-6 py-6">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
+                {source?.company ?? 'No role'}
+              </span>
+              {source?.roleTitle ? (
+                <span className="truncate text-[11px] uppercase tracking-wider text-slate-400 dark:text-ink-500">
+                  · {source.roleTitle}
+                </span>
+              ) : null}
+              {source && !source.isCurrent ? (
+                <span className="rounded-full bg-slate-100 dark:bg-ink-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-ink-400">
+                  Past role
+                </span>
+              ) : null}
+            </div>
+
+            <p className="mt-3 text-xs font-medium text-slate-500 dark:text-ink-400">
+              Take-home in {taxYear}
+            </p>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-4xl font-semibold leading-none tracking-tight text-slate-900 dark:text-ink-50 tabular-nums">
+                {money(totals.net)}
+              </span>
+              <span className="text-sm text-slate-500 dark:text-ink-400">
+                of {money(totals.gross)} gross
+              </span>
+            </div>
+            {/* Gross is more than salary, so name the parts rather than leave them to be inferred. */}
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-ink-400">
+              Gross = salary {money(salary)}
+              {totals.supplemental > 0 && ` + bonus and equity ${money(totals.supplemental)}`}
+              {totals.taxableAllowance > 0 && ` + allowances ${money(totals.taxableAllowance)}`}
+            </p>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
+              Role
+              <Tooltip title={INCOME_TOOLTIPS.rolesListed}>
+                <InfoCircleOutlined className="text-slate-300 dark:text-ink-600" />
+              </Tooltip>
+            </span>
+            <Select
+              className="w-full sm:w-[280px]"
+              value={source?.key}
+              options={roleOptions}
+              onChange={onSelectRole}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
+          {LEGEND.map((item) =>
+            shares[item.key] > 0.002 ? (
+              <div
+                key={item.key}
+                className={item.tone}
+                style={{ width: `${shares[item.key] * 100}%` }}
+              />
+            ) : null
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+          {LEGEND.map((item) => (
+            <span
+              key={item.key}
+              className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-ink-400"
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${item.tone}`} />
+              {item.label}
+              <span className="font-medium tabular-nums text-slate-700 dark:text-ink-100">
+                {(shares[item.key] * 100).toFixed(0)}%
+              </span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 px-6 py-3">
+        <Meta>
+          <span className="font-medium text-slate-700 dark:text-ink-100">{totals.count}</span> of{' '}
+          {paychecksPerYear} paychecks paid
+        </Meta>
+        {window ? <Meta>{window}</Meta> : null}
+        <Meta>
+          <span className="font-medium text-slate-700 dark:text-ink-100">
+            {(rates.calculated * 100).toFixed(1)}%
+          </span>{' '}
+          effective tax rate
+          {rates.actual !== null ? (
+            <span
+              className={
+                rates.actual > rates.calculated
+                  ? 'text-rose-600 dark:text-rose-300'
+                  : 'text-emerald-600 dark:text-emerald-300'
+              }
+            >
+              {' '}
+              · {(rates.actual * 100).toFixed(1)}% on {rates.comparedCount} recorded
+            </span>
+          ) : null}
+        </Meta>
+        <Meta>{stateAbbr ? stateLabel : 'No residence state set'}</Meta>
+      </div>
+    </div>
+  );
+};
+
+export default IncomeSummary;

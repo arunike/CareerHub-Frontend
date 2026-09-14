@@ -1,40 +1,40 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { buildEarningsReport } from './earningsByYear';
-import { useLedgerEarnings } from '../Income/useLedgerEarnings';
-import { buildInternshipParts } from './internshipParts';
+import { buildEarningsReport } from '../../utils/Experience/earningsByYear';
+import { useLedgerEarnings } from '../../hooks/Income/useLedgerEarnings';
+import { buildInternshipParts } from '../../utils/Experience/internshipParts';
 import { Button, Typography, Upload } from 'antd';
-import Modal from '../../components/MobileModal';
+import Modal from '../../components/modals/MobileModal';
 import { PlusOutlined, RobotOutlined, UserOutlined, InboxOutlined } from '@ant-design/icons';
-import { MetricCardsSkeleton, ListSkeleton } from '../../components/SkeletonLoader';
+import { MetricCardsSkeleton, ListSkeleton } from '../../components/feedback/SkeletonLoader';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Experience } from '../../types';
-import ExperienceModal from './ExperienceModal';
-import JDMatcherModal from './JDMatcherModal';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import { PageState } from '../../components/PageState';
-import RaiseHistoryModal from '../OfferComparison/RaiseHistoryModal';
-import TeamHistoryModal from './TeamHistoryModal';
-import ContactsPanel from '../../components/ContactsPanel';
-import SchedulePhasesModal from './SchedulePhasesModal';
-import CompensationBreakdownModal from './CompensationBreakdownModal';
-import PayGrowthModal from './PayGrowthModal';
-import PromotionReviewModal from './PromotionReviewModal';
-import type { OfferLike as Offer } from '../OfferComparison/calculations';
-import { getExperienceCompensationSnapshot } from './compensation';
-import ExperienceAnalyticsPanels from './ExperienceAnalyticsPanels';
-import ExperienceGroupCard from './ExperienceGroupCard';
-import { useExperienceData } from './useExperienceData';
-import { buildOfferSelectOptions } from './offerSelectOptions';
-import { renderExperienceDescription as renderDescription } from './renderExperienceDescription';
+import ExperienceModal from '../../components/Experience/ExperienceModal';
+import JDMatcherModal from '../../components/Experience/JDMatcherModal';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import { PageState } from '../../components/feedback/PageState';
+import RaiseHistoryModal from '../../components/OfferComparison/RaiseHistoryModal';
+import TeamHistoryModal from '../../components/Experience/TeamHistoryModal';
+import ContactsPanel from '../../components/Contacts/ContactsPanel';
+import SchedulePhasesModal from '../../components/Experience/SchedulePhasesModal';
+import CompensationBreakdownModal from '../../components/Experience/CompensationBreakdownModal';
+import PayGrowthModal from '../../components/Experience/PayGrowthModal';
+import PromotionReviewModal from '../../components/Experience/PromotionReviewModal';
+import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
+import { getExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
+import ExperienceAnalyticsPanels from '../../components/Experience/ExperienceAnalyticsPanels';
+import ExperienceGroupCard from '../../components/Experience/ExperienceGroupCard';
+import { useExperienceData } from '../../hooks/Experience/useExperienceData';
+import { buildOfferSelectOptions } from '../../utils/Experience/offerSelectOptions';
+import { renderExperienceDescription as renderDescription } from '../../components/Experience/renderExperienceDescription';
 import {
   formatDuration,
   formatRoleDateRange,
   getGroupTenure,
   getLatestTeam,
   getTypeDisplay,
-} from './experienceDisplay';
+} from '../../utils/Experience/experienceDisplay';
 import {
   companiesByEmploymentType,
   companyCount,
@@ -43,12 +43,15 @@ import {
   skillFrequency,
   topSkillsByFrequency,
   totalCareerDuration,
-} from './experienceSummaries';
+} from '../../utils/Experience/experienceSummaries';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { groupExperiencesByCompany, sortExperiencesForDisplay } from './experienceUtils';
-import { useExperienceCompSummaries } from './useExperienceCompSummaries';
-import { useExperienceMutations } from './useExperienceMutations';
-import { useExperienceDragOrder } from './useExperienceDragOrder';
+import {
+  groupExperiencesByCompany,
+  sortExperiencesForDisplay,
+} from '../../utils/Experience/experienceUtils';
+import { useExperienceCompSummaries } from '../../hooks/Experience/useExperienceCompSummaries';
+import { useExperienceMutations } from '../../hooks/Experience/useExperienceMutations';
+import { useExperienceDragOrder } from '../../hooks/Experience/useExperienceDragOrder';
 
 const { Text } = Typography;
 const { Dragger } = Upload;

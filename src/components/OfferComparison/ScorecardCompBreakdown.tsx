@@ -1,0 +1,308 @@
+import { type OfferLike as Offer } from '../../utils/OfferComparison/calculations';
+import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { getEquityLiquidityCopy } from '../../utils/OfferComparison/equityLiquidity';
+import HelpTooltipTrigger from '../feedback/HelpTooltipTrigger';
+import { ComponentDelta } from './ScoreBreakdown';
+import ScorecardMedicalBreakdown from './ScorecardMedicalBreakdown';
+import ScorecardTimeOffBlock from './ScorecardTimeOffBlock';
+
+import type { DecisionRow } from '../../utils/OfferComparison/decisionScoring';
+import type { ScenarioRow } from '../../utils/OfferComparison/offerAdjustmentsTypes';
+import type { AdjustedOfferMetrics } from '../../utils/OfferComparison/types';
+import { COMPENSATION_TOOLTIPS, EQUITY_TOOLTIPS } from '../../content/tooltips';
+
+type Props = {
+  adjustedByOfferId: Record<number, AdjustedOfferMetrics>;
+  collapsedDetailIds: Set<string>;
+  expandedMedicalDetailIds: Set<string>;
+  row: DecisionRow;
+  scenarioRows: ScenarioRow[];
+  showDeltas: boolean;
+  baselineLabel: string | null;
+  currentOffer: Offer | undefined;
+  currentTotal: number;
+  toggleMedicalDetails: (rowId: string) => void;
+  toggleOfferDetails: (rowId: string) => void;
+};
+
+const ScorecardCompBreakdown = ({
+  baselineLabel,
+  currentOffer,
+  currentTotal,
+  toggleMedicalDetails,
+  toggleOfferDetails,
+  adjustedByOfferId,
+  collapsedDetailIds,
+  expandedMedicalDetailIds,
+  row,
+  scenarioRows,
+  showDeltas,
+}: Props) => (
+  <div className="mb-6 rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 overflow-hidden shadow-sm">
+    <button
+      type="button"
+      onClick={() => toggleOfferDetails(row.id)}
+      aria-expanded={!collapsedDetailIds.has(row.id)}
+      className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
+    >
+      <span>
+        <span className="block text-xs font-semibold text-slate-800 dark:text-ink-50">
+          Compensation & benefits details
+        </span>
+        <span className="mt-0.5 block text-[10px] text-slate-500 dark:text-ink-400">
+          Cash, taxes, health insurance, retirement, and full time-off breakdown
+        </span>
+      </span>
+      <span className="flex shrink-0 items-center gap-2 text-xs font-semibold text-sky-700 dark:text-sky-300">
+        {!collapsedDetailIds.has(row.id) ? 'Hide' : 'View'}
+        {!collapsedDetailIds.has(row.id) ? (
+          <DownOutlined className="text-[10px]" />
+        ) : (
+          <RightOutlined className="text-[10px]" />
+        )}
+      </span>
+    </button>
+
+    {!collapsedDetailIds.has(row.id) && (
+      <div className="border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/30 dark:bg-ink-900/30 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <div>
+            <HelpTooltipTrigger
+              title={COMPENSATION_TOOLTIPS.baseSalary}
+              ariaLabel="Explain base salary"
+              density="comfortable"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
+            >
+              Base Salary
+            </HelpTooltipTrigger>
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+              ${Number(row.offer.base_salary).toLocaleString()}
+            </div>
+            {showDeltas && currentOffer && baselineLabel && (
+              <ComponentDelta
+                value={Number(row.offer.base_salary)}
+                baseline={Number(currentOffer.base_salary)}
+                baselineLabel={baselineLabel}
+              />
+            )}
+            <div className="text-[10px] text-slate-400 dark:text-ink-500">
+              After tax: $
+              {Math.round(
+                adjustedByOfferId[Number(row.offer.id)]?.afterTaxBase || 0
+              ).toLocaleString()}
+            </div>
+          </div>
+          <div>
+            <HelpTooltipTrigger
+              title={COMPENSATION_TOOLTIPS.bonus}
+              ariaLabel="Explain annual bonus"
+              density="comfortable"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
+            >
+              Bonus
+            </HelpTooltipTrigger>
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+              ${Number(row.offer.bonus).toLocaleString()}
+            </div>
+            {showDeltas && currentOffer && baselineLabel && (
+              <ComponentDelta
+                value={Number(row.offer.bonus)}
+                baseline={Number(currentOffer.bonus)}
+                baselineLabel={baselineLabel}
+              />
+            )}
+            <div className="text-[10px] text-slate-400 dark:text-ink-500">
+              After tax: $
+              {Math.round(
+                adjustedByOfferId[Number(row.offer.id)]?.afterTaxBonus || 0
+              ).toLocaleString()}
+            </div>
+          </div>
+          <div>
+            <HelpTooltipTrigger
+              title={EQUITY_TOOLTIPS.annualGrantValue}
+              ariaLabel="Explain annual equity"
+              density="comfortable"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
+            >
+              Equity / Yr
+            </HelpTooltipTrigger>
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+              {/* Repricing yields fractions of a cent, which have no place on a summary card. */}$
+              {Number(row.offer.equity).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </div>
+            {showDeltas && currentOffer && baselineLabel && (
+              <ComponentDelta
+                value={Number(row.offer.equity)}
+                baseline={Number(currentOffer.equity)}
+                baselineLabel={baselineLabel}
+              />
+            )}
+            {(() => {
+              const liquidity = getEquityLiquidityCopy(row.offer);
+              const simulatedMetrics = scenarioRows.find(
+                (scenario) => String(scenario.offer.id) === String(row.offer.id)
+              );
+              const afterTax = row.isSimulated
+                ? simulatedMetrics?.afterTaxEquity
+                : adjustedByOfferId[Number(row.offer.id)]?.afterTaxEquity;
+              return (
+                <div className="text-[10px] text-slate-500 dark:text-ink-400">
+                  {liquidity.label} · {liquidity.detail}
+                  {liquidity.realizable > 0 && (
+                    <span className="block text-slate-400 dark:text-ink-500">
+                      After tax: ${Math.round(afterTax || 0).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+          <div>
+            <HelpTooltipTrigger
+              title={COMPENSATION_TOOLTIPS.signOnClawback}
+              ariaLabel="Explain sign-on bonus"
+              density="comfortable"
+              className="text-xs font-medium text-slate-500 dark:text-ink-400"
+            >
+              Sign-On
+            </HelpTooltipTrigger>
+            <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+              ${Number(row.offer.sign_on).toLocaleString()}
+            </div>
+            {showDeltas && currentOffer && baselineLabel && (
+              <ComponentDelta
+                value={Number(row.offer.sign_on)}
+                baseline={Number(currentOffer.sign_on)}
+                baselineLabel={baselineLabel}
+              />
+            )}
+            {(() => {
+              const simulatedMetrics = scenarioRows.find(
+                (scenario) => String(scenario.offer.id) === String(row.offer.id)
+              );
+              const afterTax = row.isSimulated
+                ? simulatedMetrics?.afterTaxSignOn
+                : adjustedByOfferId[Number(row.offer.id)]?.afterTaxSignOn;
+              const schedule = (row.offer.sign_on_schedule || []).map(Number);
+              const paidYears = schedule.filter((amount) => amount > 0).length;
+              return (
+                <div className="text-[10px] text-slate-400 dark:text-ink-500">
+                  {paidYears > 1
+                    ? `Over ${paidYears} years · ${schedule
+                        .filter((amount) => amount > 0)
+                        .map((amount) => `$${Math.round(amount).toLocaleString()}`)
+                        .join(' / ')}`
+                    : 'One-time'}
+                  {Number(row.offer.sign_on) > 0 && (
+                    <span className="block">
+                      After tax: ${Math.round(afterTax || 0).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+          {Number(row.offer.relocation_bonus || 0) > 0 && (
+            <div>
+              <HelpTooltipTrigger
+                title={COMPENSATION_TOOLTIPS.relocation}
+                ariaLabel="Explain relocation perk"
+                density="comfortable"
+                className="text-xs font-medium text-slate-500 dark:text-ink-400"
+              >
+                Relocation Perk
+              </HelpTooltipTrigger>
+              <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+                ${Number(row.offer.relocation_bonus).toLocaleString()}
+              </div>
+              <div className="text-[10px] text-slate-400 dark:text-ink-500">
+                After tax: $
+                {Math.round(
+                  adjustedByOfferId[Number(row.offer.id)]?.afterTaxRelocation || 0
+                ).toLocaleString()}
+              </div>
+            </div>
+          )}
+
+          {/* Health Insurance & 401(k) Match Sub-section */}
+          <div className="col-span-2 pt-2 border-t border-slate-100 dark:border-white/[0.07]">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <HelpTooltipTrigger
+                  title={COMPENSATION_TOOLTIPS.healthSummary}
+                  ariaLabel="Explain health insurance"
+                  density="comfortable"
+                  className="text-xs font-medium text-slate-500 dark:text-ink-400"
+                >
+                  Health Insurance
+                </HelpTooltipTrigger>
+                <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+                  {Number(row.offer.health_premium_monthly || 0) > 0
+                    ? `$${Number(row.offer.health_premium_monthly).toLocaleString()}/mo`
+                    : 'Free Premium'}
+                </div>
+                {row.offer.health_plan_type && (
+                  <div className="text-[10px] text-slate-500 dark:text-ink-400 font-medium">
+                    Type: {row.offer.health_plan_type}
+                  </div>
+                )}
+                {Number(row.offer.health_oop_max || 0) > 0 && (
+                  <div className="text-[10px] text-slate-400 dark:text-ink-500">
+                    OOP Max: ${Number(row.offer.health_oop_max).toLocaleString()}/yr
+                  </div>
+                )}
+                {Number(row.offer.hsa_employer_contribution || 0) > 0 && (
+                  <div className="text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold">
+                    HSA Match: +$
+                    {Number(row.offer.hsa_employer_contribution).toLocaleString()}
+                    /yr
+                  </div>
+                )}
+              </div>
+              <div>
+                <HelpTooltipTrigger
+                  title={COMPENSATION_TOOLTIPS.retirementSummary}
+                  ariaLabel="Explain 401(k) matching"
+                  density="comfortable"
+                  className="text-xs font-medium text-slate-500 dark:text-ink-400"
+                >
+                  401(k) Matching
+                </HelpTooltipTrigger>
+                <div className="text-sm font-bold text-slate-900 dark:text-ink-50">
+                  {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                  Number(row.offer.forty_one_k_max_match || 0) > 0
+                    ? `${Number(row.offer.forty_one_k_match_percent)}% match up to ${Number(row.offer.forty_one_k_max_match)}%`
+                    : 'No 401(k) Match'}
+                </div>
+                {Number(row.offer.forty_one_k_match_percent || 0) > 0 &&
+                  Number(row.offer.forty_one_k_max_match || 0) > 0 && (
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold">
+                      Match Value: +$
+                      {Math.round(
+                        Number(row.offer.base_salary) *
+                          (Number(row.offer.forty_one_k_max_match) / 100) *
+                          (Number(row.offer.forty_one_k_match_percent) / 100)
+                      ).toLocaleString()}
+                      /yr
+                    </div>
+                  )}
+              </div>
+            </div>
+          </div>
+
+          {/* Collapsible Healthcare Breakdown (Clean & Spacious Premium Stacked Design) */}
+          <ScorecardMedicalBreakdown
+            row={row}
+            expandedMedicalDetailIds={expandedMedicalDetailIds}
+            toggleMedicalDetails={toggleMedicalDetails}
+          />
+
+          <ScorecardTimeOffBlock row={row} currentTotal={currentTotal} />
+        </div>
+      </div>
+    )}
+  </div>
+);
+
+export default ScorecardCompBreakdown;

@@ -7,10 +7,10 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/layout/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
-import { PageState } from './components/PageState';
+import { PageState } from './components/feedback/PageState';
 import {
   PageHeaderSkeleton,
   MetricCardsSkeleton,
@@ -23,7 +23,7 @@ import {
   OfferComparisonSkeleton,
   SkeletonBlock,
   AvailabilityTextSkeleton,
-} from './components/SkeletonLoader';
+} from './components/feedback/SkeletonLoader';
 import { NAV_REGISTRY } from './constants/navigationItems';
 
 const HomePage = lazy(() => import('./pages/Home'));
@@ -48,9 +48,9 @@ const LoginPage = lazy(() => import('./pages/Login'));
 const NegotiationResultPage = lazy(() => import('./pages/NegotiationResult'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const LegalPage = lazy(() => import('./pages/Legal'));
-const PromotionReviewPage = lazy(() => import('./pages/Experience/PromotionReviewPage'));
-const Layout = lazy(() => import('./components/Layout'));
-const CareerHubThemeProvider = lazy(() => import('./components/CareerHubThemeProvider'));
+const PromotionReviewPage = lazy(() => import('./components/Experience/PromotionReviewPage'));
+const Layout = lazy(() => import('./components/layout/Layout'));
+const CareerHubThemeProvider = lazy(() => import('./components/layout/CareerHubThemeProvider'));
 
 const NAV_TITLES = new Map<string, string>(
   NAV_REGISTRY.filter((entry) => !entry.key.includes('?')).map((entry) => [entry.key, entry.label])

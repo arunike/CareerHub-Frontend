@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Checkbox, Tooltip, Input } from 'antd';
-import Modal from '../../components/MobileModal';
+import Modal from '../../components/modals/MobileModal';
 import { DeleteOutlined, FileTextOutlined, LockOutlined, EditOutlined } from '@ant-design/icons';
 import {
   getAllReports,
@@ -18,10 +18,10 @@ import {
   setArtifactLock,
   updateArtifactTitle,
 } from '../../utils/aiArtifactStorage';
-import BulkActionHeader from '../../components/BulkActionHeader';
-import RowActions from '../../components/RowActions';
-import { PanelSkeleton } from '../../components/PageState';
-import IntelligenceSectionPicker from '../../components/IntelligenceSectionPicker';
+import BulkActionHeader from '../../components/actions/BulkActionHeader';
+import RowActions from '../../components/actions/RowActions';
+import { PanelSkeleton } from '../../components/feedback/PageState';
+import IntelligenceSectionPicker from '../../components/dashboard/IntelligenceSectionPicker';
 
 const getScoreMeta = (score: number) => {
   if (score >= 90)
@@ -66,7 +66,7 @@ const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-import PageActionToolbar from '../../components/PageActionToolbar';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
 import { PlusOutlined } from '@ant-design/icons';
 
 const JDReportsListPage: React.FC = () => {

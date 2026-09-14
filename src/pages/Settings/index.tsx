@@ -6,35 +6,35 @@ import { useUnsavedChanges } from '../../hooks/useUnsavedChanges';
 import { Button, message } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { SettingsSkeleton } from '../../components/SkeletonLoader';
-import EditableNumberInput from '../../components/EditableNumberInput';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import ConfirmModal from '../../components/ConfirmModal';
-import MobileSectionPicker from '../../components/MobileSectionPicker';
-import SettingsSearch from './SettingsSearch';
-import SettingsTabBar from './SettingsTabBar';
-import SettingsLoadError from './SettingsLoadError';
-import SettingsOrganizeTab from './SettingsOrganizeTab';
-import { useEmploymentTypeEditor } from './useEmploymentTypeEditor';
-import { useHolidayTabEditor } from './useHolidayTabEditor';
-import { useAppStageEditor } from './useAppStageEditor';
-import { useAiProviderSettings } from './useAiProviderSettings';
-import { useAvailabilityRanges } from './useAvailabilityRanges';
-import { useEventCategoryEditor } from './useEventCategoryEditor';
-import { useColorConflicts } from './useColorConflicts';
+import { SettingsSkeleton } from '../../components/feedback/SkeletonLoader';
+import EditableNumberInput from '../../components/inputs/EditableNumberInput';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import ConfirmModal from '../../components/modals/ConfirmModal';
+import MobileSectionPicker from '../../components/layout/MobileSectionPicker';
+import SettingsSearch from '../../components/Settings/SettingsSearch';
+import SettingsTabBar from '../../components/Settings/SettingsTabBar';
+import SettingsLoadError from '../../components/Settings/SettingsLoadError';
+import SettingsOrganizeTab from '../../components/Settings/SettingsOrganizeTab';
+import { useEmploymentTypeEditor } from '../../hooks/Settings/useEmploymentTypeEditor';
+import { useHolidayTabEditor } from '../../hooks/Settings/useHolidayTabEditor';
+import { useAppStageEditor } from '../../hooks/Settings/useAppStageEditor';
+import { useAiProviderSettings } from '../../hooks/Settings/useAiProviderSettings';
+import { useAvailabilityRanges } from '../../hooks/Settings/useAvailabilityRanges';
+import { useEventCategoryEditor } from '../../hooks/Settings/useEventCategoryEditor';
+import { useColorConflicts } from '../../hooks/Settings/useColorConflicts';
 import {
   SECTION_ICONS,
   SETTINGS_TABS,
   SettingsSection,
   findDirtyTabs,
   type SettingsTab,
-} from './settingsChrome';
-import AIProviderSection from './AIProviderSection';
-import EventRemindersSection from './EventRemindersSection';
-import AvailabilitySection from './AvailabilitySection';
-import GoogleSheetsSettings from './GoogleSheetsSettings';
-import SecurityDashboard from './SecurityDashboard';
-import NavigationSettings from './NavigationSettings';
+} from '../../components/Settings/settingsChrome';
+import AIProviderSection from '../../components/Settings/AIProviderSection';
+import EventRemindersSection from '../../components/Settings/EventRemindersSection';
+import AvailabilitySection from '../../components/Settings/AvailabilitySection';
+import GoogleSheetsSettings from '../../components/Settings/GoogleSheetsSettings';
+import SecurityDashboard from '../../components/Settings/SecurityDashboard';
+import NavigationSettings from '../../components/Settings/NavigationSettings';
 import { resolveSettings, type ReminderSettings } from '../../utils/eventReminders';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 

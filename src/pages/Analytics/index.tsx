@@ -3,19 +3,25 @@ import { useSearchParams } from 'react-router-dom';
 import type { ApplicationStats, Event } from '../../types';
 import { getEvents } from '../../api';
 import { getApplicationStats } from '../../api/career';
-import { buildEventStats, eventYears, scopeEventsToYear } from './eventLoad';
+import { buildEventStats, eventYears, scopeEventsToYear } from '../../utils/Analytics/eventLoad';
 import { message } from 'antd';
-import SegmentedToggle from '../../components/SegmentedToggle';
-import PageActionToolbar from '../../components/PageActionToolbar';
-import { PageState } from '../../components/PageState';
+import SegmentedToggle from '../../components/inputs/SegmentedToggle';
+import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import { PageState } from '../../components/feedback/PageState';
 
-import { MetricCardsSkeleton, SkeletonBlock } from '../../components/SkeletonLoader';
+import { MetricCardsSkeleton, SkeletonBlock } from '../../components/feedback/SkeletonLoader';
 
-const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics'));
-const AvailabilityAnalytics = lazy(() => import('../../components/AvailabilityAnalytics'));
-const ActivityChart = lazy(() => import('./ActivityChart'));
-const ResumeVersionAnalytics = lazy(() => import('./ResumeVersionAnalytics'));
-const DecisionOutcomeInsights = lazy(() => import('./DecisionOutcomeInsights'));
+const JobHuntAnalytics = lazy(() => import('../../components/JobHuntAnalytics/JobHuntAnalytics'));
+const AvailabilityAnalytics = lazy(
+  () => import('../../components/AvailabilityAnalytics/AvailabilityAnalytics')
+);
+const ActivityChart = lazy(() => import('../../components/Analytics/ActivityChart'));
+const ResumeVersionAnalytics = lazy(
+  () => import('../../components/Analytics/ResumeVersionAnalytics')
+);
+const DecisionOutcomeInsights = lazy(
+  () => import('../../components/Analytics/DecisionOutcomeInsights')
+);
 
 const SectionFallback = () => (
   <div className="w-full space-y-6" role="status" aria-live="polite" aria-busy="true">

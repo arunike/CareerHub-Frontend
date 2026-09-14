@@ -1,5 +1,5 @@
 import type { JDMatchResult, NegotiationAdvice } from '../api/career';
-import type { OfferLike as Offer, ApplicationLike } from '../pages/OfferComparison/calculations';
+import type { OfferLike as Offer, ApplicationLike } from '../utils/OfferComparison/calculations';
 import type { Experience } from '../types';
 import type { CareerApplication } from '../types/application';
 import { requestChatCompletion, requestJsonCompletion } from './llmClient';

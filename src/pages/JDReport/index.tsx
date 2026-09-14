@@ -12,12 +12,17 @@ import {
 } from '@ant-design/icons';
 import { getReportById } from '../../utils/reportStorage';
 import type { StoredReport } from '../../utils/reportStorage';
-import { isRecord, keywordName, requirementName, supportLabel } from './jdReportFields';
-import JDStrengthsGapsGrid from './JDStrengthsGapsGrid';
+import {
+  isRecord,
+  keywordName,
+  requirementName,
+  supportLabel,
+} from '../../utils/JDReport/jdReportFields';
+import JDStrengthsGapsGrid from '../../components/JDReport/JDStrengthsGapsGrid';
 import { getReportArtifactByClientId } from '../../utils/aiArtifactStorage';
-import ArtifactHeaderCard from '../../components/ArtifactHeaderCard';
-import ArtifactPageToolbar from '../../components/ArtifactPageToolbar';
-import { PageState, PanelSkeleton } from '../../components/PageState';
+import ArtifactHeaderCard from '../../components/artifacts/ArtifactHeaderCard';
+import ArtifactPageToolbar from '../../components/artifacts/ArtifactPageToolbar';
+import { PageState, PanelSkeleton } from '../../components/feedback/PageState';
 
 const getScoreMeta = (score: number) => {
   if (score >= 90)
