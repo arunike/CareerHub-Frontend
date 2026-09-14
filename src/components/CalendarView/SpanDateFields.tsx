@@ -71,6 +71,10 @@ const SpanDateFields = ({
     ...spanDays.map((day) => ({ value: day, label: dayjs(day).format('MMM D') })),
   ];
 
+  // The dates pair with each other, or with the aside, so the row never ends half empty.
+  const dateSpan = 12;
+  const asideSpan = isMultiDay ? 24 : 12;
+
   return (
     <>
       {canChooseScope && (
@@ -79,11 +83,29 @@ const SpanDateFields = ({
         </Form.Item>
       )}
 
+      {/* Above the dates, because these decide which date fields exist below them. */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+        {children}
+        <Form.Item name="is_multi_day" valuePropName="checked" noStyle>
+          <Checkbox
+            disabled={multiDayDisabled || (canChooseScope && scope !== 'all')}
+            onChange={(changeEvent) => {
+              // Seed the end date with the start so the picker opens somewhere sensible.
+              if (changeEvent.target.checked && !form.getFieldValue('end_date')) {
+                form.setFieldValue('end_date', form.getFieldValue('date'));
+              }
+            }}
+          >
+            Multi-day
+          </Checkbox>
+        </Form.Item>
+      </div>
+
       <Row gutter={16}>
-        <Col xs={24} sm={12}>
+        <Col xs={24} sm={dateSpan}>
           <Form.Item
             name="date"
-            label="Date"
+            label={isMultiDay ? 'Start Date' : 'Date'}
             rules={[{ required: true, message: dateRequiredMessage }]}
           >
             <DatePicker
@@ -101,16 +123,9 @@ const SpanDateFields = ({
             />
           </Form.Item>
         </Col>
-        {aside ? (
-          <Col xs={24} sm={12}>
-            {aside}
-          </Col>
-        ) : null}
-      </Row>
 
-      {isMultiDay && (
-        <Row gutter={16}>
-          <Col xs={24} sm={12}>
+        {isMultiDay && (
+          <Col xs={24} sm={dateSpan}>
             <Form.Item
               name="end_date"
               label="End Date"
@@ -147,26 +162,14 @@ const SpanDateFields = ({
               />
             </Form.Item>
           </Col>
-        </Row>
-      )}
+        )}
 
-      <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-        {children}
-        <Form.Item name="is_multi_day" valuePropName="checked" noStyle>
-          <Checkbox
-            // One day out of a run is one day, so spanning from it would edit the run again.
-            disabled={multiDayDisabled || (canChooseScope && scope !== 'all')}
-            onChange={(changeEvent) => {
-              // Seed the end date with the start so the picker opens somewhere sensible.
-              if (changeEvent.target.checked && !form.getFieldValue('end_date')) {
-                form.setFieldValue('end_date', form.getFieldValue('date'));
-              }
-            }}
-          >
-            Multi-day
-          </Checkbox>
-        </Form.Item>
-      </div>
+        {aside ? (
+          <Col xs={24} sm={asideSpan}>
+            {aside}
+          </Col>
+        ) : null}
+      </Row>
     </>
   );
 };
