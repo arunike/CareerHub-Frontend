@@ -31,7 +31,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 📥 **Import/Export**: Bulk upload via CSV/XLSX plus full-fidelity Experience import/export in CSV, JSON, or XLSX formats (JSON recommended for logos + linked snapshots)
 - 🔄 **Google Sheets Sync**: Settings can connect Google for private read-only Sheets access, link a Google Sheet to Applications or Events, auto-map columns from sheet headers, review detected application imports, resolve possible duplicates, inspect last-run change history, configure the daily sync time/timezone, and run imports on demand while cron keeps enabled syncs current
 - 🧭 **One navigation source**: the desktop sidebar, the mobile toolbar, the settings picker and the browser tab title all derive from `NAV_REGISTRY`.
-- 🏠 **Command Center**: the signed-in landing page at `/command-center`, with `/` redirecting to it. Two views behind one segmented switch, held in the URL as `?view=week` so a reload or a shared link lands where you left it:
+- 🏠 **Overview**: the signed-in landing page at `/overview`, with `/` redirecting to it. Two views behind one segmented switch, held in the URL as `?view=week` so a reload or a shared link lands where you left it:
   - **Today is the action layer** and carries no metrics at all — a hero for the next event with a jump into its application, **Needs you today** (anything landing today plus tasks due or overdue), **In interview rounds** (every live conversation, longest untouched first, tagged with its configured stage), what is coming up, offers with a deadline inside a week, **Decision reviews due** (a 30- or 90-day look-back on a past offer decision that has come around), and the remaining open tasks.
   - **This week is the measurement layer** — a written one-line verdict, then two labelled stat strips (*This week*: sent, moved on, response rate, to chase; *Where things stand*: in play, interviewing, live offers, gone cold), with cards for applications gone quiet for 10+ days, what you sent, what moved, a merged seven-day view of events and offer deadlines, the live pipeline by stage, and the latest pay change
   - **Latest pay change is masked on load** behind an eye toggle, and **Live pipeline collapses**, because a salary and a 100-row stage breakdown are the two things you might not want filling the screen
@@ -285,6 +285,9 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Event reminders**: the notification bell loads on mount rather than on click, caches for 3 minutes so reopening does not refetch, and shows a spinner instead of static text.
 - **Multi-day events**: a `Multi-day` toggle reveals an End Date, and the event then renders on every day it spans rather than only its first.
 - **All-day events**: a checkbox on the event form disables (rather than hides) the start/end time and quick-duration controls, so the form does not reflow and it stays obvious why they are inert and stores the event spanning `00:00`–`23:59`. Calendar chips, tooltips, the day panel, and the move confirmation all show `All day` in place of a clock time
+- **Interview-round rows say when, not when-touched.** Each row reads `Interview 5 Oct · Heard 28 Sep` — the next linked event and the date the current round was recorded (`current_stage_on`, the timeline entry matching the application's status). A thread with nothing booked and no reply past your ghosting threshold reads `Ghosted · no reply since …` instead, since listing stale dates implies progress that is not happening.
+- **A hidden-row count is a button, not a caption.** `SummaryCard` takes `previewCount` and reveals the rest in place; the rounds card no longer ends on a dead `15 more in an interview round`.
+- **A stage's colour is the same everywhere it appears.** The Overview's interview-round pills drew their own blue while the applications table used the stage's configured `tone`, so `R1` was two different colours on two screens; both now render `StatusBadge`, so the full stage name and colour match the applications table.
 - **Clicking the calendar opens the editor.** Events and time off both go straight to their form; the read-only detail card stays for the list and deep links.
 - **A multi-day entry can be edited whole or one day at a time.** The editor offers `All N days` alongside every date in the run, so picking the wrong day on the grid is a click away, not a reopen.
 - **Time off and events share one date section.** `SpanDateFields` owns `Date`, `Multi-day` and `End Date` for both editors, and `SpanDetailModal` owns the detail card.
@@ -305,7 +308,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 #### Reliability fixes from the UX review
 
-- **A failed source no longer reads as an all-clear.** The Command Center loads six sources
+- **A failed source no longer reads as an all-clear.** The Overview loads six sources
   independently; any that fail are named in a banner with a per-source **Retry**, and the
   "Nothing needs you today" reassurance renders only when every source answered
   (`canSayAllClear`). Previously a failed read left the card absent and the page said the day was
@@ -332,7 +335,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
   can still succeed with the same tokens.
 - Card header links are a 36px target rather than a 16px line of text, dashboard skeletons announce
   themselves to a screen reader, and `AppErrorBoundary` no longer blames every render error on a
-  deploy — it offers a way out to the Command Center alongside reload, and shows the message.
+  deploy — it offers a way out to the Overview alongside reload, and shows the message.
 
 ### 📊 Analytics (`/analytics`)
 
@@ -610,7 +613,7 @@ frontend/src/
 │   ├── Analytics/index.tsx
 │   ├── Applications/index.tsx
 │   ├── Availability/index.tsx
-│   ├── CommandCenter/index.tsx
+│   ├── Overview/index.tsx
 │   ├── Contacts/index.tsx
 │   ├── CoverLetters/index.tsx
 │   ├── Documents/index.tsx
@@ -639,7 +642,7 @@ frontend/src/
 │   ├── inputs/                # 14 files
 │   ├── layout/                # 10 files
 │   ├── modals/                # 6 files
-│   └── <Feature>/               # AITools, Analytics, Applications, Availability, AvailabilityAnalytics, CalendarView, CommandCenter, Contacts, Documents, Events, Experience, Holidays, Home, Income, JDReport, JobHuntAnalytics, OfferComparison, Profile, PublicBooking, Settings, Tasks
+│   └── <Feature>/               # AITools, Analytics, Applications, Availability, AvailabilityAnalytics, CalendarView, Overview, Contacts, Documents, Events, Experience, Holidays, Home, Income, JDReport, JobHuntAnalytics, OfferComparison, Profile, PublicBooking, Settings, Tasks
 │
 ├── hooks/                     # 59 files — use* hooks, one folder per feature
 ├── utils/                     # 195 files — pure logic, formatting, calculations — one folder per feature
