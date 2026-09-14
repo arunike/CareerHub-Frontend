@@ -66,37 +66,39 @@ const DecisionSignalsSection = ({
         the scorecard rather than scored low.
       </p>
 
-      <div className="@container grid grid-cols-1 gap-3 @[26rem]:grid-cols-2">
-        {signals.map((signal) => (
-          <div
-            key={signal.label}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.08] dark:bg-ink-900"
-          >
-            <span className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-ink-100">
-              {signal.label}
-            </span>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              {/* allowClear is what keeps blank reachable: clicking the set star blanks it again. */}
-              <Rate
-                allowClear
-                count={5}
-                tooltips={[...SIGNAL_TIERS]}
-                value={starsFromScore(signal.value)}
-                onChange={(stars) => signal.onChange(scoreFromStars(stars))}
-                aria-label={signal.label}
-              />
-              <span
-                className={`text-[11.5px] tabular-nums ${
-                  signal.value == null
-                    ? 'text-slate-400 dark:text-ink-500'
-                    : 'font-semibold text-slate-700 dark:text-ink-100'
-                }`}
-              >
-                {signalTierLabel(signal.value)}
+      <div className="@container">
+        <div className="grid grid-cols-1 gap-3 @[22rem]:grid-cols-2">
+          {signals.map((signal) => (
+            <div
+              key={signal.label}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.08] dark:bg-ink-900"
+            >
+              <span className="mb-1.5 block text-xs font-semibold text-slate-700 dark:text-ink-100">
+                {signal.label}
               </span>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                {/* allowClear is what keeps blank reachable: clicking the set star blanks it again. */}
+                <Rate
+                  allowClear
+                  count={5}
+                  tooltips={[...SIGNAL_TIERS]}
+                  value={starsFromScore(signal.value)}
+                  onChange={(stars) => signal.onChange(scoreFromStars(stars))}
+                  aria-label={signal.label}
+                />
+                <span
+                  className={`text-[11.5px] tabular-nums ${
+                    signal.value == null
+                      ? 'text-slate-400 dark:text-ink-500'
+                      : 'font-semibold text-slate-700 dark:text-ink-100'
+                  }`}
+                >
+                  {signalTierLabel(signal.value)}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <label className="block rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.08] dark:bg-ink-900">
