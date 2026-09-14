@@ -462,31 +462,34 @@ No file should pass ~600 lines (see `AGENTS.md`). Recent splits worth knowing ab
 - `lib/browserAi.ts` keeps the provider calls; the system prompts are in `lib/aiPrompts.ts`, the
   promotion-review sanitiser in `lib/promotionSanitizer.ts`, context formatting in
   `lib/aiContextFormatting.ts`, and the deterministic analytics query path in `lib/analyticsQuery.ts`.
-- `pages/OfferComparison/` — `decisionScoring.ts` (weights and per-category scorers),
-  `decisionRows.ts` (`buildRows`), `ScoreBreakdown.tsx`, `CareerTransitionAdvisor.tsx`.
-- `pages/Experience/` — `CompensationBreakdownModal.tsx` is now the shell; `SalaryBreakdown.tsx`,
-  `HourlyBreakdown.tsx`, `breakdownRows.tsx` and `compensationBreakdownFormat.ts` hold the content.
-- `pages/Settings/` — `AIProviderSection.tsx`, `aiProviderCurl.ts`, `availabilityHours.ts`,
-  `SortableStageRow.tsx`, `sheetMapping.ts`, `syncSummary.tsx`.
+- **OfferComparison** — `utils/OfferComparison/decisionScoring.ts` (weights and per-category
+  scorers) and `decisionRows.ts` (`buildRows`); `components/OfferComparison/ScoreBreakdown.tsx`
+  and `CareerTransitionAdvisor.tsx`.
+- **Experience** — `components/Experience/CompensationBreakdownModal.tsx` is the shell;
+  `SalaryBreakdown.tsx`, `HourlyBreakdown.tsx`, `breakdownRows.tsx` and
+  `utils/Experience/compensationBreakdownFormat.ts` hold the content.
+- **Settings** — `components/Settings/AIProviderSection.tsx` and `SortableStageRow.tsx`;
+  `utils/Settings/aiProviderCurl.ts`, `availabilityHours.ts`, `sheetMapping.ts`, `syncSummary.tsx`.
 
-Every page now keeps its render in `index.tsx` and its state in page-local hooks beside it. The
-pattern is one hook per concern, one component per section:
+Every page keeps its render in `pages/<Feature>/index.tsx`; its state lives in
+`hooks/<Feature>/`, its sections in `components/<Feature>/`, and its calculations in
+`utils/<Feature>/`. The pattern is one hook per concern, one component per section:
 
 | Page                     | Hooks                                                                                                                                                                                                                                                         | Section components                                                                                                                                                                                                                                                                                          |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pages/Applications/`    | `useApplicationFilters`, `useApplicationImport`, `useJobBoardImport`, `useApplicationActions`, `useApplicationEditor`                                                                                                                                         | `ApplicationsToolbar`, `ApplicationBulkBar`, `ApplicationMetricCards`, `ApplicationTable`, `ApplicationMobileList`, `ApplicationAddModal`, `ApplicationImportModal`, `JobBoardImportModal`, `ApplicationEmptyState`, `TimelineStageList` + `applicationTimelineDraft.ts`                                    |
-| `pages/Settings/`        | `useSheetDraft`, `useGoogleSheetOAuth`, `useSheetImportReview`, `useSheetSyncHistory`, `useEmploymentTypeEditor`, `useHolidayTabEditor`, `useAppStageEditor`, `useAiProviderSettings`, `useAvailabilityRanges`, `useEventCategoryEditor`, `useColorConflicts` | `SettingsTabBar`, `SettingsOrganizeTab` (takes the four editor hooks wholesale), `SheetMappingTabs`, `SavedSyncList`, `GoogleConnectionBanner`, `Sheet*Fields`, `Sheet*Modal`                                                                                                                               |
-| `pages/OfferComparison/` | `useOfferPageData`, `useOfferEditor`, `useOfferMutations`, `useOfferDialogs`, `useOfferComparisonRows`, `useDecisionSnapshots`, `useScenarioDraft`, `useSharedDriving`, `useTransitionAdvisor`, `useScenarioApplications`                                     | `CompBreakdownSection`, `OfferModalStack` (takes the editor/dialogs/scenario hooks), `Scorecard*` (header, comp breakdown, category list, evidence, action bar, sidebar), `Offer*Panel`, `raiseHistoryFields.tsx`                                                                                           |
-| `pages/Holidays/`        | `useHolidayData`, `useHolidayCrud`, `useHolidayEvents`, `useHolidaySelection`, `useFederalHolidays`, `useCalendarHolidays`                                                                                                                                    | `HolidayAddForm`, `HolidayListCard`, `HolidayEditModal`, `FederalHolidayModal`, `FederalHolidayTabPanel`                                                                                                                                                                                                    |
-| `pages/Events/`          | `useEventsData`, `useEventForm`, `useEventMutations`, `useEventSelection`                                                                                                                                                                                     | `EventsListSection`, components under `components/`                                                                                                                                                                                                                                                         |
-| `pages/Availability/`    | `useAvailabilityCalendar`, `useShareLinks`                                                                                                                                                                                                                    | `BookingsPanel`, components under `components/`, `availabilityText.ts` for the copy text                                                                                                                                                                                                                    |
-| `pages/Experience/`      | `useExperienceData`, `useExperienceMutations`, `useExperienceFormSync`, `useExperienceCompSummaries`, `useExperienceDragOrder`, `useHourlyBreakdownState`, `usePromotionReviewGeneration`                                                                     | `ExperienceGroupCard`, `ExperienceAnalyticsPanels`, `ExperienceLogoField`, `RoleContextPicker`, `SchedulePhase*`, `PromotionReviewResultView`, `PromotionDimensionScores`, `ExperienceDateFields`, `HourlyRoleDetail`, `schedulePhaseImport.ts`                                                             |
-| `pages/Tasks/`           | —                                                                                                                                                                                                                                                             | `TaskFilterBar`, `TaskKanbanBoard`, `TaskFormFields`, `WeeklyReviewCard`, `taskMeta.ts`                                                                                                                                                                                                                     |
-| `pages/Income/`          | —                                                                                                                                                                                                                                                             | `IncomeSourceTabs`, `ElectionsAdvancedPanel`, `electionsFormPrimitives.tsx`, `PaycheckRecordModal`, `PaycheckAdjustModal`                                                                                                                                                                                   |
-| `pages/Documents/`       | —                                                                                                                                                                                                                                                             | `DocumentMobileList`, `DocumentPreviewBody`                                                                                                                                                                                                                                                                 |
-| `pages/JDReport/`        | —                                                                                                                                                                                                                                                             | `JDStrengthsGapsGrid`, `jdReportFields.ts`                                                                                                                                                                                                                                                                  |
-| `pages/PublicBooking/`   | —                                                                                                                                                                                                                                                             | `BookingHeaderCard`, `BookingSlotPicker`, `BookingDetailsForm`, `CurrentBookingCard`, `bookingFieldStyles.ts`                                                                                                                                                                                               |
-| `pages/Profile/`         | —                                                                                                                                                                                                                                                             | `ProfilePreviewCard`, `ProfileSettingsForm`, `SettingsLoadError`                                                                                                                                                                                                                                            |
+| **Applications**    | `useApplicationFilters`, `useApplicationImport`, `useJobBoardImport`, `useApplicationActions`, `useApplicationEditor`                                                                                                                                         | `ApplicationsToolbar`, `ApplicationBulkBar`, `ApplicationMetricCards`, `ApplicationTable`, `ApplicationMobileList`, `ApplicationAddModal`, `ApplicationImportModal`, `JobBoardImportModal`, `ApplicationEmptyState`, `TimelineStageList` + `applicationTimelineDraft.ts`                                    |
+| **Settings**        | `useSheetDraft`, `useGoogleSheetOAuth`, `useSheetImportReview`, `useSheetSyncHistory`, `useEmploymentTypeEditor`, `useHolidayTabEditor`, `useAppStageEditor`, `useAiProviderSettings`, `useAvailabilityRanges`, `useEventCategoryEditor`, `useColorConflicts` | `SettingsTabBar`, `SettingsOrganizeTab` (takes the four editor hooks wholesale), `SheetMappingTabs`, `SavedSyncList`, `GoogleConnectionBanner`, `Sheet*Fields`, `Sheet*Modal`                                                                                                                               |
+| **OfferComparison** | `useOfferPageData`, `useOfferEditor`, `useOfferMutations`, `useOfferDialogs`, `useOfferComparisonRows`, `useDecisionSnapshots`, `useScenarioDraft`, `useSharedDriving`, `useTransitionAdvisor`, `useScenarioApplications`                                     | `CompBreakdownSection`, `OfferModalStack` (takes the editor/dialogs/scenario hooks), `Scorecard*` (header, comp breakdown, category list, evidence, action bar, sidebar), `Offer*Panel`, `raiseHistoryFields.tsx`                                                                                           |
+| **Holidays**        | `useHolidayData`, `useHolidayCrud`, `useHolidayEvents`, `useHolidaySelection`, `useFederalHolidays`, `useCalendarHolidays`                                                                                                                                    | `HolidayAddForm`, `HolidayListCard`, `HolidayEditModal`, `FederalHolidayModal`, `FederalHolidayTabPanel`                                                                                                                                                                                                    |
+| **Events**          | `useEventsData`, `useEventForm`, `useEventMutations`, `useEventSelection`                                                                                                                                                                                     | `EventsListSection`, components under `components/`                                                                                                                                                                                                                                                         |
+| **Availability**    | `useAvailabilityCalendar`, `useShareLinks`                                                                                                                                                                                                                    | `BookingsPanel`, components under `components/`, `availabilityText.ts` for the copy text                                                                                                                                                                                                                    |
+| **Experience**      | `useExperienceData`, `useExperienceMutations`, `useExperienceFormSync`, `useExperienceCompSummaries`, `useExperienceDragOrder`, `useHourlyBreakdownState`, `usePromotionReviewGeneration`                                                                     | `ExperienceGroupCard`, `ExperienceAnalyticsPanels`, `ExperienceLogoField`, `RoleContextPicker`, `SchedulePhase*`, `PromotionReviewResultView`, `PromotionDimensionScores`, `ExperienceDateFields`, `HourlyRoleDetail`, `schedulePhaseImport.ts`                                                             |
+| **Tasks**           | —                                                                                                                                                                                                                                                             | `TaskFilterBar`, `TaskKanbanBoard`, `TaskFormFields`, `WeeklyReviewCard`, `taskMeta.ts`                                                                                                                                                                                                                     |
+| **Income**          | —                                                                                                                                                                                                                                                             | `IncomeSourceTabs`, `ElectionsAdvancedPanel`, `electionsFormPrimitives.tsx`, `PaycheckRecordModal`, `PaycheckAdjustModal`                                                                                                                                                                                   |
+| **Documents**       | —                                                                                                                                                                                                                                                             | `DocumentMobileList`, `DocumentPreviewBody`                                                                                                                                                                                                                                                                 |
+| **JDReport**        | —                                                                                                                                                                                                                                                             | `JDStrengthsGapsGrid`, `jdReportFields.ts`                                                                                                                                                                                                                                                                  |
+| **PublicBooking**   | —                                                                                                                                                                                                                                                             | `BookingHeaderCard`, `BookingSlotPicker`, `BookingDetailsForm`, `CurrentBookingCard`, `bookingFieldStyles.ts`                                                                                                                                                                                               |
+| **Profile**         | —                                                                                                                                                                                                                                                             | `ProfilePreviewCard`, `ProfileSettingsForm`, `SettingsLoadError`                                                                                                                                                                                                                                            |
 | `components/`            | —                                                                                                                                                                                                                                                             | `Layout` → `SidebarHeader`, `SidebarFooter`, `MobileBottomNav`; `NotificationBell` → `DueSoonSection`, `DeadlineRadarSection`, `UpcomingEventRows`, `notificationDeadlines.ts`; `jobHuntAnalytics/widgetRenderer` → `widgetPrimitives`, `widgetFunnelSections`, `widgetOutcomeSections`, `widgetStatsTypes` |
 
 ### Spacing scale
@@ -599,142 +602,57 @@ npm run lint
 
 ## 📁 Project Structure
 
+The tree is **layered, not colocated**: a file lives in the layer that says *what* it is, inside a folder named for the feature that *owns* it. `pages/*` is one `index.tsx` per route and nothing else — no page-local `components/`, `hooks/` or `logic/` folder. Colocation was tried and abandoned: `pages/OfferComparison/` had reached 104 files in a single directory, `pages/Income/` 70 and `pages/Experience/` 69, with no two pages organised the same way.
+
+
 ```
-frontend/
-├── src/
-│   ├── components/                  # Shared reusable components
-│   │   ├── Layout.tsx               # Sidebar navigation + customizable mobile toolbar
-│   │   └── (constants/navigationItems.ts holds the sidebar structure shared by Layout and Settings)
-│   │   ├── MobileQuickActions.tsx   # Mobile quick-create bottom sheet
-│   │   ├── PageActionToolbar.tsx    # Page header with title, year filter, export, import, primary action
-│   │   ├── BulkActionHeader.tsx     # Selection count + bulk actions bar
-│   │   ├── RowActions.tsx           # Per-row lock / view / edit / delete buttons
-│   │   ├── UnitNumberInput.tsx      # The numeric input for the whole app (stepper + unit addon)
-│   │   ├── EditableNumberInput.tsx  # UnitNumberInput variant that commits on blur / Enter
-│   │   ├── ContactsPanel.tsx         # Shared Application/Experience contact context panel
-│   │   ├── contacts/                 # Shared contact and relationship editors
-│   │   ├── LockableListItem.tsx     # Per-item row with lock / edit / delete (used in Settings)
-│   │   ├── ExportButton.tsx         # CSV / XLSX / JSON dropdown export
-│   │   ├── NotificationBell.tsx     # Conflict / deadline radar fed by standard API polling
-│   │   ├── CategoryBadge.tsx        # Event category color + icon badge
-│   │   ├── IconPicker.tsx           # Icon selector for event categories
-│   │   ├── AvailabilityAnalytics.tsx
-│   │   ├── JobHuntAnalytics.tsx
-│   │   ├── CustomWidgetCard.tsx     # Metric / chart widget renderer
-│   │   └── ...
-│   │
-│   ├── pages/
-│   │   ├── Applications/
-│   │   │   ├── index.tsx            # Application tracker page
-│   │   │   ├── ApplicationDetailDrawer.tsx # In-context detail drawer for timeline/events/docs/AI/notes
-│   │   │   ├── ApplicationPrepWorkspace.tsx # Prep tab for JD fit, docs, cover letters, notes, and timeline
-│   │   │   ├── ApplicationTimelinePanel.tsx # Editable per-application timeline with sync-safe title/date/note overrides
-│   │   │   └── CoverLetterModal.tsx # AI cover letter generator (auto-saves)
-│   │   ├── CoverLetters/
-│   │   │   └── index.tsx            # Cover letters management page
-│   │   ├── OfferComparison/
-│   │   │   ├── index.tsx            # Offer comparison page
-│   │   │   ├── OfferDetailsTable.tsx
-│   │   │   ├── OfferDecisionScorecard.tsx # The scorecard UI; scoring lives beside it
-│   │   │   ├── decisionScoring.ts   # Weights, per-category scorers, and the DecisionRow/CategoryScore types
-│   │   │   ├── decisionRows.ts      # buildRows: offers + applications + weights → ranked rows
-│   │   │   ├── ScoreBreakdown.tsx   # Score formula popover and the per-component delta line
-│   │   │   ├── YearByYearSection.tsx # Four-year total comp panel (table or chart) and crossover callout
-│   │   │   ├── YearByYearChart.tsx  # Year-grouped bar chart for the four-year outlook
-│   │   │   ├── Year1BreakdownList.tsx # Year-1 component table (list view of the bar chart)
-│   │   │   ├── ProjectionAssumptions.tsx # Equity growth and base raise rate popover
-│   │   │   ├── yearByYear.ts        # Per-year TC projection and crossover detection
-│   │   │   ├── vestingSchedule.ts   # Shared four-year equity vesting engine
-│   │   │   ├── NegotiationLogModal.tsx # Negotiation rounds, risks, and final decision
-│   │   │   ├── offerLifecycle.ts    # Negotiation round and decision-status helpers (re-exports deadline utils)
-│   │   │   ├── CompensationSimulator.tsx # Monthly take-home, cost, PTO, and equity vesting simulator
-│   │   │   ├── NegotiationAdvisorModal.tsx  # AI negotiation advisor (auto-saves result)
-│   │   │   ├── OfferAdjustmentsPanel.tsx
-│   │   │   ├── EditOfferModal.tsx
-│   │   │   └── ...
-│   │   ├── Experience/
-│   │   │   ├── index.tsx            # Experience management, analytics cards, import/export, overall pay breakdowns
-│   │   │   ├── ExperienceModal.tsx  # Manual entry + quick-import parsing for experience records
-│   │   │   ├── JDMatcherModal.tsx   # AI JD evaluation modal
-│   │   │   ├── PromotionReviewModal.tsx # AI promotion readiness review modal
-│   │   │   ├── TeamHistoryModal.tsx # Team history / norms editor
-│   │   │   ├── SchedulePhasesModal.tsx # Internship multi-phase schedule editor + weekly quick import
-│   │   │   ├── CompensationBreakdownModal.tsx # Per-role and overall earnings breakdown UI
-│   │   │   ├── PayGrowthModal.tsx   # Role-vs-role pay comparison UI with selectable sides
-│   │   │   ├── payGrowth.ts         # Salary/hourly/mixed pay delta calculations
-│   │   │   └── compensation.ts      # Compensation snapshot and hourly/salary calculation helpers
-│   │   ├── Contacts/                 # Canonical list/network workspace and contact detail drawer
-│   │   ├── JDReportsList/
-│   │   │   └── index.tsx            # Saved JD match reports list
-│   │   ├── JDReport/
-│   │   │   └── index.tsx            # JD report detail + PDF export (standalone)
-│   │   ├── AITools/
-│   │   │   ├── index.tsx            # Route handler — renders tab by ?tab= param
-│   │   │   ├── CoverLettersTab.tsx  # Cover letters management
-│   │   │   ├── NegotiationResultsTab.tsx  # Negotiation results management
-│   │   │   └── PromotionReviewsTab.tsx # Promotion reviews management
-│   │   ├── NegotiationResult/
-│   │   │   └── index.tsx            # Negotiation advisory detail page (standalone)
-│   │   ├── Availability/            # Availability calendar
-│   │   ├── Events/                  # Interview event management
-│   │   ├── Holidays/                # Holiday management with custom tabs
-│   │   ├── Documents/               # Document vault + versioning
-│   │   ├── Tasks/                   # Action items / Kanban board
-│   │   ├── Analytics/               # Custom widget dashboard
-│   │   ├── Settings/                # User preferences, integrations, and layered locking
-│   │   │   ├── AIProviderSection.tsx # The BYOK provider card (form, presets, curl import/preview)
-│   │   │   ├── aiProviderCurl.ts   # curl parsing, key masking, and the copyable request preview
-│   │   │   ├── availabilityHours.ts # Work-day options, day-range summary, time formatting
-│   │   │   ├── SortableStageRow.tsx # Draggable pipeline-stage row
-│   │   │   ├── sheetMapping.ts     # Sheet draft shape, field options, header aliases, auto-mapping
-│   │   │   ├── syncSummary.tsx     # Sync-result summary grid, review labels, run error text
-│   │   ├── Home/                    # Public homepage and OAuth transparency shell
-│   │   └── PublicBooking/           # Public booking page (/book/:uuid)
-│   │
-│   ├── api/
-│   │   ├── client.ts                # Axios instance (env-aware API base URL)
-│   │   ├── career.ts                # Career, offers, experience, Google Sheets sync, and shared AI result types
-│   │   ├── availability.ts          # Events, holidays, settings, booking endpoints
-│   │   └── index.ts                 # Re-exports
-│   │
-│   ├── lib/
-│   │   ├── llmSettings.ts           # AI provider form helpers for backend-stored provider config
-│   │   ├── llmClient.ts             # Authenticated AI relay client
-│   │   ├── runtimeConfig.ts         # API/media origin helpers for local + deployed environments
-│   │   └── browserAi.ts             # Prompt builders for cover letters, JD match, negotiation, analytics
-│   │
-│   ├── constants/
-│   │   ├── mobileNavigation.tsx     # Shared mobile shortcut, Smart Slot, recency, and route-matching logic
-│   │   └── ...
-│   │
-│   ├── utils/
-│   │   ├── aiArtifactStorage.ts     # Backend AI artifact sync + localStorage migration
-│   │   ├── reportStorage.ts         # Local fallback CRUD for JD match reports
-│   │   ├── coverLetterStorage.ts    # Local fallback CRUD for cover letters
-│   │   ├── negotiationStorage.ts    # Local fallback CRUD for negotiation results
-│   │   ├── yearFilter.ts            # Year filter helpers (accept a field key or an accessor)
-│   │   ├── apiError.ts              # Turns DRF validation responses into readable messages
-│   │   └── ...
-│   ├── hooks/
-│   │   ├── useRequiredFields.ts     # Required-field validation for non-antd forms: red field, scroll, focus
-│   │   ├── offerDeadline.ts         # Offer deadline countdown, shared by the offers page and notification bell
-│   │   └── ...
-│   │
-│   ├── hooks/
-│   │   ├── usePersistedState.ts
-│   │   ├── useCustomWidgets.ts
-│   │   └── ...
-│   │
-│   ├── types/                       # Shared TypeScript types (EventCategory, Holiday, UserSettings, EmploymentType, HolidayTab, …)
-│   ├── App.tsx                      # Router + route definitions
-│   └── main.tsx                     # Entry point
+frontend/src/
 │
-├── public/                          # Static assets
-├── .env.example                     # Frontend deployment env template
-├── package.json
-├── vercel.json                      # SPA rewrite config for Vercel
-├── vite.config.ts
-└── tailwind.config.js
+├── pages/                       # One index.tsx per route — UI composition only, never nested
+│   ├── AITools/index.tsx
+│   ├── Analytics/index.tsx
+│   ├── Applications/index.tsx
+│   ├── Availability/index.tsx
+│   ├── CommandCenter/index.tsx
+│   ├── Contacts/index.tsx
+│   ├── CoverLetters/index.tsx
+│   ├── Documents/index.tsx
+│   ├── Events/index.tsx
+│   ├── Experience/index.tsx
+│   ├── Holidays/index.tsx
+│   ├── Home/index.tsx
+│   ├── Income/index.tsx
+│   ├── JDReport/index.tsx
+│   ├── JDReportsList/index.tsx
+│   ├── Legal/index.tsx
+│   ├── Login/index.tsx
+│   ├── NegotiationResult/index.tsx
+│   ├── OfferComparison/index.tsx
+│   ├── Profile/index.tsx
+│   ├── PublicBooking/index.tsx
+│   ├── Settings/index.tsx
+│   └── Tasks/index.tsx
+│
+├── components/                  # 310 files. Role folders (lowercase) + feature folders (PascalCase)
+│   ├── actions/               # 4 files
+│   ├── artifacts/             # 2 files
+│   ├── dashboard/             # 7 files
+│   ├── display/               # 3 files
+│   ├── feedback/              # 5 files
+│   ├── inputs/                # 14 files
+│   ├── layout/                # 10 files
+│   ├── modals/                # 6 files
+│   └── <Feature>/               # AITools, Analytics, Applications, Availability, AvailabilityAnalytics, CalendarView, CommandCenter, Contacts, Documents, Events, Experience, Holidays, Home, Income, JDReport, JobHuntAnalytics, OfferComparison, Profile, PublicBooking, Settings, Tasks
+│
+├── hooks/                     # 59 files — use* hooks, one folder per feature
+├── utils/                     # 195 files — pure logic, formatting, calculations — one folder per feature
+├── api/                       # 15 files — axios clients per domain
+├── constants/                 # 7 files — shared constants (navigationItems, formDefaults, …)
+├── content/                   # 12 files — tooltip dictionaries by category
+├── context/                   # 1 file — React context providers
+├── lib/                       # 12 files — third-party wrappers and browser helpers
+├── theme/                     # 6 files — antd theme tokens and palettes
+└── types/                     # 7 files — shared TypeScript types
 ```
 
 ## 📡 Routes
