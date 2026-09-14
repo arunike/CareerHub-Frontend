@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 type Option<T extends string> = {
   value: T;
@@ -15,6 +15,8 @@ type Props<T extends string> = {
   options: Option<T>[];
   wrapperClassName?: string;
   buttonClassName?: string;
+  // Lets a caller measure the track, which is how an overflowing strip knows where to dissolve.
+  wrapperRef?: RefObject<HTMLDivElement | null>;
 };
 
 const SegmentedToggle = <T extends string>({
@@ -23,9 +25,11 @@ const SegmentedToggle = <T extends string>({
   options,
   wrapperClassName,
   buttonClassName,
+  wrapperRef,
 }: Props<T>) => {
   return (
     <div
+      ref={wrapperRef}
       role="group"
       className={clsx(
         'flex rounded-[10px] border border-slate-200/80 dark:border-white/[0.08] bg-slate-100/80 dark:bg-ink-800/80 p-0.5',

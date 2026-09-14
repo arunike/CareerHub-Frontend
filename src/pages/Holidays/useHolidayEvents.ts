@@ -45,8 +45,9 @@ export const useHolidayEvents = ({
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [locationType, setLocationType] = useState<'in_person' | 'virtual' | 'hybrid'>('virtual');
 
+  // The calendar opens the editor directly rather than a read-only card first.
   const handleCalendarEventSelect = (event: Event) => {
-    setViewingEvent(event);
+    handleEventEdit(event);
   };
 
   const handleCalendarAddEvent = (date: Date) => {

@@ -12,14 +12,11 @@ import {
 } from '../../api';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
 import { normalizeTimeZone } from '../../lib/timezones';
-import {
-  askOverrideOverwrite,
-  askSpanEditScope,
-  isSpanEvent,
-  type SpanEditScope,
-} from '../../components/calendarView/confirmSpanEdit';
+import { askOverrideOverwrite, isSpanEvent } from '../../components/calendarView/confirmSpanEdit';
+import type { SpanEditScope } from '../../components/calendarView/SpanDateFields';
 import type { ApiError, EventFormValues } from './eventFormTypes';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { eventSpanDays } from '../../components/calendarView/utils';
 
 export const useEventForm = ({
   events,
@@ -103,17 +100,29 @@ export const useEventForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, location.search]);
 
+  // The form asks which days it applies to, rather than a dialog gating it before it opens.
   const handleEdit = (event: Event, clickedDay?: string) => {
-    if (isSpanEvent(event)) {
-      const clicked = clickedDay || event.date;
-      askSpanEditScope(event, clicked, (scope) => {
-        setSpanScope({ scope, day: clicked });
-        openEditForm(event, scope === 'day' ? clicked : event.date);
-      });
-      return;
-    }
-    setSpanScope(null);
+    setSpanScope(isSpanEvent(event) ? { scope: 'all', day: clickedDay || event.date } : null);
     openEditForm(event);
+  };
+
+  // Empty unless a span is being edited, which is what hides the scope control the rest of the time.
+  const editingSpan = spanScope ? events.find((candidate) => candidate.id === editingId) : null;
+  const spanEditDays = editingSpan
+    ? Array.from({ length: eventSpanDays(editingSpan) }, (_unused, offset) =>
+        dayjs(editingSpan.date).add(offset, 'day').format('YYYY-MM-DD')
+      )
+    : [];
+
+  const onSpanScopeChange = (next: SpanEditScope) => {
+    const event = events.find((candidate) => candidate.id === editingId);
+    if (!event || !spanScope) return;
+    setSpanScope({ ...spanScope, scope: next, day: next === 'all' ? spanScope.day : next });
+    form.setFieldsValue({
+      date: dayjs(next === 'all' ? event.date : next),
+      end_date: next === 'all' && event.end_date ? dayjs(event.end_date) : null,
+      is_multi_day: next === 'all',
+    });
   };
 
   const openEditForm = (event: Event, dayOverride?: string) => {
@@ -124,6 +133,7 @@ export const useEventForm = ({
 
     form.setFieldsValue({
       name: event.name,
+      scope: 'all',
       date: dayjs(dayOverride || event.date),
       start_time: dayjs(event.start_time, 'HH:mm:ss'),
       end_time: dayjs(event.end_time, 'HH:mm:ss'),
@@ -181,7 +191,7 @@ export const useEventForm = ({
     };
 
     // "This day only" saves an override attached to the span, leaving the run untouched.
-    if (spanScope?.scope === 'day' && editingId) {
+    if (values.scope && values.scope !== 'all' && spanScope && editingId) {
       const parent = events.find((candidate) => candidate.id === editingId);
       const existing = events.find(
         (candidate) =>
@@ -193,12 +203,12 @@ export const useEventForm = ({
         is_recurring: false,
         recurrence_rule: null,
         span_parent: parent?.span_parent ?? editingId,
-        override_date: spanScope.day,
+        override_date: values.scope as string,
       };
       try {
         if (existing) await updateEvent(existing.id, dayPayload);
         else await createEvent(dayPayload);
-        messageApi.success(`Updated ${dayjs(spanScope.day).format('MMM D')} only`);
+        messageApi.success(`Updated ${dayjs(values.scope as string).format('MMM D')} only`);
         setIsFormOpen(false);
         setSpanScope(null);
         fetchData();
@@ -211,7 +221,7 @@ export const useEventForm = ({
     }
 
     // Editing the whole span would wipe any day already edited on its own, so ask first.
-    if (spanScope?.scope === 'all' && editingId) {
+    if ((!values.scope || values.scope === 'all') && spanScope && editingId) {
       const overrides = events.filter((candidate) => candidate.span_parent === editingId);
       if (overrides.length > 0) {
         askOverrideOverwrite(overrides.length, async (discard) => {
@@ -293,7 +303,8 @@ export const useEventForm = ({
     setIsFormOpen,
     editingId,
     setEditingId,
-    spanScope,
+    spanEditDays,
+    onSpanScopeChange,
     setSpanScope,
     showRecurrenceModal,
     setShowRecurrenceModal,

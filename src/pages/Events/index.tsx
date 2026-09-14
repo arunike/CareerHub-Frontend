@@ -30,6 +30,7 @@ import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../l
 import LinkInterviewsModal from './components/LinkInterviewsModal';
 import YearFilter from '../../components/YearFilter';
 import EventsListSection from './EventsListSection';
+import { holidayGroupMembers } from '../Holidays/holidayGrouping';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -162,11 +163,6 @@ const Events = () => {
     setPendingCalendarHoliday({ date, target });
   };
 
-  const handleHolidaySelect = (holiday: Holiday) => {
-    setPendingCalendarHoliday(null);
-    setEditingHoliday(holiday);
-  };
-
   const {
     isFormOpen,
     setIsFormOpen,
@@ -183,6 +179,8 @@ const Events = () => {
     setLocationType,
     handleAdd,
     handleEdit,
+    spanEditDays,
+    onSpanScopeChange,
     handleDuplicate,
     onFinish,
   } = useEventForm({
@@ -248,6 +246,7 @@ const Events = () => {
     handleCalendarHolidayDelete,
     handleDeleteAll,
     handleImportUpload,
+    handleCalendarHolidaySelect,
     handleCalendarHolidaySubmit,
     handleExportWrapper,
     toggleLock,
@@ -255,6 +254,7 @@ const Events = () => {
     handleCalendarItemDrop,
   } = useEventMutations({
     setEvents,
+    customHolidays,
     setCalendarEvents,
     pendingCalendarHoliday,
     editingHoliday,
@@ -418,10 +418,11 @@ const Events = () => {
               addActionHighlight="events"
               loading={calendarLoading}
               onEventSelect={(event, day) => {
-                setViewingEvent(event);
+                // The calendar opens the editor directly; the list still opens the detail card.
                 setViewingDay(day ? dayjs(day).format('YYYY-MM-DD') : null);
+                handleEdit(event, day ? dayjs(day).format('YYYY-MM-DD') : undefined);
               }}
-              onHolidaySelect={handleHolidaySelect}
+              onHolidaySelect={handleCalendarHolidaySelect}
               onAddEvent={handleAdd}
               onAddHoliday={handleCalendarHolidayAdd}
             />
@@ -442,6 +443,8 @@ const Events = () => {
         open={isFormOpen}
         editingId={editingId}
         form={form}
+        spanDays={spanEditDays}
+        onScopeChange={onSpanScopeChange}
         onCancel={() => setIsFormOpen(false)}
         onFinish={onFinish}
         defaultDuration={defaultDuration}
@@ -490,6 +493,7 @@ const Events = () => {
       <CalendarHolidayModal
         open={!!pendingCalendarHoliday || !!editingHoliday}
         mode={editingHoliday ? 'edit' : 'add'}
+        groupHolidays={holidayGroupMembers(customHolidays, editingHoliday)}
         date={pendingCalendarHoliday?.date}
         target={pendingCalendarHoliday?.target}
         holiday={editingHoliday}

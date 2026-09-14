@@ -16,26 +16,27 @@ import {
 const addsUp = (breakdown: { steps: Parameters<typeof resolveMath>[0]; total: number }) =>
   expect(resolveMath(breakdown.steps)).toBeCloseTo(breakdown.total, 6);
 
+// Built from the substitutes: 165000 base plus a 50000 grant, a 24750 bonus and a 4% match.
 const YEAR = {
-  gross: 274547.36,
-  supplementalGross: 24000,
+  gross: 215000,
+  supplementalGross: 24750,
   taxableAllowance: 1200,
   taxFreeAllowance: 450,
-  taxWithheld: 85389.97,
-  federalTax: 52140.11,
-  stateTax: 20834.5,
-  payrollTax: 12415.36,
-  deductions: 954.12 + 2400 + 9922.15 + 0 + 3040,
-  section125: 954.12,
+  taxWithheld: 64500,
+  federalTax: 43000,
+  stateTax: 12900,
+  payrollTax: 8600,
+  deductions: 1200 + 2400 + 16500 + 0 + 3000,
+  section125: 1200,
   hsa: 2400,
-  pretax401k: 9922.15,
+  pretax401k: 16500,
   pretaxIncomeOnly: 0,
   roth401k: 2000,
-  postTax: 3040,
-  takeHome: 274547.36 + 450 - 85389.97 - (954.12 + 2400 + 9922.15 + 0 + 3040),
-  employee401k: 11922.15,
-  employerMatch: 6740.69,
-  totalComp: 281288.05,
+  postTax: 3000,
+  takeHome: 215000 + 450 - 64500 - (1200 + 2400 + 16500 + 0 + 3000),
+  employee401k: 18500,
+  employerMatch: 6600,
+  totalComp: 221600,
   electiveLimit: 24500,
 };
 
@@ -98,10 +99,10 @@ describe('mathBreakdown', () => {
   it('replays a refund from withholding minus each liability', () => {
     addsUp(
       refundBreakdown({
-        incomeTaxWithheld: 13666.92,
-        federalLiability: 6173.85,
+        incomeTaxWithheld: 15000,
+        federalLiability: 9000,
         stateLiability: 3000,
-        difference: 13666.92 - 6173.85 - 3000,
+        difference: 15000 - 9000 - 3000,
       })
     );
   });
@@ -163,11 +164,11 @@ describe('attribution by company', () => {
   const google = { ...YEAR, gross: 160000, supplementalGross: 20000, taxableAllowance: 800 };
   const netflix = {
     ...YEAR,
-    gross: 114547.36,
-    supplementalGross: 14805.86,
+    gross: 55000,
+    supplementalGross: 4750,
     taxableAllowance: 400,
     hsa: 900,
-    pretax401k: 3922.15,
+    pretax401k: 3500,
     roth401k: 500,
     postTax: 700,
   };
@@ -265,16 +266,17 @@ describe('the gross breakdown reconciles with a single role card', () => {
   });
 
   it('splits the total by role, not only the salary line', () => {
-    const roles = [role('Google', 134769.23, 24000, 0), role('Netflix', 60000, 5747.05, 425)];
+    // Both grosses derive from the substitutes: 165000 over 18 of 26 paychecks, 336000 over 4.
+    const roles = [role('Google', 114230.77, 24750, 0), role('Netflix', 51692.31, 16800, 425)];
     const totals = {
-      gross: 194769.23,
-      supplementalGross: 24000,
+      gross: 165923.08,
+      supplementalGross: 41550,
       taxableAllowance: 425,
     };
     const math = grossBreakdown(totals, roles);
     expect(math.totalParts).toEqual([
-      { label: 'Google', value: 134769.23 },
-      { label: 'Netflix', value: 60000 },
+      { label: 'Google', value: 114230.77 },
+      { label: 'Netflix', value: 51692.31 },
     ]);
   });
 

@@ -1,15 +1,13 @@
-import { Button, Col, Row, Space, Typography } from 'antd';
-import { CopyOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import Modal from '../../../components/MobileModal';
 import dayjs from 'dayjs';
 import type { Event } from '../../../types';
 import {
   confirmEventDeletion,
   type EventDeleteScope,
 } from '../../../components/calendarView/confirmCalendarDeletion';
+import SpanDetailModal, {
+  type SpanDetailField,
+} from '../../../components/calendarView/SpanDetailModal';
 import { safeExternalHref } from '../../../utils/safeUrl';
-
-const { Text } = Typography;
 
 type EventViewModalProps = {
   event: Event | null;
@@ -19,97 +17,69 @@ type EventViewModalProps = {
   onDelete?: (event: Event, scope: EventDeleteScope) => boolean | void | Promise<boolean | void>;
 };
 
+const timeLabel = (event: Event, isMultiDay: boolean) => {
+  if (event.is_all_day) return 'All day';
+  const start = event.start_time.substring(0, 5);
+  const end = event.end_time.substring(0, 5);
+  if (!isMultiDay) return `${start} - ${end}`;
+  return `${start} on ${dayjs(event.date).format('MMM D')} – ${end} on ${dayjs(event.end_date).format('MMM D')}`;
+};
+
 const EventViewModal = ({ event, onClose, onEdit, onDuplicate, onDelete }: EventViewModalProps) => {
   const isMultiDay = Boolean(event?.end_date && event.end_date !== event.date);
 
+  const fields: SpanDetailField[] = event
+    ? [
+        {
+          label: isMultiDay ? 'Dates' : 'Date',
+          value: `${dayjs(event.date).format('MMMM D, YYYY')}${
+            isMultiDay ? ` – ${dayjs(event.end_date).format('MMMM D, YYYY')}` : ''
+          }`,
+        },
+        { label: 'Time', value: timeLabel(event, isMultiDay) },
+        ...(event.meeting_link
+          ? [
+              {
+                label: 'Meeting',
+                value: (
+                  <a href={safeExternalHref(event.meeting_link)} target="_blank" rel="noreferrer">
+                    {event.meeting_link}
+                  </a>
+                ),
+                wide: true,
+              },
+            ]
+          : []),
+        ...(event.notes ? [{ label: 'Notes', value: event.notes, wide: true }] : []),
+      ]
+    : [];
+
   return (
-    <Modal
-      title={event?.name}
+    <SpanDetailModal
       open={Boolean(event)}
-      onCancel={onClose}
-      footer={
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
-          {event && onDelete && (
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              disabled={event.is_locked}
-              title={event.is_locked ? 'Unlock this event to delete it' : undefined}
-              className="sm:mr-auto"
-              onClick={() => confirmEventDeletion(event, onDelete)}
-            >
-              Delete
-            </Button>
-          )}
-          <Button onClick={onClose}>Close</Button>
-          {onDuplicate && event && !event.is_locked && (
-            <Button
-              icon={<CopyOutlined />}
-              onClick={() => {
-                onDuplicate(event);
-                onClose();
-              }}
-            >
-              Duplicate
-            </Button>
-          )}
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => {
-              if (event) {
-                onEdit(event);
-                onClose();
-              }
-            }}
-          >
-            Edit
-          </Button>
-        </div>
+      title={event?.name}
+      fields={fields}
+      onClose={onClose}
+      onEdit={
+        event
+          ? () => {
+              onEdit(event);
+              onClose();
+            }
+          : undefined
       }
-    >
-      {event && (
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12}>
-              <Text type="secondary">{isMultiDay ? 'Dates' : 'Date'}</Text>
-              <div>
-                {dayjs(event.date).format('MMMM D, YYYY')}
-                {isMultiDay && ` – ${dayjs(event.end_date).format('MMMM D, YYYY')}`}
-              </div>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Text type="secondary">Time</Text>
-              {event.is_all_day ? (
-                <div>All day</div>
-              ) : (
-                <div>
-                  {isMultiDay
-                    ? `${event.start_time.substring(0, 5)} on ${dayjs(event.date).format('MMM D')} – ${event.end_time.substring(0, 5)} on ${dayjs(event.end_date).format('MMM D')}`
-                    : `${event.start_time.substring(0, 5)} - ${event.end_time.substring(0, 5)}`}
-                </div>
-              )}
-            </Col>
-          </Row>
-          {event.meeting_link && (
-            <div>
-              <Text type="secondary">Meeting</Text>
-              <div>
-                <a href={safeExternalHref(event.meeting_link)} target="_blank" rel="noreferrer">
-                  {event.meeting_link}
-                </a>
-              </div>
-            </div>
-          )}
-          {event.notes && (
-            <div>
-              <Text type="secondary">Notes</Text>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{event.notes}</div>
-            </div>
-          )}
-        </Space>
-      )}
-    </Modal>
+      onDuplicate={
+        onDuplicate && event && !event.is_locked
+          ? () => {
+              onDuplicate(event);
+              onClose();
+            }
+          : undefined
+      }
+      onDelete={event && onDelete ? () => confirmEventDeletion(event, onDelete) : undefined}
+      deleteDisabled={event?.is_locked}
+      deleteTitle={event?.is_locked ? 'Unlock this event to delete it' : undefined}
+    />
   );
 };
 

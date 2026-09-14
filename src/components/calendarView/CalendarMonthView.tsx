@@ -17,9 +17,16 @@ import {
   canDragEvent,
 } from './CalendarDayContent';
 import type { CalendarDragItem } from './CalendarDayContent';
-import { buildWeekSpans, isMultiDay, type WeekSpan } from './spanLayout';
+import {
+  buildWeekSpans,
+  eventSpanCandidates,
+  holidayGroupCandidates,
+  isMultiDay,
+  type WeekSpan,
+} from './spanLayout';
 import { eventSpanDays, eventTimeLabel } from './utils';
 import { getEventColor } from '../../utils/eventCategoryColors';
+import { UNTABBED_HOLIDAY_LABEL, getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
@@ -42,24 +49,36 @@ type Props = {
 const SpanBar = ({
   span,
   onSelect,
+  onHolidaySelect,
   onDragStart,
   onDragEnd,
 }: {
   span: WeekSpan;
   onSelect?: (event: Event, day?: Date) => void;
+  onHolidaySelect?: (holiday: Holiday) => void;
   onDragStart?: (item: CalendarDragItem) => void;
   onDragEnd?: () => void;
 }) => {
-  const { event, startCol, endCol, lane, continuesLeft, continuesRight } = span;
-  const color = getEventColor(event);
-  const label = event.is_all_day ? event.name : `${event.start_time.substring(0, 5)} ${event.name}`;
+  const { subject, startCol, endCol, lane, continuesLeft, continuesRight } = span;
+  const isEvent = subject.kind === 'event';
+  const event = isEvent ? subject.event : null;
+  const group = isEvent ? null : subject.group;
+  const color = event ? getEventColor(event) : getHolidayTabColor(group!.holiday.tab_color);
+  const name = event ? event.name : group!.holiday.description;
+  const label = !event || event.is_all_day ? name : `${event.start_time.substring(0, 5)} ${name}`;
+  const tooltip = event
+    ? `${name} (${eventTimeLabel(event)} · ${eventSpanDays(event)} days)`
+    : `${group!.holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: ${name} · ${group!.days} days`;
+  // Moving one day of a grouped span has no unambiguous meaning, so only events drag.
+  const draggable = Boolean(onDragStart) && Boolean(event) && canDragEvent(event!);
 
   return (
-    <Tooltip title={`${event.name} (${eventTimeLabel(event)} · ${eventSpanDays(event)} days)`}>
+    <Tooltip title={tooltip}>
       <button
         type="button"
-        draggable={Boolean(onDragStart) && canDragEvent(event)}
+        draggable={draggable}
         onDragStart={(dragEvent) => {
+          if (!event) return;
           dragEvent.dataTransfer.effectAllowed = 'move';
           dragEvent.dataTransfer.setData('text/plain', String(event.id));
           onDragStart?.({ kind: 'event', event });
@@ -67,7 +86,8 @@ const SpanBar = ({
         onDragEnd={() => onDragEnd?.()}
         onClick={(clickEvent) => {
           clickEvent.stopPropagation();
-          onSelect?.(event);
+          if (event) onSelect?.(event);
+          else onHolidaySelect?.(group!.holiday);
         }}
         className={clsx(
           'pointer-events-auto mx-0.5 h-[18px] truncate px-1.5 text-left text-[11px] font-medium leading-[18px] transition-opacity hover:opacity-85',
@@ -86,7 +106,7 @@ const SpanBar = ({
         }}
       >
         {/* Only the true start names it; a continuation shows an arrow instead. */}
-        {continuesLeft ? `↳ ${event.name}` : label}
+        {continuesLeft ? `↳ ${name}` : label}
       </button>
     </Tooltip>
   );
@@ -117,6 +137,18 @@ const CalendarMonthView = ({
   let weekEvents: Event[] = [];
   let day = gridStart;
 
+  const gridHolidays: Holiday[] = [];
+  for (let probe = gridStart; probe <= gridEnd; probe = addDays(probe, 1)) {
+    gridHolidays.push(...getDayData(probe).customHolidays);
+  }
+  const holidayCandidates = holidayGroupCandidates(gridHolidays);
+  // Keyed by date, not group: a lone day left over from a split trip is still its own chip.
+  const spannedHolidayDates = new Set(
+    holidayCandidates.flatMap((candidate) =>
+      candidate.subject.kind === 'holiday' ? candidate.subject.group.dates : []
+    )
+  );
+
   while (day <= gridEnd) {
     weekDays = [];
     weekEvents = [];
@@ -129,7 +161,10 @@ const CalendarMonthView = ({
         }
       }
     }
-    const { spans, lanes } = buildWeekSpans(weekDays, weekEvents);
+    const { spans, lanes } = buildWeekSpans(weekDays, [
+      ...eventSpanCandidates(weekEvents),
+      ...holidayCandidates,
+    ]);
 
     for (let index = 0; index < 7; index++) {
       const cloneDay = day;
@@ -138,6 +173,9 @@ const CalendarMonthView = ({
       const dayData = {
         ...rawDayData,
         events: rawDayData.events.filter((event) => !isMultiDay(event)),
+        customHolidays: rawDayData.customHolidays.filter(
+          (holiday) => !spannedHolidayDates.has(holiday.date)
+        ),
       };
       const isTodayDate = isSameDay(cloneDay, today);
       const isSelected = isSameDay(cloneDay, selectedDate);
@@ -243,9 +281,10 @@ const CalendarMonthView = ({
           >
             {spans.map((span) => (
               <SpanBar
-                key={`${span.event.id}-${span.startCol}`}
+                key={`${span.id}-${span.startCol}`}
                 span={span}
                 onSelect={onEventSelect}
+                onHolidaySelect={onHolidaySelect}
                 onDragStart={onItemDrop ? setDragging : undefined}
                 onDragEnd={() => {
                   setDragging(null);

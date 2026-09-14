@@ -27,6 +27,11 @@ import {
 } from '../../components/calendarView/confirmCalendarMove';
 import { buildEventMovePatch } from '../../components/calendarView/utils';
 import { getApiErrorMessage } from '../../utils/apiError';
+import {
+  buildHolidayRangePayloads,
+  holidayGroupMembers,
+  planHolidayGroupEdit,
+} from '../Holidays/holidayGrouping';
 
 dayjs.extend(utc);
 dayjs.extend(timezonePlugin);
@@ -35,6 +40,7 @@ export const useEventMutations = ({
   setEvents,
   pendingCalendarHoliday,
   editingHoliday,
+  customHolidays,
   setPendingCalendarHoliday,
   setEditingHoliday,
   setViewingEvent,
@@ -46,6 +52,8 @@ export const useEventMutations = ({
   setCalendarEvents: React.Dispatch<React.SetStateAction<Event[]>>;
   pendingCalendarHoliday: { date: Date; target: CalendarHolidayTarget } | null;
   editingHoliday: Holiday | null;
+  // Needed to find the other days of a grouped trip before its dates are changed.
+  customHolidays: Holiday[];
   setPendingCalendarHoliday: React.Dispatch<
     React.SetStateAction<{ date: Date; target: CalendarHolidayTarget } | null>
   >;
@@ -120,23 +128,53 @@ export const useEventMutations = ({
     }
   };
 
+  const handleCalendarHolidaySelect = (holiday: Holiday) => {
+    setPendingCalendarHoliday(null);
+    setEditingHoliday(holiday);
+  };
+
   const handleCalendarHolidaySubmit = async (values: CalendarHolidayFormValues) => {
     try {
       if (editingHoliday) {
-        await updateHoliday(editingHoliday.id, {
-          description: values.description?.trim() || editingHoliday.description,
-          is_recurring: !!values.is_recurring,
-          tab: values.tab || null,
-        });
-        messageApi.success('Time off updated');
+        const result = planHolidayGroupEdit(
+          holidayGroupMembers(customHolidays, editingHoliday),
+          values,
+          editingHoliday.description
+        );
+        if (!result) return;
+        if (!result.ok) {
+          messageApi.error(
+            result.reason === 'locked'
+              ? 'Unlock the pinned days before changing these dates'
+              : 'End date must be after start date'
+          );
+          return;
+        }
+        const { plan } = result;
+        await Promise.all([
+          ...plan.update.map(({ id, patch }) => updateHoliday(id, patch)),
+          ...plan.create.map((payload) => createHoliday(payload)),
+          ...plan.deleteIds.map((id) => deleteHoliday(id)),
+        ]);
+        messageApi.success(
+          plan.create.length || plan.deleteIds.length
+            ? `Time off now covers ${plan.update.length + plan.create.length} days`
+            : 'Time off updated'
+        );
       } else if (pendingCalendarHoliday) {
-        await createHoliday({
-          date: dayjs(pendingCalendarHoliday.date).format('YYYY-MM-DD'),
-          description: values.description?.trim() || pendingCalendarHoliday.target.label,
-          is_recurring: !!values.is_recurring,
-          tab: values.tab || null,
-        });
-        messageApi.success('Time off added');
+        const payloads = buildHolidayRangePayloads(
+          values,
+          dayjs(pendingCalendarHoliday.date),
+          pendingCalendarHoliday.target.label
+        );
+        if (!payloads) {
+          messageApi.error('End date must be after start date');
+          return;
+        }
+        await Promise.all(payloads.map((payload) => createHoliday(payload)));
+        messageApi.success(
+          payloads.length > 1 ? `Time off added for ${payloads.length} days` : 'Time off added'
+        );
       }
 
       setEditingHoliday(null);
@@ -238,6 +276,7 @@ export const useEventMutations = ({
     handleCalendarHolidayDelete,
     handleDeleteAll,
     handleImportUpload,
+    handleCalendarHolidaySelect,
     handleCalendarHolidaySubmit,
     handleExportWrapper,
     toggleLock,

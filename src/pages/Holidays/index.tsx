@@ -31,6 +31,7 @@ import { PageState } from '../../components/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import YearFilter from '../../components/YearFilter';
 import FederalHolidayTabPanel from './FederalHolidayTabPanel';
+import { holidayGroupMembers } from './holidayGrouping';
 
 const Holidays = () => {
   const location = useLocation();
@@ -127,7 +128,7 @@ const Holidays = () => {
     handleCalendarHolidaySelect,
     handleCalendarHolidaySubmit,
     handleCalendarItemDrop,
-  } = useCalendarHolidays({ fetchData, messageApi });
+  } = useCalendarHolidays({ fetchData, messageApi, holidays });
 
   const {
     eventForm,
@@ -489,6 +490,7 @@ const Holidays = () => {
           date={pendingCalendarHoliday?.date}
           target={pendingCalendarHoliday?.target}
           holiday={editingCalendarHoliday}
+          groupHolidays={holidayGroupMembers(holidays, editingCalendarHoliday)}
           holidayTabs={customTabs}
           onCancel={() => {
             setPendingCalendarHoliday(null);

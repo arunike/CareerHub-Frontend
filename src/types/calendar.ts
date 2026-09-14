@@ -121,7 +121,7 @@ export interface Event {
 export interface Holiday {
   id: number;
   date: string;
-  group_id?: string;
+  group_id?: string | null;
   description: string;
   holiday_type?: 'custom' | 'federal';
   is_recurring: boolean;

@@ -9,7 +9,7 @@ describe('money', () => {
   });
 
   it('groups thousands', () => {
-    expect(money(108048.32)).toBe('$108,048.32');
+    expect(money(114230.77)).toBe('$114,230.77');
     expect(money(30000000)).toBe('$30,000,000.00');
   });
 
@@ -19,7 +19,7 @@ describe('money', () => {
   });
 
   it('matches moneyCents, so the two cannot drift apart', () => {
-    for (const value of [0, 1.005, 153.46, 3444.23, 108048.32]) {
+    for (const value of [0, 1.005, 153.46, 3444.23, 114230.77]) {
       expect(money(value)).toBe(moneyCents(value));
     }
   });

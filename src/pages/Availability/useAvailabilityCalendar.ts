@@ -31,8 +31,12 @@ import {
 } from '../../components/calendarView/confirmCalendarMove';
 import { buildEventMovePatch } from '../../components/calendarView/utils';
 import { normalizeTimeZone } from '../../lib/timezones';
-import { format } from 'date-fns';
 import { getErrorMessage, type ApiError, type EventFormValues } from './availabilityFormTypes';
+import {
+  buildHolidayRangePayloads,
+  holidayGroupMembers,
+  planHolidayGroupEdit,
+} from '../Holidays/holidayGrouping';
 
 export const useAvailabilityCalendar = ({
   timezone,
@@ -116,8 +120,9 @@ export const useAvailabilityCalendar = ({
       }
     });
   };
+  // The calendar opens the editor directly rather than a read-only card first.
   const handleCalendarEventSelect = (event: Event) => {
-    setViewingEvent(event);
+    handleEventEdit(event);
   };
 
   const handleEventEdit = (event: Event) => {
@@ -278,20 +283,45 @@ export const useAvailabilityCalendar = ({
   const handleHolidayFormFinish = async (values: CalendarHolidayFormValues) => {
     try {
       if (editingHoliday) {
-        await updateHoliday(editingHoliday.id, {
-          description: values.description?.trim() || editingHoliday.description,
-          is_recurring: !!values.is_recurring,
-          tab: values.tab || null,
-        });
-        messageApi.success('Time off updated');
+        const result = planHolidayGroupEdit(
+          holidayGroupMembers(customHolidays, editingHoliday),
+          values,
+          editingHoliday.description
+        );
+        if (!result) return;
+        if (!result.ok) {
+          messageApi.error(
+            result.reason === 'locked'
+              ? 'Unlock the pinned days before changing these dates'
+              : 'End date must be after start date'
+          );
+          return;
+        }
+        const { plan } = result;
+        await Promise.all([
+          ...plan.update.map(({ id, patch }) => updateHoliday(id, patch)),
+          ...plan.create.map((payload) => createHoliday(payload)),
+          ...plan.deleteIds.map((id) => deleteHoliday(id)),
+        ]);
+        messageApi.success(
+          plan.create.length || plan.deleteIds.length
+            ? `Time off now covers ${plan.update.length + plan.create.length} days`
+            : 'Time off updated'
+        );
       } else if (pendingHolidayAdd) {
-        await createHoliday({
-          date: format(pendingHolidayAdd.date, 'yyyy-MM-dd'),
-          description: values.description?.trim() || pendingHolidayAdd.target.label,
-          is_recurring: !!values.is_recurring,
-          tab: values.tab || null,
-        });
-        messageApi.success('Time off added');
+        const payloads = buildHolidayRangePayloads(
+          values,
+          dayjs(pendingHolidayAdd.date),
+          pendingHolidayAdd.target.label
+        );
+        if (!payloads) {
+          messageApi.error('End date must be after start date');
+          return;
+        }
+        await Promise.all(payloads.map((payload) => createHoliday(payload)));
+        messageApi.success(
+          payloads.length > 1 ? `Time off added for ${payloads.length} days` : 'Time off added'
+        );
       }
 
       setPendingHolidayAdd(null);

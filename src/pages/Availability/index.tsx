@@ -25,6 +25,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getBrowserTimeZone } from '../../lib/timezones';
 import { useAvailabilityCalendar } from './useAvailabilityCalendar';
 import { useShareLinks } from './useShareLinks';
+import { holidayGroupMembers } from '../Holidays/holidayGrouping';
 import {
   buildAvailabilityCopyText,
   groupAvailabilityByWeek,
@@ -399,6 +400,7 @@ const Availability = () => {
         date={pendingHolidayAdd?.date}
         target={pendingHolidayAdd?.target}
         holiday={editingHoliday}
+        groupHolidays={holidayGroupMembers(customHolidays, editingHoliday)}
         holidayTabs={holidayTabs}
         onCancel={() => {
           setPendingHolidayAdd(null);

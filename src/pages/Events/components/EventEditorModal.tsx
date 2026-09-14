@@ -1,18 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
-import {
-  Button,
-  Checkbox,
-  Collapse,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Row,
-  Select,
-  Space,
-  Typography,
-} from 'antd';
+import { Button, Checkbox, Collapse, Col, Form, Input, Row, Select, Space, Typography } from 'antd';
 import Modal from '../../../components/MobileModal';
 import ApplicationSelect from '../../../components/ApplicationSelect';
 import { suggestEventLink, type EventLinkHint } from '../../../api/availability';
@@ -23,6 +11,8 @@ import CategoryBadge from '../../../components/CategoryBadge';
 import FriendlyTimeInput from '../../../components/FriendlyTimeInput';
 import { TIMEZONE_OPTIONS } from '../../../lib/timezones';
 import IconPicker from '../../../components/IconPicker';
+import SpanDateFields from '../../../components/calendarView/SpanDateFields';
+import type { SpanEditScope } from '../../../components/calendarView/SpanDateFields';
 import { SCROLL_TO_FIRST_ERROR } from '../../../constants/formDefaults';
 
 const { Text } = Typography;
@@ -55,6 +45,9 @@ type EventEditorModalProps = {
   recurrenceRule: RecurrenceRule | null;
   onOpenRecurrence: () => void;
   onClearRecurrence: () => void;
+  // Every day of the event being edited; empty unless it spans days.
+  spanDays?: string[];
+  onScopeChange?: (scope: SpanEditScope) => void;
 };
 
 const EventEditorModal = ({
@@ -75,6 +68,8 @@ const EventEditorModal = ({
   recurrenceRule,
   onOpenRecurrence,
   onClearRecurrence,
+  spanDays,
+  onScopeChange,
 }: EventEditorModalProps) => {
   const isAllDay = Form.useWatch('is_all_day', form);
   const isMultiDay = Form.useWatch('is_multi_day', form);
@@ -143,88 +138,21 @@ const EventEditorModal = ({
           <Input placeholder="Team Sync" />
         </Form.Item>
 
-        <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item name="date" label="Date" rules={[{ required: true }]}>
-              <DatePicker
-                inputReadOnly
-                style={{ width: '100%' }}
-                onChange={(nextStart) => {
-                  // A start past the end drops the end rather than holding an impossible range.
-                  const end = form.getFieldValue('end_date');
-                  if (nextStart && end && end.isBefore(nextStart, 'day')) {
-                    form.setFieldValue('end_date', null);
-                    form.validateFields(['end_date']).catch(() => {});
-                  }
-                }}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
+        <SpanDateFields
+          form={form}
+          isMultiDay={isMultiDay}
+          spanDays={spanDays}
+          onScopeChange={onScopeChange}
+          aside={
             <Form.Item name="timezone" label="Timezone">
               <Select showSearch optionFilterProp="label" options={TIMEZONE_OPTIONS} />
             </Form.Item>
-          </Col>
-        </Row>
-
-        {isMultiDay && (
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="end_date"
-                label="End Date"
-                dependencies={['date']}
-                rules={[
-                  { required: true, message: 'Pick the last day' },
-                  ({ getFieldValue }) => ({
-                    validator: (_rule, value) => {
-                      const start = getFieldValue('date');
-                      if (!value || !start || !value.isBefore(start, 'day')) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error('The end date cannot be before the start date')
-                      );
-                    },
-                  }),
-                ]}
-              >
-                <DatePicker
-                  inputReadOnly
-                  style={{ width: '100%' }}
-                  disabledDate={(current) => {
-                    const start = form.getFieldValue('date');
-                    return Boolean(start && current && current.isBefore(start, 'day'));
-                  }}
-                  onChange={(nextEnd) => {
-                    const start = form.getFieldValue('date');
-                    if (nextEnd && start && nextEnd.isBefore(start, 'day')) {
-                      form.setFieldValue('end_date', null);
-                    }
-                  }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        )}
-
-        <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          }
+        >
           <Form.Item name="is_all_day" valuePropName="checked" noStyle>
             <Checkbox>All day</Checkbox>
           </Form.Item>
-          <Form.Item name="is_multi_day" valuePropName="checked" noStyle>
-            <Checkbox
-              onChange={(changeEvent) => {
-                // Seed the end date with the start so the picker opens somewhere sensible.
-                if (changeEvent.target.checked && !form.getFieldValue('end_date')) {
-                  form.setFieldValue('end_date', form.getFieldValue('date'));
-                }
-              }}
-            >
-              Multi-day
-            </Checkbox>
-          </Form.Item>
-        </div>
+        </SpanDateFields>
 
         <Row gutter={16}>
           <Col xs={24} sm={12}>

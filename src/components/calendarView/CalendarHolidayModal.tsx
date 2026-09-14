@@ -1,17 +1,24 @@
 import { useEffect } from 'react';
-import { format } from 'date-fns';
 import { Button, Checkbox, Form, Input, Select } from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
 import { DeleteOutlined } from '@ant-design/icons';
 import ModalShell from '../ModalShell';
+import SpanDateFields from './SpanDateFields';
 import type { Holiday, HolidayTab } from '../../types';
 import type { CalendarHolidayTarget } from './types';
 import { confirmHolidayDeletion } from './confirmCalendarDeletion';
+import type { SpanEditScope } from './SpanDateFields';
 import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 
 export type CalendarHolidayFormValues = {
   description?: string;
   is_recurring?: boolean;
   tab?: string | null;
+  // Mirrors the event form's fields, so the two date sections read and behave the same.
+  date?: Dayjs | null;
+  end_date?: Dayjs | null;
+  is_multi_day?: boolean;
+  scope?: SpanEditScope;
 };
 
 type CalendarHolidayModalProps = {
@@ -20,6 +27,8 @@ type CalendarHolidayModalProps = {
   date?: Date | null;
   target?: CalendarHolidayTarget | null;
   holiday?: Holiday | null;
+  // Every day of the trip being edited, so its real extent is what the pickers show.
+  groupHolidays?: Holiday[];
   holidayTabs?: HolidayTab[];
   onCancel: () => void;
   onSubmit: (values: CalendarHolidayFormValues) => void;
@@ -32,27 +41,47 @@ const CalendarHolidayModal = ({
   date,
   target,
   holiday,
+  groupHolidays = [],
   holidayTabs = [],
   onCancel,
   onSubmit,
   onDelete,
 }: CalendarHolidayModalProps) => {
   const [form] = Form.useForm<CalendarHolidayFormValues>();
+  const isMultiDay = Form.useWatch('is_multi_day', form);
+  const groupDays = groupHolidays.length > 1 ? groupHolidays : [];
+  // Callers build this array inline, so its identity changes every render; its dates do not.
+  const groupSignature = groupHolidays.map((row) => row.date).join(',');
 
   useEffect(() => {
     if (!open) return;
 
+    const clicked = date ? dayjs(date) : holiday?.date ? dayjs(holiday.date) : null;
+    // A trip opens on its whole extent, which is the choice the scope control starts on.
+    const spansDays = groupDays.length > 1;
     form.setFieldsValue({
       description: holiday?.description || '',
       is_recurring: !!holiday?.is_recurring,
       tab: holiday?.tab || target?.tab || '',
+      scope: 'all',
+      date: spansDays ? dayjs(groupDays[0].date) : clicked,
+      end_date: spansDays ? dayjs(groupDays[groupDays.length - 1].date) : null,
+      is_multi_day: spansDays,
     });
-  }, [form, holiday, open, target]);
+    // Re-seeding on a new array identity would wipe the form on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, form, groupSignature, holiday, mode, open, target]);
 
-  const title =
-    mode === 'edit'
-      ? 'Edit Time Off'
-      : `Add ${target?.label || 'Time off'}${date ? ` on ${format(date, 'MMMM d, yyyy')}` : ''}`;
+  // The dates follow the choice: a single day is that day, the whole trip is its extent.
+  const onScopeChange = (next: SpanEditScope) => {
+    form.setFieldsValue({
+      date: dayjs(next === 'all' ? groupDays[0].date : next),
+      end_date: next === 'all' ? dayjs(groupDays[groupDays.length - 1].date) : null,
+      is_multi_day: next === 'all',
+    });
+  };
+
+  const title = mode === 'edit' ? 'Edit Time Off' : `Add ${target?.label || 'Time off'}`;
 
   return (
     <ModalShell
@@ -99,6 +128,20 @@ const CalendarHolidayModal = ({
         <Form.Item name="description" label="Name">
           <Input size="large" placeholder={target?.label || holiday?.description || 'Time off'} />
         </Form.Item>
+
+        <SpanDateFields
+          form={form}
+          size="large"
+          isMultiDay={isMultiDay}
+          spanDays={mode === 'edit' ? groupDays.map((row) => row.date) : []}
+          onScopeChange={onScopeChange}
+          dateRequiredMessage="Pick the day this starts"
+        >
+          <Form.Item name="is_recurring" valuePropName="checked" noStyle>
+            <Checkbox>Recurring yearly</Checkbox>
+          </Form.Item>
+        </SpanDateFields>
+
         <Form.Item name="tab" label="Holiday Tab">
           <Select
             size="large"
@@ -107,9 +150,6 @@ const CalendarHolidayModal = ({
               ...holidayTabs.map((tab) => ({ label: tab.name, value: tab.id })),
             ]}
           />
-        </Form.Item>
-        <Form.Item name="is_recurring" valuePropName="checked">
-          <Checkbox className="min-h-11">Recurring yearly</Checkbox>
         </Form.Item>
       </Form>
     </ModalShell>
