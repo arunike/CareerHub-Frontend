@@ -11,12 +11,12 @@ describe('document title', () => {
   });
 
   it('titles the two tabs that moved', () => {
-    expect(getRouteTitle('/command-center', true)).toBe('Command Center | CareerHub');
+    expect(getRouteTitle('/overview', true)).toBe('Overview | CareerHub');
     expect(getRouteTitle('/availability', true)).toBe('Availability | CareerHub');
   });
 
   it('keeps the root titled for each audience', () => {
-    expect(getRouteTitle('/', true)).toBe('Command Center | CareerHub');
+    expect(getRouteTitle('/', true)).toBe('Overview | CareerHub');
     expect(getRouteTitle('/', false)).toBe('CareerHub');
   });
 

@@ -27,6 +27,8 @@ const SummaryCard = ({
   tone = 'neutral',
   footnote,
   collapsible = false,
+  previewCount,
+  moreLabel,
 }: {
   title: string;
   icon?: ComponentType<{ className?: string }>;
@@ -36,10 +38,16 @@ const SummaryCard = ({
   tone?: 'neutral' | 'urgent';
   footnote?: ReactNode;
   collapsible?: boolean;
+  // Rows past this are hidden behind a button that reveals them here, rather than a dead count.
+  previewCount?: number;
+  moreLabel?: (hidden: number) => string;
 }) => {
   // Open on load: a card you have to expand to read is not a summary.
   const [open, setOpen] = useState(true);
+  const [showAll, setShowAll] = useState(false);
   const collapsed = collapsible && !open;
+  const hidden = previewCount === undefined ? 0 : Math.max(0, rows.length - previewCount);
+  const visible = previewCount === undefined || showAll ? rows : rows.slice(0, previewCount);
 
   return (
     <section className="enterprise-card flex min-w-0 flex-col overflow-hidden">
@@ -83,7 +91,7 @@ const SummaryCard = ({
 
       {!collapsed && (
         <ul className="divide-y divide-slate-100/80 dark:divide-white/[0.05]">
-          {rows.map((row) => (
+          {visible.map((row) => (
             <li key={row.id}>
               <Link
                 to={row.to}
@@ -110,7 +118,21 @@ const SummaryCard = ({
         </ul>
       )}
 
-      {!collapsed && footnote && (
+      {!collapsed && hidden > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll((current) => !current)}
+          aria-expanded={showAll}
+          className="flex min-h-11 w-full items-center gap-1.5 border-t border-slate-100 px-5 text-left text-[11px] font-semibold text-blue-600 transition-colors hover:bg-blue-50/60 dark:border-white/[0.07] dark:text-blue-300 dark:hover:bg-blue-500/10"
+        >
+          {showAll ? 'Show less' : (moreLabel?.(hidden) ?? `Show ${hidden} more`)}
+          <DownOutlined
+            className={`text-[9px] transition-transform ${showAll ? 'rotate-180' : ''}`}
+          />
+        </button>
+      )}
+
+      {!collapsed && hidden === 0 && footnote && (
         <p className="border-t border-slate-100 px-5 py-2.5 text-[11px] text-slate-400 dark:border-white/[0.07] dark:text-ink-500">
           {footnote}
         </p>

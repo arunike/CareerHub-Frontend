@@ -11,7 +11,10 @@ import {
 } from '@ant-design/icons';
 import SummaryCard from './SummaryCard';
 import type { SummaryRow } from './SummaryCard';
-import { findApplicationStatus, type ApplicationStage } from '../../constants/applicationStages';
+import { StatusBadge } from '../Applications/ApplicationBadges';
+import { roundTiming } from '../../utils/Overview/overview';
+import { roundTimingLabel } from '../../utils/Overview/roundTimingLabel';
+import type { ApplicationStage } from '../../constants/applicationStages';
 import {
   expiringOffers,
   isInterviewing,
@@ -19,14 +22,14 @@ import {
   openTasks,
   tasksDue,
   upcomingEvents,
-} from '../../utils/CommandCenter/commandCenter';
+} from '../../utils/Overview/overview';
 import type {
   CommandApplication,
   CommandEvent,
   CommandOffer,
   CommandTask,
-} from '../../utils/CommandCenter/commandCenter';
-import { canSayAllClear, type CommandSource } from '../../utils/CommandCenter/commandCenterSources';
+} from '../../utils/Overview/overview';
+import { canSayAllClear, type CommandSource } from '../../utils/Overview/overviewSources';
 import { dueReviews } from '../../utils/OfferComparison/decisionJournal';
 import type { DecisionJournalEntry } from '../../utils/OfferComparison/decisionJournal';
 
@@ -41,6 +44,7 @@ export interface ViewData {
   journals: DecisionJournalEntry[];
   failed: CommandSource[];
   stages: ApplicationStage[];
+  ghostAfterDays?: number;
   todayIso: string;
 }
 
@@ -52,6 +56,7 @@ const TodayView = ({
   journals,
   failed,
   stages,
+  ghostAfterDays,
   todayIso,
 }: ViewData) => {
   const soonest = useMemo(() => nextEvent(events, todayIso), [events, todayIso]);
@@ -230,23 +235,19 @@ const TodayView = ({
       icon={SolutionOutlined}
       count={inRounds.length}
       seeAll={{ to: '/applications', label: 'All applications' }}
-      rows={inRounds.slice(0, 6).map(
-        (application): SummaryRow => ({
+      previewCount={6}
+      moreLabel={(hidden) => `Show ${hidden} more in an interview round`}
+      rows={inRounds.map((application): SummaryRow => {
+        const timing = roundTiming({ application, events, todayIso, ghostAfterDays });
+        return {
           id: `round-${application.id}`,
           to: `/applications?open=${application.id}`,
           title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
-          meta: `Last touched ${dayjs(application.updated_at).format('D MMM')}`,
-          trailing: (
-            <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:bg-blue-500/12 dark:text-blue-300">
-              {findApplicationStatus(String(application.status ?? ''), stages)?.shortLabel ??
-                application.status}
-            </span>
-          ),
-        })
-      )}
-      footnote={
-        inRounds.length > 6 ? `${inRounds.length - 6} more in an interview round` : undefined
-      }
+          meta: roundTimingLabel(timing),
+          // The stage's own colour, so a round reads the same here as on the applications table.
+          trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
+        };
+      })}
     />
   ) : null;
 

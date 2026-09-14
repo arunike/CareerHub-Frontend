@@ -38,9 +38,9 @@ export interface NavGroup {
 // One entry per tab; the sidebar tree and the mobile toolbar are both derived from this.
 export const NAV_REGISTRY = [
   {
-    key: '/command-center',
+    key: '/overview',
     group: 'grp-1',
-    label: 'Command Center',
+    label: 'Overview',
     shortLabel: 'Home',
     icon: DashboardOutlined,
   },

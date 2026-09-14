@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canSayAllClear, unavailableMessage } from './commandCenterSources';
+import { canSayAllClear, unavailableMessage } from './overviewSources';
 
 describe('unavailableMessage', () => {
   it('says nothing when every source answered', () => {

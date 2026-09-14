@@ -28,7 +28,7 @@ import { NAV_REGISTRY } from './constants/navigationItems';
 
 const HomePage = lazy(() => import('./pages/Home'));
 const Availability = lazy(() => import('./pages/Availability'));
-const CommandCenterPage = lazy(() => import('./pages/CommandCenter'));
+const OverviewPage = lazy(() => import('./pages/Overview'));
 const Events = lazy(() => import('./pages/Events'));
 const Holidays = lazy(() => import('./pages/Holidays'));
 const Analytics = lazy(() => import('./pages/Analytics'));
@@ -57,7 +57,7 @@ const NAV_TITLES = new Map<string, string>(
 );
 
 export const getRouteTitle = (pathname: string, isAuthenticated: boolean) => {
-  if (pathname === '/') return isAuthenticated ? 'Command Center | CareerHub' : 'CareerHub';
+  if (pathname === '/') return isAuthenticated ? 'Overview | CareerHub' : 'CareerHub';
   // Titles follow the sidebar, so a tab added to NAV_REGISTRY cannot read "Page not found".
   const navTitle = NAV_TITLES.get(pathname);
   if (navTitle) return `${navTitle} | CareerHub`;
@@ -378,8 +378,10 @@ function AppRoutes() {
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Its own key, so a hidden or renamed '/' preference cannot swallow the entry. */}
-              <Route path="/" element={<Navigate to="/command-center" replace />} />
-              <Route path="/command-center" element={<CommandCenterPage />} />
+              <Route path="/" element={<Navigate to="/overview" replace />} />
+              {/* Renamed from Command Center; old bookmarks and pinned toolbars still arrive here. */}
+              <Route path="/command-center" element={<Navigate to="/overview" replace />} />
+              <Route path="/overview" element={<OverviewPage />} />
               <Route path="/availability" element={<Availability />} />
               <Route path="/events" element={<Events />} />
               <Route path="/holidays" element={<Holidays />} />

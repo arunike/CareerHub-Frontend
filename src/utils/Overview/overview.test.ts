@@ -12,8 +12,8 @@ import {
   isInterviewing,
   openTasks,
   tasksDue,
-} from './commandCenter';
-import type { CommandApplication, CommandEvent, CommandTask } from './commandCenter';
+} from './overview';
+import type { CommandApplication, CommandEvent, CommandTask } from './overview';
 
 // Midnight, so a test that pins a date is not also pinning the hour it happens to run at.
 const DAY_START = 0;

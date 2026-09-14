@@ -10,11 +10,11 @@ import type { ApplicationStage } from '../../utils/Applications/applicationTypes
 export const StatusBadge = ({ status, stages }: { status: string; stages: ApplicationStage[] }) => {
   const stage = findApplicationStatus(status, stages);
   const c = getPaletteColorFromTone(stage?.tone);
-  const label = stage ? stage.label : status;
+  const label = stage?.label ?? status;
   const textColor = getReadableTextColor(c.dot);
   return (
     <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap"
       style={{ color: textColor, background: c.dot, borderColor: c.dot }}
     >
       {label}

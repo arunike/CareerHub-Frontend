@@ -20,6 +20,7 @@ export interface CommandApplication {
   updated_at: string;
   company_details?: { name: string };
   has_reached_interview?: boolean;
+  current_stage_on?: string | null;
 }
 
 export interface CommandTask {
@@ -251,3 +252,40 @@ export const openOffers = (offers: CommandOffer[], todayIso: string): OpenOffer[
       if (b.daysLeft === null) return -1;
       return a.daysLeft - b.daysLeft;
     });
+
+export const DEFAULT_GHOSTING_THRESHOLD_DAYS = 21;
+
+// What an interview-round row says about timing: next interview, when the round landed, gone quiet.
+export interface RoundTiming {
+  interviewOn: string | null;
+  heardOn: string | null;
+  ghosted: boolean;
+}
+
+export const roundTiming = ({
+  application,
+  events,
+  todayIso,
+  ghostAfterDays = DEFAULT_GHOSTING_THRESHOLD_DAYS,
+}: {
+  application: CommandApplication;
+  events: CommandEvent[];
+  todayIso: string;
+  ghostAfterDays?: number;
+}): RoundTiming => {
+  const today = dayOf(todayIso);
+  const upcoming = events
+    .filter(
+      (event) => event.application === application.id && (dayOf(event.date) ?? -1) >= (today ?? 0)
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const heardOn = application.current_stage_on ?? null;
+  // Silence is measured from the last thing that happened, not from when the row was last saved.
+  const lastSignal = dayOf(heardOn) ?? dayOf(application.updated_at);
+  const quietDays = today !== null && lastSignal !== null ? today - lastSignal : 0;
+  return {
+    interviewOn: upcoming[0]?.date ?? null,
+    heardOn,
+    ghosted: upcoming.length === 0 && quietDays >= ghostAfterDays,
+  };
+};

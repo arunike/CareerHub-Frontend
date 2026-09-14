@@ -23,8 +23,8 @@ import {
   openOffers,
   pipeline,
   raisesFrom,
-} from '../../utils/CommandCenter/commandCenter';
-import type { RaiseSource } from '../../utils/CommandCenter/commandCenter';
+} from '../../utils/Overview/overview';
+import type { RaiseSource } from '../../utils/Overview/overview';
 import {
   FOLLOW_UP_AFTER_DAYS,
   appliedThisWeek,
@@ -35,7 +35,7 @@ import {
   responseRate,
   weekHeadline,
   weekWindow,
-} from '../../utils/CommandCenter/weeklyReview';
+} from '../../utils/Overview/weeklyReview';
 
 const percent = (rate: number) => `${Math.round(rate * 100)}%`;
 

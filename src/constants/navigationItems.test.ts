@@ -93,7 +93,7 @@ describe('a tab added after the order was saved', () => {
 describe('Today entry', () => {
   it('is offered as its own route, not as /', () => {
     const keys = NAV_REGISTRY.map((entry) => entry.key);
-    expect(keys).toContain('/command-center');
+    expect(keys).toContain('/overview');
     expect(keys).toContain('/availability');
     // '/' only redirects now; a nav entry on it would inherit any saved hidden state.
     expect(keys).not.toContain('/');
@@ -102,14 +102,14 @@ describe('Today entry', () => {
   it('survives a saved preference that hid the old landing route', () => {
     const hidden = ['/'];
     const visible = NAV_REGISTRY.filter((entry) => !hidden.includes(entry.key)).map((e) => e.key);
-    expect(visible).toContain('/command-center');
+    expect(visible).toContain('/overview');
   });
 
   it('keeps its place when a saved order predates it', () => {
     const items = NAV_REGISTRY.map((entry) => ({ key: entry.key }));
     const savedOrderWithoutToday = ['/events', '/applications', '/tasks'];
     const ordered = applyNavOrder(items, savedOrderWithoutToday).map((item) => item.key);
-    expect(ordered).toContain('/command-center');
+    expect(ordered).toContain('/overview');
   });
 });
 

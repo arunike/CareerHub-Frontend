@@ -8,7 +8,7 @@ export const MOBILE_NAVIGATION_RECENT_STORAGE_KEY = 'careerhub.mobileNav.recent.
 export const MOBILE_NAVIGATION_ITEMS = NAV_REGISTRY;
 
 export const DEFAULT_MOBILE_TOOLBAR_KEYS = [
-  '/command-center',
+  '/overview',
   '/applications',
   '/offers',
   '/analytics',
@@ -54,7 +54,7 @@ const CONTEXTUAL_SMART_KEYS: Array<[string, string]> = [
   ['/contacts', '/tasks'],
   ['/jd-reports', '/ai-tools?tab=cover-letters'],
   ['/analytics', '/applications'],
-  ['/command-center', '/events'],
+  ['/overview', '/events'],
 ];
 
 export const normalizeMobileToolbarKeys = (keys?: string[]) => {

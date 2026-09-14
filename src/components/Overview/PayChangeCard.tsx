@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { EyeInvisibleOutlined, EyeOutlined, RiseOutlined } from '@ant-design/icons';
-import type { CommandRaise } from '../../utils/CommandCenter/commandCenter';
+import type { CommandRaise } from '../../utils/Overview/overview';
 
 const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 

@@ -14,20 +14,20 @@ import {
 import ModeToggle from '../../components/inputs/ModeToggle';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import type { ApplicationStage } from '../../constants/applicationStages';
-import TodayView from '../../components/CommandCenter/TodayView';
-import WeekView from '../../components/CommandCenter/WeekView';
+import TodayView from '../../components/Overview/TodayView';
+import WeekView from '../../components/Overview/WeekView';
 import type {
   CommandApplication,
   CommandEvent,
   CommandOffer,
   CommandTask,
-} from '../../utils/CommandCenter/commandCenter';
+} from '../../utils/Overview/overview';
 import type { DecisionJournalEntry } from '../../utils/OfferComparison/decisionJournal';
 import {
   SOURCE_LABELS,
   unavailableMessage,
   type CommandSource,
-} from '../../utils/CommandCenter/commandCenterSources';
+} from '../../utils/Overview/overviewSources';
 
 const list = <T,>(payload: unknown): T[] => {
   if (Array.isArray(payload)) return payload as T[];
@@ -42,7 +42,7 @@ const VIEWS: { label: string; value: View }[] = [
   { label: 'This week', value: 'week' },
 ];
 
-export default function CommandCenterPage() {
+export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<CommandEvent[]>([]);
   const [applications, setApplications] = useState<CommandApplication[]>([]);
@@ -51,6 +51,7 @@ export default function CommandCenterPage() {
   const [journals, setJournals] = useState<DecisionJournalEntry[]>([]);
   // Stage labels are user-configurable; the defaults are only a fallback.
   const [stages, setStages] = useState<ApplicationStage[]>(DEFAULT_APPLICATION_STAGES);
+  const [ghostAfterDays, setGhostAfterDays] = useState<number | undefined>(undefined);
   // In the URL, so a reload or a shared link lands on the same view.
   const [params, setParams] = useSearchParams();
   const view: View = params.get('view') === 'week' ? 'week' : 'today';
@@ -80,8 +81,9 @@ export default function CommandCenterPage() {
         } else if (source === 'journals') {
           setJournals(list<DecisionJournalEntry>((await getOfferDecisionJournal()).data));
         } else {
-          const configured = (await getUserSettings()).data.application_stages;
-          if (configured?.length) setStages(configured);
+          const settings = (await getUserSettings()).data;
+          if (settings.application_stages?.length) setStages(settings.application_stages);
+          if (settings.ghosting_threshold_days) setGhostAfterDays(settings.ghosting_threshold_days);
         }
         return true;
       } catch {
@@ -117,14 +119,24 @@ export default function CommandCenterPage() {
     };
   }, [loadSource]);
 
-  const data = { events, applications, tasks, offers, journals, stages, todayIso, failed };
+  const data = {
+    events,
+    applications,
+    tasks,
+    offers,
+    journals,
+    stages,
+    ghostAfterDays,
+    todayIso,
+    failed,
+  };
 
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[26px] font-bold tracking-[-0.025em] text-slate-900 dark:text-ink-50">
-            Command Center
+            Overview
           </h1>
           <p className="mt-1 text-[12.5px] text-slate-500 dark:text-ink-400">
             {view === 'today'
@@ -169,7 +181,7 @@ export default function CommandCenterPage() {
 
       {loading ? (
         <div className="space-y-5" role="status" aria-live="polite" aria-busy="true">
-          <span className="sr-only">Loading your Command Center</span>
+          <span className="sr-only">Loading your Overview</span>
           <Skeleton active paragraph={{ rows: 2 }} />
           <Skeleton active paragraph={{ rows: 4 }} />
         </div>

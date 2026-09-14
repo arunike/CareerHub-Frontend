@@ -47,10 +47,10 @@ class AppErrorBoundary extends Component<Props, State> {
             </button>
             {/* A second way out: reloading a page that fails every time is a loop. */}
             <a
-              href="/command-center"
+              href="/overview"
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 px-5 text-sm font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-white/[0.10] dark:text-ink-100 dark:hover:border-blue-400/40"
             >
-              Go to Command Center
+              Go to Overview
             </a>
           </div>
           {this.state.error?.message && (

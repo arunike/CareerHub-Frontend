@@ -9,7 +9,7 @@ import {
   weekHeadline,
   weekWindow,
 } from './weeklyReview';
-import type { CommandApplication, CommandEvent, CommandOffer } from './commandCenter';
+import type { CommandApplication, CommandEvent, CommandOffer } from './overview';
 
 const TODAY = '2026-09-06';
 
