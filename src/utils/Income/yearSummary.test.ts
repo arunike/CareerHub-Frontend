@@ -715,7 +715,7 @@ describe('rounding cannot separate the two pages', () => {
 });
 
 describe('a raise payroll applied late', () => {
-  // Effective 1 Jul, but payroll only paid it from 31 Aug, so July and August were short.
+  // Effective 1 Jul, but payroll only paid it from 1 Oct, so the months between were short.
   const retroRaise: RaiseEntry[] = [
     {
       id: 'r1',
@@ -758,8 +758,8 @@ describe('a raise payroll applied late', () => {
   it('adds the shortfall as a one-off on the first paycheck at the new rate', () => {
     const withRetro = role(retroRaise).gross;
     const withoutRetro = role([{ ...retroRaise[0], effective_date: null }]).gross;
-    // 92 days at the $16,500 difference.
-    expect(withRetro - withoutRetro).toBeCloseTo((16500 * 92) / 365, 0);
+    // Six fortnightly paychecks went out at the old rate, each short by 16,500 / 26.
+    expect(withRetro - withoutRetro).toBeCloseTo((16500 / 26) * 6, 0);
   });
 
   it('changes nothing when payroll was on time', () => {

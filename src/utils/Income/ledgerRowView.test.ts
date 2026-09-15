@@ -40,6 +40,7 @@ const rowWith = (overrides: Partial<EffectiveRow> = {}): EffectiveRow => ({
   actualFields: [],
   balancedFields: [],
   residual: 0,
+  otherPay: 0,
   modelledGross: PERIOD_GROSS,
   modelledNet: 2000,
   ...overrides,

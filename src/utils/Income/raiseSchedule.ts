@@ -235,16 +235,32 @@ export interface BackPay {
   raiseId: string;
   effectiveFrom: string;
   paidFrom: string;
-  days: number;
-  daysInYear: number;
+  // Whole paychecks that went out at the old rate, which is what payroll reverses and re-pays.
+  periods: number;
+  perPeriodDifference: number;
   baseBefore: number;
   baseAfter: number;
   annualDifference: number;
   amount: number;
+  // True when the pay dates were unavailable and the count came from the period length.
+  estimated: boolean;
 }
 
-// A raise announced after it took effect leaves the paychecks in between short by the difference.
-export const backPayFor = (raises: RaiseEntry[]): BackPay[] => {
+export interface BackPayContext {
+  paychecksPerYear: number;
+  // Pay dates in the year, so the periods actually paid short can be counted rather than guessed.
+  payDates?: string[];
+  // Days between a period ending and its paycheck, read off any payslip; 0 means paid same day.
+  payLagDays?: number;
+}
+
+// Payroll reverses whole paychecks at the old rate and re-pays them, so it is periods × the rise.
+export const backPayFor = (raises: RaiseEntry[], context: BackPayContext): BackPay[] => {
+  const perYear = Math.max(1, Math.round(context.paychecksPerYear) || 1);
+  const periodLength = Math.max(1, Math.round(365 / perYear));
+  const lag = Math.max(0, Math.round(context.payLagDays ?? 0));
+  const dates = [...(context.payDates ?? [])].filter(Boolean).sort();
+
   const owed: BackPay[] = [];
   for (const raise of dated(raises)) {
     const effective = raise.effective_date;
@@ -256,22 +272,37 @@ export const backPayFor = (raises: RaiseEntry[]): BackPay[] => {
     const annualDifference = baseAfter - baseBefore;
     if (annualDifference <= 0) continue;
 
-    // Whole days from the effective date up to the day before payroll caught up.
-    const days = epochDay(raise.date) - epochDay(effective);
-    if (days <= 0) continue;
+    const perPeriodDifference = annualDifference / perYear;
+    const effectiveDay = epochDay(effective);
+    const paidDay = epochDay(raise.date);
 
-    const year = daysInYear(Number(effective.slice(0, 4)));
+    let periods: number;
+    let estimated: boolean;
+    if (dates.length > 0) {
+      // A paycheck is owed when the work it covers began on or after the raise took effect.
+      periods = dates.filter((payDate) => {
+        const payDay = epochDay(payDate);
+        const workStart = payDay - lag - periodLength + 1;
+        return workStart >= effectiveDay && payDay < paidDay;
+      }).length;
+      estimated = false;
+    } else {
+      periods = Math.floor((paidDay - effectiveDay) / periodLength);
+      estimated = true;
+    }
+    if (periods <= 0) continue;
 
     owed.push({
       raiseId: raise.id,
       effectiveFrom: effective,
       paidFrom: raise.date,
-      days,
-      daysInYear: year,
+      periods,
+      perPeriodDifference,
       baseBefore,
       baseAfter,
       annualDifference,
-      amount: (annualDifference * days) / year,
+      amount: periods * perPeriodDifference,
+      estimated,
     });
   }
   return owed;

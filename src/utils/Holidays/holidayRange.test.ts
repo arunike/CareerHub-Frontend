@@ -9,7 +9,7 @@ import type { Holiday } from '../../types';
 
 const day = (iso: string) => dayjs(iso);
 
-// Dates are built from the AGENTS.md substitutes; a span steps forward from the first of them.
+// A span steps forward day by day from the first date.
 const FIRST = '2026-07-01';
 const LATER = '2026-10-01';
 

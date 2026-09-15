@@ -58,7 +58,13 @@ export interface LedgerRowView {
   gross: string;
   grossFlags: LedgerFlag[];
   grossRecorded: boolean;
+  // What the model expected, so a recorded figure can be read against it without arithmetic.
+  modelledGross: string;
+  grossDifference: string | null;
+  // Every part of the gross, so a row that looks wrong says which component is wrong.
+  grossParts: string;
   supplemental: string | null;
+  otherPay: string | null;
   preTax: string;
   preTaxFlags: LedgerFlag[];
   tax: string;
@@ -81,7 +87,27 @@ export const ledgerRowView = (row: EffectiveRow, format: AmountFormat): LedgerRo
   gross: format.money(row.gross),
   grossFlags: row.residual < RESIDUAL_FLOOR ? [flag('low')] : [],
   grossRecorded: isRecorded(row, 'gross'),
-  supplemental: row.supplementalGross > 0 ? `+${format.money(row.supplementalGross)}` : null,
+  modelledGross: format.money(row.modelledGross),
+  grossParts: [
+    `${format.money(row.gross - row.supplementalGross - row.taxableAllowance)} regular`,
+    row.taxableAllowance > 0 ? `${format.money(row.taxableAllowance)} allowance` : null,
+    row.supplementalGross > 0
+      ? `${format.money(row.supplementalGross)} bonus, vest or back pay`
+      : null,
+    row.otherPay > 0 ? `${format.money(row.otherPay)} other pay` : null,
+  ]
+    .filter(Boolean)
+    .join(' + '),
+  grossDifference:
+    isRecorded(row, 'gross') && Math.round(row.gross - row.modelledGross) !== 0
+      ? `${row.gross > row.modelledGross ? '+' : '−'}${format.money(Math.abs(row.gross - row.modelledGross))}`
+      : null,
+  // One sub-label for everything on top of base pay, whatever its source.
+  supplemental:
+    row.supplementalGross + row.otherPay > 0
+      ? `+${format.money(row.supplementalGross + row.otherPay)}`
+      : null,
+  otherPay: row.otherPay > 0 ? format.money(row.otherPay) : null,
   preTax: negated(format.money(preTaxTotal(row)), format.hidden),
   preTaxFlags: row.isAdjusted ? [flag('adj')] : [],
   tax: negated(format.money(row.taxTotal), format.hidden),

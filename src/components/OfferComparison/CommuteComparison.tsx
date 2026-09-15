@@ -1,6 +1,6 @@
 import {
   COMMUTE_MODE_LABELS,
-  effectiveFuelInputs,
+  effectiveEnergyInputs,
   formatDuration,
   formatHours,
   fuelBreakdownFor,
@@ -49,7 +49,7 @@ const CommuteComparison = ({
               const fuel = isFuelCosted(primary)
                 ? fuelBreakdownFor(primary, commute.officeDays, drivingDefaults)
                 : null;
-              const fuelInputs = effectiveFuelInputs(primary, drivingDefaults);
+              const energy = effectiveEnergyInputs(primary, drivingDefaults);
               const share = worstHours > 0 ? (commute.annualHours / worstHours) * 100 : 0;
               const isBest =
                 commute.annualHours ===
@@ -107,8 +107,16 @@ const CommuteComparison = ({
                       <div className="text-[11px] text-slate-400 dark:text-ink-500 tabular-nums">
                         {Math.round(fuel.annualMiles).toLocaleString()} mi (
                         {primary.miles_each_way ?? 0}{' '}
-                        {isRoundTrip(primary) ? 'round trip' : 'each way'}) @ {fuelInputs.mpg} mpg ·
-                        ${fuelInputs.gasPricePerGallon}/gal
+                        {isRoundTrip(primary) ? 'round trip' : 'each way'}) @ {energy.efficiency}{' '}
+                        {energy.energyType === 'ELECTRIC' ? 'mi/kWh' : 'mpg'}
+                        {fuel.chargingCovered ? (
+                          <> · charging free at the office</>
+                        ) : (
+                          <>
+                            {' '}
+                            · ${energy.pricePerUnit}/{energy.unitLabel}
+                          </>
+                        )}
                         {fuel.parkingCost > 0 && <> + {money(fuel.parkingCost)} parking</>}
                       </div>
                     )}

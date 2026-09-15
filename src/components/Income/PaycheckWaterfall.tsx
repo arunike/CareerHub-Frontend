@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Button, Tag, Tooltip } from 'antd';
+import { Button, Space, Tag, Tooltip } from 'antd';
 import {
+  AimOutlined,
   EditOutlined,
   InfoCircleOutlined,
   LeftOutlined,
   RightOutlined,
-  SlidersOutlined,
 } from '@ant-design/icons';
-import { type EffectiveRow } from '../../utils/Income/effectiveRows';
+import { mostRecentPaidRow, type EffectiveRow } from '../../utils/Income/effectiveRows';
 import {
   resolveCustomDeductions,
   resolvePeriodValues,
@@ -17,7 +17,7 @@ import {
 } from '../../utils/Income/periodDeductions';
 import type { CustomDeduction } from '../../utils/Income/deductions';
 import { resolveAllowances, type Allowance } from '../../utils/Income/allowances';
-import { formatPayDate } from '../../utils/Income/paySchedule';
+import { formatPayDate, toIsoDate } from '../../utils/Income/paySchedule';
 import { useMoney } from './amountPrivacy';
 import PaycheckAdjustModal from './PaycheckAdjustModal';
 import { INCOME_TOOLTIPS } from '../../content/tooltips';
@@ -199,6 +199,8 @@ export const PaycheckWaterfall = ({
   const position = rows.findIndex((candidate) => candidate.periodIndex === row.periodIndex);
   const previous = rows[position - 1];
   const next = rows[position + 1];
+  // Where the page lands on load, so one click gets back there from anywhere in the year.
+  const current = mostRecentPaidRow(rows, toIsoDate(new Date()));
   const isRecorded = row.actualFields.length > 0;
   const contributed = row.pretax401k + row.roth401k;
 
@@ -229,7 +231,20 @@ export const PaycheckWaterfall = ({
             </p>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        {/* The stepper is the only bordered control, so the actions beside it stay quiet. */}
+        <div className="flex shrink-0 items-center gap-2">
+          {current && current.periodIndex !== row.periodIndex ? (
+            <Tooltip title="Jump to the paycheck you were most recently paid">
+              <Button
+                type="text"
+                icon={<AimOutlined />}
+                onClick={() => onSelectPeriod(current.periodIndex)}
+              >
+                {/* The label costs more than it is worth on a phone, where the icon carries it. */}
+                <span className="hidden sm:inline">Current</span>
+              </Button>
+            </Tooltip>
+          ) : null}
           {!row.isOffCycle ? (
             <Tooltip
               title={
@@ -238,34 +253,29 @@ export const PaycheckWaterfall = ({
                   : 'Adjust this paycheck’s deductions and 401(k)'
               }
             >
-              <Button
-                size="small"
-                icon={<SlidersOutlined />}
-                onClick={() => setEditing(true)}
-                className="mr-1"
-              >
-                Edit
+              <Button type="text" icon={<EditOutlined />} onClick={() => setEditing(true)}>
+                <span className="hidden sm:inline">Edit</span>
               </Button>
             </Tooltip>
           ) : null}
-          <Tooltip title="Previous paycheck">
-            <Button
-              shape="circle"
-              size="small"
-              icon={<LeftOutlined />}
-              disabled={!previous}
-              onClick={() => previous && onSelectPeriod(previous.periodIndex)}
-            />
-          </Tooltip>
-          <Tooltip title="Next paycheck">
-            <Button
-              shape="circle"
-              size="small"
-              icon={<RightOutlined />}
-              disabled={!next}
-              onClick={() => next && onSelectPeriod(next.periodIndex)}
-            />
-          </Tooltip>
+          <Space.Compact>
+            <Tooltip title="Previous paycheck">
+              <Button
+                icon={<LeftOutlined />}
+                aria-label="Previous paycheck"
+                disabled={!previous}
+                onClick={() => previous && onSelectPeriod(previous.periodIndex)}
+              />
+            </Tooltip>
+            <Tooltip title="Next paycheck">
+              <Button
+                icon={<RightOutlined />}
+                aria-label="Next paycheck"
+                disabled={!next}
+                onClick={() => next && onSelectPeriod(next.periodIndex)}
+              />
+            </Tooltip>
+          </Space.Compact>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildInternshipParts } from './internshipParts';
 
-// The two summer internships from AGENTS.md: 60 weekdays at 8 hours, plus a little overtime.
+// Two summer internships: 60 weekdays at 8 hours, plus a little overtime.
 const STRIPE = {
   key: 'stripe-2023',
   company: 'Stripe',

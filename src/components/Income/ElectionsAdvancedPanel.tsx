@@ -1,5 +1,6 @@
 import { Collapse, DatePicker, Select, Switch } from 'antd';
 import dayjs from 'dayjs';
+import UnitNumberInput from '../inputs/UnitNumberInput';
 import PercentInput from './PercentInput';
 import { CADENCE_OPTIONS, Field } from './electionsFormPrimitives';
 
@@ -12,6 +13,8 @@ type Props = {
   onElectionsChange: any;
   onFirstPayDateChange: any;
   onPaychecksPerYearChange: any;
+  payLagDays: number;
+  onPayLagDaysChange: (value: number) => void;
   onW4Change: any;
   paidPeriodCount: any;
   paychecksPerYear: any;
@@ -30,6 +33,8 @@ const ElectionsAdvancedPanel = ({
   onElectionsChange,
   onFirstPayDateChange,
   onPaychecksPerYearChange,
+  payLagDays,
+  onPayLagDaysChange,
   onW4Change,
   paidPeriodCount,
   paychecksPerYear,
@@ -71,6 +76,20 @@ const ElectionsAdvancedPanel = ({
                 onChange={(value: dayjs.Dayjs | null) =>
                   onFirstPayDateChange(value ? value.format('YYYY-MM-DD') : null)
                 }
+              />
+            </Field>
+            <Field
+              label="Days from period end to payday"
+              hint="Read it off any payslip: a period ending 1 Jul paid on 8 Jul is 7. It sets which paychecks a backdated raise owes."
+            >
+              <UnitNumberInput
+                unit="days"
+                min={0}
+                max={45}
+                value={payLagDays}
+                onChange={(value) => onPayLagDaysChange(Number(value) || 0)}
+                placeholder="0"
+                aria-label="Days between a pay period ending and its paycheck"
               />
             </Field>
           </div>

@@ -48,6 +48,7 @@ export const writeLocal = (taxYear: number, sourceKey: string, settings: IncomeS
 export const fromPayload = (payload: IncomeYearPayload): Partial<IncomeSettings> => ({
   salaryOverride: payload.salary_override === null ? null : num(payload.salary_override),
   paychecksPerYearOverride: payload.paychecks_per_year_override ?? null,
+  payLagDays: Number(payload.pay_lag_days) || 0,
   firstPayDate: payload.first_pay_date ?? null,
   elections: {
     ...NO_ELECTIONS,

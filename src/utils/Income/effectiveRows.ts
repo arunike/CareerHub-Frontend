@@ -10,6 +10,8 @@ export interface PeriodActual {
   payDate?: string | null;
 }
 
+export const OTHER_PAY_NOTE = 'Other pay above the modelled gross';
+
 // Only gross and take-home; the per-line tax fields had zero production rows.
 export type ActualField = 'gross' | 'net';
 
@@ -49,6 +51,8 @@ export interface EffectiveRow {
   balancedFields: Array<'federalTax' | 'stateTax'>;
   // Anything the income tax lines could not absorb, so the column still adds up.
   residual: number;
+  // Recorded gross above what the model expected: unused PTO, a pay adjustment, a correction.
+  otherPay: number;
   // What the model said before any recorded figure replaced it, so an editor can show it.
   modelledGross: number;
   modelledNet: number;
@@ -118,6 +122,18 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
   const actualFields = actual ? ACTUAL_FIELDS.filter((field) => provided(actual[field])) : [];
 
   const gross = provided(actual?.gross) ? actual.gross : row.gross;
+  // Attributed rather than absorbed, so a bigger paycheck says why it was bigger.
+  const otherPay = provided(actual?.gross) ? Math.max(0, (actual?.gross ?? 0) - row.gross) : 0;
+
+  // A deferral is a percentage of gross, so a recorded gross moves it; a fixed premium does not.
+  const deferralScale = provided(actual?.gross) && row.gross > 0 ? gross / row.gross : 1;
+  const scaledPretax = row.pretax401k * deferralScale;
+  const scaledRoth = row.roth401k * deferralScale;
+  // Still bounded by the 402(g) room, which the scale must not push the pair past.
+  const room = Math.max(0, row.deferralRoom);
+  const pretax401k = Math.min(scaledPretax, room);
+  const roth401k = Math.min(scaledRoth, Math.max(0, room - pretax401k));
+  const employerMatch401k = row.employerMatch401k * deferralScale;
   const federalTax = row.federalRegular + row.federalSupplemental;
   const stateTax = row.stateRegular + row.stateSupplemental;
   const payrollTaxes = row.payrollTaxes;
@@ -125,7 +141,7 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
   const taxTotal =
     federalTax + stateTax + payrollTaxes.reduce((total, tax) => total + tax.amount, 0);
 
-  const deductions = row.section125 + row.hsa + row.pretax401k + row.pretaxIncomeOnly + row.postTax;
+  const deductions = row.section125 + row.hsa + pretax401k + row.pretaxIncomeOnly + row.postTax;
 
   // A recorded net wins: what landed in the account beats what the lines imply.
   const derivedNet = gross - deductions - taxTotal + row.taxFreeAllowance;
@@ -153,22 +169,23 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
     taxFreeAllowance: row.taxFreeAllowance,
     section125: row.section125,
     hsa: row.hsa,
-    pretax401k: row.pretax401k,
+    pretax401k,
     pretaxIncomeOnly: row.pretaxIncomeOnly,
-    roth401k: row.roth401k,
+    roth401k,
     postTax: row.postTax,
     federalTax: balanced.federalTax,
     stateTax: balanced.stateTax,
     payrollTaxes,
     taxTotal: balanced.taxTotal,
     net,
-    employerMatch401k: row.employerMatch401k,
+    employerMatch401k,
     deferralPercent: row.deferralPercent,
     matchedDeferralPercent: row.matchedDeferralPercent,
-    notes: row.notes,
+    notes: otherPay > 0 ? [...row.notes, OTHER_PAY_NOTE] : row.notes,
     actualFields,
     balancedFields: balanced.balancedFields,
     residual: balanced.residual,
+    otherPay,
     modelledGross: row.gross,
     modelledNet: row.net,
   };

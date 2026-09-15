@@ -33,6 +33,7 @@ const row = (payDate: string | null, gross: number): EffectiveRow =>
     actualFields: [],
     balancedFields: [],
     residual: 0,
+    otherPay: 0,
     modelledGross: gross,
     modelledNet: gross,
   }) as EffectiveRow;

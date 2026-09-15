@@ -203,3 +203,16 @@ export const yearsForSource = (source: IncomeSource | null, latestYear: number):
   }
   return years.length > 0 ? years.reverse() : [latestYear];
 };
+
+// Which role the page opens on when nothing is stored: the list's own order is not a choice.
+export const defaultSourceKey = (sources: IncomeSource[]): string => {
+  if (sources.length === 0) return '';
+  const ranked = [...sources].sort((a, b) => {
+    // A role you still hold outranks one you have left, however recently it ended.
+    if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+    const byStart = (b.startDate ?? '').localeCompare(a.startDate ?? '');
+    if (byStart !== 0) return byStart;
+    return (b.endDate ?? '').localeCompare(a.endDate ?? '');
+  });
+  return ranked[0].key;
+};

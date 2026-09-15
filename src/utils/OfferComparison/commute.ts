@@ -1,6 +1,8 @@
 export type CommuteMode = 'TRAIN' | 'BUS' | 'CAR' | 'BIKE' | 'WALK' | 'OTHER';
 export type CostFrequency = 'DAILY' | 'MONTHLY' | 'YEARLY';
+// FUEL means costed by distance and energy, for petrol and electricity alike.
 export type CostMode = 'FIXED' | 'FUEL';
+export type EnergyType = 'GAS' | 'ELECTRIC';
 export type DistanceBasis = 'ONE_WAY' | 'ROUND_TRIP';
 
 export interface CommuteOption {
@@ -15,6 +17,12 @@ export interface CommuteOption {
   distance_basis?: DistanceBasis;
   mpg?: number | null;
   gas_price_per_gallon?: number | null;
+  // Absent on legacy rows, which are all petrol.
+  energy_type?: EnergyType;
+  miles_per_kwh?: number | null;
+  price_per_kwh?: number | null;
+  // A charger at the office covers the commute's electricity, so only parking is left to pay.
+  free_workplace_charging?: boolean;
   parking_tolls_per_day?: number;
   is_primary?: boolean;
 }
@@ -32,6 +40,16 @@ export const COMMUTE_MODES = Object.keys(COMMUTE_MODE_LABELS) as CommuteMode[];
 
 export const DEFAULT_MPG = 28;
 export const DEFAULT_GAS_PRICE = 4;
+export const DEFAULT_MILES_PER_KWH = 3.5;
+export const DEFAULT_PRICE_PER_KWH = 0.17;
+
+export const ENERGY_TYPE_LABELS: Record<EnergyType, string> = {
+  GAS: 'Petrol',
+  ELECTRIC: 'Electric',
+};
+
+export const energyTypeOf = (option: Pick<CommuteOption, 'energy_type'>): EnergyType =>
+  option.energy_type === 'ELECTRIC' ? 'ELECTRIC' : 'GAS';
 
 export interface DrivingDefaults {
   mpg: number;
@@ -144,12 +162,42 @@ export const clearFuelOverrides = (options: CommuteOption[] | null | undefined):
 
 export interface FuelBreakdown {
   annualMiles: number;
-  gallons: number;
-  fuelCost: number;
+  energyType: EnergyType;
+  energyUnits: number;
+  energyUnitLabel: string;
+  // The office charger paid for the electricity, so energyCost is zero by design not by absence.
+  chargingCovered: boolean;
+  energyCost: number;
   parkingCost: number;
   annualCost: number;
   costPerMile: number;
 }
+
+// Efficiency and price per unit for whichever energy the car runs on.
+export const effectiveEnergyInputs = (
+  option: CommuteOption,
+  defaults?: Partial<DrivingDefaults> | null
+) => {
+  if (energyTypeOf(option) === 'ELECTRIC') {
+    return {
+      energyType: 'ELECTRIC' as EnergyType,
+      efficiency: Number(option.miles_per_kwh) || DEFAULT_MILES_PER_KWH,
+      pricePerUnit: Number(option.price_per_kwh) || DEFAULT_PRICE_PER_KWH,
+      unitLabel: 'kWh',
+    };
+  }
+  const { mpg, gasPricePerGallon } = effectiveFuelInputs(option, defaults);
+  return {
+    energyType: 'GAS' as EnergyType,
+    efficiency: mpg,
+    pricePerUnit: gasPricePerGallon,
+    unitLabel: 'gal',
+  };
+};
+
+// Only electricity can be topped up at the office; a petrol car gets no such perk.
+const chargingCovers = (option: CommuteOption) =>
+  energyTypeOf(option) === 'ELECTRIC' && Boolean(option.free_workplace_charging);
 
 export const fuelBreakdownFor = (
   option: CommuteOption,
@@ -157,16 +205,23 @@ export const fuelBreakdownFor = (
   defaults?: Partial<DrivingDefaults> | null
 ): FuelBreakdown | null => {
   const miles = annualMilesFor(option, officeDays);
-  const { mpg, gasPricePerGallon: price } = effectiveFuelInputs(option, defaults);
-  if (miles <= 0 || mpg <= 0 || price <= 0) return null;
-  const gallons = miles / mpg;
-  const fuelCost = gallons * price;
+  const { efficiency, pricePerUnit, unitLabel, energyType } = effectiveEnergyInputs(
+    option,
+    defaults
+  );
+  if (miles <= 0 || efficiency <= 0 || pricePerUnit <= 0) return null;
+  const covered = chargingCovers(option);
+  const energyUnits = miles / efficiency;
+  const energyCost = covered ? 0 : energyUnits * pricePerUnit;
   const parkingCost = (Number(option.parking_tolls_per_day) || 0) * officeDays;
-  const annualCost = fuelCost + parkingCost;
+  const annualCost = energyCost + parkingCost;
   return {
     annualMiles: miles,
-    gallons,
-    fuelCost,
+    energyType,
+    energyUnits,
+    energyUnitLabel: unitLabel,
+    chargingCovered: covered,
+    energyCost,
     parkingCost,
     annualCost,
     costPerMile: annualCost / miles,

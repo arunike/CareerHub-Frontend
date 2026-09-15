@@ -17,6 +17,8 @@ export type NumberUnit =
   | 'mi'
   | 'mpg'
   | '$/gal'
+  | 'mi/kWh'
+  | '$/kWh'
   | 'sec'
   | 'wks'
   | 'mo'
@@ -34,6 +36,8 @@ const ADDONS: Record<NumberUnit, { before?: string; after?: string }> = {
   mi: { after: 'mi' },
   mpg: { after: 'mpg' },
   '$/gal': { before: '$', after: '/gal' },
+  'mi/kWh': { after: 'mi/kWh' },
+  '$/kWh': { before: '$', after: '/kWh' },
   'days/wk': { after: 'days/wk' },
   hrs: { after: 'hrs' },
   'hrs/day': { after: 'hrs/day' },

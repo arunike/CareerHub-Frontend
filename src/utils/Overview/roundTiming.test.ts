@@ -1,16 +1,20 @@
+import dayjs from 'dayjs';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_GHOSTING_THRESHOLD_DAYS, roundTiming } from './overview';
 import type { CommandApplication, CommandEvent } from './overview';
 import { roundTimingLabel } from './roundTimingLabel';
 
+// The near dates step off TODAY, so the ghosting threshold is what decides each case.
 const TODAY = '2026-10-01';
+const HEARD = dayjs(TODAY).subtract(3, 'day').format('YYYY-MM-DD');
+const BOOKED = dayjs(TODAY).add(4, 'day').format('YYYY-MM-DD');
 
 const application = (over: Partial<CommandApplication> = {}): CommandApplication => ({
   id: 1,
   role_title: 'Software Engineer',
   status: 'ROUND_2',
-  updated_at: '2026-09-28T00:00:00Z',
-  current_stage_on: '2026-09-28',
+  updated_at: `${HEARD}T00:00:00Z`,
+  current_stage_on: HEARD,
   ...over,
 });
 
@@ -25,10 +29,10 @@ describe('roundTiming', () => {
   it('reports the next interview and when the round landed', () => {
     const timing = roundTiming({
       application: application(),
-      events: [event('2026-10-05')],
+      events: [event(BOOKED)],
       todayIso: TODAY,
     });
-    expect(timing).toEqual({ interviewOn: '2026-10-05', heardOn: '2026-09-28', ghosted: false });
+    expect(timing).toEqual({ interviewOn: BOOKED, heardOn: HEARD, ghosted: false });
   });
 
   it('ignores an interview that has already happened', () => {
@@ -43,16 +47,16 @@ describe('roundTiming', () => {
   it('takes the soonest of several upcoming interviews', () => {
     const timing = roundTiming({
       application: application(),
-      events: [event('2026-11-01'), event('2026-10-05')],
+      events: [event('2026-11-01'), event(BOOKED)],
       todayIso: TODAY,
     });
-    expect(timing.interviewOn).toBe('2026-10-05');
+    expect(timing.interviewOn).toBe(BOOKED);
   });
 
   it('ignores an event belonging to another application', () => {
     const timing = roundTiming({
       application: application(),
-      events: [event('2026-10-05', 2)],
+      events: [event(BOOKED, 2)],
       todayIso: TODAY,
     });
     expect(timing.interviewOn).toBeNull();
@@ -70,7 +74,7 @@ describe('roundTiming', () => {
   it('never calls it ghosted while an interview is still booked', () => {
     const timing = roundTiming({
       application: application({ current_stage_on: '2026-07-01' }),
-      events: [event('2026-10-05')],
+      events: [event(BOOKED)],
       todayIso: TODAY,
     });
     expect(timing.ghosted).toBe(false);
@@ -97,13 +101,13 @@ describe('roundTiming', () => {
 
 describe('roundTimingLabel', () => {
   it('names both dates when both are known', () => {
-    expect(
-      roundTimingLabel({ interviewOn: '2026-10-05', heardOn: '2026-09-28', ghosted: false })
-    ).toBe('Interview 5 Oct · Heard 28 Sep');
+    expect(roundTimingLabel({ interviewOn: BOOKED, heardOn: HEARD, ghosted: false })).toBe(
+      'Interview 5 Oct · Heard 28 Sep'
+    );
   });
 
   it('names only what it has', () => {
-    expect(roundTimingLabel({ interviewOn: null, heardOn: '2026-09-28', ghosted: false })).toBe(
+    expect(roundTimingLabel({ interviewOn: null, heardOn: HEARD, ghosted: false })).toBe(
       'Heard 28 Sep'
     );
   });

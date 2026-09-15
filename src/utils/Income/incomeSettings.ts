@@ -42,6 +42,8 @@ export interface IncomeSettings {
   retirementStartingBalance: number | null;
   retirementCurrentValue: number | null;
   extraEvents: IncomeEvent[];
+  // Days between a period ending and its paycheck; 0 means paid on the last day of the period.
+  payLagDays: number;
   actuals: PeriodActual[];
 }
 
@@ -79,5 +81,6 @@ export const DEFAULT_SETTINGS: IncomeSettings = {
   retirementStartingBalance: null,
   retirementCurrentValue: null,
   extraEvents: [],
+  payLagDays: 0,
   actuals: [],
 };

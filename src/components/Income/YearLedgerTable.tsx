@@ -151,7 +151,26 @@ export const YearLedgerTable = ({
       width: compact ? 96 : 116,
       onCell: editableCell('gross'),
       render: (_: number, row) => {
-        const { gross, grossFlags, grossRecorded, supplemental } = viewOf(row);
+        const {
+          gross,
+          grossFlags,
+          grossRecorded,
+          supplemental,
+          otherPay,
+          modelledGross,
+          grossDifference,
+          grossParts,
+        } = viewOf(row);
+        // Spelled out rather than implied: the reason a recorded figure differs is the whole point.
+        const grossTooltip = grossRecorded
+          ? [
+              `Model expected ${modelledGross}, you recorded ${gross}`,
+              grossDifference ? `${grossDifference} difference` : 'no difference',
+              otherPay ? `${otherPay} counted as other pay` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          : grossParts;
         return (
           <div className="flex flex-col items-stretch gap-0.5">
             {/* A chip beside the figure needs 24px the phone column does not have. */}
@@ -176,7 +195,7 @@ export const YearLedgerTable = ({
               />
             </span>
             {supplemental ? (
-              <Tooltip title={`Includes ${supplemental} of bonus or vest`}>
+              <Tooltip title={grossTooltip ?? `Includes ${supplemental} of bonus or vest`}>
                 {/* Shrinkable, so a longer figure cannot push the row past the card. */}
                 <span className="min-w-0 truncate text-[11px] tabular-nums text-slate-400 dark:text-ink-500">
                   {supplemental}

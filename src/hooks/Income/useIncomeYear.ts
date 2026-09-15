@@ -16,6 +16,7 @@ import {
 import {
   activeInYear,
   buildIncomeSources,
+  defaultSourceKey,
   visibleSources,
   visibleYears,
   yearsForSources,
@@ -56,7 +57,9 @@ const numericKeys = <T>(source: unknown): Record<number, T> | undefined => {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
 
-const SELECTED_SOURCE_KEY = 'careerhub.income.selectedSource';
+// Suffixed because the key before it holds picks made when the default was whatever came first.
+const SELECTED_SOURCE_KEY = 'careerhub.income.selectedSource.v2';
+const RETIRED_SOURCE_KEYS = ['careerhub.income.selectedSource'];
 
 const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings) => ({
   tax_year: taxYear,
@@ -64,6 +67,7 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
   first_pay_date: settings.firstPayDate,
   salary_override: settings.salaryOverride,
   paychecks_per_year_override: settings.paychecksPerYearOverride,
+  pay_lag_days: settings.payLagDays,
   pretax_401k_percent: settings.elections.pretax401kPercent,
   roth_401k_percent: settings.elections.roth401kPercent,
   hsa_per_period: settings.elections.hsaPerPeriod,
@@ -127,6 +131,8 @@ export const useIncomeYear = () => {
   const [sources, setSources] = useState<IncomeSource[]>([]);
   const [sourceKey, setSourceKey] = useState<string>(() => {
     try {
+      // Dropped rather than migrated: a stale pick is exactly what stops the default applying.
+      RETIRED_SOURCE_KEYS.forEach((key) => window.localStorage.removeItem(key));
       return window.localStorage.getItem(SELECTED_SOURCE_KEY) ?? '';
     } catch {
       return '';
@@ -217,7 +223,7 @@ export const useIncomeYear = () => {
     if (sourceKey && sourcesInYear.some((candidate) => candidate.key === sourceKey)) {
       return sourceKey;
     }
-    return sourcesInYear[0]?.key ?? '';
+    return defaultSourceKey(sourcesInYear);
   }, [sourceKey, sourcesInYear]);
 
   useEffect(() => {

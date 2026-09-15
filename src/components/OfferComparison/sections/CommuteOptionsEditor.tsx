@@ -1,3 +1,4 @@
+import { Checkbox } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import type { ReactNode } from 'react';
@@ -10,8 +11,12 @@ import {
   annualHoursFor,
   costPatchForMode,
   dailyMilesFor,
+  DEFAULT_MILES_PER_KWH,
+  DEFAULT_PRICE_PER_KWH,
+  ENERGY_TYPE_LABELS,
   defaultCostModeFor,
   effectiveFuelInputs,
+  energyTypeOf,
   formatHours,
   fuelBreakdownFor,
   isFuelCosted,
@@ -22,6 +27,7 @@ import {
   type CostFrequency,
   type DistanceBasis,
   type DrivingDefaults,
+  type EnergyType,
 } from '../../../utils/OfferComparison/commute';
 
 interface Props {
@@ -137,8 +143,9 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
           {Math.round(officeDays)} office days
         </span>{' '}
         a year, from this offer&apos;s RTO policy and time off. For driving, set Cost to{' '}
-        <span className="font-semibold text-slate-600 dark:text-ink-200">From gas</span> to work it
-        out from distance and pump price instead of guessing a yearly total.
+        <span className="font-semibold text-slate-600 dark:text-ink-200">From miles</span> to work
+        it out from distance and the price of petrol or electricity instead of guessing a yearly
+        total.
       </p>
 
       {options.length === 0 ? (
@@ -253,7 +260,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                       <option value="MONTHLY">Fixed, per month</option>
                       <option value="YEARLY">Fixed, per year</option>
                       {supportsFuelCosting(option.mode) && (
-                        <option value="FUEL">From gas &amp; miles</option>
+                        <option value="FUEL">From miles &amp; energy</option>
                       )}
                     </select>
                   </Field>
@@ -309,62 +316,126 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                         </select>
                       </Field>
 
-                      {/* Your car and pump price are shared across offers; overriding is possible but deliberate. */}
-                      <Field
-                        label="Efficiency"
-                        hint={fuelInputs.mpgOverridden ? 'overridden' : 'shared'}
-                        onHintClick={
-                          fuelInputs.mpgOverridden ? () => patch(index, { mpg: null }) : undefined
-                        }
-                      >
-                        {fuelInputs.mpgOverridden ? (
-                          <UnitNumberInput
-                            unit="mpg"
-                            min={1}
-                            max={200}
-                            value={option.mpg ?? null}
-                            onChange={(value) => patch(index, { mpg: value ?? null })}
-                            aria-label="Miles per gallon override"
-                          />
-                        ) : (
-                          <SharedValue
-                            text={`${fuelInputs.mpg} mpg`}
-                            onOverride={() => patch(index, { mpg: fuelInputs.mpg })}
-                            label="Override efficiency for this offer"
-                          />
-                        )}
+                      <Field label="Runs on">
+                        <select
+                          value={energyTypeOf(option)}
+                          onChange={(event) =>
+                            patch(index, { energy_type: event.target.value as EnergyType })
+                          }
+                          className={CONTROL_CLASS}
+                          aria-label="Whether the car runs on petrol or electricity"
+                        >
+                          <option value="GAS">{ENERGY_TYPE_LABELS.GAS}</option>
+                          <option value="ELECTRIC">{ENERGY_TYPE_LABELS.ELECTRIC}</option>
+                        </select>
                       </Field>
 
-                      <Field
-                        label="Gas price"
-                        hint={fuelInputs.priceOverridden ? 'overridden' : 'shared'}
-                        onHintClick={
-                          fuelInputs.priceOverridden
-                            ? () => patch(index, { gas_price_per_gallon: null })
-                            : undefined
-                        }
-                      >
-                        {fuelInputs.priceOverridden ? (
-                          <UnitNumberInput
-                            unit="$/gal"
-                            min={0}
-                            step={0.1}
-                            value={option.gas_price_per_gallon ?? null}
-                            onChange={(value) =>
-                              patch(index, { gas_price_per_gallon: value ?? null })
+                      {energyTypeOf(option) === 'ELECTRIC' ? (
+                        <>
+                          <Field label="Efficiency">
+                            <UnitNumberInput
+                              unit="mi/kWh"
+                              min={0}
+                              step={0.1}
+                              value={option.miles_per_kwh ?? null}
+                              onChange={(value) => patch(index, { miles_per_kwh: value ?? null })}
+                              placeholder={String(DEFAULT_MILES_PER_KWH)}
+                              aria-label="Miles per kilowatt hour"
+                            />
+                          </Field>
+
+                          <Field
+                            label="Electricity"
+                            hint={option.free_workplace_charging ? 'free at the office' : undefined}
+                          >
+                            <UnitNumberInput
+                              unit="$/kWh"
+                              min={0}
+                              step={0.01}
+                              disabled={Boolean(option.free_workplace_charging)}
+                              value={option.price_per_kwh ?? null}
+                              onChange={(value) => patch(index, { price_per_kwh: value ?? null })}
+                              placeholder={String(DEFAULT_PRICE_PER_KWH)}
+                              aria-label="Price per kilowatt hour"
+                            />
+                          </Field>
+
+                          <Field label="Workplace charging">
+                            {/* Disabled above rather than hidden, so the rate you would have paid stays visible. */}
+                            <Checkbox
+                              checked={Boolean(option.free_workplace_charging)}
+                              onChange={(event) =>
+                                patch(index, { free_workplace_charging: event.target.checked })
+                              }
+                            >
+                              Free at the office
+                            </Checkbox>
+                          </Field>
+                        </>
+                      ) : (
+                        <>
+                          {/* Your mpg and pump price are shared across offers; overriding is possible but deliberate. */}
+                          <Field
+                            label="Efficiency"
+                            hint={fuelInputs.mpgOverridden ? 'overridden' : 'shared'}
+                            onHintClick={
+                              fuelInputs.mpgOverridden
+                                ? () => patch(index, { mpg: null })
+                                : undefined
                             }
-                            aria-label="Gas price per gallon override"
-                          />
-                        ) : (
-                          <SharedValue
-                            text={`$${fuelInputs.gasPricePerGallon}/gal`}
-                            onOverride={() =>
-                              patch(index, { gas_price_per_gallon: fuelInputs.gasPricePerGallon })
+                          >
+                            {fuelInputs.mpgOverridden ? (
+                              <UnitNumberInput
+                                unit="mpg"
+                                min={1}
+                                max={200}
+                                value={option.mpg ?? null}
+                                onChange={(value) => patch(index, { mpg: value ?? null })}
+                                aria-label="Miles per gallon override"
+                              />
+                            ) : (
+                              <SharedValue
+                                text={`${fuelInputs.mpg} mpg`}
+                                onOverride={() => patch(index, { mpg: fuelInputs.mpg })}
+                                label="Override efficiency for this offer"
+                              />
+                            )}
+                          </Field>
+
+                          <Field
+                            label="Gas price"
+                            hint={fuelInputs.priceOverridden ? 'overridden' : 'shared'}
+                            onHintClick={
+                              fuelInputs.priceOverridden
+                                ? () => patch(index, { gas_price_per_gallon: null })
+                                : undefined
                             }
-                            label="Override gas price for this offer"
-                          />
-                        )}
-                      </Field>
+                          >
+                            {fuelInputs.priceOverridden ? (
+                              <UnitNumberInput
+                                unit="$/gal"
+                                min={0}
+                                step={0.1}
+                                value={option.gas_price_per_gallon ?? null}
+                                onChange={(value) =>
+                                  patch(index, { gas_price_per_gallon: value ?? null })
+                                }
+                                aria-label="Gas price per gallon override"
+                              />
+                            ) : (
+                              <SharedValue
+                                text={`$${fuelInputs.gasPricePerGallon}/gal`}
+                                onOverride={() =>
+                                  patch(index, {
+                                    gas_price_per_gallon: fuelInputs.gasPricePerGallon,
+                                  })
+                                }
+                                label="Override gas price for this offer"
+                              />
+                            )}
+                          </Field>
+                        </>
+                      )}
 
                       <Field label="Parking & tolls" hint="per office day">
                         <UnitNumberInput
@@ -397,8 +468,15 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                     {fuel ? (
                       <>
                         {perDayMiles.toLocaleString()} mi/day × {Math.round(officeDays)} days ={' '}
-                        {Math.round(fuel.annualMiles).toLocaleString()} mi · {money(fuel.fuelCost)}{' '}
-                        gas
+                        {Math.round(fuel.annualMiles).toLocaleString()} mi ·{' '}
+                        {fuel.chargingCovered ? (
+                          <>charging free at the office</>
+                        ) : (
+                          <>
+                            {money(fuel.energyCost)}{' '}
+                            {fuel.energyType === 'ELECTRIC' ? 'electricity' : 'gas'}
+                          </>
+                        )}
                         {fuel.parkingCost > 0 && <> · {money(fuel.parkingCost)} parking</>} ={' '}
                         <span className="font-semibold text-slate-700 dark:text-ink-100">
                           {money(fuel.annualCost)}/yr
@@ -406,7 +484,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                       </>
                     ) : (
                       <span className="text-slate-400 dark:text-ink-500">
-                        Add distance, efficiency and gas price for an estimate.
+                        Add distance, efficiency and a unit price for an estimate.
                       </span>
                     )}
                   </p>

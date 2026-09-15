@@ -237,59 +237,75 @@ describe('backPayFor', () => {
     ...over,
   });
 
-  it('owes the difference for the days payroll was late', () => {
-    const [owed] = backPayFor([retro()]);
-    // 1 Jul to 30 Sep inclusive is 92 days at $16,500 a year.
-    expect(owed.days).toBe(92);
+  it('owes the whole paychecks that went out at the old rate', () => {
+    // 1 Jul to 1 Oct is six fortnightly paychecks short at $16,500 a year over 26 periods.
+    const [owed] = backPayFor([retro()], { paychecksPerYear: 26 });
     expect(owed.annualDifference).toBe(16500);
-    expect(owed.amount).toBeCloseTo((16500 * 92) / 365, 2);
+    expect(owed.periods).toBe(6);
+    expect(owed.perPeriodDifference).toBeCloseTo(16500 / 26, 6);
+    expect(owed.amount).toBeCloseTo((16500 / 26) * 6, 2);
+    expect(owed.estimated).toBe(true);
   });
 
   it('owes nothing when payroll paid it from the effective date', () => {
-    expect(backPayFor([retro({ effective_date: '2026-10-01' })])).toEqual([]);
-    expect(backPayFor([retro({ effective_date: null })])).toEqual([]);
-    expect(backPayFor([retro({ effective_date: undefined })])).toEqual([]);
+    expect(backPayFor([retro({ effective_date: '2026-10-01' })], { paychecksPerYear: 26 })).toEqual(
+      []
+    );
+    expect(backPayFor([retro({ effective_date: null })], { paychecksPerYear: 26 })).toEqual([]);
+    expect(backPayFor([retro({ effective_date: undefined })], { paychecksPerYear: 26 })).toEqual(
+      []
+    );
   });
 
   it('ignores an effective date later than the first payment', () => {
-    expect(backPayFor([retro({ effective_date: '2026-10-01' })])).toEqual([]);
+    expect(backPayFor([retro({ effective_date: '2026-10-01' })], { paychecksPerYear: 26 })).toEqual(
+      []
+    );
   });
 
   it('owes nothing when only the bonus moved', () => {
     expect(
-      backPayFor([retro({ base_after: 165000, bonus_before: 24750, bonus_after: 27225 })])
+      backPayFor([retro({ base_after: 165000, bonus_before: 24750, bonus_after: 27225 })], {
+        paychecksPerYear: 26,
+      })
     ).toEqual([]);
   });
 
   it('owes nothing on a pay cut', () => {
-    expect(backPayFor([retro({ base_after: 100000 })])).toEqual([]);
+    expect(backPayFor([retro({ base_after: 100000 })], { paychecksPerYear: 26 })).toEqual([]);
   });
 
   it('handles two late raises independently', () => {
-    const owed = backPayFor([
-      retro({ id: 'a', date: '2025-03-01', effective_date: '2025-01-01' }),
-      retro({ id: 'b', date: '2026-10-01', effective_date: '2026-07-01' }),
-    ]);
+    const owed = backPayFor(
+      [
+        retro({ id: 'a', date: '2025-03-01', effective_date: '2025-01-01' }),
+        retro({ id: 'b', date: '2026-10-01', effective_date: '2026-07-01' }),
+      ],
+      { paychecksPerYear: 26 }
+    );
     expect(owed.map((entry) => entry.raiseId)).toEqual(['a', 'b']);
-    expect(owed[0].days).toBe(59);
+    expect(owed[0].periods).toBe(4);
   });
 });
 
 describe('backPayFor breakdown', () => {
-  const owed = backPayFor([
-    {
-      id: 'r1',
-      date: '2026-10-01',
-      effective_date: '2026-07-01',
-      type: 'merit',
-      base_before: 165000,
-      base_after: 181500,
-      bonus_before: 24750,
-      bonus_after: 27225,
-      equity_before: 50000,
-      equity_after: 50000,
-    },
-  ])[0];
+  const owed = backPayFor(
+    [
+      {
+        id: 'r1',
+        date: '2026-10-01',
+        effective_date: '2026-07-01',
+        type: 'merit',
+        base_before: 165000,
+        base_after: 181500,
+        bonus_before: 24750,
+        bonus_after: 27225,
+        equity_before: 50000,
+        equity_after: 50000,
+      },
+    ],
+    { paychecksPerYear: 26 }
+  )[0];
 
   it('reports the base rates it worked from', () => {
     expect(owed.baseBefore).toBe(165000);
@@ -300,29 +316,98 @@ describe('backPayFor breakdown', () => {
   it('leaves the bonus out, since it is settled at payout on the new rate', () => {
     // The raise also lifts the bonus by 2475, and that may not be prorated into back pay.
     expect(owed.annualDifference).not.toBe(16500 + 2475);
-    expect(owed.amount).toBeCloseTo((16500 * 92) / 365, 6);
+    expect(owed.amount).toBeCloseTo((16500 / 26) * owed.periods, 6);
   });
 
-  it('reports the day count it divided by', () => {
-    expect(owed.daysInYear).toBe(365);
+  it('is unaffected by the length of the year, unlike a day proration', () => {
+    const leap = backPayFor(
+      [
+        {
+          id: 'r2',
+          date: '2028-03-01',
+          effective_date: '2028-01-01',
+          type: 'merit',
+          base_before: 100000,
+          base_after: 110000,
+          bonus_before: 0,
+          bonus_after: 0,
+          equity_before: 50000,
+          equity_after: 50000,
+        },
+      ],
+      { paychecksPerYear: 26 }
+    )[0];
+    expect(leap.perPeriodDifference).toBeCloseTo(10000 / 26, 6);
+    expect(leap.amount).toBeCloseTo((10000 / 26) * leap.periods, 6);
+  });
+});
+
+describe('backPayFor against a known pay calendar', () => {
+  const RISE = 16500;
+  const PER_PERIOD = RISE / 26;
+  // Fortnightly, paid a week after each period ends.
+  const PAY_DATES = [
+    '2026-07-01',
+    '2026-07-15',
+    '2026-07-29',
+    '2026-08-12',
+    '2026-08-26',
+    '2026-09-09',
+    '2026-09-23',
+  ];
+  const raise = {
+    id: 'r1',
+    date: '2026-10-01',
+    effective_date: '2026-07-01',
+    type: 'merit',
+    base_before: 165000,
+    base_after: 165000 + RISE,
+    bonus_before: 0,
+    bonus_after: 0,
+    equity_before: 0,
+    equity_after: 0,
+  } as unknown as Parameters<typeof backPayFor>[0][number];
+
+  it('counts only the paychecks whose work began on or after the effective date', () => {
+    const [owed] = backPayFor([raise], {
+      paychecksPerYear: 26,
+      payDates: PAY_DATES,
+      payLagDays: 7,
+    });
+    // The paycheck on 15 Jul covers work from 25 Jun, which began before the raise.
+    expect(owed.periods).toBe(5);
+    expect(owed.amount).toBeCloseTo(PER_PERIOD * 5, 2);
+    expect(owed.estimated).toBe(false);
   });
 
-  it('counts a leap year as 366 days', () => {
-    const leap = backPayFor([
-      {
-        id: 'r2',
-        date: '2028-03-01',
-        effective_date: '2028-01-01',
-        type: 'merit',
-        base_before: 100000,
-        base_after: 110000,
-        bonus_before: 0,
-        bonus_after: 0,
-        equity_before: 0,
-        equity_after: 0,
-      },
-    ])[0];
-    expect(leap.daysInYear).toBe(366);
-    expect(leap.amount).toBeCloseTo((10000 * 60) / 366, 6);
+  it('counts one more when payroll has no lag, since the periods shift later', () => {
+    const [owed] = backPayFor([raise], { paychecksPerYear: 26, payDates: PAY_DATES });
+    expect(owed.periods).toBe(6);
+  });
+
+  it('excludes the paycheck that settled the raise and anything after it', () => {
+    const [owed] = backPayFor([raise], {
+      paychecksPerYear: 26,
+      payDates: PAY_DATES,
+      payLagDays: 7,
+    });
+    expect(owed.periods).toBeLessThan(PAY_DATES.length);
+    expect(owed.paidFrom).toBe('2026-10-01');
+  });
+
+  it('falls back to the period length when no pay dates are known, and says so', () => {
+    const [owed] = backPayFor([raise], { paychecksPerYear: 26 });
+    expect(owed.estimated).toBe(true);
+    expect(owed.periods).toBe(Math.floor(92 / 14));
+  });
+
+  it('owes nothing when every paycheck already carried the new rate', () => {
+    expect(
+      backPayFor([raise], {
+        paychecksPerYear: 26,
+        payDates: ['2026-07-01'],
+        payLagDays: 7,
+      })
+    ).toEqual([]);
   });
 });

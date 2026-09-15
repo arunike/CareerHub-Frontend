@@ -15,8 +15,9 @@ const BackPayWorking = ({ backPay }: { backPay: BackPay }) => {
   return (
     <div className="mt-2.5 border-t border-emerald-200/70 dark:border-emerald-500/25 pt-2.5">
       <div className="mb-2 text-emerald-800/80 dark:text-emerald-300">
-        {day(backPay.effectiveFrom)} → {day(lastOldRateDay)} — the {backPay.days} days you were paid
-        at the old rate.
+        {day(backPay.effectiveFrom)} → {day(lastOldRateDay)} — the{' '}
+        {backPay.periods === 1 ? 'paycheck' : `${backPay.periods} paychecks`} that went out at the
+        old rate{backPay.estimated ? ', estimated from the pay frequency' : ''}.
       </div>
       <div className="space-y-1 tabular-nums">
         <div className="flex items-baseline justify-between gap-3">
@@ -30,8 +31,10 @@ const BackPayWorking = ({ backPay }: { backPay: BackPay }) => {
           <span className="font-medium">+{fmt(backPay.annualDifference)} a year</span>
         </div>
         <div className="flex items-baseline justify-between gap-3 border-t border-emerald-200/70 dark:border-emerald-500/25 pt-1.5">
+          {/* Periods, not days: payroll reverses whole paychecks and re-pays them at the new rate. */}
           <span>
-            × {backPay.days} days ÷ {backPay.daysInYear} days in {backPay.effectiveFrom.slice(0, 4)}
+            ÷ {Math.round(backPay.annualDifference / backPay.perPeriodDifference)} paychecks a year
+            = {fmt(backPay.perPeriodDifference)} × {backPay.periods}
           </span>
           <span className="font-semibold">${exact}</span>
         </div>

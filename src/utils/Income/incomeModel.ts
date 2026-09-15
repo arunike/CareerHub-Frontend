@@ -147,7 +147,11 @@ export const buildIncomeModel = ({
     : [];
 
   // A raise payroll applied late is settled on the first paycheck that carries the new rate.
-  const backPayEvents = backPayFor(source?.raises ?? []).flatMap((owed) => {
+  const backPayEvents = backPayFor(source?.raises ?? [], {
+    paychecksPerYear,
+    payDates: ledgerPeriods.map((entry) => entry.payDate).filter(Boolean) as string[],
+    payLagDays: settings.payLagDays,
+  }).flatMap((owed) => {
     const period = ledgerPeriods.find((entry) => entry.payDate && entry.payDate >= owed.paidFrom);
     if (!period) return [];
     return [

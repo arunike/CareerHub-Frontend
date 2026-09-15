@@ -54,6 +54,8 @@ interface Props {
   onW4Change: (patch: Partial<W4Inputs>) => void;
   onFirstPayDateChange: (value: string | null) => void;
   onPaychecksPerYearChange: (value: number | null) => void;
+  payLagDays: number;
+  onPayLagDaysChange: (value: number) => void;
   onDeductionChange: (patch: Partial<DeductionLines>) => void;
   onCustomDeductionsChange: (deductions: CustomDeduction[]) => void;
   onAllowancesChange: (allowances: Allowance[]) => void;
@@ -162,6 +164,8 @@ export const ElectionsForm = ({
   onW4Change,
   onFirstPayDateChange,
   onPaychecksPerYearChange,
+  payLagDays,
+  onPayLagDaysChange,
   onDeductionChange,
   onCustomDeductionsChange,
   onAllowancesChange,
@@ -531,6 +535,8 @@ export const ElectionsForm = ({
         onElectionsChange={onElectionsChange}
         onFirstPayDateChange={onFirstPayDateChange}
         onPaychecksPerYearChange={onPaychecksPerYearChange}
+        payLagDays={payLagDays}
+        onPayLagDaysChange={onPayLagDaysChange}
         onW4Change={onW4Change}
         paidPeriodCount={paidPeriodCount}
         paychecksPerYear={paychecksPerYear}

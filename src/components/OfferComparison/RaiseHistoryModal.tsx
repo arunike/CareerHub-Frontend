@@ -68,7 +68,9 @@ const RaiseHistoryModal: React.FC<Props> = ({
   const latestEntry = sorted[0];
 
   // Previewed from the same helper the ledger uses, so the form cannot promise a different figure.
-  const [backPay] = backPayFor([{ ...form, id: 'preview' }]);
+  const [backPay] = backPayFor([{ ...form, id: 'preview' }], {
+    paychecksPerYear: Number((offer as Record<string, unknown>).paychecks_per_year) || 26,
+  });
 
   const cycle = cycleFor(form.type);
 
@@ -469,7 +471,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
           {/* Payroll told late owes the difference; told on time, the two dates simply match. */}
           {backPay && (
             <div className="rounded-lg border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-2.5 text-xs leading-relaxed text-emerald-900 dark:text-emerald-200">
-              Backdated {backPay.days} days —{' '}
+              Backdated {backPay.periods === 1 ? '1 paycheck' : `${backPay.periods} paychecks`} —{' '}
               <button
                 type="button"
                 aria-expanded={showWorking}

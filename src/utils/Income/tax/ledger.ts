@@ -168,6 +168,8 @@ export interface PeriodRow {
   postTax: number;
   net: number;
   employerMatch401k: number;
+  // 402(g) room left before this period's deferrals, so a recorded gross can be scaled safely.
+  deferralRoom: number;
   deferralPercent: number;
   matchedDeferralPercent: number;
   // A per-paycheck deduction override was used.
@@ -443,6 +445,7 @@ export const buildLedger = (input: LedgerInput): Ledger => {
       postTax,
       net,
       employerMatch401k,
+      deferralRoom: room401k,
       deferralPercent,
       matchedDeferralPercent: employer.matchTiers?.length
         ? matchedDeferralPercent(deferralPercent, employer.matchTiers)

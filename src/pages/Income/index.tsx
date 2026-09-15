@@ -199,6 +199,8 @@ const IncomePage = () => {
           }}
           onW4Change={updateW4}
           onFirstPayDateChange={(value) => update({ firstPayDate: value })}
+          payLagDays={settings.payLagDays}
+          onPayLagDaysChange={(value) => update({ payLagDays: value })}
           onPaychecksPerYearChange={(value) => {
             update({ paychecksPerYearOverride: value, firstPayDate: null });
             flagConflict('regularGross', 'gross pay');
@@ -355,13 +357,12 @@ const IncomePage = () => {
           viewSwitch={
             <Tooltip title={amountsHidden ? 'Show amounts' : 'Hide every amount on this page'}>
               <Button
-                className="toolbar-btn"
+                className="toolbar-btn toolbar-btn-icon"
                 size="large"
+                aria-label={amountsHidden ? 'Show amounts' : 'Hide every amount on this page'}
                 icon={amountsHidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                 onClick={() => setAmountsHidden((previous) => !previous)}
-              >
-                {amountsHidden ? 'Show amounts' : 'Hide amounts'}
-              </Button>
+              />
             </Tooltip>
           }
           extraActions={

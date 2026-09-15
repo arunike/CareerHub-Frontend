@@ -16,7 +16,7 @@ import {
 const addsUp = (breakdown: { steps: Parameters<typeof resolveMath>[0]; total: number }) =>
   expect(resolveMath(breakdown.steps)).toBeCloseTo(breakdown.total, 6);
 
-// Built from the substitutes: 165000 base plus a 50000 grant, a 24750 bonus and a 4% match.
+// A full year of pay: base plus a vested grant, a bonus, and a 4% employer match.
 const YEAR = {
   gross: 215000,
   supplementalGross: 24750,
@@ -266,7 +266,7 @@ describe('the gross breakdown reconciles with a single role card', () => {
   });
 
   it('splits the total by role, not only the salary line', () => {
-    // Both grosses derive from the substitutes: 165000 over 18 of 26 paychecks, 336000 over 4.
+    // Two part-year roles: 18 of 26 paychecks at one, 4 of 26 at the other.
     const roles = [role('Google', 114230.77, 24750, 0), role('Netflix', 51692.31, 16800, 425)];
     const totals = {
       gross: 165923.08,

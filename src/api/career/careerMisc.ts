@@ -176,6 +176,7 @@ export interface IncomeYearPayload {
   first_pay_date?: string | null;
   salary_override?: number | string | null;
   paychecks_per_year_override?: number | null;
+  pay_lag_days?: number;
   pretax_401k_percent?: number | string;
   roth_401k_percent?: number | string;
   hsa_per_period?: number | string;
