@@ -40,7 +40,8 @@ import {
   writeLocal,
 } from '../../utils/Income/incomeSettingsStore';
 import { buildIncomeModel } from '../../utils/Income/incomeModel';
-import { parseYearParam, YEAR_PARAM } from '../../utils/Income/yearParam';
+import { parseYearParam, ROLE_PARAM, YEAR_PARAM } from '../../utils/Income/incomeParams';
+import { keyFromRoleParam, slugForKey } from '../../utils/Income/roleSlug';
 import {
   summarizeYear,
   summarizeYears,
@@ -57,9 +58,11 @@ const numericKeys = <T>(source: unknown): Record<number, T> | undefined => {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
 
-// Suffixed because the key before it holds picks made when the default was whatever came first.
-const SELECTED_SOURCE_KEY = 'careerhub.income.selectedSource.v2';
-const RETIRED_SOURCE_KEYS = ['careerhub.income.selectedSource'];
+// Cleared on load: the role lives in the URL now, so a stored pick would only fight it.
+const RETIRED_SOURCE_KEYS = [
+  'careerhub.income.selectedSource',
+  'careerhub.income.selectedSource.v2',
+];
 
 const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings) => ({
   tax_year: taxYear,
@@ -129,15 +132,15 @@ export const useIncomeYear = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sources, setSources] = useState<IncomeSource[]>([]);
-  const [sourceKey, setSourceKey] = useState<string>(() => {
+  const roleParam = searchParams.get(ROLE_PARAM);
+
+  useEffect(() => {
     try {
-      // Dropped rather than migrated: a stale pick is exactly what stops the default applying.
       RETIRED_SOURCE_KEYS.forEach((key) => window.localStorage.removeItem(key));
-      return window.localStorage.getItem(SELECTED_SOURCE_KEY) ?? '';
     } catch {
-      return '';
+      // A browser refusing storage has nothing left to clean up anyway.
     }
-  });
+  }, []);
   const [incomeRecords, setIncomeRecords] = useState<IncomeYearPayload[] | null>(null);
   const draftsRef = useRef<Map<string, IncomeSettings>>(new Map());
   const [dirtyKeys, setDirtyKeys] = useState<string[]>([]);
@@ -219,12 +222,11 @@ export const useIncomeYear = () => {
     [sources, taxYear, hiddenRoles]
   );
 
-  const resolvedSourceKey = useMemo(() => {
-    if (sourceKey && sourcesInYear.some((candidate) => candidate.key === sourceKey)) {
-      return sourceKey;
-    }
-    return defaultSourceKey(sourcesInYear);
-  }, [sourceKey, sourcesInYear]);
+  const resolvedSourceKey = useMemo(
+    // Resolved within the year, so no param and one this year cannot hold both reach the default.
+    () => keyFromRoleParam(sourcesInYear, roleParam) || defaultSourceKey(sourcesInYear),
+    [roleParam, sourcesInYear]
+  );
 
   useEffect(() => {
     if (incomeRecords === null) return;
@@ -251,14 +253,16 @@ export const useIncomeYear = () => {
     setLoading(false);
   }, [incomeRecords, resolvedSourceKey, taxYear]);
 
-  const selectSource = useCallback((key: string) => {
-    setSourceKey(key);
-    try {
-      window.localStorage.setItem(SELECTED_SOURCE_KEY, key);
-    } catch {
-      // Selection simply will not survive a reload.
-    }
-  }, []);
+  const selectSource = useCallback(
+    (key: string) => {
+      const params = new URLSearchParams(searchParams);
+      if (key) params.set(ROLE_PARAM, slugForKey(sourcesInYear, key));
+      else params.delete(ROLE_PARAM);
+      // replace, to match the year: switching roles is filtering, not navigating.
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams, sourcesInYear]
+  );
 
   const patch = useCallback(
     (updater: (previous: IncomeSettings) => IncomeSettings) => {

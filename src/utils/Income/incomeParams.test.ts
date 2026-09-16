@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseYearParam } from './yearParam';
+import { parseYearParam } from './incomeParams';
 import { LATEST_TAX_YEAR } from './tax/data';
 
 describe('parseYearParam', () => {
