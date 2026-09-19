@@ -1,4 +1,5 @@
 import UnitNumberInput from '../../inputs/UnitNumberInput';
+import HelpTooltipTrigger from '../../feedback/HelpTooltipTrigger';
 import { DEFAULT_UNLIMITED_PTO_DAYS } from '../../../utils/OfferComparison/decisionScoring';
 type TimeOffSectionProps = {
   ptoDays?: number;
@@ -30,6 +31,7 @@ const TimeOffSection = ({
   onUnlimitedPtoPlanningDaysChange,
 }: TimeOffSectionProps) => {
   const showSeparateSickLeave = !isUnlimitedPto || !sickLeaveIncludedInUnlimitedPto;
+  const planningMode = isUnlimitedPto && Boolean(onUnlimitedPtoPlanningDaysChange);
 
   if (
     !(
@@ -73,46 +75,37 @@ const TimeOffSection = ({
               Sick leave is included and is not counted again.
             </p>
           )}
-          {isUnlimitedPto && onUnlimitedPtoPlanningDaysChange && (
-            <div className="mt-3">
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-ink-100">
-                Days you would actually take
-              </label>
-              <UnitNumberInput
-                unit="days"
-                min={0}
-                max={60}
-                value={unlimitedPtoPlanningDays ?? null}
-                placeholder={String(DEFAULT_UNLIMITED_PTO_DAYS)}
-                onChange={(value) =>
-                  onUnlimitedPtoPlanningDaysChange(value ?? DEFAULT_UNLIMITED_PTO_DAYS)
-                }
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-ink-400">
-                Unlimited is scored on what you would really book, not what the policy allows.
-              </p>
-            </div>
-          )}
         </div>
       )}
       {typeof ptoDays === 'number' && onPtoDaysChange && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            PTO Days
-          </label>
+          <div className="mb-1 flex items-center gap-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-ink-100">
+              {planningMode ? "PTO Days you'd take" : 'PTO Days'}
+            </label>
+            {planningMode && (
+              <HelpTooltipTrigger
+                ariaLabel="How unlimited PTO is scored"
+                title="Unlimited is scored on the days you would really book, not on what the policy allows. Put in the number you would actually take."
+              />
+            )}
+          </div>
           <UnitNumberInput
             unit="days"
             min={0}
-            value={ptoDays || null}
-            placeholder="0"
-            onChange={(value) => onPtoDaysChange(value ?? 0)}
-            disabled={isUnlimitedPto}
+            max={planningMode ? 60 : undefined}
+            value={
+              planningMode
+                ? (unlimitedPtoPlanningDays ?? DEFAULT_UNLIMITED_PTO_DAYS)
+                : ptoDays || null
+            }
+            placeholder={planningMode ? String(DEFAULT_UNLIMITED_PTO_DAYS) : '0'}
+            onChange={(value) =>
+              planningMode
+                ? onUnlimitedPtoPlanningDaysChange?.(value ?? DEFAULT_UNLIMITED_PTO_DAYS)
+                : onPtoDaysChange(value ?? 0)
+            }
           />
-          {isUnlimitedPto && (
-            <p className="mt-1 text-xs text-gray-500 dark:text-ink-400">
-              Ignored while unlimited PTO is enabled.
-            </p>
-          )}
         </div>
       )}
       {showSeparateSickLeave && typeof sickLeaveDays === 'number' && onSickLeaveDaysChange && (

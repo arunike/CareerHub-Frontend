@@ -21,6 +21,12 @@ type FriendlyTimeInputProps = {
   placeholder?: string;
 };
 
+// The panel is three 224px columns plus its header, which is what the flip decision compares against.
+const DESKTOP_PANEL_HEIGHT = 300;
+const PANEL_GAP = 8;
+// A landscape phone fits the panel neither below nor above, so it scrolls instead of overflowing.
+const MIN_PANEL_HEIGHT = 180;
+
 const DISPLAY_FORMAT = 'h:mm A';
 const optionBaseClass =
   'flex w-full items-center justify-center rounded-md font-medium tabular-nums transition';
@@ -140,6 +146,12 @@ const FriendlyTimeInput = ({
   });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const desktopPickerRef = useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
   const minuteOptions = useMemo(() => buildMinuteOptions(minuteStep), [minuteStep]);
   const sheetParts = useMemo(() => getSheetParts(sheetValue), [sheetValue]);
   const highlightedTime = useMemo(() => {
@@ -162,8 +174,40 @@ const FriendlyTimeInput = ({
   }, [minuteStep, sheetOpen, value]);
 
   useEffect(() => {
+    if (!open) return;
+
+    const place = () => {
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const below = window.innerHeight - rect.bottom;
+      // Flip up only when the space below cannot hold the panel and the space above can.
+      const flip = below < DESKTOP_PANEL_HEIGHT && rect.top > below;
+      const room = flip ? rect.top - PANEL_GAP * 2 : below - PANEL_GAP * 2;
+      setAnchor({
+        left: rect.left,
+        top: flip
+          ? Math.max(PANEL_GAP, rect.top - DESKTOP_PANEL_HEIGHT - PANEL_GAP)
+          : rect.bottom + PANEL_GAP,
+        width: rect.width,
+        maxHeight: Math.max(MIN_PANEL_HEIGHT, Math.min(DESKTOP_PANEL_HEIGHT, room)),
+      });
+    };
+
+    place();
+    // Capture, so a scrolling card or modal body moves the panel too, not just the window.
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
+
+  useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // The panel is portaled out of the wrapper, so it needs its own containment check.
+      if (!wrapperRef.current?.contains(target) && !desktopPickerRef.current?.contains(target)) {
         setOpen(false);
       }
     };
@@ -274,81 +318,92 @@ const FriendlyTimeInput = ({
         className={clsx(inputClasses, 'hidden sm:block')}
       />
 
-      {open && !disabled && (
-        <div
-          ref={desktopPickerRef}
-          className="absolute left-0 right-0 top-full z-[1055] mt-2 hidden rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] sm:block"
-        >
-          <div className="mb-3 text-center text-base font-semibold tracking-wide text-gray-950 dark:text-ink-50">
-            {desktopValue.format(DISPLAY_FORMAT)}
-          </div>
-          <div className="grid grid-cols-[1fr_1fr_0.75fr] gap-2">
-            <div className={clsx(columnClass, 'max-h-56')}>
-              {Array.from({ length: 12 }, (_, index) => index + 1).map((hour) => {
-                const active = desktopParts.hour === hour;
-                return (
-                  <button
-                    key={hour}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => updateDesktopValue({ hour })}
-                    className={clsx(
-                      optionBaseClass,
-                      desktopOptionClass,
-                      active ? activeOptionClass : inactiveOptionClass
-                    )}
-                  >
-                    {String(hour).padStart(2, '0')}
-                  </button>
-                );
-              })}
+      {/* Portaled for the same reason as the sheet: a card's overflow would otherwise clip it. */}
+      {open &&
+        !disabled &&
+        anchor &&
+        createPortal(
+          <div
+            ref={desktopPickerRef}
+            style={{
+              left: anchor.left,
+              top: anchor.top,
+              width: anchor.width,
+              maxHeight: anchor.maxHeight,
+            }}
+            className="fixed z-[1055] hidden overflow-y-auto rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] sm:block"
+          >
+            <div className="mb-3 text-center text-base font-semibold tracking-wide text-gray-950 dark:text-ink-50">
+              {desktopValue.format(DISPLAY_FORMAT)}
             </div>
+            <div className="grid grid-cols-[1fr_1fr_0.75fr] gap-2">
+              <div className={clsx(columnClass, 'max-h-56')}>
+                {Array.from({ length: 12 }, (_, index) => index + 1).map((hour) => {
+                  const active = desktopParts.hour === hour;
+                  return (
+                    <button
+                      key={hour}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => updateDesktopValue({ hour })}
+                      className={clsx(
+                        optionBaseClass,
+                        desktopOptionClass,
+                        active ? activeOptionClass : inactiveOptionClass
+                      )}
+                    >
+                      {String(hour).padStart(2, '0')}
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className={clsx(columnClass, 'max-h-56')}>
-              {minuteOptions.map((minute) => {
-                const active = desktopParts.minute === minute;
-                return (
-                  <button
-                    key={minute}
-                    data-minute={minute}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => updateDesktopValue({ minute })}
-                    className={clsx(
-                      optionBaseClass,
-                      desktopOptionClass,
-                      active ? activeOptionClass : inactiveOptionClass
-                    )}
-                  >
-                    {String(minute).padStart(2, '0')}
-                  </button>
-                );
-              })}
-            </div>
+              <div className={clsx(columnClass, 'max-h-56')}>
+                {minuteOptions.map((minute) => {
+                  const active = desktopParts.minute === minute;
+                  return (
+                    <button
+                      key={minute}
+                      data-minute={minute}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => updateDesktopValue({ minute })}
+                      className={clsx(
+                        optionBaseClass,
+                        desktopOptionClass,
+                        active ? activeOptionClass : inactiveOptionClass
+                      )}
+                    >
+                      {String(minute).padStart(2, '0')}
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className={columnClass}>
-              {(['AM', 'PM'] as const).map((period) => {
-                const active = desktopParts.period === period;
-                return (
-                  <button
-                    key={period}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => updateDesktopValue({ period })}
-                    className={clsx(
-                      optionBaseClass,
-                      desktopOptionClass,
-                      active ? activeOptionClass : inactiveOptionClass
-                    )}
-                  >
-                    {period}
-                  </button>
-                );
-              })}
+              <div className={columnClass}>
+                {(['AM', 'PM'] as const).map((period) => {
+                  const active = desktopParts.period === period;
+                  return (
+                    <button
+                      key={period}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => updateDesktopValue({ period })}
+                      className={clsx(
+                        optionBaseClass,
+                        desktopOptionClass,
+                        active ? activeOptionClass : inactiveOptionClass
+                      )}
+                    >
+                      {period}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* Portaled to the body: a transformed antd Drawer ancestor would trap a fixed sheet inside it. */}
       {sheetOpen &&

@@ -76,7 +76,7 @@ describe('the bonus is netted: what you give up, less what the new job pays', ()
     rows(visible, all)
       .find((row) => String(row.offer.id) === id)
       ?.categories.find((category) => category.key === 'financial')
-      ?.calculationLines?.find((line) => line.startsWith('Net bonus effect:'));
+      ?.calculationLines?.find((line) => line.startsWith('Bonus given up:'));
 
   const lineStarting = (visible: Offer[], id: string, prefix: string, all: Offer[] = visible) =>
     rows(visible, all)
@@ -95,15 +95,20 @@ describe('the bonus is netted: what you give up, less what the new job pays', ()
     expect(given).toMatch(/\d+\/365 days you would have completed/);
   });
 
-  it('breaks the first bonus at the new role out separately, also in days', () => {
-    const earned = lineStarting([currentRole, candidate], '2', 'First bonus, new role:');
-    expect(earned).toMatch(/\d+\/365 days of its bonus year/);
+  it("says nothing about the new role's own bonus, which the recurring total already pays", () => {
+    const lines =
+      rows([currentRole, candidate], [currentRole, candidate])
+        .find((row) => String(row.offer.id) === '2')
+        ?.categories.find((category) => category.key === 'financial')?.calculationLines ?? [];
+    // Crediting a part-year first bonus here paid it twice; an extra line for it is the tell.
+    expect(lines.some((line) => line.startsWith('First bonus'))).toBe(false);
+    expect(lines.some((line) => line.startsWith('Net bonus effect'))).toBe(false);
   });
 
-  it('shows the net as the difference of the two', () => {
-    const net = bonusLine([currentRole, candidate], '2');
-    expect(net).toContain('given up');
-    expect(net).toContain('earned');
+  it('shows the forfeit on its own, with no second line restating it', () => {
+    const given = bonusLine([currentRole, candidate], '2');
+    expect(given).toContain('given up');
+    expect(given).not.toContain('earned');
   });
 
   it('states the rate that produced the figure, not just the net side', () => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type React from 'react';
 import type { UserSettings } from '../../types';
 import type { AvailabilityTimeRange } from '../../utils/Settings/availabilityHours';
+import { availabilityGroupKey } from '../../utils/Settings/availabilityGroups';
 
 export const useAvailabilityRanges = ({
   settings,
@@ -10,32 +11,38 @@ export const useAvailabilityRanges = ({
   settings: UserSettings | null;
   setSettings: React.Dispatch<React.SetStateAction<UserSettings | null>>;
 }) => {
-  const [expandedAvailabilityRange, setExpandedAvailabilityRange] = useState<number | null>(null);
+  // Keyed by day set, not by index: adding a block must not move which card is open.
+  const [expandedAvailabilityGroup, setExpandedAvailabilityGroup] = useState<string | null>(null);
 
-  const addAvailabilityRange = () => {
+  const defaultDays = () => (settings?.work_days?.length ? settings.work_days : [0, 1, 2, 3, 4]);
+
+  const addAvailabilityRange = (days?: number[]) => {
     if (!settings) return;
     const ranges = settings.work_time_ranges || [];
-    const days = settings.work_days?.length ? settings.work_days : [0, 1, 2, 3, 4];
+    const groupDays = days ?? defaultDays();
     setSettings((prev) =>
       prev
         ? {
             ...prev,
-            work_time_ranges: [...ranges, { start: '09:00:00', end: '17:00:00', days }],
+            work_time_ranges: [...ranges, { start: '09:00:00', end: '17:00:00', days: groupDays }],
           }
         : null
     );
-    setExpandedAvailabilityRange(ranges.length);
+    setExpandedAvailabilityGroup(availabilityGroupKey([...groupDays].sort((a, b) => a - b)));
   };
 
   const removeAvailabilityRange = (idx: number) => {
     if (!settings) return;
     const updated = settings.work_time_ranges.filter((_, rangeIndex) => rangeIndex !== idx);
     setSettings((prev) => (prev ? { ...prev, work_time_ranges: updated } : null));
-    setExpandedAvailabilityRange((current) => {
-      if (current === null) return null;
-      if (current === idx) return null;
-      return current > idx ? current - 1 : current;
-    });
+  };
+
+  const removeAvailabilityGroup = (indices: number[]) => {
+    if (!settings) return;
+    const drop = new Set(indices);
+    const updated = settings.work_time_ranges.filter((_, rangeIndex) => !drop.has(rangeIndex));
+    setSettings((prev) => (prev ? { ...prev, work_time_ranges: updated } : null));
+    setExpandedAvailabilityGroup(null);
   };
 
   const updateAvailabilityRange = (idx: number, patch: Partial<AvailabilityTimeRange>) => {
@@ -45,25 +52,26 @@ export const useAvailabilityRanges = ({
     setSettings((prev) => (prev ? { ...prev, work_time_ranges: updated } : null));
   };
 
-  const toggleAvailabilityRangeDay = (range: AvailabilityTimeRange, idx: number, day: number) => {
+  // The day set belongs to the card, so every block in it moves together or the group splits.
+  const setAvailabilityGroupDays = (indices: number[], nextDays: number[]) => {
     if (!settings) return;
     const enabledDays = settings.work_days ?? [];
-    if (!enabledDays.includes(day)) return;
-
-    const selectedDays = (range.days ?? enabledDays).filter((item) => enabledDays.includes(item));
-    const nextDays = selectedDays.includes(day)
-      ? selectedDays.filter((item) => item !== day)
-      : [...selectedDays, day].sort();
-    updateAvailabilityRange(idx, { days: nextDays });
-  };
-
-  const applyWorkDaysToAvailabilityRange = (idx: number) => {
-    if (!settings) return;
-    updateAvailabilityRange(idx, { days: [...(settings.work_days || [])].sort() });
-  };
-
-  const clearAvailabilityRangeDays = (idx: number) => {
-    updateAvailabilityRange(idx, { days: [] });
+    const days = [...new Set(nextDays)]
+      .filter((day) => enabledDays.includes(day))
+      .sort((a, b) => a - b);
+    const touch = new Set(indices);
+    setSettings((prev) =>
+      prev
+        ? {
+            ...prev,
+            work_time_ranges: prev.work_time_ranges.map((range, rangeIndex) =>
+              touch.has(rangeIndex) ? { ...range, days } : range
+            ),
+          }
+        : null
+    );
+    // The key is the day set, so follow the card the edit just renamed.
+    setExpandedAvailabilityGroup(availabilityGroupKey(days));
   };
 
   const updateWorkDays = (nextDays: number[]) => {
@@ -82,17 +90,14 @@ export const useAvailabilityRanges = ({
     });
   };
 
-  // Categories and time-off colours share the calendar, so a repeat makes it unreadable.
-
   return {
-    expandedAvailabilityRange,
-    setExpandedAvailabilityRange,
+    expandedAvailabilityGroup,
+    setExpandedAvailabilityGroup,
     addAvailabilityRange,
     removeAvailabilityRange,
+    removeAvailabilityGroup,
     updateAvailabilityRange,
-    toggleAvailabilityRangeDay,
-    applyWorkDaysToAvailabilityRange,
-    clearAvailabilityRangeDays,
+    setAvailabilityGroupDays,
     updateWorkDays,
   };
 };

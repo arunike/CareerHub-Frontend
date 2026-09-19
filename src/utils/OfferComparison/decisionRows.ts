@@ -1,10 +1,4 @@
-import {
-  DAYS_IN_BONUS_YEAR,
-  firstBonusStint,
-  stayedBonusStint,
-  positionEndDate,
-  positionStartDate,
-} from './bonusStint';
+import { DAYS_IN_BONUS_YEAR, stayedBonusStint, positionStartDate } from './bonusStint';
 import {
   type ApplicationLike as Application,
   type OfferLike as Offer,
@@ -14,6 +8,7 @@ import type { AdjustedOfferMetrics } from './types';
 import type { ScenarioRow } from './offerAdjustmentsTypes';
 import { getImmigrationSignalLabel } from './immigrationSignal';
 import { computeIndependentFinancialScore } from './financialScore';
+import { bonusMoveCost } from './bonusMoveCost';
 import { benefitsBreakdown, scoreBenefitsWithBreakdown } from './benefitsScore';
 import {
   ONE_TIME_HORIZON_YEARS,
@@ -39,6 +34,18 @@ import {
   LINE_NOTE,
 } from './decisionScoring';
 import type { CategoryKey, CategoryScore, DecisionRow } from './decisionScoring';
+
+const oneTimeParts = (signOn: number, relocation: number, bonusCost: number): string => {
+  const parts: string[] = [];
+  if (signOn !== 0) parts.push(`sign-on ${formatCurrency(signOn)}`);
+  if (relocation !== 0) parts.push(`relocation ${formatCurrency(relocation)}`);
+  if (bonusCost !== 0) {
+    parts.push(
+      `${bonusCost > 0 ? 'less ' : 'plus '}bonus given up ${formatCurrency(Math.abs(bonusCost))}`
+    );
+  }
+  return parts.join(' ') || formatCurrency(0);
+};
 
 export const buildRows = (
   filteredOffers: Offer[],
@@ -97,18 +104,11 @@ export const buildRows = (
           leaving: startIso,
           payoutMonth: BONUS_PAYOUT_MONTH,
         });
-    const joiningStint = !isMove
-      ? { days: 0, share: 0 }
-      : firstBonusStint({
-          start: startIso,
-          end: positionEndDate(offer),
-          payoutMonth: BONUS_PAYOUT_MONTH,
-        });
     const forfeitedGross = (Number(currentRole?.bonus) || 0) * leavingStint.share;
-    const proratedGross = (Number(offer.bonus) || 0) * joiningStint.share;
-    const forfeited = forfeitedGross * afterBonusTax;
-    const proratedFirst = proratedGross * afterBonusTax;
-    const bonusNet = forfeited - proratedFirst;
+    const { forfeited, net: bonusNet } = bonusMoveCost({
+      forfeited: forfeitedGross * afterBonusTax,
+      isMove,
+    });
     const oneTimeGross =
       (Number(financialMetrics?.afterTaxSignOn) || 0) +
       (Number(financialMetrics?.afterTaxRelocation) || 0);
@@ -157,16 +157,14 @@ export const buildRows = (
               `Benefits taken out: ${formatCurrency(benefitsPortion)} of that adjusted value is 401(k) match, HSA and perks, scored under Benefits instead`,
               // Hidden when there is no sign-on, no relocation and no bonus effect at all.
               oneTimeGross !== 0 || bonusNet !== 0
-                ? `One-time payment over ${ONE_TIME_HORIZON_YEARS} years (after tax): sign-on ${formatCurrency(Number(financialMetrics?.afterTaxSignOn) || 0)} + relocation ${formatCurrency(Number(financialMetrics?.afterTaxRelocation) || 0)}${bonusNet !== 0 ? ` ${bonusNet > 0 ? '-' : '+'} bonus ${formatCurrency(Math.abs(bonusNet))}` : ''} = ${formatCurrency(oneTimeGross - bonusNet)} · x 100 / ${colIndex} = ${formatCurrency(scoreParts.oneTimeTotal)} · ÷ ${ONE_TIME_HORIZON_YEARS} = ${formatCurrency(scoreParts.oneTimeCounted)}${LINE_NOTE}Cost of living applies because this is removed from a total that is already adjusted, so a raw figure would mix units. The result is then split evenly across ${ONE_TIME_HORIZON_YEARS} years.`
+                ? `One-time over ${ONE_TIME_HORIZON_YEARS} years (after tax): ${oneTimeParts(
+                    Number(financialMetrics?.afterTaxSignOn) || 0,
+                    Number(financialMetrics?.afterTaxRelocation) || 0,
+                    bonusNet
+                  )} = ${formatCurrency(oneTimeGross - bonusNet)} · x 100 / ${colIndex} = ${formatCurrency(scoreParts.oneTimeTotal)} · ÷ ${ONE_TIME_HORIZON_YEARS} = ${formatCurrency(scoreParts.oneTimeCounted)}${LINE_NOTE}Cost of living applies because this is removed from a total that is already adjusted, so a raw figure would mix units. The result is then split evenly across ${ONE_TIME_HORIZON_YEARS} years.`
                 : '',
               forfeited !== 0
                 ? `Bonus given up: ${leavingStint.days >= DAYS_IN_BONUS_YEAR ? 'a full year at your current role' : `${leavingStint.days}/${DAYS_IN_BONUS_YEAR} days you would have completed`} · ${lessTax(forfeitedGross, Number(financialMetrics?.usedBonusTaxRate) || 0, forfeited)}${LINE_NOTE}Staying would have completed the bonus year and paid the whole bonus, so leaving gives up all of it. Pro-rated only if you had not been at your current role for the whole of that year by its payout.`
-                : '',
-              proratedFirst !== 0
-                ? `First bonus, new role: ${joiningStint.days}/${DAYS_IN_BONUS_YEAR} days of its bonus year · ${lessTax(proratedGross, Number(financialMetrics?.usedBonusTaxRate) || 0, proratedFirst)}${LINE_NOTE}Starting part-way through a bonus year earns only the share of it you are there for, measured from the start date on this offer to the payout, and capped by an end date where one is known.`
-                : '',
-              bonusNet !== 0
-                ? `Net bonus effect: ${formatCurrency(forfeited)} given up - ${formatCurrency(proratedFirst)} earned = ${formatCurrency(bonusNet)} (after tax)${LINE_NOTE}Charged once, through the same one-time bucket as a sign-on, so it is spread evenly over the four-year horizon.`
                 : '',
               ...buildScoreValueLines({
                 financialValue,
@@ -268,6 +266,8 @@ export const buildRows = (
   const simRows = simulatedOffers.map((offer, index) => {
     const financialValue = simFinancialValues[index];
     const scenarioRow = scenarioRows.find((row) => String(row.offer.id) === String(offer.id));
+    // A simulated offer is a hypothetical, never the role you hold, so any current role is a move.
+    const isMove = Boolean(currentRole);
     const baseApp = offer.application ? applicationsById[offer.application] : undefined;
     const company = baseApp
       ? baseApp.company_name
@@ -327,20 +327,17 @@ export const buildRows = (
             benefitsPortion,
             afterTaxSignOn: Number(scenarioRow?.afterTaxSignOn) || 0,
             afterTaxRelocation: Number(scenarioRow?.afterTaxRelocation) || 0,
-            bonusNetOnMove:
-              ((Number(currentRole?.bonus) || 0) *
+            bonusNetOnMove: bonusMoveCost({
+              forfeited:
+                (Number(currentRole?.bonus) || 0) *
                 stayedBonusStint({
                   joined: positionStartDate(currentRole),
                   leaving: bonusClockDate(offer, todayIso),
                   payoutMonth: BONUS_PAYOUT_MONTH,
-                }).share -
-                (Number(offer.bonus) || 0) *
-                  firstBonusStint({
-                    start: bonusClockDate(offer, todayIso),
-                    end: positionEndDate(offer),
-                    payoutMonth: BONUS_PAYOUT_MONTH,
-                  }).share) *
-              (1 - (Number(scenarioRow?.usedBonusTaxRate) || 0) / 100),
+                }).share *
+                (1 - (Number(scenarioRow?.usedBonusTaxRate) || 0) / 100),
+              isMove,
+            }).net,
             colIndex: simColIndex,
           });
           const cashOnlyValue = scoreParts.value;

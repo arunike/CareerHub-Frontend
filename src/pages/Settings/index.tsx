@@ -98,14 +98,13 @@ const Settings: React.FC = () => {
   } = categoryEditor;
 
   const {
-    expandedAvailabilityRange,
-    setExpandedAvailabilityRange,
+    expandedAvailabilityGroup,
+    setExpandedAvailabilityGroup,
     addAvailabilityRange,
     removeAvailabilityRange,
+    removeAvailabilityGroup,
     updateAvailabilityRange,
-    toggleAvailabilityRangeDay,
-    applyWorkDaysToAvailabilityRange,
-    clearAvailabilityRangeDays,
+    setAvailabilityGroupDays,
     updateWorkDays,
   } = useAvailabilityRanges({ settings, setSettings });
 
@@ -151,7 +150,7 @@ const Settings: React.FC = () => {
       }
       originalSettingsRef.current = JSON.stringify(data);
       setSettings(data);
-      setExpandedAvailabilityRange(null);
+      setExpandedAvailabilityGroup(null);
       setIsLocked(Boolean(data.is_locked));
       syncAiSettings(data);
       setIsDirty(false);
@@ -161,7 +160,7 @@ const Settings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [messageApi, syncAiSettings, setExpandedAvailabilityRange]);
+  }, [messageApi, syncAiSettings, setExpandedAvailabilityGroup]);
 
   useEffect(() => {
     fetchSettings();
@@ -307,15 +306,14 @@ const Settings: React.FC = () => {
         {activeTab === 'general' && settings && (
           <AvailabilitySection
             addAvailabilityRange={addAvailabilityRange}
-            applyWorkDaysToAvailabilityRange={applyWorkDaysToAvailabilityRange}
             categories={categories}
-            clearAvailabilityRangeDays={clearAvailabilityRangeDays}
-            expandedAvailabilityRange={expandedAvailabilityRange}
+            expandedAvailabilityGroup={expandedAvailabilityGroup}
+            removeAvailabilityGroup={removeAvailabilityGroup}
             removeAvailabilityRange={removeAvailabilityRange}
-            setExpandedAvailabilityRange={setExpandedAvailabilityRange}
+            setAvailabilityGroupDays={setAvailabilityGroupDays}
+            setExpandedAvailabilityGroup={setExpandedAvailabilityGroup}
             setSettings={setSettings}
             settings={settings}
-            toggleAvailabilityRangeDay={toggleAvailabilityRangeDay}
             updateAvailabilityRange={updateAvailabilityRange}
             updateWorkDays={updateWorkDays}
           />
