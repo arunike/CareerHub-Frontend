@@ -12,16 +12,28 @@ const num = (value: unknown) => {
 
 const usable = (entry: RaiseEntry) => Boolean(entry?.date) && num(entry.base_after) > 0;
 
-// A raise is a step change in pay: it applies from its effective date and holds until the next.
+// Payroll acts on the notified date, but a rise announced early cannot be paid before it starts.
+const stepDateOf = (raise: RaiseEntry) => {
+  const effective = raise.effective_date;
+  return effective && effective > raise.date ? effective : raise.date;
+};
+
+// A raise is a step change in pay: it applies from that day and holds until the next one.
 export const buildSalarySteps = (raises: RaiseEntry[], fallbackSalary: number): SalaryStep[] => {
-  const sorted = raises.filter(usable).sort((a, b) => a.date.localeCompare(b.date));
+  // Two raises notified the same day tie, so the later effective one wins by rule, not by JSON order.
+  const sorted = raises.filter(usable).sort((a, b) => {
+    const byDate = a.date.localeCompare(b.date);
+    if (byDate !== 0) return byDate;
+    const byEffective = (a.effective_date ?? a.date).localeCompare(b.effective_date ?? b.date);
+    return byEffective !== 0 ? byEffective : num(a.base_after) - num(b.base_after);
+  });
   if (sorted.length === 0) return [];
 
   // Before the first raise the pay is whatever it was raised from, not today's figure.
   const opening = num(sorted[0].base_before) || fallbackSalary;
   const steps: SalaryStep[] = [{ effectiveFrom: '', annualSalary: opening }];
   for (const raise of sorted) {
-    steps.push({ effectiveFrom: raise.date, annualSalary: num(raise.base_after) });
+    steps.push({ effectiveFrom: stepDateOf(raise), annualSalary: num(raise.base_after) });
   }
   return steps;
 };
@@ -80,17 +92,13 @@ export const currentPackage = (raises: RaiseEntry[], stored: Package): Package =
   };
 };
 
-export const stepsForField = (
-  raises: RaiseEntry[],
-  field: RaiseField,
-  fallback: number
-): SalaryStep[] => {
+const stepsForField = (raises: RaiseEntry[], field: RaiseField, fallback: number): SalaryStep[] => {
   const sorted = dated(raises);
   if (sorted.length === 0) return [];
   const opening = num(sorted[0][BEFORE[field]]) || fallback;
   const steps: SalaryStep[] = [{ effectiveFrom: '', annualSalary: opening }];
   for (const raise of sorted) {
-    steps.push({ effectiveFrom: raise.date, annualSalary: num(raise[AFTER[field]]) });
+    steps.push({ effectiveFrom: stepDateOf(raise), annualSalary: num(raise[AFTER[field]]) });
   }
   return steps;
 };
@@ -306,4 +314,41 @@ export const backPayFor = (raises: RaiseEntry[], context: BackPayContext): BackP
     });
   }
   return owed;
+};
+
+export interface RaiseLedgerInput {
+  raises: RaiseEntry[];
+  periods: Array<{ periodIndex: number; payDate: string | null }>;
+  fallbackSalary: number;
+  hasLinkedOffer: boolean;
+}
+
+// Why a logged raise changed nothing, so a flat ledger is never left unexplained.
+export const raiseLedgerNotice = ({
+  raises,
+  periods,
+  fallbackSalary,
+  hasLinkedOffer,
+}: RaiseLedgerInput): string | null => {
+  if (!hasLinkedOffer) {
+    return 'No offer is linked to this role, so its pay comes from the Experience record alone — raises, benefits and employer match are all stored on an offer and cannot reach these paychecks. Link one on the Experience page.';
+  }
+  if (raises.length === 0) return null;
+
+  const unusable = raises.filter((raise) => !usable(raise));
+  if (unusable.length === raises.length) {
+    return 'The recorded raise has no date or no new base pay, so there is nothing to apply.';
+  }
+
+  const applied = salaryByPeriod(periods, raises, fallbackSalary, 1);
+  if (Object.keys(applied).length > 0) return null;
+
+  const dated = raises.filter(usable).sort((a, b) => a.date.localeCompare(b.date));
+  const payDates = periods.map((period) => period.payDate).filter(Boolean) as string[];
+  const lastPayDate = payDates[payDates.length - 1];
+  const firstRaise = dated[0].date;
+  if (lastPayDate && firstRaise > lastPayDate) {
+    return `The raise is dated ${firstRaise}, after the last paycheck of this year — it will apply from the year that contains it.`;
+  }
+  return 'The raise lands on the same base pay this role already uses, so no paycheck changes. Check the After figure against the role’s current base.';
 };

@@ -16,7 +16,10 @@ import { allowanceSchedule as buildAllowanceSchedule, splitAllowances } from './
 import { tiersFromOffer, type MatchTier } from './matchTiers';
 import { splitCustomDeductions } from './deductions';
 import { buildVestEvents } from './vestEvents';
-import { backPayFor, salaryByPeriod } from './raiseSchedule';
+import { backPayFor, raiseLedgerNotice, salaryByPeriod } from './raiseSchedule';
+import { salaryBasisOf, type SalaryBasis } from './salaryBasis';
+import { deferralOverridesFor, emptyDeferralPlan, mergeDeferralSchedule } from './deferralSchedule';
+import { raiseCoverageOf, type RaiseCoverage } from './raiseCoverage';
 import {
   buildBonusEvents,
   nextYearBonusEstimate,
@@ -43,6 +46,12 @@ export interface IncomeModelInput {
 
 export interface IncomeModel {
   paychecksPerYear: number;
+  // Which record produced the headline salary, so the page can show its own working.
+  salaryBasis: SalaryBasis;
+  // How many raises exist and how many paychecks they moved; zero of either is worth saying.
+  raiseCoverage: RaiseCoverage;
+  // Why a recorded raise did not move any paycheck; null when it did, or when there is none.
+  raiseNotice: string | null;
   annualSalary: number;
   firstPayDate: string;
   periods: ReturnType<typeof buildPayPeriods>;
@@ -171,11 +180,17 @@ export const buildIncomeModel = ({
 
   const stateAbbr = settings.stateOverride || extractStateAbbr(source?.location ?? '', stateNames);
 
+  const coversDependents = settings.hasDependentsOverride ?? source?.hasDependents ?? false;
   const deductionLines = {
     medical: settings.medicalOverride ?? source?.medicalPerPeriod ?? 0,
     dental: settings.dentalOverride ?? source?.dentalPerPeriod ?? 0,
     vision: settings.visionOverride ?? source?.visionPerPeriod ?? 0,
-    dependent: settings.dependentOverride ?? source?.dependentPerPeriod ?? 0,
+    // Summed from its three lines, so the ledger keeps one figure while the form shows the parts.
+    dependent: coversDependents
+      ? (settings.dependentMedicalOverride ?? source?.dependentMedicalPerPeriod ?? 0) +
+        (settings.dependentDentalOverride ?? source?.dependentDentalPerPeriod ?? 0) +
+        (settings.dependentVisionOverride ?? source?.dependentVisionPerPeriod ?? 0)
+      : 0,
   };
 
   const customSplit = splitCustomDeductions(settings.customDeductions);
@@ -207,8 +222,18 @@ export const buildIncomeModel = ({
     regularGross: paychecksPerYear > 0 ? roundCents(annualSalary / paychecksPerYear) : 0,
   };
 
+  // Laid under the manual overrides, so a rate typed on one paycheck still wins over the schedule.
+  const scheduledDeferrals = deferralOverridesFor(
+    periods,
+    settings.deferralPlan ?? emptyDeferralPlan(),
+    {
+      pretaxPercent: settings.elections.pretax401kPercent,
+      rothPercent: settings.elections.roth401kPercent,
+    },
+    firstPayDate
+  );
   const periodOverrides = buildPeriodOverrides(
-    settings.periodDeductions,
+    mergeDeferralSchedule(settings.periodDeductions, scheduledDeferrals),
     periodDefaults,
     settings.customDeductions,
     {
@@ -260,6 +285,15 @@ export const buildIncomeModel = ({
   return {
     paychecksPerYear,
     annualSalary,
+    salaryBasis: salaryBasisOf(settings.salaryOverride, source?.annualSalary, source?.payFrom),
+    raiseCoverage: raiseCoverageOf(source?.raises ?? [], Object.keys(raiseSalaries).length),
+    // Non-null when a logged raise changed nothing, so a flat ledger explains itself.
+    raiseNotice: raiseLedgerNotice({
+      raises: source?.raises ?? [],
+      periods,
+      fallbackSalary: annualSalary,
+      hasLinkedOffer: Boolean(source?.hasBenefitData),
+    }),
     firstPayDate,
     periods,
     vestingTerms,

@@ -15,7 +15,7 @@ export const OTHER_PAY_NOTE = 'Other pay above the modelled gross';
 // Only gross and take-home; the per-line tax fields had zero production rows.
 export type ActualField = 'gross' | 'net';
 
-export const ACTUAL_FIELDS: ActualField[] = ['gross', 'net'];
+const ACTUAL_FIELDS: ActualField[] = ['gross', 'net'];
 
 // The row the page displays: modelled figures with any recorded values substituted in.
 export interface EffectiveRow {

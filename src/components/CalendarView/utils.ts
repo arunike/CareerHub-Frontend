@@ -16,7 +16,7 @@ export const hasDayItems = (dayData: DayData) =>
   dayData.customHolidays.length > 0 ||
   dayData.federalHolidays.length > 0;
 
-export const formatRangeLabel = (start: Date, end: Date) => {
+const formatRangeLabel = (start: Date, end: Date) => {
   const sameYear = format(start, 'yyyy') === format(end, 'yyyy');
   const sameMonth = format(start, 'yyyy-MM') === format(end, 'yyyy-MM');
 

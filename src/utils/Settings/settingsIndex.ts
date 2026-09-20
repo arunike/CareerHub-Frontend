@@ -75,7 +75,7 @@ export interface SettingsSearchEntry {
   keywords: string;
 }
 
-export const SETTINGS_SEARCH_INDEX: SettingsSearchEntry[] = [
+const SETTINGS_SEARCH_INDEX: SettingsSearchEntry[] = [
   {
     tab: 'general',
     id: 'availability',

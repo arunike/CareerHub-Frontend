@@ -1,6 +1,6 @@
 import type { PromotionReviewResult } from './browserAi';
 
-export const PROMOTION_REVIEW_UNSAFE_PATTERNS = [
+const PROMOTION_REVIEW_UNSAFE_PATTERNS = [
   /\bpublic\s+(data|benchmark|comp|compensation|salary)\b/i,
   /\b(glassdoor|levels\.fyi|salary\.com|market\s+comp|compensation\s+benchmark)\b/i,
   /\b(formal\s+)?promotion\s+cycles?\b/i,
@@ -15,10 +15,10 @@ export const PROMOTION_REVIEW_UNSAFE_PATTERNS = [
   /\bsame\s+manager\s+since\s+(start|the\s+start)\b/i,
 ];
 
-export const PROMOTION_REVIEW_GENERIC_FALLBACK =
+const PROMOTION_REVIEW_GENERIC_FALLBACK =
   'Use manager calibration to validate this against your actual promotion expectations.';
 
-export const isUnsafePromotionText = (value: string) =>
+const isUnsafePromotionText = (value: string) =>
   PROMOTION_REVIEW_UNSAFE_PATTERNS.some((pattern) => pattern.test(value));
 
 export const sanitizePromotionText = (
@@ -37,7 +37,7 @@ export const sanitizePromotionText = (
   return safeSentences.join(' ') || fallback;
 };
 
-export const sanitizePromotionList = (items?: string[], fallback?: string[]) => {
+const sanitizePromotionList = (items?: string[], fallback?: string[]) => {
   const sanitized = (items || []).map((item) => sanitizePromotionText(item, '')).filter(Boolean);
   return sanitized.length ? sanitized : fallback || [];
 };

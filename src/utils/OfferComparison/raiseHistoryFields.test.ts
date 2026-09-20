@@ -90,9 +90,15 @@ describe('reasonValue', () => {
 });
 
 describe('emptyForm', () => {
-  it('defaults the effective date to the review cycle', () => {
+  it('opens with no type, so the entry carries no reason nobody chose', () => {
+    expect(emptyForm().type).toBe('');
+  });
+
+  it('dates the effective day from the notified day while no cycle is known', () => {
     const form = emptyForm();
-    expect(form.effective_date).toBe(suggestEffectiveDate({ type: 'merit', date: form.date }));
+    expect(form.effective_date).toBe(form.date);
+    // Picking merit is what moves it onto the review cycle, and only then.
+    expect(suggestEffectiveDate({ type: 'merit', date: form.date })).not.toBe(form.date);
   });
 
   it('never dates a new raise into the future', () => {

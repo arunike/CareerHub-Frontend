@@ -15,7 +15,7 @@ export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   toastDurationSeconds: 12,
 };
 
-export const REMINDER_STATE_KEY = 'careerhub.eventReminders.state';
+const REMINDER_STATE_KEY = 'careerhub.eventReminders.state';
 
 export interface ReminderState {
   // event id -> ISO date it may reappear on, or 'forever' when muted for good.

@@ -31,7 +31,7 @@ export const canDragEvent = (event: Event) =>
   !event.is_locked && !event.is_recurring && !event.parent_event;
 
 // Federal holidays are fixed calendar facts; only your own custom ones can move.
-export const canDragHoliday = (holiday: Holiday) =>
+const canDragHoliday = (holiday: Holiday) =>
   Boolean(holiday.id) &&
   holiday.holiday_type !== 'federal' &&
   !holiday.is_locked &&

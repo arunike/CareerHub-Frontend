@@ -1,4 +1,5 @@
 import type { FilingStatus } from '../../types/tax';
+import { emptyDeferralPlan, type DeferralPlan } from './deferralSchedule';
 import { NO_ELECTIONS, type Elections, type IncomeEvent } from './tax/ledger';
 import { EMPTY_W4, type W4Inputs } from './tax/withholding';
 import type { BonusExtra, BonusPayout } from './bonusSchedule';
@@ -13,6 +14,7 @@ export interface IncomeSettings {
   stateOverride: string;
   firstPayDate: string | null;
   salaryOverride: number | null;
+  deferralPlan: DeferralPlan;
   paychecksPerYearOverride: number | null;
   elections: Elections;
   w4: W4Inputs;
@@ -33,6 +35,11 @@ export interface IncomeSettings {
   dentalOverride: number | null;
   visionOverride: number | null;
   dependentOverride: number | null;
+  // Drafts for the offer's own dependent lines, cleared once a save has written them across.
+  dependentMedicalOverride: number | null;
+  dependentDentalOverride: number | null;
+  dependentVisionOverride: number | null;
+  hasDependentsOverride: boolean | null;
   customDeductions: CustomDeduction[];
   allowances: Allowance[];
   matchTiers: MatchTier[] | null;
@@ -52,6 +59,7 @@ export const DEFAULT_SETTINGS: IncomeSettings = {
   stateOverride: '',
   firstPayDate: null,
   salaryOverride: null,
+  deferralPlan: emptyDeferralPlan(),
   paychecksPerYearOverride: null,
   elections: NO_ELECTIONS,
   w4: EMPTY_W4,
@@ -72,6 +80,10 @@ export const DEFAULT_SETTINGS: IncomeSettings = {
   dentalOverride: null,
   visionOverride: null,
   dependentOverride: null,
+  dependentMedicalOverride: null,
+  dependentDentalOverride: null,
+  dependentVisionOverride: null,
+  hasDependentsOverride: null,
   customDeductions: [],
   allowances: [],
   matchTiers: null,

@@ -20,9 +20,7 @@ const parseAmount = (raw: string): number | null => {
 };
 
 // null means "not a numeric range" — e.g. 'Competitive', 'DOE', 'Up to £90k'.
-export const parseSalaryRange = (
-  value?: string
-): { min: number | null; max: number | null } | null => {
+const parseSalaryRange = (value?: string): { min: number | null; max: number | null } | null => {
   const text = (value ?? '').trim();
   if (!text) return { min: null, max: null };
   const parts = text.split(SEPARATOR).filter(Boolean);
@@ -36,7 +34,7 @@ export const parseSalaryRange = (
 };
 
 // Plain digits with spaces around the dash — the shape already used in synced sheets.
-export const formatSalaryRange = (min: number | null, max: number | null) => {
+const formatSalaryRange = (min: number | null, max: number | null) => {
   if (min != null && max != null) return `${min} - ${max}`;
   if (min != null) return String(min);
   if (max != null) return String(max);

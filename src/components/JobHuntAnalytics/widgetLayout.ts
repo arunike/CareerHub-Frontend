@@ -3,7 +3,7 @@ import type { Layout, LayoutItem } from 'react-grid-layout';
 export const GRID_COLS = 12;
 export const ROW_HEIGHT = 8;
 export const MARGIN: [number, number] = [24, 24];
-export const MIN_WIDTH = 2;
+const MIN_WIDTH = 2;
 const FALLBACK_HEIGHT = 240;
 
 export interface Placement {

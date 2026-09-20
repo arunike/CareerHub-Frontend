@@ -71,7 +71,7 @@ export const formatStageDate = (value: string) => {
   return parsed ? format(parsed, 'MMM d, yyyy') : value;
 };
 
-export const percentageColor = (index: number) => {
+const percentageColor = (index: number) => {
   const colors = [
     'bg-blue-500',
     'bg-sky-500',

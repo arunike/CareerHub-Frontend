@@ -9,7 +9,7 @@ export interface AIProviderSettings {
   apiKeyMasked: string;
 }
 
-export const DEFAULT_AI_PROVIDER_SETTINGS: AIProviderSettings = {
+const DEFAULT_AI_PROVIDER_SETTINGS: AIProviderSettings = {
   adapter: 'gemini',
   endpoint: 'https://generativelanguage.googleapis.com/v1beta',
   model: 'gemini-3-flash-preview',

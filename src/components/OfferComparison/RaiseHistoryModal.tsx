@@ -14,8 +14,21 @@ import type { RaiseEntry } from '../../types';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { backPayFor } from '../../utils/Income/raiseSchedule';
 import { cycleFor, nextEffectiveDate } from '../../utils/OfferComparison/raiseCycles';
+import { SALARY_HOURS_PER_YEAR } from '../../utils/Experience/payGrowth';
 import ModeToggle from '../inputs/ModeToggle';
 import BackPayWorking from './BackPayWorking';
+import {
+  describeRaiseFormIssues,
+  raiseFormIssues,
+} from '../../utils/OfferComparison/raiseFormValidation';
+import {
+  annualFromHourly,
+  changeBetween,
+  formatPercentChange,
+  hourlyFromAnnual,
+} from '../../utils/OfferComparison/raiseAfterValues';
+import { bonusAtSameRate, bonusFromPercent, bonusPercentOf } from '../../utils/bonusPercent';
+import { applyRolePayToChain, firstRaiseDrift } from '../../utils/OfferComparison/raiseChain';
 import RaiseBreakdown from './RaiseBreakdown';
 import {
   defaultModes,
@@ -29,6 +42,7 @@ import {
   reasonValue,
   type AfterModes,
   type BaseEquityMode,
+  type BaseMode,
   type BonusMode,
   type PctInputs,
 } from './raiseHistoryFields';
@@ -64,6 +78,9 @@ const RaiseHistoryModal: React.FC<Props> = ({
   const [afterModes, setAfterModes] = useState<AfterModes>(defaultModes);
   const [showWorking, setShowWorking] = useState(false);
   const [pctInputs, setPctInputs] = useState<PctInputs>(defaultPcts);
+  // A bonus tracks base at its old share until edited; after that it is the user's number.
+  const [bonusTouched, setBonusTouched] = useState(false);
+  const [hourlyInput, setHourlyInput] = useState('');
 
   const latestEntry = sorted[0];
 
@@ -78,8 +95,15 @@ const RaiseHistoryModal: React.FC<Props> = ({
     if (afterModes.bonus === '%ofbase' && pctInputs.bonus !== '') {
       const pctVal = parseFloat(pctInputs.bonus);
       if (!isNaN(pctVal)) {
-        setForm((f) => ({ ...f, bonus_after: Math.round((f.base_after * pctVal) / 100) }));
+        setForm((f) => ({ ...f, bonus_after: bonusFromPercent(pctVal, f.base_after) }));
       }
+      return;
+    }
+    if (afterModes.bonus === '$' && !bonusTouched) {
+      setForm((f) => ({
+        ...f,
+        bonus_after: bonusAtSameRate(f.base_before, f.bonus_before, f.base_after),
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.base_after]);
@@ -88,6 +112,8 @@ const RaiseHistoryModal: React.FC<Props> = ({
     setForm(f);
     setAfterModes(defaultModes);
     setPctInputs(defaultPcts);
+    setBonusTouched(false);
+    setHourlyInput('');
   };
 
   const openAdd = () => {
@@ -139,12 +165,43 @@ const RaiseHistoryModal: React.FC<Props> = ({
     setEditingId(null);
   };
 
+  // Read from the offer, which is the record the Offers page edits.
+  const drift = firstRaiseDrift(entries, Number(offer.base_salary) || 0);
+
+  const handleApplyRolePay = async () => {
+    if (!drift) return;
+    setSaving(true);
+    await onSave(applyRolePayToChain(entries, drift.rolePay));
+    setSaving(false);
+  };
+
   const handleDelete = async (id: string) => {
     await onSave(entries.filter((e) => e.id !== id));
   };
 
   const setF = (key: keyof Omit<RaiseEntry, 'id'>, val: unknown) =>
     setForm((f) => ({ ...f, [key]: val }));
+
+  const issues = raiseFormIssues(form);
+  const blockedReason = describeRaiseFormIssues(issues);
+
+  const changeLine = (before: number, after: number) => {
+    const { amount, percent } = changeBetween(before, after);
+    if (amount === 0 && percent === null) return null;
+    const tone =
+      amount > 0
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : amount < 0
+          ? 'text-rose-600 dark:text-rose-400'
+          : 'text-slate-400 dark:text-ink-500';
+    return (
+      <div className={`mt-1 text-xs tabular-nums ${tone}`}>
+        {amount > 0 ? '+' : amount < 0 ? '−' : ''}
+        {fmt(Math.abs(amount))}
+        {percent !== null && <span className="ml-1.5">· {formatPercentChange(percent)}</span>}
+      </div>
+    );
+  };
 
   // One row per figure, so the two columns cannot drift as the After side grows a toggle or a hint.
   const metricRow = (
@@ -179,8 +236,12 @@ const RaiseHistoryModal: React.FC<Props> = ({
     </div>
   );
 
-  const switchBaseMode = (mode: BaseEquityMode) => {
+  const switchBaseMode = (mode: BaseMode) => {
     setAfterModes((m) => ({ ...m, base: mode }));
+    if (mode === 'rate') {
+      const hourly = hourlyFromAnnual(form.base_after || form.base_before);
+      setHourlyInput(hourly ? hourly.toFixed(2) : '');
+    }
     if (mode === '%change') {
       const p = form.base_before
         ? ((form.base_after - form.base_before) / form.base_before) * 100
@@ -197,7 +258,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
         : 0;
       setPctInputs((pi) => ({ ...pi, bonus: p.toFixed(1) }));
     } else if (mode === '%ofbase') {
-      const p = form.base_after ? (form.bonus_after / form.base_after) * 100 : 0;
+      const p = bonusPercentOf(form.base_after, form.bonus_after);
       setPctInputs((pi) => ({ ...pi, bonus: p.toFixed(1) }));
     }
   };
@@ -223,6 +284,7 @@ const RaiseHistoryModal: React.FC<Props> = ({
         options={[
           { label: '$', value: '$' },
           { label: '% increase', value: '%change' },
+          { label: '$/hr', value: 'rate' },
         ]}
       />,
       mode === '$' ? (
@@ -231,6 +293,17 @@ const RaiseHistoryModal: React.FC<Props> = ({
           min={0}
           value={form.base_after || null}
           onChange={(value) => setF('base_after', value ?? 0)}
+        />
+      ) : mode === 'rate' ? (
+        <UnitNumberInput
+          unit="$/hr"
+          min={0}
+          value={hourlyInput === '' ? null : Number(hourlyInput)}
+          onChange={(value) => {
+            setHourlyInput(value == null ? '' : String(value));
+            if (value != null) setF('base_after', annualFromHourly(value));
+          }}
+          placeholder="e.g. 80"
         />
       ) : (
         <UnitNumberInput
@@ -243,9 +316,15 @@ const RaiseHistoryModal: React.FC<Props> = ({
           placeholder="e.g. 4.2"
         />
       ),
-      mode === '%change' && form.base_after > 0 ? (
-        <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">{fmt(form.base_after)}</div>
-      ) : null
+      <>
+        {mode !== '$' && form.base_after > 0 ? (
+          <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
+            {fmt(form.base_after)}
+            {mode === 'rate' && ` · ${SALARY_HOURS_PER_YEAR.toLocaleString()} hrs/yr`}
+          </div>
+        ) : null}
+        {changeLine(form.base_before, form.base_after)}
+      </>
     );
   };
 
@@ -268,7 +347,10 @@ const RaiseHistoryModal: React.FC<Props> = ({
           unit="$"
           min={0}
           value={form.bonus_after || null}
-          onChange={(value) => setF('bonus_after', value ?? 0)}
+          onChange={(value) => {
+            setBonusTouched(true);
+            setF('bonus_after', value ?? 0);
+          }}
         />
       ) : (
         <UnitNumberInput
@@ -280,21 +362,24 @@ const RaiseHistoryModal: React.FC<Props> = ({
               if (mode === '%change') {
                 setF('bonus_after', Math.round(form.bonus_before * (1 + value / 100)));
               } else {
-                setF('bonus_after', Math.round((form.base_after * value) / 100));
+                setF('bonus_after', bonusFromPercent(value, form.base_after));
               }
             }
           }}
           placeholder={mode === '%ofbase' ? 'e.g. 20' : 'e.g. 5'}
         />
       ),
-      mode !== '$' && form.bonus_after > 0 ? (
-        <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
-          {fmt(form.bonus_after)}
-          {mode === '%ofbase' && form.base_after > 0 && (
-            <span className="ml-1 text-blue-400">of {fmt(form.base_after)} base</span>
-          )}
-        </div>
-      ) : null
+      <>
+        {mode !== '$' && form.bonus_after > 0 ? (
+          <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
+            {fmt(form.bonus_after)}
+            {mode === '%ofbase' && form.base_after > 0 && (
+              <span className="ml-1 text-blue-400">of {fmt(form.base_after)} base</span>
+            )}
+          </div>
+        ) : null}
+        {changeLine(form.bonus_before, form.bonus_after)}
+      </>
     );
   };
 
@@ -330,11 +415,14 @@ const RaiseHistoryModal: React.FC<Props> = ({
           placeholder="e.g. 4.2"
         />
       ),
-      mode === '%change' && form.equity_after > 0 ? (
-        <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
-          {fmt(form.equity_after)}
-        </div>
-      ) : null
+      <>
+        {mode === '%change' && form.equity_after > 0 ? (
+          <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
+            {fmt(form.equity_after)}
+          </div>
+        ) : null}
+        {changeLine(form.equity_before, form.equity_after)}
+      </>
     );
   };
 
@@ -356,6 +444,24 @@ const RaiseHistoryModal: React.FC<Props> = ({
       }
       width={680}
     >
+      {/* The earliest raise stores the pay it started from, so editing the role's base leaves it behind. */}
+      {drift && !showForm ? (
+        <div className="mb-4 flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 sm:flex-row sm:items-center sm:justify-between dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+          <span>
+            This role&rsquo;s base pay is now {fmt(drift.rolePay)}, but the first raise starts from{' '}
+            {fmt(drift.storedBefore)}.
+          </span>
+          <Button
+            size="small"
+            loading={saving}
+            onClick={() => void handleApplyRolePay()}
+            className="shrink-0"
+          >
+            Start from {fmt(drift.rolePay)}
+          </Button>
+        </div>
+      ) : null}
+
       {/* Add Raise button */}
       {!showForm && (
         <div className="mb-4 flex justify-end md:mt-5">
@@ -526,9 +632,21 @@ const RaiseHistoryModal: React.FC<Props> = ({
           {/* Form actions */}
           <div className="flex flex-col-reverse gap-2 border-t border-gray-200 dark:border-white/[0.08] pt-4 sm:flex-row sm:justify-end">
             <Button onClick={cancelForm}>Cancel</Button>
-            <Button type="primary" loading={saving} onClick={handleSubmit}>
-              {editingId ? 'Update' : 'Add'}
-            </Button>
+            {/* Wrapped: a disabled antd Button fires no mouse events, so the tooltip needs a host. */}
+            <Tooltip title={blockedReason || undefined}>
+              <span className="inline-flex">
+                <Button
+                  // antd's disabled primary is grey on grey; default stays readable while inert.
+                  type={issues.length > 0 ? 'default' : 'primary'}
+                  disabled={issues.length > 0}
+                  loading={saving}
+                  onClick={handleSubmit}
+                  className="w-full sm:w-auto"
+                >
+                  {editingId ? 'Update' : 'Add'}
+                </Button>
+              </span>
+            </Tooltip>
           </div>
         </div>
       )}

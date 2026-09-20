@@ -75,7 +75,7 @@ export const raisesFrom = (sources: RaiseSource[]): CommandRaise[] =>
   });
 
 // Keys from DEFAULT_APPLICATION_STAGES: settled or off the board, so not a lead that went cold.
-export const CLOSED_STATUSES = new Set([
+const CLOSED_STATUSES = new Set([
   'REJECTED',
   'GHOSTED',
   'REMOVED_FROM_SHEET',
@@ -87,7 +87,7 @@ export const CLOSED_STATUSES = new Set([
 ]);
 
 // Every stage that means a conversation is happening, including the round-numbered ones.
-export const INTERVIEWING_STATUSES = new Set([
+const INTERVIEWING_STATUSES = new Set([
   'ROUND_1',
   'ROUND_2',
   'ROUND_3',
@@ -101,7 +101,7 @@ export const INTERVIEWING_STATUSES = new Set([
 export const isClosed = (status: string) => CLOSED_STATUSES.has(status.toUpperCase());
 export const isInterviewing = (status: string) => INTERVIEWING_STATUSES.has(status.toUpperCase());
 
-export const OFFER_HORIZON_DAYS = 7;
+const OFFER_HORIZON_DAYS = 7;
 
 const DAY = 86400000;
 
@@ -129,7 +129,7 @@ export interface UpcomingEvent {
 }
 
 // Filtering on the date alone left a 09:00 interview under "Next up" all afternoon.
-export const hasElapsed = (event: CommandEvent, todayIso: string, nowMinutes: number): boolean => {
+const hasElapsed = (event: CommandEvent, todayIso: string, nowMinutes: number): boolean => {
   const gap = daysBetween(todayIso, event.date);
   if (gap === null) return false;
   if (gap !== 0) return gap < 0;
@@ -140,7 +140,7 @@ export const hasElapsed = (event: CommandEvent, todayIso: string, nowMinutes: nu
 };
 
 // Minutes since local midnight, which is the clock the dates on these records are written against.
-export const minutesIntoDay = (now: Date = new Date()) => now.getHours() * 60 + now.getMinutes();
+const minutesIntoDay = (now: Date = new Date()) => now.getHours() * 60 + now.getMinutes();
 
 // Everything still ahead, soonest first. Not just interviews: a deadline or a call matters too.
 export const upcomingEvents = (

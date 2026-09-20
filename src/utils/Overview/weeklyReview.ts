@@ -1,7 +1,7 @@
 import { daysBetween, isClosed } from './overview';
 import type { CommandApplication, CommandEvent, CommandOffer } from './overview';
 
-export const WEEK_DAYS = 7;
+const WEEK_DAYS = 7;
 const DAY_MS = 86400000;
 export const FOLLOW_UP_AFTER_DAYS = 10;
 

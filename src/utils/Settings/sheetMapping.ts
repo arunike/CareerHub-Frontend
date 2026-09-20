@@ -115,7 +115,7 @@ export const toDraft = (config: GoogleSheetSyncConfig): Draft => ({
   overwrite_strategies: config.overwrite_strategies || {},
 });
 
-export const HEADER_ALIASES: Record<GoogleSheetSyncTarget, Record<string, string[]>> = {
+const HEADER_ALIASES: Record<GoogleSheetSyncTarget, Record<string, string[]>> = {
   APPLICATIONS: {
     external_id: ['external id', 'id', 'row id', 'sheet id'],
     company_name: ['company', 'company name', 'employer', 'organization'],

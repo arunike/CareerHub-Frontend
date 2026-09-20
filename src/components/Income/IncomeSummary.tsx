@@ -1,5 +1,9 @@
 import { Select, Tooltip } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { describeSalaryBasis, type SalaryBasis } from '../../utils/Income/salaryBasis';
+import { describeRaiseCoverage, type RaiseCoverage } from '../../utils/Income/raiseCoverage';
+import type { LinkedDrift } from '../../utils/Income/linkedDrift';
+import LinkedDriftPrompt from './LinkedDriftPrompt';
 import type { totalsToDate } from '../../utils/Income/effectiveRows';
 import type { IncomeSource } from '../../utils/Income/incomeSources';
 import { formatPayDate } from '../../utils/Income/paySchedule';
@@ -8,7 +12,7 @@ import { INCOME_TOOLTIPS } from '../../content/tooltips';
 
 interface RoleOption {
   label: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; isUnlinkedOffer?: boolean }>;
 }
 
 interface Props {
@@ -21,6 +25,12 @@ interface Props {
   taxYear: number;
   rates: { calculated: number; actual: number | null; comparedCount: number };
   roleOptions: RoleOption[];
+  raiseNotice?: string | null;
+  salaryBasis?: SalaryBasis;
+  raiseCoverage?: RaiseCoverage;
+  pendingDrift?: LinkedDrift[];
+  onAcceptLinkedValues?: () => void;
+  onDismissLinkedValues?: () => void;
   onSelectRole: (key: string) => void;
 }
 
@@ -46,6 +56,12 @@ export const IncomeSummary = ({
   taxYear,
   rates,
   roleOptions,
+  raiseNotice,
+  salaryBasis,
+  raiseCoverage,
+  pendingDrift,
+  onAcceptLinkedValues,
+  onDismissLinkedValues,
   onSelectRole,
 }: Props) => {
   const { money } = useMoney();
@@ -115,9 +131,52 @@ export const IncomeSummary = ({
               value={source?.key}
               options={roleOptions}
               onChange={onSelectRole}
+              // A suffix on the label is the first thing truncated away, so the tag renders beside it.
+              optionRender={(option) => (
+                <span className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                  {(option.data as { isUnlinkedOffer?: boolean }).isUnlinkedOffer ? (
+                    <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                      Offer only
+                    </span>
+                  ) : null}
+                </span>
+              )}
             />
           </div>
         </div>
+
+        {/* An action ending a sentence reads as part of it; the button sits apart from the prose. */}
+        {salaryBasis ? (
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600 sm:flex-row sm:items-center sm:justify-between dark:border-white/[0.08] dark:bg-ink-800 dark:text-ink-200">
+            <div className="min-w-0">
+              <span className="font-semibold text-slate-700 dark:text-ink-100">Pay basis</span>
+              <div className="mt-1">
+                {describeSalaryBasis(salaryBasis)}
+                {raiseCoverage ? ` ${describeRaiseCoverage(raiseCoverage)}` : ''}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {pendingDrift &&
+        pendingDrift.length > 0 &&
+        onAcceptLinkedValues &&
+        onDismissLinkedValues ? (
+          <LinkedDriftPrompt
+            drift={pendingDrift}
+            onAccept={onAcceptLinkedValues}
+            onDismiss={onDismissLinkedValues}
+          />
+        ) : null}
+
+        {/* Full width and above the figures: a note beside the picker is read after the ledger, not before. */}
+        {raiseNotice ? (
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
+            <WarningOutlined className="mt-0.5 shrink-0" />
+            <span>{raiseNotice}</span>
+          </div>
+        ) : null}
 
         <div className="mt-6 flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-ink-800">
           {LEGEND.map((item) =>

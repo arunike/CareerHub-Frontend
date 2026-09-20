@@ -9,7 +9,7 @@ export interface AnalyticsSourceData {
   events: Event[];
 }
 
-export const getDateRangeFromQuery = (query: string) => {
+const getDateRangeFromQuery = (query: string) => {
   const now = new Date();
 
   if (query.includes('this month')) {
@@ -45,11 +45,7 @@ export const getDateRangeFromQuery = (query: string) => {
   return { start: null as Date | null, end: null as Date | null };
 };
 
-export const isWithinDateRange = (
-  value: string | undefined,
-  start: Date | null,
-  end: Date | null
-) => {
+const isWithinDateRange = (value: string | undefined, start: Date | null, end: Date | null) => {
   if (!start && !end) return true;
   const parsed = parseRecordDate(value);
   if (!parsed) return false;
@@ -117,7 +113,7 @@ export const loadAnalyticsSourceData = async (): Promise<AnalyticsSourceData> =>
   };
 };
 
-export const normalizeAnalyticsContext = (
+const normalizeAnalyticsContext = (
   queryLower: string,
   context: AnalyticsContext
 ): AnalyticsContext => {

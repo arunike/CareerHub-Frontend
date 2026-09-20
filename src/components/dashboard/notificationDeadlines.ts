@@ -33,7 +33,7 @@ export const countdownLabel = (date: string) => {
 };
 
 export const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
-export const MAX_DEADLINE_DAYS = 7;
+const MAX_DEADLINE_DAYS = 7;
 
 export const buildTaskDeadlines = (
   tasks: Task[],

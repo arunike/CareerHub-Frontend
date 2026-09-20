@@ -40,7 +40,7 @@ const savedAt = (artifact: AIArtifact) =>
 
 const payloadOf = (artifact: AIArtifact) => artifact.payload || {};
 
-export const reportToArtifactPayload = (report: StoredReport) => ({
+const reportToArtifactPayload = (report: StoredReport) => ({
   artifact_type: 'JD_REPORT' as AIArtifactType,
   client_id: report.id,
   title:
@@ -55,7 +55,7 @@ export const reportToArtifactPayload = (report: StoredReport) => ({
   saved_at: report.savedAt,
 });
 
-export const coverLetterToArtifactPayload = (letter: StoredCoverLetter) => ({
+const coverLetterToArtifactPayload = (letter: StoredCoverLetter) => ({
   artifact_type: 'COVER_LETTER' as AIArtifactType,
   client_id: letter.id,
   title: letter.title || `${letter.roleTitle} @ ${letter.companyName}`,
@@ -65,7 +65,7 @@ export const coverLetterToArtifactPayload = (letter: StoredCoverLetter) => ({
   saved_at: letter.savedAt,
 });
 
-export const negotiationResultToArtifactPayload = (result: StoredNegotiationResult) => ({
+const negotiationResultToArtifactPayload = (result: StoredNegotiationResult) => ({
   artifact_type: 'NEGOTIATION_RESULT' as AIArtifactType,
   client_id: result.id,
   title: result.title || `${result.roleTitle} @ ${result.companyName}`,
@@ -75,7 +75,7 @@ export const negotiationResultToArtifactPayload = (result: StoredNegotiationResu
   saved_at: result.savedAt,
 });
 
-export const artifactToReport = (artifact: AIArtifact): StoredReport => {
+const artifactToReport = (artifact: AIArtifact): StoredReport => {
   const payload = payloadOf(artifact) as unknown as StoredReport;
   return {
     ...payload,
@@ -86,7 +86,7 @@ export const artifactToReport = (artifact: AIArtifact): StoredReport => {
   };
 };
 
-export const artifactToCoverLetter = (artifact: AIArtifact): StoredCoverLetter => {
+const artifactToCoverLetter = (artifact: AIArtifact): StoredCoverLetter => {
   const payload = payloadOf(artifact) as unknown as StoredCoverLetter;
   return {
     ...payload,
@@ -97,7 +97,7 @@ export const artifactToCoverLetter = (artifact: AIArtifact): StoredCoverLetter =
   };
 };
 
-export const artifactToNegotiationResult = (artifact: AIArtifact): StoredNegotiationResult => {
+const artifactToNegotiationResult = (artifact: AIArtifact): StoredNegotiationResult => {
   const payload = payloadOf(artifact) as unknown as StoredNegotiationResult;
   return {
     ...payload,
@@ -108,7 +108,7 @@ export const artifactToNegotiationResult = (artifact: AIArtifact): StoredNegotia
   };
 };
 
-export const artifactToPromotionReview = (artifact: AIArtifact): StoredPromotionReview => {
+const artifactToPromotionReview = (artifact: AIArtifact): StoredPromotionReview => {
   const payload = payloadOf(artifact) as unknown as StoredPromotionReview;
   return {
     ...payload,
@@ -121,7 +121,7 @@ export const artifactToPromotionReview = (artifact: AIArtifact): StoredPromotion
   };
 };
 
-export const migrateLocalAIArtifacts = async () => {
+const migrateLocalAIArtifacts = async () => {
   if (typeof window === 'undefined' || window.localStorage.getItem(MIGRATION_KEY)) return;
   const localItems = [
     ...getAllReports().map(reportToArtifactPayload),

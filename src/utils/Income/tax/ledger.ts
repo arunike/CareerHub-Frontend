@@ -36,7 +36,7 @@ export const DEFERRAL_BASE_HINTS: Record<DeferralBase, string> = {
 };
 
 // What comes off the gross to reach the base, per paycheck.
-export const excludedFromDeferral = (
+const excludedFromDeferral = (
   base: DeferralBase,
   parts: { taxableAllowance: number; supplementalGross: number }
 ) => {
@@ -485,7 +485,7 @@ const emptyTotals = (): LedgerTotals => ({
   employerMatch401k: 0,
 });
 
-export const totalsOf = (rows: PeriodRow[]): LedgerTotals => ({
+const totalsOf = (rows: PeriodRow[]): LedgerTotals => ({
   gross: sumBy(rows, (row) => row.gross),
   taxableAllowance: sumBy(rows, (row) => row.taxableAllowance),
   taxFreeAllowance: sumBy(rows, (row) => row.taxFreeAllowance),

@@ -12,6 +12,7 @@ import {
   uploadExperienceLogo,
 } from '../../api/career';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { roundOfferDecimals } from '../../utils/OfferComparison/offerPrecision';
 import { normalizeInternshipCompInputs } from '../../utils/Experience/internshipCompInputs';
 import type { InternshipCompInputs } from '../../utils/Experience/internshipCompInputs';
 
@@ -92,11 +93,12 @@ export const useExperienceMutations = ({
       if (data.offer && (data.base_salary != null || data.bonus != null || data.equity != null)) {
         const linkedOffer = allOffers.find((o) => o.id === data.offer);
         if (linkedOffer) {
-          const patch: Record<string, unknown> = { ...(linkedOffer as Record<string, unknown>) };
+          const patch: Record<string, unknown> = {};
           if (data.base_salary != null) patch.base_salary = data.base_salary;
           if (data.bonus != null) patch.bonus = data.bonus;
           if (data.equity != null) patch.equity = data.equity;
-          await updateOffer(linkedOffer.id!, patch);
+          // Rounded, because a numeric(12,2) column rejects a derived float's full precision.
+          await updateOffer(linkedOffer.id!, roundOfferDecimals(patch));
           setAllOffers((prev) =>
             prev.map((o) => (o.id === linkedOffer.id ? { ...o, ...patch } : o))
           );
@@ -164,11 +166,20 @@ export const useExperienceMutations = ({
   const handleSaveRaiseHistory = async (entries: RaiseEntry[]) => {
     if (!raiseHistoryExp) return;
     const offer = getLinkedOffer(raiseHistoryExp);
-    if (!offer?.id) return;
-    await updateOffer(offer.id, { ...(offer as Record<string, unknown>), raise_history: entries });
-    setAllOffers((prev) =>
-      prev.map((o) => (o.id === offer.id ? { ...o, raise_history: entries } : o))
-    );
+    if (!offer?.id) {
+      message.error('Link an offer to this role before recording a raise');
+      return;
+    }
+    try {
+      // Only the field being changed: spreading the offer writes derived figures back to the record.
+      await updateOffer(offer.id, { raise_history: entries });
+      setAllOffers((prev) =>
+        prev.map((o) => (o.id === offer.id ? { ...o, raise_history: entries } : o))
+      );
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'Failed to save the raise'));
+      throw err;
+    }
   };
 
   const handleRaiseHistoryClick = (exp: Experience) => {

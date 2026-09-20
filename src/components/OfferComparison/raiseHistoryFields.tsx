@@ -82,10 +82,12 @@ export const reasonValue = (text: string): RaiseType => {
 };
 
 export type BaseEquityMode = '$' | '%change';
+// Base alone takes an hourly rate, because equity and bonus are not paid by the hour.
+export type BaseMode = BaseEquityMode | 'rate';
 export type BonusMode = '$' | '%change' | '%ofbase';
 
 export interface AfterModes {
-  base: BaseEquityMode;
+  base: BaseMode;
   bonus: BonusMode;
   equity: BaseEquityMode;
 }
@@ -112,10 +114,11 @@ export const delta = (before: number, after: number) => {
 
 export function emptyForm(prefill?: Partial<RaiseEntry>): Omit<RaiseEntry, 'id'> {
   const date = dayjs().format('YYYY-MM-DD');
+  // Blank, because guessing merit puts a reason on the entry the user never chose.
   return {
     date,
-    effective_date: suggestEffectiveDate({ type: 'merit', date }),
-    type: 'merit',
+    effective_date: suggestEffectiveDate({ type: '', date }),
+    type: '',
     label: '',
     base_before: prefill?.base_before ?? 0,
     base_after: prefill?.base_after ?? 0,

@@ -1,4 +1,6 @@
 import { Tooltip } from 'antd';
+import DeferralScheduleFields from './DeferralScheduleFields';
+import type { DeferralPlan } from '../../utils/Income/deferralSchedule';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import type { RetirementSummary } from '../../utils/Income/retirement';
 import { Button, Select } from 'antd';
@@ -42,6 +44,8 @@ interface Props {
   excludableAllowances: number;
   excludableSupplemental: number;
   onDeferralBaseChange: (value: DeferralBase) => void;
+  deferralPlan: DeferralPlan;
+  onDeferralPlanChange: (plan: DeferralPlan) => void;
   onStartingBalanceChange: (value: number | null) => void;
   onCurrentValueChange: (value: number | null) => void;
   onMatchTiersChange: (tiers: MatchTier[]) => void;
@@ -124,6 +128,8 @@ export const RetirementForm = ({
   excludableAllowances,
   excludableSupplemental,
   onDeferralBaseChange,
+  deferralPlan,
+  onDeferralPlanChange,
   onStartingBalanceChange,
   onCurrentValueChange,
   onMatchTiersChange,
@@ -167,6 +173,8 @@ export const RetirementForm = ({
             />
           </Field>
         </div>
+
+        <DeferralScheduleFields plan={deferralPlan} onChange={onDeferralPlanChange} />
 
         <div className="mt-3 rounded-lg bg-slate-50 dark:bg-ink-900 px-3 py-2.5">
           <Field

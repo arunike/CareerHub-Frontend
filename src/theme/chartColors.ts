@@ -25,13 +25,13 @@ const DARK_SERIES = {
 
 export type ChartSeries = typeof LIGHT_SERIES;
 
-export const chartSeriesFor = (theme: 'light' | 'dark'): ChartSeries =>
+const chartSeriesFor = (theme: 'light' | 'dark'): ChartSeries =>
   theme === 'dark' ? DARK_SERIES : LIGHT_SERIES;
 
 export const useChartSeries = (): ChartSeries => chartSeriesFor(useTheme().resolved);
 
 // Axes and gridlines follow the surface, not the data.
-export const chartAxisFor = (theme: 'light' | 'dark') =>
+const chartAxisFor = (theme: 'light' | 'dark') =>
   theme === 'dark'
     ? { axis: '#6e727b', grid: 'rgba(255,255,255,0.10)', label: '#8a8e97' }
     : { axis: '#94a3b8', grid: 'rgba(15,23,42,0.12)', label: '#64748b' };

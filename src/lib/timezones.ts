@@ -21,7 +21,7 @@ export const normalizeTimeZone = (value?: string | null) => {
 export const getBrowserTimeZone = () =>
   normalizeTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
-export const getTimeZoneLabel = (timeZone: string) => {
+const getTimeZoneLabel = (timeZone: string) => {
   const normalized = normalizeTimeZone(timeZone);
   const name = normalized.replace(/_/g, ' ');
   try {

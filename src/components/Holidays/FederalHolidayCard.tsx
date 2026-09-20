@@ -19,9 +19,8 @@ export interface FederalHolidayGroup {
 
 export type FederalHolidayDisplayItem = Holiday | FederalHolidayGroup;
 
-export const isFederalHolidayGroup = (
-  item: FederalHolidayDisplayItem
-): item is FederalHolidayGroup => 'isGroup' in item && item.isGroup;
+const isFederalHolidayGroup = (item: FederalHolidayDisplayItem): item is FederalHolidayGroup =>
+  'isGroup' in item && item.isGroup;
 
 export const groupFederalHolidays = (holidays: Holiday[]): FederalHolidayDisplayItem[] => {
   const displayItems: FederalHolidayDisplayItem[] = [];

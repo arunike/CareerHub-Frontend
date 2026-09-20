@@ -5,7 +5,7 @@ import { asList } from '../../utils/Experience/promotionReviewFields';
 
 const { Text } = Typography;
 
-export const SmartListItem: React.FC<{ item: string }> = ({ item }) => {
+const SmartListItem: React.FC<{ item: string }> = ({ item }) => {
   const { lead, subpoints } = splitSubpoints(item);
 
   return (

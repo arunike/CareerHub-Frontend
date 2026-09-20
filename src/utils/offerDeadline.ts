@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-export const DEADLINE_WARNING_DAYS = 7;
+const DEADLINE_WARNING_DAYS = 7;
 
 export type DeadlineTone = 'expired' | 'critical' | 'warning' | 'calm';
 

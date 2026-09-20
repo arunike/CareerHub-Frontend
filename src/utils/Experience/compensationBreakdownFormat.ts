@@ -30,7 +30,7 @@ export const toNullableNumber = (value: string | number | null | undefined): num
 export const toInputValue = (value: number | null | undefined) =>
   value == null ? '' : String(value);
 
-export const normalizeEditableNumber = (value: string | number | null | undefined) => {
+const normalizeEditableNumber = (value: string | number | null | undefined) => {
   const parsed = toNullableNumber(value);
   if (parsed == null) return null;
   return Number(parsed.toFixed(2));

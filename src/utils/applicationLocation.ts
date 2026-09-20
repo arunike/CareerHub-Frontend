@@ -5,7 +5,7 @@ type LocationSource = {
 
 const cleanLocation = (value?: string | null) => (value || '').trim();
 
-export const getHomeLocation = (source?: LocationSource | null) => cleanLocation(source?.location);
+const getHomeLocation = (source?: LocationSource | null) => cleanLocation(source?.location);
 
 export const getOfficeLocation = (source?: LocationSource | null) =>
   cleanLocation(source?.office_location);

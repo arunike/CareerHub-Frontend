@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { bonusPercentOf, defaultBonusMode, rescaleBonus } from '../../utils/bonusPercent';
 import { Popover } from 'antd';
 import ModeToggle from './ModeToggle';
 import UnitNumberInput from './UnitNumberInput';
@@ -78,7 +79,7 @@ const CompensationFields: React.FC<Props> = ({
   const bonus = value?.bonus ?? null;
   const equity = value?.equity ?? null;
 
-  const [bonusMode, setBonusMode] = useState<BonusMode>('$');
+  const [bonusMode, setBonusMode] = useState<BonusMode>(() => defaultBonusMode(base, bonus));
   const [bonusPct, setBonusPct] = useState('');
   const [equityMode, setEquityMode] = useState<EquityMode>(defaultEquityMode);
   const [equityTotal, setEquityTotal] = useState('');
@@ -104,7 +105,7 @@ const CompensationFields: React.FC<Props> = ({
 
   useEffect(() => {
     if (bonusMode === '%' && base != null && base > 0 && bonus != null) {
-      setBonusPct(((bonus / base) * 100).toFixed(2).replace(/\.00$/, ''));
+      setBonusPct(bonusPercentOf(base, bonus).toFixed(2).replace(/\.00$/, ''));
     }
     if (
       equityMode === 'total' &&
@@ -123,14 +124,13 @@ const CompensationFields: React.FC<Props> = ({
 
   const handleBaseChange = (raw: string) => {
     const next = raw === '' ? null : Number(raw);
-    const nextBonus =
-      bonusMode === '%' && next != null ? ((Number(bonusPct) || 0) / 100) * next : bonus;
+    const nextBonus = bonusMode === '%' ? rescaleBonus(bonusPct, next, bonus) : bonus;
     onChange?.({ base_salary: next, bonus: nextBonus, equity });
   };
 
   const handleBonusToggle = () => {
     if (bonusMode === '$') {
-      const pct = base && base > 0 ? ((bonus ?? 0) / base) * 100 : 0;
+      const pct = bonusPercentOf(base, bonus);
       setBonusPct(pct.toFixed(2).replace(/\.00$/, ''));
       setBonusMode('%');
     } else {

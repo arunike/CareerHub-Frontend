@@ -64,7 +64,7 @@ export const formatOptionalPromotionContext = (context: PromotionReviewContext =
     : 'No optional context provided. Base the review on saved CareerHub experience data and clearly identify evidence gaps.';
 };
 
-export const formatTeamHistory = (experience: Experience) => {
+const formatTeamHistory = (experience: Experience) => {
   if (!experience.team_history?.length) return 'No team history saved.';
   return experience.team_history
     .map((team) => {
@@ -74,7 +74,7 @@ export const formatTeamHistory = (experience: Experience) => {
     .join('\n');
 };
 
-export const formatSchedulePhases = (experience: Experience) => {
+const formatSchedulePhases = (experience: Experience) => {
   if (!experience.schedule_phases?.length) return 'No schedule phases saved.';
   return experience.schedule_phases
     .map(

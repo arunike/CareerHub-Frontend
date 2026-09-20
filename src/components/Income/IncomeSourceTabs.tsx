@@ -9,6 +9,10 @@ import { totalsToDate } from '../../utils/Income/effectiveRows';
 import { toIsoDate } from '../../utils/Income/paySchedule';
 import YearEarningsCard from './YearEarningsCard';
 import PaycheckWaterfall from './PaycheckWaterfall';
+import type { SalaryBasis } from '../../utils/Income/salaryBasis';
+import type { RaiseCoverage } from '../../utils/Income/raiseCoverage';
+import type { LinkedDrift } from '../../utils/Income/linkedDrift';
+import LinkedDriftPrompt from './LinkedDriftPrompt';
 import ReconciliationCards from './ReconciliationCards';
 import YearLedgerTable from './YearLedgerTable';
 import {
@@ -50,6 +54,12 @@ type Props = {
   batchOpen: boolean;
   rates: any;
   roleOptions: any;
+  raiseNotice?: string | null;
+  salaryBasis?: SalaryBasis;
+  raiseCoverage?: RaiseCoverage;
+  pendingDrift?: LinkedDrift[];
+  onAcceptLinkedValues?: () => void;
+  onDismissLinkedValues?: () => void;
   row: any;
   selectedKeys: number[];
   setBatchOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -66,6 +76,12 @@ const IncomeSourceTabs = ({
   batchOpen,
   rates,
   roleOptions,
+  raiseNotice,
+  salaryBasis,
+  raiseCoverage,
+  pendingDrift,
+  onAcceptLinkedValues,
+  onDismissLinkedValues,
   row,
   selectedKeys,
   setBatchOpen,
@@ -118,6 +134,12 @@ const IncomeSourceTabs = ({
           taxYear={taxYear}
           rates={rates}
           roleOptions={roleOptions}
+          raiseNotice={raiseNotice}
+          salaryBasis={salaryBasis}
+          raiseCoverage={raiseCoverage}
+          pendingDrift={view === 'paycheck' ? [] : pendingDrift}
+          onAcceptLinkedValues={onAcceptLinkedValues}
+          onDismissLinkedValues={onDismissLinkedValues}
           onSelectRole={(key) => {
             selectSource(key);
             setSelectedPeriod(null);
@@ -224,6 +246,14 @@ const IncomeSourceTabs = ({
                 ))}
               </div>
             </div>
+
+            {view === 'paycheck' && pendingDrift && pendingDrift.length > 0 ? (
+              <LinkedDriftPrompt
+                drift={pendingDrift}
+                onAccept={() => onAcceptLinkedValues?.()}
+                onDismiss={() => onDismissLinkedValues?.()}
+              />
+            ) : null}
 
             {view === 'paycheck' ? (
               <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">

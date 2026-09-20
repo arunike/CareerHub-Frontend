@@ -41,14 +41,9 @@ export interface StandingDeductions {
   allowanceSchedule: Record<number, AllowancePeriodTotals>;
 }
 
-export const DEDUCTION_KEYS: Array<keyof DeductionLines> = [
-  'medical',
-  'dental',
-  'vision',
-  'dependent',
-];
+const DEDUCTION_KEYS: Array<keyof DeductionLines> = ['medical', 'dental', 'vision', 'dependent'];
 
-export const OVERRIDE_KEYS: Array<keyof PeriodDefaults> = [
+const OVERRIDE_KEYS: Array<keyof PeriodDefaults> = [
   ...DEDUCTION_KEYS,
   'pretax401kPercent',
   'roth401kPercent',
@@ -227,7 +222,8 @@ export const buildPeriodOverrides = (
       postTaxPerPeriod: standing.postTaxPerPeriod + custom.postTax,
       pretax401kPercent: resolved.pretax401kPercent,
       roth401kPercent: resolved.roth401kPercent,
-      regularGross: resolved.regularGross,
+      // Typed only: filling gross from defaults pins the paycheck and the raise never reaches it.
+      ...(override.regularGross !== undefined ? { regularGross: override.regularGross } : {}),
       taxableAllowancePerPeriod: allowance.taxable,
       taxFreeAllowancePerPeriod: allowance.taxFree,
       ...(override.employerMatch !== undefined ? { employerMatch: override.employerMatch } : {}),

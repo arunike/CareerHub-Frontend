@@ -36,12 +36,22 @@ import { DEFAULT_SETTINGS, type IncomeSettings } from '../../utils/Income/income
 import {
   createSettingsResolver,
   fromPayload,
+  readDismissedDrift,
+  writeDismissedDrift,
   readLocal,
   writeLocal,
 } from '../../utils/Income/incomeSettingsStore';
 import { buildIncomeModel } from '../../utils/Income/incomeModel';
-import { parseYearParam, ROLE_PARAM, YEAR_PARAM } from '../../utils/Income/incomeParams';
-import { keyFromRoleParam, slugForKey } from '../../utils/Income/roleSlug';
+import { driftSignature, linkedDrift, unseenDrift } from '../../utils/Income/linkedDrift';
+import { updateOffer } from '../../api/career';
+import { roundOfferDecimals } from '../../utils/OfferComparison/offerPrecision';
+import {
+  LEGACY_ROLE_PARAM,
+  parseYearParam,
+  ROLE_ID_PARAM,
+  YEAR_PARAM,
+} from '../../utils/Income/incomeParams';
+import { codeForKey, keyFromRoleParam } from '../../utils/Income/roleCode';
 import {
   summarizeYear,
   summarizeYears,
@@ -79,6 +89,7 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
   hsa_family_coverage: settings.elections.hsaFamilyCoverage,
   age_50_plus: settings.elections.age50Plus,
   deferral_base: settings.elections.deferralBase,
+  deferral_plan: settings.deferralPlan,
   include_bonus: settings.includeBonus,
   bonus_override: settings.bonusOverride,
   bonus_payouts: settings.bonusPayouts as unknown as Array<Record<string, unknown>>,
@@ -92,10 +103,6 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
   cliff_months_override: settings.cliffMonthsOverride,
   vesting_years_override: settings.vestingYearsOverride,
   first_vest_date: settings.firstVestDate,
-  medical_premium_override: settings.medicalOverride,
-  dental_premium_override: settings.dentalOverride,
-  vision_premium_override: settings.visionOverride,
-  dependent_premium_override: settings.dependentOverride,
   custom_deductions: settings.customDeductions as unknown as Array<Record<string, unknown>>,
   allowances: settings.allowances as unknown as Array<Record<string, unknown>>,
   match_tiers: (settings.matchTiers ?? []) as unknown as Array<Record<string, unknown>>,
@@ -132,7 +139,7 @@ export const useIncomeYear = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sources, setSources] = useState<IncomeSource[]>([]);
-  const roleParam = searchParams.get(ROLE_PARAM);
+  const roleParam = searchParams.get(ROLE_ID_PARAM) ?? searchParams.get(LEGACY_ROLE_PARAM);
 
   useEffect(() => {
     try {
@@ -224,8 +231,8 @@ export const useIncomeYear = () => {
 
   const resolvedSourceKey = useMemo(
     // Resolved within the year, so no param and one this year cannot hold both reach the default.
-    () => keyFromRoleParam(sourcesInYear, roleParam) || defaultSourceKey(sourcesInYear),
-    [roleParam, sourcesInYear]
+    () => keyFromRoleParam(sourcesInYear, roleParam) || defaultSourceKey(sourcesInYear, taxYear),
+    [roleParam, sourcesInYear, taxYear]
   );
 
   useEffect(() => {
@@ -256,8 +263,10 @@ export const useIncomeYear = () => {
   const selectSource = useCallback(
     (key: string) => {
       const params = new URLSearchParams(searchParams);
-      if (key) params.set(ROLE_PARAM, slugForKey(sourcesInYear, key));
-      else params.delete(ROLE_PARAM);
+      // The legacy name goes when a code is written, so the two can never disagree.
+      params.delete(LEGACY_ROLE_PARAM);
+      if (key) params.set(ROLE_ID_PARAM, codeForKey(sourcesInYear, key));
+      else params.delete(ROLE_ID_PARAM);
       // replace, to match the year: switching roles is filtering, not navigating.
       setSearchParams(params, { replace: true });
     },
@@ -355,6 +364,9 @@ export const useIncomeYear = () => {
   const {
     paychecksPerYear,
     annualSalary,
+    raiseNotice,
+    salaryBasis,
+    raiseCoverage,
     firstPayDate,
     periods,
     vestingTerms,
@@ -384,6 +396,59 @@ export const useIncomeYear = () => {
     drift,
   } = model;
 
+  // One value: an edited premium is written to the offer, not stored as a per-year shadow.
+  const pushPremiumsToOffer = useCallback(async () => {
+    const offerId = source?.offerId;
+    if (!offerId) return;
+    const patch: Record<string, unknown> = {};
+    if (settings.medicalOverride != null) patch.health_premium_paycheck = settings.medicalOverride;
+    if (settings.dentalOverride != null) patch.dental_premium_paycheck = settings.dentalOverride;
+    if (settings.visionOverride != null) patch.vision_premium_paycheck = settings.visionOverride;
+    if (settings.hasDependentsOverride != null)
+      patch.has_dependents = settings.hasDependentsOverride;
+    if (settings.dependentMedicalOverride != null) {
+      patch.dependent_health_premium_paycheck = settings.dependentMedicalOverride;
+    }
+    if (settings.dependentDentalOverride != null) {
+      patch.dependent_dental_premium_paycheck = settings.dependentDentalOverride;
+    }
+    if (settings.dependentVisionOverride != null) {
+      patch.dependent_vision_premium_paycheck = settings.dependentVisionOverride;
+    }
+    if (Object.keys(patch).length === 0) return;
+    await updateOffer(offerId, roundOfferDecimals(patch));
+    setSources((rows) =>
+      rows.map((row) =>
+        row.key === source?.key
+          ? {
+              ...row,
+              medicalPerPeriod: settings.medicalOverride ?? row.medicalPerPeriod,
+              dentalPerPeriod: settings.dentalOverride ?? row.dentalPerPeriod,
+              visionPerPeriod: settings.visionOverride ?? row.visionPerPeriod,
+              hasDependents: settings.hasDependentsOverride ?? row.hasDependents,
+              dependentMedicalPerPeriod:
+                settings.dependentMedicalOverride ?? row.dependentMedicalPerPeriod,
+              dependentDentalPerPeriod:
+                settings.dependentDentalOverride ?? row.dependentDentalPerPeriod,
+              dependentVisionPerPeriod:
+                settings.dependentVisionOverride ?? row.dependentVisionPerPeriod,
+            }
+          : row
+      )
+    );
+    setSettings((prev) => ({
+      ...prev,
+      medicalOverride: null,
+      dentalOverride: null,
+      visionOverride: null,
+      dependentOverride: null,
+      dependentMedicalOverride: null,
+      dependentDentalOverride: null,
+      dependentVisionOverride: null,
+      hasDependentsOverride: null,
+    }));
+  }, [settings, source]);
+
   const save = useCallback(async () => {
     const draftKey = `${taxYear}|${resolvedSourceKey}`;
     const settle = () => {
@@ -400,6 +465,7 @@ export const useIncomeYear = () => {
     setSaving(true);
     try {
       const payload = toPayload(taxYear, resolvedSourceKey, settings);
+      await pushPremiumsToOffer();
       if (recordId) {
         await updateIncomeYear(recordId, payload);
       } else {
@@ -415,7 +481,7 @@ export const useIncomeYear = () => {
     } finally {
       setSaving(false);
     }
-  }, [persistence, recordId, resolvedSourceKey, settings, taxYear]);
+  }, [persistence, pushPremiumsToOffer, recordId, resolvedSourceKey, settings, taxYear]);
 
   const isDirty = dirtyKeys.includes(`${taxYear}|${resolvedSourceKey}`);
 
@@ -430,11 +496,42 @@ export const useIncomeYear = () => {
     setSettings({ ...DEFAULT_SETTINGS, ...(local ?? {}), ...(match ? fromPayload(match) : {}) });
   }, [incomeRecords, resolvedSourceKey, taxYear]);
 
+  const offerDrift = useMemo(() => linkedDrift(settings, source ?? null), [settings, source]);
+  const [dismissedDrift, setDismissedDrift] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDismissedDrift(readDismissedDrift(taxYear, resolvedSourceKey));
+  }, [resolvedSourceKey, taxYear]);
+
+  const pendingDrift = unseenDrift(offerDrift, dismissedDrift) ? offerDrift : [];
+
+  // Accept releases the pin rather than writing back: base_salary is the pre-raise opening rate.
+  const acceptLinkedValues = useCallback(() => {
+    if (offerDrift.length === 0) return;
+    const draftKey = `${taxYear}|${resolvedSourceKey}`;
+    setSettings((prev) => {
+      const next = { ...prev };
+      for (const entry of offerDrift) next[entry.field] = null;
+      draftsRef.current.set(draftKey, next);
+      return next;
+    });
+    setDirtyKeys((keys) => (keys.includes(draftKey) ? keys : [...keys, draftKey]));
+  }, [offerDrift, resolvedSourceKey, taxYear]);
+
+  const dismissLinkedValues = useCallback(() => {
+    const signature = driftSignature(offerDrift);
+    writeDismissedDrift(taxYear, resolvedSourceKey, signature);
+    setDismissedDrift(signature);
+  }, [offerDrift, resolvedSourceKey, taxYear]);
+
   return {
     loading,
     saving,
     isDirty,
     discardChanges,
+    pendingDrift,
+    acceptLinkedValues,
+    dismissLinkedValues,
     persistence,
     taxYear,
     setTaxYear,
@@ -455,6 +552,9 @@ export const useIncomeYear = () => {
     save,
     stateAbbr,
     paychecksPerYear,
+    raiseNotice,
+    salaryBasis,
+    raiseCoverage,
     annualSalary,
     firstPayDate,
     periods,

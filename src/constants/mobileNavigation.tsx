@@ -2,7 +2,7 @@ import { ThunderboltOutlined } from '@ant-design/icons';
 import { NAV_REGISTRY } from './navigationItems';
 
 export const MOBILE_SMART_SLOT_KEY = '__smart__';
-export const MOBILE_NAVIGATION_RECENT_STORAGE_KEY = 'careerhub.mobileNav.recent.v1';
+const MOBILE_NAVIGATION_RECENT_STORAGE_KEY = 'careerhub.mobileNav.recent.v1';
 
 // Derived, not restated: a tab added to NAV_REGISTRY is pinnable the moment it exists.
 export const MOBILE_NAVIGATION_ITEMS = NAV_REGISTRY;
@@ -95,7 +95,7 @@ export const recordMobileNavigationUse = (key: string) => {
   );
 };
 
-export const resolveSmartMobileNavigationKey = (
+const resolveSmartMobileNavigationKey = (
   configuredKeys: string[],
   pathname: string,
   recentKeys: string[] = []

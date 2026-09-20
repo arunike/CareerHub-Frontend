@@ -11,6 +11,7 @@ import OverrideConflictModal, {
   type OverrideConflict,
 } from '../../components/Income/OverrideConflictModal';
 import RetirementForm from '../../components/Income/RetirementForm';
+import { ranPastYearEnd } from '../../utils/Income/incomeSources';
 import VestingForm from '../../components/Income/VestingForm';
 import { mostRecentPaidRow } from '../../utils/Income/effectiveRows';
 import { toIsoDate } from '../../utils/Income/paySchedule';
@@ -71,6 +72,12 @@ const IncomePage = () => {
     save,
     stateAbbr,
     paychecksPerYear,
+    raiseNotice,
+    salaryBasis,
+    pendingDrift,
+    acceptLinkedValues,
+    dismissLinkedValues,
+    raiseCoverage,
     annualSalary,
     firstPayDate,
     ledger,
@@ -113,20 +120,38 @@ const IncomePage = () => {
   useUnsavedChanges(isDirty, 'income changes');
 
   const roleOptions = useMemo(() => {
-    const current = sourcesInYear.filter((candidate) => candidate.isCurrent);
-    const past = sourcesInYear.filter((candidate) => !candidate.isCurrent);
+    // Grouped by the year on screen, not by today: in 2025 a role you left in 2026 was still yours.
+    const ongoing = sourcesInYear.filter((candidate) => ranPastYearEnd(candidate, taxYear));
+    const ended = sourcesInYear.filter((candidate) => !ranPastYearEnd(candidate, taxYear));
+    const isThisYear = taxYear >= new Date().getFullYear();
+    // An offer no role claims is its own income source, so the same job can appear twice.
     const toOption = (candidate: (typeof sourcesInYear)[number]) => ({
       value: candidate.key,
       label: `${candidate.company}${candidate.roleTitle ? ` · ${candidate.roleTitle}` : ''}`,
+      isUnlinkedOffer: candidate.kind === 'offer',
     });
 
     return [
-      ...(current.length > 0 ? [{ label: 'Current role', options: current.map(toOption) }] : []),
-      ...(past.length > 0
-        ? [{ label: 'Past roles, from your Experience page', options: past.map(toOption) }]
+      ...(ongoing.length > 0
+        ? [
+            {
+              label: isThisYear ? 'Current role' : `Still yours at the end of ${taxYear}`,
+              options: ongoing.map(toOption),
+            },
+          ]
+        : []),
+      ...(ended.length > 0
+        ? [
+            {
+              label: isThisYear
+                ? 'Past roles, from your Experience page'
+                : `Ended during ${taxYear}`,
+              options: ended.map(toOption),
+            },
+          ]
         : []),
     ];
-  }, [sourcesInYear]);
+  }, [sourcesInYear, taxYear]);
 
   const rates = useMemo(
     () => compareRates(effectiveRows, settings.actuals),
@@ -205,6 +230,20 @@ const IncomePage = () => {
             update({ paychecksPerYearOverride: value, firstPayDate: null });
             flagConflict('regularGross', 'gross pay');
           }}
+          coversDependents={settings.hasDependentsOverride ?? source?.hasDependents ?? false}
+          dependentLines={{
+            medical: settings.dependentMedicalOverride ?? source?.dependentMedicalPerPeriod ?? 0,
+            dental: settings.dependentDentalOverride ?? source?.dependentDentalPerPeriod ?? 0,
+            vision: settings.dependentVisionOverride ?? source?.dependentVisionPerPeriod ?? 0,
+          }}
+          onCoversDependentsChange={(value) => update({ hasDependentsOverride: value })}
+          onDependentLineChange={(patch) =>
+            update({
+              ...(patch.medical !== undefined ? { dependentMedicalOverride: patch.medical } : {}),
+              ...(patch.dental !== undefined ? { dependentDentalOverride: patch.dental } : {}),
+              ...(patch.vision !== undefined ? { dependentVisionOverride: patch.vision } : {}),
+            })
+          }
           onDeductionChange={(patch) => {
             update({
               ...(patch.medical !== undefined ? { medicalOverride: patch.medical } : {}),
@@ -273,6 +312,8 @@ const IncomePage = () => {
       label: '401(k)',
       children: (
         <RetirementForm
+          deferralPlan={settings.deferralPlan}
+          onDeferralPlanChange={(deferralPlan) => update({ deferralPlan })}
           summary={retirement}
           perPeriodMatch={row?.employerMatch401k ?? 0}
           paidPeriodCount={ledger.rows.length}
@@ -422,6 +463,12 @@ const IncomePage = () => {
           batchOpen={batchOpen}
           rates={rates}
           roleOptions={roleOptions}
+          raiseNotice={raiseNotice}
+          salaryBasis={salaryBasis}
+          raiseCoverage={raiseCoverage}
+          pendingDrift={pendingDrift}
+          onAcceptLinkedValues={acceptLinkedValues}
+          onDismissLinkedValues={dismissLinkedValues}
           row={row}
           selectedKeys={selectedKeys}
           setBatchOpen={setBatchOpen}

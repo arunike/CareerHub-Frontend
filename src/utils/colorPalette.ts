@@ -157,7 +157,7 @@ const relativeLuminance = (hex: string) => {
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
 };
 
-export const getContrastRatio = (foreground: string, background: string) => {
+const getContrastRatio = (foreground: string, background: string) => {
   const foregroundLuminance = relativeLuminance(normalizeHexColor(foreground));
   const backgroundLuminance = relativeLuminance(normalizeHexColor(background));
   const lighter = Math.max(foregroundLuminance, backgroundLuminance);
@@ -176,11 +176,7 @@ export const getReadableTextColor = (background: string) => {
 };
 
 // Darken the same hue until it clears 4.5:1 on its own tint.
-export const getReadableAccentColor = (
-  color?: string | null,
-  background = '#ffffff',
-  target = 4.5
-) => {
+const getReadableAccentColor = (color?: string | null, background = '#ffffff', target = 4.5) => {
   let hex = normalizeHexColor(color);
   for (let step = 0; step < 12; step += 1) {
     if (getContrastRatio(hex, background) >= target) return hex;

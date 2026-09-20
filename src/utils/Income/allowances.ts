@@ -59,8 +59,7 @@ export const ALLOWANCE_PRESETS: AllowancePreset[] = [
   { label: 'Tuition reimbursement', unit: 'ONCE' },
 ];
 
-export const presetByLabel = (label: string) =>
-  ALLOWANCE_PRESETS.find((preset) => preset.label === label);
+const presetByLabel = (label: string) => ALLOWANCE_PRESETS.find((preset) => preset.label === label);
 
 // Sets the cadence and resets the count, which would otherwise multiply a one-time payment.
 export const applyPreset = (label: string): Partial<Allowance> => {

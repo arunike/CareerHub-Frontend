@@ -1,7 +1,7 @@
 import type { FilingStatus, JurisdictionTable } from '../../../types/tax';
 import { calculateProgressiveTax } from '../../taxMath';
 
-export const standardDeductionFor = (table: JurisdictionTable, filingStatus: FilingStatus) =>
+const standardDeductionFor = (table: JurisdictionTable, filingStatus: FilingStatus) =>
   table.standardDeduction?.[filingStatus] ?? 0;
 
 // One exemption for the filer, a second for a joint spouse, plus one per dependent.

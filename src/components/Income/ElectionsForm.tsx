@@ -1,4 +1,4 @@
-import { AutoComplete, Button, Input, Select, Tooltip } from 'antd';
+import { AutoComplete, Button, Input, Select, Tooltip, Checkbox } from 'antd';
 import dayjs from 'dayjs';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { FilingStatus } from '../../types/tax';
@@ -45,6 +45,12 @@ interface Props {
   hsaLimit: number;
   paidPeriodCount: number;
   deductionLines: DeductionLines;
+  coversDependents: boolean;
+  dependentLines: { medical: number; dental: number; vision: number };
+  onCoversDependentsChange: (value: boolean) => void;
+  onDependentLineChange: (
+    patch: Partial<{ medical: number; dental: number; vision: number }>
+  ) => void;
   customDeductions: CustomDeduction[];
   allowances: Allowance[];
   periods: PayPeriod[];
@@ -155,6 +161,10 @@ export const ElectionsForm = ({
   hsaLimit,
   paidPeriodCount,
   deductionLines,
+  coversDependents,
+  dependentLines,
+  onCoversDependentsChange,
+  onDependentLineChange,
   customDeductions,
   allowances,
   periods,
@@ -268,15 +278,39 @@ export const ElectionsForm = ({
               onChange={(value) => onDeductionChange({ vision: value })}
             />
           </Field>
-          <Field
-            label="Dependent coverage"
-            hint="Added premium for covering a spouse, partner or children."
+        </div>
+
+        <div className="mt-4 border-t border-slate-200 pt-3 dark:border-white/[0.08]">
+          <Checkbox
+            checked={coversDependents}
+            onChange={(event) => onCoversDependentsChange(event.target.checked)}
           >
-            <Dollars
-              value={deductionLines.dependent}
-              onChange={(value) => onDeductionChange({ dependent: value })}
-            />
-          </Field>
+            <span className="text-xs font-medium text-slate-600 dark:text-ink-200">
+              Covers dependents
+            </span>
+          </Checkbox>
+          {coversDependents ? (
+            <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+              <Field label="Dependent medical">
+                <Dollars
+                  value={dependentLines.medical}
+                  onChange={(value) => onDependentLineChange({ medical: value })}
+                />
+              </Field>
+              <Field label="Dependent dental">
+                <Dollars
+                  value={dependentLines.dental}
+                  onChange={(value) => onDependentLineChange({ dental: value })}
+                />
+              </Field>
+              <Field label="Dependent vision">
+                <Dollars
+                  value={dependentLines.vision}
+                  onChange={(value) => onDependentLineChange({ vision: value })}
+                />
+              </Field>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-5">

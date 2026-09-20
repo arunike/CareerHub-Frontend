@@ -364,7 +364,7 @@ export const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(Math.round(value));
 
-export const signedCurrency = (value: number) => {
+const signedCurrency = (value: number) => {
   const rounded = Math.round(value);
   return `${rounded >= 0 ? '+' : '−'}${formatCurrency(Math.abs(rounded))}`;
 };

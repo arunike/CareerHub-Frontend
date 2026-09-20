@@ -177,6 +177,7 @@ export interface IncomeYearPayload {
   salary_override?: number | string | null;
   paychecks_per_year_override?: number | null;
   pay_lag_days?: number;
+  deferral_plan?: unknown;
   pretax_401k_percent?: number | string;
   roth_401k_percent?: number | string;
   hsa_per_period?: number | string;
@@ -197,10 +198,6 @@ export interface IncomeYearPayload {
   cliff_months_override?: number | null;
   vesting_years_override?: number | null;
   first_vest_date?: string | null;
-  medical_premium_override?: number | string | null;
-  dental_premium_override?: number | string | null;
-  vision_premium_override?: number | string | null;
-  dependent_premium_override?: number | string | null;
   custom_deductions?: Array<Record<string, unknown>>;
   period_deductions?: Array<Record<string, unknown>>;
   deferral_base?: string;

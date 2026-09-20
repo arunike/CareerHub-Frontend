@@ -1,6 +1,6 @@
 import type { AIProviderSettings } from '../../lib/llmSettings';
 
-export const unquoteShellValue = (value: string) => {
+const unquoteShellValue = (value: string) => {
   const trimmed = value.trim();
   if (
     (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
@@ -38,14 +38,14 @@ export const parseAIProviderCurl = (curlText: string) => {
   };
 };
 
-export const maskedProviderKey = (settings: AIProviderSettings) => {
+const maskedProviderKey = (settings: AIProviderSettings) => {
   const key = settings.apiKey.trim();
   if (key) return key.length <= 4 ? '•'.repeat(key.length) : `••••••••${key.slice(-4)}`;
   if (settings.apiKeyConfigured) return settings.apiKeyMasked || '<stored encrypted key>';
   return '<provider key>';
 };
 
-export const chatMessagesPreview = '[{"role":"user","content":"Hello"}]';
+const chatMessagesPreview = '[{"role":"user","content":"Hello"}]';
 
 export const buildAIProviderCurlPreview = (settings: AIProviderSettings) => {
   const endpoint = settings.endpoint.trim() || '<endpoint>';

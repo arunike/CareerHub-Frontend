@@ -26,7 +26,7 @@ const DEFAULT_SCENARIO_BENEFITS: BenefitItem[] = [
   },
 ];
 
-export const defaultScenarioDraft = (): SimulatedOffer => ({
+const defaultScenarioDraft = (): SimulatedOffer => ({
   id: '',
   application: null,
   custom_company_name: '',

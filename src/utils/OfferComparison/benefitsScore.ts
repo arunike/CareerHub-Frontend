@@ -14,7 +14,7 @@ const num = (value: unknown, fallback = 0) => {
 };
 
 // Net value of a package worth a full score: employer contributions less what you pay in premiums.
-export const BENEFITS_REFERENCE_VALUE = 20000;
+const BENEFITS_REFERENCE_VALUE = 20000;
 
 export interface BenefitsBreakdown {
   retirementMatch: number;

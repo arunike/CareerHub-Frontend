@@ -21,10 +21,7 @@ export interface VestingOfferFields {
 // Refresh grants vest evenly across this many years, like a standard grant.
 const REFRESH_VEST_YEARS = 4;
 
-export const buildRefreshVestingYears = (
-  offer: VestingOfferFields,
-  equityGrowthPct: number
-): number[] => {
+const buildRefreshVestingYears = (offer: VestingOfferFields, equityGrowthPct: number): number[] => {
   const refreshValue = Math.max(0, Number(offer.annual_refresh_value) || 0);
   const liquidity = normalizeEquityLiquidity(offer.equity_liquidity);
 
@@ -56,7 +53,7 @@ export const getEquityGrowth = (preset: EquityPreset, customGrowthPct: number) =
   return 0;
 };
 
-export const getTotalGrant = (offer: VestingOfferFields) => {
+const getTotalGrant = (offer: VestingOfferFields) => {
   const annualEquity = Number(offer.equity || 0);
   const explicitGrant = Number(offer.equity_total_grant || 0);
   if (explicitGrant > 0) return explicitGrant;

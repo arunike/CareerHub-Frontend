@@ -1,6 +1,7 @@
 import { parseIsoDate } from './paySchedule';
 import type { EmployerContributions } from './tax/ledger';
 import type { RaiseEntry } from '../../types';
+import { storedPackageOf } from '../Experience/compensation';
 
 export interface IncomeSource {
   key: string;
@@ -20,6 +21,12 @@ export interface IncomeSource {
   dentalPerPeriod: number;
   visionPerPeriod: number;
   dependentPerPeriod: number;
+  hasDependents: boolean;
+  // The offer these premiums live on, so an edit can be written back to it.
+  offerId: number | null;
+  dependentMedicalPerPeriod: number;
+  dependentDentalPerPeriod: number;
+  dependentVisionPerPeriod: number;
   employer: EmployerContributions;
   cliffMonths: number;
   vestsPerYear: number;
@@ -28,6 +35,8 @@ export interface IncomeSource {
   raises: RaiseEntry[];
   // False when a past role has no linked offer, so benefits and match are unknown.
   hasBenefitData: boolean;
+  // Which record the salary and bonus were read from, so the page can say where to edit them.
+  payFrom: 'offer' | 'role' | 'hourly';
 }
 
 const num = (value: unknown) => {
@@ -37,17 +46,37 @@ const num = (value: unknown) => {
 
 const premiumsOf = (offer: Record<string, any> | null) => {
   if (!offer) {
-    return { medical: 0, dental: 0, vision: 0, dependent: 0, total: 0 };
+    return {
+      medical: 0,
+      dental: 0,
+      vision: 0,
+      dependent: 0,
+      hasDependents: false,
+      dependentMedical: 0,
+      dependentDental: 0,
+      dependentVision: 0,
+      total: 0,
+    };
   }
   const medical = num(offer.health_premium_paycheck);
   const dental = num(offer.dental_premium_paycheck);
   const vision = num(offer.vision_premium_paycheck);
-  const dependent = offer.has_dependents
-    ? num(offer.dependent_health_premium_paycheck) +
-      num(offer.dependent_dental_premium_paycheck) +
-      num(offer.dependent_vision_premium_paycheck)
-    : 0;
-  return { medical, dental, vision, dependent, total: medical + dental + vision + dependent };
+  const hasDependents = Boolean(offer.has_dependents);
+  const dependentMedical = hasDependents ? num(offer.dependent_health_premium_paycheck) : 0;
+  const dependentDental = hasDependents ? num(offer.dependent_dental_premium_paycheck) : 0;
+  const dependentVision = hasDependents ? num(offer.dependent_vision_premium_paycheck) : 0;
+  const dependent = dependentMedical + dependentDental + dependentVision;
+  return {
+    medical,
+    dental,
+    vision,
+    dependent,
+    hasDependents,
+    dependentMedical,
+    dependentDental,
+    dependentVision,
+    total: medical + dental + vision + dependent,
+  };
 };
 
 // equity holds the annualized value, so the grant is recoverable from the vest percent.
@@ -91,6 +120,10 @@ const spreadPremiums = (premiums: ReturnType<typeof premiumsOf>) => ({
   dentalPerPeriod: premiums.dental,
   visionPerPeriod: premiums.vision,
   dependentPerPeriod: premiums.dependent,
+  hasDependents: premiums.hasDependents,
+  dependentMedicalPerPeriod: premiums.dependentMedical,
+  dependentDentalPerPeriod: premiums.dependentDental,
+  dependentVisionPerPeriod: premiums.dependentVision,
 });
 
 export const buildIncomeSources = (
@@ -104,6 +137,9 @@ export const buildIncomeSources = (
     const offer = experience.offer ? (offerById.get(experience.offer) ?? null) : null;
     if (offer) usedOfferIds.add(offer.id);
 
+    // One resolver for all three surfaces: the linked offer's figure, else the role's own.
+    const stored = storedPackageOf(experience, offer);
+
     return {
       key: `experience-${experience.id}`,
       kind: 'experience' as const,
@@ -113,9 +149,17 @@ export const buildIncomeSources = (
       location: experience.location || offer?.application_details?.location || '',
       startDate: experience.start_date ?? null,
       endDate: experience.end_date ?? null,
-      annualSalary: num(experience.base_salary) || annualizedHourly(experience),
-      bonus: num(experience.bonus),
-      totalGrant: grantOf(offer, num(experience.equity)),
+      offerId: offer?.id ?? null,
+      payFrom:
+        offer && num(offer.base_salary) > 0
+          ? ('offer' as const)
+          : num(experience.base_salary) > 0
+            ? ('role' as const)
+            : ('hourly' as const),
+      // Pre-raise on purpose: the raise schedule below steps it, so applying it here pays twice.
+      annualSalary: stored.base || annualizedHourly(experience),
+      bonus: stored.bonus,
+      totalGrant: grantOf(offer, stored.equity),
       paychecksPerYear: offer ? num(offer.paychecks_per_year) || 26 : 26,
       ...spreadPremiums(premiumsOf(offer)),
       employer: employerOf(offer),
@@ -133,6 +177,8 @@ export const buildIncomeSources = (
       return {
         key: `offer-${offer.id}`,
         kind: 'offer' as const,
+        offerId: offer.id,
+        payFrom: 'offer' as const,
         isCurrent: Boolean(offer.is_current),
         company: details.company || 'Offer',
         roleTitle: details.role_title || '',
@@ -166,8 +212,15 @@ export const activeInYear = (source: IncomeSource, taxYear: number) => {
   return true;
 };
 
+// Still running when the year closed, which `isCurrent` cannot say: that one means current today.
+export const ranPastYearEnd = (source: IncomeSource, taxYear: number) => {
+  const end = parseIsoDate(source.endDate);
+  if (!end) return true;
+  return end.getFullYear() > taxYear;
+};
+
 // Never removes the last option: an empty picker reads as a broken page.
-export const applyIncomeVisibility = <T>(items: T[], hidden: (item: T) => boolean): T[] => {
+const applyIncomeVisibility = <T>(items: T[], hidden: (item: T) => boolean): T[] => {
   const visible = items.filter((item) => !hidden(item));
   return visible.length > 0 ? visible : items;
 };
@@ -205,11 +258,13 @@ export const yearsForSource = (source: IncomeSource | null, latestYear: number):
 };
 
 // Which role the page opens on when nothing is stored: the list's own order is not a choice.
-export const defaultSourceKey = (sources: IncomeSource[]): string => {
+export const defaultSourceKey = (sources: IncomeSource[], taxYear?: number): string => {
   if (sources.length === 0) return '';
+  // Held at the close of the year on screen, so 2025 opens on the role you held in 2025.
+  const held = (source: IncomeSource) =>
+    taxYear == null ? source.isCurrent : ranPastYearEnd(source, taxYear);
   const ranked = [...sources].sort((a, b) => {
-    // A role you still hold outranks one you have left, however recently it ended.
-    if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+    if (held(a) !== held(b)) return held(a) ? -1 : 1;
     const byStart = (b.startDate ?? '').localeCompare(a.startDate ?? '');
     if (byStart !== 0) return byStart;
     return (b.endDate ?? '').localeCompare(a.endDate ?? '');

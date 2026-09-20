@@ -56,9 +56,7 @@ export interface DrivingDefaults {
   gasPricePerGallon: number;
 }
 
-export const resolveDrivingDefaults = (
-  defaults?: Partial<DrivingDefaults> | null
-): DrivingDefaults => ({
+const resolveDrivingDefaults = (defaults?: Partial<DrivingDefaults> | null): DrivingDefaults => ({
   mpg: Number(defaults?.mpg) || DEFAULT_MPG,
   gasPricePerGallon: Number(defaults?.gasPricePerGallon) || DEFAULT_GAS_PRICE,
 });
@@ -132,7 +130,7 @@ export const dailyMilesFor = (option: CommuteOption) => {
   return isRoundTrip(option) ? entered : entered * 2;
 };
 
-export const annualMilesFor = (option: CommuteOption, officeDays: number) =>
+const annualMilesFor = (option: CommuteOption, officeDays: number) =>
   dailyMilesFor(option) * officeDays;
 
 export const isFuelCosted = (option: CommuteOption) => option.cost_mode === 'FUEL';
@@ -245,7 +243,7 @@ export const annualCostFor = (
 export const annualHoursFor = (option: CommuteOption, officeDays: number) =>
   ((Number(option.minutes_each_way) || 0) * 2 * officeDays) / 60;
 
-export const primaryCommute = (options?: CommuteOption[] | null) => {
+const primaryCommute = (options?: CommuteOption[] | null) => {
   if (!Array.isArray(options) || options.length === 0) return null;
   return options.find((option) => option.is_primary) ?? options[0];
 };
@@ -291,7 +289,7 @@ export const commuteTimePenalty = (annualHours: number) => {
   return (MAX_TIME_PENALTY * annualHours) / (annualHours + TIME_PENALTY_HALF_HOURS);
 };
 
-export const WORK_HOURS_PER_YEAR = 2080;
+const WORK_HOURS_PER_YEAR = 2080;
 // Half pay is the transport-economics convention: worth less than working time, far more than nil.
 export const COMMUTE_TIME_WAGE_FRACTION = 0.5;
 

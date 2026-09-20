@@ -12,7 +12,7 @@ const dayOf = (value: unknown): number | null => {
 const payoutDayIn = (year: number, payoutMonth: number) =>
   Math.floor(Date.UTC(year, payoutMonth, 0) / DAY_MS);
 
-export const nextPayoutDayFrom = (day: number, payoutMonth: number) => {
+const nextPayoutDayFrom = (day: number, payoutMonth: number) => {
   const year = new Date(day * DAY_MS).getUTCFullYear();
   const thisYear = payoutDayIn(year, payoutMonth);
   return thisYear >= day ? thisYear : payoutDayIn(year + 1, payoutMonth);

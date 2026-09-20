@@ -74,7 +74,7 @@ const num = (value: unknown) => {
 // Compounding factor for year N, where year 1 is always the offer letter as written.
 const growthFactor = (growthPct: number, year: number) => Math.pow(1 + growthPct / 100, year - 1);
 
-export const buildOfferProjection = (
+const buildOfferProjection = (
   row: ScenarioRow,
   equityGrowthPct: number,
   baseGrowthPct: number = DEFAULT_BASE_GROWTH_PCT

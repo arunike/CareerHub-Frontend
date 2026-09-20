@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS, type IncomeSettings } from './incomeSettings';
+import { normalizeDeferralPlan } from './deferralSchedule';
 import { NO_ELECTIONS, type Elections, type IncomeEvent } from './tax/ledger';
 import { EMPTY_W4 } from './tax/withholding';
 import type { BonusExtra, BonusPayout } from './bonusSchedule';
@@ -37,6 +38,25 @@ export const readLocal = (taxYear: number, sourceKey: string): IncomeSettings | 
   }
 };
 
+const dismissKey = (taxYear: number, sourceKey: string) =>
+  `careerhub.income.driftSeen.${taxYear}.${sourceKey}`;
+
+export const readDismissedDrift = (taxYear: number, sourceKey: string): string | null => {
+  try {
+    return window.localStorage.getItem(dismissKey(taxYear, sourceKey));
+  } catch {
+    return null;
+  }
+};
+
+export const writeDismissedDrift = (taxYear: number, sourceKey: string, signature: string) => {
+  try {
+    window.localStorage.setItem(dismissKey(taxYear, sourceKey), signature);
+  } catch {
+    // The prompt simply returns next load.
+  }
+};
+
 export const writeLocal = (taxYear: number, sourceKey: string, settings: IncomeSettings) => {
   try {
     window.localStorage.setItem(storageKey(taxYear, sourceKey), JSON.stringify(settings));
@@ -47,6 +67,8 @@ export const writeLocal = (taxYear: number, sourceKey: string, settings: IncomeS
 
 export const fromPayload = (payload: IncomeYearPayload): Partial<IncomeSettings> => ({
   salaryOverride: payload.salary_override === null ? null : num(payload.salary_override),
+  // An absent or empty plan is the default, so an older row reads as "no schedule" not as broken.
+  deferralPlan: normalizeDeferralPlan(payload.deferral_plan),
   paychecksPerYearOverride: payload.paychecks_per_year_override ?? null,
   payLagDays: Number(payload.pay_lag_days) || 0,
   firstPayDate: payload.first_pay_date ?? null,
@@ -80,14 +102,15 @@ export const fromPayload = (payload: IncomeYearPayload): Partial<IncomeSettings>
   cliffMonthsOverride: payload.cliff_months_override ?? null,
   vestingYearsOverride: payload.vesting_years_override ?? null,
   firstVestDate: payload.first_vest_date ?? null,
-  medicalOverride:
-    payload.medical_premium_override == null ? null : num(payload.medical_premium_override),
-  dentalOverride:
-    payload.dental_premium_override == null ? null : num(payload.dental_premium_override),
-  visionOverride:
-    payload.vision_premium_override == null ? null : num(payload.vision_premium_override),
-  dependentOverride:
-    payload.dependent_premium_override == null ? null : num(payload.dependent_premium_override),
+  // Premiums live on the offer now; these four are an in-session edit buffer, never loaded.
+  medicalOverride: null,
+  dentalOverride: null,
+  visionOverride: null,
+  dependentOverride: null,
+  dependentMedicalOverride: null,
+  dependentDentalOverride: null,
+  dependentVisionOverride: null,
+  hasDependentsOverride: null,
   customDeductions: (payload.custom_deductions ?? []) as unknown as CustomDeduction[],
   allowances: (payload.allowances ?? []) as unknown as Allowance[],
   matchTiers: payload.match_tiers?.length ? (payload.match_tiers as unknown as MatchTier[]) : null,

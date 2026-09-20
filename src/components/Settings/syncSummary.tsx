@@ -9,7 +9,7 @@ export type SyncSummarySource =
   | Partial<GoogleSheetSyncConfig['last_result']>
   | Record<string, unknown>;
 
-export const syncSummaryValue = (summary: SyncSummarySource | null | undefined, key: string) => {
+const syncSummaryValue = (summary: SyncSummarySource | null | undefined, key: string) => {
   const value = summary?.[key];
   return typeof value === 'number' ? value : 0;
 };
@@ -20,7 +20,7 @@ export const syncMissingFromSheet = (summary: SyncSummarySource | null | undefin
   return syncSummaryValue(summary, 'archived') + syncSummaryValue(summary, 'deleted');
 };
 
-export const syncReviewItems = (summary: SyncSummarySource | null | undefined) => [
+const syncReviewItems = (summary: SyncSummarySource | null | undefined) => [
   {
     key: 'created',
     label: 'Created',

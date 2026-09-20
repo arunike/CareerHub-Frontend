@@ -16,7 +16,7 @@ export const OFF_CYCLE_BASE = 1000;
 export const mergePeriods = (regular: PayPeriod[], offCycle: PayPeriod[]): PayPeriod[] =>
   [...regular, ...offCycle].sort((a, b) => a.payDate.localeCompare(b.payDate));
 
-export const dayNumber = (date: Date) =>
+const dayNumber = (date: Date) =>
   Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
 
 export const inclusiveDayCount = (from: Date, to: Date) =>

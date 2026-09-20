@@ -20,7 +20,7 @@ const grantValueOf = (offer: EquityFields) =>
   num(offer.equity_total_grant) || num(offer.equity) || num(offer.equity_buyback_value);
 
 // A private company has no ticker, so its price lives on the offer; a listed one shares a quote.
-export const currentPriceOf = (offer: EquityFields, prices: PriceBySymbol): number => {
+const currentPriceOf = (offer: EquityFields, prices: PriceBySymbol): number => {
   const own = num(offer.equity_current_price);
   if (own > 0) return own;
   const symbol = normalizeSymbol(offer.equity_ticker);

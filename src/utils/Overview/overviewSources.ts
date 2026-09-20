@@ -10,7 +10,7 @@ export const SOURCE_LABELS = {
 export type CommandSource = keyof typeof SOURCE_LABELS;
 
 // Which cards are affected, so the banner says what is missing rather than that "something" failed.
-export const SOURCE_AFFECTS: Record<CommandSource, string> = {
+const SOURCE_AFFECTS: Record<CommandSource, string> = {
   events: 'upcoming events and deadlines',
   applications: 'live conversations and pipeline',
   tasks: 'open and overdue tasks',

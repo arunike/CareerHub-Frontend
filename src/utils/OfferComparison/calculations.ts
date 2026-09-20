@@ -49,10 +49,8 @@ export const annualizeAmount = (
   return safe;
 };
 
-export const calculateDirectCashAdjustment = (
-  freeFoodPerkAnnual: number,
-  commuteAnnualCost: number
-) => (Number(freeFoodPerkAnnual) || 0) - (Number(commuteAnnualCost) || 0);
+const calculateDirectCashAdjustment = (freeFoodPerkAnnual: number, commuteAnnualCost: number) =>
+  (Number(freeFoodPerkAnnual) || 0) - (Number(commuteAnnualCost) || 0);
 
 export const calculateScenarioValue = ({
   base_salary,
@@ -207,7 +205,7 @@ export const estimateColIndexFromCity = (
   return stateColBase[stateAbbr] || 100;
 };
 
-export const estimateEffectiveTaxRate = (
+const estimateEffectiveTaxRate = (
   income: number,
   maritalStatus: MaritalStatus,
   city: string,
