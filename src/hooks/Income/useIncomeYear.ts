@@ -42,7 +42,9 @@ import {
   writeLocal,
 } from '../../utils/Income/incomeSettingsStore';
 import { buildIncomeModel } from '../../utils/Income/incomeModel';
-import { driftSignature, linkedDrift, unseenDrift } from '../../utils/Income/linkedDrift';
+import { driftSignature, linkedDrift } from '../../utils/Income/linkedDrift';
+import { grossPinDrift, grossPinSignature } from '../../utils/Income/grossPinDrift';
+import { clearFieldFromPeriods } from '../../utils/Income/periodDeductions';
 import { updateOffer } from '../../api/career';
 import { roundOfferDecimals } from '../../utils/OfferComparison/offerPrecision';
 import {
@@ -503,26 +505,53 @@ export const useIncomeYear = () => {
     setDismissedDrift(readDismissedDrift(taxYear, resolvedSourceKey));
   }, [resolvedSourceKey, taxYear]);
 
-  const pendingDrift = unseenDrift(offerDrift, dismissedDrift) ? offerDrift : [];
+  // A pinned gross outranks the raise schedule, so it is drift in the same sense as a pinned field.
+  const grossPins = useMemo(
+    () =>
+      grossPinDrift(
+        settings.periodDeductions,
+        model.periods,
+        model.ledgerInput.salaryPerPeriodByIndex ?? {},
+        model.periodDefaults.regularGross
+      ),
+    [
+      settings.periodDeductions,
+      model.periods,
+      model.ledgerInput.salaryPerPeriodByIndex,
+      model.periodDefaults.regularGross,
+    ]
+  );
+
+  const pendingSignature = `${driftSignature(offerDrift)}#${grossPinSignature(grossPins)}`;
+  const unseen =
+    (offerDrift.length > 0 || grossPins.length > 0) && pendingSignature !== dismissedDrift;
+  const pendingDrift = unseen ? offerDrift : [];
+  const pendingGrossPins = unseen ? grossPins : [];
 
   // Accept releases the pin rather than writing back: base_salary is the pre-raise opening rate.
   const acceptLinkedValues = useCallback(() => {
-    if (offerDrift.length === 0) return;
+    if (offerDrift.length === 0 && grossPins.length === 0) return;
     const draftKey = `${taxYear}|${resolvedSourceKey}`;
     setSettings((prev) => {
       const next = { ...prev };
       for (const entry of offerDrift) next[entry.field] = null;
+      if (grossPins.length > 0) {
+        next.periodDeductions = clearFieldFromPeriods(
+          prev.periodDeductions,
+          'regularGross',
+          grossPins.map((entry) => entry.periodIndex)
+        );
+      }
       draftsRef.current.set(draftKey, next);
       return next;
     });
     setDirtyKeys((keys) => (keys.includes(draftKey) ? keys : [...keys, draftKey]));
-  }, [offerDrift, resolvedSourceKey, taxYear]);
+  }, [grossPins, offerDrift, resolvedSourceKey, taxYear]);
 
   const dismissLinkedValues = useCallback(() => {
-    const signature = driftSignature(offerDrift);
-    writeDismissedDrift(taxYear, resolvedSourceKey, signature);
-    setDismissedDrift(signature);
-  }, [offerDrift, resolvedSourceKey, taxYear]);
+    writeDismissedDrift(taxYear, resolvedSourceKey, pendingSignature);
+    setDismissedDrift(pendingSignature);
+  }, [pendingSignature, resolvedSourceKey, taxYear]);
 
   return {
     loading,
@@ -530,6 +559,7 @@ export const useIncomeYear = () => {
     isDirty,
     discardChanges,
     pendingDrift,
+    pendingGrossPins,
     acceptLinkedValues,
     dismissLinkedValues,
     persistence,

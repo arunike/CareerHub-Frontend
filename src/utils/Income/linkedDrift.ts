@@ -41,6 +41,3 @@ export const linkedDrift = (
 // Keyed by the value that was rejected, so the prompt returns if the record moves again.
 export const driftSignature = (drift: LinkedDrift[]): string =>
   drift.map((entry) => `${entry.field}:${Math.round(entry.linked)}`).join('|');
-
-export const unseenDrift = (drift: LinkedDrift[], dismissedSignature: string | null) =>
-  drift.length > 0 && driftSignature(drift) !== dismissedSignature;

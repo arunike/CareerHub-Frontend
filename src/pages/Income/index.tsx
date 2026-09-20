@@ -75,6 +75,7 @@ const IncomePage = () => {
     raiseNotice,
     salaryBasis,
     pendingDrift,
+    pendingGrossPins,
     acceptLinkedValues,
     dismissLinkedValues,
     raiseCoverage,
@@ -467,6 +468,7 @@ const IncomePage = () => {
           salaryBasis={salaryBasis}
           raiseCoverage={raiseCoverage}
           pendingDrift={pendingDrift}
+          pendingGrossPins={pendingGrossPins}
           onAcceptLinkedValues={acceptLinkedValues}
           onDismissLinkedValues={dismissLinkedValues}
           row={row}

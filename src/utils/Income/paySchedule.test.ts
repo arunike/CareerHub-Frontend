@@ -10,9 +10,9 @@ import {
 
 describe('buildPayDates', () => {
   it('steps biweekly from the anchor date', () => {
-    const dates = buildPayDates(2026, 26, '2026-01-09');
-    expect(toIsoDate(dates[0])).toBe('2026-01-09');
-    expect(toIsoDate(dates[1])).toBe('2026-01-23');
+    const dates = buildPayDates(2026, 26, '2026-01-15');
+    expect(toIsoDate(dates[0])).toBe('2026-01-15');
+    expect(toIsoDate(dates[1])).toBe('2026-01-29');
     expect(dates.length).toBeGreaterThanOrEqual(26);
   });
 
@@ -48,7 +48,7 @@ describe('buildPayDates', () => {
 describe('buildPayPeriods', () => {
   it('drops paychecks before the start date', () => {
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       startDate: '2026-07-01',
     });
     expect(periods.length).toBeGreaterThan(0);
@@ -58,38 +58,38 @@ describe('buildPayPeriods', () => {
   });
 
   it('keeps the cheque that pays for the last days worked, prorated', () => {
-    // Leaving on 1 Nov, the 13 Nov cheque still covers 31 Oct - 1 Nov: two of its fourteen days.
+    // Leaving on 1 Nov, the 5 Nov cheque still covers 23 Oct - 1 Nov: ten of its fourteen days.
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       endDate: '2026-11-01',
     });
-    expect(periods.at(-1)!.payDate).toBe('2026-11-13');
-    expect(periods.at(-1)!.coverage).toBeCloseTo(2 / 14, 6);
-    expect(periods.at(-2)!.payDate).toBe('2026-10-30');
+    expect(periods.at(-1)!.payDate).toBe('2026-11-05');
+    expect(periods.at(-1)!.coverage).toBeCloseTo(10 / 14, 6);
+    expect(periods.at(-2)!.payDate).toBe('2026-10-22');
     expect(periods.at(-2)!.coverage).toBeUndefined();
   });
 
   it('drops a cheque whose whole period falls after the end date', () => {
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
-      endDate: '2026-10-30',
+      firstPayDate: '2026-01-15',
+      endDate: '2026-11-05',
     });
-    expect(periods.at(-1)!.payDate).toBe('2026-10-30');
+    expect(periods.at(-1)!.payDate).toBe('2026-11-05');
   });
 
   it('leaves the opening cheque whole, so a year-spanning role keeps its December days', () => {
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       startDate: '2026-07-01',
     });
-    expect(periods[0].payDate).toBe('2026-07-10');
+    expect(periods[0].payDate).toBe('2026-07-02');
     expect(periods[0].coverage).toBeUndefined();
   });
 
   it('keeps the original period numbering so a part year is not renumbered', () => {
-    const full = buildPayPeriods(2026, 26, { firstPayDate: '2026-01-09' });
+    const full = buildPayPeriods(2026, 26, { firstPayDate: '2026-01-15' });
     const partial = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       startDate: '2026-07-01',
     });
     expect(partial[0].periodIndex).toBeGreaterThan(1);
@@ -116,7 +116,7 @@ describe('defaultFirstPayDate', () => {
 });
 
 describe('applyPayDateOverrides', () => {
-  const periods = buildPayPeriods(2026, 26, { firstPayDate: '2026-01-09' });
+  const periods = buildPayPeriods(2026, 26, { firstPayDate: '2026-01-15' });
 
   it('leaves the run alone without overrides', () => {
     expect(applyPayDateOverrides(periods, [])).toBe(periods);

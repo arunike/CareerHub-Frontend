@@ -2,6 +2,7 @@ import { Select, Tooltip } from 'antd';
 import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { describeSalaryBasis, type SalaryBasis } from '../../utils/Income/salaryBasis';
 import { describeRaiseCoverage, type RaiseCoverage } from '../../utils/Income/raiseCoverage';
+import type { GrossPinDrift } from '../../utils/Income/grossPinDrift';
 import type { LinkedDrift } from '../../utils/Income/linkedDrift';
 import LinkedDriftPrompt from './LinkedDriftPrompt';
 import type { totalsToDate } from '../../utils/Income/effectiveRows';
@@ -29,6 +30,8 @@ interface Props {
   salaryBasis?: SalaryBasis;
   raiseCoverage?: RaiseCoverage;
   pendingDrift?: LinkedDrift[];
+  pendingGrossPins?: GrossPinDrift[];
+  onSelectPaycheck?: (periodIndex: number) => void;
   onAcceptLinkedValues?: () => void;
   onDismissLinkedValues?: () => void;
   onSelectRole: (key: string) => void;
@@ -60,6 +63,8 @@ export const IncomeSummary = ({
   salaryBasis,
   raiseCoverage,
   pendingDrift,
+  pendingGrossPins,
+  onSelectPaycheck,
   onAcceptLinkedValues,
   onDismissLinkedValues,
   onSelectRole,
@@ -159,12 +164,13 @@ export const IncomeSummary = ({
           </div>
         ) : null}
 
-        {pendingDrift &&
-        pendingDrift.length > 0 &&
+        {((pendingDrift?.length ?? 0) > 0 || (pendingGrossPins?.length ?? 0) > 0) &&
         onAcceptLinkedValues &&
         onDismissLinkedValues ? (
           <LinkedDriftPrompt
-            drift={pendingDrift}
+            drift={pendingDrift ?? []}
+            grossPins={pendingGrossPins ?? []}
+            onSelectPaycheck={onSelectPaycheck}
             onAccept={onAcceptLinkedValues}
             onDismiss={onDismissLinkedValues}
           />

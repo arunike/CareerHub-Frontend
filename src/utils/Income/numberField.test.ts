@@ -89,7 +89,7 @@ describe('roundCents', () => {
   it('cuts a calculated figure to the cent', () => {
     // 160,000 over 26 paychecks, which is what leaked into the field at full float width.
     expect(roundCents(160000 / 26)).toBe(6153.85);
-    expect(roundCents(5538.461538461538)).toBe(5538.46);
+    expect(roundCents(6346.153846153846)).toBe(6346.15);
   });
 
   it('leaves a figure that is already exact alone', () => {

@@ -19,7 +19,7 @@ import {
 } from './bonusSchedule';
 import { buildPayPeriods } from './paySchedule';
 
-const periods = buildPayPeriods(2026, 26, { firstPayDate: '2026-01-09' });
+const periods = buildPayPeriods(2026, 26, { firstPayDate: '2026-01-15' });
 
 const payout = (overrides: Partial<BonusPayout> = {}): BonusPayout => ({
   id: 'p1',
@@ -65,7 +65,7 @@ describe('buildBonusEvents', () => {
 
   it('drops a payout scheduled outside the paid periods', () => {
     const partYear = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       startDate: '2026-07-01',
     });
     expect(buildBonusEvents(20000, [payout({ periodIndex: 2 })], partYear)).toEqual([]);

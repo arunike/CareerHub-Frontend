@@ -202,6 +202,24 @@ export const clearFieldFromOverrides = (
     .filter((override) => Object.keys(override).some((key) => key !== 'periodIndex'))
     .sort(byPeriod);
 
+// Drops one field from the named paychecks only, so a value typed on another is left alone.
+export const clearFieldFromPeriods = (
+  overrides: PeriodDeductionOverride[],
+  key: string,
+  periodIndexes: number[]
+): PeriodDeductionOverride[] => {
+  const targets = new Set(periodIndexes);
+  return overrides
+    .map((override) => {
+      if (!targets.has(override.periodIndex)) return override;
+      const next = { ...override } as Record<string, unknown>;
+      delete next[key];
+      return next as unknown as PeriodDeductionOverride;
+    })
+    .filter((override) => Object.keys(override).some((name) => name !== 'periodIndex'))
+    .sort(byPeriod);
+};
+
 export const buildPeriodOverrides = (
   overrides: PeriodDeductionOverride[],
   defaults: PeriodDefaults,

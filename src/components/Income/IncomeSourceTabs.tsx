@@ -11,6 +11,7 @@ import YearEarningsCard from './YearEarningsCard';
 import PaycheckWaterfall from './PaycheckWaterfall';
 import type { SalaryBasis } from '../../utils/Income/salaryBasis';
 import type { RaiseCoverage } from '../../utils/Income/raiseCoverage';
+import type { GrossPinDrift } from '../../utils/Income/grossPinDrift';
 import type { LinkedDrift } from '../../utils/Income/linkedDrift';
 import LinkedDriftPrompt from './LinkedDriftPrompt';
 import ReconciliationCards from './ReconciliationCards';
@@ -58,6 +59,7 @@ type Props = {
   salaryBasis?: SalaryBasis;
   raiseCoverage?: RaiseCoverage;
   pendingDrift?: LinkedDrift[];
+  pendingGrossPins?: GrossPinDrift[];
   onAcceptLinkedValues?: () => void;
   onDismissLinkedValues?: () => void;
   row: any;
@@ -80,6 +82,7 @@ const IncomeSourceTabs = ({
   salaryBasis,
   raiseCoverage,
   pendingDrift,
+  pendingGrossPins,
   onAcceptLinkedValues,
   onDismissLinkedValues,
   row,
@@ -138,6 +141,11 @@ const IncomeSourceTabs = ({
           salaryBasis={salaryBasis}
           raiseCoverage={raiseCoverage}
           pendingDrift={view === 'paycheck' ? [] : pendingDrift}
+          pendingGrossPins={view === 'paycheck' ? [] : pendingGrossPins}
+          onSelectPaycheck={(period) => {
+            setSelectedPeriod(period);
+            setView('paycheck');
+          }}
           onAcceptLinkedValues={onAcceptLinkedValues}
           onDismissLinkedValues={onDismissLinkedValues}
           onSelectRole={(key) => {
@@ -247,9 +255,12 @@ const IncomeSourceTabs = ({
               </div>
             </div>
 
-            {view === 'paycheck' && pendingDrift && pendingDrift.length > 0 ? (
+            {view === 'paycheck' &&
+            ((pendingDrift?.length ?? 0) > 0 || (pendingGrossPins?.length ?? 0) > 0) ? (
               <LinkedDriftPrompt
-                drift={pendingDrift}
+                drift={pendingDrift ?? []}
+                grossPins={pendingGrossPins ?? []}
+                onSelectPaycheck={setSelectedPeriod}
                 onAccept={() => onAcceptLinkedValues?.()}
                 onDismiss={() => onDismissLinkedValues?.()}
               />

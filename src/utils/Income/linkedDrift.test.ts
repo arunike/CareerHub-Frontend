@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { driftSignature, linkedDrift, unseenDrift } from './linkedDrift';
+import { linkedDrift } from './linkedDrift';
 import type { IncomeSource } from './incomeSources';
 
 const source = (over: Partial<IncomeSource> = {}): IncomeSource =>
@@ -38,26 +38,5 @@ describe('linkedDrift', () => {
 
   it('says nothing without a linked record to compare against', () => {
     expect(linkedDrift(pinned({ salaryOverride: 165000 }), null)).toEqual([]);
-  });
-});
-
-describe('unseenDrift', () => {
-  const drift = linkedDrift(pinned({ salaryOverride: 165000 }), source());
-
-  it('shows while nothing has been dismissed', () => {
-    expect(unseenDrift(drift, null)).toBe(true);
-  });
-
-  it('stays hidden once this exact value has been dismissed', () => {
-    expect(unseenDrift(drift, driftSignature(drift))).toBe(false);
-  });
-
-  it('returns when the linked record moves again after a dismissal', () => {
-    const later = linkedDrift(pinned({ salaryOverride: 165000 }), source({ annualSalary: 199650 }));
-    expect(unseenDrift(later, driftSignature(drift))).toBe(true);
-  });
-
-  it('never shows when there is no drift at all', () => {
-    expect(unseenDrift([], null)).toBe(false);
   });
 });

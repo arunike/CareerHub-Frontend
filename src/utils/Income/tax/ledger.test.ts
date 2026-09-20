@@ -32,7 +32,7 @@ const elections = (overrides: Partial<Elections>): Elections => ({ ...NO_ELECTIO
 describe('buildLedger over real pay periods', () => {
   it('only pays the periods on or after the start date', () => {
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       startDate: '2026-07-01',
     });
     const { rows, totals } = buildLedger(
@@ -48,19 +48,19 @@ describe('buildLedger over real pay periods', () => {
 
   it('stops paying after the role ends', () => {
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       endDate: '2026-11-01',
     });
     const { rows } = buildLedger(input({ periodsPerYear: 26, periods }));
     // The final cheque lands after the last day worked, paying only for the days it covers.
-    expect(rows.at(-1)!.payDate).toBe('2026-11-13');
-    expect(rows.at(-1)!.regularGross).toBeCloseTo(rows.at(-2)!.regularGross * (2 / 14), 6);
+    expect(rows.at(-1)!.payDate).toBe('2026-11-05');
+    expect(rows.at(-1)!.regularGross).toBeCloseTo(rows.at(-2)!.regularGross * (10 / 14), 6);
   });
 
   // Payroll annualizes each paycheck, so a part year over-withholds and refunds.
   it('over-withholds a part year because withholding annualizes every paycheck', () => {
     const periods = buildPayPeriods(2026, 26, {
-      firstPayDate: '2026-01-09',
+      firstPayDate: '2026-01-15',
       startDate: '2026-07-01',
     });
     const partYear = buildLedger(input({ periodsPerYear: 26, periods, annualSalary: 130000 }));

@@ -8,7 +8,7 @@ import { buildPayPeriods } from './paySchedule';
 const ANNUAL_SALARY = 160000;
 const BASE_PER_PERIOD = ANNUAL_SALARY / 26;
 const ALLOWANCE = 30;
-const periods = buildPayPeriods(2025, 26, { firstPayDate: '2025-02-07' });
+const periods = buildPayPeriods(2025, 26, { firstPayDate: '2025-01-15' });
 
 const run = (deferralPercent: number, excludeAllowances: boolean) =>
   buildLedger({
