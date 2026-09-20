@@ -16,7 +16,7 @@ type LocationSelectProps = {
 export const LocationSelect: React.FC<LocationSelectProps> = ({
   value = '',
   onChange,
-  placeholder = 'e.g. San Francisco, CA',
+  placeholder = 'e.g. Mountain View, CA',
   className,
   disabled,
   allowClear = true,

@@ -130,7 +130,7 @@ const JobBoardImportModal = ({
             </Col>
             <Col span={24}>
               <Form.Item name="office_location" label="Location">
-                <LocationSelect placeholder="Remote, San Francisco, CA, ..." />
+                <LocationSelect placeholder="Remote, Mountain View, CA, ..." />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>

@@ -52,7 +52,7 @@ const ExperienceDateFields = ({
       />
     </Form.Item>
     <Form.Item name="location" label="Location">
-      <LocationSelect placeholder="e.g. San Francisco, CA" />
+      <LocationSelect placeholder="e.g. Mountain View, CA" />
     </Form.Item>
   </div>
 );

@@ -96,7 +96,7 @@ const ApplicationFormFields = ({
       </Col>
       <Col xs={24} sm={12}>
         <Form.Item name="office_location" label="Location">
-          <LocationSelect className="w-full" placeholder="e.g. San Francisco, CA" />
+          <LocationSelect className="w-full" placeholder="e.g. Mountain View, CA" />
         </Form.Item>
       </Col>
       <Col span={12}>
