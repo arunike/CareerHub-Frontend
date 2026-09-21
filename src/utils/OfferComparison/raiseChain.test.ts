@@ -81,21 +81,44 @@ describe('withDerivedBefores', () => {
 describe('firstRaiseDrift', () => {
   const entry = raise({ id: 'a', base_before: 160000, base_after: 181500 });
 
+  // Pinned rather than read off the clock, or these start failing once the year turns.
+  const during = '2026-10-01';
+
   it('reports nothing when the first raise already starts from the role pay', () => {
-    expect(firstRaiseDrift([entry], 160000)).toBeNull();
+    expect(firstRaiseDrift([entry], 160000, during)).toBeNull();
   });
 
   it('reports the gap when the role pay was corrected afterwards', () => {
-    expect(firstRaiseDrift([entry], 165000)).toEqual({
+    expect(firstRaiseDrift([entry], 165000, during)).toEqual({
       entryId: 'a',
       storedBefore: 160000,
       rolePay: 165000,
+      affectedYear: 2026,
     });
   });
 
+  it('goes quiet once the year holding those paychecks is past', () => {
+    expect(firstRaiseDrift([entry], 165000, '2027-01-01')).toBeNull();
+  });
+
+  it('still reports on the last day of the affected year', () => {
+    expect(firstRaiseDrift([entry], 165000, '2026-12-31')?.affectedYear).toBe(2026);
+  });
+
+  it('takes the year from the later of the two dates, as the ledger does', () => {
+    const announcedEarly = raise({
+      id: 'a',
+      date: '2026-12-20',
+      effective_date: '2027-01-04',
+      base_before: 160000,
+      base_after: 181500,
+    });
+    expect(firstRaiseDrift([announcedEarly], 165000, during)?.affectedYear).toBe(2027);
+  });
+
   it('stays quiet when the role has no pay of its own to compare against', () => {
-    expect(firstRaiseDrift([entry], 0)).toBeNull();
-    expect(firstRaiseDrift([], 165000)).toBeNull();
+    expect(firstRaiseDrift([entry], 0, during)).toBeNull();
+    expect(firstRaiseDrift([], 165000, during)).toBeNull();
   });
 });
 

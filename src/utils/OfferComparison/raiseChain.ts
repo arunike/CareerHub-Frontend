@@ -1,4 +1,5 @@
 import type { RaiseEntry } from '../../types';
+import { stepDateOf } from '../Income/raiseSchedule';
 
 export interface StoredPackage {
   base: number;
@@ -40,17 +41,26 @@ export interface ChainDrift {
   entryId: string;
   storedBefore: number;
   rolePay: number;
+  // The year holding the paychecks a re-chain would move.
+  affectedYear: number;
 }
 
 // The earliest raise should start from the role's own pay; it will not if that was edited after.
-export const firstRaiseDrift = (raises: RaiseEntry[], rolePay: number): ChainDrift | null => {
+export const firstRaiseDrift = (
+  raises: RaiseEntry[],
+  rolePay: number,
+  todayIso: string = new Date().toISOString().slice(0, 10)
+): ChainDrift | null => {
   if (rolePay <= 0) return null;
   const sorted = [...raises].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
   const first = sorted[0];
   if (!first) return null;
   const storedBefore = num(first.base_before);
   if (storedBefore <= 0 || storedBefore === rolePay) return null;
-  return { entryId: String(first.id), storedBefore, rolePay };
+  // Re-chaining only moves paychecks before the first raise, so a past year has nothing left to move.
+  const affectedYear = Number(stepDateOf(first).slice(0, 4));
+  if (!affectedYear || Number(todayIso.slice(0, 4)) > affectedYear) return null;
+  return { entryId: String(first.id), storedBefore, rolePay, affectedYear };
 };
 
 // Re-chains from the role's pay, which is what the Apply action writes back.

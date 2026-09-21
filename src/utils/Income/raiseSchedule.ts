@@ -13,7 +13,7 @@ const num = (value: unknown) => {
 const usable = (entry: RaiseEntry) => Boolean(entry?.date) && num(entry.base_after) > 0;
 
 // Payroll acts on the notified date, but a rise announced early cannot be paid before it starts.
-const stepDateOf = (raise: RaiseEntry) => {
+export const stepDateOf = (raise: RaiseEntry) => {
   const effective = raise.effective_date;
   return effective && effective > raise.date ? effective : raise.date;
 };

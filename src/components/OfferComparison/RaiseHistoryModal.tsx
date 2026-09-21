@@ -10,6 +10,7 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import HelpTooltipTrigger from '../feedback/HelpTooltipTrigger';
 import type { RaiseEntry } from '../../types';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { backPayFor } from '../../utils/Income/raiseSchedule';
@@ -58,6 +59,9 @@ interface Props {
   roleTitle: string;
   onSave: (entries: RaiseEntry[]) => Promise<void>;
 }
+
+// Quiet enough that the label reads first; the colour still carries the reason.
+const ENTRY_TAG = '!mr-0 !px-1.5 !text-[11px] !leading-[18px]';
 
 const RaiseHistoryModal: React.FC<Props> = ({
   open,
@@ -447,9 +451,13 @@ const RaiseHistoryModal: React.FC<Props> = ({
       {/* The earliest raise stores the pay it started from, so editing the role's base leaves it behind. */}
       {drift && !showForm ? (
         <div className="mb-4 flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 sm:flex-row sm:items-center sm:justify-between dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-300">
-          <span>
-            This role&rsquo;s base pay is now {fmt(drift.rolePay)}, but the first raise starts from{' '}
+          <span className="flex items-center gap-1.5">
+            Base pay is now {fmt(drift.rolePay)}; the first raise starts from{' '}
             {fmt(drift.storedBefore)}.
+            <HelpTooltipTrigger
+              ariaLabel="Why the two figures differ"
+              title={`Expected if ${fmt(drift.storedBefore)} is what you were paid until the raise. Starting from ${fmt(drift.rolePay)} re-rates your ${drift.affectedYear} paychecks before it, so use it only if the earlier figure is wrong.`}
+            />
           </span>
           <Button
             size="small"
@@ -686,21 +694,25 @@ const RaiseHistoryModal: React.FC<Props> = ({
               {/* Entry header */}
               <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 px-3 py-2 sm:px-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="whitespace-nowrap text-sm font-semibold text-gray-700 dark:text-ink-100">
+                  <span className="whitespace-nowrap text-xs text-gray-500 dark:text-ink-400">
                     {entry.date}
                   </span>
-                  <Tag color={reasonColor(entry.type)}>{reason}</Tag>
+                  <span className="truncate text-sm font-semibold text-gray-800 dark:text-ink-50">
+                    {entry.label || reason}
+                  </span>
+                  {entry.label && (
+                    <Tag color={reasonColor(entry.type)} className={ENTRY_TAG}>
+                      {reason}
+                    </Tag>
+                  )}
                   {entry.effective_date && entry.effective_date < entry.date && (
                     <Tooltip
                       title={`Took effect ${entry.effective_date}; the difference is owed as back pay`}
                     >
-                      <Tag color="volcano">Backdated</Tag>
+                      <Tag color="volcano" className={ENTRY_TAG}>
+                        Backdated
+                      </Tag>
                     </Tooltip>
-                  )}
-                  {entry.label && (
-                    <span className="truncate text-xs text-gray-500 dark:text-ink-400">
-                      {entry.label}
-                    </span>
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
