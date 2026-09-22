@@ -16,6 +16,8 @@ import { useHolidayCrud } from '../../hooks/Holidays/useHolidayCrud';
 import { useHolidayData } from '../../hooks/Holidays/useHolidayData';
 import FederalHolidayModal from '../../components/Holidays/FederalHolidayModal';
 import HolidayEditModal from '../../components/Holidays/HolidayEditModal';
+import TimeOffTracker from '../../components/Holidays/TimeOffTracker';
+import { usePtoRoles } from '../../hooks/Holidays/usePtoRoles';
 import HolidayListCard from '../../components/Holidays/HolidayListCard';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import {
@@ -41,6 +43,7 @@ const Holidays = () => {
   const [editForm] = Form.useForm();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const ptoRoles = usePtoRoles();
 
   const [activeTab, setActiveTab] = useState('custom');
 
@@ -394,6 +397,15 @@ const Holidays = () => {
         ) : (
           <CalendarView
             pageControls={viewControls}
+            navLeading={(anchorDate) => (
+              <TimeOffTracker
+                holidays={holidays}
+                year={anchorDate.getFullYear()}
+                tabColor={userSettings?.default_holiday_color}
+                // The full time-off editor, not the cut-down one: the tracker's rows are trips.
+                onOpenDay={(holiday) => setEditingCalendarHoliday(holiday as never)}
+              />
+            )}
             onItemDrop={handleCalendarItemDrop}
             events={events}
             customHolidays={holidaysForSelectedYear}
@@ -498,6 +510,8 @@ const Holidays = () => {
           }}
           onSubmit={handleCalendarHolidaySubmit}
           onDelete={handleCalendarHolidayDelete}
+          onToggleLock={toggleLock}
+          ptoRoles={ptoRoles}
         />
       </div>
     </>

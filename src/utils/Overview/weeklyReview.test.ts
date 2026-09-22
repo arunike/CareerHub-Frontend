@@ -83,6 +83,17 @@ describe('responseRate', () => {
 });
 
 describe('needsFollowUp', () => {
+  it('measures silence from the last real signal, not from the last save', () => {
+    // A sheet sync touches every row, so updated_at says today while nobody has replied since August.
+    const synced = application({
+      id: 9,
+      status: 'ROUND_1',
+      updated_at: TODAY,
+      current_stage_on: '2026-08-06',
+    });
+    expect(needsFollowUp([synced], TODAY).map((row) => row.daysQuiet)).toEqual([31]);
+  });
+
   it('surfaces engaged applications gone quiet, longest first', () => {
     const rows = [
       application({ id: 1, status: 'ROUND_1', updated_at: '2026-08-01' }),

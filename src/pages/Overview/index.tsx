@@ -5,6 +5,8 @@ import { Button, Skeleton } from 'antd';
 import { ReloadOutlined, WarningOutlined } from '@ant-design/icons';
 import {
   getApplications,
+  getApplicationTimeline,
+  getInterviewDebriefs,
   getEvents,
   getOfferDecisionJournal,
   getOffers,
@@ -16,12 +18,15 @@ import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import type { ApplicationStage } from '../../constants/applicationStages';
 import TodayView from '../../components/Overview/TodayView';
 import WeekView from '../../components/Overview/WeekView';
+import { nextEvent } from '../../utils/Overview/overview';
 import type {
   CommandApplication,
   CommandEvent,
   CommandOffer,
   CommandTask,
 } from '../../utils/Overview/overview';
+import { prepFromDebriefs, type InterviewPrep } from '../../utils/Overview/interviewPrep';
+import type { TimelineEntryLike } from '../../utils/Overview/stageVelocity';
 import type { DecisionJournalEntry } from '../../utils/OfferComparison/decisionJournal';
 import {
   SOURCE_LABELS,
@@ -49,9 +54,11 @@ export default function OverviewPage() {
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [offers, setOffers] = useState<CommandOffer[]>([]);
   const [journals, setJournals] = useState<DecisionJournalEntry[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEntryLike[]>([]);
   // Stage labels are user-configurable; the defaults are only a fallback.
   const [stages, setStages] = useState<ApplicationStage[]>(DEFAULT_APPLICATION_STAGES);
   const [ghostAfterDays, setGhostAfterDays] = useState<number | undefined>(undefined);
+  const [prep, setPrep] = useState<InterviewPrep | null>(null);
   // In the URL, so a reload or a shared link lands on the same view.
   const [params, setParams] = useSearchParams();
   const view: View = params.get('view') === 'week' ? 'week' : 'today';
@@ -80,6 +87,9 @@ export default function OverviewPage() {
           setOffers(list<CommandOffer>((await getOffers()).data));
         } else if (source === 'journals') {
           setJournals(list<DecisionJournalEntry>((await getOfferDecisionJournal()).data));
+        } else if (source === 'timeline') {
+          // No application filter: the medians are only meaningful across the whole history.
+          setTimeline(list<TimelineEntryLike>((await getApplicationTimeline()).data));
         } else {
           const settings = (await getUserSettings()).data;
           if (settings.application_stages?.length) setStages(settings.application_stages);
@@ -92,6 +102,27 @@ export default function OverviewPage() {
     },
     [todayIso]
   );
+
+  // Secondary and allowed to fail: a missing prep note is nothing to show, not a broken source.
+  useEffect(() => {
+    const applicationId = nextEvent(events, todayIso)?.applicationId;
+    if (!applicationId) {
+      setPrep(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await getInterviewDebriefs(applicationId);
+        if (!cancelled) setPrep(prepFromDebriefs(list(response.data), todayIso));
+      } catch {
+        if (!cancelled) setPrep(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [events, todayIso]);
 
   const retry = useCallback(
     async (source: CommandSource) => {
@@ -125,6 +156,7 @@ export default function OverviewPage() {
     tasks,
     offers,
     journals,
+    timeline,
     stages,
     ghostAfterDays,
     todayIso,
@@ -132,7 +164,7 @@ export default function OverviewPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-7xl space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[26px] font-bold tracking-[-0.025em] text-slate-900 dark:text-ink-50">
@@ -186,7 +218,7 @@ export default function OverviewPage() {
           <Skeleton active paragraph={{ rows: 4 }} />
         </div>
       ) : view === 'today' ? (
-        <TodayView {...data} />
+        <TodayView {...data} prep={prep} />
       ) : (
         <WeekView {...data} />
       )}

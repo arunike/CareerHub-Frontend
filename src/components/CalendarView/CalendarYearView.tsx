@@ -12,6 +12,7 @@ import {
 import { Tooltip } from 'antd';
 import clsx from 'clsx';
 import { CalendarDayTooltipContent } from './CalendarDayContent';
+import { hasDayItems } from './utils';
 import { getEventColor } from '../../utils/eventCategoryColors';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import type { GetDayData } from './types';
@@ -63,7 +64,12 @@ const CalendarYearView = ({
           dayCells.push(
             <Tooltip
               key={cloneDay.toString()}
-              title={<CalendarDayTooltipContent day={cloneDay} dayData={dayData} />}
+              // An element is truthy even when it renders nothing, so antd drew an empty bubble.
+              title={
+                hasDayItems(dayData) ? (
+                  <CalendarDayTooltipContent day={cloneDay} dayData={dayData} />
+                ) : null
+              }
               mouseEnterDelay={0}
             >
               <button

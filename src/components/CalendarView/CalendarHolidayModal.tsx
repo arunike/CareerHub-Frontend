@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Button, Checkbox, Form, Input, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { DeleteOutlined } from '@ant-design/icons';
+import { LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
 import ModalShell from '../modals/ModalShell';
 import SpanDateFields from './SpanDateFields';
 import type { Holiday, HolidayTab } from '../../types';
@@ -19,6 +19,9 @@ export type CalendarHolidayFormValues = {
   end_date?: Dayjs | null;
   is_multi_day?: boolean;
   scope?: SpanEditScope;
+  // Which roles the day is charged to; concurrent jobs each spend a day.
+  pto_experience_ids?: number[];
+  counts_as_pto?: boolean;
 };
 
 type CalendarHolidayModalProps = {
@@ -30,9 +33,31 @@ type CalendarHolidayModalProps = {
   // Every day of the trip being edited, so its real extent is what the pickers show.
   groupHolidays?: Holiday[];
   holidayTabs?: HolidayTab[];
+  // Full-time roles a day can be charged to.
+  ptoRoles?: Array<{
+    id: number;
+    label: string;
+    startDate?: string | null;
+    endDate?: string | null;
+  }>;
   onCancel: () => void;
   onSubmit: (values: CalendarHolidayFormValues) => void;
   onDelete?: (holiday: Holiday) => boolean | void | Promise<boolean | void>;
+  onToggleLock?: (holiday: Holiday) => void | Promise<void>;
+};
+
+// Which roles were running on a day: concurrent jobs both spend it.
+const rolesRunningOnIn = (
+  roles: Array<{ id: number; startDate?: string | null; endDate?: string | null }>,
+  date: string | null
+) => {
+  if (!date) return [];
+  return roles
+    .filter(
+      (role) =>
+        (!role.startDate || role.startDate <= date) && (!role.endDate || date <= role.endDate)
+    )
+    .map((role) => role.id);
 };
 
 const CalendarHolidayModal = ({
@@ -43,11 +68,15 @@ const CalendarHolidayModal = ({
   holiday,
   groupHolidays = [],
   holidayTabs = [],
+  ptoRoles = [],
   onCancel,
   onSubmit,
   onDelete,
+  onToggleLock,
 }: CalendarHolidayModalProps) => {
   const [form] = Form.useForm<CalendarHolidayFormValues>();
+  const rolesRunningOn = (date: string | null) => rolesRunningOnIn(ptoRoles, date);
+  const countsAsPto = Form.useWatch('counts_as_pto', form);
   const isMultiDay = Form.useWatch('is_multi_day', form);
   const groupDays = groupHolidays.length > 1 ? groupHolidays : [];
   // Callers build this array inline, so its identity changes every render; its dates do not.
@@ -67,6 +96,14 @@ const CalendarHolidayModal = ({
       date: spansDays ? dayjs(groupDays[0].date) : clicked,
       end_date: spansDays ? dayjs(groupDays[groupDays.length - 1].date) : null,
       is_multi_day: spansDays,
+      counts_as_pto: holiday?.counts_as_pto !== false,
+      // Only seed a day that counts: clearing the list is how you opt out, so it must survive a reopen.
+      pto_experience_ids:
+        holiday?.counts_as_pto === false
+          ? []
+          : holiday?.pto_experience_ids?.length
+            ? holiday.pto_experience_ids
+            : rolesRunningOn(holiday?.date ?? null),
     });
     // Re-seeding on a new array identity would wipe the form on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,13 +129,11 @@ const CalendarHolidayModal = ({
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
       footer={
         <>
-          {mode === 'edit' && holiday?.id && onDelete ? (
+          {mode === 'edit' && holiday?.id && !holiday.is_locked && onDelete ? (
             <Button
               danger
               size="large"
               icon={<DeleteOutlined />}
-              disabled={holiday.is_locked}
-              title={holiday.is_locked ? 'Unlock this time off to delete it' : undefined}
               onClick={() => confirmHolidayDeletion(holiday, onDelete)}
               className="w-full sm:mr-auto sm:w-auto"
             >
@@ -151,6 +186,53 @@ const CalendarHolidayModal = ({
             ]}
           />
         </Form.Item>
+
+        {/* Emptying the roles is the same decision as unticking this, so the two move together. */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Form.Item name="counts_as_pto" valuePropName="checked" className="!mb-0">
+            <Checkbox
+              onChange={(event) =>
+                form.setFieldValue(
+                  'pto_experience_ids',
+                  event.target.checked ? rolesRunningOn(holiday?.date ?? null) : []
+                )
+              }
+            >
+              Counts against my PTO
+            </Checkbox>
+          </Form.Item>
+          {/* Beside the record rather than a fourth footer button, where it was running off the edge. */}
+          {mode === 'edit' && holiday?.id && onToggleLock ? (
+            <Button
+              size="small"
+              icon={holiday.is_locked ? <UnlockOutlined /> : <LockOutlined />}
+              onClick={() => void onToggleLock(holiday)}
+            >
+              {holiday.is_locked ? 'Unlock' : 'Lock'}
+            </Button>
+          ) : null}
+        </div>
+
+        {countsAsPto !== false && (
+          <Form.Item
+            name="pto_experience_ids"
+            label="Charge to role"
+            extra="Filled in from the date. Hold both if two jobs each spend the day."
+          >
+            <Select
+              mode="multiple"
+              size="large"
+              allowClear
+              maxTagCount={2}
+              maxTagTextLength={22}
+              placeholder="Charged to no role"
+              options={ptoRoles.map((role) => ({ label: role.label, value: role.id }))}
+              onChange={(value: number[]) => {
+                if (value.length === 0) form.setFieldValue('counts_as_pto', false);
+              }}
+            />
+          </Form.Item>
+        )}
       </Form>
     </ModalShell>
   );

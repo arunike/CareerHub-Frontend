@@ -38,6 +38,8 @@ interface HolidayRangeRequest {
   description?: string;
   is_recurring?: boolean;
   tab?: string | null;
+  pto_experience_ids?: number[];
+  counts_as_pto?: boolean;
 }
 
 const resolveRange = (values: HolidayRangeRequest, fallback: dayjs.Dayjs) => {
@@ -62,6 +64,8 @@ export const buildHolidayRangePayloads = (
     description: values.description?.trim() || fallbackLabel,
     is_recurring: !!values.is_recurring,
     tab: values.tab || null,
+    pto_experience_ids: values.pto_experience_ids ?? [],
+    counts_as_pto: values.counts_as_pto !== false,
     ...(groupId ? { group_id: groupId } : {}),
   }));
 };
@@ -121,6 +125,8 @@ export const planHolidayGroupEdit = (
               description: values.description?.trim() || target.description || fallbackLabel,
               is_recurring: !!values.is_recurring,
               tab: values.tab || null,
+              pto_experience_ids: values.pto_experience_ids ?? [],
+              counts_as_pto: values.counts_as_pto !== false,
               group_id: null,
             },
           },
@@ -143,6 +149,8 @@ export const planHolidayGroupEdit = (
     description: values.description?.trim() || sorted[0].description || fallbackLabel,
     is_recurring: !!values.is_recurring,
     tab: values.tab || null,
+    pto_experience_ids: values.pto_experience_ids ?? [],
+    counts_as_pto: values.counts_as_pto !== false,
     ...(groupId ? { group_id: groupId } : {}),
   };
 

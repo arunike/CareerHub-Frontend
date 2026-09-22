@@ -6,6 +6,7 @@ import {
   CheckSquareOutlined,
   DollarOutlined,
   HistoryOutlined,
+  MessageOutlined,
   SolutionOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -30,6 +31,10 @@ import type {
   CommandTask,
 } from '../../utils/Overview/overview';
 import { canSayAllClear, type CommandSource } from '../../utils/Overview/overviewSources';
+import type { InterviewPrep } from '../../utils/Overview/interviewPrep';
+import { stalledRounds } from '../../utils/Overview/stageVelocity';
+import type { TimelineEntryLike } from '../../utils/Overview/stageVelocity';
+import { goneCold, needsFollowUp } from '../../utils/Overview/weeklyReview';
 import { dueReviews } from '../../utils/OfferComparison/decisionJournal';
 import type { DecisionJournalEntry } from '../../utils/OfferComparison/decisionJournal';
 
@@ -42,10 +47,16 @@ export interface ViewData {
   tasks: CommandTask[];
   offers: CommandOffer[];
   journals: DecisionJournalEntry[];
+  timeline: TimelineEntryLike[];
   failed: CommandSource[];
   stages: ApplicationStage[];
   ghostAfterDays?: number;
   todayIso: string;
+}
+
+interface TodayProps extends ViewData {
+  // What the last recorded round said to work on, when another is booked.
+  prep?: InterviewPrep | null;
 }
 
 const TodayView = ({
@@ -54,11 +65,13 @@ const TodayView = ({
   tasks,
   offers,
   journals,
+  timeline,
   failed,
   stages,
   ghostAfterDays,
   todayIso,
-}: ViewData) => {
+  prep,
+}: TodayProps) => {
   const soonest = useMemo(() => nextEvent(events, todayIso), [events, todayIso]);
   const ahead = useMemo(() => upcomingEvents(events, todayIso), [events, todayIso]);
   const allTasks = useMemo(() => openTasks(tasks), [tasks]);
@@ -73,6 +86,16 @@ const TodayView = ({
         .sort((a, b) => String(a.updated_at).localeCompare(String(b.updated_at))),
     [applications]
   );
+
+  // Rounds already past what that stage has historically cost you.
+  const stalled = useMemo(
+    () => stalledRounds(applications, timeline, todayIso),
+    [applications, timeline, todayIso]
+  );
+
+  // Replied then went quiet: the short list, as against the roster of every live round.
+  const chase = useMemo(() => needsFollowUp(applications, todayIso), [applications, todayIso]);
+  const cold = useMemo(() => goneCold(applications, todayIso), [applications, todayIso]);
 
   // Anything landing today that the hero is not already announcing.
   const alsoToday = ahead.filter(
@@ -251,10 +274,59 @@ const TodayView = ({
     />
   ) : null;
 
+  const stalledCard = stalled.length ? (
+    <SummaryCard
+      title="Running long"
+      icon={HistoryOutlined}
+      count={stalled.length}
+      seeAll={{ to: '/applications', label: 'All applications' }}
+      previewCount={6}
+      moreLabel={(hidden) => `Show ${hidden} more running long`}
+      rows={stalled.map(
+        ({ application, days, typical }): SummaryRow => ({
+          id: `stalled-${application.id}`,
+          to: `/applications?open=${application.id}`,
+          title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
+          meta: `${days} days in this round \u00b7 yours usually move in ${typical}`,
+          trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
+        })
+      )}
+    />
+  ) : null;
+
+  // The footnote is a count, never a list: the never-answered pile is a decision, not today's work.
+  const chaseCard = chase.length ? (
+    <SummaryCard
+      title="Worth chasing"
+      icon={MessageOutlined}
+      count={chase.length}
+      seeAll={{ to: '/applications', label: 'All applications' }}
+      previewCount={6}
+      moreLabel={(hidden) => `Show ${hidden} more worth chasing`}
+      rows={chase.map(
+        ({ application, daysQuiet }): SummaryRow => ({
+          id: `chase-${application.id}`,
+          to: `/applications?open=${application.id}`,
+          title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
+          meta: `quiet ${daysQuiet} days`,
+          trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
+        })
+      )}
+      footnote={cold.length ? `${cold.length} sent and never answered` : null}
+    />
+  ) : null;
+
   // Two balanced columns rather than a fixed main and rail: on a quiet day the rail was just a void.
-  const cards = [nowCard, activeCard, scheduleCard, closingCard, journalCard, taskCard].filter(
-    Boolean
-  );
+  const cards = [
+    nowCard,
+    stalledCard,
+    chaseCard,
+    activeCard,
+    scheduleCard,
+    closingCard,
+    journalCard,
+    taskCard,
+  ].filter(Boolean);
   const main = cards.filter((_, index) => index % 2 === 0);
   const rail = cards.filter((_, index) => index % 2 === 1);
 
@@ -291,6 +363,14 @@ const TodayView = ({
                 {soonest.event.location ? ` · ${soonest.event.location}` : ''}
               </p>
             </div>
+            {prep && (
+              <p className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2 text-[12px] leading-5 text-slate-600 dark:bg-white/[0.04] dark:text-ink-300">
+                <span className="font-semibold text-slate-700 dark:text-ink-100">
+                  From your {prep.stage || 'last round'} notes
+                </span>{' '}
+                &middot; {prep.nextSteps || prep.weakAreas}
+              </p>
+            )}
             <div className="flex shrink-0 flex-wrap gap-2">
               {soonest.applicationId && (
                 <Link

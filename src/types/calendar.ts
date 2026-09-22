@@ -130,6 +130,9 @@ export interface Holiday {
   tab?: string | null;
   tab_color?: string;
   tab_name?: string;
+  // Which roles the day is charged to; empty falls back to whichever role was running then.
+  pto_experience_ids?: number[];
+  counts_as_pto?: boolean;
 }
 
 export interface Availability {

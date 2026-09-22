@@ -4,6 +4,7 @@ export const SOURCE_LABELS = {
   tasks: 'Tasks',
   offers: 'Offers',
   journals: 'Decision journals',
+  timeline: 'Stage history',
   settings: 'Stage names',
 } as const;
 
@@ -16,6 +17,7 @@ const SOURCE_AFFECTS: Record<CommandSource, string> = {
   tasks: 'open and overdue tasks',
   offers: 'offers and their deadlines',
   journals: 'decision reviews due',
+  timeline: 'which rounds are running long',
   settings: 'your configured stage names',
 };
 

@@ -17,6 +17,8 @@ type Props = {
   onViewModeChange: (nextViewMode: CalendarViewMode) => void;
   onShiftRange: (direction: 'prev' | 'next') => void;
   onGoToToday: () => void;
+  // Sits ahead of the prev/Today/next group, where a per-page control belongs.
+  navLeading?: React.ReactNode;
   categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
   filters: CalendarFilters;
@@ -37,6 +39,7 @@ const CalendarHeader = ({
   onViewModeChange,
   onShiftRange,
   onGoToToday,
+  navLeading,
   categories = [],
   holidayTabs = [],
   filters,
@@ -65,6 +68,7 @@ const CalendarHeader = ({
       role="group"
       aria-label="Calendar navigation"
     >
+      {navLeading}
       <button
         type="button"
         onClick={() => onShiftRange('prev')}

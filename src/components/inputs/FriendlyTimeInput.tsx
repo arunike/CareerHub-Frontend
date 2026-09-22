@@ -331,7 +331,7 @@ const FriendlyTimeInput = ({
               width: anchor.width,
               maxHeight: anchor.maxHeight,
             }}
-            className="fixed z-[1055] hidden overflow-y-auto rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] sm:block"
+            className="fixed z-[2000] hidden overflow-y-auto rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)] sm:block"
           >
             <div className="mb-3 text-center text-base font-semibold tracking-wide text-gray-950 dark:text-ink-50">
               {desktopValue.format(DISPLAY_FORMAT)}

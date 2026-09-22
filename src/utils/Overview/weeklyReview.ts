@@ -65,7 +65,11 @@ const quietOpen = (
     .filter((application) => !isClosed(status(application)))
     .map((application) => ({
       application,
-      daysQuiet: daysBetween(application.updated_at, todayIso),
+      // From the last thing that happened, not the last save: a sync bumps updated_at and hides the silence.
+      daysQuiet: daysBetween(
+        text(application.current_stage_on) || application.updated_at,
+        todayIso
+      ),
     }))
     .filter((entry): entry is FollowUp => entry.daysQuiet !== null && entry.daysQuiet >= afterDays)
     .sort((a, b) => b.daysQuiet - a.daysQuiet);

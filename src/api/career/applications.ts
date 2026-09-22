@@ -73,9 +73,10 @@ export const deleteApplication = (id: number) => api.delete(`/career/application
 
 export const deleteAllApplications = () => api.delete('/career/applications/delete_all/');
 
-export const getApplicationTimeline = (applicationId: number) =>
+// Without an id it returns the whole history, which is what a cross-application median needs.
+export const getApplicationTimeline = (applicationId?: number) =>
   api.get<ApplicationTimelineEntry[]>('/career/application-timeline/', {
-    params: { application: applicationId },
+    params: applicationId === undefined ? undefined : { application: applicationId },
   });
 
 export const createApplicationTimelineEntry = (data: Partial<ApplicationTimelineEntry>) =>

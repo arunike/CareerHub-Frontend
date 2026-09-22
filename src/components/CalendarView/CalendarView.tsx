@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { addDays, differenceInCalendarDays, format } from 'date-fns';
 
 // A plain yyyy-MM-dd parses as UTC midnight, which lands on the previous day west of GMT.
@@ -15,6 +16,9 @@ import type { CalendarDragItem } from './CalendarDayContent';
 import CalendarRangeView from './CalendarRangeView';
 import CalendarYearView from './CalendarYearView';
 import type { CalendarFilters, CalendarHolidayTarget, CalendarViewMode, DayData } from './types';
+const CALENDAR_VIEW_MODES: CalendarViewMode[] = ['day', 'threeDay', 'week', 'month', 'year'];
+const formatIsoDay = (date: Date) => format(date, 'yyyy-MM-dd');
+
 import { getHeaderLabel, getVisibleRangeDates, shiftAnchorDate } from './utils';
 import { FEDERAL_HOLIDAY_COLOR } from '../../utils/holidayTabColors';
 
@@ -33,6 +37,8 @@ interface CalendarViewProps {
   onAddHoliday?: (day: Date, target: CalendarHolidayTarget) => void;
   // Merged into the calendar header rather than leaving an empty band under the page title.
   pageControls?: React.ReactNode;
+  // Given the calendar's own anchor, so a control beside the arrows follows what is on screen.
+  navLeading?: (anchorDate: Date) => React.ReactNode;
   // Colour for time off with no tab. Configurable, so it cannot be hardcoded here.
   defaultHolidayColor?: string;
   federalHolidayColor?: string;
@@ -52,12 +58,21 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onAddEvent,
   onAddHoliday,
   pageControls,
+  navLeading,
   defaultHolidayColor,
   federalHolidayColor,
 }) => {
   const today = new Date();
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
-  const [anchorDate, setAnchorDate] = useState(today);
+  // In the URL, so a refresh or a shared link lands on the same month and the same view.
+  const [params, setParams] = useSearchParams();
+  const urlMode = params.get('cal') as CalendarViewMode | null;
+  const urlOn = params.get('on');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(
+    urlMode && CALENDAR_VIEW_MODES.includes(urlMode) ? urlMode : 'month'
+  );
+  const [anchorDate, setAnchorDate] = useState(
+    urlOn && !Number.isNaN(Date.parse(`${urlOn}T00:00:00`)) ? new Date(`${urlOn}T00:00:00`) : today
+  );
   const [selectedDate, setSelectedDate] = useState(today);
   const [pendingAddDate, setPendingAddDate] = useState<Date | null>(null);
   const [filters, setFilters] = useState<CalendarFilters>({
@@ -265,6 +280,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
   const selectedDayData = getDayData(selectedDate);
+  useEffect(() => {
+    const next = new URLSearchParams(params);
+    next.set('cal', viewMode);
+    next.set('on', formatIsoDay(anchorDate));
+    if (next.toString() !== params.toString()) setParams(next, { replace: true });
+    // Only the two values we own; re-running on every params change would fight other writers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, anchorDate]);
+
   const visibleRangeDates = getVisibleRangeDates(viewMode, anchorDate);
   const canAddFromCalendar = !!onAddEvent || !!onAddHoliday;
   const shouldHighlightEventAdd = addActionHighlight === 'events' || addActionHighlight === 'all';
@@ -275,6 +299,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     <div>
       <CalendarHeader
         pageControls={pageControls}
+        navLeading={navLeading?.(anchorDate)}
         defaultHolidayColor={defaultHolidayColor}
         federalHolidayColor={federalHolidayColor}
         headerLabel={getHeaderLabel(viewMode, anchorDate)}

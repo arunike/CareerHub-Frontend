@@ -132,7 +132,8 @@ const SummaryCard = ({
         </button>
       )}
 
-      {!collapsed && hidden === 0 && footnote && (
+      {/* Not gated on the expander: a footnote can be a separate fact, not just an overflow note. */}
+      {!collapsed && footnote && (
         <p className="border-t border-slate-100 px-5 py-2.5 text-[11px] text-slate-400 dark:border-white/[0.07] dark:text-ink-500">
           {footnote}
         </p>
