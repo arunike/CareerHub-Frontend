@@ -105,6 +105,6 @@ describe('the dates are read off the position', () => {
   });
 
   it('reads an end date from the linked experience', () => {
-    expect(positionEndDate({ linked_experience: { end_date: '2026-09-14' } })).toBe('2026-09-14');
+    expect(positionEndDate({ linked_experience: { end_date: '2026-11-01' } })).toBe('2026-11-01');
   });
 });

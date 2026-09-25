@@ -18,6 +18,7 @@ import {
 import type { CustomDeduction } from '../../utils/Income/deductions';
 import { resolveAllowances, type Allowance } from '../../utils/Income/allowances';
 import { formatPayDate, toIsoDate } from '../../utils/Income/paySchedule';
+import { scheduledPosition } from '../../utils/Income/paycheckPosition';
 import { useMoney } from './amountPrivacy';
 import PaycheckAdjustModal from './PaycheckAdjustModal';
 import { INCOME_TOOLTIPS } from '../../content/tooltips';
@@ -25,7 +26,6 @@ import { INCOME_TOOLTIPS } from '../../content/tooltips';
 interface Props {
   row: EffectiveRow;
   rows: EffectiveRow[];
-  periodsPerYear: number;
   onSelectPeriod: (periodIndex: number) => void;
   deductionDefaults: PeriodDefaults;
   customDeductions: CustomDeduction[];
@@ -173,7 +173,6 @@ const Row = ({
 export const PaycheckWaterfall = ({
   row,
   rows,
-  periodsPerYear,
   onSelectPeriod,
   deductionDefaults,
   customDeductions,
@@ -184,6 +183,7 @@ export const PaycheckWaterfall = ({
   onOverrideClear,
   matchFormulaLabel,
 }: Props) => {
+  const paycheckPosition = scheduledPosition(rows, row.periodIndex);
   const { moneyCents } = useMoney();
   const [editing, setEditing] = useState(false);
   const payDateLabel = row.payDate ? formatPayDate(row.payDate) : `paycheck ${row.periodIndex}`;
@@ -220,10 +220,10 @@ export const PaycheckWaterfall = ({
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
             {row.isOffCycle
               ? 'Off-cycle payment'
-              : `Paycheck ${row.periodIndex} of ${periodsPerYear}`}
+              : `Paycheck ${paycheckPosition.position} of ${paycheckPosition.total}`}
           </p>
           <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-ink-50">
-            {row.payDate ? formatPayDate(row.payDate) : `Paycheck ${row.periodIndex}`}
+            {row.payDate ? formatPayDate(row.payDate) : `Paycheck ${paycheckPosition.position}`}
           </h3>
           {row.isAdjustedDate ? (
             <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-300">

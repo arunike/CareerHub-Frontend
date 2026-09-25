@@ -272,7 +272,6 @@ const IncomeSourceTabs = ({
                   <PaycheckWaterfall
                     row={row}
                     rows={effectiveRows}
-                    periodsPerYear={paychecksPerYear}
                     matchFormulaLabel={describeFormula(matchFormula)}
                     onSelectPeriod={setSelectedPeriod}
                     deductionDefaults={periodDefaults}
