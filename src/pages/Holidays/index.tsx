@@ -120,6 +120,7 @@ const Holidays = () => {
     handleAddFederal,
     handleDeleteFederalRange,
     handleToggleFederalHoliday,
+    handleRenameFederalHoliday,
   } = useFederalHolidays({ federalHolidays, userSettings, fetchData, messageApi });
 
   const {
@@ -151,6 +152,8 @@ const Holidays = () => {
     locationType,
     setLocationType,
     handleCalendarEventSelect,
+    spanEditDays,
+    onSpanScopeChange,
     handleCalendarAddEvent,
     handleEventEdit,
     handleCalendarEventDelete,
@@ -318,6 +321,7 @@ const Holidays = () => {
           handleDelete={handleDelete}
           handleDeleteFederalRange={handleDeleteFederalRange}
           handleToggleFederalHoliday={handleToggleFederalHoliday}
+          handleRenameFederalHoliday={handleRenameFederalHoliday}
           loading={loading}
           setAddFederalModalOpen={setAddFederalModalOpen}
           setIsFederalRangeMode={setIsFederalRangeMode}
@@ -470,6 +474,8 @@ const Holidays = () => {
           open={isEventFormOpen}
           editingId={editingEventId}
           form={eventForm}
+          spanDays={spanEditDays}
+          onScopeChange={onSpanScopeChange}
           onCancel={() => setIsEventFormOpen(false)}
           onFinish={handleEventFormFinish}
           defaultDuration={defaultEventDuration}

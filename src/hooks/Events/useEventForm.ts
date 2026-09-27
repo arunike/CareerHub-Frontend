@@ -3,20 +3,12 @@ import { Form, Modal } from 'antd';
 import dayjs from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { MessageInstance } from 'antd/es/message/interface';
-import {
-  createEvent,
-  deleteEvent,
-  setRecurrence,
-  updateEvent,
-  updateRecurringSeries,
-} from '../../api';
+import { createEvent, setRecurrence, updateEvent, updateRecurringSeries } from '../../api';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
 import { normalizeTimeZone } from '../../lib/timezones';
-import { askOverrideOverwrite, isSpanEvent } from '../../components/CalendarView/confirmSpanEdit';
+import { useSpanScope } from './useSpanScope';
 import type { SpanEditScope } from '../../components/CalendarView/SpanDateFields';
 import type { ApiError, EventFormValues } from '../../utils/Events/eventFormTypes';
-import { getApiErrorMessage } from '../../utils/apiError';
-import { eventSpanDays } from '../../components/CalendarView/utils';
 
 export const useEventForm = ({
   events,
@@ -43,7 +35,6 @@ export const useEventForm = ({
   const navigate = useNavigate();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [spanScope, setSpanScope] = useState<{ scope: SpanEditScope; day: string } | null>(null);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -102,28 +93,22 @@ export const useEventForm = ({
 
   // The form asks which days it applies to, rather than a dialog gating it before it opens.
   const handleEdit = (event: Event, clickedDay?: string) => {
-    setSpanScope(isSpanEvent(event) ? { scope: 'all', day: clickedDay || event.date } : null);
+    beginSpanEdit(event, clickedDay);
     openEditForm(event);
   };
 
-  // Empty unless a span is being edited, which is what hides the scope control the rest of the time.
-  const editingSpan = spanScope ? events.find((candidate) => candidate.id === editingId) : null;
-  const spanEditDays = editingSpan
-    ? Array.from({ length: eventSpanDays(editingSpan) }, (_unused, offset) =>
-        dayjs(editingSpan.date).add(offset, 'day').format('YYYY-MM-DD')
-      )
-    : [];
-
-  const onSpanScopeChange = (next: SpanEditScope) => {
-    const event = events.find((candidate) => candidate.id === editingId);
-    if (!event || !spanScope) return;
-    setSpanScope({ ...spanScope, scope: next, day: next === 'all' ? spanScope.day : next });
-    form.setFieldsValue({
-      date: dayjs(next === 'all' ? event.date : next),
-      end_date: next === 'all' && event.end_date ? dayjs(event.end_date) : null,
-      is_multi_day: next === 'all',
+  const { spanEditDays, beginSpanEdit, clearSpanScope, onScopeChange, saveWithScope } =
+    useSpanScope({
+      events,
+      editingId,
+      form,
+      messageApi,
+      onSaved: () => {
+        setIsFormOpen(false);
+        fetchData();
+        fetchCalendarData();
+      },
     });
-  };
 
   const openEditForm = (event: Event, dayOverride?: string) => {
     setEditingId(event.id);
@@ -190,60 +175,8 @@ export const useEventForm = ({
       reminder_minutes: 15,
     };
 
-    // "This day only" saves an override attached to the span, leaving the run untouched.
-    if (values.scope && values.scope !== 'all' && spanScope && editingId) {
-      const parent = events.find((candidate) => candidate.id === editingId);
-      const existing = events.find(
-        (candidate) =>
-          candidate.span_parent === editingId && candidate.override_date === spanScope.day
-      );
-      const dayPayload = {
-        ...payload,
-        end_date: null,
-        is_recurring: false,
-        recurrence_rule: null,
-        span_parent: parent?.span_parent ?? editingId,
-        override_date: values.scope as string,
-      };
-      try {
-        if (existing) await updateEvent(existing.id, dayPayload);
-        else await createEvent(dayPayload);
-        messageApi.success(`Updated ${dayjs(values.scope as string).format('MMM D')} only`);
-        setIsFormOpen(false);
-        setSpanScope(null);
-        fetchData();
-        fetchCalendarData();
-      } catch (error) {
-        console.error('Failed to save the day override', error);
-        messageApi.error(getApiErrorMessage(error, 'Could not save that day'));
-      }
-      return;
-    }
-
-    // Editing the whole span would wipe any day already edited on its own, so ask first.
-    if ((!values.scope || values.scope === 'all') && spanScope && editingId) {
-      const overrides = events.filter((candidate) => candidate.span_parent === editingId);
-      if (overrides.length > 0) {
-        askOverrideOverwrite(overrides.length, async (discard) => {
-          try {
-            if (discard) {
-              await Promise.all(overrides.map((override) => deleteEvent(override.id)));
-            }
-            await updateEvent(editingId, payload);
-            messageApi.success(discard ? 'Event updated; separate days replaced' : 'Event updated');
-            setIsFormOpen(false);
-            setSpanScope(null);
-            fetchData();
-            fetchCalendarData();
-          } catch (error) {
-            console.error('Failed to update the span', error);
-            messageApi.error(getApiErrorMessage(error, 'Could not update the event'));
-          }
-        });
-        return;
-      }
-      setSpanScope(null);
-    }
+    // The scope decides the save when a run is being edited; otherwise fall through as normal.
+    if (await saveWithScope({ scope: values.scope as SpanEditScope | undefined, payload })) return;
 
     try {
       if (editingId) {
@@ -304,8 +237,8 @@ export const useEventForm = ({
     editingId,
     setEditingId,
     spanEditDays,
-    onSpanScopeChange,
-    setSpanScope,
+    onSpanScopeChange: onScopeChange,
+    clearSpanScope,
     showRecurrenceModal,
     setShowRecurrenceModal,
     recurrenceRule,

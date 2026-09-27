@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { Button, Checkbox, Collapse, Col, Form, Input, Row, Select, Space, Typography } from 'antd';
-import Modal from '../modals/MobileModal';
+import ModalShell from '../modals/ModalShell';
 import ApplicationSelect from '../inputs/ApplicationSelect';
 import { suggestEventLink, type EventLinkHint } from '../../api/availability';
 import { EnvironmentOutlined, PlusOutlined, VideoCameraOutlined } from '@ant-design/icons';
@@ -120,13 +120,28 @@ const EventEditorModal = ({
   }, [autoLinked, linkedApplication]);
 
   return (
-    <Modal
+    // The same shell as Edit Time Off: one chrome for both, the body is what differs.
+    <ModalShell
+      isOpen={open}
       title={editingId ? 'Edit Event' : 'Add Event'}
-      open={open}
-      onCancel={onCancel}
-      destroyOnHidden
-      footer={null}
-      width={600}
+      onClose={onCancel}
+      maxWidthClass="max-w-xl"
+      bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
+      footer={
+        <>
+          <Button size="large" onClick={onCancel} className="w-full sm:w-auto">
+            Cancel
+          </Button>
+          <Button
+            size="large"
+            type="primary"
+            onClick={() => form.submit()}
+            className="w-full sm:w-auto"
+          >
+            {editingId ? 'Save Event' : 'Add Event'}
+          </Button>
+        </>
+      }
     >
       <Form
         scrollToFirstError={SCROLL_TO_FIRST_ERROR}
@@ -342,17 +357,8 @@ const EventEditorModal = ({
             },
           ]}
         />
-
-        <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={onCancel}>Cancel</Button>
-            <Button type="primary" htmlType="submit">
-              Save
-            </Button>
-          </Space>
-        </Form.Item>
       </Form>
-    </Modal>
+    </ModalShell>
   );
 };
 

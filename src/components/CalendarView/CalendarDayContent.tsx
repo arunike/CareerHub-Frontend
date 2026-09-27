@@ -30,6 +30,26 @@ export type CalendarDragItem =
 export const canDragEvent = (event: Event) =>
   !event.is_locked && !event.is_recurring && !event.parent_event;
 
+// An observed day, whether a real federal one or a range you added to that tab.
+const isObservedHoliday = (holiday: Holiday) =>
+  holiday.holiday_type === 'federal' || holiday.holiday_type === 'federal_native';
+
+// One description of a holiday chip for every view: the bucket it arrived in decides nothing
+export const holidayChrome = (holiday: Holiday) => ({
+  label: holiday.tab_name ?? (isObservedHoliday(holiday) ? 'Observed' : UNTABBED_HOLIDAY_LABEL),
+  colour: isObservedHoliday(holiday)
+    ? getFederalHolidayColor(holiday.tab_color)
+    : getHolidayTabColor(holiday.tab_color),
+  // A real federal day is computed, not stored, so it has no row to open.
+  editable: holiday.id !== undefined,
+});
+
+// Every holiday on a day, observed ones first, so the three views cannot drift apart.
+export const dayHolidays = (dayData: DayData) => [
+  ...dayData.federalHolidays,
+  ...dayData.customHolidays,
+];
+
 // Federal holidays are fixed calendar facts; only your own custom ones can move.
 const canDragHoliday = (holiday: Holiday) =>
   Boolean(holiday.id) &&
@@ -50,13 +70,10 @@ export const CalendarDayTooltipContent = ({ day, dayData }: DayTooltipProps) => 
   return (
     <div className="space-y-1 text-xs">
       <div className="font-semibold text-white/95">{format(day, 'MMMM d, yyyy')}</div>
-      {dayData.federalHolidays.map((holiday, index) => (
-        <div key={`fed-${index}`}>Federal: {holiday.description}</div>
-      ))}
-      {dayData.customHolidays.map((holiday, index) => (
+      {dayHolidays(dayData).map((holiday, index) => (
         // Same label as every other surface: the tab it belongs to, not a generic word.
-        <div key={`cust-${index}`}>
-          {holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: {holiday.description}
+        <div key={`holiday-${index}`}>
+          {holidayChrome(holiday).label}: {holiday.description}
         </div>
       ))}
       {dayData.events.map((event) => (
@@ -91,15 +108,10 @@ const handleHolidayEntryClick = (
 };
 
 const getCompactItems = (dayData: DayData) => [
-  ...dayData.federalHolidays.map((holiday, index) => ({
-    kind: 'federal' as const,
+  ...dayHolidays(dayData).map((holiday, index) => ({
+    kind: 'holiday' as const,
     holiday,
-    key: `fed-${index}-${holiday.description}`,
-  })),
-  ...dayData.customHolidays.map((holiday, index) => ({
-    kind: 'custom' as const,
-    holiday,
-    key: `cust-${index}-${holiday.description}`,
+    key: `holiday-${index}-${holiday.description}`,
   })),
   ...dayData.events.map((event) => ({
     kind: 'event' as const,
@@ -122,9 +134,7 @@ export const CalendarMobileDaySummary = ({ dayData }: Pick<DayDataProps, 'dayDat
         const color =
           item.kind === 'event'
             ? getEventColor(item.event).dot
-            : item.kind === 'custom'
-              ? getHolidayTabColor(item.holiday.tab_color).dot
-              : getFederalHolidayColor(item.holiday.tab_color).dot;
+            : holidayChrome(item.holiday).colour.dot;
 
         return (
           <span
@@ -160,33 +170,14 @@ export const CalendarCompactDayEntries = ({
   return (
     <div className="flex-1 space-y-1 overflow-hidden text-xs mt-1">
       {visibleItems.map((item) => {
-        if (item.kind === 'federal') {
+        if (item.kind === 'holiday') {
           const { holiday } = item;
+          const { label, colour, editable } = holidayChrome(holiday);
+          const openable = editable && onHolidaySelect;
 
           return (
-            <Tooltip
-              key={item.key}
-              title={`Observed Holiday: ${holiday.description}`}
-              mouseEnterDelay={0}
-            >
-              <div className="bg-gray-100 dark:bg-ink-800 text-gray-600 dark:text-ink-200 px-1.5 py-0.5 rounded truncate">
-                Federal: {holiday.description}
-              </div>
-            </Tooltip>
-          );
-        }
-
-        if (item.kind === 'custom') {
-          const { holiday } = item;
-          const holidayColor = getHolidayTabColor(holiday.tab_color);
-
-          return (
-            <Tooltip
-              key={item.key}
-              title={`${holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: ${holiday.description}`}
-              mouseEnterDelay={0}
-            >
-              {onHolidaySelect ? (
+            <Tooltip key={item.key} title={`${label}: ${holiday.description}`} mouseEnterDelay={0}>
+              {openable ? (
                 <button
                   type="button"
                   draggable={Boolean(onItemDragStart) && canDragHoliday(holiday)}
@@ -202,9 +193,9 @@ export const CalendarCompactDayEntries = ({
                   className="block w-full rounded px-1.5 py-0.5 text-left font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
                   style={
                     {
-                      backgroundColor: holidayColor.bg,
-                      color: holidayColor.text,
-                      '--tw-ring-color': holidayColor.border,
+                      backgroundColor: colour.bg,
+                      color: colour.text,
+                      '--tw-ring-color': colour.border,
                     } as CSSProperties
                   }
                 >
@@ -213,10 +204,7 @@ export const CalendarCompactDayEntries = ({
               ) : (
                 <div
                   className="truncate rounded px-1.5 py-0.5"
-                  style={{
-                    backgroundColor: holidayColor.bg,
-                    color: holidayColor.text,
-                  }}
+                  style={{ backgroundColor: colour.bg, color: colour.text }}
                 >
                   {holiday.description}
                 </div>
@@ -301,25 +289,12 @@ export const CalendarDayAgendaEntries = ({
 
   return (
     <div className="space-y-2">
-      {dayData.federalHolidays.map((holiday, index) => (
-        <div
-          key={`fed-${index}-${holiday.description}`}
-          className="rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 px-3 py-2 text-sm text-gray-700 dark:text-ink-100"
-        >
-          <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-ink-500">
-            Observed Holiday
-          </div>
-          <div className="mt-1">{holiday.description}</div>
-        </div>
-      ))}
-
-      {dayData.customHolidays.map((holiday, index) => {
-        const holidayColor = getHolidayTabColor(holiday.tab_color);
+      {dayHolidays(dayData).map((holiday, index) => {
+        const { label, colour, editable } = holidayChrome(holiday);
+        const openable = editable && onHolidaySelect;
         const content = (
           <>
-            <div className="text-xs font-semibold uppercase tracking-wide opacity-75">
-              {holiday.tab_name || UNTABBED_HOLIDAY_LABEL}
-            </div>
+            <div className="text-xs font-semibold uppercase tracking-wide opacity-75">{label}</div>
             <div className="mt-1">
               {holiday.description}
               {holiday.is_recurring ? ' (Yearly)' : ''}
@@ -327,18 +302,18 @@ export const CalendarDayAgendaEntries = ({
           </>
         );
 
-        return onHolidaySelect ? (
+        return openable ? (
           <button
             type="button"
-            key={`cust-${index}-${holiday.description}`}
+            key={`holiday-${index}-${holiday.description}`}
             onClick={(clickEvent) => handleHolidayEntryClick(holiday, onHolidaySelect, clickEvent)}
             className="block w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1"
             style={
               {
-                borderColor: holidayColor.border,
-                backgroundColor: holidayColor.bg,
-                color: holidayColor.text,
-                '--tw-ring-color': holidayColor.border,
+                borderColor: colour.border,
+                backgroundColor: colour.bg,
+                color: colour.text,
+                '--tw-ring-color': colour.border,
               } as CSSProperties
             }
           >
@@ -346,12 +321,12 @@ export const CalendarDayAgendaEntries = ({
           </button>
         ) : (
           <div
-            key={`cust-${index}-${holiday.description}`}
+            key={`holiday-${index}-${holiday.description}`}
             className="rounded-xl border px-3 py-2 text-sm"
             style={{
-              borderColor: holidayColor.border,
-              backgroundColor: holidayColor.bg,
-              color: holidayColor.text,
+              borderColor: colour.border,
+              backgroundColor: colour.bg,
+              color: colour.text,
             }}
           >
             {content}

@@ -11,6 +11,7 @@ type Props = {
   handleDelete: any;
   handleDeleteFederalRange: any;
   handleToggleFederalHoliday: any;
+  handleRenameFederalHoliday: any;
   loading: any;
   setAddFederalModalOpen: any;
   setIsFederalRangeMode: any;
@@ -26,6 +27,7 @@ const FederalHolidayTabPanel = ({
   handleDelete,
   handleDeleteFederalRange,
   handleToggleFederalHoliday,
+  handleRenameFederalHoliday,
   loading,
   setAddFederalModalOpen,
   setIsFederalRangeMode,
@@ -101,6 +103,7 @@ const FederalHolidayTabPanel = ({
               onDeleteHoliday={(id) => void handleDelete(id)}
               onDeleteRange={(group) => void handleDeleteFederalRange(group)}
               onToggleObserved={handleToggleFederalHoliday}
+              onRename={(target, nextName) => void handleRenameFederalHoliday(target, nextName)}
             />
           </List.Item>
         )}

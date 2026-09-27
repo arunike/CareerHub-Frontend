@@ -137,17 +137,27 @@ const CalendarMonthView = ({
   let weekEvents: Event[] = [];
   let day = gridStart;
 
-  const gridHolidays: Holiday[] = [];
+  const gridCustomHolidays: Holiday[] = [];
+  const gridFederalHolidays: Holiday[] = [];
   for (let probe = gridStart; probe <= gridEnd; probe = addDays(probe, 1)) {
-    gridHolidays.push(...getDayData(probe).customHolidays);
+    const probeData = getDayData(probe);
+    gridCustomHolidays.push(...probeData.customHolidays);
+    // An observed range you added carries a group_id too, so it spans like any other run.
+    gridFederalHolidays.push(...probeData.federalHolidays);
   }
-  const holidayCandidates = holidayGroupCandidates(gridHolidays);
+  // A set per bucket: a shared date must not let one bucket's bar hide the other's chip.
+  const spannedDates = (candidates: ReturnType<typeof holidayGroupCandidates>) =>
+    new Set(
+      candidates.flatMap((candidate) =>
+        candidate.subject.kind === 'holiday' ? candidate.subject.group.dates : []
+      )
+    );
+  const customCandidates = holidayGroupCandidates(gridCustomHolidays);
+  const federalCandidates = holidayGroupCandidates(gridFederalHolidays);
+  const holidayCandidates = [...customCandidates, ...federalCandidates];
   // Keyed by date, not group: a lone day left over from a split trip is still its own chip.
-  const spannedHolidayDates = new Set(
-    holidayCandidates.flatMap((candidate) =>
-      candidate.subject.kind === 'holiday' ? candidate.subject.group.dates : []
-    )
-  );
+  const spannedHolidayDates = spannedDates(customCandidates);
+  const spannedFederalDates = spannedDates(federalCandidates);
 
   while (day <= gridEnd) {
     weekDays = [];
@@ -175,6 +185,9 @@ const CalendarMonthView = ({
         events: rawDayData.events.filter((event) => !isMultiDay(event)),
         customHolidays: rawDayData.customHolidays.filter(
           (holiday) => !spannedHolidayDates.has(holiday.date)
+        ),
+        federalHolidays: rawDayData.federalHolidays.filter(
+          (holiday) => !spannedFederalDates.has(holiday.date)
         ),
       };
       const isTodayDate = isSameDay(cloneDay, today);

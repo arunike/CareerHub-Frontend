@@ -123,7 +123,8 @@ export interface Holiday {
   date: string;
   group_id?: string | null;
   description: string;
-  holiday_type?: 'custom' | 'federal';
+  // 'federal_native' is a real federal day the API computes; 'federal' is a range you added to that tab.
+  holiday_type?: 'custom' | 'federal' | 'federal_native';
   is_recurring: boolean;
   is_locked: boolean;
   is_ignored?: boolean;

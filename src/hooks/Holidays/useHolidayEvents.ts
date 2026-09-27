@@ -16,6 +16,8 @@ import {
   updateRecurringSeries,
 } from '../../api';
 import type { Event, EventCategory, RecurrenceRule } from '../../types';
+import { useSpanScope } from '../Events/useSpanScope';
+import type { SpanEditScope } from '../../components/CalendarView/SpanDateFields';
 import type { EventDeleteScope } from '../../components/CalendarView/confirmCalendarDeletion';
 import { normalizeTimeZone } from '../../lib/timezones';
 import type { ApiError, EventFormValues } from '../../utils/Holidays/holidayGrouping';
@@ -45,8 +47,21 @@ export const useHolidayEvents = ({
   const [newCategoryIcon, setNewCategoryIcon] = useState('tag');
   const [locationType, setLocationType] = useState<'in_person' | 'virtual' | 'hybrid'>('virtual');
 
+  // The same owner the Events page uses, so a run of days behaves identically on both.
+  const { spanEditDays, beginSpanEdit, onScopeChange, saveWithScope } = useSpanScope({
+    events,
+    editingId: editingEventId,
+    form: eventForm,
+    messageApi,
+    onSaved: () => {
+      setIsEventFormOpen(false);
+      void fetchData();
+    },
+  });
+
   // The calendar opens the editor directly rather than a read-only card first.
-  const handleCalendarEventSelect = (event: Event) => {
+  const handleCalendarEventSelect = (event: Event, day?: Date) => {
+    beginSpanEdit(event, day ? dayjs(day).format('YYYY-MM-DD') : undefined);
     handleEventEdit(event);
   };
 
@@ -136,6 +151,8 @@ export const useHolidayEvents = ({
       reminder_minutes: 15,
     };
 
+    if (await saveWithScope({ scope: values.scope as SpanEditScope | undefined, payload })) return;
+
     const saveEvent = async (force = false) => {
       if (!editingEventId) {
         const response = await createEvent(payload, force ? { force: true } : undefined);
@@ -218,6 +235,8 @@ export const useHolidayEvents = ({
     locationType,
     setLocationType,
     handleCalendarEventSelect,
+    spanEditDays,
+    onSpanScopeChange: onScopeChange,
     handleCalendarAddEvent,
     handleEventEdit,
     handleCalendarEventDelete,

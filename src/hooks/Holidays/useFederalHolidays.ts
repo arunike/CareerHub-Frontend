@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Form } from 'antd';
 import dayjs from 'dayjs';
 import type { MessageInstance } from 'antd/es/message/interface';
-import { createHoliday, deleteHoliday, updateUserSettings } from '../../api';
+import { createHoliday, deleteHoliday, updateHoliday, updateUserSettings } from '../../api';
 import type { Holiday, UserSettings } from '../../types';
 import {
   createHolidayGroupId,
@@ -98,6 +98,30 @@ export const useFederalHolidays = ({
     }
   };
 
+  // The ignore list is keyed by name, so a rename has to carry that entry across with it.
+  const handleRenameFederalHoliday = async (
+    item: { id?: number; items?: { id: number }[]; description: string },
+    nextName: string
+  ) => {
+    const ids = item.items?.map((row) => row.id) ?? (item.id === undefined ? [] : [item.id]);
+    if (ids.length === 0) return;
+    try {
+      await Promise.all(ids.map((id) => updateHoliday(id, { description: nextName })));
+      const ignoredList = userSettings?.ignored_federal_holidays ?? [];
+      if (ignoredList.includes(item.description)) {
+        await updateUserSettings({
+          ignored_federal_holidays: ignoredList.map((name) =>
+            name === item.description ? nextName : name
+          ),
+        });
+      }
+      messageApi.success('Renamed');
+      fetchData();
+    } catch {
+      messageApi.error('Could not rename this holiday');
+    }
+  };
+
   const handleToggleFederalHoliday = async (
     holidayName: string,
     dateStr: string,
@@ -138,5 +162,6 @@ export const useFederalHolidays = ({
     handleAddFederal,
     handleDeleteFederalRange,
     handleToggleFederalHoliday,
+    handleRenameFederalHoliday,
   };
 };

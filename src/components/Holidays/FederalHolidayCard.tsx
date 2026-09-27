@@ -65,6 +65,8 @@ interface FederalHolidayCardProps {
   onDeleteHoliday: (id: number) => void;
   onDeleteRange: (group: FederalHolidayGroup) => void;
   onToggleObserved: (holidayName: string, date: string, checked: boolean) => void;
+  // Only offered for holidays you added; a real federal day is identified by its name.
+  onRename?: (item: FederalHolidayDisplayItem, nextName: string) => void;
 }
 
 const FederalHolidayCard = ({
@@ -73,6 +75,7 @@ const FederalHolidayCard = ({
   onDeleteHoliday,
   onDeleteRange,
   onToggleObserved,
+  onRename,
 }: FederalHolidayCardProps) => {
   const isGroup = isFederalHolidayGroup(item);
   const isIgnored = Boolean(item.is_ignored);
@@ -166,6 +169,18 @@ const FederalHolidayCard = ({
               : 'text-gray-600 dark:text-ink-200'
           }`}
           title={item.description}
+          editable={
+            isAdvancedMode && isCustomFederal && onRename
+              ? {
+                  tooltip: 'Rename',
+                  maxLength: 120,
+                  onChange: (next) => {
+                    const trimmed = next.trim();
+                    if (trimmed && trimmed !== item.description) onRename(item, trimmed);
+                  },
+                }
+              : false
+          }
         >
           {item.description}
         </Text>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { stageDurations, stalledRounds } from './stageVelocity';
 import type { CommandApplication } from './overview';
 
-const TODAY = '2026-09-21';
+const TODAY = '2026-10-01';
 
 // Three applications that each moved 1st Round -> 2nd Round, taking 4, 6 and 8 days.
 const history = [1, 2, 3].flatMap((application, index) => [
@@ -21,7 +21,7 @@ const application = (over: Partial<CommandApplication> = {}): CommandApplication
     role_title: 'Software Engineer',
     status: 'ROUND_1',
     updated_at: TODAY,
-    current_stage_on: '2026-09-01',
+    current_stage_on: '2026-09-11',
     ...over,
   }) as CommandApplication;
 
@@ -46,7 +46,7 @@ describe('stageDurations', () => {
 
 describe('stalledRounds', () => {
   it('flags a live round that has outlasted its own median', () => {
-    const rows = stalledRounds([application({ current_stage_on: '2026-09-01' })], history, TODAY);
+    const rows = stalledRounds([application({ current_stage_on: '2026-09-11' })], history, TODAY);
     expect(rows).toEqual([
       { application: rows[0].application, stage: 'ROUND_1', days: 20, typical: 6 },
     ]);
@@ -54,7 +54,7 @@ describe('stalledRounds', () => {
 
   it('stays quiet while a round is still inside its usual span', () => {
     expect(
-      stalledRounds([application({ current_stage_on: '2026-09-18' })], history, TODAY)
+      stalledRounds([application({ current_stage_on: '2026-09-28' })], history, TODAY)
     ).toEqual([]);
   });
 
@@ -69,8 +69,8 @@ describe('stalledRounds', () => {
   it('puts the furthest overdue first', () => {
     const rows = stalledRounds(
       [
-        application({ id: 1, current_stage_on: '2026-09-10' }),
-        application({ id: 2, current_stage_on: '2026-08-01' }),
+        application({ id: 1, current_stage_on: '2026-09-20' }),
+        application({ id: 2, current_stage_on: '2026-08-11' }),
       ],
       history,
       TODAY

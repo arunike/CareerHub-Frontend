@@ -20,6 +20,8 @@ import {
   updateHoliday,
   updateRecurringSeries,
 } from '../../api';
+import { useSpanScope } from '../Events/useSpanScope';
+import type { SpanEditScope } from '../../components/CalendarView/SpanDateFields';
 import type { Event, EventCategory, Holiday, HolidayTab, RecurrenceRule } from '../../types';
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
 import type { CalendarHolidayFormValues } from '../../components/CalendarView/CalendarHolidayModal';
@@ -124,8 +126,21 @@ export const useAvailabilityCalendar = ({
       }
     });
   };
+  // The same owner the other two pages use, so a run of days behaves identically everywhere.
+  const { spanEditDays, beginSpanEdit, onScopeChange, saveWithScope } = useSpanScope({
+    events,
+    editingId: editingEventId,
+    form: eventForm,
+    messageApi,
+    onSaved: () => {
+      setIsEventFormOpen(false);
+      void fetchCalendarData();
+    },
+  });
+
   // The calendar opens the editor directly rather than a read-only card first.
-  const handleCalendarEventSelect = (event: Event) => {
+  const handleCalendarEventSelect = (event: Event, day?: Date) => {
+    beginSpanEdit(event, day ? dayjs(day).format('YYYY-MM-DD') : undefined);
     handleEventEdit(event);
   };
 
@@ -239,6 +254,8 @@ export const useAvailabilityCalendar = ({
       recurrence_rule: recurrenceRule,
       reminder_minutes: 15,
     };
+
+    if (await saveWithScope({ scope: values.scope as SpanEditScope | undefined, payload })) return;
 
     const saveEvent = async (force = false) => {
       if (!editingEventId) {
@@ -389,6 +406,8 @@ export const useAvailabilityCalendar = ({
     handleCalendarItemDrop,
     handleCalendarEventSelect,
     handleEventEdit,
+    spanEditDays,
+    onSpanScopeChange: onScopeChange,
     handleCalendarEventDelete,
     handleCalendarAddEvent,
     handleCalendarAddHoliday,

@@ -79,6 +79,8 @@ const Availability = () => {
     isEventFormOpen,
     setIsEventFormOpen,
     editingEventId,
+    spanEditDays,
+    onSpanScopeChange,
     showRecurrenceModal,
     setShowRecurrenceModal,
     recurrenceRule,
@@ -368,6 +370,8 @@ const Availability = () => {
         open={isEventFormOpen}
         editingId={editingEventId}
         form={eventForm}
+        spanDays={spanEditDays}
+        onScopeChange={onSpanScopeChange}
         onCancel={() => setIsEventFormOpen(false)}
         onFinish={handleEventFormFinish}
         defaultDuration={defaultDuration}
