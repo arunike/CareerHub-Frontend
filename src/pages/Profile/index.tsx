@@ -11,7 +11,7 @@ import type { UserSettings } from '../../types';
 import { SaveOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import Modal from '../../components/modals/MobileModal';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { PageState } from '../../components/feedback/PageState';
 import { SettingsSkeleton } from '../../components/feedback/SkeletonLoader';
 import { useAuth } from '../../context/AuthContext';
@@ -381,7 +381,14 @@ const ProfilePage: React.FC = () => {
       : settings.display_name || user?.full_name || 'Update Your Name';
   const deletionScheduledFor = formatDeletionDate(settings.account_deletion_scheduled_for);
   return (
-    <div className="max-w-6xl mx-auto pb-20">
+    <PageShell
+      title="Profile Settings"
+      subtitle="Manage your identity, security, and private account data."
+      onPrimaryAction={handleSaveGeneral}
+      primaryActionLabel="Save Changes"
+      primaryActionIcon={<SaveOutlined />}
+      primaryActionLoading={saving}
+    >
       {contextHolder}
       <Modal
         title="Delete account"
@@ -410,15 +417,6 @@ const ProfilePage: React.FC = () => {
           />
         </div>
       </Modal>
-
-      <PageActionToolbar
-        title="Profile Settings"
-        subtitle="Manage your identity, security, and private account data."
-        onPrimaryAction={handleSaveGeneral}
-        primaryActionLabel="Save Changes"
-        primaryActionIcon={<SaveOutlined />}
-        primaryActionLoading={saving}
-      />
 
       <div className="mt-6 grid grid-cols-12 gap-4 sm:gap-8">
         {/* Sidebar-style Profile Preview */}
@@ -466,7 +464,7 @@ const ProfilePage: React.FC = () => {
           settings={settings}
         />
       </div>
-    </div>
+    </PageShell>
   );
 };
 

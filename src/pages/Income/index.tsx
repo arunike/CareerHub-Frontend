@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Tooltip, message } from 'antd';
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { usePersistedState } from '../../hooks/usePersistedState';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { SkeletonBlock } from '../../components/feedback/SkeletonLoader';
 import type { FilingStatus } from '../../types/tax';
 import BonusForm from '../../components/Income/BonusForm';
@@ -385,38 +385,36 @@ const IncomePage = () => {
 
   return (
     <AmountPrivacyProvider hidden={amountsHidden}>
-      <div className="space-y-5">
-        <PageActionToolbar
-          title="Income"
-          subtitle="What actually lands in your account, and what you will owe in April"
-          selectedYear={taxYear}
-          onYearChange={(year) => {
-            if (year !== 'all') setTaxYear(year);
-          }}
-          availableYears={availableYears}
-          allowAllYears={false}
-          singleRowDesktop
-          viewSwitch={
-            <Tooltip title={amountsHidden ? 'Show amounts' : 'Hide every amount on this page'}>
-              <Button
-                className="toolbar-btn toolbar-btn-icon"
-                size="large"
-                aria-label={amountsHidden ? 'Show amounts' : 'Hide every amount on this page'}
-                icon={amountsHidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                onClick={() => setAmountsHidden((previous) => !previous)}
-              />
-            </Tooltip>
-          }
-          extraActions={
-            <UnsavedChangesActions
-              isDirty={isDirty}
-              saving={saving}
-              onDiscard={discardChanges}
-              onSave={handleSave}
+      <PageShell
+        title="Income"
+        subtitle="What actually lands in your account, and what you will owe in April"
+        selectedYear={taxYear}
+        onYearChange={(year) => {
+          if (year !== 'all') setTaxYear(year);
+        }}
+        availableYears={availableYears}
+        allowAllYears={false}
+        singleRowDesktop
+        viewSwitch={
+          <Tooltip title={amountsHidden ? 'Show amounts' : 'Hide every amount on this page'}>
+            <Button
+              className="toolbar-btn toolbar-btn-icon"
+              size="large"
+              aria-label={amountsHidden ? 'Show amounts' : 'Hide every amount on this page'}
+              icon={amountsHidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+              onClick={() => setAmountsHidden((previous) => !previous)}
             />
-          }
-        />
-
+          </Tooltip>
+        }
+        extraActions={
+          <UnsavedChangesActions
+            isDirty={isDirty}
+            saving={saving}
+            onDiscard={discardChanges}
+            onSave={handleSave}
+          />
+        }
+      >
         <OverrideConflictModal
           conflict={conflict}
           rows={effectiveRows}
@@ -481,7 +479,7 @@ const IncomePage = () => {
           stateLabel={stateLabel}
           view={view}
         />
-      </div>
+      </PageShell>
     </AmountPrivacyProvider>
   );
 };

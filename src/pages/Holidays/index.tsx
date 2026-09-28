@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, Space, Form, Input, message } from 'antd';
 import Modal from '../../components/modals/MobileModal';
 import { deleteHoliday } from '../../api';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import CalendarView from '../../components/CalendarView/CalendarView';
 import RecurrenceModal from '../../components/modals/RecurrenceModal';
 import SegmentedToggle from '../../components/inputs/SegmentedToggle';
@@ -366,15 +366,13 @@ const Holidays = () => {
     <>
       {contextHolder}
       <div className="w-full">
-        <div className="mb-6">
-          <PageActionToolbar
-            title="Holidays"
-            subtitle="Manage personal time off and observed holidays."
-            onExport={handleExportWrapper}
-            exportFilename="holidays"
-            onImport={() => setShowImport(true)}
-          />
-        </div>
+        <PageShell
+          title="Holidays"
+          subtitle="Manage personal time off and observed holidays."
+          onExport={handleExportWrapper}
+          exportFilename="holidays"
+          onImport={() => setShowImport(true)}
+        ></PageShell>
 
         {loadError && !hasLoadedData ? (
           <PageState

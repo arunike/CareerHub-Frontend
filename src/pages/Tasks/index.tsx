@@ -12,7 +12,7 @@ import {
   reorderTasks,
   updateTask,
 } from '../../api';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import RowActions from '../../components/actions/RowActions';
 import ModalShell from '../../components/modals/ModalShell';
 import { PageState } from '../../components/feedback/PageState';
@@ -367,44 +367,42 @@ const Tasks: React.FC = () => {
   const weeklyReviewLoadFailed = weeklyReviewError && !weeklyReview;
 
   return (
-    <div className="space-y-6 w-full">
+    <PageShell
+      title="Action Items"
+      subtitle="Track your to-do list in Kanban or checklist view."
+      extraActions={
+        <div className="toolbar-toggle-group" role="group" aria-label="Action item view">
+          <button
+            type="button"
+            onClick={() => setViewMode('kanban')}
+            className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
+              viewMode === 'kanban'
+                ? 'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm'
+                : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
+            }`}
+            aria-pressed={viewMode === 'kanban'}
+          >
+            Kanban
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('checklist')}
+            className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
+              viewMode === 'checklist'
+                ? 'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm'
+                : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
+            }`}
+            aria-pressed={viewMode === 'checklist'}
+          >
+            Checklist
+          </button>
+        </div>
+      }
+      onPrimaryAction={openCreateModal}
+      primaryActionLabel="Add Action Item"
+      primaryActionIcon={<PlusOutlined />}
+    >
       {contextHolder}
-
-      <PageActionToolbar
-        title="Action Items"
-        subtitle="Track your to-do list in Kanban or checklist view."
-        extraActions={
-          <div className="toolbar-toggle-group" role="group" aria-label="Action item view">
-            <button
-              type="button"
-              onClick={() => setViewMode('kanban')}
-              className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
-                viewMode === 'kanban'
-                  ? 'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm'
-                  : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
-              }`}
-              aria-pressed={viewMode === 'kanban'}
-            >
-              Kanban
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('checklist')}
-              className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
-                viewMode === 'checklist'
-                  ? 'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm'
-                  : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
-              }`}
-              aria-pressed={viewMode === 'checklist'}
-            >
-              Checklist
-            </button>
-          </div>
-        }
-        onPrimaryAction={openCreateModal}
-        primaryActionLabel="Add Action Item"
-        primaryActionIcon={<PlusOutlined />}
-      />
 
       <Card className="enterprise-section overflow-hidden">
         <TaskFilterBar
@@ -542,7 +540,7 @@ const Tasks: React.FC = () => {
       >
         <TaskFormFields form={form} modalMode={modalMode} />
       </ModalShell>
-    </div>
+    </PageShell>
   );
 };
 

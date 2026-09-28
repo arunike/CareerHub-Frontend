@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { updateApplication } from '../../api';
 import { PlusOutlined } from '@ant-design/icons';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { getCurrentYear } from '../../utils/yearFilter';
 import { Button, message, Select, Spin } from 'antd';
 import { useOfferAdjustmentsPersistence } from '../../hooks/OfferComparison/useOfferAdjustmentsPersistence';
@@ -287,19 +287,18 @@ const OfferComparison = () => {
     return <div className="p-8 text-center text-gray-500 dark:text-ink-400">Loading offers...</div>;
 
   return (
-    <div className="space-y-6">
+    <PageShell
+      title="Offer Comparison"
+      subtitle="Compare total compensation across your offers, in year 1 and over four years."
+      selectedYear={selectedYear}
+      onYearChange={handleYearChange}
+      availableYears={availableYears}
+      onExport={handleExportOffers}
+      exportFilename="offers"
+      primaryActionIcon={<PlusOutlined />}
+      singleRowDesktop
+    >
       {contextHolder}
-      <PageActionToolbar
-        title="Offer Comparison"
-        subtitle="Compare total compensation across your offers, in year 1 and over four years."
-        selectedYear={selectedYear}
-        onYearChange={handleYearChange}
-        availableYears={availableYears}
-        onExport={handleExportOffers}
-        exportFilename="offers"
-        primaryActionIcon={<PlusOutlined />}
-        singleRowDesktop
-      />
 
       {/* Named rather than silently dropped: the stub is a prompt to fill it in, not a real offer. */}
       {unfilledOffers.length > 0 && (
@@ -509,7 +508,7 @@ const OfferComparison = () => {
         handleRestoreDecisionSnapshot={handleRestoreDecisionSnapshot}
         refreshStockPrices={refreshStockPrices}
       />
-    </div>
+    </PageShell>
   );
 };
 

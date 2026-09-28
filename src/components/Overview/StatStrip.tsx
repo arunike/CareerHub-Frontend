@@ -1,5 +1,9 @@
+import { useState } from 'react';
+import { Drawer, Popover } from 'antd';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 export interface Stat {
   label: string;
@@ -7,6 +11,8 @@ export interface Stat {
   hint?: string;
   to?: string;
   tone?: 'neutral' | 'good' | 'warn';
+  // A cell that opens its detail in place, for a list that does not deserve a section of its own.
+  panel?: { title: string; content: ReactNode };
 }
 
 const VALUE_TONE: Record<string, string> = {
@@ -25,6 +31,57 @@ const seams = (index: number) =>
     'sm:border-b-0',
     index > 0 ? 'sm:border-r-0 sm:border-l' : 'sm:border-r-0',
   ].join(' ');
+
+// A bottom sheet on a phone and a popover on a desktop, the same split every disclosure here uses.
+const StatPanelCell = ({
+  panel,
+  className,
+  children,
+}: {
+  panel: { title: string; content: ReactNode };
+  className: string;
+  children: ReactNode;
+}) => {
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
+
+  // Popover supplies its own onClick; passing one as well made each click toggle twice.
+  const trigger = (onClick?: () => void) => (
+    <button type="button" className={className} aria-expanded={open} onClick={onClick}>
+      {children}
+    </button>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        {trigger(() => setOpen(true))}
+        <Drawer
+          open={open}
+          onClose={() => setOpen(false)}
+          placement="bottom"
+          height="auto"
+          title={panel.title}
+        >
+          {panel.content}
+        </Drawer>
+      </>
+    );
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={setOpen}
+      trigger="click"
+      placement="bottom"
+      title={panel.title}
+      content={panel.content}
+    >
+      {trigger()}
+    </Popover>
+  );
+};
 
 // One card split by hairlines rather than four floating boxes, so the numbers read as a set.
 const StatStrip = ({ stats, caption }: { stats: Stat[]; caption?: string }) => (
@@ -54,12 +111,20 @@ const StatStrip = ({ stats, caption }: { stats: Stat[]; caption?: string }) => (
           </>
         );
         const cell = `px-4 py-4 sm:px-5 ${HAIRLINE} ${seams(index)}`;
+        const hover = 'transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]';
+        if (stat.panel) {
+          return (
+            <StatPanelCell
+              key={stat.label}
+              className={`${cell} ${hover} text-left`}
+              panel={stat.panel}
+            >
+              {body}
+            </StatPanelCell>
+          );
+        }
         return stat.to ? (
-          <Link
-            key={stat.label}
-            to={stat.to}
-            className={`${cell} transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]`}
-          >
+          <Link key={stat.label} to={stat.to} className={`${cell} ${hover}`}>
             {body}
           </Link>
         ) : (

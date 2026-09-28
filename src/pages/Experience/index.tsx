@@ -12,7 +12,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Experience } from '../../types';
 import ExperienceModal from '../../components/Experience/ExperienceModal';
 import JDMatcherModal from '../../components/Experience/JDMatcherModal';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { PageState } from '../../components/feedback/PageState';
 import RaiseHistoryModal from '../../components/OfferComparison/RaiseHistoryModal';
 import TeamHistoryModal from '../../components/Experience/TeamHistoryModal';
@@ -256,35 +256,31 @@ const ExperiencePage: React.FC = () => {
   });
 
   return (
-    <div style={{ padding: 0, width: '100%' }}>
-      <div style={{ marginBottom: 24 }}>
-        <PageActionToolbar
-          title={<span className="whitespace-nowrap">Career History</span>}
-          subtitle="Roles, skills, compensation, and achievements over time."
-          extraActions={
-            <Button
-              size="large"
-              icon={<RobotOutlined />}
-              onClick={() => setJdModalOpen(true)}
-              className="toolbar-btn text-sky-600 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/25 hover:bg-sky-100 hover:border-sky-300 shadow-sm"
-            >
-              Match JD
-            </Button>
-          }
-          onDeleteAll={handleDeleteAll}
-          deleteAllLabel="Delete All"
-          deleteAllDisabled={!experiences.some((exp) => !exp.is_locked)}
-          deleteAllConfirmTitle="Delete all experiences?"
-          deleteAllConfirmDescription="This will permanently delete all unlocked experiences."
-          onExport={handleExportWrapper}
-          exportFilename="experiences"
-          onImport={() => setIsImportModalOpen(true)}
-          onPrimaryAction={openAddModal}
-          primaryActionLabel="Add Experience"
-          primaryActionIcon={<PlusOutlined />}
-        />
-      </div>
-
+    <PageShell
+      title={<span className="whitespace-nowrap">Career History</span>}
+      subtitle="Roles, skills, compensation, and achievements over time."
+      extraActions={
+        <Button
+          size="large"
+          icon={<RobotOutlined />}
+          onClick={() => setJdModalOpen(true)}
+          className="toolbar-btn text-sky-600 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/25 hover:bg-sky-100 hover:border-sky-300 shadow-sm"
+        >
+          Match JD
+        </Button>
+      }
+      onDeleteAll={handleDeleteAll}
+      deleteAllLabel="Delete All"
+      deleteAllDisabled={!experiences.some((exp) => !exp.is_locked)}
+      deleteAllConfirmTitle="Delete all experiences?"
+      deleteAllConfirmDescription="This will permanently delete all unlocked experiences."
+      onExport={handleExportWrapper}
+      exportFilename="experiences"
+      onImport={() => setIsImportModalOpen(true)}
+      onPrimaryAction={openAddModal}
+      primaryActionLabel="Add Experience"
+      primaryActionIcon={<PlusOutlined />}
+    >
       {/* Analytics Dashboard */}
       {experiences.length > 0 && (
         <ExperienceAnalyticsPanels
@@ -584,7 +580,7 @@ const ExperiencePage: React.FC = () => {
           </p>
         </Dragger>
       </Modal>
-    </div>
+    </PageShell>
   );
 };
 

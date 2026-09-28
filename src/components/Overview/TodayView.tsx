@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
@@ -10,6 +11,9 @@ import {
   SolutionOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
+import StatStrip from './StatStrip';
+import SummaryRowList from './SummaryRowList';
+import type { Stat } from './StatStrip';
 import SummaryCard from './SummaryCard';
 import type { SummaryRow } from './SummaryCard';
 import { StatusBadge } from '../Applications/ApplicationBadges';
@@ -20,10 +24,13 @@ import {
   expiringOffers,
   isInterviewing,
   nextEvent,
+  openOffers,
   openTasks,
+  pipeline,
   tasksDue,
   upcomingEvents,
 } from '../../utils/Overview/overview';
+import { stageLabel } from '../../utils/Overview/stageLabel';
 import type {
   CommandApplication,
   CommandEvent,
@@ -34,7 +41,8 @@ import { canSayAllClear, type CommandSource } from '../../utils/Overview/overvie
 import type { InterviewPrep } from '../../utils/Overview/interviewPrep';
 import { stalledRounds } from '../../utils/Overview/stageVelocity';
 import type { TimelineEntryLike } from '../../utils/Overview/stageVelocity';
-import { goneCold, needsFollowUp } from '../../utils/Overview/weeklyReview';
+import { bucketApplications, inBucket, STALE_AFTER_DAYS } from '../../utils/Overview/todayBuckets';
+import type { BucketedApplication } from '../../utils/Overview/todayBuckets';
 import { dueReviews } from '../../utils/OfferComparison/decisionJournal';
 import type { DecisionJournalEntry } from '../../utils/OfferComparison/decisionJournal';
 
@@ -78,24 +86,24 @@ const TodayView = ({
   const due = useMemo(() => tasksDue(tasks, todayIso), [tasks, todayIso]);
   const closing = useMemo(() => expiringOffers(offers, todayIso), [offers, todayIso]);
   const lookBacks = useMemo(() => dueReviews(journals, todayIso), [journals, todayIso]);
-  // Live conversations, longest untouched first. Not a count — the actual threads to work.
-  const inRounds = useMemo(
-    () =>
-      applications
-        .filter((application) => isInterviewing(String(application.status ?? '')))
-        .sort((a, b) => String(a.updated_at).localeCompare(String(b.updated_at))),
-    [applications]
+  // One pass, one bucket each: three cards measuring the same silence listed a role three times.
+  const buckets = useMemo(
+    () => bucketApplications(applications, todayIso),
+    [applications, todayIso]
   );
+  const moving = useMemo(() => inBucket(buckets, 'moving'), [buckets]);
+  const nudge = useMemo(() => inBucket(buckets, 'nudge'), [buckets]);
+  const stale = useMemo(() => inBucket(buckets, 'stale'), [buckets]);
+  const cold = useMemo(() => inBucket(buckets, 'cold'), [buckets]);
 
-  // Rounds already past what that stage has historically cost you.
-  const stalled = useMemo(
-    () => stalledRounds(applications, timeline, todayIso),
-    [applications, timeline, todayIso]
-  );
-
-  // Replied then went quiet: the short list, as against the roster of every live round.
-  const chase = useMemo(() => needsFollowUp(applications, todayIso), [applications, todayIso]);
-  const cold = useMemo(() => goneCold(applications, todayIso), [applications, todayIso]);
+  // Running long is an annotation on a row, not a card: as a card it repeated the whole list.
+  const overdueByApplication = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const round of stalledRounds(applications, timeline, todayIso)) {
+      map.set(round.application.id, round.typical);
+    }
+    return map;
+  }, [applications, timeline, todayIso]);
 
   // Anything landing today that the hero is not already announcing.
   const alsoToday = ahead.filter(
@@ -252,83 +260,168 @@ const TodayView = ({
     />
   ) : null;
 
-  const activeCard = inRounds.length ? (
+  const applicationRow = (
+    { application }: BucketedApplication,
+    prefix: string,
+    meta: ReactNode
+  ): SummaryRow => ({
+    id: `${prefix}-${application.id}`,
+    to: `/applications?open=${application.id}`,
+    title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
+    meta,
+    // The stage's own colour, so a round reads the same here as on the applications table.
+    trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
+  });
+
+  const quietMeta = ({ application, daysQuiet }: BucketedApplication) => {
+    const typical = overdueByApplication.get(application.id);
+    const silence = `Quiet ${daysQuiet} ${daysQuiet === 1 ? 'day' : 'days'}`;
+    return typical === undefined
+      ? silence
+      : `${silence} \u00b7 this round usually takes ${Math.round(typical)}`;
+  };
+
+  // The one card that asks for an action, so it leads: a reply has landed and the thread is cooling.
+  const nudgeCard = nudge.length ? (
     <SummaryCard
-      title="In interview rounds"
-      icon={SolutionOutlined}
-      count={inRounds.length}
+      title="Worth a nudge"
+      icon={MessageOutlined}
+      tone="urgent"
+      count={nudge.length}
       seeAll={{ to: '/applications', label: 'All applications' }}
       previewCount={6}
-      moreLabel={(hidden) => `Show ${hidden} more in an interview round`}
-      rows={inRounds.map((application): SummaryRow => {
-        const timing = roundTiming({ application, events, todayIso, ghostAfterDays });
-        return {
-          id: `round-${application.id}`,
-          to: `/applications?open=${application.id}`,
-          title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
-          meta: roundTimingLabel(timing),
-          // The stage's own colour, so a round reads the same here as on the applications table.
-          trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
-        };
+      moreLabel={(hidden) => `Show ${hidden} more worth a nudge`}
+      rows={nudge.map((entry) => applicationRow(entry, 'nudge', quietMeta(entry)))}
+    />
+  ) : null;
+
+  const movingCard = moving.length ? (
+    <SummaryCard
+      title="In play"
+      icon={SolutionOutlined}
+      count={moving.length}
+      seeAll={{ to: '/applications', label: 'All applications' }}
+      previewCount={6}
+      moreLabel={(hidden) => `Show ${hidden} more in play`}
+      rows={moving.map((entry) => {
+        const timing = roundTiming({
+          application: entry.application,
+          events,
+          todayIso,
+          ghostAfterDays,
+        });
+        const typical = overdueByApplication.get(entry.application.id);
+        return applicationRow(
+          entry,
+          'moving',
+          typical === undefined
+            ? roundTimingLabel(timing)
+            : `${roundTimingLabel(timing)} \u00b7 running long for this round`
+        );
       })}
     />
   ) : null;
 
-  const stalledCard = stalled.length ? (
+  const live = useMemo(() => openOffers(offers, todayIso), [offers, todayIso]);
+  const stagesInPlay = useMemo(() => pipeline(applications), [applications]);
+  const inRounds = useMemo(
+    () => buckets.filter((row) => isInterviewing(String(row.application.status ?? ''))).length,
+    [buckets]
+  );
+
+  // Counts, not a list: with nothing booked the page was three rows tall on a full pipeline.
+  const stats: Stat[] = [
+    {
+      label: 'Still open',
+      value: buckets.length,
+      hint: buckets.length ? 'not closed out' : 'nothing live',
+      to: '/applications',
+    },
+    {
+      label: 'In rounds',
+      value: inRounds,
+      hint: inRounds ? 'interviewing now' : 'none interviewing',
+      to: '/applications',
+    },
+    {
+      label: 'Offers open',
+      value: live.length,
+      hint: live.length ? 'awaiting a decision' : 'none on the table',
+      tone: live.length ? 'good' : 'neutral',
+      to: '/offers',
+    },
+    {
+      label: 'Gone quiet',
+      value: stale.length,
+      hint: `${STALE_AFTER_DAYS / 7} weeks or more`,
+      tone: stale.length ? 'warn' : 'neutral',
+      // Opened from the cell that already counts them, rather than a section of its own.
+      ...(stale.length
+        ? {
+            panel: {
+              title: `Quiet ${STALE_AFTER_DAYS / 7} weeks or more`,
+              content: (
+                <div className="-mx-4 w-[min(30rem,80vw)] max-w-full">
+                  <div className="max-h-[50vh] overflow-y-auto">
+                    <SummaryRowList
+                      rows={stale.map((entry) => applicationRow(entry, 'stale', quietMeta(entry)))}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 border-t border-slate-100 px-5 py-2.5 dark:border-white/[0.07]">
+                    {cold.length > 0 && (
+                      <span className="text-[11px] text-slate-400 dark:text-ink-500">
+                        {cold.length} sent and never answered
+                      </span>
+                    )}
+                    <Link
+                      to="/applications"
+                      className="ml-auto text-[11px] font-semibold text-blue-600 hover:underline dark:text-blue-300"
+                    >
+                      All applications
+                    </Link>
+                  </div>
+                </div>
+              ),
+            },
+          }
+        : { to: '/applications' }),
+    },
+  ];
+
+  const pipelineCard = stagesInPlay.length ? (
     <SummaryCard
-      title="Running long"
-      icon={HistoryOutlined}
-      count={stalled.length}
+      title="Where things stand"
+      icon={SolutionOutlined}
+      count={buckets.length}
       seeAll={{ to: '/applications', label: 'All applications' }}
-      previewCount={6}
-      moreLabel={(hidden) => `Show ${hidden} more running long`}
-      rows={stalled.map(
-        ({ application, days, typical }): SummaryRow => ({
-          id: `stalled-${application.id}`,
-          to: `/applications?open=${application.id}`,
-          title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
-          meta: `${days} days in this round \u00b7 yours usually move in ${typical}`,
-          trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
+      rows={stagesInPlay.map(
+        (stage): SummaryRow => ({
+          id: `stage-${stage.status}`,
+          to: `/applications?status=${encodeURIComponent(stage.status)}`,
+          title: stageLabel(stage.status, stages),
+          trailing: (
+            <span className="inline-flex min-w-6 justify-end text-[13px] font-semibold tabular-nums text-slate-700 dark:text-ink-100">
+              {stage.count}
+            </span>
+          ),
         })
       )}
     />
   ) : null;
 
-  // The footnote is a count, never a list: the never-answered pile is a decision, not today's work.
-  const chaseCard = chase.length ? (
-    <SummaryCard
-      title="Worth chasing"
-      icon={MessageOutlined}
-      count={chase.length}
-      seeAll={{ to: '/applications', label: 'All applications' }}
-      previewCount={6}
-      moreLabel={(hidden) => `Show ${hidden} more worth chasing`}
-      rows={chase.map(
-        ({ application, daysQuiet }): SummaryRow => ({
-          id: `chase-${application.id}`,
-          to: `/applications?open=${application.id}`,
-          title: `${application.company_details?.name ?? 'Unknown company'} \u00b7 ${application.role_title}`,
-          meta: `quiet ${daysQuiet} days`,
-          trailing: <StatusBadge status={String(application.status ?? '')} stages={stages} />,
-        })
-      )}
-      footnote={cold.length ? `${cold.length} sent and never answered` : null}
-    />
-  ) : null;
-
-  // Two balanced columns rather than a fixed main and rail: on a quiet day the rail was just a void.
   const cards = [
     nowCard,
-    stalledCard,
-    chaseCard,
-    activeCard,
+    nudgeCard,
+    movingCard,
     scheduleCard,
     closingCard,
     journalCard,
     taskCard,
+    pipelineCard,
   ].filter(Boolean);
-  const main = cards.filter((_, index) => index % 2 === 0);
-  const rail = cards.filter((_, index) => index % 2 === 1);
+  // Split by priority, not interleaved: the card asking for an action must read first.
+  const main = cards.slice(0, Math.ceil(cards.length / 2));
+  const rail = cards.slice(Math.ceil(cards.length / 2));
 
   return (
     <div className="space-y-5">
@@ -391,6 +484,9 @@ const TodayView = ({
         </section>
       )}
 
+      {/* Under the hero, above the work: the shape of the search, not a replacement for it. */}
+      {buckets.length > 0 && <StatStrip stats={stats} />}
+
       {cards.length > 0 && (
         <div className={`grid gap-5 ${rail.length ? 'lg:grid-cols-2' : ''}`}>
           <div className="space-y-5">
@@ -437,13 +533,35 @@ const TodayView = ({
               </div>
             </>
           ) : (
-            <p className="text-[13px] text-slate-500 dark:text-ink-400">
-              Nothing needs you today. Check{' '}
-              <Link to="?view=week" className="font-semibold text-blue-600 dark:text-blue-300">
-                This week
-              </Link>{' '}
-              for how the search is going.
-            </p>
+            <>
+              <p className="text-[15px] font-semibold text-slate-900 dark:text-ink-50">
+                Nothing needs you today
+              </p>
+              {/* A quiet day with a large quiet pile is a prompt to prune, not just reassurance. */}
+              <p className="mx-auto mt-1 max-w-md text-[13px] text-slate-500 dark:text-ink-400">
+                {stale.length > 0 ? (
+                  <>
+                    {stale.length === 1
+                      ? 'One conversation has'
+                      : `${stale.length} conversations have`}{' '}
+                    been quiet for {STALE_AFTER_DAYS / 7} weeks or more
+                    {cold.length > 0 ? `, and ${cold.length} were never answered at all` : ''}.
+                    Deciding which to close is worth more than another follow-up.
+                  </>
+                ) : (
+                  <>
+                    Check{' '}
+                    <Link
+                      to="?view=week"
+                      className="font-semibold text-blue-600 dark:text-blue-300"
+                    >
+                      This week
+                    </Link>{' '}
+                    for how the search is going.
+                  </>
+                )}
+              </p>
+            </>
           )}
         </section>
       )}

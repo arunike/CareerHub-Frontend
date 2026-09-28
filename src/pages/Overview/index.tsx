@@ -16,6 +16,7 @@ import {
 import ModeToggle from '../../components/inputs/ModeToggle';
 import { DEFAULT_APPLICATION_STAGES } from '../../constants/applicationStages';
 import type { ApplicationStage } from '../../constants/applicationStages';
+import PageShell from '../../components/layout/PageShell';
 import TodayView from '../../components/Overview/TodayView';
 import WeekView from '../../components/Overview/WeekView';
 import { nextEvent } from '../../utils/Overview/overview';
@@ -164,18 +165,14 @@ export default function OverviewPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-[26px] font-bold tracking-[-0.025em] text-slate-900 dark:text-ink-50">
-            Overview
-          </h1>
-          <p className="mt-1 text-[12.5px] text-slate-500 dark:text-ink-400">
-            {view === 'today'
-              ? `${dayjs().format('dddd, D MMMM YYYY')} · everything that needs you, in one place.`
-              : 'How the search went this week, and what to line up next.'}
-          </p>
-        </div>
+    <PageShell
+      title="Overview"
+      subtitle={
+        view === 'today'
+          ? `${dayjs().format('dddd, D MMMM YYYY')} \u00b7 everything that needs you, in one place.`
+          : 'How the search went this week, and what to line up next.'
+      }
+      viewSwitch={
         <ModeToggle
           size="lg"
           options={VIEWS}
@@ -187,8 +184,8 @@ export default function OverviewPage() {
             setParams(updated, { replace: true });
           }}
         />
-      </header>
-
+      }
+    >
       {failed.length > 0 && (
         <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-400/20 dark:bg-amber-500/10">
           <p className="flex items-start gap-2 text-[12.5px] font-medium text-amber-900 dark:text-amber-200">
@@ -222,6 +219,6 @@ export default function OverviewPage() {
       ) : (
         <WeekView {...data} />
       )}
-    </div>
+    </PageShell>
   );
 }

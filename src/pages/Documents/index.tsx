@@ -19,7 +19,7 @@ import {
 } from '../../api';
 import type { Document } from '../../types';
 import UploadDocumentModal from '../../components/Documents/UploadDocumentModal';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { getCurrentYear } from '../../utils/yearFilter';
 import RowActions from '../../components/actions/RowActions';
 import { PageState } from '../../components/feedback/PageState';
@@ -387,26 +387,24 @@ const Documents: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <PageActionToolbar
-        title="Document Vault"
-        subtitle={`${documentsTotal.toLocaleString()} documents`}
-        selectedYear={selectedYear}
-        onYearChange={handleYearChange}
-        availableYears={availableYears}
-        onDeleteAll={handleDeleteAll}
-        deleteAllLabel="Delete All"
-        deleteAllConfirmTitle="Delete All Documents?"
-        deleteAllConfirmDescription="This will permanently delete all documents."
-        deleteAllDisabled={documentsUnlocked === 0}
-        onExport={handleExportWrapper}
-        exportFilename="documents"
-        onImport={() => setIsUploadModalVisible(true)}
-        onPrimaryAction={() => setIsUploadModalVisible(true)}
-        primaryActionLabel="Add Document"
-        primaryActionIcon={<PlusOutlined />}
-      />
-
+    <PageShell
+      title="Document Vault"
+      subtitle={`${documentsTotal.toLocaleString()} documents`}
+      selectedYear={selectedYear}
+      onYearChange={handleYearChange}
+      availableYears={availableYears}
+      onDeleteAll={handleDeleteAll}
+      deleteAllLabel="Delete All"
+      deleteAllConfirmTitle="Delete All Documents?"
+      deleteAllConfirmDescription="This will permanently delete all documents."
+      deleteAllDisabled={documentsUnlocked === 0}
+      onExport={handleExportWrapper}
+      exportFilename="documents"
+      onImport={() => setIsUploadModalVisible(true)}
+      onPrimaryAction={() => setIsUploadModalVisible(true)}
+      primaryActionLabel="Add Document"
+      primaryActionIcon={<PlusOutlined />}
+    >
       {documentLoadFailed ? (
         <PageState
           tone="error"
@@ -532,7 +530,7 @@ const Documents: React.FC = () => {
           versionsLoading={versionsLoading}
         />
       </Modal>
-    </div>
+    </PageShell>
   );
 };
 

@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import CalendarView from '../../components/CalendarView/CalendarView';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { PageState, PanelSkeleton } from '../../components/feedback/PageState';
 import { message } from 'antd';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
@@ -214,18 +214,17 @@ const Availability = () => {
   const hasBookingData = shareLink !== null || shareLinks.length > 0 || publicBookings.length > 0;
 
   return (
-    <div className="space-y-6">
+    <PageShell
+      title="Availability"
+      subtitle="Generate shareable times and manage public booking links."
+      viewSwitch={
+        <AvailabilityViewToggle
+          viewTab={viewTab}
+          onChange={(next) => setSearchParams({ view: next })}
+        />
+      }
+    >
       {contextHolder}
-      <PageActionToolbar
-        title="Availability"
-        subtitle="Generate shareable times and manage public booking links."
-        viewSwitch={
-          <AvailabilityViewToggle
-            viewTab={viewTab}
-            onChange={(next) => setSearchParams({ view: next })}
-          />
-        }
-      />
 
       {viewTab === 'calendar' ? (
         calendarLoadError && !hasCalendarData ? (
@@ -413,7 +412,7 @@ const Availability = () => {
         onSubmit={handleHolidayFormFinish}
         onDelete={handleCalendarHolidayDelete}
       />
-    </div>
+    </PageShell>
   );
 };
 export default Availability;

@@ -9,14 +9,13 @@ import {
   SendOutlined,
   SolutionOutlined,
 } from '@ant-design/icons';
+import { stageLabel } from '../../utils/Overview/stageLabel';
 import SummaryCard from './SummaryCard';
 import StatStrip from './StatStrip';
 import PayChangeCard from './PayChangeCard';
 import type { SummaryRow } from './SummaryCard';
 import type { Stat } from './StatStrip';
 import type { ViewData } from './TodayView';
-import { findApplicationStatus } from '../../constants/applicationStages';
-import type { ApplicationStage } from '../../constants/applicationStages';
 import {
   isInterviewing,
   latestPayChange,
@@ -40,13 +39,6 @@ import {
 const percent = (rate: number) => `${Math.round(rate * 100)}%`;
 
 const quietLabel = (days: number) => (days >= 30 ? '30d+' : `${days}d`);
-
-// The configured stage list is the source of the label; titlecasing the key is only a fallback.
-const stageLabel = (status: string, stages: ApplicationStage[]) =>
-  findApplicationStatus(status, stages)?.label ??
-  (status === 'UNKNOWN'
-    ? 'No stage'
-    : status.charAt(0) + status.slice(1).toLowerCase().replace(/_/g, ' '));
 
 const WeekView = ({ events, applications, offers, stages: appStages, todayIso }: ViewData) => {
   const window = useMemo(() => weekWindow(todayIso), [todayIso]);

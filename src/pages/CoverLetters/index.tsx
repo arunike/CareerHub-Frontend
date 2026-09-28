@@ -11,7 +11,7 @@ import {
   CopyOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import BulkActionHeader from '../../components/actions/BulkActionHeader';
 import RowActions from '../../components/actions/RowActions';
 import {
@@ -153,23 +153,19 @@ const CoverLetters: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 0, width: '100%' }}>
+    <PageShell
+      title="Cover Letters"
+      subtitle={`${letters.length} cover letter${letters.length !== 1 ? 's' : ''} saved`}
+      onDeleteAll={letters.length > 0 ? handleDeleteAll : undefined}
+      deleteAllConfirmTitle="Clear All Cover Letters?"
+      deleteAllConfirmDescription="Locked letters will be preserved. This cannot be undone."
+      onExport={letters.length > 0 ? handleExport : undefined}
+      exportFilename="cover_letters"
+      onPrimaryAction={() => navigate('/applications')}
+      primaryActionLabel="Generate New"
+      primaryActionIcon={<ThunderboltOutlined />}
+    >
       {contextHolder}
-
-      <div style={{ marginBottom: 24 }}>
-        <PageActionToolbar
-          title="Cover Letters"
-          subtitle={`${letters.length} cover letter${letters.length !== 1 ? 's' : ''} saved`}
-          onDeleteAll={letters.length > 0 ? handleDeleteAll : undefined}
-          deleteAllConfirmTitle="Clear All Cover Letters?"
-          deleteAllConfirmDescription="Locked letters will be preserved. This cannot be undone."
-          onExport={letters.length > 0 ? handleExport : undefined}
-          exportFilename="cover_letters"
-          onPrimaryAction={() => navigate('/applications')}
-          primaryActionLabel="Generate New"
-          primaryActionIcon={<ThunderboltOutlined />}
-        />
-      </div>
 
       {/* Bulk action bar */}
       {selectedIds.length > 0 && (
@@ -405,7 +401,7 @@ const CoverLetters: React.FC = () => {
           />
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 };
 

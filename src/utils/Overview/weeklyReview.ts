@@ -8,7 +8,7 @@ export const FOLLOW_UP_AFTER_DAYS = 10;
 // A rejection is a reply; GHOSTED is the absence of one and REMOVED_FROM_SHEET is bookkeeping.
 const UNANSWERED = new Set(['APPLIED', 'GHOSTED', 'REMOVED_FROM_SHEET', '']);
 
-const hasReplied = (application: CommandApplication) =>
+export const hasReplied = (application: CommandApplication) =>
   !UNANSWERED.has(status(application)) || Boolean(application.has_reached_interview);
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '');

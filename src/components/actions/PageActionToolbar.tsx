@@ -182,9 +182,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
             <Typography.Title
               level={1}
               className="text-balance"
+              // No literal colour: an inline one beats every dark rule and painted this black on black.
               style={{
                 margin: 0,
-                color: '#111827',
                 fontWeight: 740,
                 letterSpacing: '-0.015em',
                 lineHeight: 1.08,
@@ -234,9 +234,9 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
             <Typography.Title
               level={1}
               className="text-balance"
+              // No literal colour: an inline one beats every dark rule and painted this black on black.
               style={{
                 margin: 0,
-                color: '#111827',
                 fontWeight: 740,
                 letterSpacing: '-0.015em',
                 lineHeight: 1.08,

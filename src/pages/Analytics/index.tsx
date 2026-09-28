@@ -6,7 +6,7 @@ import { getApplicationStats } from '../../api/career';
 import { buildEventStats, eventYears, scopeEventsToYear } from '../../utils/Analytics/eventLoad';
 import { message } from 'antd';
 import SegmentedToggle from '../../components/inputs/SegmentedToggle';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { PageState } from '../../components/feedback/PageState';
 
 import { MetricCardsSkeleton, SkeletonBlock } from '../../components/feedback/SkeletonLoader';
@@ -121,51 +121,48 @@ const Analytics: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 w-full">
+      <PageShell
+        title="Analytics"
+        subtitle="Review availability patterns and job search progress."
+        extraActions={<div className="w-[180px] h-[38px] shimmer-bg rounded-lg" />}
+        singleRowDesktop
+      >
         {contextHolder}
-        <PageActionToolbar
-          title="Analytics"
-          subtitle="Review availability patterns and job search progress."
-          extraActions={<div className="w-[180px] h-[38px] shimmer-bg rounded-lg" />}
-          singleRowDesktop
-        />
         <SectionFallback />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-6 w-full">
+    <PageShell
+      title="Analytics"
+      subtitle="Review availability patterns and job search progress."
+      selectedYear={selectedYear}
+      onYearChange={setSelectedYear}
+      availableYears={activeTab === 'career' ? applicationYears : eventYearOptions}
+      extraActions={
+        <SegmentedToggle
+          value={activeTab}
+          onChange={setActiveTab}
+          wrapperClassName="grid grid-cols-2 sm:flex"
+          options={[
+            {
+              value: 'availability',
+              label: 'Availability',
+              activeClassName: 'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm',
+            },
+            {
+              value: 'career',
+              label: 'Job Search',
+              activeClassName:
+                'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm',
+            },
+          ]}
+        />
+      }
+      singleRowDesktop
+    >
       {contextHolder}
-      <PageActionToolbar
-        title="Analytics"
-        subtitle="Review availability patterns and job search progress."
-        selectedYear={selectedYear}
-        onYearChange={setSelectedYear}
-        availableYears={activeTab === 'career' ? applicationYears : eventYearOptions}
-        extraActions={
-          <SegmentedToggle
-            value={activeTab}
-            onChange={setActiveTab}
-            wrapperClassName="grid grid-cols-2 sm:flex"
-            options={[
-              {
-                value: 'availability',
-                label: 'Availability',
-                activeClassName:
-                  'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm',
-              },
-              {
-                value: 'career',
-                label: 'Job Search',
-                activeClassName:
-                  'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm',
-              },
-            ]}
-          />
-        }
-        singleRowDesktop
-      />
 
       {activeTab === 'availability' && availabilityError ? (
         <PageState
@@ -234,7 +231,7 @@ const Analytics: React.FC = () => {
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 };
 

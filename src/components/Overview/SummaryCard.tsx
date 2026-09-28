@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import type { ComponentType, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-export interface SummaryRow {
-  id: string;
-  to: string;
-  title: string;
-  meta?: ReactNode;
-  trailing?: ReactNode;
-  leading?: ReactNode;
-}
+import SummaryRowList from './SummaryRowList';
+import type { SummaryRow } from './SummaryRowList';
+
+// Re-exported so the many call sites that type their rows keep one import.
+export type { SummaryRow };
 
 const TONE_RING: Record<string, string> = {
   neutral: 'bg-slate-100 dark:bg-ink-800 text-slate-600 dark:text-ink-200',
@@ -27,6 +24,7 @@ const SummaryCard = ({
   tone = 'neutral',
   footnote,
   collapsible = false,
+  defaultOpen = true,
   previewCount,
   moreLabel,
 }: {
@@ -38,12 +36,14 @@ const SummaryCard = ({
   tone?: 'neutral' | 'urgent';
   footnote?: ReactNode;
   collapsible?: boolean;
+  // Closed on load for a pile that is a decision rather than today's work.
+  defaultOpen?: boolean;
   // Rows past this are hidden behind a button that reveals them here, rather than a dead count.
   previewCount?: number;
   moreLabel?: (hidden: number) => string;
 }) => {
   // Open on load: a card you have to expand to read is not a summary.
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   const [showAll, setShowAll] = useState(false);
   const collapsed = collapsible && !open;
   const hidden = previewCount === undefined ? 0 : Math.max(0, rows.length - previewCount);
@@ -89,34 +89,7 @@ const SummaryCard = ({
         </span>
       </header>
 
-      {!collapsed && (
-        <ul className="divide-y divide-slate-100/80 dark:divide-white/[0.05]">
-          {visible.map((row) => (
-            <li key={row.id}>
-              <Link
-                to={row.to}
-                className="group flex min-h-11 items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]"
-              >
-                {row.leading}
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-medium text-slate-800 dark:text-ink-100">
-                    {row.title}
-                  </span>
-                  {row.meta && (
-                    <span className="mt-0.5 block truncate text-[11.5px] text-slate-500 dark:text-ink-400">
-                      {row.meta}
-                    </span>
-                  )}
-                </span>
-                <span className="flex shrink-0 items-center gap-2.5">
-                  {row.trailing}
-                  <RightOutlined className="text-[10px] text-slate-300 transition-transform group-hover:translate-x-0.5 dark:text-ink-600" />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      {!collapsed && <SummaryRowList rows={visible} />}
 
       {!collapsed && hidden > 0 && (
         <button
@@ -132,8 +105,8 @@ const SummaryCard = ({
         </button>
       )}
 
-      {/* Not gated on the expander: a footnote can be a separate fact, not just an overflow note. */}
-      {!collapsed && footnote && (
+      {/* Shown while collapsed too: on a closed card the footnote is the only fact left visible. */}
+      {footnote && (
         <p className="border-t border-slate-100 px-5 py-2.5 text-[11px] text-slate-400 dark:border-white/[0.07] dark:text-ink-500">
           {footnote}
         </p>

@@ -11,7 +11,7 @@ import type { Event } from '../../types';
 import { createCategory } from '../../api';
 import type { Holiday } from '../../types';
 import RecurrenceModal from '../../components/modals/RecurrenceModal';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { PageState } from '../../components/feedback/PageState';
 import CalendarView from '../../components/CalendarView/CalendarView';
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
@@ -308,39 +308,38 @@ const Events = () => {
   return (
     <>
       {contextHolder}
-      <div className="p-0">
+      <PageShell
+        title="Events"
+        subtitle={`${eventsTotal.toLocaleString()} events`}
+        secondaryActions={
+          <Button
+            className="toolbar-btn"
+            size="large"
+            icon={<LinkOutlined />}
+            onClick={() => setIsLinkInterviewsOpen(true)}
+          >
+            Link interviews
+          </Button>
+        }
+        secondaryMenuItems={[
+          {
+            key: 'link-interviews',
+            icon: <LinkOutlined />,
+            label: 'Link interviews',
+            onClick: () => setIsLinkInterviewsOpen(true),
+          },
+        ]}
+        onDeleteAll={() => setIsDeleteAllOpen(true)}
+        deleteAllDisabled={eventsUnlocked === 0}
+        onExport={handleExportWrapper}
+        exportFilename="events"
+        onImport={() => setShowImport(true)}
+        onPrimaryAction={handleAdd}
+        primaryActionLabel="Add Event"
+        primaryActionIcon={<PlusOutlined />}
+      >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* Header & Actions */}
-          <PageActionToolbar
-            title="Events"
-            subtitle={`${eventsTotal.toLocaleString()} events`}
-            secondaryActions={
-              <Button
-                className="toolbar-btn"
-                size="large"
-                icon={<LinkOutlined />}
-                onClick={() => setIsLinkInterviewsOpen(true)}
-              >
-                Link interviews
-              </Button>
-            }
-            secondaryMenuItems={[
-              {
-                key: 'link-interviews',
-                icon: <LinkOutlined />,
-                label: 'Link interviews',
-                onClick: () => setIsLinkInterviewsOpen(true),
-              },
-            ]}
-            onDeleteAll={() => setIsDeleteAllOpen(true)}
-            deleteAllDisabled={eventsUnlocked === 0}
-            onExport={handleExportWrapper}
-            exportFilename="events"
-            onImport={() => setShowImport(true)}
-            onPrimaryAction={handleAdd}
-            primaryActionLabel="Add Event"
-            primaryActionIcon={<PlusOutlined />}
-          />
 
           {contentView === 'list' && listLoadFailed ? (
             <PageState
@@ -428,7 +427,7 @@ const Events = () => {
             />
           )}
         </Space>
-      </div>
+      </PageShell>
 
       <LinkInterviewsModal
         open={isLinkInterviewsOpen}

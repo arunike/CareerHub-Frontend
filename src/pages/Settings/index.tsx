@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { SettingsSkeleton } from '../../components/feedback/SkeletonLoader';
 import EditableNumberInput from '../../components/inputs/EditableNumberInput';
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import ConfirmModal from '../../components/modals/ConfirmModal';
 import MobileSectionPicker from '../../components/layout/MobileSectionPicker';
 import SettingsSearch from '../../components/Settings/SettingsSearch';
@@ -238,7 +238,36 @@ const Settings: React.FC = () => {
   const categoryPendingDeletion = categories.find((category) => category.id === deletingCategoryId);
 
   return (
-    <div className="relative mx-auto max-w-3xl space-y-6">
+    <PageShell
+      width="reading"
+      title="Settings"
+      singleRowDesktop
+      extraActions={
+        <>
+          <SettingsSearch onJump={jumpToSection} />
+          <Button
+            size="large"
+            icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+            onClick={handleToggleSettingsLock}
+            className="toolbar-btn"
+          >
+            {isLocked ? 'Locked' : 'Lock'}
+          </Button>
+          {activeTab !== 'ai' && activeTab !== 'integrations' && activeTab !== 'security' && (
+            <Button
+              size="large"
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSave}
+              disabled={!isDirty || saving || isLocked}
+              className="toolbar-btn"
+            >
+              {saving ? 'Saving…' : 'Save Settings'}
+            </Button>
+          )}
+        </>
+      }
+    >
       {contextHolder}
       <ConfirmModal
         isOpen={deletingCategoryId !== null}
@@ -248,36 +277,6 @@ const Settings: React.FC = () => {
         type="danger"
         onConfirm={() => void confirmDeleteCategory()}
         onCancel={() => setDeletingCategoryId(null)}
-      />
-
-      <PageActionToolbar
-        title="Settings"
-        singleRowDesktop
-        extraActions={
-          <>
-            <SettingsSearch onJump={jumpToSection} />
-            <Button
-              size="large"
-              icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
-              onClick={handleToggleSettingsLock}
-              className="toolbar-btn"
-            >
-              {isLocked ? 'Locked' : 'Lock'}
-            </Button>
-            {activeTab !== 'ai' && activeTab !== 'integrations' && activeTab !== 'security' && (
-              <Button
-                size="large"
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={handleSave}
-                disabled={!isDirty || saving || isLocked}
-                className="toolbar-btn"
-              >
-                {saving ? 'Saving…' : 'Save Settings'}
-              </Button>
-            )}
-          </>
-        }
       />
 
       <MobileSectionPicker
@@ -434,7 +433,7 @@ const Settings: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };
 

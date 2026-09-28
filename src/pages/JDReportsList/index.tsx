@@ -66,7 +66,7 @@ const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-import PageActionToolbar from '../../components/actions/PageActionToolbar';
+import PageShell from '../../components/layout/PageShell';
 import { PlusOutlined } from '@ant-design/icons';
 
 const JDReportsListPage: React.FC = () => {
@@ -232,209 +232,203 @@ const JDReportsListPage: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: 0, width: '100%' }}>
-      <div className="mb-4">
-        <IntelligenceSectionPicker value="jd-reports" />
-      </div>
-      <div style={{ marginBottom: 24 }}>
-        <PageActionToolbar
-          title="Analysis Reports"
-          subtitle={`${reports.length} report${reports.length !== 1 ? 's' : ''} saved from your AI matching sessions.`}
-          onDeleteAll={reports.length > 0 ? handleClearAll : undefined}
-          deleteAllLabel="Clear All"
-          deleteAllConfirmTitle="Clear All Reports?"
-          deleteAllConfirmDescription="This will delete all unlocked reports. This cannot be undone."
-          onPrimaryAction={() => navigate('/experience')}
-          primaryActionLabel="New Match"
-          primaryActionIcon={<PlusOutlined />}
-        />
+    <PageShell
+      above={<IntelligenceSectionPicker value="jd-reports" />}
+      title="Analysis Reports"
+      subtitle={`${reports.length} report${reports.length !== 1 ? 's' : ''} saved from your AI matching sessions.`}
+      onDeleteAll={reports.length > 0 ? handleClearAll : undefined}
+      deleteAllLabel="Clear All"
+      deleteAllConfirmTitle="Clear All Reports?"
+      deleteAllConfirmDescription="This will delete all unlocked reports. This cannot be undone."
+      onPrimaryAction={() => navigate('/experience')}
+      primaryActionLabel="New Match"
+      primaryActionIcon={<PlusOutlined />}
+    >
+      <div className="flex flex-col gap-6">
+        {selectedIds.length > 0 && (
+          <div className="bg-white dark:bg-ink-900 p-4 rounded-xl border border-sky-100 dark:border-sky-500/20 shadow-sm">
+            <BulkActionHeader
+              selectedCount={selectedIds.length}
+              totalCount={reports.length}
+              onSelectAll={handleSelectAll}
+              onCancelSelection={() => setSelectedIds([])}
+              title="Management"
+              bulkActions={bulkActions}
+            />
+          </div>
+        )}
 
-        <div className="flex flex-col gap-6">
-          {selectedIds.length > 0 && (
-            <div className="bg-white dark:bg-ink-900 p-4 rounded-xl border border-sky-100 dark:border-sky-500/20 shadow-sm">
-              <BulkActionHeader
-                selectedCount={selectedIds.length}
-                totalCount={reports.length}
-                onSelectAll={handleSelectAll}
-                onCancelSelection={() => setSelectedIds([])}
-                title="Management"
-                bulkActions={bulkActions}
-              />
+        {!hasLoadedReports ? <PanelSkeleton rows={4} /> : null}
+
+        {/* Empty state */}
+        {hasLoadedReports && reports.length === 0 && (
+          <div className="enterprise-empty flex flex-col items-center justify-center gap-6 px-4 py-16 sm:py-24">
+            <div className="w-20 h-20 bg-sky-50 dark:bg-sky-500/10 rounded-full flex items-center justify-center">
+              <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
             </div>
-          )}
-
-          {!hasLoadedReports ? <PanelSkeleton rows={4} /> : null}
-
-          {/* Empty state */}
-          {hasLoadedReports && reports.length === 0 && (
-            <div className="enterprise-empty flex flex-col items-center justify-center gap-6 px-4 py-16 sm:py-24">
-              <div className="w-20 h-20 bg-sky-50 dark:bg-sky-500/10 rounded-full flex items-center justify-center">
-                <FileTextOutlined style={{ fontSize: 40, color: '#0ea5e9' }} />
-              </div>
-              <div className="text-center">
-                <h3 className="text-gray-900 dark:text-ink-50 font-bold text-xl m-0 mb-2">
-                  No reports yet
-                </h3>
-                <p className="text-gray-500 dark:text-ink-400 m-0 max-w-sm">
-                  Run the AI Resume Evaluator to generate your first technical gap analysis report.
-                </p>
-              </div>
-              <Button
-                type="primary"
-                size="large"
-                className="bg-sky-600 hover:!bg-sky-500 border-transparent shadow-lg shadow-sky-200"
-                onClick={() => navigate('/experience')}
-              >
-                Go to Experience Page
-              </Button>
+            <div className="text-center">
+              <h3 className="text-gray-900 dark:text-ink-50 font-bold text-xl m-0 mb-2">
+                No reports yet
+              </h3>
+              <p className="text-gray-500 dark:text-ink-400 m-0 max-w-sm">
+                Run the AI Resume Evaluator to generate your first technical gap analysis report.
+              </p>
             </div>
-          )}
+            <Button
+              type="primary"
+              size="large"
+              className="bg-sky-600 hover:!bg-sky-500 border-transparent shadow-lg shadow-sky-200"
+              onClick={() => navigate('/experience')}
+            >
+              Go to Experience Page
+            </Button>
+          </div>
+        )}
 
-          {/* Report Cards Grid */}
-          {hasLoadedReports && (
-            <div className="grid grid-cols-1 gap-6">
-              {reports.map((report) => {
-                const meta = getScoreMeta(report.score);
-                const isSelected = selectedIds.includes(report.id);
-                const date = new Date(report.savedAt).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
+        {/* Report Cards Grid */}
+        {hasLoadedReports && (
+          <div className="grid grid-cols-1 gap-6">
+            {reports.map((report) => {
+              const meta = getScoreMeta(report.score);
+              const isSelected = selectedIds.includes(report.id);
+              const date = new Date(report.savedAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              });
 
-                return (
-                  <article
-                    key={report.id}
-                    className={`group overflow-hidden rounded-2xl border bg-white dark:bg-ink-900 transition-all duration-300 ${
-                      isSelected
-                        ? 'border-sky-300 dark:border-sky-500/30 shadow-md ring-1 ring-sky-200 dark:ring-sky-500/25'
-                        : 'border-slate-200 dark:border-white/[0.08] shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 p-4 sm:gap-5 sm:p-6">
-                      <div className="flex min-h-11 min-w-8 shrink-0 items-start justify-center pt-2">
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => toggleSelect(report.id)}
-                          aria-label={`Select ${report.title || report.jdSnippet || 'untitled report'}`}
-                        />
-                      </div>
-                      <ScoreBadge score={report.score} />
+              return (
+                <article
+                  key={report.id}
+                  className={`group overflow-hidden rounded-2xl border bg-white dark:bg-ink-900 transition-all duration-300 ${
+                    isSelected
+                      ? 'border-sky-300 dark:border-sky-500/30 shadow-md ring-1 ring-sky-200 dark:ring-sky-500/25'
+                      : 'border-slate-200 dark:border-white/[0.08] shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 p-4 sm:gap-5 sm:p-6">
+                    <div className="flex min-h-11 min-w-8 shrink-0 items-start justify-center pt-2">
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={() => toggleSelect(report.id)}
+                        aria-label={`Select ${report.title || report.jdSnippet || 'untitled report'}`}
+                      />
+                    </div>
+                    <ScoreBadge score={report.score} />
 
-                      <div className="flex-1 min-w-0">
-                        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
-                              style={{
-                                background: meta.bg,
-                                color: meta.text,
-                                border: `1px solid ${meta.border}`,
-                              }}
-                            >
-                              {meta.label} Match
-                            </span>
-                            {report.isLocked && (
-                              <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-500/20">
-                                <LockOutlined className="text-[10px]" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">
-                                  Locked
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-[11px] font-medium text-gray-400 dark:text-ink-500 uppercase tracking-wider">
-                              {date}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="group/title mb-4 flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/jd-report/${report.id}`)}
-                            className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-ink-50 hover:text-blue-600"
-                          >
-                            <span className="line-clamp-2">
-                              {report.title || report.jdSnippet || 'Untitled Match'}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingReport({
-                                id: report.id,
-                                title: report.title || report.jdSnippet || '',
-                              });
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                            style={{
+                              background: meta.bg,
+                              color: meta.text,
+                              border: `1px solid ${meta.border}`,
                             }}
-                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-ink-500 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/title:opacity-100"
-                            aria-label="Rename report"
                           >
-                            <EditOutlined className="text-sm" />
-                          </button>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5">
-                          {report.matched_skills?.slice(0, 6).map((s, i) => (
-                            <span
-                              key={i}
-                              className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20 font-semibold"
-                            >
-                              {reportSkillName(s)}
-                            </span>
-                          ))}
-                          {(report.matched_skills?.length ?? 0) > 6 && (
-                            <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 border border-gray-100 dark:border-white/[0.07] font-medium">
-                              +{report.matched_skills.length - 6} more
-                            </span>
+                            {meta.label} Match
+                          </span>
+                          {report.isLocked && (
+                            <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-500/20">
+                              <LockOutlined className="text-[10px]" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">
+                                Locked
+                              </span>
+                            </div>
                           )}
                         </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-[11px] font-medium text-gray-400 dark:text-ink-500 uppercase tracking-wider">
+                            {date}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Card Footer */}
-                    <div
-                      className={`flex flex-col gap-2 border-t px-4 py-2 transition-colors duration-300 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-3.5 ${
-                        isSelected
-                          ? 'bg-sky-50/40 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20'
-                          : 'bg-gray-50/60 dark:bg-ink-900/60 border-gray-50 dark:border-white/[0.07]'
-                      }`}
-                    >
-                      <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold text-gray-500 dark:text-ink-400 sm:flex sm:items-center sm:gap-4 sm:text-xs sm:font-bold sm:uppercase sm:tracking-widest sm:text-gray-400">
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{' '}
-                          {report.matched_skills?.length ?? 0} strengths
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />{' '}
-                          {report.missing_skills?.length ?? 0} gaps
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />{' '}
-                          {report.tailored_bullets?.length ?? 0} rewrites
-                        </span>
+                      <div className="group/title mb-4 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/jd-report/${report.id}`)}
+                          className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-ink-50 hover:text-blue-600"
+                        >
+                          <span className="line-clamp-2">
+                            {report.title || report.jdSnippet || 'Untitled Match'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingReport({
+                              id: report.id,
+                              title: report.title || report.jdSnippet || '',
+                            });
+                          }}
+                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-ink-500 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/title:opacity-100"
+                          aria-label="Rename report"
+                        >
+                          <EditOutlined className="text-sm" />
+                        </button>
                       </div>
-                      <div className="flex justify-end">
-                        <RowActions
-                          isLocked={report.isLocked}
-                          onToggleLock={() => handleToggleLock(report.id)}
-                          onView={() => navigate(`/jd-report/${report.id}`)}
-                          onDelete={() => setDeletingId(report.id)}
-                          disableDelete={report.isLocked}
-                          deleteButtonTooltip={report.isLocked ? 'Unlock to delete' : undefined}
-                          confirmDelete={false}
-                        />
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {report.matched_skills?.slice(0, 6).map((s, i) => (
+                          <span
+                            key={i}
+                            className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20 font-semibold"
+                          >
+                            {reportSkillName(s)}
+                          </span>
+                        ))}
+                        {(report.matched_skills?.length ?? 0) > 6 && (
+                          <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 border border-gray-100 dark:border-white/[0.07] font-medium">
+                            +{report.matched_skills.length - 6} more
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                  </div>
+
+                  {/* Card Footer */}
+                  <div
+                    className={`flex flex-col gap-2 border-t px-4 py-2 transition-colors duration-300 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-3.5 ${
+                      isSelected
+                        ? 'bg-sky-50/40 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20'
+                        : 'bg-gray-50/60 dark:bg-ink-900/60 border-gray-50 dark:border-white/[0.07]'
+                    }`}
+                  >
+                    <div className="grid grid-cols-3 gap-2 text-[11px] font-semibold text-gray-500 dark:text-ink-400 sm:flex sm:items-center sm:gap-4 sm:text-xs sm:font-bold sm:uppercase sm:tracking-widest sm:text-gray-400">
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{' '}
+                        {report.matched_skills?.length ?? 0} strengths
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />{' '}
+                        {report.missing_skills?.length ?? 0} gaps
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />{' '}
+                        {report.tailored_bullets?.length ?? 0} rewrites
+                      </span>
+                    </div>
+                    <div className="flex justify-end">
+                      <RowActions
+                        isLocked={report.isLocked}
+                        onToggleLock={() => handleToggleLock(report.id)}
+                        onView={() => navigate(`/jd-report/${report.id}`)}
+                        onDelete={() => setDeletingId(report.id)}
+                        disableDelete={report.isLocked}
+                        deleteButtonTooltip={report.isLocked ? 'Unlock to delete' : undefined}
+                        confirmDelete={false}
+                      />
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Delete confirm modal */}
@@ -477,7 +471,7 @@ const JDReportsListPage: React.FC = () => {
           />
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 };
 
