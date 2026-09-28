@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-// One canonical vocabulary, read rather than restated; a missing file throws instead of passing.
-const REFERENCE = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.claude', 'reference', 'substitutes.json');
+// Committed beside the rule: reaching outside the repo broke the build on every fresh clone.
+const REFERENCE = join(dirname(fileURLToPath(import.meta.url)), 'substitutes.json');
 const reference = JSON.parse(readFileSync(REFERENCE, 'utf8'));
 
 export const ALLOWED_FIGURES = new Set(
