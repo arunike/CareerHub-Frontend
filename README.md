@@ -461,7 +461,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 ### 🧪 Fixture Hygiene
 
 - **Fixtures name only the sanctioned substitutes** — `Google` and `Netflix` for full-time, `Stripe` and `Airbnb` for internships.
-- **`agents/no-real-data-in-placeholders`** fails `npm run build` on a money amount, an ISO date or an off-table figure inside any `placeholder`, reading the substitutes from `.claude/reference/substitutes.json` so the rule and the docs cannot drift.
+- **`agents/no-real-data-in-placeholders`** fails `npm run build` on a money amount, an ISO date or an off-table figure inside any `placeholder`, reading the substitutes from `eslint-rules/substitutes.json`, which is committed alongside the rule so a fresh clone can lint.
 - **An optional `.git/hooks/pre-commit`** greps staged lines against a list generated from the maintainer's own data by the backend's `export_leakcheck_values` command. The list lives outside every git repo and is never pushed; see the backend README.
 
 ### 🔐 Authentication & Security
