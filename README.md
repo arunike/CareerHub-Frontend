@@ -309,7 +309,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 > User-created entries are called **time off** throughout the UI; **holiday** now refers only to observed/federal holidays, which are fixed calendar facts rather than something you enter. The `/holidays` route, the `CustomHoliday` model, and the offer benefit field `Holiday Days` keep their existing names.
 
-- **Holidays** (`/holidays`): Observed holiday + time-off management; create/edit events and time off from the calendar; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Inauspicious Days") for organizing time off beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
+- **Holidays** (`/holidays`): Observed holiday + time-off management; create/edit events and time off from the calendar; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Company Holidays") for organizing time off beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
 - **⚡ Conflict Radar**: `NotificationBell` refreshes unresolved conflicts, upcoming events, and task deadlines through the standard API flow, which keeps the UI compatible with local dev, Docker, and Vercel deployments
 
 
