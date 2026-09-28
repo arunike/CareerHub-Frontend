@@ -32,7 +32,7 @@ The **Frontend** is a React-based single-page application that provides an intui
 - 🔄 **Google Sheets Sync**: Settings can connect Google for private read-only Sheets access, link a Google Sheet to Applications or Events, auto-map columns from sheet headers, review detected application imports, resolve possible duplicates, inspect last-run change history, configure the daily sync time/timezone, and run imports on demand while cron keeps enabled syncs current
 - 🧭 **One navigation source**: the desktop sidebar, the mobile toolbar, the settings picker and the browser tab title all derive from `NAV_REGISTRY`.
 - 🏠 **Overview**: the signed-in landing page at `/overview`, with `/` redirecting to it. Two views behind one segmented switch, held in the URL as `?view=week` so a reload or a shared link lands where you left it:
-  - **Today is the action layer** and carries no metrics at all — a hero for the next event with a jump into its application, **Needs you today** (anything landing today plus tasks due or overdue), **In interview rounds** (every live conversation, longest untouched first, tagged with its configured stage), what is coming up, offers with a deadline inside a week, **Decision reviews due** (a 30- or 90-day look-back on a past offer decision that has come around), and the remaining open tasks.
+  - **Today is the action layer** — a hero for the next event with a jump into its application, a four-cell strip (still open, in rounds, offers open, gone quiet) because on a day with nothing booked the page was three rows tall, **Needs you today** (anything landing today plus tasks due or overdue), **Worth a nudge** (a reply that has gone quiet between 10 days and 3 weeks, the only card that asks for an action), **In play** (conversations that moved inside the last 10 days), what is coming up, offers with a deadline inside a week, **Decision reviews due** (a 30- or 90-day look-back on a past offer decision that has come around), the remaining open tasks, and **Where things stand** (a count per live stage). The quiet pile has no section at all: the strip's **Gone quiet** cell is the button that opens it.
   - **This week is the measurement layer** — a written one-line verdict, then two labelled stat strips (*This week*: sent, moved on, response rate, to chase; *Where things stand*: in play, interviewing, live offers, gone cold), with cards for applications gone quiet for 10+ days, what you sent, what moved, a merged seven-day view of events and offer deadlines, the live pipeline by stage, and the latest pay change
   - **Latest pay change is masked on load** behind an eye toggle, and **Live pipeline collapses**, because a salary and a 100-row stage breakdown are the two things you might not want filling the screen
   - Every row links straight to the record it came from, and a card with nothing in it is not rendered at all rather than shown as an empty shell. Every rule tolerates the shapes the API actually returns — a null date, a missing status, a `raise_history` that is not a list — because a single null crashed the whole view on the first build
@@ -296,6 +296,36 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **A commute is costed on what the car actually runs on.** A `Runs on` selector switches the fuel inputs between `mpg` + `$/gal` and `mi/kWh` + `$/kWh`, and an electric option can be marked **free at the office**, which takes the energy cost to zero while parking and tolls still count.
 - **Interview-round rows say when, not when-touched.** Each row reads `Interview 1 Oct · Heard 1 Jul` — the next linked event and the date the current round was recorded (`current_stage_on`, the timeline entry matching the application's status).
 - **A hidden-row count is a button, not a caption.** `SummaryCard` takes `previewCount` and reveals the rest in place; the rounds card no longer ends on a dead `15 more in an interview round`.
+- **Every open application appears in exactly one card.** Today used to run three lists off the same
+  measurement — `stalledRounds`, `needsFollowUp` and the interviewing filter all read
+  `current_stage_on` — so a role that had been interviewing and silent for months was printed three
+  times under three names, which is what made the page unreadable at 19 + 20 + 20 rows.
+  `utils/Overview/todayBuckets.ts` now assigns each open application one bucket (`moving`, `nudge`,
+  `stale`, `cold`) and a test asserts the buckets partition the set. Running long survives as a row
+  annotation rather than a card, because as a card it restated the whole list.
+- **Three weeks of silence is demoted, not surfaced.** `STALE_AFTER_DAYS = 21` keeps those rows off
+  the page entirely: a `Stat` may carry a `panel`, and the strip's **Gone quiet** cell opens the list
+  as a popover on a desktop and a bottom sheet on a phone — the same split `TimeOffTracker` uses. It
+  went from a full card, to a one-line strip, to no section at all, because the count was already on
+  the page and a second element restated it.
+- **A Django route is case-sensitive, so an uppercase path 404s and the page blames the network.**
+  `getContacts` called `/career/Contacts/` while the router registers `contacts`, so the whole
+  Contacts page rendered "Contacts are unavailable" — the data was fine and the URL was wrong.
+  Unauthenticated probing tells the two apart without logging in: a real route answers 401 and a
+  missing one answers 404. `npm run lint:api` runs inside `npm run quality` and fails on any
+  uppercase segment in an `api.get/post/patch/put/delete` path.
+- **`components/layout/PageShell.tsx` owns page chrome, and a check enforces it.** Every page used
+  to pick its own outer wrapper — `space-y-6`, `space-y-5`, `mb-6`, `mb-4`, `p-0`, `padding: 0` —
+  and three of them capped their own width on top of the `max-w-[1560px]` the layout already
+  applies, so Overview sat 108px narrower per side than Availability and its heading was 26px
+  against everyone else's 38px. `PageShell` renders the header through `PageActionToolbar`, owns the
+  vertical rhythm, and takes `width="reading"` for the one deliberate exception plus `above` for a
+  section picker that belongs over the title. `npm run lint:pages` runs inside `npm run quality` and
+  fails when a page renders `PageActionToolbar` directly or caps its own width; the reading-width
+  list must match exactly, so a new offender cannot hide by being added to it.
+- **`components/Overview/SummaryRowList.tsx` owns the row markup.** `SummaryCard` renders it and so
+  does the Gone quiet panel, so a linked row looks the same in a card and inside a popover; copying
+  the twenty lines of `<li><Link>` into the second caller is how one of them ends up behind.
 - **A stage's colour is the same everywhere it appears.** The Overview's interview-round pills drew their own blue while the applications table used the stage's configured `tone`, so `R1` was two different colours on two screens; both now render `StatusBadge`, so the full stage name and colour match the applications table.
 - **Clicking the calendar opens the editor.** Events and time off both go straight to their form; the read-only detail card stays for the list and deep links.
 - **A multi-day entry can be edited whole or one day at a time.** The editor offers `All N days` alongside every date in the run, so picking the wrong day on the grid is a click away, not a reopen.
