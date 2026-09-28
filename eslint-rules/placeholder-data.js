@@ -1,10 +1,21 @@
 // Enforces the AGENTS.md rule that placeholders carry substitutes, never real data.
 
-// Safe by construction: every figure here is published in AGENTS.md or a generic round teaching number.
-export const ALLOWED_FIGURES = new Set([
-  '1000', '1500', '2500', '3000', '5000', '10000', '20000',
-  '24750', '50000', '165000', '181500', '200000', '336000',
-]);
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+// One canonical vocabulary, read rather than restated; a missing file throws instead of passing.
+const REFERENCE = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.claude', 'reference', 'substitutes.json');
+const reference = JSON.parse(readFileSync(REFERENCE, 'utf8'));
+
+export const ALLOWED_FIGURES = new Set(
+  [
+    ...Object.values(reference.figures).flat(),
+    ...Object.values(reference.dates),
+  ]
+    .filter((value) => typeof value === 'number')
+    .map(String)
+);
 
 // Already written down in the committed tooltip guard, so naming them again reveals nothing new.
 const BRANDS =
