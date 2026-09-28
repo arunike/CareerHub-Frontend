@@ -225,7 +225,7 @@ const EditOfferModal = ({
           </div>
         }
         onClose={requestClose}
-        maxWidthClass="max-w-6xl"
+        width={1152}
         bodyClassName="flex-1 min-h-0 overflow-y-auto bg-slate-50 dark:bg-ink-900"
         headerClassName="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 sm:px-6 sm:py-4"
         titleClassName="min-w-0 flex-1 pr-4"

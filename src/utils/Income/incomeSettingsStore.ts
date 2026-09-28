@@ -79,6 +79,7 @@ export const fromPayload = (payload: IncomeYearPayload): Partial<IncomeSettings>
     hsaPerPeriod: num(payload.hsa_per_period),
     fsaPerPeriod: num(payload.fsa_per_period),
     postTaxPerPeriod: num(payload.post_tax_deductions_per_period),
+    imputedPerPeriod: num(payload.imputed_income_per_period),
     hsaFamilyCoverage: Boolean(payload.hsa_family_coverage),
     age50Plus: Boolean(payload.age_50_plus),
     deferralBase:

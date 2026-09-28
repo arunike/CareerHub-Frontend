@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Form } from 'antd';
-import Modal from '../../components/modals/MobileModal';
 import dayjs from 'dayjs';
+import { useEventSave } from '../Events/useEventSave';
 import type { MessageInstance } from 'antd/es/message/interface';
 import {
   createCategory,
-  createEvent,
   createHoliday,
   deleteEvent,
   deleteHoliday,
@@ -15,13 +14,11 @@ import {
   getEvents,
   getFederalHolidays,
   getHolidays,
-  setRecurrence,
   updateEvent,
   updateHoliday,
-  updateRecurringSeries,
 } from '../../api';
 import { useSpanScope } from '../Events/useSpanScope';
-import type { SpanEditScope } from '../../components/CalendarView/SpanDateFields';
+import type {} from '../../components/CalendarView/SpanDateFields';
 import type { Event, EventCategory, Holiday, HolidayTab, RecurrenceRule } from '../../types';
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
 import type { CalendarHolidayFormValues } from '../../components/CalendarView/CalendarHolidayModal';
@@ -33,11 +30,7 @@ import {
 } from '../../components/CalendarView/confirmCalendarMove';
 import { buildEventMovePatch } from '../../components/CalendarView/utils';
 import { normalizeTimeZone } from '../../lib/timezones';
-import {
-  getErrorMessage,
-  type ApiError,
-  type EventFormValues,
-} from '../../utils/Availability/availabilityFormTypes';
+import { getErrorMessage } from '../../utils/Availability/availabilityFormTypes';
 import {
   buildHolidayRangePayloads,
   holidayGroupMembers,
@@ -239,67 +232,17 @@ export const useAvailabilityCalendar = ({
     }
   };
 
-  const handleEventFormFinish = async (values: EventFormValues) => {
-    const payload = {
-      ...values,
-      date: values.date.format('YYYY-MM-DD'),
-      // Cleared when the toggle is off, so unticking Multi-day really shortens the event.
-      end_date:
-        values.is_multi_day && values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
-      // An all-day event still needs times stored, so it spans the whole day.
-      start_time: values.is_all_day ? '00:00:00' : values.start_time.format('HH:mm:ss'),
-      end_time: values.is_all_day ? '23:59:00' : values.end_time.format('HH:mm:ss'),
-      is_all_day: Boolean(values.is_all_day),
-      is_recurring: !!recurrenceRule,
-      recurrence_rule: recurrenceRule,
-      reminder_minutes: 15,
-    };
-
-    if (await saveWithScope({ scope: values.scope as SpanEditScope | undefined, payload })) return;
-
-    const saveEvent = async (force = false) => {
-      if (!editingEventId) {
-        const response = await createEvent(payload, force ? { force: true } : undefined);
-        if (recurrenceRule && response.data.id) {
-          await setRecurrence(response.data.id, recurrenceRule);
-        }
-        return;
-      }
-
-      const existing = events.find((event) => event.id === editingEventId);
-      if (existing?.is_virtual && existing.parent_event) {
-        await updateRecurringSeries(existing.parent_event, payload);
-        if (recurrenceRule) await setRecurrence(existing.parent_event, recurrenceRule);
-        return;
-      }
-
-      await updateEvent(editingEventId, payload, force ? { force: true } : undefined);
-    };
-
-    try {
-      await saveEvent();
-      messageApi.success(editingEventId ? 'Event updated' : 'Event created');
+  const { submit: handleEventFormFinish } = useEventSave({
+    events,
+    editingId: editingEventId,
+    recurrenceRule,
+    messageApi,
+    onSaved: () => {
       setIsEventFormOpen(false);
-      await fetchCalendarData();
-    } catch (error: unknown) {
-      const apiError = error as ApiError;
-      if (apiError.response?.status === 400 && apiError.response?.data?.conflict) {
-        Modal.confirm({
-          title: 'Schedule Conflict',
-          content: 'Conflict detected. Force save?',
-          onOk: async () => {
-            await saveEvent(true);
-            messageApi.success(editingEventId ? 'Event updated' : 'Event created');
-            setIsEventFormOpen(false);
-            fetchCalendarData();
-          },
-        });
-        return;
-      }
-
-      messageApi.error('Failed to save event');
-    }
-  };
+      void fetchCalendarData();
+    },
+    saveWithScope,
+  });
 
   const handleHolidayFormFinish = async (values: CalendarHolidayFormValues) => {
     try {

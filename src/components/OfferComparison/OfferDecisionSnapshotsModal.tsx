@@ -140,7 +140,7 @@ const OfferDecisionSnapshotsModal: React.FC<Props> = ({
       isOpen={open}
       title="Decision Snapshots"
       onClose={onClose}
-      maxWidthClass="max-w-[860px]"
+      width={860}
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
     >
       {contextHolder}

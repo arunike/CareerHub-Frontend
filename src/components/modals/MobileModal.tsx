@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef, type MouseEvent as ReactMouseEvent } from 'react';
-import { Button, Modal as AntModal, Drawer as AntDrawer, type ModalProps } from 'antd';
-import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
+import { type MouseEvent as ReactMouseEvent } from 'react';
+import { Button, Modal as AntModal, type ModalProps } from 'antd';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import MobileSheet from './MobileSheet';
 
 interface MobileModalProps extends ModalProps {
   mobileExpandable?: boolean;
@@ -15,40 +16,7 @@ const MobileModalBase = ({
   ...props
 }: MobileModalProps) => {
   const isOpen = Boolean(props.open);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isContentShort, setIsContentShort] = useState(true);
-  const bodyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Measure content height on open or children change
-  useEffect(() => {
-    if (!isOpen || !isMobile) return;
-
-    const timer = setTimeout(() => {
-      if (bodyRef.current) {
-        // Fullscreen is only worth offering once the body outgrows the sheet's 88dvh cap.
-        const height = bodyRef.current.scrollHeight;
-        setIsContentShort(height <= window.innerHeight * 0.88 - 96);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [isOpen, isMobile, props.children]);
-
-  // Reset expansion state when drawer closes
-  useEffect(() => {
-    if (!isOpen) {
-      setIsExpanded(false);
-    }
-  }, [isOpen]);
-
+  const isMobile = useIsMobile();
   if (!isMobile) {
     return (
       <AntModal
@@ -60,33 +28,10 @@ const MobileModalBase = ({
     );
   }
 
-  // Mobile viewport: Render a premium native bottom Drawer
+  // Mobile viewport: a native bottom sheet, shared with ModalShell.
   const handleClose = () => {
     props.onCancel?.({} as ReactMouseEvent<HTMLButtonElement, MouseEvent>);
   };
-
-  const drawerTitle = (
-    <div className="careerhub-mobile-drawer-title-wrapper">
-      <div className="careerhub-mobile-drawer-handle-bar">
-        <span />
-      </div>
-      <div className="careerhub-mobile-drawer-header-row">
-        <div className="careerhub-mobile-drawer-title-text">{props.title as React.ReactNode}</div>
-        {mobileExpandable && !isContentShort && (
-          <div className="careerhub-mobile-drawer-actions">
-            <button
-              type="button"
-              className="careerhub-mobile-drawer-action-btn"
-              onClick={() => setIsExpanded((curr) => !curr)}
-              aria-label={isExpanded ? 'Exit fullscreen' : 'Expand to fullscreen'}
-            >
-              {isExpanded ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   // antd defaults a footer when none is given; Drawer does not, so pass it explicitly.
   const drawerFooter =
@@ -117,25 +62,21 @@ const MobileModalBase = ({
     );
 
   return (
-    <AntDrawer
-      open={isOpen}
+    <MobileSheet
+      isOpen={isOpen}
       onClose={handleClose}
-      title={drawerTitle}
+      title={props.title as React.ReactNode}
       footer={drawerFooter}
-      destroyOnClose={props.destroyOnClose}
-      placement="bottom"
-      height={isExpanded ? '100dvh' : undefined}
-      rootClassName={`careerhub-mobile-drawer ${
-        isExpanded ? 'careerhub-mobile-drawer-expanded' : ''
-      }`.trim()}
       className={props.className}
+      mobileExpandable={mobileExpandable}
+      destroyOnClose={props.destroyOnClose}
       closable={props.closable ?? true}
       keyboard={props.keyboard}
       mask={props.mask ?? true}
       maskClosable={props.maskClosable ?? false}
     >
-      <div ref={bodyRef}>{props.children}</div>
-    </AntDrawer>
+      {props.children}
+    </MobileSheet>
   );
 };
 

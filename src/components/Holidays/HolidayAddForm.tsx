@@ -71,7 +71,7 @@ const HolidayAddForm = ({ form, handleAdd, isRangeMode, setIsRangeMode }: Props)
         </Col>
         <Col span={24} md={8}>
           <Form.Item name="name" label="Name">
-            <Input placeholder="Winter Break" />
+            <Input placeholder="Company Offsite" />
           </Form.Item>
         </Col>
         <Col span={24} md={8}>

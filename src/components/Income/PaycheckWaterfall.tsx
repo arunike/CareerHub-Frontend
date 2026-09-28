@@ -122,6 +122,14 @@ const sectionsFor = (row: EffectiveRow): Section[] => {
   if (row.roth401k > 0) postTax.push({ label: 'Roth 401(k)', amount: row.roth401k });
   const otherPostTax = row.postTax - row.roth401k;
   if (otherPostTax > 0) postTax.push({ label: 'Post-tax deductions', amount: otherPostTax });
+  // Taxed inside gross, then taken straight back out, so the figures on screen still add up.
+  if (row.imputed > 0) {
+    postTax.push({
+      label: 'Imputed income',
+      amount: row.imputed,
+      hint: 'Employer-paid cover, taxed above and removed here; it never reaches your take-home.',
+    });
+  }
 
   return [
     { title: 'Pre-tax deductions', tone: 'bg-sky-500', lines: preTax },
@@ -370,6 +378,16 @@ export const PaycheckWaterfall = ({
             </span>
             <span className="tabular-nums text-xs text-slate-500 dark:text-ink-400">
               {moneyCents(row.taxableAllowance)}
+            </span>
+          </div>
+        ) : null}
+        {row.imputed > 0 ? (
+          <div className="flex items-baseline justify-between gap-3 pb-2 pl-3">
+            <span className="text-xs text-slate-500 dark:text-ink-400">
+              including imputed income
+            </span>
+            <span className="tabular-nums text-xs text-slate-500 dark:text-ink-400">
+              {moneyCents(row.imputed)}
             </span>
           </div>
         ) : null}

@@ -1,4 +1,5 @@
 import type { Event } from '../types';
+import { localDay as parseDay } from './localDay';
 
 export interface ReminderSettings {
   startDaysBefore: number;
@@ -38,7 +39,6 @@ const toDay = (value: Date) =>
   `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 
 // Local midnight: `new Date('2026-08-10')` is UTC and lands a day early west of GMT.
-const parseDay = (value: string) => new Date(`${value}T00:00:00`);
 
 export const daysUntil = (eventDate: string, today: Date) =>
   Math.round((parseDay(eventDate).getTime() - parseDay(toDay(today)).getTime()) / 86400000);

@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { money, moneyCents, signedMoney } from '../../utils/Income/format';
+import { money, moneyCents, moneyWhole, signedMoney } from '../../utils/Income/format';
 
 // Wide enough to read as a hidden figure without collapsing the column it sits in.
 const MASK = '••••••';
@@ -8,14 +8,16 @@ interface AmountFormatters {
   hidden: boolean;
   money: (value: number) => string;
   moneyCents: (value: number) => string;
+  moneyWhole: (value: number) => string;
   signedMoney: (value: number) => string;
 }
 
-const PLAIN: AmountFormatters = { hidden: false, money, moneyCents, signedMoney };
+const PLAIN: AmountFormatters = { hidden: false, money, moneyCents, moneyWhole, signedMoney };
 const MASKED: AmountFormatters = {
   hidden: true,
   money: () => MASK,
   moneyCents: () => MASK,
+  moneyWhole: () => MASK,
   signedMoney: () => MASK,
 };
 

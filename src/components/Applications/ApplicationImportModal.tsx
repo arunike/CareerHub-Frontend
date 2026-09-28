@@ -57,7 +57,7 @@ const ApplicationImportModal = ({
     isOpen={isImportModalOpen}
     title="Import Applications"
     onClose={closeImportModal}
-    maxWidthClass="max-w-[1100px]"
+    width={1100}
     bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
     footer={
       applicationImportPreview ? (

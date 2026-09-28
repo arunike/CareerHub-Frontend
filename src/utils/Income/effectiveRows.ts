@@ -29,6 +29,7 @@ export interface EffectiveRow {
   gross: number;
   supplementalGross: number;
   taxableAllowance: number;
+  imputed: number;
   taxFreeAllowance: number;
   section125: number;
   hsa: number;
@@ -166,6 +167,7 @@ export const toEffectiveRow = (row: PeriodRow, actual?: PeriodActual): Effective
     gross,
     supplementalGross: row.supplementalGross,
     taxableAllowance: row.taxableAllowance,
+    imputed: row.imputed,
     taxFreeAllowance: row.taxFreeAllowance,
     section125: row.section125,
     hsa: row.hsa,

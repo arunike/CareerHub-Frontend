@@ -2,6 +2,7 @@ import { Button } from 'antd';
 import type { LinkedDrift } from '../../utils/Income/linkedDrift';
 import type { GrossPinDrift } from '../../utils/Income/grossPinDrift';
 import { formatPayDateShort } from '../../utils/Income/paySchedule';
+import { useMoney } from './amountPrivacy';
 
 type Props = {
   drift: LinkedDrift[];
@@ -10,8 +11,6 @@ type Props = {
   onDismiss: () => void;
   onSelectPaycheck?: (periodIndex: number) => void;
 };
-
-const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
 const uniform = (values: number[]) =>
   values.length > 0 && values.every((value) => value === values[0]) ? values[0] : null;
@@ -30,6 +29,8 @@ const CHIP_LINK = `${CHIP_BASE} min-h-11 cursor-pointer px-3 py-0.5 transition-c
 
 // Pulses rather than flashes: a hard blink is a seizure risk and reads as an error state.
 const LinkedDriftPrompt = ({ drift, grossPins, onAccept, onDismiss, onSelectPaycheck }: Props) => {
+  // Through the provider, or hide-amounts leaves these figures readable on the busiest page.
+  const { moneyWhole: money } = useMoney();
   if (drift.length === 0 && grossPins.length === 0) return null;
   const pinnedRate = uniform(grossPins.map((entry) => entry.pinned));
   const scheduledRate = uniform(grossPins.map((entry) => entry.scheduled));

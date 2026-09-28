@@ -183,6 +183,7 @@ export interface IncomeYearPayload {
   hsa_per_period?: number | string;
   fsa_per_period?: number | string;
   post_tax_deductions_per_period?: number | string;
+  imputed_income_per_period?: number | string;
   hsa_family_coverage?: boolean;
   age_50_plus?: boolean;
   include_bonus?: boolean;

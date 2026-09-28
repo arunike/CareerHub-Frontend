@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { EyeInvisibleOutlined, EyeOutlined, RiseOutlined } from '@ant-design/icons';
 import type { CommandRaise } from '../../utils/Overview/overview';
-
-const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
+import { moneyWhole as money } from '../../utils/Income/format';
 
 const PayChangeCard = ({ raise }: { raise: CommandRaise }) => {
   // Masked on load: a salary is the one number on this page you might not want over your shoulder.

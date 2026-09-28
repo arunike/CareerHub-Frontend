@@ -125,7 +125,7 @@ const EventEditorModal = ({
       isOpen={open}
       title={editingId ? 'Edit Event' : 'Add Event'}
       onClose={onCancel}
-      maxWidthClass="max-w-xl"
+      width={576}
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
       footer={
         <>

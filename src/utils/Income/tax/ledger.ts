@@ -38,11 +38,13 @@ export const DEFERRAL_BASE_HINTS: Record<DeferralBase, string> = {
 // What comes off the gross to reach the base, per paycheck.
 const excludedFromDeferral = (
   base: DeferralBase,
-  parts: { taxableAllowance: number; supplementalGross: number }
+  parts: { taxableAllowance: number; supplementalGross: number; imputed: number }
 ) => {
-  if (base === 'NO_ALLOWANCES') return parts.taxableAllowance;
-  if (base === 'SALARY_ONLY') return parts.taxableAllowance + parts.supplementalGross;
-  return 0;
+  // Imputed income comes off every base: a plan defers on pay, and this is pay you never receive.
+  if (base === 'NO_ALLOWANCES') return parts.taxableAllowance + parts.imputed;
+  if (base === 'SALARY_ONLY')
+    return parts.taxableAllowance + parts.supplementalGross + parts.imputed;
+  return parts.imputed;
 };
 
 export interface Elections {
@@ -58,6 +60,8 @@ export interface Elections {
   taxableAllowancePerPeriod: number;
   // An allowance paid without tax, e.g. a qualified expense reimbursement.
   taxFreeAllowancePerPeriod: number;
+  // Employer-paid cover the IRS taxes as income: it raises taxable gross and is taken back out.
+  imputedPerPeriod: number;
   postTaxPerPeriod: number;
   hsaFamilyCoverage: boolean;
   age50Plus: boolean;
@@ -74,6 +78,7 @@ export const NO_ELECTIONS: Elections = {
   pretaxIncomeOnlyPerPeriod: 0,
   taxableAllowancePerPeriod: 0,
   taxFreeAllowancePerPeriod: 0,
+  imputedPerPeriod: 0,
   postTaxPerPeriod: 0,
   hsaFamilyCoverage: false,
   age50Plus: false,
@@ -105,6 +110,7 @@ export interface PeriodOverride {
   section125PerPeriod?: number;
   pretaxIncomeOnlyPerPeriod?: number;
   postTaxPerPeriod?: number;
+  imputedPerPeriod?: number;
   hsaPerPeriod?: number;
   pretax401kPercent?: number;
   roth401kPercent?: number;
@@ -149,6 +155,7 @@ export interface PeriodRow {
   gross: number;
   taxableAllowance: number;
   taxFreeAllowance: number;
+  imputed: number;
   section125: number;
   fsa: number;
   hsa: number;
@@ -187,6 +194,7 @@ export interface LedgerTotals {
   gross: number;
   taxableAllowance: number;
   taxFreeAllowance: number;
+  imputed: number;
   section125: number;
   hsa: number;
   pretax401k: number;
@@ -287,7 +295,9 @@ export const buildLedger = (input: LedgerInput): Ledger => {
     const regularGross =
       recurringForPay * (override?.regularGross ?? scheduledSalary) + taxableAllowance;
     const supplementalGross = sumBy(events, (event) => event.amount);
-    const gross = regularGross + supplementalGross;
+    // Taxed but never received, so it joins gross here and comes back out of net below.
+    const imputed = recurring * (override?.imputedPerPeriod ?? elections.imputedPerPeriod);
+    const gross = regularGross + supplementalGross + imputed;
 
     const fsa = recurring * Math.min(elections.fsaPerPeriod, Math.max(0, limits.fsa - ytdFsa));
     const section125 =
@@ -305,6 +315,7 @@ export const buildLedger = (input: LedgerInput): Ledger => {
         excludedFromDeferral(elections.deferralBase, {
           taxableAllowance,
           supplementalGross,
+          imputed,
         })
     );
 
@@ -383,7 +394,8 @@ export const buildLedger = (input: LedgerInput): Ledger => {
       pretax401k -
       pretaxIncomeOnly -
       postTax -
-      taxTotal +
+      taxTotal -
+      imputed +
       taxFreeAllowance;
 
     const matchedOfPay = employer.matchTiers?.length
@@ -422,6 +434,7 @@ export const buildLedger = (input: LedgerInput): Ledger => {
       gross,
       taxableAllowance,
       taxFreeAllowance,
+      imputed,
       section125,
       fsa,
       hsa,
@@ -468,6 +481,7 @@ export const buildLedger = (input: LedgerInput): Ledger => {
 const emptyTotals = (): LedgerTotals => ({
   gross: 0,
   taxableAllowance: 0,
+  imputed: 0,
   taxFreeAllowance: 0,
   section125: 0,
   hsa: 0,
@@ -488,6 +502,7 @@ const emptyTotals = (): LedgerTotals => ({
 const totalsOf = (rows: PeriodRow[]): LedgerTotals => ({
   gross: sumBy(rows, (row) => row.gross),
   taxableAllowance: sumBy(rows, (row) => row.taxableAllowance),
+  imputed: sumBy(rows, (row) => row.imputed),
   taxFreeAllowance: sumBy(rows, (row) => row.taxFreeAllowance),
   section125: sumBy(rows, (row) => row.section125),
   hsa: sumBy(rows, (row) => row.hsa),

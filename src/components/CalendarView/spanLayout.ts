@@ -1,4 +1,5 @@
 import type { Event, Holiday } from '../../types';
+import { holidayRuns } from '../../utils/Holidays/holidayRuns';
 
 // Time off is stored a row per day, so a trip only becomes one bar once its days are grouped.
 interface HolidayGroup {
@@ -50,54 +51,28 @@ export const eventSpanCandidates = (events: Event[]): SpanCandidate[] =>
 
 // A group of one is left as a chip: a bar spanning a single cell only adds a border.
 export const holidayGroupCandidates = (holidays: Holiday[]): SpanCandidate[] => {
-  const byGroup = new Map<string, Holiday[]>();
-  for (const holiday of holidays) {
-    if (!holiday.group_id) continue;
-    const members = byGroup.get(holiday.group_id);
-    if (members) {
-      if (!members.some((seen) => seen.date === holiday.date)) members.push(holiday);
-    } else {
-      byGroup.set(holiday.group_id, [holiday]);
-    }
-  }
-
   const candidates: SpanCandidate[] = [];
-  for (const [groupId, members] of byGroup) {
-    const sorted = [...members].sort((a, b) => a.date.localeCompare(b.date));
-    // A day taken out of the middle of a trip splits it, so runs are cut where the dates skip.
-    let run: Holiday[] = [];
-    const flush = () => {
-      if (run.length > 1) {
-        candidates.push({
-          id: `holiday-${groupId}-${run[0].date}`,
-          start: run[0].date,
-          end: run[run.length - 1].date,
-          subject: {
-            kind: 'holiday',
-            group: {
-              id: groupId,
-              start: run[0].date,
-              end: run[run.length - 1].date,
-              days: run.length,
-              holiday: run[0],
-              dates: run.map((member) => member.date),
-            },
-          },
-        });
-      }
-      run = [];
-    };
-    for (const member of sorted) {
-      const previous = run[run.length - 1];
-      const adjacent =
-        previous &&
-        new Date(`${member.date}T00:00:00`).getTime() -
-          new Date(`${previous.date}T00:00:00`).getTime() ===
-          86400000;
-      if (previous && !adjacent) flush();
-      run.push(member);
-    }
-    flush();
+  for (const { groupId, members } of holidayRuns(holidays, { splitOnGap: true })) {
+    // A group of one is left as a chip: a bar spanning a single cell only adds a border.
+    if (members.length < 2) continue;
+    const start = members[0].date;
+    const end = members[members.length - 1].date;
+    candidates.push({
+      id: `holiday-${groupId}-${start}`,
+      start,
+      end,
+      subject: {
+        kind: 'holiday',
+        group: {
+          id: groupId,
+          start,
+          end,
+          days: members.length,
+          holiday: members[0],
+          dates: members.map((member) => member.date),
+        },
+      },
+    });
   }
   return candidates;
 };

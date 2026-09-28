@@ -14,6 +14,7 @@ const row = (payDate: string | null, gross: number): EffectiveRow =>
     gross,
     supplementalGross: 0,
     taxableAllowance: 0,
+    imputed: 0,
     taxFreeAllowance: 0,
     section125: 0,
     hsa: 0,

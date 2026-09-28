@@ -8,6 +8,7 @@ import type { Event, EventCategory, RecurrenceRule } from '../../types';
 import { normalizeTimeZone } from '../../lib/timezones';
 import { useSpanScope } from './useSpanScope';
 import type { SpanEditScope } from '../../components/CalendarView/SpanDateFields';
+import { eventPayload } from '../../utils/Events/eventFormTypes';
 import type { ApiError, EventFormValues } from '../../utils/Events/eventFormTypes';
 
 export const useEventForm = ({
@@ -160,20 +161,7 @@ export const useEventForm = ({
   };
 
   const onFinish = async (values: EventFormValues) => {
-    const payload = {
-      ...values,
-      date: values.date.format('YYYY-MM-DD'),
-      // Cleared when the toggle is off, so unticking Multi-day really shortens the event.
-      end_date:
-        values.is_multi_day && values.end_date ? values.end_date.format('YYYY-MM-DD') : null,
-      // An all-day event still needs times stored, so it spans the whole day.
-      start_time: values.is_all_day ? '00:00:00' : values.start_time.format('HH:mm:ss'),
-      end_time: values.is_all_day ? '23:59:00' : values.end_time.format('HH:mm:ss'),
-      is_all_day: Boolean(values.is_all_day),
-      is_recurring: !!recurrenceRule,
-      recurrence_rule: recurrenceRule,
-      reminder_minutes: 15,
-    };
+    const payload = eventPayload(values, recurrenceRule);
 
     // The scope decides the save when a run is being edited; otherwise fall through as normal.
     if (await saveWithScope({ scope: values.scope as SpanEditScope | undefined, payload })) return;

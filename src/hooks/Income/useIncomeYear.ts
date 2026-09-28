@@ -88,6 +88,7 @@ const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings)
   hsa_per_period: settings.elections.hsaPerPeriod,
   fsa_per_period: settings.elections.fsaPerPeriod,
   post_tax_deductions_per_period: settings.elections.postTaxPerPeriod,
+  imputed_income_per_period: settings.elections.imputedPerPeriod,
   hsa_family_coverage: settings.elections.hsaFamilyCoverage,
   age_50_plus: settings.elections.age50Plus,
   deferral_base: settings.elections.deferralBase,

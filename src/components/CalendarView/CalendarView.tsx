@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { addDays, differenceInCalendarDays, format } from 'date-fns';
+import { localDay as parseCalendarDate } from '../../utils/localDay';
 
-// A plain yyyy-MM-dd parses as UTC midnight, which lands on the previous day west of GMT.
-const parseCalendarDate = (value: string) => new Date(`${value}T00:00:00`);
 // A safety rail on the day-expansion loop, not a product limit.
 const MAX_EVENT_SPAN_DAYS = 366;
 import { Button } from 'antd';
@@ -71,7 +70,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     urlMode && CALENDAR_VIEW_MODES.includes(urlMode) ? urlMode : 'month'
   );
   const [anchorDate, setAnchorDate] = useState(
-    urlOn && !Number.isNaN(Date.parse(`${urlOn}T00:00:00`)) ? new Date(`${urlOn}T00:00:00`) : today
+    urlOn && !Number.isNaN(parseCalendarDate(urlOn).getTime()) ? parseCalendarDate(urlOn) : today
   );
   const [selectedDate, setSelectedDate] = useState(today);
   const [pendingAddDate, setPendingAddDate] = useState<Date | null>(null);

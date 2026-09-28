@@ -46,7 +46,7 @@ const JobBoardImportModal = ({
     isOpen={isJobImportModalOpen}
     title="Import from Job URL"
     onClose={closeJobImportModal}
-    maxWidthClass="max-w-[760px]"
+    width={760}
     bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
     footer={
       <>

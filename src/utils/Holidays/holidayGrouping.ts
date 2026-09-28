@@ -1,17 +1,8 @@
 import type { Holiday } from '../../types';
 import dayjs from 'dayjs';
 
-export type EventFormValues = {
-  date: dayjs.Dayjs;
-  start_time: dayjs.Dayjs;
-  end_time: dayjs.Dayjs;
-  is_all_day?: boolean;
-  is_multi_day?: boolean;
-  end_date?: dayjs.Dayjs | null;
-  [key: string]: unknown;
-};
-
-export type ApiError = { response?: { status?: number; data?: { conflict?: boolean } } };
+// Re-exported, not redefined: one shape for the event form on every page.
+export type { ApiError, EventFormValues } from '../Events/eventFormTypes';
 
 export const createHolidayGroupId = () =>
   crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);

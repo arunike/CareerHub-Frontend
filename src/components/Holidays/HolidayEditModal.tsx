@@ -55,7 +55,7 @@ const HolidayEditModal = ({
           placeholder={
             editingItem?.isBulk && !editingItem?.allSameDesc
               ? 'Leave blank to keep original names...'
-              : 'Winter Break'
+              : 'Company Offsite'
           }
         />
       </Form.Item>

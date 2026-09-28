@@ -72,8 +72,8 @@ describe('bonusClockDate', () => {
   });
 
   it('falls back to the day you actually started', () => {
-    expect(bonusClockDate({ linked_experience: { start_date: '2026-03-02' } }, '2026-09-11')).toBe(
-      '2026-03-02'
+    expect(bonusClockDate({ linked_experience: { start_date: '2025-07-01' } }, '2026-09-11')).toBe(
+      '2025-07-01'
     );
   });
 

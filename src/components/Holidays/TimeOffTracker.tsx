@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { getExperiences, getOffers, updateOffer } from '../../api';
 import { getHolidayTabColor } from '../../utils/holidayTabColors';
 import { getPaletteColor } from '../../utils/colorPalette';
+import { holidayRuns } from '../../utils/Holidays/holidayRuns';
 import {
   coverageOfYear,
   daysOffInWindow,
@@ -12,6 +13,7 @@ import {
   yearsOfService,
 } from '../../utils/TimeOff/ptoBalance';
 import type { DayOff, PtoPolicy, RoleWindow } from '../../utils/TimeOff/ptoBalance';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const rangeLabel = (dates: string[]) => {
   const first = dayjs(dates[0]);
@@ -57,14 +59,7 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleId, setRoleId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     void (async () => {
@@ -149,25 +144,17 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
   // A trip is one line, not one line per day: its label and its range say everything.
   const rows = useMemo(() => {
     const counted = new Set(taken);
-    const groups = new Map<string, { label: string; dates: string[]; holiday: HolidayLike }>();
-    for (const holiday of holidays) {
-      if (!counted.has(holiday.date)) continue;
-      const key = holiday.group_id || String(holiday.id);
-      const existing = groups.get(key);
-      if (existing) existing.dates.push(holiday.date);
-      else
-        groups.set(key, {
-          label: holiday.description || 'Time off',
-          dates: [holiday.date],
-          holiday,
-        });
-    }
     const todayIso = dayjs().format('YYYY-MM-DD');
     return (
-      [...groups.values()]
-        .map((group) => {
-          const dates = [...group.dates].sort();
-          return { ...group, dates, upcoming: dates[dates.length - 1] >= todayIso };
+      holidayRuns(holidays.filter((holiday) => counted.has(holiday.date)))
+        .map(({ members }) => {
+          const dates = members.map((member) => member.date);
+          return {
+            label: members[0].description || 'Time off',
+            holiday: members[0],
+            dates,
+            upcoming: dates[dates.length - 1] >= todayIso,
+          };
         })
         // Upcoming first and soonest-first; what is already spent reads newest-first below it.
         .sort((a, b) =>

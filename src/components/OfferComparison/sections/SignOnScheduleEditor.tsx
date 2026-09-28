@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Popover } from 'antd';
 import UnitNumberInput from '../../inputs/UnitNumberInput';
 import { FIELD_HINT_CLASS, FIELD_LABEL_CLASS } from '../../inputs/formControls';
+import { moneyWhole as money } from '../../../utils/Income/format';
 
 const MAX_YEARS = 4;
 const DEFAULT_YEARS = 2;
-
-const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
 // Two rows by default; a sign-on split beyond year 2 is rare.
 const normalise = (schedule: number[], total: number) => {

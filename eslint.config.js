@@ -6,6 +6,7 @@ import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import commentStyle from './eslint-rules/comment-style.js';
+import placeholderData from './eslint-rules/placeholder-data.js';
 
 export default defineConfig([
   globalIgnores(['dist', 'node_modules', 'coverage']),
@@ -22,9 +23,10 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-    plugins: { agents: commentStyle },
+    plugins: { agents: { rules: { ...commentStyle.rules, ...placeholderData.rules } } },
     rules: {
       'agents/one-line-per-comment': 'error',
+      'agents/no-real-data-in-placeholders': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',

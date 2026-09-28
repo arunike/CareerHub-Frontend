@@ -125,7 +125,7 @@ const CalendarHolidayModal = ({
       isOpen={open}
       title={title}
       onClose={onCancel}
-      maxWidthClass="max-w-lg"
+      width={512}
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
       footer={
         <>

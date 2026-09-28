@@ -29,6 +29,7 @@ import {
   type DrivingDefaults,
   type EnergyType,
 } from '../../../utils/OfferComparison/commute';
+import { moneyWhole as money } from '../../../utils/Income/format';
 
 interface Props {
   options: CommuteOption[];
@@ -36,8 +37,6 @@ interface Props {
   officeDays: number;
   drivingDefaults?: Partial<DrivingDefaults> | null;
 }
-
-const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
 const newOption = (used: CommuteMode[]): CommuteOption => {
   const mode = COMMUTE_MODES.find((candidate) => !used.includes(candidate)) ?? 'OTHER';

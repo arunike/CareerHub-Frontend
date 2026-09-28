@@ -9,8 +9,7 @@ import {
   type DrivingDefaults,
 } from '../../utils/OfferComparison/commute';
 import type { ScenarioRow } from '../../utils/OfferComparison/offerAdjustmentsTypes';
-
-const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
+import { moneyWhole as money } from '../../utils/Income/format';
 
 // Hours as well as cost: $2,400 a year is noise next to a salary, 200 hours is not.
 const CommuteComparison = ({

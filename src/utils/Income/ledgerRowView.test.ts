@@ -21,6 +21,7 @@ const rowWith = (overrides: Partial<EffectiveRow> = {}): EffectiveRow => ({
   gross: PERIOD_GROSS,
   supplementalGross: 0,
   taxableAllowance: 0,
+  imputed: 0,
   taxFreeAllowance: 0,
   section125: 100,
   hsa: 50,

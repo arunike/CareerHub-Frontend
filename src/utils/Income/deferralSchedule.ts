@@ -1,3 +1,5 @@
+import { localDay } from '../localDay';
+
 export interface DeferralStep {
   id: string;
   // The rate applies to every paycheck dated on or after this day.
@@ -38,8 +40,8 @@ const num = (value: unknown) => {
 };
 
 const yearsBetween = (fromIso: string, toIso: string): number => {
-  const from = new Date(`${fromIso}T00:00:00`);
-  const to = new Date(`${toIso}T00:00:00`);
+  const from = localDay(fromIso);
+  const to = localDay(toIso);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return 0;
   let years = to.getFullYear() - from.getFullYear();
   const beforeAnniversary =

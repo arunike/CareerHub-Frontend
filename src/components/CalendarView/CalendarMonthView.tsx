@@ -31,6 +31,7 @@ import type { Event, Holiday } from '../../types';
 import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
 import useCalendarDoubleTap from './useCalendarDoubleTap';
+import { localDay } from '../../utils/localDay';
 
 type Props = {
   anchorDate: Date;
@@ -199,7 +200,7 @@ const CalendarMonthView = ({
       const draggingDate =
         dragging && (dragging.kind === 'event' ? dragging.event.date : dragging.holiday.date);
       const isDropCandidate =
-        Boolean(dragging) && !isSameDay(cloneDay, new Date(`${draggingDate}T00:00:00`));
+        Boolean(draggingDate) && !isSameDay(cloneDay, localDay(draggingDate!));
 
       days.push(
         <div

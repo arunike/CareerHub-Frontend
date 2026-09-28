@@ -125,6 +125,15 @@ const ElectionsAdvancedPanel = ({
                 onChange={(value: number | null) => onElectionsChange({ postTaxPerPeriod: value })}
               />
             </Field>
+            <Field
+              label="Imputed income per paycheck"
+              hint="Employer-paid cover the IRS taxes as income, such as group term life or LTD. Read the total off your payslip: it is taxed but never reaches your take-home, and it is not deferrable."
+            >
+              <Dollars
+                value={elections.imputedPerPeriod}
+                onChange={(value: number | null) => onElectionsChange({ imputedPerPeriod: value })}
+              />
+            </Field>
             <Field label="Extra withholding per paycheck" hint="W-4 Step 4c.">
               <Dollars
                 value={w4.extraPerPeriod}

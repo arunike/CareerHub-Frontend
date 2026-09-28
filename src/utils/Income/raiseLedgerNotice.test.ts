@@ -3,16 +3,16 @@ import { raiseLedgerNotice } from './raiseSchedule';
 import type { RaiseEntry } from '../../types';
 
 const periods = [
-  { periodIndex: 18, payDate: '2026-10-01' },
-  { periodIndex: 19, payDate: '2026-10-02' },
-  { periodIndex: 20, payDate: '2026-12-25' },
+  { periodIndex: 18, payDate: '2026-07-01' },
+  { periodIndex: 19, payDate: '2026-07-15' },
+  { periodIndex: 20, payDate: '2026-07-29' },
 ];
 
 const raise = (over: Partial<RaiseEntry> = {}): RaiseEntry =>
   ({
     id: 'r1',
-    date: '2026-10-01',
-    effective_date: '2026-10-01',
+    date: '2026-07-01',
+    effective_date: '2026-07-01',
     type: 'merit',
     base_before: 165000,
     base_after: 181500,

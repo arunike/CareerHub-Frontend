@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Input } from 'antd';
 import UnitNumberInput from './UnitNumberInput';
 import { FIELD_HINT_CLASS } from './formControls';
+import { moneyWhole as money } from '../../utils/Income/format';
 
 // Never rewrite salary_range on its own: its exact string is part of the sheet row hash.
 
@@ -40,8 +41,6 @@ const formatSalaryRange = (min: number | null, max: number | null) => {
   if (max != null) return String(max);
   return '';
 };
-
-const money = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
 interface Props {
   value?: string;

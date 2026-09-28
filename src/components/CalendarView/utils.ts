@@ -10,6 +10,7 @@ import {
   subYears,
 } from 'date-fns';
 import type { CalendarViewMode, DayData } from './types';
+import { localDay as parseDayString } from '../../utils/localDay';
 
 export const hasDayItems = (dayData: DayData) =>
   dayData.events.length > 0 ||
@@ -112,8 +113,6 @@ export const eventTimeRangeLabel = (event: {
   const days = event.date ? eventSpanDays({ date: event.date, end_date: event.end_date }) : 1;
   return days > 1 ? `${range} · over ${days} days` : range;
 };
-
-const parseDayString = (value: string) => new Date(`${value}T00:00:00`);
 
 const toDayString = (day: Date) =>
   `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;

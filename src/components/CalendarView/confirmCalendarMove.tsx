@@ -4,13 +4,13 @@ import { format } from 'date-fns';
 import type { ReactNode } from 'react';
 import type { Event, Holiday } from '../../types';
 import { buildEventMovePatch, eventSpanDays } from './utils';
+import { localDay as parseApiDate } from '../../utils/localDay';
 
 type MoveHandler<T> = (item: T, day: Date) => boolean | void | Promise<boolean | void>;
 
 const prettyDate = (day: Date) => format(day, 'EEE, MMM d, yyyy');
 
 // Keyed yyyy-MM-dd; parsed directly it reads as UTC midnight and shifts a day west of Greenwich.
-const parseApiDate = (value: string) => new Date(`${value}T00:00:00`);
 
 const MoveSummary = ({
   name,

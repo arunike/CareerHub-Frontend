@@ -23,7 +23,7 @@ const ApplicationAddModal = ({
     isOpen={isAddModalOpen}
     title="Add Application"
     onClose={() => setIsAddModalOpen(false)}
-    maxWidthClass="max-w-[700px]"
+    width={700}
     bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
     footer={
       <div className="flex flex-col gap-3 w-full sm:flex-row sm:justify-end">
