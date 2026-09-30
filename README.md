@@ -17,28 +17,25 @@ A modern React application powering the user interface of the CareerHub job sear
 
 ## 🌟 Overview
 
-The **Frontend** is a React-based single-page application that provides an intuitive, responsive interface for managing your job search. Built with TypeScript and styled with Tailwind CSS + Ant Design, it covers the full job search lifecycle: tracking applications, comparing offers, managing interview availability, running AI career tools, and visualizing progress.
+The frontend is a React single-page application for managing a job search end to end: applications, offers, pay, availability and the people involved.
 
 **Key Capabilities:**
 
-- 📊 **Interactive Dashboards**: Visualize applications, offers, and availability with dynamic charts
-- 🤖 **AI Career Suite**: JD matching, cover letter generation, negotiation advice, skill refinement, and custom widgets powered by your own provider config with encrypted backend key storage
-- 🔐 **JWT Auth Flow**: Login, refresh, and protected-route bootstrapping now use Bearer tokens so the frontend can talk to a separate `*.vercel.app` backend without shared cookies
-- 💰 **Offer Comparison**: Side-by-side compensation analysis with tax/COL/rent-adjusted "Diff vs Current" and weighted decision scoring
-- 👤 **Experience Intelligence**: Rich work history management with internship earnings breakdowns, multi-phase schedules, team history, and linked-offer raise tracking
-- 👥 **Career Relationships**: A central list and relationship graph connects people across applications and work experience while keeping Application and Experience as searchable context
-- 📅 **Calendar Views**: Weekly availability calendar with federal holiday detection and public booking links
-- 📥 **Import/Export**: Bulk upload via CSV/XLSX plus full-fidelity Experience import/export in CSV, JSON, or XLSX formats (JSON recommended for logos + linked snapshots)
-- 🔄 **Google Sheets Sync**: Settings can connect Google for private read-only Sheets access, link a Google Sheet to Applications or Events, auto-map columns from sheet headers, review detected application imports, resolve possible duplicates, inspect last-run change history, configure the daily sync time/timezone, and run imports on demand while cron keeps enabled syncs current
-- 🧭 **One navigation source**: the desktop sidebar, the mobile toolbar, the settings picker and the browser tab title all derive from `NAV_REGISTRY`.
-- 🏠 **Overview**: the signed-in landing page at `/overview`, with `/` redirecting to it. Two views behind one segmented switch, held in the URL as `?view=week` so a reload or a shared link lands where you left it:
-  - **Today is the action layer** — a hero for the next event with a jump into its application, a four-cell strip (still open, in rounds, offers open, gone quiet) because on a day with nothing booked the page was three rows tall, **Needs you today** (anything landing today plus tasks due or overdue), **Worth a nudge** (a reply that has gone quiet between 10 days and 3 weeks, the only card that asks for an action), **In play** (conversations that moved inside the last 10 days), what is coming up, offers with a deadline inside a week, **Decision reviews due** (a 30- or 90-day look-back on a past offer decision that has come around), the remaining open tasks, and **Where things stand** (a count per live stage). The quiet pile has no section at all: the strip's **Gone quiet** cell is the button that opens it.
-  - **This week is the measurement layer** — a written one-line verdict, then two labelled stat strips (*This week*: sent, moved on, response rate, to chase; *Where things stand*: in play, interviewing, live offers, gone cold), with cards for applications gone quiet for 10+ days, what you sent, what moved, a merged seven-day view of events and offer deadlines, the live pipeline by stage, and the latest pay change
-  - **Latest pay change is masked on load** behind an eye toggle, and **Live pipeline collapses**, because a salary and a 100-row stage breakdown are the two things you might not want filling the screen
-  - Every row links straight to the record it came from, and a card with nothing in it is not rendered at all rather than shown as an empty shell. Every rule tolerates the shapes the API actually returns — a null date, a missing status, a `raise_history` that is not a list — because a single null crashed the whole view on the first build
-- 🌐 **Public Shell**: Logged-out visitors see an editorial homepage with Light, Dark, and System modes, a persisted public theme preference, an illustrative application workspace, a numbered application-to-income story, a week-at-a-glance example, offer decision support, an ownership section covering exports, account deletion, optional AI, encrypted provider keys and read-only Google Sheets access, a focused progressive-disclosure FAQ, repeated sign-in actions, and Privacy/Terms navigation; authenticated users keep `/` as the app dashboard, and every public example uses the sanctioned substitutes rather than account data
+- 📊 **Interactive dashboards**: applications, offers and availability as draggable widgets and charts.
+- 🤖 **AI career suite**: JD matching, cover letter generation, negotiation advice, skill refinement and custom widgets, through your own provider key.
+- 🔐 **JWT auth**: login, refresh and protected-route bootstrapping over Bearer tokens, so the frontend can talk to an API on another origin.
+- 💰 **Offer comparison**: side-by-side compensation with tax, cost-of-living and rent-adjusted differences, plus a weighted scorecard.
+- 👤 **Experience intelligence**: work history with internship earnings, multi-phase schedules and per-role pay breakdowns.
+- 👥 **Career relationships**: a list and a relationship graph connecting people across applications and roles.
+- 📅 **Calendar**: availability, events and holidays on one calendar, with public booking links.
+- 📥 **Import / export**: CSV and XLSX bulk upload, and full-fidelity Experience export in CSV, JSON or XLSX.
+- 🔄 **Google Sheets sync**: connect Google for read-only access and sync a sheet into Applications or Events.
+- 🧭 **One navigation source**: the sidebar, mobile toolbar, settings picker and browser tab title all read the same registry.
+- 🏠 **Overview** (`/overview`, with `/` redirecting there): two views behind one switch. *Today* is the action layer — the next event, what needs you today, replies worth chasing and where things stand. *This week* is the measurement layer — a one-line verdict then labelled stat strips. Every row links to the record it came from, and an empty card is not rendered.
+- 🌐 **Public shell**: logged-out visitors get an editorial homepage with Light, Dark and System modes, an illustrative workspace, offer decision support, an ownership section covering exports, account deletion and optional AI, a progressive-disclosure FAQ, and Privacy/Terms. Every public example uses the sanctioned substitutes rather than account data.
 
 ## ✨ Features
+
 
 ### 🏢 Application Tracker (`/applications`)
 
@@ -65,82 +62,23 @@ The **Frontend** is a React-based single-page application that provides an intui
 
 ### 💎 Offer Comparison (`/offers`)
 
-- **Compensation Breakdown**: One collapsible panel with two switches — `Year 1` / `4-year outlook` and `List` / `Chart`. Year 1 renders either a Recharts stacked bar chart (Base, Bonus, Equity, Sign-On, Benefits) or a component table; the 4-year outlook renders either a year-grouped bar chart or the projection table
-- **Attach an offer letter in place**: the offer editor's `Add` button opens the shared upload modal already filled in — title from the company, type `Offer Letter`, and the application locked to this offer — so the only step left is picking the file. The panel refreshes itself on success instead of sending you to the Documents page
-- **Sign-on payout schedule**: per-year amounts entered directly (`Y1 $30,000`, `Y2 $20,000`), laid out like the equity vesting editor.
-- **Past Experience filter**: a fourth pill between `Active` and `Rejected` holding offers whose linked experience is over, so a role already left stops counting as a live offer.
-- **`Current` vs `Comparison Baseline`**: `Offer.is_current` marks which offer every `Diff vs Current` measures against and is set by hand via `Mark Current`; `Experience.is_current` says whether the role is still held.
-- **Per-component comparison**: each of Base Salary, Bonus, Equity / Yr, and Sign-On carries its own gap against the same component on the baseline offer (`+$23,000 vs Google`, `−$4,412 vs Google`, `Same as Google` when identical), so components can be compared one to one instead of only through the single aggregate `Diff vs Current`.
-- **Offer Details Table**: Company, role, location, RTO badge, all salary components with after-tax breakdown, Total Comp, Adjusted Value, PTO/Holiday days, Diff vs Current
-- **Decision Scorecard**: Weighted offer ranking across financial value and location, with advanced growth, WLB, brand, manager/team, and immigration signals scored only when filled; Financial maps adjusted annual value to an uncapped logarithmic score where $300k = 100, scales its comparison bars to the highest visible score, counts direct commute and food cash effects, and keeps Remote/RTO preferences in Location and WLB
-- **Decision Snapshots**: Save point-in-time offer decisions with current score, rank, total comp, adjusted value, rent/tax/commute assumptions, category breakdown, and notes; locked snapshots are preserved from deletion
-- 📓 **Decision Journal**: **Journal** on each offer card's action row (alongside Edit, Mark Current and Snapshots, rather than buried in More, where the first build put it and nobody found it) records why an offer was accepted or declined — the reasons, the concerns, the decision date and the start date — and then schedules a **30-day** and **90-day** look-back against it.
-- **Compensation Simulator**: After-tax monthly take-home view with rent, commute, food budget, PTO value, and equity vesting scenarios for real offers and custom scenarios
-- **Private Equity Liquidity**: Mark equity as freely tradable, company-buyback, or currently unsellable. The scorecard, adjusted value, deltas, chart, snapshots, and simulator count only realizable equity, while the full paper grant remains visible for context
-- **⚡ Negotiation Advisor**: per-row "Negotiate" button (non-current offers) opens `NegotiationAdvisorModal`:
-  - Centered offer snapshot header (Base, Bonus, Equity/yr, Sign-On, PTO)
-  - **Suggested Counter-Ask** — concrete numbers (base, sign-on, equity, PTO) with rationale
-  - **Leverage Points** (green) — strengths to cite
-  - **Talking Points & Scripts** (amber) — ready-to-use scripts
-  - **Watch Out For** (red) — risks and cautions
-  - Regenerate button; auto-saves result to localStorage with "Saved" indicator + "View Full Report" link
-- **🔮 Career Transition Advisor**: Collapsible panel integrated below the scorecard to evaluate your current job:
-  - **Qualitative Input**: Predefined pain points (burnout, bad WLB, commute, low growth, toxic culture) and custom free-text situational inputs.
-  - **Strategic Outcome**: Side-by-side comparison of Option A (Stay at current job / Accept current best offer) vs. Option B (Start job hunting) to preview outcomes.
-  - **Target Criteria**: List of target company types, salary targets, WLB/remote policies, and culture criteria to look for in your next search.
-- **Equity Refresh Grants** (optional): An annual refresh grant value and start year on each offer.
-- **Match Gap**: The four-year panel reports what the runner-up would need to match the leader — extra annual base or extra total grant — in gross dollars, ready to use as a counter-ask. The base ask is solved as a year-1 raise that then compounds at the configured rate, so at 3% a $100k gap asks for $23.9k/yr rather than a flat $25k
-- **Analytics tab in the URL**: `/analytics?tab=career` drives which tab is open, so a refresh, the back button, or a shared link all land on the tab you were looking at rather than snapping back to Availability.
-- **Calendar-first Events and Holidays**: both default to the calendar view, and their view switch and year filter render inside the calendar's own header (`CalendarView.pageControls` → `CalendarHeader`) on the same line as the day/week/month switch.
-- **Page toolbar**: `PageActionToolbar` slots a control by what it _is_, and each layout decides how prominent that makes it.
-- **Score breakdown readability**: each category's derivation was a block of 10px text on a 16px line-height with 2px gaps — one grey mass.
-- **"Free food" wording retired**: with meals able to cost you money, calling the line a perk was wrong.
-- **Simulator food clamp**: only the provided half of the food figure reduces the monthly food budget (`Math.max(0, …)`). Meals you buy yourself are money already inside that budget, so subtracting a negative would have inflated the budget by the amount you spend — $650/mo became $826/mo. The out-of-pocket half is carried in the offer's score instead, where it belongs
-- **Offer save payload is an explicit whitelist**: `updateApplication` in the offer page lists every field it sends, so a new column is silently dropped unless it is added there.
-- **Food on office days**: moved out of Work & commute into Benefits, with a row per meal — its own amount, and whether the office provides it or you pay.
-- **Collapsible benefit groups**: all six Benefits groups (medical & healthcare risk, dental, vision, 401(k), custom benefits, free food) collapse, and start collapsed — most offers only ever fill in one or two, so an expanded default made the common case the worst case.
-- **Work & commute is its own section**: the offer form's section rail gained a `Work & commute` tab (2 of 6) holding work mode, RTO days/week, flexible hours, travel frequency and the commute editor.
-- **One way or round trip, stated not assumed**: the distance field is paired with a `Counts as` selector.
-- **No usable-time discount**: the per-mode "can work or read on the way" toggle and the 50% discount it applied are gone, along with `effectiveHours` — travel time is now counted in full everywhere it is read.
-- **Commute editor layout**: each mode is its own card. **Mode** and **Cost** lead in a tinted panel of their own, because those two choices decide which fields below even apply — they previously sat mixed among the value fields at identical weight.
-- **Shared driving assumptions**: mpg and gas price are edited once, from a `Driving: 28 mpg · $4/gal` button on the Offers page's Commute card, and every offer reads them.
-- **Apply the shared figures to offers that override them**: saving is explicit (**Cancel** / **Save**), and closing discards, because an override is data entered on purpose.
-- **Remote offers have no commute**: with Work Mode set to Remote the commute editor is not rendered and the Commute comparison excludes the offer entirely, rather than listing it at 0 hrs / $0. Saved rows are kept on the record, so switching back to Hybrid restores them
-- **A car row opens on gas and miles**: `defaultCostModeFor` sets `FUEL` for `CAR`, so a new car row and any row switched to Car start on mileage costing rather than a flat fare — that is how a car actually costs, and a flat figure had to be undone every time.
-- **Driving cost from gas and miles**: a car row can be costed `from gas` instead of a flat yearly figure — enter miles each way and parking/tolls per office day, take mpg and pump price from the shared driving assumptions, and the annual cost is derived (`miles × 2 × officeDays ÷ mpg × price + parking × officeDays`).
-- **Commute** (Offer form → Work Setup): per-mode entry of door-to-door time and cost — train, bus, car, bike, walk — with one marked primary.
-- **Unit Number Inputs**: Every numeric field in the app — all 67 of them — uses the shared `UnitNumberInput`: an antd `InputNumber` with a stepper and the unit in an attached grey addon.
-- **Salary Range editor**: `SalaryRangeInput` renders the application salary as two `$` min/max fields with a midpoint and spread hint, falling back to a plain text box for values that are not a numeric range (`Competitive`, `DOE`).
-- **Form control alignment**: `components/formControls.ts` holds `CONTROL_CLASS` plus `FIELD_HEADER_CLASS` / `FIELD_HINT_CLASS`.
-- **Equity configuration popover**: the equity field's `Configure` button opens one popover holding both the vesting schedule and the annual refresh grant, so everything that changes the grant lives with the grant. Replaces the separate full-width "Annual equity refresh" card that used to sit under the compensation row
-- **Sign-on payout popover**: the per-year sign-on split moved from an inline card into a `Payout by year` popover next to the Sign-On field, matching the equity pattern. The inline hint shows how many years the sign-on is split across, or how much is still unallocated
-- **Projection Assumptions**: An **Equity ±x% · Base ±y%** popover on the four-year panel sets both growth rates the projection runs on.
-- **Four-Year Total Comp**: Lives inside the **Compensation breakdown** panel behind a `Year 1` / `4-year outlook` switch, so the year-1 view stays the default.
-- 📈 **Offer comparison reads today's pay, not the signed figure**: a raise writes only to `raise_history`, so `base_salary` stays at whatever the offer was signed at.
-- 💹 **Equity repriced at the latest share price**: equity is stored as the dollar value it was granted at, so it never moved with the market.
-- 🫙 **Offers with no figures are left out of the comparison**: setting an application to `OFFER` or `ACCEPTED` makes the server auto-create a blank offer (`ensure_offer_for_application`), so the page is handed records with zero base, bonus, equity and sign-on.
-- ⏱️ **Commute time is costed in the Location score**: `annualHours` comes from the primary commute option's minutes each way × the same office-day count the cost uses, so a hybrid role is not charged for five days.
-- 🚀 **Trajectory replaces Growth and Team**: they were the same judgement measured twice — growth comes from the team you work with, so two weights let one signal count against everything else twice over.
-- 🏥 **Benefits is its own weighted category**, not part of Financial. A 401(k) match and cheap health cover trade off against cash pay, so folding them into one weight meant you could not say "cash matters more than perks".
-- 💸 **A sign-on is not a raise**: `adjustedValue` counts sign-on and relocation in full because year 1 really does pay them, but the Financial *score* used to treat $60,000 paid once as identical to $60,000 added to base.
-- 🎯 **The bonus is priced as two dated stints, netted**: `bonusStint.ts` counts **days**, not month fractions, against the positions themselves.
-- **One after-tax row per component.** `After tax` was a single row carrying eight figures, so working out which rate produced which number meant reading it against the `Tax rates` row above.
-- 🏖️ **Unlimited PTO is scored on what you would actually take**, not what the policy allows.
-- 💬 **Every jargon field in the offer form explains itself.** The three insurance and compensation sections had 33 labels and **zero** tooltips, while the scorecard next to them was fully annotated — so the page that asks for an out-of-pocket max never said what one is.
-- 📐 **The scorecard panels size themselves on their container, not the viewport.** The category list went two-up at `sm:`, but it lives inside an offer card that is half-width at `xl` — a viewport breakpoint cannot see how much room the panel actually has, so at ~450px of card the star ratings ran past the card edge and collided with the next column's label.
-- 💯 **Money is never printed with stray cents.** `Diff vs Current` read `$${diff.toLocaleString()}` and showed three decimals — a float with no digit cap, the same defect that once printed an unrounded adjusted value.
-- 🔍 **The score breakdown collapses per category**: a 560px panel with one `label | value` row per step, the detail behind a per-category **Show the maths (14 steps)** disclosure, and any step that did nothing omitted. Below `md` it opens as a bottom sheet through `MobileModal`, sharing `ScoreBreakdownContent` via `variant="sheet"`; on desktop it always opens downward, capped at `min(70vh, 640px)` with internal scroll.
-- 🏷️ **The compare picker uses a fixed tag count, never `responsive`**: that antd mode measures tags with a ResizeObserver and collapses them to fit, so a label wider than the control's `maxWidth` — one long role title was enough — flips endlessly between shown and collapsed.
-- **Decision Deadlines**: `Offer.deadline` is editable on the offer form and surfaced in the **notification bell** alongside task deadlines, sharing the existing Deadline Radar snooze so each entry can be dismissed for a day. Offers inside 7 days appear as `Nd left` / `Today` with P0/P1/P2 priority; settled offers (accepted, declined, expired, withdrawn) and past-due offers are filtered out
-- **Negotiation Log**: Per-offer record of each negotiation round — date, outcome, and asked-vs-received for base, bonus, equity, and sign-on with the gap computed per component. Also holds **Risks & watch-outs**, which the Negotiation Advisor now writes its "Watch Out For" list into so it persists server-side instead of only in localStorage, and the **Final decision** (status plus reasoning)
-- **Adjustments Panel**: Tax/COL/rent/commute/food-perk adjustments and per-offer overrides. Saved to your account (`UserSettings.offer_adjustment_settings`) alongside custom scenarios, so they follow you across devices. The page reads and writes the server only — no browser storage is involved
-- **Edit Offer Modal**: Shared form for real and scenario offers (bonus $/% toggle, equity total+vesting mode, benefit items)
-- **A benefit added by hand starts taxable**: `newBenefitItem` sets `is_taxable: true`, because most perks are income and a reimbursement that is not is the exception worth marking.
-- **Decision signals sit flat on their own tab**: growth, work-life, brand and manager/team are **star ratings**, not 1-5 dropdowns, and the immigration select sits below them.
-- **Set as Current**: Any offer row can be toggled as the current-job baseline, which clears the flag from every other offer. This is the only way to designate a baseline; there is no separate "Add Current Job" flow
-- **Export**: Offers export to CSV, JSON, or XLSX from the page toolbar, matching the other pages
-- **Attached Documents**: The offer modal lists documents linked to the offer's application, offer letters first, each opening in a new tab. Documents hang off the application and an offer has a one-to-one link to it, so no extra relation was needed
-- **Year Filter**: Groups offers by the linked application's `date_applied`, not the offer record's `created_at`, so offers backfilled from an earlier job search stay under the year you actually applied. Falls back to `created_at` when no applied date is available
+Compare offers on total compensation and on the things that are not compensation.
+
+- **Offer details table**: company, role, location, RTO badge and every salary component, with an after-tax breakdown and total comp.
+- **Compensation breakdown**: one panel switching between `Year 1` and a 4-year outlook, as a list or a chart.
+- **Per-component comparison**: base, bonus, equity per year and sign-on each carry their own gap against the baseline offer. `Offer.is_current` marks what `Diff vs Current` measures against; any offer can be made the comparison baseline instead.
+- **Decision scorecard**: weighted ranking across financial value, location, growth, work-life balance, brand, learning and stability, with the weights you set and a popover showing each line of the score.
+- **Decision snapshots**: save a point-in-time decision — score, rank, total comp, adjusted value and the rent and commute assumptions behind it — and restore or compare it later.
+- **Decision journal**: record the judgement itself. Concerns are itemised and later marked as became real, never happened or still unclear, so the Analytics tab can read your decisions back as a set.
+- **Compensation simulator**: after-tax monthly take-home with rent, commute, food budget, PTO value and equity vesting.
+- **Equity liquidity**: mark a grant freely tradable, company-buyback or currently unsellable, which the scorecard and simulator price differently.
+- **Negotiation advisor**: a suggested counter-ask with concrete numbers, your leverage points, talking points and what to watch for, saved per offer.
+- **Career transition advisor**: takes what is wrong with the current role and returns a strategic outcome and target criteria for the next one.
+- **Equity refresh grants** and **match gap** model the parts of a package that arrive after year one.
+- **Sign-on payout schedule**: per-year amounts entered directly, laid out like the equity schedule.
+- **Benefits and commute**: benefits group into collapsible sections; commute is priced by distance and energy, one-way or round trip, with shared assumptions you can override per offer. A remote offer has no commute.
+- **Attach an offer letter** from the offer editor, which opens the shared upload modal already filled in.
+- **Filters**: `Active`, `Past Experience` (the linked role has ended) and `Rejected`.
 
 ### 🧠 Intelligence (`/ai-tools`, `/jd-reports`, `/negotiation-result/:id`, `/jd-report/:id`)
 
@@ -192,238 +130,60 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### 💵 Income (`/income`)
 
-- **Every figure shows its own arithmetic**: the info icon beside Gross, Tax withheld, Deductions, Take-home, Your 401(k), Total comp, the refund/balance and the next-year bonus estimate opens the lines the number was built from — deductions itemised by type, tax split by jurisdiction, the refund as withholding minus each liability, the bonus through its multiplier and proration.
-- **Next year's bonus, estimated**: an annual bonus is earned in one year and paid in the next, and the proration that handles a part year was only ever visible as a sentence inside the Bonus tab.
-- **What you deferred, per role and against the limit**: the year card showed the employer match but never your own 401(k), so a role row's visible parts did not add up to its own total.
-- **Lands on the paycheck you were most recently paid.** Opening the page mid-year on `Paycheck 1 of 26` from January was never what you wanted: the default selection is now the latest row whose pay date has already passed (`mostRecentPaidRow` in `effectiveRows.ts`), which lands on the last paycheck of a year that is over, and falls back to the first row for a year that has not paid out yet — a future year, or a role that starts later this year.
-- **Roles are the income sources**: each Experience entry (with its linked offer's benefit data, when there is one) becomes a selectable source, filtered to the ones active in the chosen year. The year lives in the URL (`?year=`), so a refresh or a shared link lands on the same year
-- **One paycheck / Whole year**: the view switcher is the shared `SegmentedToggle` the rest of the app uses, not antd's `Segmented` — that control's track is the same tint as the page, so the active pill read as a button floating on nothing.
-- **The year ledger hides columns instead of scrolling sideways.** The register used to be an antd `Table` with `scroll={{ x: 1500 }}`, so reading Take-home on a laptop meant dragging the table 500px to the right and every column below `lg` was off screen.
-- **Gross and take-home are both edited in place; the payslip modal is gone.** `Record actual payslip` opened a six-field dialog for gross, federal, state, Social Security, Medicare and take-home.
-- **Experience earnings come from the Income tab's ledger, not a second calculation.** The breakdowns used to estimate a year's pay as annual rate × days worked, which ignores how often you are paid, when the bonus actually lands, the vesting schedule and any payslip you recorded — so the Experience page and the Income page quoted different numbers for the same year.
-- **The role card's earnings chip says what it means.** It was printing the current annual package under the words _total earnings_, so a role held for over a year read "$239,750 total earnings" when it had actually paid $420,000.
-- **The pay breakdown shows its working, and the overall one is grouped by year and role.** The headline is money earned, not a rate: the year is cut into one stretch per pay rate and each is priced separately, printed under **How this adds up** — "1 Feb – 30 Jun · 150 days at $239,750 a year = $98,527", "1 Jul – 1 Oct · 93 days at $258,725 a year = $65,922", totalling $164,449 over 243 of 365 days.
-- **The pay breakdown follows your raises instead of the figure the role was created with.** Saving a raise writes only to `raise_history` — `base_salary` on the role is never touched — so **Pay Structure Breakdown** kept showing the pre-raise package indefinitely.
-- **A recorded raise re-rates every paycheck after its effective date.** A role carried one flat `base_salary`, so logging a mid-year raise changed the headline figure and nothing else — every paycheck in the year, including the ones paid before the raise, was grossed at the same rate.
-- **A backdated raise pays out the difference instead of rewriting history.** Payroll is often told about a rise weeks after it took effect — effective 1 July, announced 1 October — and the July and August paychecks really were paid at the old rate.
-- **The effective date defaults to your review cycle instead of asking you to remember it.** A **merit increase** fills in **1 July** — reviews close 30 June, so the new rate runs from the 1st.
-- **The raise reason is a box you can type in, not a closed list.** It suggests the nine reasons as you type — each still explained in the dropdown — but accepts anything, so a reason the list does not cover is recorded in your words instead of as a generic grey _Other_ tag.
-- **The raise form is on one padding scale, and Before/After reads as two columns.** Every gap in the form was a slightly different size — `p-4` shell, `gap-3` fields, `px-3` banners, `mb-1` labels — and the Before/After captions floated above six loose fields rather than heading anything.
-- **The raise modal fits a phone, and the mode buttons line up.** Three things were broken at 390px: the drawer title ran off the right edge — "Raise History" could not wrap and the "Google / Software Engineer" beside it had nowhere to go, so it now stacks onto its own line below the title and ellipsises; the five-column breakdown table pushed _+/-_ and _%_ past the screen, so on a phone those two columns collapse into one line under the After figure (`+$16,500 · +10.0%`); and the entry header wrapped mid-date, so the date is now `whitespace-nowrap` and the row wraps between chips instead.
-- **A bottom sheet is as tall as what is in it.** Any sheet whose content passed 350px jumped straight to a fixed 85dvh, so a list of three rows sat at the top of a sheet with several hundred pixels of empty white beneath it.
-- **Every bottom sheet got the same header treatment.** The mobile sheet header packed the close button, title and fullscreen button against each other with a 60px hole on the right: the close sat flush against the title with no gap, and the fullscreen button was pinned at a fixed `right: 60px` — an offset that only lines up for one particular title length, and which here overlapped the title outright.
-- **The grey panel is inset the same 20px it uses inside.** In the raise modal antd leaves 8px between the header rule and the first block of content, while the panel itself pads 20px before "Edit Raise" — so the panel looked jammed against the header.
-- **Your last days are paid for.** A leaving date cut the pay schedule by pay date alone — every cheque dated after your last day was dropped whole.
-- **One segmented control for every money field, and no more `%Δ`.** The raise form drew its own mode buttons — blue-tinted pills, a different size and shape from the segmented control the offer form uses for Bonus and Equity — so the same choice looked like two different widgets depending on which screen you were on.
-- **A role you have not started yet has earned $0, not a year's salary.** The pay chip totals what the role has actually paid, and a future-dated role has no pay years at all — so it fell through to a fallback that prints the annual package as "$258,725 a year".
-- **A part-year figure and a full-year one are different numbers.** `SalaryBreakdown` appends "· $160,000 for the full year" only when the projection exceeds what has been paid — and it never appeared, because the ledger mapping read the projection from `role.gross`, which is itself the paid-to-date figure.
-- **Theme is one preference for the whole product, and the app is staged in behind a flag.** `src/theme/preference.ts` owns the three states, the storage key and the system watcher; `ThemeProvider` sits above the router so the public page and the signed-in app read the same choice, and picking Dark on the marketing page carries through sign-in instead of resetting.
-- **The dark palette is a bespoke ink scale, not Tailwind slate.** Slate is a blue-grey, so every card sat under a faint navy cast that read as cheap.
-- **A calendar chip is the colour you picked, in either theme.** Chips were painted as a *translucent* tint of the category colour, so they took whatever was behind them: pastel on white, muddy brown and teal on near-black, with the label calculated against the wrong surface and disappearing entirely.
-- **Saturated colour is louder on dark than on light.** The chart series, status figures and status pills were all picked against white, and a near-black ground amplifies chroma, so they read as fluorescent.
-- **Sign Out reads as destructive before you hover it.** It sat in the same slate as Settings and only turned red on hover, so the two most different actions in the sidebar looked identical at rest.
-- **A dark variant appended after a `hover:` class loses the state.** `hover:!text-rose-500 dark:!text-rose-400` is not a dark hover: the dark class has no state prefix, so it paints at rest, and in dark the button was permanently rose with a rose background. 56 of these across 16 files, all created by the conversion sweeps, now carry `dark:hover:`
-- **An `!important` light class beats a plain dark one.** `!bg-white dark:bg-ink-900` renders white in dark mode, which is why the sidebar's Settings and Sign Out buttons stayed bright after everything around them had turned. 61 dark variants across the app had the same defect and are now `dark:!bg-ink-900`. Any sweep that appends a dark class has to carry the weight of the class it is answering
-- **The public homepage themes itself without touching the app.** Light / Dark / System live only on `/`.
-- **A dark-mode visitor no longer gets a white flash.** The app is client-rendered, so the shell paints before React decides the theme.
-- **The FAQ uses the same header shape as the sections above it.** It had a two-column split — heading and blurb on the left, the accordion on the right — so a short heading sat next to eight tall rows and left most of the left column empty.
-- **The landing FAQ answers the reader's questions, not the product's.** All four entries were the company's own concerns — what it costs, what it requires, who it serves — and three of them restated the privacy section directly above, so a visitor scrolling for "is this better than my spreadsheet?" found nothing.
-- **The back-pay figure shows its working.** "$4,159 of back pay" is a number the ledger will actually pay out, so it should not have to be taken on trust.
-- **The raise breakdown is rows on a phone, a table on a tablet.** Five money columns squeezed into 390px left the numbers stranded mid-row with the change stacked awkwardly under the After figure.
-- **The form hides the history while it is open.** The New Raise form already carries your latest package as its read-only _Before_ column, so listing the previous raises underneath it was the same information twice — and while editing, the list showed the very entry you were part-way through changing, next to a form holding different numbers. The list comes back as soon as you save or cancel
-- **The raise reasons cover why pay actually moves.** The list was Merit, COLA, Market Adjustment, Retention, Other — which left no home for a **promotion**, the most common reason pay jumps at all, and led with `COLA`, an acronym you have to already know.
-- **The raise form shows Before rather than asking for it.** Before is history — the pay this raise moved away from — so it renders as a dashed, muted, read-only figure, which is also what makes it obvious at a glance which side you can type in.
-- **An outbound link is sanitised before it reaches `href`.** A job link or meeting link is typed by the user, and job links also arrive from a Google Sheets import, so `javascript:alert(...)` in that field would run in this origin when clicked.
-- **Analytics widgets are placed by dragging, not by a fixed grid.** Both dashboards used a CSS grid with fixed column spans and dnd-kit reordering, so a short card such as the Watch List left a band of dead space beside its taller neighbour and there was no way to move it there.
-- **Every analytics widget folds to its header.** A chevron beside the title hides the body and drops the card to `h-auto`, so a folded widget is a header strip rather than an empty box, and the grid reclaims the rows underneath.
-- **Income can be pinned to the mobile toolbar, and so can any tab added later.** A tab used to need an entry in two hand-maintained lists — `NAV_GROUPS` for the sidebar and `MOBILE_NAVIGATION_ITEMS` for the toolbar — and Income only had the first, so its pin toggle in Settings existed and did nothing.
-- **Roles and tax years can be switched off in Settings.** The Income pickers listed every role you have ever held and every year any of them covered, which for an old side role or a year before you started tracking is noise you cannot dismiss.
-  - **Hiding never empties a picker.** `visibleSources` and `visibleYears` return the full list when every entry is hidden, and the last visible switch is disabled with a note saying why — a picker with nothing in it reads as a broken page, and the setting that emptied it lives on another screen entirely
-  - Roles are filtered **after** the year narrows the list, so hiding one role cannot blank a year that still holds another. A key for a role that no longer exists is ignored rather than counted
-- **The performance year offers only years the role was held, and defaults to one of them.** The picker always listed `taxYear − 2`, `− 1` and `taxYear`, and the default was blindly the year before — so a role that began in the year being modelled was prorated against a year it did not exist, and the target silently came out **$0.00** with no explanation beyond a note telling you to change the year yourself.
-- **Proration shows its arithmetic.** It read `This role covered 59% of 2025`, which states the answer and hides the sum.
-- **The deferral base is a choice of three, not a toggle.** `Compute on base pay only` was a switch that carved out stipends and allowances — which framed gross pay, the normal case, as the exception, and gave no way at all to say what most plans actually do: exclude the **bonus**.
-- **A payout row says what each box is.** The schedule rows carried a date, a percent and an amount side by side with no labels, so `2026-07-01 · 100 % · $6,346.15` read as one run-on figure.
-- **One-off awards live in the Bonus tab, not under Allowances.** `Referral bonus` and `Spot bonus` were allowance presets, which put a single supplemental payment next to recurring stipends.
-- **The paycheck header is one stepper, and everything else is quiet.** The prev/next arrows are a joined stepper and the only bordered control in the row; `Edit` and `Current` — which jumps back to the paycheck you were most recently paid — sit beside it as borderless actions whose labels collapse to their icons below `sm`.
-- **The paycheck card's edit action sits with its other controls.** `Edit this paycheck's figures` had a bordered strip of its own below the take-home row, which read as a footer for a card that had already finished.
-- **`Contributed in {year}` is a subtotal, and says so.** The block listed the year's projected traditional, Roth, match and total — the same $16,500.00 that made the gain read as a loss — with nothing marking it as a forecast.
-- **The gain is measured to date, not against the whole year.** The comparison subtracted every contribution the year would eventually make from a balance recorded today, so a mid-year account reported a loss it had never suffered — $12,000.00 of growth against $16,500.00 "paid in" read as −$4,500.00 when only $10,788.46 had actually been deferred.
-- **Unsaved work says so, and asks before you leave it.** The indicator was grey text hidden below `sm`, so a phone gave no sign at all that anything was pending.
-- **401(k) performance reads on the year card, not just in the tab.** Recording an opening and a closing balance has always produced an investment gain — balance change less every dollar paid in, contributions and match together — but it only appeared at the bottom of the 401(k) tab, behind the One-paycheck view, so it was easy to miss entirely.
-  - **A role only counts once both of its balances are in.** Each employer's plan is its own account, so the balances add across roles — unlike the deferral limit, which follows the person.
-  - The percentage is a simple return over the money at work (opening balance plus contributions), not time-weighted, and it is rendered unsigned beside a signed amount so the sign is stated once
-- **No scrollbar inside the card.** The ledger used to be a 460px `scroll={{ y }}` box, which put a second scrollbar inside a card that already sits on a scrolling page — the ugliest thing on the view, and it hid how long the year actually was.
-- **The editor is the figure turning typable.** Clicking a value used to open a bordered `InputNumber` with a focus ring, and on a phone the 44px control floor made it taller than the row and shoved everything below it.
-- **The whole cell is the hit target, and it says so.** The first pass made only the digits clickable — a 69×19px target with a hover tint that appeared once you had already found it.
-- **One gutter for every column.** antd's small table leaves 8px, the card-edge overrides added 12px, and the editable cells were adding their own on top, so no two columns were spaced alike.
-- **The figure is the input; there is no second column for it.** `TAKE-HOME` and `ACTUAL` were the same number in two columns — both read `actual_net`, so a recorded paycheck printed its value twice, side by side, and the phone had to give up Gross to fit the duplicate.
-- **The phone keeps the column you actually type into.** Recording what landed is the thing you do on a phone, and since take-home is now the field itself, no column has to give way for it — a phone shows date, gross and take-home, with a caret that expands it in place to the pay date, the note, and the figures its columns cannot show.
-- **One accent, and it means something.** A row used to carry sky pre-tax, rose tax, violet match and four colours of antd `Tag`, so nothing read first.
-- **An allowance can be a one-off, not just a stipend.** A referral bonus, a home-office setup payment or a relocation allowance happens once, on one paycheck — the old model only offered per paycheck, per month and per year, so the nearest fit was "per year" landing on the first or last cheque.
-- **The allowance label offers the common ones.** The field is now a combobox: type anything, or pick from work-from-home, internet, phone, wellness, car and commuter (monthly), meal and on-call (per paycheck), and referral, spot, home-office, relocation, learning-and-development and tuition (one time).
-- List and relationship-network views share one canonical contact dataset across Applications and Experience
-- Search spans people, companies, roles, notes, career context, and relationship labels; Application/Experience, relationship, and company filters apply to both List and Network, while the responsive directory rows show email, relationship badges, company and role hierarchy, Application/Experience context counts, and compact company or career-record grouping
-- The network keeps `Me` at the center and lays people out by their contact-to-contact edges rather than by distance from `Me`, so everyone sharing an anchor (two reports under one manager, for example) clusters around that person instead of flattening onto a single ring; clicking a person hides unrelated branches while preserving the path back to `Me` and expanding that person's connections
-- Every edge is drawn with an arrowhead per recorded direction, so a one-way link reads as `source → target` and a mutual pair shows both heads
-- Edge labels render above the nodes and can be dragged along their own line to clear a crowded corner; people can be dragged anywhere on the canvas for the same reason, and a `Reset layout` button appears once anything has been moved
-- Drag positions persist in `localStorage`; node positions are scoped per view, since focusing someone lays the graph out differently and a drag made on the `Me` view should not follow them there
-- An expand button hands the graph the whole page for a dense network, keeping the `Back to me`, `Reset layout`, and drag controls with it; `Esc` or the `Exit` button collapses it. This is an in-app full-page view rather than the Fullscreen API, so it keeps the app's own chrome and works on iOS Safari, which refuses element fullscreen
-- The automatic `Contact` edge every person gets is dropped from a label once a real role sits alongside it, so an edge reads `Recruiter` rather than `Contact · Recruiter`, and stays `Contact` only when that is all there is
-- Contact details open in a compact profile drawer with contact/work details, relationships, a `Linked applications` list, possible-duplicate review, merge, and delete controls; edit, relationship, and merge actions close the drawer before opening their editor so overlays never compete
-- A contact's job title is only ever what was entered on that contact. It never falls back to the linked application's role, which is the job _you_ applied for and would otherwise label every contact with your own title; company still falls back to the linked record
-- The drawer's relationship list is one row per other person however many edges that pair has, each showing direction and inline edit/remove; your own link to the contact is a `To you:` badge on the header rather than a row named `Me`
-- Relationships support standard or custom labels, multiple edges, indirect people who are not connected to the user, and same-Experience candidate suggestions without inferring reporting lines automatically
-- The relationship editor creates and edits edges from one modal, explains that `To` names the person holding the role, and pre-fills `To` with the drawer's contact once `From` is set to `Me`
-- Company is required when adding or editing a contact, entered as free text with application companies offered as suggestions
-- The contact editor can link a person to an existing application from the Contacts page, searchable by company or role. Picking one adds a link rather than replacing existing ones, and the field is hidden when the editor was already opened from inside an application or experience, which supplies the link itself
-- The company drives the link, so there is no separate application field to fill in. Choosing a company resolves the application outright when that company has only one, showing the role and its status inline; a company with several asks which one, and a company with no applications says so
-- The lookup queries `/applications/options/` scoped to the chosen company rather than filtering a client-side page. That endpoint caps `page_size` at 100, so with several hundred applications an unfiltered page silently omits most of them; results are still matched on exact company name, since the endpoint's search also matches role and location
+Models what actually lands in your account, paycheck by paycheck, and what you will owe in April.
+
+- **Roles are the income sources.** Each Experience entry, with its linked offer's benefit data, becomes a selectable source filtered to the ones active in the chosen year. The year and role live in the URL (`?year=`, `?role_id=`), so a refresh or a shared link lands in the same place.
+- **Two views:** *One paycheck* for a single period, *Whole year* for the register. The page opens on the most recent paycheck already paid, not January.
+- **Every figure shows its own arithmetic.** An info icon beside Gross, Tax withheld, Deductions, Take-home, Your 401(k), Total comp, the refund or balance and the next-year bonus estimate opens the lines the number was built from.
+- **The figures are the inputs.** Date, gross and take-home are edited in place by clicking the value; the derived columns stay derived. A recorded figure is marked so the row shows which numbers are real.
+- **The year ledger hides columns rather than scrolling sideways**, keeping the ones you type into on a phone.
+- **Raises re-rate the paychecks after them.** `raise_history` drives a step schedule, so each cheque is grossed at the rate in force on its own pay date. A raise has a notified date and an effective date; when they differ the shortfall is paid as back pay on the first cheque from the notified date, with its arithmetic shown. The reason is a free-text combobox with the common reasons suggested, and a review cycle fills in a default effective date.
+- **401(k) covers deferrals, the employer match and the annual limit.** Contributions are counted to date rather than against the whole year, the limit is taken per person across roles rather than summed, and recording opening and closing balances reports the account's return.
+- **Allowances and one-offs.** A stipend recurs on a cadence; a referral, spot bonus or relocation payment lands once on a paycheck you pick. Each carries a tax treatment.
+- **Experience earnings read from this ledger**, so the Experience page and the Income page cannot quote different numbers for the same year.
+- **Roles and tax years can be hidden in Settings**, and hiding never empties a picker — the last visible entry cannot be switched off.
+- **Unsaved work is flagged and confirmed before you navigate away.**
+
+### 🤝 Contacts (`/contacts`)
+
+People you met while applying, and the relationships between them.
+
+- **One dataset across the app.** The list and the relationship network share the same contacts, and the same records back Applications and Experience.
+- **Search spans** people, companies, roles, notes, career context and relationship labels, with filters for application or experience, relationship and company.
+- **The network is a graph, not a hierarchy.** `Me` stays at the centre but people are laid out by their contact-to-contact edges, so someone you met through a colleague sits beside that colleague. Edges carry an arrowhead per recorded direction, and a mutual pair shows both.
+- **Nodes and edge labels can be dragged**, positions persisting per view in `localStorage`; an expand button hands the graph the whole page.
+- **A contact's details open in a drawer** with work details, relationships, linked applications, duplicate suggestions and inline edit. The job title is only ever what was entered on that contact, never the linked application's role.
+- **Relationships support** standard or custom labels, several edges per pair, people not connected to you, and colleagues from the same Experience. One row per other person, whatever the number of edges.
+- **A contact is linked to an application through its company**, chosen from your application companies, so there is no separate application field to fill in.
 
 ### 📅 Availability & Events
 
-- **Start date field on iOS**: the generator's date input sized itself from the iOS date control rather than the box it was given, so `w-full` plus the leading calendar icon's padding ran it ~54px past the card edge on a phone while the timezone select beside it fitted.
-- **Event reminders**: the notification bell loads on mount rather than on click, caches for 3 minutes so reopening does not refetch, and shows a spinner instead of static text.
-- **Multi-day events**: a `Multi-day` toggle reveals an End Date, and the event then renders on every day it spans rather than only its first.
-- **All-day events**: a checkbox on the event form disables (rather than hides) the start/end time and quick-duration controls, so the form does not reflow and it stays obvious why they are inert and stores the event spanning `00:00`–`23:59`. Calendar chips, tooltips, the day panel, and the move confirmation all show `All day` in place of a clock time
-- **Unsaved changes get a bar on a phone, not a third control in the header.** `UnsavedChangesActions` keeps the `Discard` / `Save` group inline from `sm` up, ruled off from the view controls, and on a phone pins a bar above the bottom nav so Save is in thumb reach.
-- **A recorded gross moves the deferrals with it.** Recording a paycheck bigger than the model scales the traditional, Roth and employer-match lines with it and clamps the pair to `deferralRoom`; fixed premiums are left alone.
-- **Back pay counts paychecks, not days.** A backdated raise owes `periods × (rise / paychecks a year)`, and which paychecks count comes from **Days from period end to payday** under Pay schedule.
-- **The gross cell explains its own arithmetic.** Hovering a row lists the parts that make it up — regular, allowance, bonus/vest/back pay, other pay — and for a recorded row states `Model expected X, you recorded Y` with the signed difference.
-- **A recorded gross above the model is named, not absorbed.** The surplus over the modelled figure, supplements included, is attributed to **other pay** and shown as a `+$…` sub-label with a tooltip naming the likely causes; it is a label only, so the recorded figure still drives tax and take-home.
-- **The role picker is in the URL, beside the year.** `?role_id=2gq8xp` is a stable six-character code for the role, so a link keeps working when roles are added or renamed; anything unrecognised, or no param at all, falls to the default role.
-- **The Income page opens on the role you actually hold.** `defaultSourceKey` ranks a current role over a past one, then the latest start date, then the latest end date; a stored choice still wins, under the `.v2` storage key.
-- **A commute is costed on what the car actually runs on.** A `Runs on` selector switches the fuel inputs between `mpg` + `$/gal` and `mi/kWh` + `$/kWh`, and an electric option can be marked **free at the office**, which takes the energy cost to zero while parking and tolls still count.
-- **Interview-round rows say when, not when-touched.** Each row reads `Interview 1 Oct · Heard 1 Jul` — the next linked event and the date the current round was recorded (`current_stage_on`, the timeline entry matching the application's status).
-- **A hidden-row count is a button, not a caption.** `SummaryCard` takes `previewCount` and reveals the rest in place; the rounds card no longer ends on a dead `15 more in an interview round`.
-- **Every open application appears in exactly one card.** Today used to run three lists off the same
-  measurement — `stalledRounds`, `needsFollowUp` and the interviewing filter all read
-  `current_stage_on` — so a role that had been interviewing and silent for months was printed three
-  times under three names, which is what made the page unreadable at 19 + 20 + 20 rows.
-  `utils/Overview/todayBuckets.ts` now assigns each open application one bucket (`moving`, `nudge`,
-  `stale`, `cold`) and a test asserts the buckets partition the set. Running long survives as a row
-  annotation rather than a card, because as a card it restated the whole list.
-- **Three weeks of silence is demoted, not surfaced.** `STALE_AFTER_DAYS = 21` keeps those rows off
-  the page entirely: a `Stat` may carry a `panel`, and the strip's **Gone quiet** cell opens the list
-  as a popover on a desktop and a bottom sheet on a phone — the same split `TimeOffTracker` uses. It
-  went from a full card, to a one-line strip, to no section at all, because the count was already on
-  the page and a second element restated it.
-- **A Django route is case-sensitive, so an uppercase path 404s and the page blames the network.**
-  `getContacts` called `/career/Contacts/` while the router registers `contacts`, so the whole
-  Contacts page rendered "Contacts are unavailable" — the data was fine and the URL was wrong.
-  Unauthenticated probing tells the two apart without logging in: a real route answers 401 and a
-  missing one answers 404. `npm run lint:api` runs inside `npm run quality` and fails on any
-  uppercase segment in an `api.get/post/patch/put/delete` path.
-- **`components/layout/PageShell.tsx` owns page chrome, and a check enforces it.** Every page used
-  to pick its own outer wrapper — `space-y-6`, `space-y-5`, `mb-6`, `mb-4`, `p-0`, `padding: 0` —
-  and three of them capped their own width on top of the `max-w-[1560px]` the layout already
-  applies, so Overview sat 108px narrower per side than Availability and its heading was 26px
-  against everyone else's 38px. `PageShell` renders the header through `PageActionToolbar`, owns the
-  vertical rhythm, and takes `width="reading"` for the one deliberate exception plus `above` for a
-  section picker that belongs over the title. `npm run lint:pages` runs inside `npm run quality` and
-  fails when a page renders `PageActionToolbar` directly or caps its own width; the reading-width
-  list must match exactly, so a new offender cannot hide by being added to it.
-- **`components/Overview/SummaryRowList.tsx` owns the row markup.** `SummaryCard` renders it and so
-  does the Gone quiet panel, so a linked row looks the same in a card and inside a popover; copying
-  the twenty lines of `<li><Link>` into the second caller is how one of them ends up behind.
-- **A stage's colour is the same everywhere it appears.** The Overview's interview-round pills drew their own blue while the applications table used the stage's configured `tone`, so `R1` was two different colours on two screens; both now render `StatusBadge`, so the full stage name and colour match the applications table.
-- **Clicking the calendar opens the editor.** Events and time off both go straight to their form; the read-only detail card stays for the list and deep links.
-- **A multi-day entry can be edited whole or one day at a time.** The editor offers `All N days` alongside every date in the run, so picking the wrong day on the grid is a click away, not a reopen.
-- **Time off and events share one date section.** `SpanDateFields` owns `Date`, `Multi-day` and `End Date` for both editors, and `SpanDetailModal` owns the detail card.
-- **Grouped time off draws as one connected bar**, like a multi-day event, instead of a separate chip on every day it covers.
-- **Drag to reschedule**: in month view an event or time-off entry can be dragged onto another day to move it.
-- **Availability** (`/`): Weekly calendar with user-defined week-long availability text generation, federal holiday integration, event badges, date navigation, create/edit actions for events and time off, and **Multiple Public Booking Links** support.
-- **Responsive Availability Workspace**: The text generator, booking setup/configuration, public-link cards, booking cards, and generated time rows use phone, tablet, and wide-desktop layouts without horizontal page overflow; long timezones and user-provided text wrap inside their cards.
-- **Events** (`/events`): Create/edit/delete interview events; create/edit time off from the calendar; apply the configured default event category; set end times with 15-minute to 3-hour quick-duration options; link to applications; timezone display; event type tags
-- Google Sheets sync can import mapped sheet rows as Events for interview calendars
+One calendar across three pages, with the same header, month/week/day views and editors.
 
-> User-created entries are called **time off** throughout the UI; **holiday** now refers only to observed/federal holidays, which are fixed calendar facts rather than something you enter. The `/holidays` route, the `CustomHoliday` model, and the offer benefit field `Holiday Days` keep their existing names.
-
-- **Holidays** (`/holidays`): Observed holiday + time-off management; create/edit events and time off from the calendar; group multi-day collections; ignore specific holidays; **custom tabs** defined in Settings (e.g., "Company Holidays") for organizing time off beyond the built-in Custom/Federal split; tab-aware bulk edit with "Leave unchanged" sentinel to avoid accidental tab wipes
-- **⚡ Conflict Radar**: `NotificationBell` refreshes unresolved conflicts, upcoming events, and task deadlines through the standard API flow, which keeps the UI compatible with local dev, Docker, and Vercel deployments
-
-
-- **One-time money is called a one-time payment, and disappears when there is none.** With no sign-on, no relocation and no shortfall, the line read `$0 + $0 = $0` and two of the five steps were `- $0` then `+ $0`.
-
-#### Reliability fixes from the UX review
-
-- **A failed source no longer reads as an all-clear.** The Overview loads six sources
-  independently; any that fail are named in a banner with a per-source **Retry**, and the
-  "Nothing needs you today" reassurance renders only when every source answered
-  (`canSayAllClear`). Previously a failed read left the card absent and the page said the day was
-  clear.
-- **"Next up" respects the clock, not just the date.** `hasElapsed` drops a timed event once its
-  start time has passed, while an all-day event stays put until the day ends — a 09:00 interview
-  used to sit under Next up all afternoon. The tests pass an explicit `nowMinutes` so they do not
-  quietly depend on the hour the suite runs at.
-- **The counted week is the displayed week.** `appliedThisWeek` and `movedThisWeek` used a rolling
-  seven days while the heading printed Monday–Sunday, so the numbers disagreed with their own label
-  six days out of seven. Both now read the same `weekWindow`.
-- **Drafts survive.** `guardedNavigate` in `Layout` is the single route change the shell owns;
-  `MobileBottomNav` and `SidebarFooter` were handed the raw `navigate` and discarded work without
-  asking. Signing out asks first too. The application editor tracks typed-in changes (not
-  programmatic `setFieldsValue`) and confirms before a close, cancel, or add-modal dismiss throws
-  them away, via the shared `confirmLeaveDialog` the shell already used.
-- **Summary rows open the record they name**, through `?event=`, `?taskId=`, `?offer=` and
-  `?open=`; the offer link scrolls its card into view and rings it. Vague `All` / `Calendar` /
-  `Compare` labels now say what they open.
-- **An empty account gets a first step** — *Add first application* and *Import from a job link* —
-  while an established user's quiet day keeps its existing wording.
-- **A network blip no longer signs you out.** `isSessionRejection` clears tokens only on a 4xx from
-  the refresh endpoint; a dropped connection or a 502 keeps the session, because the next request
-  can still succeed with the same tokens.
-- Card header links are a 36px target rather than a 16px line of text, dashboard skeletons announce
-  themselves to a screen reader, and `AppErrorBoundary` no longer blames every render error on a
-  deploy — it offers a way out to the Overview alongside reload, and shows the message.
+- **Availability** (`/availability`): a weekly calendar that generates shareable availability text for a chosen range and timezone, as a combined summary or a detailed per-day list, with a copy-all action. Federal holidays and event badges show through.
+- **Public booking links**: several links per account, each configurable, letting someone book a slot without an account.
+- **Events** (`/events`): create, edit and delete interview events; set an end time from 15-minute to 3-hour quick durations; link an event to an application; apply the configured default category; pick the display timezone; tag by event type.
+- **Holidays** (`/holidays`): observed holidays and personal time off together, with custom tabs defined in Settings for organising leave beyond the built-in Custom and Federal split, bulk edit that leaves a field unchanged unless you set it, and the option to ignore a specific holiday.
+- **Time-off tracker**: a button beside the calendar arrows showing days remaining for the role on screen, opening the year's allowance, accrual and what you have taken.
+- **Reminders, multi-day and all-day entries** are supported on events, and a multi-day entry can be edited as a whole run or one day at a time.
+- **Drag to reschedule** an event or a day of time off on the calendar; clicking a day opens the editor directly.
+- **Grouped time off draws as one connected bar** across the month rather than a chip per day.
+- **⚡ Conflict radar**: the notification bell surfaces unresolved conflicts, upcoming events and task deadlines.
 
 ### 📊 Analytics (`/analytics`)
 
-- 🔍 **Decision outcome insights** (Job Search tab): the Decision Journal read as a set rather than
-  one entry at a time — **which concerns became real**, **which assumptions were wrong**, and
-  **which criteria have historically mattered**. It works because the journal records the judgement
-  in a countable shape: concerns are itemised rows each marked `Became real` / `Never happened` /
-  `Still unclear`, and the criteria a decision rested on are picked from the **scorecard's own
-  categories**, then graded `Better` / `As expected` / `Worse` at each look-back. A stacked bar per
-  criterion shows how the calls that rested on it actually turned out, against how often it drove
-  one. **Nothing is asserted early**: patterns stay hidden until three decisions have been looked
-  back on, and the panel says so rather than going blank; a criterion judged fewer times is flagged;
-  a criterion is only called a wrong assumption when it came in worse on *more than half* its judged
-  decisions, so an even split is left alone. Each sentence names the counts it rests on
-  (`Trajectory came in worse than you expected on 3 of 4 decisions`) rather than asserting a trend
-  bare. The concern hit rate cuts both ways — worries that mostly come true are worth negotiating
-  on, worries that mostly do not may be costing you offers you would have been happy in
-- 📄 **Resume version analytics** (Job Search tab): which resume actually worked, built entirely from
-  `Application.submitted_documents` — the exact version sent is already on record, so nothing new is
-  asked for. One card per version showing applications, response / interview / offer rates with the
-  raw counts beside each, and bar breakdowns **by role type** and **by source** (source is read off
-  the job link's host, so no field to fill in). A segmented control switches which rate the cards and
-  bars are read on. **Sample size is treated as part of the finding**: a version under the backend's
-  minimum shows `N more applications before these rates mean much` in place of its comparison line,
-  its bars are greyed, and `bestVersion` refuses to name a winner unless at least two versions clear
-  the minimum and one genuinely leads — a tie is not a finding. The winner is ranked on **interview
-  rate, not offer rate**, since an offer rate over a handful of applications swings on a single yes
-  while getting into the room is the part the resume controls. Applications with no resume recorded
-  are counted and named in the header rather than silently dropped, so a short list of versions
-  cannot be mistaken for a short job search
+Two dashboards — Job Search and Availability — built from draggable widgets.
 
-- **Availability Analytics**: Total Events, Events This Week, Schedule Load and Events by Category, all year-scoped
-- **Schedule Load**: events per week across the span the data actually covers, the busiest single day, how many days hold two or more, and the weekday and hour they usually land on. This replaces Average Duration, which never moved: on a calendar that is almost entirely interviews they are all about an hour, so the number carried no information
-- **Shared activity chart**: the events tab uses the same day/week/month chart as applications — custom date ranges, drill-down and year anchoring included — instead of a hardcoded last-seven-days bar. The counted noun is a prop, so one component serves both tabs. Multi-day events are counted once on the day they start, so a week-long commitment does not read as a week of separate events
-- **Retired availability widgets**: Average Duration and the old Daily Activity bar are normalised out of saved layouts, and anyone who had Average Duration gets Schedule Load in its place. Without that step a saved layout would keep an id nothing renders, leaving an empty card in the grid
-- **Trend chip on Response Rate**: a ▲/▼ delta in percentage points against the previous comparable period, with the full cohort arithmetic in its tooltip.
-- **Actionable watch list**: each row links to `/applications?application=<id>`, which opens that application's drawer directly, and carries a "Ghosted" action that takes it out of the pipeline and off the list.
-- **Data Health**: blank fields and unlinked interviews in one card, each with what filling it would unlock — `Level · blank on 805 of 806 · Fill it to compare response rates by seniority`. Reporting an empty breakdown is less useful than saying why it is empty
-- **Reply timing**: how long replies took to arrive, bucketed with a cumulative share. Bars are scaled to the busiest bucket rather than to the total — against the total the largest bar reached only 63% and the rest were slivers in a wide empty track, which is the opposite of what a distribution should show.
-- **Best Response Rate**: replaces the old offer-rate "Best Odds" panel, which ranked companies on offers and let one company at two applications outrank everything at "50%". Segments are ranked on reply rate instead and anything under 20 applications is omitted rather than shown as a rate its sample cannot support
-- **Per-stage staleness context**: the funnel shows the median days each stage typically takes, and every watch-list row says how far past normal _for its own stage_ it is (`93 days past the 6d typical for this stage`) rather than only how long it has been waiting. Stages with too little history are left uncompared
-- **Small shares keep a decimal**: any percentage that would round to `0%` while its count is non-zero renders as one decimal instead (`2 reached · 0.2%`), falling back to `<0.1%` below a tenth of a percent. A flat `0%` beside a real count read as though the funnel never reached that stage. Applied to the funnel, the location and application-age lists, and the offer-rate summaries
-- **Watch list**: every stale application, longest-waiting first, with a count beside the heading and the date the wait is measured from (`99 days in 1st Round · since May 8, 2026`). It was capped at four rows, which hid 12 of 16 and made a run of applications synced on the same day look like a capped number rather than a genuine tie. Long lists scroll instead of stretching the card
-- **Eight independent widgets**: Headline Numbers, Application Funnel, Watch List, Reply Timing, Outcomes, Best Response Rate, Top Locations and Application Age are each their own card — separately toggleable, reorderable by drag, and individually sized on the 4-column grid.
-- **Application Funnel**: Counts how many applications _ever reached_ each stage from the timeline, not how many currently sit there — an application rejected after the 3rd round still counts as having reached it, so the pipeline reads several times larger than current status alone.
-- **Aggregates come from the server**: the career tab reads `/career/application-stats/` instead of fetching every application to count them in the browser, cutting that request from ≈960 KB to ≈3 KB.
-- **Activity chart**: switch between Day, Week and Month, pick a range in that unit (Last 14/30/60/90 days, 8/12/26/52 weeks, 6/12/24 months, or All time), or set exact dates in the date picker that sits beside them — e.g. 08/10/2026 to 08/13/2026 — and click any bar to break it down — month opens into weeks, week into days, with a breadcrumb back out.
-- **Custom Widget Engine**: Natural language queries (e.g., "rejections this month", "events by category") — common queries resolve locally and free-form queries send a frontend-built data summary through the authenticated backend AI relay
-- **Drag-and-Drop Dashboard**: Reorder and save widget layouts with `dnd-kit`
+- **Widgets are placed by dragging** and each folds to its header, so a collapsed card takes only the space it needs. Any tab can be pinned to the mobile toolbar.
+- **Application funnel**, **response rate** with a trend chip, **activity chart** and **best response rate** cover how the search is going; aggregates are computed server-side rather than from the page you are looking at.
+- **Per-stage staleness**: how long a round has run against how long that stage has historically taken you.
+- **Watch list**: the applications that need a decision, with the reason each is listed.
+- **Data health**: what is missing from your records that would make the other numbers better.
+- **Reply timing**: when responses actually arrive, so a follow-up lands at a useful moment.
+- 🔍 **Decision outcome insights**: reads the Decision Journal back as a set — which concerns became real, which assumptions were wrong, and which criteria have historically mattered.
+- 📄 **Resume version analytics**: which version went out, and how each performed.
+- **Availability analytics** and **schedule load**: how your week is actually filling up.
+- **Custom widget engine**: define your own widget from the recorded data and place it alongside the built-in ones.
 
 ### ✅ Action Items (`/tasks`)
 
@@ -435,51 +195,18 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 
 ### ⚙️ Settings (`/settings`)
 
-- **Consistent section cards**: one shared `SettingsSection` renders every section's shell, heading, description and anchor.
-- **Unsaved-changes dots**: the Save button is global, so a pending edit in General was indistinguishable from no changes while standing on Navigation. Each tab now shows an amber dot when its own saved fields differ from the last loaded copy, from an explicit field-to-tab map. AI, Integrations and Security save inline and own no fields there, so they never light up falsely
-- **Settings search**: searches section titles plus keywords, and selecting a result switches tab and scrolls the card into view (`ghost` → Job Hunt Settings, `sidebar` → Navigation, `api key` → AI Provider).
-- **Reset to default**: the Navigation reset was an antd text button — a bare label with no affordance — carrying `UndoOutlined`, whose open arc reads as a clipped circle at that size.
-- **Tab bar**: each of the six tabs carries an icon, and the active tab's one-line description sits under the bar instead of leaving six bare words to guess from
-- **The time picker opens over its card, not inside it.** `FriendlyTimeInput`'s desktop panel is portaled to the body, positioned against the field, and flips up or shrinks to fit the viewport; a phone keeps its own bottom sheet.
-- **One availability card per day pattern, holding as many time blocks as you like.** Two windows on the same days share a card with an **Add time block** button and one day selector; editing the days moves every block in it.
-- **Unlimited PTO reuses the PTO Days field rather than adding a second one.** Ticking it turns that field into `PTO Days you'd take`, defaulted to 20 and still editable, with a tooltip saying it is scored on what you would really book; your fixed PTO bank is kept underneath and comes back if you untick.
-- **An entry's label is what identifies it, so it leads the row.** The date shrinks to a muted prefix and the reason and `Backdated` chips shrink behind it; with no label the reason takes the lead instead of being repeated as a chip.
-- **Raise History flags a base that has moved underneath it.** A raise stores the pay it started from, so correcting the role's base afterwards leaves the two disagreeing. The bar offers to re-chain from the current figure, keeps the caveat in a tooltip, and hides once the affected year is past.
-- **It also states what the raises did.** `1 raise recorded, re-rating 6 paychecks from 2026-10-01` — or `No raises are recorded against this role`, which is what a raise saved against a different offer looks like.
-- **Insurance premiums are one value, shared with the offer.** The three premiums, a `Covers dependents` toggle and a dependent line for each read from the linked offer and write back to it on save, so premiums no longer differ between tax years.
-- **A figure the offer has moved past asks about itself.** A pinned salary, bonus or equity grant that the linked offer later changes raises a pulsing prompt naming both numbers, with **Use the new value** or **Keep mine**.
-- **A paycheck a raise cannot reach asks the same way.** Editing one paycheck's deductions used to pin its gross, so a later raise could never re-rate it. The same prompt names both rates and tags each affected paycheck — the tag opens it — releasing only those pins.
-- **An unlinked offer is tagged in the role picker.** A current offer no Experience claims is its own income source, so the same job can list twice; the offer-only entry carries an `Offer only` tag rather than being merged, since an offer you have not started is a real separate row.
-- **401(k) rates change by date, and can climb on their own.** Under Your contribution, add a rate change from a date — paychecks before it keep the standing rate — and switch on an annual increase, which defaults to 1 point a year capped at 15%. A rate typed on a single paycheck still wins over both.
-- **The role picker groups by the year you are viewing.** A job you left in 2026 shows under `Still yours at the end of 2025` when 2025 is on screen, not under past roles, and that year opens on the role you actually held then.
-- **The Income summary states where its salary came from.** `$88,899 a year, from the linked offer` — or from the Experience record, the role's hourly rate, or a saved override, which outranks the rest.
-- **A raise announced before it starts is paid from its effective date.** The schedule steps on the later of the notified and effective dates, so an early announcement does not raise your pay early, while a backdated raise still pays from the day payroll acted.
-- **A logged raise that moves no paycheck explains itself.** A banner across the Income summary says why — no linked offer, an incomplete entry, a date past the year's last paycheck, or a new base that already matches the one in use.
-- **Bonus is entered as a percent of base by default, and follows the base.** Where a base and a bonus already exist the field opens on `% of base`, and changing the base rescales the bonus at the percentage shown; a record with no base yet opens on dollars.
-- **Offer, Experience and Income read one base and bonus.** A role linked to an offer takes the offer's figures; a role without one uses its own; raises logged against the offer step the paychecks from there. The Income role picker says which record its pay came from so an edit lands in the right place.
-- **A raise row shows what changed, and the bonus follows the base.** Each After field carries the amount and percent difference against its Before value, base can be entered as an hourly rate (annualised at 2,080 hrs), and the bonus moves with the base at the share it already had until you edit it yourself.
-- **A raise opens with no type, and Add stays disabled until it has one.** The form no longer guesses Merit increase; the button greys out while Type or either date is blank and its tooltip names what is missing.
-- **Changing job mid-bonus-cycle is priced as a one-time cost.** The scorecard charges the bonus you forfeit by leaving and nothing else — the new role's own bonus is already counted in the recurring figure above — and the one-time line names only the components that are not zero.
-- **Availability & Job Hunt Settings**: work hours, work days, availability range, default event duration, buffer time, primary timezone, ghosting threshold, default event category
-- **Mobile modal actions**: `MobileModal` renders a bottom drawer under 768px, and antd's `Drawer` does not synthesise the default OK/Cancel footer that `Modal` does — so any modal relying on `okText`/`onOk` alone lost its action buttons on a phone.
-- **Multi-day events on mobile**: month-view cells deliberately exclude multi-day events because they are drawn as span bars across the row, but those bars are `hidden sm:grid` — so on a phone a multi-day event rendered in neither place and was invisible.
-- **Multi-day end date**: the end-date picker disables any day before the start, and moving the start past an existing end clears the end date rather than leaving an impossible range sitting in the form. The existing form rule stays as a backstop, and the API rejects the pair independently
-- **Navigation** (Settings → Navigation): one section for the whole sidebar, replacing the separate Mobile Toolbar and Navigation Visibility cards.
-- **Settings lives in the sidebar footer**: it used to sit alone in a trailing unlabelled group under Analytics, which read as a stray page rather than app configuration.
-- **Mobile Toolbar**: the live preview at the top of Navigation _is_ the editor — drag the tiles to reorder up to four account-synced slots, and pin or unpin from any row below.
-- **AI Provider**: configure Claude, Gemini, OpenAI, OpenRouter, or Custom providers for cover letters, JD matching, job URL import, negotiation advice, and analytics widgets; paste a chat-completions curl command to fill endpoint/model/key; the key is stored encrypted on the backend and never re-shown after save
-- **Integrations**: connect/disconnect Google OAuth for private read-only Sheets access, pick from available Google spreadsheets and worksheet tabs, create Google Sheets syncs, select Applications or Events, auto-map sheet columns, configure the daily sync time/timezone, adjust/add/remove mapped fields when needed, preview rows, review detected application imports, compare possible duplicates side by side, resolve duplicates, inspect last-run change history, and run syncs immediately
-- **Security Dashboard**: review deployment posture, auth throttles, Google Sheets sync health, OAuth scope readiness, and Vercel edge/WAF setup status from one Settings tab
-- **Multiple Availability Time Ranges**: define non-contiguous availability windows with per-range day chips (e.g., Mon–Thu 10am–3pm, Fri 1pm–4pm) via an add/remove range UI; falls back to the legacy single start/end time when no ranges are configured
-- **Manage Categories**: add/edit/delete event categories with color + icon; per-item lock (persisted to DB via PATCH); section-level lock
-- **Application Stages**: drag the handle on any stage to reorder it. Order is meaningful — the analytics funnel renders stages in this sequence — and dragging is disabled for a locked stage or a locked section, so the lock actually protects the row
-- **Employment Types**: fully configurable employment types used across the Experience page — add/edit/delete with label, auto-generated slug value, and 10-color swatch picker; per-item lock; section-level lock; saved with Settings
-- **Holiday Manager Tabs**: define custom tabs (name → auto-generated ID) that appear as tabs in the Holiday Manager; per-item lock; section-level lock; saved with Settings
-- **Profile & Identity** (`/profile`): Standalone management page for your professional identity:
-  - **Visual Identity**: Shared identity avatar with profile photo management (upload/delete via Vercel Blob), synced with sidebar and public booking defaults.
-  - **Account Security**: Secure password change flow with automatic logout for session protection.
-  - **Personal Details**: Update first name, last name, and display name (syncs to public booking links).
-  - **Privacy & Export Center**: Download account exports, create browser-encrypted local exports, restore backups, and schedule account deletion with typed confirmation plus a 14-day login-to-cancel grace period.
+Six tabs, each a set of section cards with a global Save.
+
+- **General**: working hours, timezone, event reminders and job-hunt thresholds. Availability is one card per day pattern, holding as many time blocks as that pattern needs.
+- **AI provider**: bring your own key for cover letters, JD matching and custom widgets. Keys are stored encrypted and all AI traffic is relayed through the API.
+- **Integrations**: connect Google and sync a sheet into Applications or Events, with read-only access and a history of each sync run.
+- **Security**: active sessions, sign-in history and account protection.
+- **Organize**: categories, employment types, time-off colours and pipeline stages. A stage's colour is used everywhere that stage appears.
+- **Navigation**: reorder the sidebar, hide entries you do not use, and choose what sits in the mobile toolbar. The page you are on is never hidden from you, and `Reset to default` restores the shipped order.
+- **Light and dark themes**: one preference for the whole product, persisted per account, with a dedicated ink palette for dark. A category colour you picked renders the same in both.
+- **Income roles and years** can be hidden from the Income pickers, and hiding never empties one — the last visible entry cannot be switched off.
+- **Pay and benefits defaults** that other pages read: insurance premiums shared with the offer form, 401(k) rates that change by date with optional auto-escalation, and PTO settings where unlimited PTO re-labels the existing days field rather than adding a second one.
+- **Settings search** matches section titles and keywords, switching tab and scrolling to the result; a per-section dot marks which one has a pending edit.
 
 ### 🧩 Form Validation
 
@@ -657,13 +384,21 @@ Output in `dist/`.
 
 ### Run Linter
 
+`npm run quality` is what `npm run build` runs first, and what the pre-commit hook runs: ESLint,
+the CSS comment check, the page-shell, API-path and one-owner checks, then Prettier.
+
 ```bash
-npm run lint
+npm run lint          # ESLint only
+npm run lint:css      # comment style in src/**/*.css
+npm run lint:pages    # every page renders its header through PageShell
+npm run lint:api      # no uppercase segment in an api.* path
+npm run lint:owners   # no second copy of a shared helper
+npm run quality       # all of the above, plus Prettier
 ```
 
 ## 📁 Project Structure
 
-The tree is **layered, not colocated**: a file lives in the layer that says *what* it is, inside a folder named for the feature that *owns* it. `pages/*` is one `index.tsx` per route and nothing else — no page-local `components/`, `hooks/` or `logic/` folder. Colocation was tried and abandoned: `pages/OfferComparison/` had reached 104 files in a single directory, `pages/Income/` 70 and `pages/Experience/` 69, with no two pages organised the same way.
+The tree is **layered, not colocated**: a file lives in the layer that says *what* it is, inside a folder named for the feature that *owns* it. `pages/*` is one `index.tsx` per route and nothing else — no page-local `components/`, `hooks/` or `logic/` folder.
 
 
 ```
