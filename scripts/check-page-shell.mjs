@@ -30,6 +30,10 @@ for (const { name, source } of pages) {
   if (capsWidth(source) && !READING_WIDTH_PAGES.has(name)) {
     problems.push(`${name}: caps its own width. Layout already centres the page; drop the max-w-*.`);
   }
+  // An empty shell beside its content loses the shared vertical rhythm and nothing looks broken.
+  if (/><\/PageShell>/.test(source)) {
+    problems.push(`${name}: renders an empty PageShell. Put the page content inside it.`);
+  }
 }
 
 const capping = pages.filter((page) => capsWidth(page.source)).map((page) => page.name).sort();

@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import FriendlyTimeInput from '../inputs/FriendlyTimeInput';
 import { TIMEZONE_OPTIONS } from '../../lib/timezones';
 import { syncTimeValue } from '../../utils/Settings/sheetMapping';
@@ -11,10 +12,7 @@ type Props = {
 const SheetScheduleFields = ({ draft, updateDraft }: Props) => (
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div>
-      <label
-        id="google-sheet-sync-time-label"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label id="google-sheet-sync-time-label" className={FORM_LABEL_CLASS}>
         Daily Sync Time
       </label>
       <FriendlyTimeInput
@@ -33,10 +31,7 @@ const SheetScheduleFields = ({ draft, updateDraft }: Props) => (
       </p>
     </div>
     <div className="sm:col-span-2">
-      <label
-        htmlFor="google-sheet-sync-timezone"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label htmlFor="google-sheet-sync-timezone" className={FORM_LABEL_CLASS}>
         Sync Timezone
       </label>
       <select

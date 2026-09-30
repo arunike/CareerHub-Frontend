@@ -1,5 +1,5 @@
+import { confirmDestructive } from '../modals/confirmDestructive';
 import { Button } from 'antd';
-import Modal from '../modals/MobileModal';
 import type { Event, Holiday } from '../../types';
 
 export type EventDeleteScope = 'instance' | 'series';
@@ -28,7 +28,7 @@ export const confirmEventDeletion = (event: Event, onDelete: EventDeleteHandler)
       }
     };
 
-    const confirmation = Modal.confirm({
+    const confirmation = confirmDestructive({
       title: 'Delete recurring event?',
       content: `Choose what to delete for “${event.name}”.`,
       icon: null,
@@ -48,11 +48,10 @@ export const confirmEventDeletion = (event: Event, onDelete: EventDeleteHandler)
     return;
   }
 
-  Modal.confirm({
+  confirmDestructive({
     title: 'Delete event?',
     content: `Delete “${event.name}”? This cannot be undone.`,
     okText: 'Delete event',
-    okType: 'danger',
     cancelText: 'Keep event',
     onOk: () => onDelete(event, 'series'),
   });
@@ -61,11 +60,10 @@ export const confirmEventDeletion = (event: Event, onDelete: EventDeleteHandler)
 export const confirmHolidayDeletion = (holiday: Holiday, onDelete: HolidayDeleteHandler) => {
   if (holiday.is_locked || !holiday.id) return;
 
-  Modal.confirm({
+  confirmDestructive({
     title: 'Delete time off?',
     content: `Delete “${holiday.description || 'this time off'}”? This cannot be undone.`,
     okText: 'Delete time off',
-    okType: 'danger',
     cancelText: 'Keep time off',
     onOk: () => onDelete(holiday),
   });

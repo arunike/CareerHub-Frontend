@@ -1,3 +1,4 @@
+import { normalizeBenefitItem } from '../../utils/OfferComparison/benefitItem';
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { updateApplication } from '../../api';
 import { PlusOutlined } from '@ant-design/icons';
@@ -24,7 +25,6 @@ import { useScenarioApplications } from '../../hooks/OfferComparison/useScenario
 import {
   OFFER_STATUS_FILTERS,
   type ApplicationLike as Application,
-  type BenefitItem,
   type OfferStatusFilter,
 } from '../../utils/OfferComparison/calculations';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -41,14 +41,6 @@ const LazySectionFallback = () => (
     <Spin size="large" />
   </div>
 );
-
-const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
-  id: item.id || fallbackId,
-  label: item.label || '',
-  amount: Number(item.amount) || 0,
-  frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
-  is_taxable: Boolean(item.is_taxable),
-});
 
 const OfferComparison = () => {
   const location = useLocation();

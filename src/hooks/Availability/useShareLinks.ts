@@ -1,5 +1,5 @@
+import { confirmDestructive } from '../../components/modals/confirmDestructive';
 import { useEffect, useState } from 'react';
-import Modal from '../../components/modals/MobileModal';
 import type { MessageInstance } from 'antd/es/message/interface';
 import {
   cancelHostPublicBooking,
@@ -250,12 +250,11 @@ export const useShareLinks = ({
   };
 
   const handleCancelHostBooking = (booking: PublicBooking) => {
-    Modal.confirm({
+    confirmDestructive({
       title: `Cancel booking with ${booking.name}?`,
       content:
         'This cancels the booking from your host account and removes its locked calendar event. Guest reschedule/cancel cutoff settings do not apply to host actions.',
       okText: 'Cancel booking',
-      okType: 'danger',
       cancelText: 'Keep booking',
       onOk: async () => {
         try {

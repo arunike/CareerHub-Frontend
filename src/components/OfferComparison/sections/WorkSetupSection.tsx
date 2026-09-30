@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../../inputs/formControls';
 import UnitNumberInput from '../../inputs/UnitNumberInput';
 import { CONTROL_CLASS } from '../../inputs/formControls';
 import CommuteOptionsEditor from './CommuteOptionsEditor';
@@ -44,9 +45,7 @@ const WorkSetupSection = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-          Work Mode
-        </label>
+        <label className={FORM_LABEL_CLASS}>Work Mode</label>
         <select
           value={workMode}
           onChange={(e) => onWorkModeChange(e.target.value as 'REMOTE' | 'HYBRID' | 'ONSITE')}
@@ -59,9 +58,7 @@ const WorkSetupSection = ({
       </div>
       {showRtoDays && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            RTO Days / Week
-          </label>
+          <label className={FORM_LABEL_CLASS}>RTO Days / Week</label>
           <UnitNumberInput
             unit="days/wk"
             min={0}
@@ -73,9 +70,7 @@ const WorkSetupSection = ({
         </div>
       )}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-          Flexible Hours Policy
-        </label>
+        <label className={FORM_LABEL_CLASS}>Flexible Hours Policy</label>
         <select
           value={flexibleHoursPolicy || 'UNKNOWN'}
           onChange={(e) => onFlexibleHoursPolicyChange?.(e.target.value)}
@@ -88,9 +83,7 @@ const WorkSetupSection = ({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-          Business Travel Frequency
-        </label>
+        <label className={FORM_LABEL_CLASS}>Business Travel Frequency</label>
         <select
           value={travelFrequency || 'UNKNOWN'}
           onChange={(e) => onTravelFrequencyChange?.(e.target.value)}

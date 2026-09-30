@@ -1,3 +1,4 @@
+import { moneyWhole as formatCurrency } from '../../utils/Income/format';
 import clsx from 'clsx';
 import type { ScenarioRow } from '../../utils/OfferComparison/offerAdjustmentsTypes';
 import { isPastRole } from '../../utils/OfferComparison/calculations';
@@ -22,13 +23,6 @@ type Props = {
   rows: CompensationSimulatorDisplayRow[];
   equityGrowthPct: number;
 };
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0);
 
 const CompensationSimulatorMobile = ({ rows, equityGrowthPct }: Props) => (
   <div className="divide-y divide-slate-200 dark:divide-white/[0.08] md:hidden">

@@ -1,3 +1,4 @@
+import { useLoadStatus } from '../../hooks/useLoadStatus';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Form, message, Grid } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
@@ -58,8 +59,7 @@ const Applications = () => {
 
   const [applications, setApplications] = useState<CareerApplication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState(false);
+  const { loading, failed: loadError, run } = useLoadStatus(false);
   const [applicationsTotal, setApplicationsTotal] = useState(0);
   const [applicationSummary, setApplicationSummary] = useState(DEFAULT_APPLICATION_SUMMARY);
   const [applicationOrdering, setApplicationOrdering] = useState<ApplicationOrdering>();
@@ -108,49 +108,50 @@ const Applications = () => {
     clearApplicationFilters,
   } = useApplicationFilters({ applications, setSelectedRowKeys });
 
-  const fetchApplications = useCallback(async () => {
-    try {
-      setLoading(true);
-      setLoadError(false);
-      const appsResp = await getApplications({
-        page: currentPage,
-        page_size: APPLICATION_PAGE_SIZE,
-        search: debouncedSearchText || undefined,
-        status: statusFilter !== 'ALL' ? statusFilter : undefined,
-        employment_type: empTypeFilter !== 'ALL' ? empTypeFilter : undefined,
-        location: locationFilter !== 'ALL' ? locationFilter : undefined,
-        is_locked: isLockedFilter !== undefined ? String(isLockedFilter) : undefined,
-        year: selectedYear,
-        ordering: applicationOrdering,
-      });
-      const data = appsResp.data as CareerApplication[] | PaginatedApplicationsResponse;
-      if (isPaginatedApplicationsResponse(data)) {
-        setApplications(data.results);
-        setApplicationsTotal(data.count);
-        setApplicationSummary(data.summary || summarizeApplications(data.results, data.count));
-      } else {
-        setApplications(data);
-        setApplicationsTotal(data.length);
-        setApplicationSummary(summarizeApplications(data));
-      }
-    } catch (error) {
-      setLoadError(true);
-      messageApi.error('Failed to load applications');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    applicationOrdering,
-    currentPage,
-    debouncedSearchText,
-    empTypeFilter,
-    isLockedFilter,
-    locationFilter,
-    messageApi,
-    selectedYear,
-    statusFilter,
-  ]);
+  const fetchApplications = useCallback(
+    () =>
+      run(
+        async () => {
+          const appsResp = await getApplications({
+            page: currentPage,
+            page_size: APPLICATION_PAGE_SIZE,
+            search: debouncedSearchText || undefined,
+            status: statusFilter !== 'ALL' ? statusFilter : undefined,
+            employment_type: empTypeFilter !== 'ALL' ? empTypeFilter : undefined,
+            location: locationFilter !== 'ALL' ? locationFilter : undefined,
+            is_locked: isLockedFilter !== undefined ? String(isLockedFilter) : undefined,
+            year: selectedYear,
+            ordering: applicationOrdering,
+          });
+          const data = appsResp.data as CareerApplication[] | PaginatedApplicationsResponse;
+          if (isPaginatedApplicationsResponse(data)) {
+            setApplications(data.results);
+            setApplicationsTotal(data.count);
+            setApplicationSummary(data.summary || summarizeApplications(data.results, data.count));
+          } else {
+            setApplications(data);
+            setApplicationsTotal(data.length);
+            setApplicationSummary(summarizeApplications(data));
+          }
+        },
+        (error) => {
+          messageApi.error('Failed to load applications');
+          console.error(error);
+        }
+      ),
+    [
+      applicationOrdering,
+      currentPage,
+      debouncedSearchText,
+      empTypeFilter,
+      isLockedFilter,
+      locationFilter,
+      messageApi,
+      run,
+      selectedYear,
+      statusFilter,
+    ]
+  );
 
   const {
     isImportModalOpen,

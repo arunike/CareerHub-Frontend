@@ -1,3 +1,4 @@
+import { useLoadStatus } from '../../hooks/useLoadStatus';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, Form, Grid, Input, Select, Table, Tag, message } from 'antd';
 import Modal from '../../components/modals/MobileModal';
@@ -54,8 +55,7 @@ const Documents: React.FC = () => {
   const [documentsTotal, setDocumentsTotal] = useState(0);
   const [documentsUnlocked, setDocumentsUnlocked] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const { loading, failed: loadError, run } = useLoadStatus();
   const [saving, setSaving] = useState(false);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [uploadingVersion, setUploadingVersion] = useState(false);
@@ -76,34 +76,34 @@ const Documents: React.FC = () => {
     }
   );
 
-  const fetchDocuments = useCallback(async () => {
-    try {
-      setLoading(true);
-      setLoadError(false);
-      const response = await getDocuments({
-        page: currentPage,
-        page_size: DOCUMENT_PAGE_SIZE,
-        year: selectedYear,
-      });
-      const data = response.data as Document[] | PaginatedDocumentsResponse;
-      if (isPaginatedDocumentsResponse(data)) {
-        setDocuments(data.results);
-        setDocumentsTotal(data.count);
-        // Counted server-side across every page; the current page cannot answer it.
-        setDocumentsUnlocked(data.unlocked_count ?? data.count);
-      } else {
-        setDocuments(data);
-        setDocumentsTotal(data.length);
-        setDocumentsUnlocked(data.filter((item) => !item.is_locked).length);
-      }
-    } catch (error) {
-      setLoadError(true);
-      message.error('Failed to load documents');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, selectedYear]);
+  const fetchDocuments = useCallback(
+    () =>
+      run(
+        async () => {
+          const response = await getDocuments({
+            page: currentPage,
+            page_size: DOCUMENT_PAGE_SIZE,
+            year: selectedYear,
+          });
+          const data = response.data as Document[] | PaginatedDocumentsResponse;
+          if (isPaginatedDocumentsResponse(data)) {
+            setDocuments(data.results);
+            setDocumentsTotal(data.count);
+            // Counted server-side across every page; the current page cannot answer it.
+            setDocumentsUnlocked(data.unlocked_count ?? data.count);
+          } else {
+            setDocuments(data);
+            setDocumentsTotal(data.length);
+            setDocumentsUnlocked(data.filter((item) => !item.is_locked).length);
+          }
+        },
+        (error) => {
+          message.error('Failed to load documents');
+          console.error(error);
+        }
+      ),
+    [currentPage, selectedYear, run]
+  );
 
   useEffect(() => {
     fetchDocuments();

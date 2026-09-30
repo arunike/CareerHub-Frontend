@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { Select, Tooltip } from 'antd';
 import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { describeSalaryBasis, type SalaryBasis } from '../../utils/Income/salaryBasis';
@@ -90,9 +91,7 @@ export const IncomeSummary = ({
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-                {source?.company ?? 'No role'}
-              </span>
+              <span className={SECTION_LABEL_CLASS}>{source?.company ?? 'No role'}</span>
               {source?.roleTitle ? (
                 <span className="truncate text-[11px] uppercase tracking-wider text-slate-400 dark:text-ink-500">
                   · {source.roleTitle}

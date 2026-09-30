@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import Modal from '../modals/MobileModal';
@@ -234,9 +235,7 @@ export const BatchOverrideModal = ({
 
       {customDeductions.length > 0 ? (
         <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Custom deductions
-          </span>
+          <span className={SECTION_LABEL_CLASS}>Custom deductions</span>
           <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
             {customDeductions.map((deduction) => (
               <Field
@@ -260,9 +259,7 @@ export const BatchOverrideModal = ({
 
       {allowances.length > 0 ? (
         <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Allowances
-          </span>
+          <span className={SECTION_LABEL_CLASS}>Allowances</span>
           <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
             {allowances.map((item) => (
               <Field
@@ -285,9 +282,7 @@ export const BatchOverrideModal = ({
       ) : null}
 
       <div className="mt-5 border-t border-slate-100 dark:border-white/[0.07] pt-4">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          Employer match
-        </span>
+        <span className={SECTION_LABEL_CLASS}>Employer match</span>
         <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           <Field label="Match on these paychecks" mixed={current.match === null}>
             <MoneyInput

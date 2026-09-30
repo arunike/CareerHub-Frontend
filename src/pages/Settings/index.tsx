@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../../components/inputs/formControls';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getUserSettings, updateUserSettings } from '../../api';
 import type { UserSettings } from '../../types';
@@ -333,10 +334,7 @@ const Settings: React.FC = () => {
             description="Thresholds the pipeline and analytics judge applications against."
           >
             <div>
-              <label
-                htmlFor="settings-ghosting-threshold"
-                className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-              >
+              <label htmlFor="settings-ghosting-threshold" className={FORM_LABEL_CLASS}>
                 Ghosting Threshold
               </label>
               <EditableNumberInput

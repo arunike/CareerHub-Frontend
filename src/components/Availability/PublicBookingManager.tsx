@@ -1,3 +1,4 @@
+import { confirmDestructive } from '../modals/confirmDestructive';
 import { useState } from 'react';
 import {
   CopyOutlined,
@@ -121,11 +122,10 @@ const PublicBookingManager = ({
   };
 
   const handleBulkDeleteLinks = () => {
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete Selected Links',
       content: `Are you sure you want to delete ${selectedLinkIds.length} booking links? This cannot be undone.`,
       okText: 'Delete',
-      okType: 'danger',
       onOk: () => {
         if (onDeleteLinks) {
           onDeleteLinks(selectedLinkIds);
@@ -136,11 +136,10 @@ const PublicBookingManager = ({
   };
 
   const handleBulkDeleteBookings = () => {
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete Selected Bookings',
       content: `Are you sure you want to delete ${selectedBookingIds.length} public bookings?`,
       okText: 'Delete',
-      okType: 'danger',
       onOk: () => {
         if (onDeleteBookings) {
           onDeleteBookings(selectedBookingIds);

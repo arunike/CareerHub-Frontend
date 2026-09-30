@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import type { DriftSummary, Reconciliation } from '../../utils/Income/tax/reconcile';
 import type { NextYearBonusEstimate } from '../../utils/Income/bonusSchedule';
 import { percent } from '../../utils/Income/format';
@@ -47,9 +48,7 @@ const Stat = ({
   return (
     <div className={`bg-white dark:bg-ink-900 px-6 py-5 ${className}`}>
       <div className="flex items-center gap-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          {label}
-        </span>
+        <span className={SECTION_LABEL_CLASS}>{label}</span>
         <FigureMath label={label} hint={hint} breakdown={breakdown} />
       </div>
       <div

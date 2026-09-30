@@ -101,9 +101,9 @@ const CalendarHeader = ({
   );
 
   return (
-    <div className="mb-4 flex flex-col gap-4 sm:mb-6 xl:flex-row xl:items-start xl:justify-between">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
+    <div className="mb-4 flex flex-col gap-4 sm:mb-6 xl:grid xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center xl:gap-x-6 xl:gap-y-3">
+      <div className="flex flex-col gap-3 xl:contents">
+        <div className="flex items-center justify-between gap-2 xl:col-start-1 xl:row-start-1">
           <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold text-slate-800 dark:text-ink-50 sm:text-xl">
             <CalendarOutlined className="text-lg text-slate-500 dark:text-ink-400" />
             {headerLabel}
@@ -112,7 +112,7 @@ const CalendarHeader = ({
           <div className="shrink-0 xl:hidden">{navCluster}</div>
         </div>
 
-        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 xl:col-start-1 xl:row-start-2">
           {categories.map((category) => {
             const categoryColor = getEventCategoryColor(category);
             const active = filters.eventCategoryIds.has(category.id);
@@ -215,9 +215,9 @@ const CalendarHeader = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 sm:items-end">
+      <div className="flex flex-col gap-2 sm:items-end xl:contents">
         {/* Shares the view-mode line; three right-hand rows left a dead gap down the middle. */}
-        <div className="calendar-header-controls flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+        <div className="calendar-header-controls flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end xl:col-start-2 xl:row-start-1">
           {pageControls}
           <div className="scrollbar-none -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
             <SegmentedToggle
@@ -233,7 +233,9 @@ const CalendarHeader = ({
           </div>
         </div>
 
-        <div className="hidden xl:flex">{navCluster}</div>
+        <div className="hidden xl:col-start-2 xl:row-start-2 xl:flex xl:justify-end">
+          {navCluster}
+        </div>
       </div>
     </div>
   );

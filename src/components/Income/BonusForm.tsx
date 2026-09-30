@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { AutoComplete, Button, DatePicker, Select, Switch, Tooltip } from 'antd';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -82,9 +83,7 @@ const SectionLabel = ({
   trailing?: React.ReactNode;
 }) => (
   <div className="flex items-baseline justify-between gap-3">
-    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-      {children}
-    </span>
+    <span className={SECTION_LABEL_CLASS}>{children}</span>
     {trailing}
   </div>
 );

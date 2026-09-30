@@ -13,10 +13,9 @@ import type { Holiday } from '../../types';
 import RecurrenceModal from '../../components/modals/RecurrenceModal';
 import PageShell from '../../components/layout/PageShell';
 import { PageState } from '../../components/feedback/PageState';
-import CalendarView from '../../components/CalendarView/CalendarView';
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
-import SegmentedToggle from '../../components/inputs/SegmentedToggle';
+import CalendarWorkspace from '../../components/CalendarView/CalendarWorkspace';
 import EventsFilterBar from '../../components/Events/EventsFilterBar';
 import { useEventsData } from '../../hooks/Events/useEventsData';
 import { useEventSelection } from '../../hooks/Events/useEventSelection';
@@ -25,10 +24,10 @@ import { useEventMutations } from '../../hooks/Events/useEventMutations';
 import EventEditorModal from '../../components/Events/EventEditorModal';
 import EventViewModal from '../../components/Events/EventViewModal';
 import { getCurrentYear } from '../../utils/yearFilter';
+import { useCalendarContentView } from '../../hooks/useCalendarContentView';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 import LinkInterviewsModal from '../../components/Events/LinkInterviewsModal';
-import YearFilter from '../../components/inputs/YearFilter';
 import EventsListSection from '../../components/Events/EventsListSection';
 import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
 
@@ -80,14 +79,7 @@ const Events = () => {
   } | null>(null);
   const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
 
-  const [contentView, setContentView] = usePersistedState<'list' | 'calendar'>(
-    'eventsContentView',
-    'calendar',
-    {
-      serialize: (value) => value,
-      deserialize: (raw) => (raw === 'calendar' ? 'calendar' : 'list'),
-    }
-  );
+  const [contentView, setContentView] = useCalendarContentView('eventsContentView');
 
   const {
     events,
@@ -267,42 +259,16 @@ const Events = () => {
     messageApi,
   });
 
-  const viewControls = (
-    <>
-      <SegmentedToggle
-        value={contentView}
-        onChange={setContentView}
-        wrapperClassName="page-toolbar-view-switch w-max rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-1"
-        buttonClassName="px-3 py-1.5"
-        options={[
-          {
-            value: 'list',
-            label: 'List',
-            activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
-          },
-          {
-            value: 'calendar',
-            label: 'Calendar',
-            activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
-          },
-        ]}
-      />
-      <YearFilter
-        selectedYear={selectedYear}
-        onYearChange={handleYearChange}
-        availableYears={availableYears}
-        className="toolbar-select"
-      />
-      <Select
-        aria-label="Display timezone"
-        value={normalizeTimeZone(userTimezone)}
-        onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
-        className="toolbar-select w-full sm:w-[220px]"
-        showSearch
-        optionFilterProp="label"
-        options={TIMEZONE_OPTIONS}
-      />
-    </>
+  const timezoneControl = (
+    <Select
+      aria-label="Display timezone"
+      value={normalizeTimeZone(userTimezone)}
+      onChange={(value) => setUserTimezone(normalizeTimeZone(value))}
+      className="toolbar-select w-full sm:w-[220px]"
+      showSearch
+      optionFilterProp="label"
+      options={TIMEZONE_OPTIONS}
+    />
   );
 
   return (
@@ -349,53 +315,7 @@ const Events = () => {
               actionLabel="Retry loading events"
               onAction={() => void fetchData()}
             />
-          ) : contentView === 'list' ? (
-            <>
-              <div className="mb-3 flex flex-wrap items-center gap-2">{viewControls}</div>
-              <EventsFilterBar
-                categoryFilter={categoryFilter}
-                onCategoryFilterChange={setCategoryFilter}
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
-                sortBy={sortBy}
-                onSortByChange={setSortBy}
-                sortOrder={sortOrder}
-                onSortOrderToggle={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                categories={categories}
-              />
-
-              {!loading && paginatedEvents.length === 0 ? (
-                eventEmptyState
-              ) : (
-                <EventsListSection
-                  events={events}
-                  eventsTotal={eventsTotal}
-                  formatEventTime={formatEventTime}
-                  handleBulkDelete={handleBulkDelete}
-                  handleBulkToggleLock={handleBulkToggleLock}
-                  handleDeleteAction={handleDeleteAction}
-                  handleDuplicate={handleDuplicate}
-                  handleEdit={handleEdit}
-                  handleSelectAll={handleSelectAll}
-                  handleSelectChange={handleSelectChange}
-                  isAnySelectedLocked={isAnySelectedLocked}
-                  loading={loading}
-                  selectedIds={selectedIds}
-                  setSelectedIds={setSelectedIds}
-                  toggleLock={toggleLock}
-                  userTimezone={userTimezone}
-                  currentPage={currentPage}
-                  isMobile={isMobile}
-                  pageSize={pageSize}
-                  paginatedEvents={paginatedEvents}
-                  setCurrentPage={setCurrentPage}
-                  setPageSize={setPageSize}
-                  setViewingEvent={setViewingEvent}
-                  viewingDay={viewingDay}
-                />
-              )}
-            </>
-          ) : calendarLoadFailed ? (
+          ) : contentView === 'calendar' && calendarLoadFailed ? (
             <PageState
               tone="error"
               title="Calendar could not be loaded"
@@ -404,8 +324,61 @@ const Events = () => {
               onAction={() => void fetchCalendarData()}
             />
           ) : (
-            <CalendarView
-              pageControls={viewControls}
+            <CalendarWorkspace
+              contentView={contentView}
+              onContentViewChange={setContentView}
+              selectedYear={selectedYear}
+              onYearChange={handleYearChange}
+              availableYears={availableYears}
+              extraControls={timezoneControl}
+              listView={
+                <>
+                  <EventsFilterBar
+                    categoryFilter={categoryFilter}
+                    onCategoryFilterChange={setCategoryFilter}
+                    dateRange={dateRange}
+                    onDateRangeChange={setDateRange}
+                    sortBy={sortBy}
+                    onSortByChange={setSortBy}
+                    sortOrder={sortOrder}
+                    onSortOrderToggle={() =>
+                      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                    }
+                    categories={categories}
+                  />
+
+                  {!loading && paginatedEvents.length === 0 ? (
+                    eventEmptyState
+                  ) : (
+                    <EventsListSection
+                      events={events}
+                      eventsTotal={eventsTotal}
+                      formatEventTime={formatEventTime}
+                      handleBulkDelete={handleBulkDelete}
+                      handleBulkToggleLock={handleBulkToggleLock}
+                      handleDeleteAction={handleDeleteAction}
+                      handleDuplicate={handleDuplicate}
+                      handleEdit={handleEdit}
+                      handleSelectAll={handleSelectAll}
+                      handleSelectChange={handleSelectChange}
+                      isAnySelectedLocked={isAnySelectedLocked}
+                      loading={loading}
+                      selectedIds={selectedIds}
+                      setSelectedIds={setSelectedIds}
+                      toggleLock={toggleLock}
+                      userTimezone={userTimezone}
+                      currentPage={currentPage}
+                      isMobile={isMobile}
+                      pageSize={pageSize}
+                      paginatedEvents={paginatedEvents}
+                      setCurrentPage={setCurrentPage}
+                      setPageSize={setPageSize}
+                      setViewingEvent={setViewingEvent}
+                      viewingDay={viewingDay}
+                    />
+                  )}
+                </>
+              }
               onItemDrop={handleCalendarItemDrop}
               events={calendarEvents}
               customHolidays={customHolidays}

@@ -1,3 +1,4 @@
+import { moneyUpToCents, moneyWhole as money } from '../../utils/Income/format';
 import { DollarOutlined, RightOutlined, TeamOutlined } from '@ant-design/icons';
 import { payYearsOf, payYearsTotal } from '../../utils/Experience/payYears';
 import type { ExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
@@ -12,9 +13,6 @@ const MONEY_STATIC =
 const Dot = ({ className = '' }: { className?: string }) => (
   <span className={`text-slate-300 dark:text-ink-600 ${className}`}>·</span>
 );
-
-const money = (value: number, maximumFractionDigits = 0) =>
-  `$${value.toLocaleString(undefined, { maximumFractionDigits })}`;
 
 const RoleMetaRow = ({
   dates,
@@ -54,7 +52,9 @@ const RoleMetaRow = ({
           className="shrink-0 text-emerald-500 dark:text-emerald-400"
           style={{ fontSize: 11 }}
         />
-        <span className="truncate">{money(total, maximumFractionDigits)} total earnings</span>
+        <span className="truncate">
+          {maximumFractionDigits === 2 ? moneyUpToCents(total) : money(total)} total earnings
+        </span>
       </span>
       {/* antd's .anticon sets display unlayered, so Tailwind can only hide a wrapper. */}
       <span className="shrink-0 text-[9px] text-emerald-600/70 dark:text-emerald-300 sm:hidden">

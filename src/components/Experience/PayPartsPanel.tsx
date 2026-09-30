@@ -1,4 +1,4 @@
-import { fmtMoney } from '../../utils/Experience/compensationBreakdownFormat';
+import { moneyWhole as money } from '../../utils/Income/format';
 import { PayPie, PayStackedBar } from './PayChart';
 
 export interface PartMember {
@@ -16,8 +16,6 @@ export interface PayPart {
   total: number;
   members: PartMember[];
 }
-
-const money = (value: number) => fmtMoney(Math.round(value));
 
 // Parts of pay, each split into whoever earned it: one chart, one bar and one list per part.
 export const PayPartsPanel = ({

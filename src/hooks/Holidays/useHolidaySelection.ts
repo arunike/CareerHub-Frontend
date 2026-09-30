@@ -1,8 +1,8 @@
+import { confirmDestructive } from '../../components/modals/confirmDestructive';
 import { useMemo, useState } from 'react';
 import type React from 'react';
 import type { FormInstance } from 'antd';
 import type { MessageInstance } from 'antd/es/message/interface';
-import Modal from '../../components/modals/MobileModal';
 import { deleteHoliday, updateHoliday } from '../../api';
 import type { Holiday } from '../../types';
 
@@ -58,11 +58,10 @@ export const useHolidaySelection = ({
   };
 
   const handleBulkDelete = () => {
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete Selected Time Off',
       content: `Are you sure you want to delete ${selectedIds.length} holidays?`,
       okText: 'Yes',
-      okType: 'danger',
       cancelText: 'No',
       onOk: async () => {
         try {
@@ -139,11 +138,10 @@ export const useHolidaySelection = ({
   };
 
   const handleDeleteGroup = (groupItem: any) => {
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete Time Off Collection',
       content: `Are you sure you want to delete all ${groupItem.items.length} days in this collection?`,
       okText: 'Yes',
-      okType: 'danger',
       cancelText: 'No',
       onOk: async () => {
         try {

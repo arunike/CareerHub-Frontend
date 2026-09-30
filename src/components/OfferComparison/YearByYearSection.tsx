@@ -1,3 +1,4 @@
+import { moneyWhole as formatCurrency } from '../../utils/Income/format';
 import { useMemo, useState } from 'react';
 import { Segmented } from 'antd';
 import { AimOutlined, SwapRightOutlined } from '@ant-design/icons';
@@ -14,13 +15,6 @@ import {
   type OfferProjection,
   type ProjectionBasis,
 } from '../../utils/OfferComparison/yearByYear';
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0);
 
 const YEARS = Array.from({ length: PROJECTION_YEARS }, (_, index) => index + 1);
 

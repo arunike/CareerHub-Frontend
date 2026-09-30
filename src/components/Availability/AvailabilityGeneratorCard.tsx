@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import { useId } from 'react';
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import EditableNumberInput from '../inputs/EditableNumberInput';
@@ -32,10 +33,7 @@ const AvailabilityGeneratorCard = ({
     <div className="enterprise-section p-4 sm:p-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(8rem,0.55fr)_auto] xl:items-end">
         <div className="min-w-0">
-          <label
-            htmlFor={startDateId}
-            className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-          >
+          <label htmlFor={startDateId} className={FORM_LABEL_CLASS}>
             Start Date
           </label>
           <div className="relative min-w-0">
@@ -54,10 +52,7 @@ const AvailabilityGeneratorCard = ({
         </div>
 
         <div className="min-w-0">
-          <label
-            htmlFor={timezoneId}
-            className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-          >
+          <label htmlFor={timezoneId} className={FORM_LABEL_CLASS}>
             Timezone
           </label>
           <div className="relative min-w-0">
@@ -81,10 +76,7 @@ const AvailabilityGeneratorCard = ({
         </div>
 
         <div className="min-w-0">
-          <label
-            htmlFor={rangeId}
-            className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-          >
+          <label htmlFor={rangeId} className={FORM_LABEL_CLASS}>
             Range
           </label>
           <EditableNumberInput

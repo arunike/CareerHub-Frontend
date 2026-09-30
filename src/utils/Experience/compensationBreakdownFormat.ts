@@ -1,3 +1,7 @@
+import { toNullableNumber } from './experienceUtils';
+
+export { toNullableNumber };
+import { moneyUpToCents } from '../Income/format';
 export type HourlyInputUpdate = {
   hourly_rate: number | null;
   hours_per_day: number | null;
@@ -15,17 +19,11 @@ export const SEGMENTS = [
   { key: 'equity', label: 'Equity / RSU', color: '#60a5fa' },
 ] as const;
 
-export const fmtMoney = (value: number) =>
-  `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+// The same formatter under the name eight Experience files already import.
+export const fmtMoney = moneyUpToCents;
 
 export const fmtNumber = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-export const toNullableNumber = (value: string | number | null | undefined): number | null => {
-  if (value == null || value === '') return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
 
 export const toInputValue = (value: number | null | undefined) =>
   value == null ? '' : String(value);

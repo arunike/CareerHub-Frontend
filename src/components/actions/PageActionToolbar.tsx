@@ -1,5 +1,6 @@
+import { confirmDestructive } from '../modals/confirmDestructive';
 import React from 'react';
-import { Button, Dropdown, Grid, Modal, Typography } from 'antd';
+import { Button, Dropdown, Grid, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   DeleteOutlined,
@@ -110,11 +111,10 @@ const PageActionToolbar: React.FC<PageActionToolbarProps> = ({
       onDeleteAll();
       return;
     }
-    Modal.confirm({
+    confirmDestructive({
       title: deleteAllConfirmTitle,
       content: deleteAllConfirmDescription,
       okText: deleteAllLabel,
-      okType: 'danger',
       onOk: onDeleteAll,
     });
   };

@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import { LinkOutlined } from '@ant-design/icons';
 import type { GoogleOAuthStatus, GoogleSpreadsheetFile } from '../../types';
 import type { Draft } from '../../utils/Settings/sheetMapping';
@@ -22,10 +23,7 @@ const SheetTargetPicker = ({
   <div className="space-y-3">
     {googleStatus?.connected && googleStatus.can_list_spreadsheets && (
       <div>
-        <label
-          htmlFor="google-sheet-sync-source"
-          className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-        >
+        <label htmlFor="google-sheet-sync-source" className={FORM_LABEL_CLASS}>
           Choose from Google Sheets
         </label>
         <select
@@ -47,10 +45,7 @@ const SheetTargetPicker = ({
       </div>
     )}
     <div>
-      <label
-        htmlFor="google-sheet-sync-url"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label htmlFor="google-sheet-sync-url" className={FORM_LABEL_CLASS}>
         Google Sheet Link
       </label>
       <div className="relative">

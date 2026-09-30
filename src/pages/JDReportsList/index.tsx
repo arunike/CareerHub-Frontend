@@ -1,3 +1,4 @@
+import { confirmDestructive } from '../../components/modals/confirmDestructive';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Checkbox, Tooltip, Input } from 'antd';
@@ -151,12 +152,11 @@ const JDReportsListPage: React.FC = () => {
 
     if (deletableIds.length === 0) return;
 
-    Modal.confirm({
+    confirmDestructive({
       title: `Delete ${deletableIds.length} reports?`,
       content:
         'Selected unlocked reports will be permanently removed. Locked reports will be skipped.',
       okText: 'Delete Selected',
-      okType: 'danger',
       onOk: () => {
         Promise.all(
           deletableIds.map((id) =>
@@ -172,13 +172,12 @@ const JDReportsListPage: React.FC = () => {
 
   const handleClearAll = useCallback(() => {
     const isAnyLocked = reports.some((r) => r.isLocked);
-    Modal.confirm({
+    confirmDestructive({
       title: 'Clear all reports?',
       content: isAnyLocked
         ? 'All UNLOCKED reports will be permanently deleted. Locked reports will be preserved.'
         : 'This will permanently delete all saved reports. This action cannot be undone.',
       okText: 'Clear All',
-      okType: 'danger',
       onOk: () => {
         (usingBackendArtifacts
           ? deleteAllArtifactsByType('JD_REPORT')

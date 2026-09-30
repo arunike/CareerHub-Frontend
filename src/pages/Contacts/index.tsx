@@ -1,3 +1,4 @@
+import { useLoadStatus } from '../../hooks/useLoadStatus';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Select, message } from 'antd';
 import {
@@ -48,8 +49,7 @@ const contactCompanies = (contact: ApplicationContact) =>
 const ContactsPage = () => {
   const [contacts, setContacts] = useState<ApplicationContact[]>([]);
   const [relationships, setRelationships] = useState<ContactRelationship[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const { loading, failed: loadError, run } = useLoadStatus();
   const [view, setView] = useState<ViewMode>('list');
   const [search, setSearch] = useState('');
   const [contextFilter, setContextFilter] = useState<ContextFilter>('ALL');
@@ -69,23 +69,21 @@ const ContactsPage = () => {
   const [mergeDuplicateId, setMergeDuplicateId] = useState<number>();
   const [merging, setMerging] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError(false);
-    try {
-      const [contactResponse, relationshipResponse] = await Promise.all([
-        getContacts(),
-        getContactRelationships(),
-      ]);
-      setContacts(contactResponse.data);
-      setRelationships(relationshipResponse.data);
-    } catch (error) {
-      console.error('Failed to load contacts workspace', error);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const load = useCallback(
+    () =>
+      run(
+        async () => {
+          const [contactResponse, relationshipResponse] = await Promise.all([
+            getContacts(),
+            getContactRelationships(),
+          ]);
+          setContacts(contactResponse.data);
+          setRelationships(relationshipResponse.data);
+        },
+        (error) => console.error('Failed to load contacts workspace', error)
+      ),
+    [run]
+  );
 
   useEffect(() => {
     void load();

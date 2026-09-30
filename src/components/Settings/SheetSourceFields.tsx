@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import type { GoogleSheetSyncTarget } from '../../types';
 import type { Draft } from '../../utils/Settings/sheetMapping';
 
@@ -10,10 +11,7 @@ type Props = {
 const SheetSourceFields = ({ changeTarget, draft, updateDraft }: Props) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
-      <label
-        htmlFor="google-sheet-sync-name"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label htmlFor="google-sheet-sync-name" className={FORM_LABEL_CLASS}>
         Sync Name
       </label>
       <input
@@ -25,10 +23,7 @@ const SheetSourceFields = ({ changeTarget, draft, updateDraft }: Props) => (
       />
     </div>
     <div>
-      <label
-        htmlFor="google-sheet-sync-functionality"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label htmlFor="google-sheet-sync-functionality" className={FORM_LABEL_CLASS}>
         Functionality
       </label>
       <select

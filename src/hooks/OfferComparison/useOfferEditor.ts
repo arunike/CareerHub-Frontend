@@ -1,3 +1,4 @@
+import { normalizeBenefitItem } from '../../utils/OfferComparison/benefitItem';
 import { useState } from 'react';
 import type React from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
@@ -16,14 +17,6 @@ const normalizeDecisionScore = (value: unknown) => {
   const parsed = Number(value);
   return parsed >= 1 && parsed <= 5 ? parsed : null;
 };
-
-const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
-  id: item.id || fallbackId,
-  label: item.label || '',
-  amount: Number(item.amount) || 0,
-  frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
-  is_taxable: Boolean(item.is_taxable),
-});
 
 export const useOfferEditor = ({
   applications,

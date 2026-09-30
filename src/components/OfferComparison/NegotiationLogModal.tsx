@@ -1,3 +1,4 @@
+import { moneyWhole } from '../../utils/Income/format';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, DatePicker, Input, Popconfirm, Select, message } from 'antd';
 import UnitNumberInput from '../inputs/UnitNumberInput';
@@ -54,8 +55,7 @@ const emptyDraft = (): Draft => ({
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
-const money = (value: number | null) =>
-  value == null ? '—' : `$${Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+const money = (value: number | null) => (value == null ? '\u2014' : moneyWhole(value));
 
 const COMPONENT_FIELDS: { label: string; asked: keyof Draft; received: keyof Draft }[] = [
   { label: 'Base', asked: 'askedBase', received: 'receivedBase' },

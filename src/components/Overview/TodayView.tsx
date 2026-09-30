@@ -485,21 +485,25 @@ const TodayView = ({
       )}
 
       {/* Under the hero, above the work: the shape of the search, not a replacement for it. */}
-      {buckets.length > 0 && <StatStrip stats={stats} />}
+      {buckets.length > 0 && <StatStrip stats={stats} split />}
 
       {cards.length > 0 && (
         <div className={`grid gap-5 ${rail.length ? 'lg:grid-cols-2' : ''}`}>
-          <div className="space-y-5">
-            {main.map((card, index) => (
-              <div key={index}>{card}</div>
-            ))}
-          </div>
-          {rail.length > 0 && (
-            <div className="space-y-5">
-              {rail.map((card, index) => (
-                <div key={index}>{card}</div>
-              ))}
-            </div>
+          {[main, rail].map(
+            (column, columnIndex) =>
+              column.length > 0 && (
+                <div key={columnIndex} className="flex flex-col gap-5">
+                  {column.map((card, index) => (
+                    // The last card absorbs the slack, so both columns end on the same line.
+                    <div
+                      key={index}
+                      className={index === column.length - 1 ? 'flex-1 [&>section]:h-full' : ''}
+                    >
+                      {card}
+                    </div>
+                  ))}
+                </div>
+              )
           )}
         </div>
       )}

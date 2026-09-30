@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../../inputs/formControls';
 import { AutoComplete } from 'antd';
 import { useMemo } from 'react';
 import type {
@@ -83,9 +84,7 @@ const LocationTaxSection = ({
     <>
       {onOfficeLocationChange && workMode !== 'REMOTE' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            Office Location
-          </label>
+          <label className={FORM_LABEL_CLASS}>Office Location</label>
           <AutoComplete
             className="w-full"
             value={officeLocation}
@@ -104,9 +103,7 @@ const LocationTaxSection = ({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-          Home Location
-        </label>
+        <label className={FORM_LABEL_CLASS}>Home Location</label>
         <AutoComplete
           className="w-full"
           value={location}
@@ -170,9 +167,7 @@ const LocationTaxSection = ({
 
       {typeof editableMonthlyRent === 'number' && onEditableMonthlyRentChange && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            Monthly Rent (for this offer)
-          </label>
+          <label className={FORM_LABEL_CLASS}>Monthly Rent (for this offer)</label>
           <UnitNumberInput
             unit="$"
             min={0}

@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { Button, DatePicker, InputNumber, Select, Switch, Tooltip } from 'antd';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -180,9 +181,7 @@ export const VestingForm = ({
 
       {includeVestEvents ? (
         <div className="mt-5 rounded-lg bg-slate-50 dark:bg-ink-900 px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Vests landing this year
-          </div>
+          <div className={SECTION_LABEL_CLASS}>Vests landing this year</div>
           {generatedVests.length === 0 ? (
             <p className="mt-2 text-xs text-slate-500 dark:text-ink-400">
               None — the cliff or the grant date puts every vest outside this year.
@@ -213,9 +212,7 @@ export const VestingForm = ({
 
       <div className="mt-5">
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-white/[0.07] pt-5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Extra income events
-          </span>
+          <span className={SECTION_LABEL_CLASS}>Extra income events</span>
           <Button size="small" icon={<PlusOutlined />} onClick={addEvent}>
             Add
           </Button>

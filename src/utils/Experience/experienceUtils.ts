@@ -49,7 +49,7 @@ export const groupExperiencesByCompany = (sorted: Experience[]): Experience[][] 
 export const orderExperiencesAsDisplayed = (experiences: Experience[]): Experience[] =>
   groupExperiencesByCompany(sortExperiencesForDisplay(experiences)).flat();
 
-export const toNullableNumber = (value: number | string | null | undefined): number | null => {
+export const toNullableNumber = (value: unknown): number | null => {
   if (value == null || value === '') return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;

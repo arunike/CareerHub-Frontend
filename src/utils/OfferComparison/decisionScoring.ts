@@ -1,3 +1,6 @@
+import { moneyWhole as formatCurrency } from '../Income/format';
+
+export { formatCurrency };
 import {
   MAX_TIME_PENALTY,
   TIME_PENALTY_HALF_HOURS,
@@ -356,13 +359,6 @@ export const lessTax = (gross: number, ratePercent: number, net: number) => {
   if (rate <= 0 || Math.round(gross) === Math.round(net)) return formatCurrency(net);
   return `${formatCurrency(gross)} - ${rate}% = ${formatCurrency(net)}`;
 };
-
-export const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Math.round(value));
 
 const signedCurrency = (value: number) => {
   const rounded = Math.round(value);

@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import type React from 'react';
 import { Button } from 'antd';
 import MoneyInput from './MoneyInput';
@@ -135,9 +136,7 @@ const PaycheckAdjustModal = ({
 
     {effectiveAllowances.length > 0 ? (
       <div className="mt-3 border-t border-slate-100 dark:border-white/[0.07] pt-3">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          Allowances this paycheck
-        </span>
+        <span className={SECTION_LABEL_CLASS}>Allowances this paycheck</span>
         <p className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
           Set one to zero for a paycheck it was not paid on.
         </p>

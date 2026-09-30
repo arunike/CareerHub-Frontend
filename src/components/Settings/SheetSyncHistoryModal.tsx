@@ -1,3 +1,4 @@
+import { confirmDestructive } from '../modals/confirmDestructive';
 import { Button, Collapse, Tag } from 'antd';
 import Modal from '../modals/MobileModal';
 import type { GoogleSheetSyncConfig, GoogleSheetSyncRun } from '../../types';
@@ -81,12 +82,11 @@ const SheetSyncHistoryModal = ({
                         size="small"
                         danger
                         onClick={() => {
-                          Modal.confirm({
+                          confirmDestructive({
                             title: 'Rollback this sync?',
                             content:
                               'This will undo creations and field updates made during this specific sync run.',
                             okText: 'Yes, rollback',
-                            okButtonProps: { danger: true },
                             onOk: () => rollbackRun(historyConfig, run.id),
                           });
                         }}

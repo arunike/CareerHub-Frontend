@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { Tooltip } from 'antd';
 import DeferralScheduleFields from './DeferralScheduleFields';
 import type { DeferralPlan } from '../../utils/Income/deferralSchedule';
@@ -153,9 +154,7 @@ export const RetirementForm = ({
       </p>
 
       <div className="mt-5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          Your contribution
-        </span>
+        <span className={SECTION_LABEL_CLASS}>Your contribution</span>
         <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           <Field
             label="Traditional 401(k) %"
@@ -293,9 +292,7 @@ export const RetirementForm = ({
 
       <div className="mt-6 border-t border-slate-100 dark:border-white/[0.07] pt-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Contributed in {taxYear}
-          </span>
+          <span className={SECTION_LABEL_CLASS}>Contributed in {taxYear}</span>
           {/* A year still running is reporting a subtotal, so it has to say where it stops. */}
           {summary.hasUnpaidPeriods && summary.paidThroughDate ? (
             <span className="text-[11px] text-slate-400 dark:text-ink-500">
@@ -373,9 +370,7 @@ export const RetirementForm = ({
 
         <div className="mt-4">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-              Match bands
-            </span>
+            <span className={SECTION_LABEL_CLASS}>Match bands</span>
             <Button
               size="small"
               icon={<PlusOutlined />}
@@ -457,9 +452,7 @@ export const RetirementForm = ({
       </div>
 
       <div className="mt-6 border-t border-slate-100 dark:border-white/[0.07] pt-5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          Account value
-        </span>
+        <span className={SECTION_LABEL_CLASS}>Account value</span>
         <div className="mt-3 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           <Field
             label={`Balance on 1 Jan ${taxYear}`}

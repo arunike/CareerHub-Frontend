@@ -1,5 +1,6 @@
+import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Drawer, InputNumber, Popover, Select, Tooltip, message } from 'antd';
+import { Button, InputNumber, Popover, Select, Tooltip, message } from 'antd';
 import { SettingOutlined, SunOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getExperiences, getOffers, updateOffer } from '../../api';
@@ -13,7 +14,6 @@ import {
   yearsOfService,
 } from '../../utils/TimeOff/ptoBalance';
 import type { DayOff, PtoPolicy, RoleWindow } from '../../utils/TimeOff/ptoBalance';
-import { useIsMobile } from '../../hooks/useIsMobile';
 
 const rangeLabel = (dates: string[]) => {
   const first = dayjs(dates[0]);
@@ -59,7 +59,6 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleId, setRoleId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     void (async () => {
@@ -417,34 +416,15 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
     </Button>
   );
 
-  if (isMobile) {
-    return (
-      <>
-        {trigger(() => setOpen(true))}
-        <Drawer
-          open={open}
-          onClose={() => setOpen(false)}
-          placement="bottom"
-          height="auto"
-          title={`Time off · ${year}`}
-        >
-          {body}
-        </Drawer>
-      </>
-    );
-  }
-
   return (
-    <Popover
+    <ResponsiveDisclosure
       open={open}
       onOpenChange={setOpen}
-      trigger="click"
       placement="bottomRight"
       title={`Time off · ${year}`}
       content={body}
-    >
-      {trigger()}
-    </Popover>
+      trigger={trigger}
+    />
   );
 };
 

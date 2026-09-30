@@ -1,6 +1,6 @@
+import { confirmDestructive } from '../../components/modals/confirmDestructive';
 import { useState } from 'react';
 import type { MessageInstance } from 'antd/es/message/interface';
-import Modal from '../../components/modals/MobileModal';
 import { deleteEvent, updateEvent } from '../../api';
 import type { Event } from '../../types';
 
@@ -31,11 +31,10 @@ export const useEventSelection = ({
   };
 
   const handleBulkDelete = () => {
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete Selected Events',
       content: `Are you sure you want to delete ${selectedIds.length} events?`,
       okText: 'Yes',
-      okType: 'danger',
       cancelText: 'No',
       onOk: async () => {
         try {

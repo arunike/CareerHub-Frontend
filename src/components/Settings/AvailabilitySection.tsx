@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import type React from 'react';
 import type { EventCategory, UserSettings } from '../../types';
 import { PlusOutlined, CloseOutlined, DownOutlined, RightOutlined } from '@ant-design/icons';
@@ -369,10 +370,7 @@ const AvailabilitySection = ({
       </div>
 
       <div>
-        <label
-          htmlFor="settings-default-event-duration"
-          className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-        >
+        <label htmlFor="settings-default-event-duration" className={FORM_LABEL_CLASS}>
           Default Event Duration
         </label>
         <EditableNumberInput
@@ -389,10 +387,7 @@ const AvailabilitySection = ({
       </div>
 
       <div>
-        <label
-          htmlFor="settings-default-event-category"
-          className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-        >
+        <label htmlFor="settings-default-event-category" className={FORM_LABEL_CLASS}>
           Default Event Category
         </label>
         <select
@@ -420,10 +415,7 @@ const AvailabilitySection = ({
       </div>
 
       <div>
-        <label
-          htmlFor="settings-buffer-time"
-          className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-        >
+        <label htmlFor="settings-buffer-time" className={FORM_LABEL_CLASS}>
           Buffer Time
         </label>
         <EditableNumberInput
@@ -444,10 +436,7 @@ const AvailabilitySection = ({
       </div>
 
       <div>
-        <label
-          htmlFor="settings-primary-timezone"
-          className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-        >
+        <label htmlFor="settings-primary-timezone" className={FORM_LABEL_CLASS}>
           Primary Timezone
         </label>
         <select

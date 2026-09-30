@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { Tooltip } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -88,9 +89,7 @@ const RoleBreakdown = ({
         className="hidden items-baseline gap-x-4 px-2 pb-2 sm:grid"
         style={{ gridTemplateColumns: template }}
       >
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          By role
-        </span>
+        <span className={SECTION_LABEL_CLASS}>By role</span>
         {columns.map((column) => (
           <span
             key={column.key}
@@ -275,9 +274,7 @@ const RetirementGain = ({ summary }: { summary: YearEarnings }) => {
   return (
     <div className="mt-3 border-t border-dashed border-slate-100 dark:border-white/[0.07] pt-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-          Investment gain
-        </span>
+        <span className={SECTION_LABEL_CLASS}>Investment gain</span>
         <span className="text-xs tabular-nums">
           <span
             className={`font-semibold ${up ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}
@@ -367,9 +364,7 @@ export const YearEarningsCard = ({
               }`}
             />
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-                All roles in {taxYear}
-              </span>
+              <span className={SECTION_LABEL_CLASS}>All roles in {taxYear}</span>
               <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-ink-50">
                 {money(summary.totalComp)}
               </p>
@@ -439,9 +434,7 @@ export const YearEarningsCard = ({
       {!collapsed && history.length > 1 ? (
         <div className="border-t border-slate-100 dark:border-white/[0.07] px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-              By year
-            </span>
+            <span className={SECTION_LABEL_CLASS}>By year</span>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {SEGMENTS.map((segment) => (
                 <span

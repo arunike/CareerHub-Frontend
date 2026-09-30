@@ -1,3 +1,4 @@
+import { normalizeBenefitItem } from './benefitItem';
 import type { OfferDecisionSnapshot } from '../../api';
 import type {
   ApplicationLike as Application,
@@ -5,14 +6,6 @@ import type {
   OfferLike as Offer,
 } from './calculations';
 import { normalizeEquityLiquidity } from './equityLiquidity';
-
-const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
-  id: item.id || fallbackId,
-  label: item.label || '',
-  amount: Number(item.amount) || 0,
-  frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
-  is_taxable: Boolean(item.is_taxable),
-});
 
 const snapshotValue = (snapshot: Record<string, unknown>, key: string) =>
   Object.prototype.hasOwnProperty.call(snapshot, key) ? snapshot[key] : undefined;

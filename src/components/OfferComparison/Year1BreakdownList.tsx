@@ -1,3 +1,4 @@
+import { moneyWhole as formatCurrency } from '../../utils/Income/format';
 type ChartDatum = {
   id?: string;
   name: string;
@@ -16,13 +17,6 @@ const COMPONENTS: { key: keyof ChartDatum; label: string; dot: string }[] = [
   { key: 'SignOn', label: 'Sign-on', dot: 'bg-teal-500' },
   { key: 'Benefits', label: 'Benefits', dot: 'bg-amber-500' },
 ];
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0);
 
 const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
   if (data.length === 0) return null;

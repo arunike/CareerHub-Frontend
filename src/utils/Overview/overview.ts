@@ -1,3 +1,4 @@
+import { dayIndex as dayOf } from '../localDay';
 export interface CommandEvent {
   id: number;
   name: string;
@@ -103,14 +104,7 @@ export const isInterviewing = (status: string) => INTERVIEWING_STATUSES.has(stat
 
 const OFFER_HORIZON_DAYS = 7;
 
-const DAY = 86400000;
-
 // Null for anything unusable: a record with no date cannot be scheduled, chased or ranked.
-const dayOf = (value: unknown): number | null => {
-  if (typeof value !== 'string' || value.length < 10) return null;
-  const time = Date.parse(`${value.slice(0, 10)}T00:00:00Z`);
-  return Number.isNaN(time) ? null : Math.floor(time / DAY);
-};
 
 export const daysBetween = (from: unknown, to: unknown): number | null => {
   const start = dayOf(from);

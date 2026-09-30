@@ -1,3 +1,4 @@
+import { confirmDestructive } from '../modals/confirmDestructive';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Checkbox, Input, Popconfirm, Space, Tag, Typography, message } from 'antd';
@@ -126,11 +127,10 @@ const PromotionReviewsTab: React.FC = () => {
   const handleBulkDelete = () => {
     const deletableIds = selectedReviews.filter((review) => !review.isLocked).map((r) => r.id);
     if (!deletableIds.length) return;
-    Modal.confirm({
+    confirmDestructive({
       title: `Delete ${deletableIds.length} promotion review${deletableIds.length === 1 ? '' : 's'}?`,
       content: 'Locked reviews will be skipped.',
       okText: 'Delete',
-      okType: 'danger',
       onOk: async () => {
         if (saving) return;
         setSaving(true);

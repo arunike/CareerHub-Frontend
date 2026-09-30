@@ -1,3 +1,5 @@
+import { DAY_MS as DAY } from '../localDay';
+import { dayIndex as dayOf } from '../localDay';
 import type { DecisionCriterion } from '../../types/career';
 
 export type JournalDecision = 'ACCEPTED' | 'DECLINED';
@@ -71,14 +73,6 @@ export interface DecisionJournalEntry {
 
 // Thirty days is long enough for the honeymoon to wear off; ninety for the job to show its shape.
 export const REVIEW_MILESTONES = [30, 90] as const;
-
-const DAY = 86400000;
-
-const dayOf = (value: unknown): number | null => {
-  if (typeof value !== 'string' || value.length < 10) return null;
-  const time = Date.parse(`${value.slice(0, 10)}T00:00:00Z`);
-  return Number.isNaN(time) ? null : Math.floor(time / DAY);
-};
 
 const isoOf = (days: number) => new Date(days * DAY).toISOString().slice(0, 10);
 

@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
@@ -17,9 +18,7 @@ export const SectionLabel = ({
   trailing?: React.ReactNode;
 }) => (
   <div className="flex items-baseline justify-between gap-3">
-    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-      {children}
-    </span>
+    <span className={SECTION_LABEL_CLASS}>{children}</span>
     {trailing}
   </div>
 );

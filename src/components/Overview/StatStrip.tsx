@@ -1,9 +1,6 @@
-import { useState } from 'react';
-import { Drawer, Popover } from 'antd';
+import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
-
-import { useIsMobile } from '../../hooks/useIsMobile';
 
 export interface Stat {
   label: string;
@@ -32,109 +29,93 @@ const seams = (index: number) =>
     index > 0 ? 'sm:border-r-0 sm:border-l' : 'sm:border-r-0',
   ].join(' ');
 
-// A bottom sheet on a phone and a popover on a desktop, the same split every disclosure here uses.
-const StatPanelCell = ({
-  panel,
-  className,
-  children,
-}: {
-  panel: { title: string; content: ReactNode };
-  className: string;
-  children: ReactNode;
-}) => {
-  const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
-
-  // Popover supplies its own onClick; passing one as well made each click toggle twice.
-  const trigger = (onClick?: () => void) => (
-    <button type="button" className={className} aria-expanded={open} onClick={onClick}>
-      {children}
-    </button>
+// Split into pairs, so the seam between them is the same gutter the cards below use.
+const pairs = <T,>(items: T[]) =>
+  items.reduce<T[][]>(
+    (out, item, index) =>
+      index % 2 === 0 ? [...out, [item]] : [...out.slice(0, -1), [...out[out.length - 1], item]],
+    []
   );
 
-  if (isMobile) {
-    return (
+// One card of hairline-split cells, or two such cards when the page below is two columns.
+const StatStrip = ({
+  stats,
+  caption,
+  split = false,
+}: {
+  stats: Stat[];
+  caption?: string;
+  split?: boolean;
+}) => {
+  const cellFor = (stat: Stat, seamClass: string) => {
+    const body = (
       <>
-        {trigger(() => setOpen(true))}
-        <Drawer
-          open={open}
-          onClose={() => setOpen(false)}
-          placement="bottom"
-          height="auto"
-          title={panel.title}
+        <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500">
+          {stat.label}
+        </p>
+        <p
+          className={`mt-1.5 text-[26px] font-semibold leading-none tabular-nums tracking-[-0.02em] ${
+            VALUE_TONE[stat.tone ?? 'neutral']
+          }`}
         >
-          {panel.content}
-        </Drawer>
+          {stat.value}
+        </p>
+        <p className="mt-1.5 truncate text-[11px] text-slate-400 dark:text-ink-500">
+          {stat.hint ?? ' '}
+        </p>
       </>
     );
-  }
+    const cell = `px-4 py-4 sm:px-5 ${HAIRLINE} ${seamClass}`;
+    const hover = 'transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]';
+
+    if (stat.panel) {
+      const panel = stat.panel;
+      return (
+        <ResponsiveDisclosure
+          key={stat.label}
+          title={panel.title}
+          content={panel.content}
+          trigger={(onClick) => (
+            <button type="button" className={`${cell} ${hover} text-left`} onClick={onClick}>
+              {body}
+            </button>
+          )}
+        />
+      );
+    }
+    return stat.to ? (
+      <Link key={stat.label} to={stat.to} className={`${cell} ${hover}`}>
+        {body}
+      </Link>
+    ) : (
+      <div key={stat.label} className={cell}>
+        {body}
+      </div>
+    );
+  };
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={setOpen}
-      trigger="click"
-      placement="bottom"
-      title={panel.title}
-      content={panel.content}
-    >
-      {trigger()}
-    </Popover>
+    <div>
+      {caption && (
+        <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500">
+          {caption}
+        </p>
+      )}
+      {split ? (
+        <div className="grid gap-5 lg:grid-cols-2">
+          {pairs(stats).map((group, groupIndex) => (
+            <div key={groupIndex} className="enterprise-card grid grid-cols-2 overflow-hidden">
+              {group.map((stat, index) => cellFor(stat, index === 0 ? `border-r ${HAIRLINE}` : ''))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="enterprise-card grid grid-cols-2 overflow-hidden sm:grid-cols-4">
+          {stats.map((stat, index) => cellFor(stat, seams(index)))}
+        </div>
+      )}
+    </div>
   );
 };
-
-// One card split by hairlines rather than four floating boxes, so the numbers read as a set.
-const StatStrip = ({ stats, caption }: { stats: Stat[]; caption?: string }) => (
-  <div>
-    {caption && (
-      <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500">
-        {caption}
-      </p>
-    )}
-    <div className="enterprise-card grid grid-cols-2 overflow-hidden sm:grid-cols-4">
-      {stats.map((stat, index) => {
-        const body = (
-          <>
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400 dark:text-ink-500">
-              {stat.label}
-            </p>
-            <p
-              className={`mt-1.5 text-[26px] font-semibold leading-none tabular-nums tracking-[-0.02em] ${
-                VALUE_TONE[stat.tone ?? 'neutral']
-              }`}
-            >
-              {stat.value}
-            </p>
-            <p className="mt-1.5 truncate text-[11px] text-slate-400 dark:text-ink-500">
-              {stat.hint ?? ' '}
-            </p>
-          </>
-        );
-        const cell = `px-4 py-4 sm:px-5 ${HAIRLINE} ${seams(index)}`;
-        const hover = 'transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]';
-        if (stat.panel) {
-          return (
-            <StatPanelCell
-              key={stat.label}
-              className={`${cell} ${hover} text-left`}
-              panel={stat.panel}
-            >
-              {body}
-            </StatPanelCell>
-          );
-        }
-        return stat.to ? (
-          <Link key={stat.label} to={stat.to} className={`${cell} ${hover}`}>
-            {body}
-          </Link>
-        ) : (
-          <div key={stat.label} className={cell}>
-            {body}
-          </div>
-        );
-      })}
-    </div>
-  </div>
-);
 
 export default StatStrip;

@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../../inputs/formControls';
 import UnitNumberInput from '../../inputs/UnitNumberInput';
 import HelpTooltipTrigger from '../../feedback/HelpTooltipTrigger';
 import { DEFAULT_UNLIMITED_PTO_DAYS } from '../../../utils/OfferComparison/decisionScoring';
@@ -127,9 +128,7 @@ const TimeOffSection = ({
       )}
       {typeof holidayDays === 'number' && onHolidayDaysChange && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            Holiday Days
-          </label>
+          <label className={FORM_LABEL_CLASS}>Holiday Days</label>
           <UnitNumberInput
             unit="days"
             min={0}

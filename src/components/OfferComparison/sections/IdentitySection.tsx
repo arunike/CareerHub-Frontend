@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../../inputs/formControls';
 import { DatePicker } from 'antd';
 import dayjs from 'dayjs';
 import { useCompanyList } from '../../../hooks/useCompanyList';
@@ -52,9 +53,7 @@ const IdentitySection = ({
     <>
       {showLinkApplication && onLinkedApplicationChange && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            Link Existing Application (Optional)
-          </label>
+          <label className={FORM_LABEL_CLASS}>Link Existing Application (Optional)</label>
           <ApplicationSelect
             className="w-full"
             value={linkedApplicationId ?? undefined}
@@ -71,7 +70,7 @@ const IdentitySection = ({
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+              <label className={FORM_LABEL_CLASS}>
                 Company{' '}
                 <span className="text-red-500 dark:text-red-400" aria-hidden="true">
                   *
@@ -100,7 +99,7 @@ const IdentitySection = ({
               </datalist>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
+              <label className={FORM_LABEL_CLASS}>
                 Role{' '}
                 <span className="text-red-500 dark:text-red-400" aria-hidden="true">
                   *
@@ -126,9 +125,7 @@ const IdentitySection = ({
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             {onLevelChange !== undefined && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-                  Level
-                </label>
+                <label className={FORM_LABEL_CLASS}>Level</label>
                 <input
                   type="text"
                   value={level}
@@ -140,10 +137,7 @@ const IdentitySection = ({
             )}
             {onExpectedStartDateChange !== undefined && (
               <div>
-                <label
-                  className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-                  htmlFor="offer-form-expected-start"
-                >
+                <label className={FORM_LABEL_CLASS} htmlFor="offer-form-expected-start">
                   Expected start date
                 </label>
                 <DatePicker
@@ -163,10 +157,7 @@ const IdentitySection = ({
             )}
             {onDeadlineChange !== undefined && (
               <div>
-                <label
-                  className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-                  htmlFor="offer-form-deadline"
-                >
+                <label className={FORM_LABEL_CLASS} htmlFor="offer-form-deadline">
                   Decision deadline
                 </label>
                 <DatePicker

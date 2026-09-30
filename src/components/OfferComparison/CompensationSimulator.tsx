@@ -1,3 +1,4 @@
+import { moneyWhole as formatCurrency } from '../../utils/Income/format';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Select } from 'antd';
 import {
@@ -31,14 +32,6 @@ type OfferWithCompFields = ScenarioRow['offer'] & {
   equity_liquidity?: string;
   equity_buyback_value?: number;
 };
-
-const formatCurrency = (value: number, options?: Intl.NumberFormatOptions) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-    ...options,
-  }).format(Number.isFinite(value) ? value : 0);
 
 const Explain = ({ label, title }: { label: string; title: ReactNode }) => (
   <HelpTooltipTrigger

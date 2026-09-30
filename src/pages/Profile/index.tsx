@@ -1,3 +1,4 @@
+import { confirmDestructive } from '../../components/modals/confirmDestructive';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   getUserSettings,
@@ -321,12 +322,11 @@ const ProfilePage: React.FC = () => {
       return;
     }
     setDeleteModalOpen(false);
-    Modal.confirm({
+    confirmDestructive({
       title: 'Schedule account deletion?',
       content:
         'Your account will be scheduled for permanent deletion in 14 days. Sign in again before then to cancel the deletion.',
       okText: 'Schedule deletion',
-      okButtonProps: { danger: true },
       cancelText: 'Keep account',
       onOk: async () => {
         setDeleting(true);

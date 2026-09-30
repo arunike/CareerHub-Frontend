@@ -1,8 +1,8 @@
+import { DAY_MS } from '../localDay';
 import { daysBetween, isClosed } from './overview';
 import type { CommandApplication, CommandEvent, CommandOffer } from './overview';
 
 const WEEK_DAYS = 7;
-const DAY_MS = 86400000;
 export const FOLLOW_UP_AFTER_DAYS = 10;
 
 // A rejection is a reply; GHOSTED is the absence of one and REMOVED_FROM_SHEET is bookkeeping.

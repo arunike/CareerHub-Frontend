@@ -16,7 +16,20 @@ const wholeCurrency = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
-export const moneyWhole = (value: number) => wholeCurrency.format(Math.round(value));
+// Non-finite renders as $0: five of the six copies of this guarded and the sixth printed "$NaN".
+export const moneyWhole = (value: number) =>
+  wholeCurrency.format(Number.isFinite(value) ? Math.round(value) : 0);
+
+// Cents only when there are cents, for a figure that is usually round but not always.
+const upToCents = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+export const moneyUpToCents = (value: number) =>
+  upToCents.format(Number.isFinite(value) ? value : 0);
 export const signedMoney = (value: number) =>
   `${value >= 0 ? '+' : '-'}${currency.format(Math.abs(value))}`;
 export const percent = (value: number, digits = 1) => `${(value * 100).toFixed(digits)}%`;

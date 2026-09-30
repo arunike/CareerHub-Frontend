@@ -1,12 +1,6 @@
+import { DAY_MS } from '../localDay';
+import { dayIndex as dayOf } from '../localDay';
 export const DAYS_IN_BONUS_YEAR = 365;
-
-const DAY_MS = 86400000;
-
-const dayOf = (value: unknown): number | null => {
-  if (typeof value !== 'string' || value.length < 10) return null;
-  const time = Date.parse(`${value.slice(0, 10)}T00:00:00Z`);
-  return Number.isNaN(time) ? null : Math.floor(time / DAY_MS);
-};
 
 // A bonus lands at the end of its month, so the year it covers closes on that month's last day.
 const payoutDayIn = (year: number, payoutMonth: number) =>

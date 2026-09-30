@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { useState } from 'react';
 import { Button, Space, Tag, Tooltip } from 'antd';
 import {
@@ -225,7 +226,7 @@ export const PaycheckWaterfall = ({
     <div className="enterprise-card px-6 py-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
+          <p className={SECTION_LABEL_CLASS}>
             {row.isOffCycle
               ? 'Off-cycle payment'
               : `Paycheck ${paycheckPosition.position} of ${paycheckPosition.total}`}
@@ -289,9 +290,7 @@ export const PaycheckWaterfall = ({
 
       <div className="mt-5 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Take-home
-          </p>
+          <p className={SECTION_LABEL_CLASS}>Take-home</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-ink-50">
             {moneyCents(row.net)}
           </p>
@@ -400,9 +399,7 @@ export const PaycheckWaterfall = ({
             <div className="flex items-center justify-between gap-2 py-1">
               <span className="flex items-center gap-2">
                 <span className={`h-1.5 w-1.5 rounded-full ${section.tone}`} />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-                  {section.title}
-                </span>
+                <span className={SECTION_LABEL_CLASS}>{section.title}</span>
               </span>
               {section.title === 'Pre-tax deductions' && !editing ? (
                 <Tooltip title={INCOME_TOOLTIPS.paycheckOverrides}>
@@ -435,9 +432,7 @@ export const PaycheckWaterfall = ({
           <div className="mt-2 border-t border-slate-100 dark:border-white/[0.07] pt-2">
             <div className="flex items-center gap-2 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-                Added after tax
-              </span>
+              <span className={SECTION_LABEL_CLASS}>Added after tax</span>
             </div>
             <Row
               label="Tax-free allowances"
@@ -480,9 +475,7 @@ export const PaycheckWaterfall = ({
         <div className="mt-4 rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-ink-900/60 px-3 py-2.5">
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-              Paid by your employer
-            </span>
+            <span className={SECTION_LABEL_CLASS}>Paid by your employer</span>
             <Tooltip title={INCOME_TOOLTIPS.employerMatchNotTakeHome}>
               <InfoCircleOutlined className="text-[11px] text-slate-300 dark:text-ink-600" />
             </Tooltip>

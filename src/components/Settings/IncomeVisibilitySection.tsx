@@ -1,3 +1,4 @@
+import { SECTION_LABEL_CLASS } from '../inputs/formControls';
 import { useEffect, useMemo, useState } from 'react';
 import { Switch, Tooltip } from 'antd';
 import { getOffers } from '../../api/career/offers';
@@ -106,9 +107,7 @@ export const IncomeVisibilitySection = ({
     return (
       <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Roles
-          </span>
+          <span className={SECTION_LABEL_CLASS}>Roles</span>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             A hidden role is left out of the Income page&rsquo;s role picker. Nothing is deleted,
             and its paychecks still count toward the year totals.
@@ -136,9 +135,7 @@ export const IncomeVisibilitySection = ({
         </div>
 
         <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
-            Tax years
-          </span>
+          <span className={SECTION_LABEL_CLASS}>Tax years</span>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
             A hidden year is left out of the year picker. Useful for years before you started
             tracking, which model a full year off a partial record.

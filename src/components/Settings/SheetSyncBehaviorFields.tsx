@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import type { GoogleSpreadsheetTab } from '../../types';
 import EditableNumberInput from '../inputs/EditableNumberInput';
 import type { Draft } from '../../utils/Settings/sheetMapping';
@@ -17,10 +18,7 @@ const SheetSyncBehaviorFields = ({
 }: Props) => (
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div className="sm:col-span-2">
-      <label
-        htmlFor="google-sheet-sync-worksheet"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label htmlFor="google-sheet-sync-worksheet" className={FORM_LABEL_CLASS}>
         Worksheet Tab
       </label>
       {worksheetTabs.length > 0 ? (
@@ -55,10 +53,7 @@ const SheetSyncBehaviorFields = ({
       )}
     </div>
     <div>
-      <label
-        htmlFor="google-sheet-sync-header-row"
-        className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1"
-      >
+      <label htmlFor="google-sheet-sync-header-row" className={FORM_LABEL_CLASS}>
         Header Row
       </label>
       <EditableNumberInput

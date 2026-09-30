@@ -1,3 +1,4 @@
+import { daysInYear, epochDay } from '../localDay';
 import type { RaiseEntry } from '../../types';
 
 export interface SalaryStep {
@@ -103,8 +104,6 @@ const stepsForField = (raises: RaiseEntry[], field: RaiseField, fallback: number
   return steps;
 };
 
-const epochDay = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86400000);
-
 export interface YearWindow {
   start: string;
   end: string;
@@ -166,8 +165,6 @@ export interface YearEarnings {
 }
 
 const isoOf = (day: number) => new Date(day * 86400000).toISOString().slice(0, 10);
-
-const daysInYear = (year: number) => epochDay(`${year}-12-31`) - epochDay(`${year}-01-01`) + 1;
 
 const componentsOn = (raises: RaiseEntry[], stored: Package, isoDate: string): Package => {
   const current = currentPackage(raises, stored);

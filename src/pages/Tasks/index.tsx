@@ -1,3 +1,4 @@
+import { useLoadStatus } from '../../hooks/useLoadStatus';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, Form, Grid, Tag, message } from 'antd';
 import { CheckCircleOutlined, InboxOutlined, PlusOutlined } from '@ant-design/icons';
@@ -39,8 +40,7 @@ const Tasks: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState(false);
+  const { loading, failed: loadError, run } = useLoadStatus(false);
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -58,20 +58,20 @@ const Tasks: React.FC = () => {
     [smartReminderText]
   );
 
-  const fetchTasks = useCallback(async () => {
-    try {
-      setLoading(true);
-      setLoadError(false);
-      const response = await getTasks();
-      setTasks(response.data);
-    } catch (error) {
-      setLoadError(true);
-      messageApi.error('Failed to load action items');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [messageApi]);
+  const fetchTasks = useCallback(
+    () =>
+      run(
+        async () => {
+          const response = await getTasks();
+          setTasks(response.data);
+        },
+        (error) => {
+          messageApi.error('Failed to load action items');
+          console.error(error);
+        }
+      ),
+    [messageApi, run]
+  );
 
   const notifyTasksUpdated = () => {
     window.dispatchEvent(new Event(TASKS_UPDATED_EVENT));

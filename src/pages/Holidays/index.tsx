@@ -3,9 +3,8 @@ import { Tabs, Space, Form, Input, message } from 'antd';
 import Modal from '../../components/modals/MobileModal';
 import { deleteHoliday } from '../../api';
 import PageShell from '../../components/layout/PageShell';
-import CalendarView from '../../components/CalendarView/CalendarView';
+import CalendarWorkspace from '../../components/CalendarView/CalendarWorkspace';
 import RecurrenceModal from '../../components/modals/RecurrenceModal';
-import SegmentedToggle from '../../components/inputs/SegmentedToggle';
 import { getCurrentYear } from '../../utils/yearFilter';
 import HolidayAddForm from '../../components/Holidays/HolidayAddForm';
 import { useHolidayEvents } from '../../hooks/Holidays/useHolidayEvents';
@@ -19,6 +18,7 @@ import HolidayEditModal from '../../components/Holidays/HolidayEditModal';
 import TimeOffTracker from '../../components/Holidays/TimeOffTracker';
 import { usePtoRoles } from '../../hooks/Holidays/usePtoRoles';
 import HolidayListCard from '../../components/Holidays/HolidayListCard';
+import { useCalendarContentView } from '../../hooks/useCalendarContentView';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import {
   FEDERAL_HOLIDAY_LABEL,
@@ -31,7 +31,6 @@ import EventViewModal from '../../components/Events/EventViewModal';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
 import { PageState } from '../../components/feedback/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
-import YearFilter from '../../components/inputs/YearFilter';
 import FederalHolidayTabPanel from '../../components/Holidays/FederalHolidayTabPanel';
 import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
 
@@ -59,14 +58,7 @@ const Holidays = () => {
       deserialize: (raw) => (raw === 'all' ? 'all' : parseInt(raw)),
     }
   );
-  const [contentView, setContentView] = usePersistedState<'list' | 'calendar'>(
-    'holidaysContentView',
-    'calendar',
-    {
-      serialize: (value) => value,
-      deserialize: (raw) => (raw === 'calendar' ? 'calendar' : 'list'),
-    }
-  );
+  const [contentView, setContentView] = useCalendarContentView('holidaysContentView');
 
   const [isRangeMode, setIsRangeMode] = useState(false);
 
@@ -332,48 +324,16 @@ const Holidays = () => {
     },
   ];
 
-  // Inside the calendar header, so the page title is not followed by a band of controls.
-  const viewControls = (
-    <>
-      <SegmentedToggle
-        value={contentView}
-        onChange={setContentView}
-        wrapperClassName="page-toolbar-view-switch w-max rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-1"
-        buttonClassName="px-3 py-1.5"
-        options={[
-          {
-            value: 'list',
-            label: 'List',
-            activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
-          },
-          {
-            value: 'calendar',
-            label: 'Calendar',
-            activeClassName: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300',
-          },
-        ]}
-      />
-      <YearFilter
-        selectedYear={selectedYear}
-        onYearChange={handleYearChange}
-        availableYears={availableYears}
-        className="toolbar-select"
-      />
-    </>
-  );
-
   return (
     <>
       {contextHolder}
-      <div className="w-full">
-        <PageShell
-          title="Holidays"
-          subtitle="Manage personal time off and observed holidays."
-          onExport={handleExportWrapper}
-          exportFilename="holidays"
-          onImport={() => setShowImport(true)}
-        ></PageShell>
-
+      <PageShell
+        title="Holidays"
+        subtitle="Manage personal time off and observed holidays."
+        onExport={handleExportWrapper}
+        exportFilename="holidays"
+        onImport={() => setShowImport(true)}
+      >
         {loadError && !hasLoadedData ? (
           <PageState
             tone="error"
@@ -382,23 +342,25 @@ const Holidays = () => {
             actionLabel="Try again"
             onAction={fetchData}
           />
-        ) : contentView === 'list' ? (
-          <>
-            <div className="mb-3 flex flex-wrap items-center gap-2">{viewControls}</div>
-            <Tabs
-              className="holiday-manager-tabs"
-              activeKey={activeTab}
-              onChange={(key) => {
-                setActiveTab(key);
-                setSelectedIds([]);
-              }}
-              items={items}
-              type="card"
-            />
-          </>
         ) : (
-          <CalendarView
-            pageControls={viewControls}
+          <CalendarWorkspace
+            contentView={contentView}
+            onContentViewChange={setContentView}
+            selectedYear={selectedYear}
+            onYearChange={handleYearChange}
+            availableYears={availableYears}
+            listView={
+              <Tabs
+                className="holiday-manager-tabs"
+                activeKey={activeTab}
+                onChange={(key) => {
+                  setActiveTab(key);
+                  setSelectedIds([]);
+                }}
+                items={items}
+                type="card"
+              />
+            }
             navLeading={(anchorDate) => (
               <TimeOffTracker
                 holidays={holidays}
@@ -517,7 +479,7 @@ const Holidays = () => {
           onToggleLock={toggleLock}
           ptoRoles={ptoRoles}
         />
-      </div>
+      </PageShell>
     </>
   );
 };

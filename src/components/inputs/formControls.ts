@@ -10,3 +10,10 @@ export const FIELD_LABEL_CLASS =
 
 // Hint line under a control. Fixed height keeps the bottom edge of each column even.
 export const FIELD_HINT_CLASS = 'mt-1 flex h-5 items-center justify-between gap-2 text-[11px]';
+
+// The sentence-case label above a control, as against the uppercase FIELD_LABEL_CLASS.
+export const FORM_LABEL_CLASS = 'block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1';
+
+// The small uppercase heading over a group of rows.
+export const SECTION_LABEL_CLASS =
+  'text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500';

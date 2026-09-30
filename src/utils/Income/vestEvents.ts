@@ -1,3 +1,4 @@
+import { daysInYear } from '../localDay';
 import type { IncomeEvent } from './tax/ledger';
 import { inclusiveDayCount, parseIsoDate, type PayPeriod } from './paySchedule';
 
@@ -49,8 +50,6 @@ export const vestOccasions = (terms: VestTerms): VestOccasion[] => {
 
   return occasions;
 };
-
-const daysInYear = (year: number) => (new Date(year, 1, 29).getMonth() === 1 ? 366 : 365);
 
 export const periodForDate = (date: Date, paychecksPerYear: number) => {
   const startOfYear = new Date(date.getFullYear(), 0, 1);

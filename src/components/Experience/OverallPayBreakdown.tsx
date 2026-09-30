@@ -1,16 +1,14 @@
+import { moneyWhole as money } from '../../utils/Income/format';
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import SegmentedToggle from '../inputs/SegmentedToggle';
 import { PayPartsPanel } from './PayPartsPanel';
-import { fmtMoney } from '../../utils/Experience/compensationBreakdownFormat';
 import {
   buildComponentBreakdown,
   totalOf,
   yearsIn,
   type YearGroup,
 } from '../../utils/Experience/earningsByYear';
-
-const money = (value: number) => fmtMoney(Math.round(value));
 
 export const OverallPayBreakdown = ({
   groups,

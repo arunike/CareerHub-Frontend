@@ -1,3 +1,4 @@
+import { confirmDestructive } from '../modals/confirmDestructive';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Tooltip, Input, Typography, Checkbox, message } from 'antd';
@@ -135,11 +136,10 @@ const NegotiationResultsTab: React.FC = () => {
       return !r?.isLocked;
     });
     if (deletableIds.length === 0) return;
-    Modal.confirm({
+    confirmDestructive({
       title: `Delete ${deletableIds.length} negotiation result${deletableIds.length > 1 ? 's' : ''}?`,
       content: 'Locked results will be skipped.',
       okText: 'Delete',
-      okType: 'danger',
       onOk: () => {
         Promise.all(
           deletableIds.map((id) =>

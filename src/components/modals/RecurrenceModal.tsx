@@ -1,3 +1,4 @@
+import { FORM_LABEL_CLASS } from '../inputs/formControls';
 import React, { useEffect, useState } from 'react';
 import Modal from './MobileModal';
 import clsx from 'clsx';
@@ -107,9 +108,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
     >
       <div className="space-y-5 pt-1">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            Repeat
-          </label>
+          <label className={FORM_LABEL_CLASS}>Repeat</label>
           <select
             className="w-full rounded-lg border border-gray-300 dark:border-white/[0.12] px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={frequency}
@@ -125,9 +124,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-ink-100 mb-1">
-            Every
-          </label>
+          <label className={FORM_LABEL_CLASS}>Every</label>
           <div className="flex items-center gap-3">
             <UnitNumberInput
               min={1}

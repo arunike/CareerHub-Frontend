@@ -1,3 +1,4 @@
+import { toNullableNumber } from '../../utils/Experience/experienceUtils';
 import React, { useMemo, useState } from 'react';
 import { Form, Input, DatePicker, Checkbox, Tabs, message, Select, Upload, Tooltip } from 'antd';
 import Modal from '../modals/MobileModal';
@@ -57,12 +58,6 @@ const DEFAULT_EMP_TYPES: EmploymentType[] = [
 ];
 
 const MAX_LOGO_FILE_BYTES = 4 * 1024 * 1024;
-
-const toNullableNumber = (value: unknown): number | null => {
-  if (value == null || value === '') return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
 
 const ExperienceModal: React.FC<ExperienceModalProps> = ({
   open,

@@ -1,3 +1,4 @@
+import { daysInYear } from '../localDay';
 import type { IncomeEvent } from './tax/ledger';
 import type { PayPeriod } from './paySchedule';
 import { formatPayDateShort, inclusiveDayCount, OFF_CYCLE_BASE, parseIsoDate } from './paySchedule';
@@ -51,8 +52,6 @@ export const bonusFromPercent = (percentOfBase: number, annualSalary: number) =>
 
 export const extrasTotal = (extras: BonusExtra[]) =>
   extras.reduce((total, extra) => total + Math.max(0, Number(extra.amount) || 0), 0);
-
-const daysInYear = (year: number) => (new Date(year, 1, 29).getMonth() === 1 ? 366 : 365);
 
 // Years the role covers, newest last; offering any other prorates the target to nothing.
 export const performanceYearOptions = (

@@ -1,13 +1,6 @@
-import { type BenefitItem, type SimulatedOffer, computeBenefitsTotal } from './calculations';
+import { normalizeBenefitItem } from './benefitItem';
+import { type SimulatedOffer, computeBenefitsTotal } from './calculations';
 import { normalizeEquityLiquidity } from './equityLiquidity';
-
-const normalizeBenefitItem = (item: Partial<BenefitItem>, fallbackId: string): BenefitItem => ({
-  id: item.id || fallbackId,
-  label: item.label || '',
-  amount: Number(item.amount) || 0,
-  frequency: item.frequency === 'MONTHLY' ? 'MONTHLY' : 'YEARLY',
-  is_taxable: Boolean(item.is_taxable),
-});
 
 // Saved scenarios predate benefit items, so a legacy total becomes one line.
 export const normalizeSimulatedOffers = (offers: SimulatedOffer[]) =>

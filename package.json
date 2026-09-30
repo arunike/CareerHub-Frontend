@@ -7,7 +7,7 @@
     "dev": "vite",
     "test": "vitest run",
     "test:watch": "vitest",
-    "quality": "npm run lint && npm run lint:css && npm run lint:pages && npm run lint:api && npm run format:check",
+    "quality": "npm run lint && npm run lint:css && npm run lint:pages && npm run lint:api && npm run lint:owners && npm run format:check",
     "build": "npm run quality && tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -16,7 +16,8 @@
     "preview": "vite preview",
     "lint:css": "node scripts/check-css-comments.mjs",
     "lint:pages": "node scripts/check-page-shell.mjs",
-    "lint:api": "node scripts/check-api-paths.mjs"
+    "lint:api": "node scripts/check-api-paths.mjs",
+    "lint:owners": "node scripts/check-one-owner.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.1",

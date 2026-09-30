@@ -1,3 +1,4 @@
+import { DAY_MS } from '../localDay';
 export interface PayPeriod {
   // 1-based in the tax year; off-cycle payments are numbered above the regular run.
   periodIndex: number;
@@ -103,7 +104,6 @@ export const buildPayDates = (
   });
 };
 
-const DAY_MS = 86400000;
 const epoch = (date: Date) => Math.floor(date.getTime() / DAY_MS);
 
 // Leaving mid-period pays for the days worked rather than losing the whole cheque; tail only.

@@ -1,4 +1,4 @@
-import { Modal } from 'antd';
+import { confirmDestructive } from '../../components/modals/confirmDestructive';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type React from 'react';
 import {
@@ -48,11 +48,10 @@ export const useApplicationActions = ({
 
   const requestDeleteApplication = (application: CareerApplication) => {
     const companyName = application.company_details?.name || 'this application';
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete application?',
       content: `Delete ${application.role_title} at ${companyName}? This cannot be undone.`,
       okText: 'Delete application',
-      okType: 'danger',
       cancelText: 'Keep application',
       onOk: () => handleDelete(application.id),
     });
@@ -87,11 +86,10 @@ export const useApplicationActions = ({
   };
 
   const handleBulkDelete = () => {
-    Modal.confirm({
+    confirmDestructive({
       title: 'Delete Selected Applications',
       content: `Are you sure you want to delete ${selectedRowKeys.length} applications?`,
       okText: 'Yes',
-      okType: 'danger',
       cancelText: 'No',
       onOk: async () => {
         try {

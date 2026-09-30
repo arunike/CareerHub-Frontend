@@ -1,3 +1,4 @@
+import { moneyWhole as formatCurrency } from '../../utils/Income/format';
 import {
   Bar,
   BarChart,
@@ -12,13 +13,6 @@ import { PROJECTION_YEARS } from '../../utils/OfferComparison/vestingSchedule';
 import type { OfferProjection, ProjectionBasis } from '../../utils/OfferComparison/yearByYear';
 
 const SERIES_COLORS = ['#2563eb', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#64748b'];
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0);
 
 interface TooltipEntry {
   name: string;

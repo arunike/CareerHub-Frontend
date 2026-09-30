@@ -1,3 +1,4 @@
+import { daysInYear, epochDay as dayOf } from '../localDay';
 export interface PtoPolicy {
   ptoDays: number;
   isUnlimited: boolean;
@@ -40,10 +41,6 @@ const num = (value: unknown) => {
 
 // Payroll tracks half days, so every figure here lands on one.
 const toHalfDay = (value: number) => Math.round(value * 2) / 2;
-
-const dayOf = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / 86400000;
-
-const daysInYear = (year: number) => dayOf(`${year + 1}-01-01`) - dayOf(`${year}-01-01`);
 
 // The share of the year this role actually covered: a job started in July earns half the allowance.
 export const coverageOfYear = (window: RoleWindow, year: number) => {
