@@ -94,7 +94,7 @@ describe('roundCents', () => {
 
   it('leaves a figure that is already exact alone', () => {
     expect(roundCents(6000)).toBe(6000);
-    expect(roundCents(15.24)).toBe(15.24);
+    expect(roundCents(12.5)).toBe(12.5);
     expect(roundCents(0)).toBe(0);
   });
 

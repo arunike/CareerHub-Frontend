@@ -198,7 +198,7 @@ const EventsGrid = ({
                 )}
               </Space>
               <Space>
-                <CalendarOutlined style={{ color: '#8c8c8c', fontSize: '16px' }} />
+                <CalendarOutlined className="text-base text-slate-400 dark:text-ink-500" />
                 <Text type="secondary">{dayjs(event.date).format('MMM D, YYYY')}</Text>
               </Space>
               {event.application_details && (

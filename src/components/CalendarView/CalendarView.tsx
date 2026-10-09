@@ -14,11 +14,17 @@ import CalendarMonthView from './CalendarMonthView';
 import type { CalendarDragItem } from './CalendarDayContent';
 import CalendarRangeView from './CalendarRangeView';
 import CalendarYearView from './CalendarYearView';
-import type { CalendarFilters, CalendarHolidayTarget, CalendarViewMode, DayData } from './types';
+import type {
+  AddActionHighlight,
+  CalendarFilters,
+  CalendarHolidayTarget,
+  CalendarViewMode,
+  DayData,
+} from './types';
 const CALENDAR_VIEW_MODES: CalendarViewMode[] = ['day', 'threeDay', 'week', 'month', 'year'];
 const formatIsoDay = (date: Date) => format(date, 'yyyy-MM-dd');
 
-import { getHeaderLabel, getVisibleRangeDates, shiftAnchorDate } from './utils';
+import { getHeaderLabel, getVisibleRangeDates, quickAddLayout, shiftAnchorDate } from './utils';
 import { FEDERAL_HOLIDAY_COLOR } from '../../utils/holidayTabColors';
 
 interface CalendarViewProps {
@@ -27,7 +33,7 @@ interface CalendarViewProps {
   federalHolidays: Holiday[];
   categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
-  addActionHighlight?: 'events' | 'holidays' | 'all';
+  addActionHighlight?: AddActionHighlight;
   loading?: boolean;
   onEventSelect?: (event: Event, day?: Date) => void;
   onItemDrop?: (item: CalendarDragItem, day: Date) => void;
@@ -290,9 +296,44 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   const visibleRangeDates = getVisibleRangeDates(viewMode, anchorDate);
   const canAddFromCalendar = !!onAddEvent || !!onAddHoliday;
-  const shouldHighlightEventAdd = addActionHighlight === 'events' || addActionHighlight === 'all';
-  const shouldHighlightHolidayAdd =
-    addActionHighlight === 'holidays' || addActionHighlight === 'all';
+  const {
+    highlightEvent: shouldHighlightEventAdd,
+    highlightHoliday: shouldHighlightHolidayAdd,
+    holidayFirst: holidayAddFirst,
+  } = quickAddLayout(addActionHighlight);
+
+  const addEventButton = onAddEvent ? (
+    <Button
+      type={shouldHighlightEventAdd ? 'primary' : 'default'}
+      onClick={handleAddEvent}
+      disabled={loading}
+      block
+    >
+      Add Event
+    </Button>
+  ) : null;
+
+  const addHolidayButtons = onAddHoliday ? (
+    <>
+      <Button
+        type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
+        onClick={() => handleAddHoliday({ tab: null, label: 'My Time Off' })}
+        block
+      >
+        Add Time Off
+      </Button>
+      {holidayTabs.map((tab) => (
+        <Button
+          key={tab.id}
+          type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
+          onClick={() => handleAddHoliday({ tab: tab.id, label: tab.name })}
+          block
+        >
+          Add {tab.name}
+        </Button>
+      ))}
+    </>
+  ) : null;
 
   return (
     <div>
@@ -385,35 +426,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         destroyOnHidden
       >
         <div className="grid gap-2">
-          {onAddEvent && (
-            <Button
-              type={shouldHighlightEventAdd ? 'primary' : 'default'}
-              onClick={handleAddEvent}
-              disabled={loading}
-              block
-            >
-              Add Event
-            </Button>
-          )}
-          {onAddHoliday && (
+          {holidayAddFirst ? (
             <>
-              <Button
-                type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
-                onClick={() => handleAddHoliday({ tab: null, label: 'My Time Off' })}
-                block
-              >
-                Add Time Off
-              </Button>
-              {holidayTabs.map((tab) => (
-                <Button
-                  key={tab.id}
-                  type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
-                  onClick={() => handleAddHoliday({ tab: tab.id, label: tab.name })}
-                  block
-                >
-                  Add {tab.name}
-                </Button>
-              ))}
+              {addHolidayButtons}
+              {addEventButton}
+            </>
+          ) : (
+            <>
+              {addEventButton}
+              {addHolidayButtons}
             </>
           )}
         </div>

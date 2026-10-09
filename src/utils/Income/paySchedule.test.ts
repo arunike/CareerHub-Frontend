@@ -96,6 +96,14 @@ describe('buildPayPeriods', () => {
     expect(full.some((period) => period.periodIndex === partial[0].periodIndex)).toBe(true);
   });
 
+  it('counts a mid-year joiner by its own cheques, not the pay frequency', () => {
+    const periods = buildPayPeriods(2026, 26, {
+      firstPayDate: '2026-01-15',
+      startDate: '2026-07-01',
+    });
+    expect(periods.length).toBe(14);
+  });
+
   it('returns nothing when the role ended before the year began', () => {
     expect(buildPayPeriods(2026, 26, { endDate: '2025-06-01' })).toEqual([]);
   });

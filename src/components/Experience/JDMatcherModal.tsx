@@ -119,8 +119,8 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
     <Modal
       title={
         <Space size={8}>
-          <RobotOutlined style={{ color: '#0ea5e9' }} />
-          <span style={{ fontWeight: 600, color: '#1f2937' }}>AI Resume Evaluator</span>
+          <RobotOutlined className="text-sky-500 dark:text-sky-300" />
+          <span className="font-semibold text-slate-800 dark:text-ink-50">AI Resume Evaluator</span>
         </Space>
       }
       open={open}
@@ -144,7 +144,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
               onClose={() => setErrorMsg(null)}
             />
           )}
-          <p style={{ margin: 0, color: '#6b7280', fontSize: 13, lineHeight: 1.6 }}>
+          <p className="m-0 text-[13px] leading-relaxed text-slate-500 dark:text-ink-400">
             {application
               ? `Paste the Job Description for ${application.role_title}. This report will be linked to this application.`
               : 'Paste a full Job Description below. Our AI will cross-reference it against your entire Career History and generate a full evaluation report.'}
@@ -164,17 +164,8 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
             loading={analyzing}
             disabled={!jdText.trim()}
             block
-            style={
-              jdText.trim()
-                ? {
-                    height: 46,
-                    borderRadius: 10,
-                    background: '#0284c7',
-                    borderColor: '#0284c7',
-                    fontSize: 14,
-                  }
-                : { height: 46, borderRadius: 10, fontSize: 14 }
-            }
+            className={jdText.trim() ? 'border-sky-600 bg-sky-600 hover:bg-sky-700' : undefined}
+            style={{ height: 46, borderRadius: 10, fontSize: 14 }}
           >
             {analyzing ? 'Analyzing...' : 'Analyze Resume against JD'}
           </Button>
@@ -202,7 +193,9 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
               trailColor="rgba(255,255,255,0.6)"
               strokeWidth={7}
               format={(pct) => (
-                <span style={{ fontSize: 22, fontWeight: 900, color: '#111827' }}>{pct}%</span>
+                <span className="text-[22px] font-black text-slate-900 dark:text-ink-50">
+                  {pct}%
+                </span>
               )}
             />
             <div style={{ flex: 1 }}>
@@ -222,7 +215,7 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
               >
                 {savedReport.score_label || meta!.label}
               </span>
-              <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.65 }}>
+              <p className="m-0 text-[13px] leading-relaxed text-slate-700 dark:text-ink-200">
                 {savedReport.summary}
               </p>
             </div>
@@ -230,67 +223,27 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
 
           {/* Quick stats row */}
           <div style={{ display: 'flex', gap: 10 }}>
-            <div
-              style={{
-                flex: 1,
-                background: '#f0fdf4',
-                borderRadius: 10,
-                padding: '12px 14px',
-                border: '1px solid #d1fae5',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  color: '#059669',
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
-              >
+            <div className="flex-1 rounded-[10px] border border-emerald-100 bg-emerald-50 px-3.5 py-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
                 <CheckCircleOutlined /> Strengths
               </div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#065f46', marginTop: 4 }}>
+              <div className="mt-1 text-[22px] font-extrabold text-emerald-800 dark:text-emerald-200">
                 {savedReport.matched_skills?.length ?? 0}
               </div>
             </div>
-            <div
-              style={{
-                flex: 1,
-                background: '#fef2f2',
-                borderRadius: 10,
-                padding: '12px 14px',
-                border: '1px solid #fecaca',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  color: '#dc2626',
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
-              >
+            <div className="flex-1 rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-3 dark:border-rose-500/20 dark:bg-rose-500/10">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-rose-600 dark:text-rose-300">
                 <WarningOutlined /> Gaps
               </div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#7f1d1d', marginTop: 4 }}>
+              <div className="mt-1 text-[22px] font-extrabold text-rose-900 dark:text-rose-200">
                 {savedReport.missing_skills?.length ?? 0}
               </div>
             </div>
-            <div
-              style={{
-                flex: 1,
-                background: '#fffbeb',
-                borderRadius: 10,
-                padding: '12px 14px',
-                border: '1px solid #fde68a',
-              }}
-            >
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#d97706' }}>Tailor</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#78350f', marginTop: 4 }}>
+            <div className="flex-1 rounded-[10px] border border-amber-200 bg-amber-50 px-3.5 py-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+              <div className="text-[13px] font-semibold text-amber-600 dark:text-amber-300">
+                Tailor
+              </div>
+              <div className="mt-1 text-[22px] font-extrabold text-amber-900 dark:text-amber-200">
                 {(savedReport.tailored_bullets?.length ?? 0) ||
                   (savedReport.recommendations?.length ?? 0)}
               </div>
@@ -299,28 +252,11 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
 
           {((savedReport.tailored_bullets?.length ?? 0) > 0 ||
             (savedReport.keyword_suggestions?.length ?? 0) > 0) && (
-            <div
-              style={{
-                background: '#f8fafc',
-                borderRadius: 12,
-                padding: '14px 16px',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  color: '#475569',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  marginBottom: 8,
-                }}
-              >
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-white/[0.08] dark:bg-white/[0.04]">
+              <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-600 dark:text-ink-200">
                 <EditOutlined /> Resume Tailoring Added
               </div>
-              <p style={{ margin: 0, color: '#64748b', fontSize: 12, lineHeight: 1.6 }}>
+              <p className="m-0 text-xs leading-relaxed text-slate-500 dark:text-ink-400">
                 Full report includes {savedReport.tailored_bullets?.length ?? 0} bullet rewrite
                 suggestion{(savedReport.tailored_bullets?.length ?? 0) === 1 ? '' : 's'}
                 {(savedReport.keyword_suggestions?.length ?? 0) > 0
@@ -337,14 +273,8 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
             icon={<ExpandOutlined />}
             block
             onClick={openReport}
-            style={{
-              height: 46,
-              borderRadius: 10,
-              background: '#0284c7',
-              borderColor: '#0284c7',
-              fontSize: 14,
-              fontWeight: 600,
-            }}
+            className="border-sky-600 bg-sky-600 hover:bg-sky-700"
+            style={{ height: 46, borderRadius: 10, fontSize: 14, fontWeight: 600 }}
           >
             View Full Report
           </Button>
@@ -352,31 +282,13 @@ const JDMatcherModal: React.FC<Props> = ({ open, onCancel, application, onSaved 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={handleReset}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#9ca3af',
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
+              className="flex cursor-pointer items-center gap-1 border-none bg-transparent text-[13px] text-slate-400 hover:text-slate-600 dark:text-ink-500 dark:hover:text-ink-300"
             >
               <ArrowLeftOutlined /> Analyze another
             </button>
             <button
               onClick={viewAllReports}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#9ca3af',
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
+              className="flex cursor-pointer items-center gap-1 border-none bg-transparent text-[13px] text-slate-400 hover:text-slate-600 dark:text-ink-500 dark:hover:text-ink-300"
             >
               View all reports →
             </button>

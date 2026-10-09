@@ -21,7 +21,8 @@ interface Props {
   source: IncomeSource | null;
   // Paid so far, so this card agrees with the year card and the Experience breakdown.
   totals: ReturnType<typeof totalsToDate>;
-  paychecksPerYear: number;
+  // The role's cheques this year, not the pay frequency: a September joiner has seven of them.
+  paychecks: number;
   stateAbbr: string;
   stateLabel: string;
   taxYear: number;
@@ -54,7 +55,7 @@ const Meta = ({ children }: { children: React.ReactNode }) => (
 export const IncomeSummary = ({
   source,
   totals,
-  paychecksPerYear,
+  paychecks,
   stateAbbr,
   stateLabel,
   taxYear,
@@ -214,7 +215,7 @@ export const IncomeSummary = ({
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 dark:border-white/[0.07] bg-white dark:bg-ink-900 px-6 py-3">
         <Meta>
           <span className="font-medium text-slate-700 dark:text-ink-100">{totals.count}</span> of{' '}
-          {paychecksPerYear} paychecks paid
+          {paychecks} paychecks paid
         </Meta>
         {window ? <Meta>{window}</Meta> : null}
         <Meta>

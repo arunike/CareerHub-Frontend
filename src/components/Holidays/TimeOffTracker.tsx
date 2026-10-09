@@ -1,3 +1,4 @@
+import { toIsoDate } from '../../utils/localDay';
 import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber, Popover, Select, Tooltip, message } from 'antd';
@@ -55,6 +56,14 @@ interface Props {
   onOpenDay: (holiday: HolidayLike) => void;
 }
 
+const LAPSE_MONTHS = [
+  { value: 0, label: 'Never' },
+  ...Array.from({ length: 12 }, (_, index) => ({
+    value: index + 1,
+    label: new Date(2026, index, 1).toLocaleString(undefined, { month: 'long' }),
+  })),
+];
+
 const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleId, setRoleId] = useState<number | null>(null);
@@ -88,6 +97,7 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
                 isUnlimited: Boolean(offer.is_unlimited_pto),
                 unlimitedPlanningDays: num(offer.unlimited_pto_planning_days),
                 rolloverMaxDays: num(offer.pto_rollover_max_days),
+                rolloverExpiresMonth: num(offer.pto_rollover_expires_month),
                 accrualDaysPerYear: num(offer.pto_accrual_days_per_year),
                 accrualMaxDays: num(offer.pto_accrual_max_days),
                 hoursPerDay: num(offer.pto_hours_per_day) || 8,
@@ -122,7 +132,13 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
       ...daysOffInWindow(holidays, role.window, year, role.id),
       ...daysOffInWindow(holidays, role.window, year - 1, role.id),
     ].map((date) => ({ date, days: 1, kind: 'PTO' }));
-    return ptoBalance({ policy: role.policy, window: role.window, year, entries: asEntries });
+    return ptoBalance({
+      policy: role.policy,
+      window: role.window,
+      year,
+      entries: asEntries,
+      todayIso: toIsoDate(new Date()),
+    });
   }, [holidays, role, year]);
 
   // Written back to the offer it came from: these are the employer's policy, not view settings.
@@ -282,6 +298,22 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
                       max={90}
                       size="small"
                       className="w-16"
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between gap-2">
+                    <span className="text-slate-600 dark:text-ink-300">Carried days lapse in</span>
+                    <Select
+                      value={role.policy.rolloverExpiresMonth}
+                      onChange={(value) =>
+                        void savePolicy(
+                          { rolloverExpiresMonth: value },
+                          { pto_rollover_expires_month: value }
+                        )
+                      }
+                      size="small"
+                      className="w-28"
+                      options={LAPSE_MONTHS}
                     />
                   </label>
 

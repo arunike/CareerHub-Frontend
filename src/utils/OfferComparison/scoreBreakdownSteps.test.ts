@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { stepOneHeading, totalFormula } from '../../components/OfferComparison/ScoreBreakdown';
-import { buildFinancialCalculationLines, buildScoreValueLines, lessTax } from './decisionScoring';
+import {
+  buildFinancialCalculationLines,
+  buildScoreValueLines,
+  lessTax,
+} from './decisionScoreLines';
 
 describe('the breakdown only numbers steps it actually has', () => {
   it('drops the "Step 1" prefix when nothing is skipped', () => {

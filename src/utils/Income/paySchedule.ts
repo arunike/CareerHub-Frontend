@@ -1,4 +1,6 @@
-import { DAY_MS } from '../localDay';
+import { DAY_MS, toIsoDate } from '../localDay';
+
+export { toIsoDate };
 export interface PayPeriod {
   // 1-based in the tax year; off-cycle payments are numbered above the regular run.
   periodIndex: number;
@@ -22,12 +24,6 @@ const dayNumber = (date: Date) =>
 
 export const inclusiveDayCount = (from: Date, to: Date) =>
   Math.max(0, dayNumber(to) - dayNumber(from) + 1);
-
-export const toIsoDate = (date: Date) => {
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-};
 
 export const parseIsoDate = (value?: string | null) => {
   if (!value) return null;

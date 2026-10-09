@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 import { Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { LINE_NOTE, type DecisionRow } from '../../utils/OfferComparison/decisionScoring';
+import { LINE_NOTE } from '../../utils/OfferComparison/decisionScoreLines';
+import type { DecisionRow } from '../../utils/OfferComparison/decisionScoring';
 
 // With nothing skipped there is no second step, so numbering the first one invents a sequence.
 export const stepOneHeading = (hasSkipped: boolean) =>

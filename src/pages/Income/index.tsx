@@ -442,7 +442,6 @@ const IncomePage = () => {
           ledger={ledger}
           matchFormula={matchFormula}
           modelledYears={modelledYears}
-          paychecksPerYear={paychecksPerYear}
           periodDefaults={periodDefaults}
           reconciliation={reconciliation}
           selectSource={selectSource}

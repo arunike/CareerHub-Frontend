@@ -19,3 +19,10 @@ export const dayIndex = (value: unknown): number | null => {
 
 export const daysInYear = (year: number) =>
   epochDay(`${year + 1}-01-01`) - epochDay(`${year}-01-01`);
+
+// Local calendar date, not UTC: toISOString() shifts the day either side of midnight.
+export const toIsoDate = (date: Date) => {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};

@@ -14,6 +14,7 @@ const policy = (over: Partial<PtoPolicy> = {}): PtoPolicy => ({
   isUnlimited: false,
   unlimitedPlanningDays: 25,
   rolloverMaxDays: 5,
+  rolloverExpiresMonth: 0,
   accrualDaysPerYear: 0,
   accrualMaxDays: 0,
   hoursPerDay: 8,
@@ -258,5 +259,32 @@ describe('tenure accrual', () => {
       entries: [],
     });
     expect(grown).toMatchObject({ entitled: 23, accrued: 3 });
+  });
+});
+
+describe('carried days that lapse', () => {
+  const window = { startDate: '2024-01-01', endDate: null };
+  // 20 entitled, nothing taken last year, so 5 days carry under a 5-day cap.
+  const carried = { policy: policy({ rolloverExpiresMonth: 4 }), window, year: 2026, entries: [] };
+
+  it('carries the days before the lapse month', () => {
+    expect(ptoBalance({ ...carried, todayIso: '2026-03-31' }).rolledOver).toBe(5);
+  });
+
+  it('drops them from the first of the lapse month', () => {
+    expect(ptoBalance({ ...carried, todayIso: '2026-04-01' }).rolledOver).toBe(0);
+  });
+
+  it('treats a finished year as lapsed', () => {
+    expect(ptoBalance({ ...carried, todayIso: '2027-01-02' }).rolledOver).toBe(0);
+  });
+
+  it('never lapses when the month is 0, whatever the date', () => {
+    const never = { ...carried, policy: policy({ rolloverExpiresMonth: 0 }) };
+    expect(ptoBalance({ ...never, todayIso: '2026-12-31' }).rolledOver).toBe(5);
+  });
+
+  it('cannot lapse without a reference date', () => {
+    expect(ptoBalance(carried).rolledOver).toBe(5);
   });
 });

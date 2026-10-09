@@ -9,8 +9,15 @@ import {
   subWeeks,
   subYears,
 } from 'date-fns';
-import type { CalendarViewMode, DayData } from './types';
+import type { AddActionHighlight, CalendarViewMode, DayData } from './types';
 import { localDay as parseDayString } from '../../utils/localDay';
+
+// The page's own kind of entry leads the quick-add sheet; 'all' owns neither, so Event stays first.
+export const quickAddLayout = (highlight: AddActionHighlight) => ({
+  highlightEvent: highlight === 'events' || highlight === 'all',
+  highlightHoliday: highlight === 'holidays' || highlight === 'all',
+  holidayFirst: highlight === 'holidays',
+});
 
 export const hasDayItems = (dayData: DayData) =>
   dayData.events.length > 0 ||

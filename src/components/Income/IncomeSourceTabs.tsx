@@ -33,7 +33,6 @@ type Props = {
   ledger: any;
   matchFormula: any;
   modelledYears: any;
-  paychecksPerYear: any;
   periodDefaults: any;
   reconciliation: any;
   selectSource: any;
@@ -101,7 +100,6 @@ const IncomeSourceTabs = ({
   ledger,
   matchFormula,
   modelledYears,
-  paychecksPerYear,
   periodDefaults,
   reconciliation,
   selectSource,
@@ -131,7 +129,7 @@ const IncomeSourceTabs = ({
         <IncomeSummary
           source={source}
           totals={totalsToDate(effectiveRows, toIsoDate(new Date()))}
-          paychecksPerYear={paychecksPerYear}
+          paychecks={effectiveRows.length}
           stateAbbr={stateAbbr}
           stateLabel={stateLabel}
           taxYear={taxYear}

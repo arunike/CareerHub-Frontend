@@ -17,11 +17,14 @@ import {
   BONUS_PAYOUT_MONTH,
 } from './financialScore';
 import {
-  CATEGORY_LABELS,
-  VISA_OVERLAY_WEIGHT,
+  LINE_NOTE,
   buildFinancialCalculationLines,
   buildScoreValueLines,
   lessTax,
+} from './decisionScoreLines';
+import {
+  CATEGORY_LABELS,
+  VISA_OVERLAY_WEIGHT,
   formatCurrency,
   getWorkMode,
   hasImmigrationSignal,
@@ -31,7 +34,6 @@ import {
   scoreVisa,
   scoreWorkLife,
   totalAnnualComp,
-  LINE_NOTE,
 } from './decisionScoring';
 import type { CategoryKey, CategoryScore, DecisionRow } from './decisionScoring';
 

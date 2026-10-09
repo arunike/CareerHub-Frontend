@@ -81,7 +81,7 @@ const NegotiationResultPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto min-h-screen max-w-6xl px-4 py-12 sm:px-6">
+      <div className="mx-auto min-h-screen max-w-6xl">
         <PanelSkeleton rows={6} />
       </div>
     );

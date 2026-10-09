@@ -9,6 +9,7 @@ import { buildIncomeSources, yearsForSources } from '../../utils/Income/incomeSo
 import { createSettingsResolver } from '../../utils/Income/incomeSettingsStore';
 import { summarizeYears } from '../../utils/Income/yearSummary';
 import type { RoleEarnings } from '../../utils/Income/yearSummary';
+import { numericKeys } from '../../utils/Income/numericKeys';
 
 // role.gross is already to-date, so the full year must come from projectedGross, not from it.
 export const ledgerYearOf = (
@@ -42,14 +43,6 @@ export interface LedgerYear {
   projected: number;
   paychecksToDate: number;
 }
-
-const numericKeys = <T>(source: unknown): Record<number, T> | undefined => {
-  if (!source || typeof source !== 'object') return undefined;
-  const entries = Object.entries(source as Record<string, T>).map(
-    ([year, value]) => [Number(year), value] as const
-  );
-  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
-};
 
 const round = (value: number) => Math.round(value);
 

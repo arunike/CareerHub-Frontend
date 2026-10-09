@@ -37,3 +37,5 @@ export const WEEKDAY_LABELS = Array.from({ length: 7 }, (_, index) =>
 export const MINI_WEEKDAY_LABELS = Array.from({ length: 7 }, (_, index) =>
   format(addDays(startOfWeek(new Date()), index), 'EEEEE')
 );
+
+export type AddActionHighlight = 'events' | 'holidays' | 'all';

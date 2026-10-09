@@ -435,19 +435,8 @@ const CoverLettersTab: React.FC = () => {
               themeColor="sky"
             />
             <div
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 16,
-                padding: '24px 28px',
-                whiteSpace: 'pre-wrap',
-                fontFamily: 'Georgia, serif',
-                lineHeight: 1.9,
-                fontSize: 15,
-                maxHeight: 450,
-                overflowY: 'auto',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-              }}
+              className="max-h-[450px] overflow-y-auto rounded-2xl border border-slate-200 bg-white px-7 py-6 text-[15px] shadow-sm dark:border-white/[0.08] dark:bg-ink-900 dark:text-ink-100"
+              style={{ whiteSpace: 'pre-wrap', fontFamily: 'Georgia, serif', lineHeight: 1.9 }}
             >
               {viewingLetter.coverLetter}
             </div>

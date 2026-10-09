@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildScoreValueLines } from './decisionScoring';
+import { buildScoreValueLines } from './decisionScoreLines';
 import { computeIndependentFinancialScore, financialScoreValue } from './financialScore';
 
 // A made-up package chosen for round arithmetic, so every step is checkable by eye.

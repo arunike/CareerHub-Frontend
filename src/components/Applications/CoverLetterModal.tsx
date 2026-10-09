@@ -202,7 +202,11 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
               size="small"
               icon={copied ? <CheckOutlined /> : <CopyOutlined />}
               onClick={handleCopy}
-              style={copied ? { color: '#059669', borderColor: '#059669' } : {}}
+              className={
+                copied
+                  ? 'border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-300'
+                  : undefined
+              }
             >
               {copied ? 'Copied!' : 'Copy'}
             </Button>
@@ -210,19 +214,8 @@ const CoverLetterModal = ({ application, open, onClose }: Props) => {
 
           {/* Letter body */}
           <div
-            style={{
-              background: '#fafafa',
-              border: '1px solid #e8e8e8',
-              borderRadius: 10,
-              padding: '20px 24px',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'Georgia, serif',
-              lineHeight: 1.85,
-              fontSize: 14,
-              color: '#1f2937',
-              maxHeight: 420,
-              overflowY: 'auto',
-            }}
+            className="max-h-[420px] overflow-y-auto rounded-[10px] border border-slate-200 bg-slate-50 px-6 py-5 text-sm text-slate-800 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-ink-100"
+            style={{ whiteSpace: 'pre-wrap', fontFamily: 'Georgia, serif', lineHeight: 1.85 }}
           >
             {coverLetter}
           </div>

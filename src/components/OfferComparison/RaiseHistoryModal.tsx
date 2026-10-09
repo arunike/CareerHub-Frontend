@@ -1,36 +1,22 @@
+import RaiseComponentRows from './RaiseComponentRows';
+import RaiseHistoryList from './RaiseHistoryList';
 import React, { useState, useEffect } from 'react';
-import { AutoComplete, Button, DatePicker, Input, Tag, Tooltip, Popconfirm } from 'antd';
+import { AutoComplete, Button, DatePicker, Input, Tooltip } from 'antd';
 import Modal from '../modals/MobileModal';
-import UnitNumberInput from '../inputs/UnitNumberInput';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  DownOutlined,
-  TrophyOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, DownOutlined, TrophyOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import HelpTooltipTrigger from '../feedback/HelpTooltipTrigger';
 import type { RaiseEntry } from '../../types';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { backPayFor } from '../../utils/Income/raiseSchedule';
 import { cycleFor, nextEffectiveDate } from '../../utils/OfferComparison/raiseCycles';
-import { SALARY_HOURS_PER_YEAR } from '../../utils/Experience/payGrowth';
-import ModeToggle from '../inputs/ModeToggle';
 import BackPayWorking from './BackPayWorking';
 import {
   describeRaiseFormIssues,
   raiseFormIssues,
 } from '../../utils/OfferComparison/raiseFormValidation';
-import {
-  annualFromHourly,
-  changeBetween,
-  formatPercentChange,
-  hourlyFromAnnual,
-} from '../../utils/OfferComparison/raiseAfterValues';
-import { bonusAtSameRate, bonusFromPercent, bonusPercentOf } from '../../utils/bonusPercent';
+import { bonusAtSameRate, bonusFromPercent } from '../../utils/bonusPercent';
 import { applyRolePayToChain, firstRaiseDrift } from '../../utils/OfferComparison/raiseChain';
-import RaiseBreakdown from './RaiseBreakdown';
 import {
   defaultModes,
   defaultPcts,
@@ -38,13 +24,9 @@ import {
   fmt,
   nanoid,
   RAISE_TYPES,
-  reasonColor,
   reasonLabel,
   reasonValue,
   type AfterModes,
-  type BaseEquityMode,
-  type BaseMode,
-  type BonusMode,
   type PctInputs,
 } from './raiseHistoryFields';
 
@@ -61,7 +43,6 @@ interface Props {
 }
 
 // Quiet enough that the label reads first; the colour still carries the reason.
-const ENTRY_TAG = '!mr-0 !px-1.5 !text-[11px] !leading-[18px]';
 
 const RaiseHistoryModal: React.FC<Props> = ({
   open,
@@ -188,247 +169,6 @@ const RaiseHistoryModal: React.FC<Props> = ({
 
   const issues = raiseFormIssues(form);
   const blockedReason = describeRaiseFormIssues(issues);
-
-  const changeLine = (before: number, after: number) => {
-    const { amount, percent } = changeBetween(before, after);
-    if (amount === 0 && percent === null) return null;
-    const tone =
-      amount > 0
-        ? 'text-emerald-600 dark:text-emerald-400'
-        : amount < 0
-          ? 'text-rose-600 dark:text-rose-400'
-          : 'text-slate-400 dark:text-ink-500';
-    return (
-      <div className={`mt-1 text-xs tabular-nums ${tone}`}>
-        {amount > 0 ? '+' : amount < 0 ? '−' : ''}
-        {fmt(Math.abs(amount))}
-        {percent !== null && <span className="ml-1.5">· {formatPercentChange(percent)}</span>}
-      </div>
-    );
-  };
-
-  // One row per figure, so the two columns cannot drift as the After side grows a toggle or a hint.
-  const metricRow = (
-    label: string,
-    before: number,
-    modes: React.ReactNode,
-    after: React.ReactNode,
-    hint?: React.ReactNode
-  ) => (
-    <div className="px-4 py-3.5">
-      <div className="mb-2 flex min-h-11 items-center justify-between gap-3 sm:grid sm:min-h-7 sm:grid-cols-2 sm:gap-4">
-        <label className="text-xs font-medium text-slate-600 dark:text-ink-200">{label}</label>
-        <div className="flex items-center justify-end">{modes}</div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-ink-500 sm:hidden">
-            Before
-          </span>
-          <div className="flex h-[38px] items-center rounded-[9px] border border-dashed border-slate-200 dark:border-white/[0.08] bg-slate-100 dark:bg-ink-800 px-3 text-sm text-slate-500 dark:text-ink-400">
-            {before > 0 ? fmt(before) : '—'}
-          </div>
-        </div>
-        <div>
-          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-300 sm:hidden">
-            After
-          </span>
-          {after}
-          {hint}
-        </div>
-      </div>
-    </div>
-  );
-
-  const switchBaseMode = (mode: BaseMode) => {
-    setAfterModes((m) => ({ ...m, base: mode }));
-    if (mode === 'rate') {
-      const hourly = hourlyFromAnnual(form.base_after || form.base_before);
-      setHourlyInput(hourly ? hourly.toFixed(2) : '');
-    }
-    if (mode === '%change') {
-      const p = form.base_before
-        ? ((form.base_after - form.base_before) / form.base_before) * 100
-        : 0;
-      setPctInputs((pi) => ({ ...pi, base: p.toFixed(1) }));
-    }
-  };
-
-  const switchBonusMode = (mode: BonusMode) => {
-    setAfterModes((m) => ({ ...m, bonus: mode }));
-    if (mode === '%change') {
-      const p = form.bonus_before
-        ? ((form.bonus_after - form.bonus_before) / form.bonus_before) * 100
-        : 0;
-      setPctInputs((pi) => ({ ...pi, bonus: p.toFixed(1) }));
-    } else if (mode === '%ofbase') {
-      const p = bonusPercentOf(form.base_after, form.bonus_after);
-      setPctInputs((pi) => ({ ...pi, bonus: p.toFixed(1) }));
-    }
-  };
-
-  const switchEquityMode = (mode: BaseEquityMode) => {
-    setAfterModes((m) => ({ ...m, equity: mode }));
-    if (mode === '%change') {
-      const p = form.equity_before
-        ? ((form.equity_after - form.equity_before) / form.equity_before) * 100
-        : 0;
-      setPctInputs((pi) => ({ ...pi, equity: p.toFixed(1) }));
-    }
-  };
-
-  const baseRow = () => {
-    const mode = afterModes.base;
-    return metricRow(
-      'Base Salary',
-      form.base_before,
-      <ModeToggle
-        value={mode}
-        onChange={switchBaseMode}
-        options={[
-          { label: '$', value: '$' },
-          { label: '% increase', value: '%change' },
-          { label: '$/hr', value: 'rate' },
-        ]}
-      />,
-      mode === '$' ? (
-        <UnitNumberInput
-          unit="$"
-          min={0}
-          value={form.base_after || null}
-          onChange={(value) => setF('base_after', value ?? 0)}
-        />
-      ) : mode === 'rate' ? (
-        <UnitNumberInput
-          unit="$/hr"
-          min={0}
-          value={hourlyInput === '' ? null : Number(hourlyInput)}
-          onChange={(value) => {
-            setHourlyInput(value == null ? '' : String(value));
-            if (value != null) setF('base_after', annualFromHourly(value));
-          }}
-          placeholder="e.g. 80"
-        />
-      ) : (
-        <UnitNumberInput
-          unit="%"
-          value={pctInputs.base === '' ? null : Number(pctInputs.base)}
-          onChange={(value) => {
-            setPctInputs((pi) => ({ ...pi, base: value == null ? '' : String(value) }));
-            if (value != null) setF('base_after', Math.round(form.base_before * (1 + value / 100)));
-          }}
-          placeholder="e.g. 4.2"
-        />
-      ),
-      <>
-        {mode !== '$' && form.base_after > 0 ? (
-          <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
-            {fmt(form.base_after)}
-            {mode === 'rate' && ` · ${SALARY_HOURS_PER_YEAR.toLocaleString()} hrs/yr`}
-          </div>
-        ) : null}
-        {changeLine(form.base_before, form.base_after)}
-      </>
-    );
-  };
-
-  const bonusRow = () => {
-    const mode = afterModes.bonus;
-    return metricRow(
-      'Annual Bonus',
-      form.bonus_before,
-      <ModeToggle
-        value={mode}
-        onChange={switchBonusMode}
-        options={[
-          { label: '$', value: '$' },
-          { label: '% increase', value: '%change' },
-          { label: '% of base', value: '%ofbase' },
-        ]}
-      />,
-      mode === '$' ? (
-        <UnitNumberInput
-          unit="$"
-          min={0}
-          value={form.bonus_after || null}
-          onChange={(value) => {
-            setBonusTouched(true);
-            setF('bonus_after', value ?? 0);
-          }}
-        />
-      ) : (
-        <UnitNumberInput
-          unit="%"
-          value={pctInputs.bonus === '' ? null : Number(pctInputs.bonus)}
-          onChange={(value) => {
-            setPctInputs((pi) => ({ ...pi, bonus: value == null ? '' : String(value) }));
-            if (value != null) {
-              if (mode === '%change') {
-                setF('bonus_after', Math.round(form.bonus_before * (1 + value / 100)));
-              } else {
-                setF('bonus_after', bonusFromPercent(value, form.base_after));
-              }
-            }
-          }}
-          placeholder={mode === '%ofbase' ? 'e.g. 20' : 'e.g. 5'}
-        />
-      ),
-      <>
-        {mode !== '$' && form.bonus_after > 0 ? (
-          <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
-            {fmt(form.bonus_after)}
-            {mode === '%ofbase' && form.base_after > 0 && (
-              <span className="ml-1 text-blue-400">of {fmt(form.base_after)} base</span>
-            )}
-          </div>
-        ) : null}
-        {changeLine(form.bonus_before, form.bonus_after)}
-      </>
-    );
-  };
-
-  const equityRow = () => {
-    const mode = afterModes.equity;
-    return metricRow(
-      'Annual RSU',
-      form.equity_before,
-      <ModeToggle
-        value={mode}
-        onChange={switchEquityMode}
-        options={[
-          { label: '$', value: '$' },
-          { label: '% increase', value: '%change' },
-        ]}
-      />,
-      mode === '$' ? (
-        <UnitNumberInput
-          unit="$"
-          min={0}
-          value={form.equity_after || null}
-          onChange={(value) => setF('equity_after', value ?? 0)}
-        />
-      ) : (
-        <UnitNumberInput
-          unit="%"
-          value={pctInputs.equity === '' ? null : Number(pctInputs.equity)}
-          onChange={(value) => {
-            setPctInputs((pi) => ({ ...pi, equity: value == null ? '' : String(value) }));
-            if (value != null)
-              setF('equity_after', Math.round(form.equity_before * (1 + value / 100)));
-          }}
-          placeholder="e.g. 4.2"
-        />
-      ),
-      <>
-        {mode === '%change' && form.equity_after > 0 ? (
-          <div className="mt-0.5 text-xs text-gray-400 dark:text-ink-500">
-            {fmt(form.equity_after)}
-          </div>
-        ) : null}
-        {changeLine(form.equity_before, form.equity_after)}
-      </>
-    );
-  };
 
   return (
     <Modal
@@ -618,9 +358,17 @@ const RaiseHistoryModal: React.FC<Props> = ({
               </div>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-white/[0.07]">
-              {baseRow()}
-              {bonusRow()}
-              {equityRow()}
+              <RaiseComponentRows
+                form={form}
+                setF={setF}
+                afterModes={afterModes}
+                setAfterModes={setAfterModes}
+                pctInputs={pctInputs}
+                setPctInputs={setPctInputs}
+                hourlyInput={hourlyInput}
+                setHourlyInput={setHourlyInput}
+                setBonusTouched={setBonusTouched}
+              />
             </div>
           </div>
 
@@ -666,88 +414,12 @@ const RaiseHistoryModal: React.FC<Props> = ({
         </p>
       )}
 
-      <div className={`space-y-4 ${showForm ? 'hidden' : ''}`}>
-        {sorted.map((entry) => {
-          const reason = reasonLabel(entry);
-          const tcBefore = entry.base_before + entry.bonus_before + entry.equity_before;
-          const tcAfter = entry.base_after + entry.bonus_after + entry.equity_after;
-
-          const rows: { label: string; before: number; after: number; extra?: string }[] = [
-            { label: 'Base', before: entry.base_before, after: entry.base_after },
-            {
-              label: 'Annual Bonus',
-              before: entry.bonus_before,
-              after: entry.bonus_after,
-              extra:
-                entry.base_after > 0
-                  ? `${((entry.bonus_after / entry.base_after) * 100).toFixed(1)}% of base`
-                  : undefined,
-            },
-            { label: 'Annual RSU', before: entry.equity_before, after: entry.equity_after },
-          ];
-
-          return (
-            <div
-              key={entry.id}
-              className="border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden"
-            >
-              {/* Entry header */}
-              <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 px-3 py-2 sm:px-4">
-                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="whitespace-nowrap text-xs text-gray-500 dark:text-ink-400">
-                    {entry.date}
-                  </span>
-                  <span className="truncate text-sm font-semibold text-gray-800 dark:text-ink-50">
-                    {entry.label || reason}
-                  </span>
-                  {entry.label && (
-                    <Tag color={reasonColor(entry.type)} className={ENTRY_TAG}>
-                      {reason}
-                    </Tag>
-                  )}
-                  {entry.effective_date && entry.effective_date < entry.date && (
-                    <Tooltip
-                      title={`Took effect ${entry.effective_date}; the difference is owed as back pay`}
-                    >
-                      <Tag color="volcano" className={ENTRY_TAG}>
-                        Backdated
-                      </Tag>
-                    </Tooltip>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Tooltip title="Edit">
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={() => openEdit(entry)}
-                    />
-                  </Tooltip>
-                  <Popconfirm
-                    title="Delete this raise entry?"
-                    okText="Delete"
-                    okType="danger"
-                    onConfirm={() => handleDelete(entry.id)}
-                  >
-                    <Tooltip title="Delete">
-                      <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-                    </Tooltip>
-                  </Popconfirm>
-                </div>
-              </div>
-
-              <RaiseBreakdown rows={rows} tcBefore={tcBefore} tcAfter={tcAfter} />
-
-              {entry.notes && (
-                <div className="border-t border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 px-3 py-2 text-xs italic text-gray-500 dark:text-ink-400 sm:px-4">
-                  {entry.notes}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <RaiseHistoryList
+        entries={sorted}
+        hidden={showForm}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+      />
     </Modal>
   );
 };

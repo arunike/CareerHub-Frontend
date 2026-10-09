@@ -24,21 +24,39 @@ import RowActions from '../../components/actions/RowActions';
 import { PanelSkeleton } from '../../components/feedback/PageState';
 import IntelligenceSectionPicker from '../../components/dashboard/IntelligenceSectionPicker';
 
-const getScoreMeta = (score: number) => {
-  if (score >= 90)
-    return { label: 'Strong', color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0', text: '#065f46' };
-  if (score >= 70)
-    return { label: 'Good', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af' };
-  if (score >= 50)
-    return {
-      label: 'Partial',
-      color: '#f59e0b',
-      bg: '#fffbeb',
-      border: '#fde68a',
-      text: '#92400e',
-    };
-  return { label: 'Poor', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', text: '#7f1d1d' };
-};
+const SCORE_TIERS = [
+  {
+    min: 90,
+    label: 'Strong',
+    panel:
+      'bg-emerald-50 border-emerald-200 text-emerald-500 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-300',
+    text: 'text-emerald-800 dark:text-emerald-200',
+  },
+  {
+    min: 70,
+    label: 'Good',
+    panel:
+      'bg-blue-50 border-blue-200 text-blue-500 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-300',
+    text: 'text-blue-800 dark:text-blue-200',
+  },
+  {
+    min: 50,
+    label: 'Partial',
+    panel:
+      'bg-amber-50 border-amber-200 text-amber-500 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-300',
+    text: 'text-amber-800 dark:text-amber-200',
+  },
+  {
+    min: 0,
+    label: 'Poor',
+    panel:
+      'bg-rose-50 border-rose-200 text-rose-500 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-300',
+    text: 'text-rose-900 dark:text-rose-200',
+  },
+];
+
+const getScoreMeta = (score: number) =>
+  SCORE_TIERS.find((tier) => score >= tier.min) ?? SCORE_TIERS[SCORE_TIERS.length - 1];
 
 const reportSkillName = (value: unknown) =>
   value && typeof value === 'object' && !Array.isArray(value) && 'skill' in value
@@ -49,18 +67,10 @@ const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   const meta = getScoreMeta(score);
   return (
     <div
-      className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl font-black sm:h-16 sm:w-16"
-      style={{
-        background: meta.bg,
-        border: `2px solid ${meta.border}`,
-        color: meta.color,
-      }}
+      className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl border-2 font-black sm:h-16 sm:w-16 ${meta.panel}`}
     >
       <span className="text-xl leading-none">{score}</span>
-      <span
-        className="text-[9px] font-bold uppercase tracking-wide mt-0.5"
-        style={{ color: meta.text }}
-      >
+      <span className={`mt-0.5 text-[9px] font-bold uppercase tracking-wide ${meta.text}`}>
         {meta.label}
       </span>
     </div>
@@ -321,12 +331,7 @@ const JDReportsListPage: React.FC = () => {
                       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
-                            style={{
-                              background: meta.bg,
-                              color: meta.text,
-                              border: `1px solid ${meta.border}`,
-                            }}
+                            className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${meta.panel} ${meta.text}`}
                           >
                             {meta.label} Match
                           </span>

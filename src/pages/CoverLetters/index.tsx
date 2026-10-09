@@ -359,18 +359,8 @@ const CoverLetters: React.FC = () => {
       >
         {viewingLetter && (
           <div
-            style={{
-              background: '#f9f9f9',
-              border: '1px solid #e8e8e8',
-              borderRadius: 6,
-              padding: '20px 24px',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'Georgia, serif',
-              lineHeight: 1.9,
-              fontSize: 14,
-              maxHeight: 500,
-              overflowY: 'auto',
-            }}
+            className="max-h-[500px] overflow-y-auto rounded-md border border-slate-200 bg-slate-50 px-6 py-5 text-sm text-slate-800 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-ink-100"
+            style={{ whiteSpace: 'pre-wrap', fontFamily: 'Georgia, serif', lineHeight: 1.9 }}
           >
             {viewingLetter.coverLetter}
           </div>

@@ -39,8 +39,10 @@ import {
   readDismissedDrift,
   writeDismissedDrift,
   readLocal,
+  toPayload,
   writeLocal,
 } from '../../utils/Income/incomeSettingsStore';
+import { numericKeys } from '../../utils/Income/numericKeys';
 import { buildIncomeModel } from '../../utils/Income/incomeModel';
 import { driftSignature, linkedDrift } from '../../utils/Income/linkedDrift';
 import { grossPinDrift, grossPinSignature } from '../../utils/Income/grossPinDrift';
@@ -61,69 +63,11 @@ import {
 } from '../../utils/Income/yearSummary';
 import type { W4Inputs } from '../../utils/Income/tax/withholding';
 
-// The API keys years as strings; the lookups are numeric.
-const numericKeys = <T>(source: unknown): Record<number, T> | undefined => {
-  if (!source || typeof source !== 'object') return undefined;
-  const entries = Object.entries(source as Record<string, T>).map(
-    ([year, value]) => [Number(year), value] as const
-  );
-  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
-};
-
 // Cleared on load: the role lives in the URL now, so a stored pick would only fight it.
 const RETIRED_SOURCE_KEYS = [
   'careerhub.income.selectedSource',
   'careerhub.income.selectedSource.v2',
 ];
-
-const toPayload = (taxYear: number, sourceKey: string, settings: IncomeSettings) => ({
-  tax_year: taxYear,
-  source_key: sourceKey,
-  first_pay_date: settings.firstPayDate,
-  salary_override: settings.salaryOverride,
-  paychecks_per_year_override: settings.paychecksPerYearOverride,
-  pay_lag_days: settings.payLagDays,
-  pretax_401k_percent: settings.elections.pretax401kPercent,
-  roth_401k_percent: settings.elections.roth401kPercent,
-  hsa_per_period: settings.elections.hsaPerPeriod,
-  fsa_per_period: settings.elections.fsaPerPeriod,
-  post_tax_deductions_per_period: settings.elections.postTaxPerPeriod,
-  imputed_income_per_period: settings.elections.imputedPerPeriod,
-  hsa_family_coverage: settings.elections.hsaFamilyCoverage,
-  age_50_plus: settings.elections.age50Plus,
-  deferral_base: settings.elections.deferralBase,
-  deferral_plan: settings.deferralPlan,
-  include_bonus: settings.includeBonus,
-  bonus_override: settings.bonusOverride,
-  bonus_payouts: settings.bonusPayouts as unknown as Array<Record<string, unknown>>,
-  bonus_multiplier_percent: settings.bonusMultiplierPercent,
-  bonus_extras: settings.bonusExtras as unknown as Array<Record<string, unknown>>,
-  bonus_prorated: settings.bonusProrated,
-  bonus_performance_year: settings.bonusPerformanceYear,
-  include_vest_events: settings.includeVestEvents,
-  total_grant_override: settings.totalGrantOverride,
-  vests_per_year_override: settings.vestsPerYearOverride,
-  cliff_months_override: settings.cliffMonthsOverride,
-  vesting_years_override: settings.vestingYearsOverride,
-  first_vest_date: settings.firstVestDate,
-  custom_deductions: settings.customDeductions as unknown as Array<Record<string, unknown>>,
-  allowances: settings.allowances as unknown as Array<Record<string, unknown>>,
-  match_tiers: (settings.matchTiers ?? []) as unknown as Array<Record<string, unknown>>,
-  match_non_elective_percent: settings.matchNonElectivePercent,
-  match_annual_cap: settings.matchAnnualCap,
-  period_deductions: settings.periodDeductions as unknown as Array<Record<string, unknown>>,
-  retirement_starting_balance: settings.retirementStartingBalance,
-  retirement_current_value: settings.retirementCurrentValue,
-  income_events: settings.extraEvents as unknown as Array<Record<string, unknown>>,
-  // Recorded paychecks and any pay-date override, so a phone sees what a laptop typed.
-  actuals: settings.actuals.map((actual) => ({
-    period_index: actual.periodIndex,
-    pay_date: actual.payDate ?? null,
-    actual_gross: actual.gross ?? null,
-    actual_net: actual.net ?? null,
-    note: actual.note ?? '',
-  })),
-});
 
 export const useIncomeYear = () => {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -4,6 +4,8 @@ export interface PtoPolicy {
   isUnlimited: boolean;
   unlimitedPlanningDays: number;
   rolloverMaxDays: number;
+  // Month the carried days lapse, 1-12; 0 means they never lapse.
+  rolloverExpiresMonth: number;
   // Extra days per completed year of service; 0 leaves the allowance flat.
   accrualDaysPerYear: number;
   accrualMaxDays: number;
@@ -81,16 +83,32 @@ const entitledIn = (policy: PtoPolicy, window: RoleWindow, year: number) => {
   );
 };
 
+// Carried days lapse at the start of their month, so they are gone for the rest of that year.
+export const rolloverHasLapsed = (
+  expiresMonth: number,
+  year: number,
+  todayIso?: string
+): boolean => {
+  const month = num(expiresMonth);
+  if (month < 1 || month > 12 || !todayIso || todayIso.length < 10) return false;
+  const todayYear = Number(todayIso.slice(0, 4));
+  if (todayYear > year) return true;
+  return todayYear === year && Number(todayIso.slice(5, 7)) >= month;
+};
+
 export const ptoBalance = ({
   policy,
   window,
   year,
   entries,
+  todayIso,
 }: {
   policy: PtoPolicy;
   window: RoleWindow;
   year: number;
   entries: TimeOffEntryLike[];
+  // Threaded in from the page: a lapse date cannot be read off the clock inside the model.
+  todayIso?: string;
 }): PtoBalance => {
   const entitled = entitledIn(policy, window, year);
   const taken = toHalfDay(takenIn(entries, year));
@@ -99,9 +117,10 @@ export const ptoBalance = ({
     0,
     entitledIn(policy, window, year - 1) - takenIn(entries, year - 1)
   );
-  const rolledOver = policy.isUnlimited
-    ? 0
-    : toHalfDay(Math.min(num(policy.rolloverMaxDays), unusedLastYear));
+  const rolledOver =
+    policy.isUnlimited || rolloverHasLapsed(policy.rolloverExpiresMonth, year, todayIso)
+      ? 0
+      : toHalfDay(Math.min(num(policy.rolloverMaxDays), unusedLastYear));
 
   return {
     entitled,

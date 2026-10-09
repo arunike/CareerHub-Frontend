@@ -367,10 +367,7 @@ const ExperienceGroupCard = ({
                         const team = getLatestTeam(exp);
                         return team ? (
                           <div className="mt-1 flex items-start gap-1.5 text-[15px] text-gray-500 dark:text-ink-400">
-                            <TeamOutlined
-                              className="mt-[4px] shrink-0"
-                              style={{ fontSize: 12, color: '#9ca3af' }}
-                            />
+                            <TeamOutlined className="mt-[4px] shrink-0 text-xs text-slate-400 dark:text-ink-500" />
                             <span className="min-w-0">{team.name}</span>
                           </div>
                         ) : null;
