@@ -164,9 +164,10 @@ One calendar across three pages, with the same header, month/week/day views and 
 - **Public booking links**: several links per account, each configurable, letting someone book a slot without an account.
 - **Events** (`/events`): create, edit and delete interview events; set an end time from 15-minute to 3-hour quick durations; link an event to an application; apply the configured default category; pick the display timezone; tag by event type.
 - **Holidays** (`/holidays`): observed holidays and personal time off together, with custom tabs defined in Settings for organising leave beyond the built-in Custom and Federal split, bulk edit that leaves a field unchanged unless you set it, and the option to ignore a specific holiday.
-- **Time-off tracker**: a button beside the calendar arrows showing days remaining for the role on screen, opening the year's allowance, accrual and what you have taken.
+- **Time-off tracker**: a button beside the calendar arrows showing days remaining for the role on screen, opening the year's allowance, accrual and what you have taken. Carried-over days can be given a lapse month, after which the balance drops them for the rest of the year.
 - **Reminders, multi-day and all-day entries** are supported on events, and a multi-day entry can be edited as a whole run or one day at a time.
 - **Drag to reschedule** an event or a day of time off on the calendar; clicking a day opens the editor directly.
+- **Quick add on a day** offers Add Event, Add Time Off and a button per custom holiday tab, led by whichever kind the page is for — the holiday buttons first on Holidays, Add Event first on Events.
 - **Grouped time off draws as one connected bar** across the month rather than a chip per day.
 - **⚡ Conflict radar**: the notification bell surfaces unresolved conflicts, upcoming events and task deadlines.
 
@@ -385,7 +386,8 @@ Output in `dist/`.
 ### Run Linter
 
 `npm run quality` is what `npm run build` runs first, and what the pre-commit hook runs: ESLint,
-the CSS comment check, the page-shell, API-path and one-owner checks, then Prettier.
+the CSS comment check, the page-shell, API-path, one-owner and fixture-vocabulary checks, then
+Prettier.
 
 ```bash
 npm run lint          # ESLint only
@@ -393,6 +395,7 @@ npm run lint:css      # comment style in src/**/*.css
 npm run lint:pages    # every page renders its header through PageShell
 npm run lint:api      # no uppercase segment in an api.* path
 npm run lint:owners   # no second copy of a shared helper
+npm run lint:fixtures # every company name in a fixture is a substitute
 npm run quality       # all of the above, plus Prettier
 ```
 
