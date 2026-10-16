@@ -15,6 +15,8 @@ import PageShell from '../../components/layout/PageShell';
 import { PageState } from '../../components/feedback/PageState';
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
+import { observedDaysOf } from '../../utils/TimeOff/observedDays';
+import { useObservance } from '../../hooks/Holidays/useObservance';
 import CalendarWorkspace from '../../components/CalendarView/CalendarWorkspace';
 import EventsFilterBar from '../../components/Events/EventsFilterBar';
 import { useEventsData } from '../../hooks/Events/useEventsData';
@@ -87,10 +89,10 @@ const Events = () => {
     calendarEvents,
     setCalendarEvents,
     customHolidays,
-    federalHolidays,
+    observedHolidays,
     holidayTabs,
     defaultHolidayColor,
-    federalHolidayColor,
+    observedHolidayColor,
     eventsTotal,
     eventsUnlocked,
     loading,
@@ -127,6 +129,9 @@ const Events = () => {
     navigateEvents('/events', { replace: true });
   }, [eventDeepLink.search, events, navigateEvents]);
 
+  const observedDates = useMemo(() => observedDaysOf(observedHolidays), [observedHolidays]);
+  const { toggleObservance } = useObservance({ fetchData: fetchCalendarData, messageApi });
+
   const paginatedEvents = events;
   const availableYears = useMemo(
     () => (typeof selectedYear === 'number' ? [selectedYear] : []),
@@ -148,7 +153,7 @@ const Events = () => {
     calendarLoadError &&
     calendarEvents.length === 0 &&
     customHolidays.length === 0 &&
-    federalHolidays.length === 0;
+    observedHolidays.length === 0;
 
   const handleCalendarHolidayAdd = (date: Date, target: CalendarHolidayTarget) => {
     setEditingHoliday(null);
@@ -382,11 +387,11 @@ const Events = () => {
               onItemDrop={handleCalendarItemDrop}
               events={calendarEvents}
               customHolidays={customHolidays}
-              federalHolidays={federalHolidays}
+              observedHolidays={observedHolidays}
               categories={categories}
               holidayTabs={holidayTabs}
               defaultHolidayColor={defaultHolidayColor}
-              federalHolidayColor={federalHolidayColor}
+              observedHolidayColor={observedHolidayColor}
               addActionHighlight="events"
               loading={calendarLoading}
               onEventSelect={(event, day) => {
@@ -476,6 +481,8 @@ const Events = () => {
         }}
         onSubmit={handleCalendarHolidaySubmit}
         onDelete={handleCalendarHolidayDelete}
+        observedDates={observedDates}
+        onToggleObservance={toggleObservance}
       />
 
       {/* Import Modal */}

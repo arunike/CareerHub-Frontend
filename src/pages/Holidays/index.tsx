@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Tabs, Space, Form, Input, message } from 'antd';
 import Modal from '../../components/modals/MobileModal';
 import { deleteHoliday } from '../../api';
@@ -9,21 +9,23 @@ import { getCurrentYear } from '../../utils/yearFilter';
 import HolidayAddForm from '../../components/Holidays/HolidayAddForm';
 import { useHolidayEvents } from '../../hooks/Holidays/useHolidayEvents';
 import { useHolidaySelection } from '../../hooks/Holidays/useHolidaySelection';
-import { useFederalHolidays } from '../../hooks/Holidays/useFederalHolidays';
+import { useObservedHolidays } from '../../hooks/Holidays/useObservedHolidays';
+import { useObservance } from '../../hooks/Holidays/useObservance';
 import { useCalendarHolidays } from '../../hooks/Holidays/useCalendarHolidays';
 import { useHolidayCrud } from '../../hooks/Holidays/useHolidayCrud';
 import { useHolidayData } from '../../hooks/Holidays/useHolidayData';
-import FederalHolidayModal from '../../components/Holidays/FederalHolidayModal';
+import ObservedHolidayModal from '../../components/Holidays/ObservedHolidayModal';
 import HolidayEditModal from '../../components/Holidays/HolidayEditModal';
 import TimeOffTracker from '../../components/Holidays/TimeOffTracker';
 import { usePtoRoles } from '../../hooks/Holidays/usePtoRoles';
+import { observedDaysOf } from '../../utils/TimeOff/observedDays';
 import HolidayListCard from '../../components/Holidays/HolidayListCard';
 import { useCalendarContentView } from '../../hooks/useCalendarContentView';
 import { usePersistedState } from '../../hooks/usePersistedState';
 import {
-  FEDERAL_HOLIDAY_LABEL,
+  OBSERVED_HOLIDAY_LABEL,
   UNTABBED_HOLIDAY_LABEL,
-  getFederalHolidayColor,
+  getObservedHolidayColor,
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
 import EventEditorModal from '../../components/Events/EventEditorModal';
@@ -31,7 +33,7 @@ import EventViewModal from '../../components/Events/EventViewModal';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
 import { PageState } from '../../components/feedback/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
-import FederalHolidayTabPanel from '../../components/Holidays/FederalHolidayTabPanel';
+import ObservedHolidayTabPanel from '../../components/Holidays/ObservedHolidayTabPanel';
 import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
 
 const Holidays = () => {
@@ -81,7 +83,7 @@ const Holidays = () => {
     setCategories,
     holidays,
     setHolidays,
-    federalHolidays,
+    observedHolidays,
     userSettings,
     loading,
     loadError,
@@ -102,18 +104,18 @@ const Holidays = () => {
   };
 
   const {
-    federalForm,
-    addFederalModalOpen,
-    setAddFederalModalOpen,
-    isFederalRangeMode,
-    setIsFederalRangeMode,
-    groupedFederalHolidays,
-    closeFederalModal,
-    handleAddFederal,
-    handleDeleteFederalRange,
-    handleToggleFederalHoliday,
-    handleRenameFederalHoliday,
-  } = useFederalHolidays({ federalHolidays, userSettings, fetchData, messageApi });
+    observedForm,
+    addObservedModalOpen,
+    setAddObservedModalOpen,
+    isObservedRangeMode,
+    setIsObservedRangeMode,
+    groupedObservedHolidays,
+    closeObservedModal,
+    handleAddObserved,
+    handleDeleteObservedRange,
+    handleToggleObservedHoliday,
+    handleRenameObservedHoliday,
+  } = useObservedHolidays({ observedHolidays, userSettings, fetchData, messageApi });
 
   const {
     pendingCalendarHoliday,
@@ -125,6 +127,9 @@ const Holidays = () => {
     handleCalendarHolidaySubmit,
     handleCalendarItemDrop,
   } = useCalendarHolidays({ fetchData, messageApi, holidays });
+
+  const observedDates = useMemo(() => observedDaysOf(observedHolidays), [observedHolidays]);
+  const { toggleObservance } = useObservance({ fetchData, messageApi });
 
   const {
     eventForm,
@@ -294,29 +299,29 @@ const Holidays = () => {
       children: renderHolidayListTab(t.id, t.name),
     })),
     {
-      key: 'federal',
+      key: 'observed',
       label: (
         <span className="inline-flex items-center gap-1.5">
           <span
             className="h-2 w-2 rounded-full"
             style={{
-              backgroundColor: getFederalHolidayColor(userSettings?.federal_holiday_color).dot,
+              backgroundColor: getObservedHolidayColor(userSettings?.observed_holiday_color).dot,
             }}
           />
-          {FEDERAL_HOLIDAY_LABEL}
+          {OBSERVED_HOLIDAY_LABEL}
         </span>
       ),
       children: (
-        <FederalHolidayTabPanel
-          federalForm={federalForm}
-          groupedFederalHolidays={groupedFederalHolidays}
+        <ObservedHolidayTabPanel
+          observedForm={observedForm}
+          groupedObservedHolidays={groupedObservedHolidays}
           handleDelete={handleDelete}
-          handleDeleteFederalRange={handleDeleteFederalRange}
-          handleToggleFederalHoliday={handleToggleFederalHoliday}
-          handleRenameFederalHoliday={handleRenameFederalHoliday}
+          handleDeleteObservedRange={handleDeleteObservedRange}
+          handleToggleObservedHoliday={handleToggleObservedHoliday}
+          handleRenameObservedHoliday={handleRenameObservedHoliday}
           loading={loading}
-          setAddFederalModalOpen={setAddFederalModalOpen}
-          setIsFederalRangeMode={setIsFederalRangeMode}
+          setAddObservedModalOpen={setAddObservedModalOpen}
+          setIsObservedRangeMode={setIsObservedRangeMode}
           isAdvancedMode={isAdvancedMode}
           setIsAdvancedMode={setIsAdvancedMode}
         />
@@ -366,6 +371,7 @@ const Holidays = () => {
                 holidays={holidays}
                 year={anchorDate.getFullYear()}
                 tabColor={userSettings?.default_holiday_color}
+                observedDates={observedDates}
                 // The full time-off editor, not the cut-down one: the tracker's rows are trips.
                 onOpenDay={(holiday) => setEditingCalendarHoliday(holiday as never)}
               />
@@ -373,11 +379,11 @@ const Holidays = () => {
             onItemDrop={handleCalendarItemDrop}
             events={events}
             customHolidays={holidaysForSelectedYear}
-            federalHolidays={federalHolidays}
+            observedHolidays={observedHolidays}
             categories={categories}
             holidayTabs={customTabs}
             defaultHolidayColor={userSettings?.default_holiday_color}
-            federalHolidayColor={userSettings?.federal_holiday_color}
+            observedHolidayColor={userSettings?.observed_holiday_color}
             addActionHighlight="holidays"
             loading={loading}
             onEventSelect={handleCalendarEventSelect}
@@ -414,13 +420,13 @@ const Holidays = () => {
         </Modal>
 
         {/* Add Observed Holiday Modal */}
-        <FederalHolidayModal
-          federalForm={federalForm}
-          addFederalModalOpen={addFederalModalOpen}
-          closeFederalModal={closeFederalModal}
-          handleAddFederal={handleAddFederal}
-          isFederalRangeMode={isFederalRangeMode}
-          setIsFederalRangeMode={setIsFederalRangeMode}
+        <ObservedHolidayModal
+          observedForm={observedForm}
+          addObservedModalOpen={addObservedModalOpen}
+          closeObservedModal={closeObservedModal}
+          handleAddObserved={handleAddObserved}
+          isObservedRangeMode={isObservedRangeMode}
+          setIsObservedRangeMode={setIsObservedRangeMode}
         />
 
         <EventViewModal
@@ -464,7 +470,7 @@ const Holidays = () => {
 
         <CalendarHolidayModal
           open={!!pendingCalendarHoliday || !!editingCalendarHoliday}
-          mode={editingCalendarHoliday && editingCalendarHoliday.id ? 'edit' : 'add'}
+          mode={editingCalendarHoliday ? 'edit' : 'add'}
           date={pendingCalendarHoliday?.date}
           target={pendingCalendarHoliday?.target}
           holiday={editingCalendarHoliday}
@@ -477,6 +483,8 @@ const Holidays = () => {
           onSubmit={handleCalendarHolidaySubmit}
           onDelete={handleCalendarHolidayDelete}
           onToggleLock={toggleLock}
+          observedDates={observedDates}
+          onToggleObservance={toggleObservance}
           ptoRoles={ptoRoles}
         />
       </PageShell>

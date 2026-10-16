@@ -7,41 +7,41 @@ import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 const { RangePicker } = DatePicker;
 
 type Props = {
-  federalForm: FormInstance;
-  addFederalModalOpen: boolean;
-  closeFederalModal: () => void;
-  handleAddFederal: () => void;
-  isFederalRangeMode: boolean;
-  setIsFederalRangeMode: React.Dispatch<React.SetStateAction<boolean>>;
+  observedForm: FormInstance;
+  addObservedModalOpen: boolean;
+  closeObservedModal: () => void;
+  handleAddObserved: () => void;
+  isObservedRangeMode: boolean;
+  setIsObservedRangeMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const FederalHolidayModal = ({
-  federalForm,
-  addFederalModalOpen,
-  closeFederalModal,
-  handleAddFederal,
-  isFederalRangeMode,
-  setIsFederalRangeMode,
+const ObservedHolidayModal = ({
+  observedForm,
+  addObservedModalOpen,
+  closeObservedModal,
+  handleAddObserved,
+  isObservedRangeMode,
+  setIsObservedRangeMode,
 }: Props) => (
   <Modal
     title="Add Observed Holiday"
-    open={addFederalModalOpen}
-    onCancel={closeFederalModal}
-    onOk={handleAddFederal}
-    okText={isFederalRangeMode ? 'Add Range' : 'Add time off'}
+    open={addObservedModalOpen}
+    onCancel={closeObservedModal}
+    onOk={handleAddObserved}
+    okText={isObservedRangeMode ? 'Add Range' : 'Add time off'}
   >
-    <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={federalForm} layout="vertical">
+    <Form scrollToFirstError={SCROLL_TO_FIRST_ERROR} form={observedForm} layout="vertical">
       <div className="mb-4 text-gray-500 dark:text-ink-400 text-sm">
         Add a company holiday, wellness day, or another shared day off as one date or a continuous
         range.
       </div>
       <div className="mb-5">
         <SegmentedToggle
-          value={isFederalRangeMode ? 'range' : 'single'}
+          value={isObservedRangeMode ? 'range' : 'single'}
           onChange={(value) => {
             const nextIsRange = value === 'range';
-            setIsFederalRangeMode(nextIsRange);
-            federalForm.setFieldsValue(
+            setIsObservedRangeMode(nextIsRange);
+            observedForm.setFieldsValue(
               nextIsRange ? { date: undefined } : { dateRange: undefined }
             );
           }}
@@ -53,7 +53,7 @@ const FederalHolidayModal = ({
           ]}
         />
       </div>
-      {isFederalRangeMode ? (
+      {isObservedRangeMode ? (
         <Form.Item
           name="dateRange"
           label="Date Range"
@@ -84,4 +84,4 @@ const FederalHolidayModal = ({
   </Modal>
 );
 
-export default FederalHolidayModal;
+export default ObservedHolidayModal;

@@ -1,36 +1,36 @@
 import type React from 'react';
 import { List, Button, Card, Space, Switch, Typography } from 'antd';
 import { LockOutlined, PlusOutlined } from '@ant-design/icons';
-import FederalHolidayCard, { type FederalHolidayDisplayItem } from './FederalHolidayCard';
+import ObservedHolidayCard, { type ObservedHolidayDisplayItem } from './ObservedHolidayCard';
 
 const { Text } = Typography;
 
 type Props = {
-  federalForm: any;
-  groupedFederalHolidays: FederalHolidayDisplayItem[];
+  observedForm: any;
+  groupedObservedHolidays: ObservedHolidayDisplayItem[];
   handleDelete: any;
-  handleDeleteFederalRange: any;
-  handleToggleFederalHoliday: any;
-  handleRenameFederalHoliday: any;
+  handleDeleteObservedRange: any;
+  handleToggleObservedHoliday: any;
+  handleRenameObservedHoliday: any;
   loading: any;
-  setAddFederalModalOpen: any;
-  setIsFederalRangeMode: any;
+  setAddObservedModalOpen: any;
+  setIsObservedRangeMode: any;
   isAdvancedMode: boolean;
   setIsAdvancedMode: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const FederalHolidayTabPanel = ({
+const ObservedHolidayTabPanel = ({
   isAdvancedMode,
   setIsAdvancedMode,
-  federalForm,
-  groupedFederalHolidays,
+  observedForm,
+  groupedObservedHolidays,
   handleDelete,
-  handleDeleteFederalRange,
-  handleToggleFederalHoliday,
-  handleRenameFederalHoliday,
+  handleDeleteObservedRange,
+  handleToggleObservedHoliday,
+  handleRenameObservedHoliday,
   loading,
-  setAddFederalModalOpen,
-  setIsFederalRangeMode,
+  setAddObservedModalOpen,
+  setIsObservedRangeMode,
 }: Props) => (
   <Space direction="vertical" size="middle" style={{ width: '100%' }}>
     <Card>
@@ -41,8 +41,8 @@ const FederalHolidayTabPanel = ({
             <Text strong>Observed Holidays</Text>
             <div>
               <Text type="secondary">
-                Federal holidays are included automatically. Add company holidays, wellness days, or
-                other shared days off here.
+                US federal holidays are included automatically. Add company holidays, wellness days,
+                or other shared days off here.
               </Text>
             </div>
           </div>
@@ -55,9 +55,9 @@ const FederalHolidayTabPanel = ({
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => {
-                  federalForm.resetFields();
-                  setIsFederalRangeMode(false);
-                  setAddFederalModalOpen(true);
+                  observedForm.resetFields();
+                  setIsObservedRangeMode(false);
+                  setAddObservedModalOpen(true);
                 }}
               >
                 Add Observed Holiday
@@ -94,16 +94,16 @@ const FederalHolidayTabPanel = ({
     ) : (
       <List
         grid={{ gutter: 24, column: 3, xs: 1, sm: 1, md: 2, lg: 3, xl: 3, xxl: 3 }}
-        dataSource={groupedFederalHolidays}
+        dataSource={groupedObservedHolidays}
         renderItem={(item) => (
           <List.Item style={{ height: '100%', width: '100%' }}>
-            <FederalHolidayCard
+            <ObservedHolidayCard
               item={item}
               isAdvancedMode={isAdvancedMode}
               onDeleteHoliday={(id) => void handleDelete(id)}
-              onDeleteRange={(group) => void handleDeleteFederalRange(group)}
-              onToggleObserved={handleToggleFederalHoliday}
-              onRename={(target, nextName) => void handleRenameFederalHoliday(target, nextName)}
+              onDeleteRange={(group) => void handleDeleteObservedRange(group)}
+              onToggleObserved={handleToggleObservedHoliday}
+              onRename={(target, nextName) => void handleRenameObservedHoliday(target, nextName)}
             />
           </List.Item>
         )}
@@ -112,4 +112,4 @@ const FederalHolidayTabPanel = ({
   </Space>
 );
 
-export default FederalHolidayTabPanel;
+export default ObservedHolidayTabPanel;

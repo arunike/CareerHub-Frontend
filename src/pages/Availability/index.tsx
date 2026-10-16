@@ -10,6 +10,8 @@ import PageShell from '../../components/layout/PageShell';
 import { PageState, PanelSkeleton } from '../../components/feedback/PageState';
 import { message } from 'antd';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
+import { observedDaysOf } from '../../utils/TimeOff/observedDays';
+import { useObservance } from '../../hooks/Holidays/useObservance';
 import RecurrenceModal from '../../components/modals/RecurrenceModal';
 import EventEditorModal from '../../components/Events/EventEditorModal';
 import EventViewModal from '../../components/Events/EventViewModal';
@@ -71,7 +73,7 @@ const Availability = () => {
     calendarLoading,
     calendarLoadError,
     customHolidays,
-    federalHolidays,
+    observedHolidays,
     holidayTabs,
     categories,
     viewingEvent,
@@ -198,6 +200,8 @@ const Availability = () => {
   }, []);
 
   const groupedData = useMemo(() => groupAvailabilityByWeek(data, startDate), [data, startDate]);
+  const observedDates = useMemo(() => observedDaysOf(observedHolidays), [observedHolidays]);
+  const { toggleObservance } = useObservance({ fetchData: fetchCalendarData, messageApi });
 
   const renderedGroups = groupedData
     .map((group) => ({
@@ -209,7 +213,7 @@ const Availability = () => {
   const hasCalendarData =
     events.length > 0 ||
     customHolidays.length > 0 ||
-    federalHolidays.length > 0 ||
+    observedHolidays.length > 0 ||
     categories.length > 0;
   const hasBookingData = shareLink !== null || shareLinks.length > 0 || publicBookings.length > 0;
 
@@ -240,7 +244,7 @@ const Availability = () => {
             onItemDrop={handleCalendarItemDrop}
             events={events}
             customHolidays={customHolidays}
-            federalHolidays={federalHolidays}
+            observedHolidays={observedHolidays}
             categories={categories}
             holidayTabs={holidayTabs}
             addActionHighlight="all"
@@ -411,6 +415,8 @@ const Availability = () => {
         }}
         onSubmit={handleHolidayFormFinish}
         onDelete={handleCalendarHolidayDelete}
+        observedDates={observedDates}
+        onToggleObservance={toggleObservance}
       />
     </PageShell>
   );

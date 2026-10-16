@@ -9,43 +9,44 @@ import {
   getInclusiveHolidayDates,
 } from '../../utils/Holidays/holidayGrouping';
 import {
-  groupFederalHolidays,
-  type FederalHolidayGroup,
-} from '../../components/Holidays/FederalHolidayCard';
+  groupObservedHolidays,
+  type ObservedHolidayGroup,
+} from '../../components/Holidays/ObservedHolidayCard';
+import { ignoreListAfter } from '../../utils/Holidays/observance';
 
-export const useFederalHolidays = ({
-  federalHolidays,
+export const useObservedHolidays = ({
+  observedHolidays,
   userSettings,
   fetchData,
   messageApi,
 }: {
-  federalHolidays: Holiday[];
+  observedHolidays: Holiday[];
   userSettings: UserSettings | null;
   fetchData: () => Promise<void> | void;
   messageApi: MessageInstance;
 }) => {
-  const [federalForm] = Form.useForm();
-  const [addFederalModalOpen, setAddFederalModalOpen] = useState(false);
-  const [isFederalRangeMode, setIsFederalRangeMode] = useState(false);
+  const [observedForm] = Form.useForm();
+  const [addObservedModalOpen, setAddObservedModalOpen] = useState(false);
+  const [isObservedRangeMode, setIsObservedRangeMode] = useState(false);
 
-  const sortedFederalHolidays = [...federalHolidays].sort((a, b) =>
+  const sortedObservedHolidays = [...observedHolidays].sort((a, b) =>
     dayjs(a.date).diff(dayjs(b.date))
   );
-  const groupedFederalHolidays = groupFederalHolidays(sortedFederalHolidays);
+  const groupedObservedHolidays = groupObservedHolidays(sortedObservedHolidays);
 
-  const closeFederalModal = () => {
-    federalForm.resetFields();
-    setIsFederalRangeMode(false);
-    setAddFederalModalOpen(false);
+  const closeObservedModal = () => {
+    observedForm.resetFields();
+    setIsObservedRangeMode(false);
+    setAddObservedModalOpen(false);
   };
 
-  const handleAddFederal = async () => {
+  const handleAddObserved = async () => {
     try {
-      const values = await federalForm.validateFields();
+      const values = await observedForm.validateFields();
       const description = values.description.trim();
       const isRecurring = values.is_recurring || false;
 
-      if (isFederalRangeMode) {
+      if (isObservedRangeMode) {
         const [start, end] = values.dateRange;
         if (end.isBefore(start, 'day')) {
           messageApi.error('End date must be after start date');
@@ -75,7 +76,7 @@ export const useFederalHolidays = ({
         messageApi.success('Observed holiday added');
       }
 
-      closeFederalModal();
+      closeObservedModal();
       fetchData();
     } catch (error) {
       if (error && (error as any).errorFields) {
@@ -86,7 +87,7 @@ export const useFederalHolidays = ({
     }
   };
 
-  const handleDeleteFederalRange = async (group: FederalHolidayGroup) => {
+  const handleDeleteObservedRange = async (group: ObservedHolidayGroup) => {
     try {
       await Promise.all(group.items.map((item) => deleteHoliday(item.id)));
       messageApi.success('Observed holiday range deleted');
@@ -99,7 +100,7 @@ export const useFederalHolidays = ({
   };
 
   // The ignore list is keyed by name, so a rename has to carry that entry across with it.
-  const handleRenameFederalHoliday = async (
+  const handleRenameObservedHoliday = async (
     item: { id?: number; items?: { id: number }[]; description: string },
     nextName: string
   ) => {
@@ -107,10 +108,10 @@ export const useFederalHolidays = ({
     if (ids.length === 0) return;
     try {
       await Promise.all(ids.map((id) => updateHoliday(id, { description: nextName })));
-      const ignoredList = userSettings?.ignored_federal_holidays ?? [];
+      const ignoredList = userSettings?.ignored_observed_holidays ?? [];
       if (ignoredList.includes(item.description)) {
         await updateUserSettings({
-          ignored_federal_holidays: ignoredList.map((name) =>
+          ignored_observed_holidays: ignoredList.map((name) =>
             name === item.description ? nextName : name
           ),
         });
@@ -122,7 +123,7 @@ export const useFederalHolidays = ({
     }
   };
 
-  const handleToggleFederalHoliday = async (
+  const handleToggleObservedHoliday = async (
     holidayName: string,
     dateStr: string,
     isObserved: boolean
@@ -130,17 +131,14 @@ export const useFederalHolidays = ({
     if (!userSettings) return;
 
     try {
-      let ignoredList = userSettings.ignored_federal_holidays || [];
+      const ignoredList = ignoreListAfter(
+        userSettings.ignored_observed_holidays || [],
+        holidayName,
+        dateStr,
+        isObserved
+      );
 
-      if (!isObserved) {
-        if (!ignoredList.includes(holidayName) && !ignoredList.includes(dateStr)) {
-          ignoredList = [...ignoredList, holidayName];
-        }
-      } else {
-        ignoredList = ignoredList.filter((name) => name !== holidayName && name !== dateStr);
-      }
-
-      await updateUserSettings({ ignored_federal_holidays: ignoredList });
+      await updateUserSettings({ ignored_observed_holidays: ignoredList });
       messageApi.success(`${holidayName} is now ${isObserved ? 'observed' : 'ignored'}`);
 
       fetchData();
@@ -151,17 +149,17 @@ export const useFederalHolidays = ({
   };
 
   return {
-    federalForm,
-    addFederalModalOpen,
-    setAddFederalModalOpen,
-    isFederalRangeMode,
-    setIsFederalRangeMode,
-    sortedFederalHolidays,
-    groupedFederalHolidays,
-    closeFederalModal,
-    handleAddFederal,
-    handleDeleteFederalRange,
-    handleToggleFederalHoliday,
-    handleRenameFederalHoliday,
+    observedForm,
+    addObservedModalOpen,
+    setAddObservedModalOpen,
+    isObservedRangeMode,
+    setIsObservedRangeMode,
+    sortedObservedHolidays,
+    groupedObservedHolidays,
+    closeObservedModal,
+    handleAddObserved,
+    handleDeleteObservedRange,
+    handleToggleObservedHoliday,
+    handleRenameObservedHoliday,
   };
 };

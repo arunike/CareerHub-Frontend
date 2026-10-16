@@ -6,7 +6,7 @@ export type CalendarViewMode = 'day' | 'threeDay' | 'week' | 'month' | 'year';
 export type DayData = {
   events: Event[];
   customHolidays: Holiday[];
-  federalHolidays: Holiday[];
+  observedHolidays: Holiday[];
 };
 
 export type GetDayData = (day: Date) => DayData;
@@ -19,7 +19,7 @@ export type CalendarHolidayTarget = {
 export type CalendarFilters = {
   eventCategoryIds: Set<number | 'uncategorized'>;
   customHolidayTabs: Set<string | 'default'>;
-  federal: boolean;
+  observed: boolean;
 };
 
 export const VIEW_OPTIONS: Array<{ value: CalendarViewMode; label: string }> = [

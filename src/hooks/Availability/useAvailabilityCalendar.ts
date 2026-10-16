@@ -12,7 +12,7 @@ import {
   deleteRecurringSeries,
   getCategories,
   getEvents,
-  getFederalHolidays,
+  getObservedHolidays,
   getHolidays,
   updateEvent,
   updateHoliday,
@@ -49,7 +49,7 @@ export const useAvailabilityCalendar = ({
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarLoadError, setCalendarLoadError] = useState(false);
   const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
-  const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
+  const [observedHolidays, setObservedHolidays] = useState<Holiday[]>([]);
   const [holidayTabs] = useState<HolidayTab[]>([]);
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
@@ -74,12 +74,12 @@ export const useAvailabilityCalendar = ({
       const [eventsResp, holidaysResp, fedResp, categoriesResp] = await Promise.all([
         getEvents(),
         getHolidays(),
-        getFederalHolidays(),
+        getObservedHolidays(),
         getCategories(),
       ]);
       setEvents(eventsResp.data);
       setCustomHolidays(holidaysResp.data);
-      setFederalHolidays(fedResp.data);
+      setObservedHolidays(fedResp.data);
       setCategories(categoriesResp.data);
     } catch (error) {
       setCalendarLoadError(true);
@@ -322,7 +322,7 @@ export const useAvailabilityCalendar = ({
     calendarLoading,
     calendarLoadError,
     customHolidays,
-    federalHolidays,
+    observedHolidays,
     holidayTabs,
     categories,
     viewingEvent,

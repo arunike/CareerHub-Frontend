@@ -32,6 +32,7 @@ import type { GetDayData } from './types';
 import { WEEKDAY_LABELS } from './types';
 import useCalendarDoubleTap from './useCalendarDoubleTap';
 import { localDay } from '../../utils/localDay';
+import { observedDaysOf } from '../../utils/TimeOff/observedDays';
 
 type Props = {
   anchorDate: Date;
@@ -45,6 +46,12 @@ type Props = {
   onItemDrop?: (item: CalendarDragItem, day: Date) => void;
   getDayData: GetDayData;
 };
+
+// A trip over a weekend or a holiday spans more days than it spends, so say both.
+const spanDaysLabel = (group: { days: number; leaveDays: number }) =>
+  group.leaveDays === group.days
+    ? `${group.days} days`
+    : `${group.days} days · ${group.leaveDays} days leave`;
 
 // One element drawn over the grid, so cell borders and padding cannot break the bar up.
 const SpanBar = ({
@@ -69,7 +76,7 @@ const SpanBar = ({
   const label = !event || event.is_all_day ? name : `${event.start_time.substring(0, 5)} ${name}`;
   const tooltip = event
     ? `${name} (${eventTimeLabel(event)} · ${eventSpanDays(event)} days)`
-    : `${group!.holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: ${name} · ${group!.days} days`;
+    : `${group!.holiday.tab_name || UNTABBED_HOLIDAY_LABEL}: ${name} · ${spanDaysLabel(group!)}`;
   // Moving one day of a grouped span has no unambiguous meaning, so only events drag.
   const draggable = Boolean(onDragStart) && Boolean(event) && canDragEvent(event!);
 
@@ -139,12 +146,12 @@ const CalendarMonthView = ({
   let day = gridStart;
 
   const gridCustomHolidays: Holiday[] = [];
-  const gridFederalHolidays: Holiday[] = [];
+  const gridObservedHolidays: Holiday[] = [];
   for (let probe = gridStart; probe <= gridEnd; probe = addDays(probe, 1)) {
     const probeData = getDayData(probe);
     gridCustomHolidays.push(...probeData.customHolidays);
     // An observed range you added carries a group_id too, so it spans like any other run.
-    gridFederalHolidays.push(...probeData.federalHolidays);
+    gridObservedHolidays.push(...probeData.observedHolidays);
   }
   // A set per bucket: a shared date must not let one bucket's bar hide the other's chip.
   const spannedDates = (candidates: ReturnType<typeof holidayGroupCandidates>) =>
@@ -153,12 +160,14 @@ const CalendarMonthView = ({
         candidate.subject.kind === 'holiday' ? candidate.subject.group.dates : []
       )
     );
-  const customCandidates = holidayGroupCandidates(gridCustomHolidays);
-  const federalCandidates = holidayGroupCandidates(gridFederalHolidays);
-  const holidayCandidates = [...customCandidates, ...federalCandidates];
+  // Only the custom bucket spends leave, so the observed runs need no observed set of their own.
+  const observedDates = observedDaysOf(gridObservedHolidays);
+  const customCandidates = holidayGroupCandidates(gridCustomHolidays, observedDates);
+  const observedCandidates = holidayGroupCandidates(gridObservedHolidays);
+  const holidayCandidates = [...customCandidates, ...observedCandidates];
   // Keyed by date, not group: a lone day left over from a split trip is still its own chip.
   const spannedHolidayDates = spannedDates(customCandidates);
-  const spannedFederalDates = spannedDates(federalCandidates);
+  const spannedObservedDates = spannedDates(observedCandidates);
 
   while (day <= gridEnd) {
     weekDays = [];
@@ -187,8 +196,8 @@ const CalendarMonthView = ({
         customHolidays: rawDayData.customHolidays.filter(
           (holiday) => !spannedHolidayDates.has(holiday.date)
         ),
-        federalHolidays: rawDayData.federalHolidays.filter(
-          (holiday) => !spannedFederalDates.has(holiday.date)
+        observedHolidays: rawDayData.observedHolidays.filter(
+          (holiday) => !spannedObservedDates.has(holiday.date)
         ),
       };
       const isTodayDate = isSameDay(cloneDay, today);

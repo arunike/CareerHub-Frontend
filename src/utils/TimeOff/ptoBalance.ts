@@ -148,8 +148,27 @@ export const isWorkday = (iso: string) => {
   return weekday !== 0 && weekday !== 6;
 };
 
+// Keyed yyyy-MM-dd.
+export type ObservedDays = ReadonlySet<string>;
+
+// A day the employer is already closed costs no leave, whether that is a weekend or a holiday.
+export const costsLeave = (iso: string, observed?: ObservedDays) =>
+  isWorkday(iso) && !observed?.has(iso);
+
+// The chargeable days of one run, so a trip's leave cost and its span length stay distinguishable.
+export const leaveDaysOf = (dates: string[], observed?: ObservedDays) =>
+  dates.filter((date) => costsLeave(date, observed));
+
+// Why a span spends nothing, so a caller can drop the PTO choice; null when part of it does cost.
+export const alreadyOffReason = (dates: string[], observed?: ObservedDays) => {
+  if (dates.length === 0 || leaveDaysOf(dates, observed).length > 0) return null;
+  if (dates.every((date) => observed?.has(date))) return 'holiday' as const;
+  if (dates.every((date) => !isWorkday(date))) return 'weekend' as const;
+  return 'both' as const;
+};
+
 // A day falls to whichever role you held that day, so changing jobs splits the year by itself.
-export const daysOffInWindow = (
+export const timeOffInWindow = (
   days: DayOff[],
   window: RoleWindow,
   year: number,
@@ -160,7 +179,6 @@ export const daysOffInWindow = (
   const dates = days
     .filter((day) => !day.tab && day.date.slice(0, 4) === String(year))
     .filter((day) => day.counts_as_pto !== false)
-    .filter((day) => isWorkday(day.date))
     .filter((day) => {
       // An explicit link wins outright, so a day charged elsewhere never lands here by its date.
       const linked = day.pto_experience_ids ?? [];
@@ -171,3 +189,12 @@ export const daysOffInWindow = (
     .map((day) => day.date);
   return [...new Set(dates)];
 };
+
+// What the allowance is actually charged: the days booked, less the ones already off.
+export const daysOffInWindow = (
+  days: DayOff[],
+  window: RoleWindow,
+  year: number,
+  roleId?: number | null,
+  observed?: ObservedDays
+) => leaveDaysOf(timeOffInWindow(days, window, year, roleId), observed);

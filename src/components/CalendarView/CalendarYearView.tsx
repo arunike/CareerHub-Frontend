@@ -108,7 +108,7 @@ const CalendarYearView = ({
                       style={{ backgroundColor: customHolidayColor }}
                     />
                   )}
-                  {dayData.federalHolidays.length > 0 && (
+                  {dayData.observedHolidays.length > 0 && (
                     <span className="h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-ink-700" />
                   )}
                 </div>

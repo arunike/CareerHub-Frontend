@@ -28,7 +28,7 @@ const CalendarDetailsPanel = ({ selectedDate, dayData, onEventSelect, onHolidayS
           </div>
         ) : (
           <>
-            {dayData.federalHolidays.map((holiday, index) => (
+            {dayData.observedHolidays.map((holiday, index) => (
               <div
                 key={`selected-fed-${index}-${holiday.description}`}
                 className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 p-2 text-sm text-gray-600 dark:text-ink-200"

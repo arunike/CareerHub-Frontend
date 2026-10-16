@@ -22,7 +22,7 @@ export const quickAddLayout = (highlight: AddActionHighlight) => ({
 export const hasDayItems = (dayData: DayData) =>
   dayData.events.length > 0 ||
   dayData.customHolidays.length > 0 ||
-  dayData.federalHolidays.length > 0;
+  dayData.observedHolidays.length > 0;
 
 const formatRangeLabel = (start: Date, end: Date) => {
   const sameYear = format(start, 'yyyy') === format(end, 'yyyy');

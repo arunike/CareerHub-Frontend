@@ -138,6 +138,36 @@ textarea::placeholder {
   display: none;
 }
 
+/* A touch row scrolls without a bar; a pointer needs one to know the filters continue. */
+.calendar-legend-scroll {
+  scrollbar-width: none;
+}
+
+.calendar-legend-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .calendar-legend-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .calendar-legend-scroll::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+
+  .calendar-legend-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  .calendar-legend-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 /* Shared state transitions */
 .ant-btn,
 .ant-select-selector,
@@ -2224,6 +2254,14 @@ summary,
 }
 
 [data-theme='dark'] .ledger-table .ant-table-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme='dark'] .calendar-legend-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+[data-theme='dark'] .calendar-legend-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.18);
 }
 

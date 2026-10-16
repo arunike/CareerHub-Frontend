@@ -4,7 +4,7 @@ import type { MessageInstance } from 'antd/es/message/interface';
 import {
   getCategories,
   getEvents,
-  getFederalHolidays,
+  getObservedHolidays,
   getHolidays,
   getUserSettings,
 } from '../../api';
@@ -29,7 +29,7 @@ export const useHolidayData = ({
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [federalHolidays, setFederalHolidays] = useState<Holiday[]>([]);
+  const [observedHolidays, setObservedHolidays] = useState<Holiday[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -39,17 +39,16 @@ export const useHolidayData = ({
       setLoading(true);
       setLoadError(false);
       const requestedYear = selectedYear === 'all' ? undefined : selectedYear;
-      const [customResp, federalResp, settingsResp, eventsResp, categoriesResp] = await Promise.all(
-        [
+      const [customResp, observedResp, settingsResp, eventsResp, categoriesResp] =
+        await Promise.all([
           getHolidays(),
-          getFederalHolidays(requestedYear),
+          getObservedHolidays(requestedYear),
           getUserSettings(),
           getEvents(),
           getCategories(),
-        ]
-      );
+        ]);
       setHolidays(customResp.data.filter((holiday: Holiday) => holiday.holiday_type !== 'federal'));
-      setFederalHolidays(federalResp.data);
+      setObservedHolidays(observedResp.data);
       setUserSettings(settingsResp.data);
       setEvents(eventsResp.data);
       setCategories(categoriesResp.data);
@@ -84,7 +83,7 @@ export const useHolidayData = ({
         (h) => !h.tab || !customTabs.some((t) => t.id === h.tab)
       );
     }
-    if (activeTab === 'federal') return [];
+    if (activeTab === 'observed') return [];
     return holidaysForSelectedYear.filter((h) => h.tab === activeTab);
   }, [holidaysForSelectedYear, activeTab, customTabs]);
 
@@ -138,7 +137,7 @@ export const useHolidayData = ({
   ).sort((a, b) => b - a);
   const hasLoadedData =
     holidays.length > 0 ||
-    federalHolidays.length > 0 ||
+    observedHolidays.length > 0 ||
     events.length > 0 ||
     categories.length > 0 ||
     userSettings !== null;
@@ -150,7 +149,7 @@ export const useHolidayData = ({
     setCategories,
     holidays,
     setHolidays,
-    federalHolidays,
+    observedHolidays,
     userSettings,
     loading,
     loadError,

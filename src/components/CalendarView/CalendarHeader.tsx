@@ -4,7 +4,7 @@ import type { EventCategory, HolidayTab } from '../../types';
 import { getEventCategoryColor } from '../../utils/eventCategoryColors';
 import {
   UNTABBED_HOLIDAY_LABEL,
-  getFederalHolidayColor,
+  getObservedHolidayColor,
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
 import SegmentedToggle from '../inputs/SegmentedToggle';
@@ -26,11 +26,11 @@ type Props = {
   loading?: boolean;
   onToggleEventCategory: (categoryId: number | 'uncategorized') => void;
   onToggleCustomHolidayTab: (tabId: string | 'default') => void;
-  onToggleFederal: () => void;
+  onToggleObserved: () => void;
   // Merged in here rather than sitting in an otherwise empty band under the page title.
   pageControls?: React.ReactNode;
   defaultHolidayColor?: string;
-  federalHolidayColor?: string;
+  observedHolidayColor?: string;
 };
 
 const CalendarHeader = ({
@@ -47,10 +47,10 @@ const CalendarHeader = ({
   loading = false,
   onToggleEventCategory,
   onToggleCustomHolidayTab,
-  onToggleFederal,
+  onToggleObserved,
   pageControls,
   defaultHolidayColor,
-  federalHolidayColor,
+  observedHolidayColor,
 }: Props) => {
   const filterButtonClassName = (active: boolean) =>
     `inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1 md:text-sm ${
@@ -112,7 +112,8 @@ const CalendarHeader = ({
           <div className="shrink-0 xl:hidden">{navCluster}</div>
         </div>
 
-        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 xl:col-start-1 xl:row-start-2">
+        {/* One scrolling line at every width: wrapping pushed the grid down a row as tabs were added. */}
+        <div className="calendar-legend-scroll -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 xl:col-start-1 xl:row-start-2">
           {categories.map((category) => {
             const categoryColor = getEventCategoryColor(category);
             const active = filters.eventCategoryIds.has(category.id);
@@ -197,20 +198,20 @@ const CalendarHeader = ({
 
           <button
             type="button"
-            onClick={onToggleFederal}
+            onClick={onToggleObserved}
             disabled={loading}
-            aria-pressed={filters.federal}
-            className={filterButtonClassName(filters.federal)}
+            aria-pressed={filters.observed}
+            className={filterButtonClassName(filters.observed)}
           >
             <span
               className="h-2.5 w-2.5 rounded-full"
               style={{
-                backgroundColor: filters.federal
-                  ? getFederalHolidayColor(federalHolidayColor).dot
+                backgroundColor: filters.observed
+                  ? getObservedHolidayColor(observedHolidayColor).dot
                   : '#d1d5db',
               }}
             />
-            <span>Federal</span>
+            <span>Observed</span>
           </button>
         </div>
       </div>

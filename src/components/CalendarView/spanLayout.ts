@@ -1,5 +1,6 @@
 import type { Event, Holiday } from '../../types';
 import { holidayRuns } from '../../utils/Holidays/holidayRuns';
+import { leaveDaysOf, type ObservedDays } from '../../utils/TimeOff/ptoBalance';
 
 // Time off is stored a row per day, so a trip only becomes one bar once its days are grouped.
 interface HolidayGroup {
@@ -7,6 +8,8 @@ interface HolidayGroup {
   start: string;
   end: string;
   days: number;
+  // What the run actually spends, which excludes weekends and days already observed.
+  leaveDays: number;
   // The earliest day of the run, which is what a click opens and where the colour comes from.
   holiday: Holiday;
   // Every date the bar covers, so the cells beneath it can drop their own chips.
@@ -50,13 +53,17 @@ export const eventSpanCandidates = (events: Event[]): SpanCandidate[] =>
   }));
 
 // A group of one is left as a chip: a bar spanning a single cell only adds a border.
-export const holidayGroupCandidates = (holidays: Holiday[]): SpanCandidate[] => {
+export const holidayGroupCandidates = (
+  holidays: Holiday[],
+  observed?: ObservedDays
+): SpanCandidate[] => {
   const candidates: SpanCandidate[] = [];
   for (const { groupId, members } of holidayRuns(holidays, { splitOnGap: true })) {
     // A group of one is left as a chip: a bar spanning a single cell only adds a border.
     if (members.length < 2) continue;
     const start = members[0].date;
     const end = members[members.length - 1].date;
+    const dates = members.map((member) => member.date);
     candidates.push({
       id: `holiday-${groupId}-${start}`,
       start,
@@ -68,8 +75,9 @@ export const holidayGroupCandidates = (holidays: Holiday[]): SpanCandidate[] => 
           start,
           end,
           days: members.length,
+          leaveDays: leaveDaysOf(dates, observed).length,
           holiday: members[0],
-          dates: members.map((member) => member.date),
+          dates,
         },
       },
     });

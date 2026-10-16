@@ -5,7 +5,7 @@ import type { Holiday } from '../../types';
 
 const { Text } = Typography;
 
-export interface FederalHolidayGroup {
+export interface ObservedHolidayGroup {
   isGroup: true;
   id: string;
   group_id: string;
@@ -17,14 +17,14 @@ export interface FederalHolidayGroup {
   is_ignored: boolean;
 }
 
-export type FederalHolidayDisplayItem = Holiday | FederalHolidayGroup;
+export type ObservedHolidayDisplayItem = Holiday | ObservedHolidayGroup;
 
-const isFederalHolidayGroup = (item: FederalHolidayDisplayItem): item is FederalHolidayGroup =>
+const isObservedHolidayGroup = (item: ObservedHolidayDisplayItem): item is ObservedHolidayGroup =>
   'isGroup' in item && item.isGroup;
 
-export const groupFederalHolidays = (holidays: Holiday[]): FederalHolidayDisplayItem[] => {
-  const displayItems: FederalHolidayDisplayItem[] = [];
-  const groupMap = new Map<string, FederalHolidayGroup>();
+export const groupObservedHolidays = (holidays: Holiday[]): ObservedHolidayDisplayItem[] => {
+  const displayItems: ObservedHolidayDisplayItem[] = [];
+  const groupMap = new Map<string, ObservedHolidayGroup>();
 
   holidays.forEach((holiday) => {
     if (!holiday.group_id || holiday.holiday_type !== 'federal') {
@@ -59,31 +59,31 @@ export const groupFederalHolidays = (holidays: Holiday[]): FederalHolidayDisplay
   return displayItems;
 };
 
-interface FederalHolidayCardProps {
-  item: FederalHolidayDisplayItem;
+interface ObservedHolidayCardProps {
+  item: ObservedHolidayDisplayItem;
   isAdvancedMode: boolean;
   onDeleteHoliday: (id: number) => void;
-  onDeleteRange: (group: FederalHolidayGroup) => void;
+  onDeleteRange: (group: ObservedHolidayGroup) => void;
   onToggleObserved: (holidayName: string, date: string, checked: boolean) => void;
-  // Only offered for holidays you added; a real federal day is identified by its name.
-  onRename?: (item: FederalHolidayDisplayItem, nextName: string) => void;
+  // Only offered for holidays you added; a computed federal day is identified by its name.
+  onRename?: (item: ObservedHolidayDisplayItem, nextName: string) => void;
 }
 
-const FederalHolidayCard = ({
+const ObservedHolidayCard = ({
   item,
   isAdvancedMode,
   onDeleteHoliday,
   onDeleteRange,
   onToggleObserved,
   onRename,
-}: FederalHolidayCardProps) => {
-  const isGroup = isFederalHolidayGroup(item);
+}: ObservedHolidayCardProps) => {
+  const isGroup = isObservedHolidayGroup(item);
   const isIgnored = Boolean(item.is_ignored);
   const dateLabel = isGroup
     ? `${dayjs(item.date).format('MMM D')} to ${dayjs(item.endDate).format('MMM D, YYYY')}`
     : dayjs(item.date).format('MMMM D, YYYY');
   const dateDetail = isGroup ? `${item.items.length} days` : dayjs(item.date).format('dddd');
-  const isCustomFederal = item.holiday_type === 'federal';
+  const isCustomObserved = item.holiday_type === 'federal';
 
   return (
     <div
@@ -138,7 +138,7 @@ const FederalHolidayCard = ({
             {isIgnored ? 'Ignored' : 'Observed'}
           </Tag>
 
-          {isAdvancedMode && isCustomFederal && (
+          {isAdvancedMode && isCustomObserved && (
             <Popconfirm
               title={isGroup ? 'Delete observed holiday range?' : 'Delete observed holiday?'}
               description={
@@ -170,7 +170,7 @@ const FederalHolidayCard = ({
           }`}
           title={item.description}
           editable={
-            isAdvancedMode && isCustomFederal && onRename
+            isAdvancedMode && isCustomObserved && onRename
               ? {
                   tooltip: 'Rename',
                   maxLength: 120,
@@ -207,4 +207,4 @@ const FederalHolidayCard = ({
   );
 };
 
-export default FederalHolidayCard;
+export default ObservedHolidayCard;

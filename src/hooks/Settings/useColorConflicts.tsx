@@ -9,8 +9,8 @@ import {
 } from '../../utils/colorConflicts';
 import { getPaletteColor } from '../../utils/colorPalette';
 import {
-  FEDERAL_HOLIDAY_COLOR,
-  FEDERAL_HOLIDAY_LABEL,
+  OBSERVED_HOLIDAY_COLOR,
+  OBSERVED_HOLIDAY_LABEL,
   UNTABBED_HOLIDAY_COLOR,
   UNTABBED_HOLIDAY_LABEL,
 } from '../../utils/holidayTabColors';
@@ -36,8 +36,8 @@ export const useColorConflicts = ({
       },
       {
         kind: 'holiday' as const,
-        label: FEDERAL_HOLIDAY_LABEL,
-        color: settings?.federal_holiday_color ?? FEDERAL_HOLIDAY_COLOR,
+        label: OBSERVED_HOLIDAY_LABEL,
+        color: settings?.observed_holiday_color ?? OBSERVED_HOLIDAY_COLOR,
       },
       ...(settings?.holiday_tabs ?? []).map((tab) => ({
         kind: 'holiday' as const,

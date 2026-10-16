@@ -123,8 +123,8 @@ export interface Holiday {
   date: string;
   group_id?: string | null;
   description: string;
-  // 'federal_native' is a real federal day the API computes; 'federal' is a range you added to that tab.
-  holiday_type?: 'custom' | 'federal' | 'federal_native';
+  // 'observed_native' is a federal day the API computes; 'observed' is a range you added to that tab.
+  holiday_type?: 'custom' | 'federal' | 'observed_native';
   is_recurring: boolean;
   is_locked: boolean;
   is_ignored?: boolean;
@@ -160,11 +160,11 @@ export interface UserSettings {
   default_mpg?: number | string;
   default_gas_price_per_gallon?: number | string;
   default_event_category?: number | null;
-  ignored_federal_holidays?: string[];
+  ignored_observed_holidays?: string[];
   employment_types?: EmploymentType[];
   holiday_tabs?: HolidayTab[];
   default_holiday_color?: string;
-  federal_holiday_color?: string;
+  observed_holiday_color?: string;
   application_stages?: Array<{
     key: string;
     label: string;

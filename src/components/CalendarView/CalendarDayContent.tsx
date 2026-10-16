@@ -5,7 +5,7 @@ import type { Event, Holiday } from '../../types';
 import { getEventColor } from '../../utils/eventCategoryColors';
 import {
   UNTABBED_HOLIDAY_LABEL,
-  getFederalHolidayColor,
+  getObservedHolidayColor,
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
 import type { DayData } from './types';
@@ -30,27 +30,27 @@ export type CalendarDragItem =
 export const canDragEvent = (event: Event) =>
   !event.is_locked && !event.is_recurring && !event.parent_event;
 
-// An observed day, whether a real federal one or a range you added to that tab.
+// An observed day, whether a federal one the API computes or a range you added to that tab.
 const isObservedHoliday = (holiday: Holiday) =>
-  holiday.holiday_type === 'federal' || holiday.holiday_type === 'federal_native';
+  holiday.holiday_type === 'federal' || holiday.holiday_type === 'observed_native';
 
 // One description of a holiday chip for every view: the bucket it arrived in decides nothing
 export const holidayChrome = (holiday: Holiday) => ({
   label: holiday.tab_name ?? (isObservedHoliday(holiday) ? 'Observed' : UNTABBED_HOLIDAY_LABEL),
   colour: isObservedHoliday(holiday)
-    ? getFederalHolidayColor(holiday.tab_color)
+    ? getObservedHolidayColor(holiday.tab_color)
     : getHolidayTabColor(holiday.tab_color),
-  // A real federal day is computed, not stored, so it has no row to open.
-  editable: holiday.id !== undefined,
+  // A computed day has no row, but it still opens: its observance is a setting you can change.
+  editable: holiday.id !== undefined || holiday.holiday_type === 'observed_native',
 });
 
 // Every holiday on a day, observed ones first, so the three views cannot drift apart.
 export const dayHolidays = (dayData: DayData) => [
-  ...dayData.federalHolidays,
+  ...dayData.observedHolidays,
   ...dayData.customHolidays,
 ];
 
-// Federal holidays are fixed calendar facts; only your own custom ones can move.
+// Observed holidays are fixed calendar facts; only your own custom ones can move.
 const canDragHoliday = (holiday: Holiday) =>
   Boolean(holiday.id) &&
   holiday.holiday_type !== 'federal' &&

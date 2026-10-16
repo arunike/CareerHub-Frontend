@@ -25,12 +25,12 @@ const CALENDAR_VIEW_MODES: CalendarViewMode[] = ['day', 'threeDay', 'week', 'mon
 const formatIsoDay = (date: Date) => format(date, 'yyyy-MM-dd');
 
 import { getHeaderLabel, getVisibleRangeDates, quickAddLayout, shiftAnchorDate } from './utils';
-import { FEDERAL_HOLIDAY_COLOR } from '../../utils/holidayTabColors';
+import { OBSERVED_HOLIDAY_COLOR } from '../../utils/holidayTabColors';
 
 interface CalendarViewProps {
   events: Event[];
   customHolidays: Holiday[];
-  federalHolidays: Holiday[];
+  observedHolidays: Holiday[];
   categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
   addActionHighlight?: AddActionHighlight;
@@ -46,13 +46,13 @@ interface CalendarViewProps {
   navLeading?: (anchorDate: Date) => React.ReactNode;
   // Colour for time off with no tab. Configurable, so it cannot be hardcoded here.
   defaultHolidayColor?: string;
-  federalHolidayColor?: string;
+  observedHolidayColor?: string;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
   events,
   customHolidays,
-  federalHolidays,
+  observedHolidays,
   categories = [],
   holidayTabs = [],
   addActionHighlight = 'all',
@@ -65,7 +65,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   pageControls,
   navLeading,
   defaultHolidayColor,
-  federalHolidayColor,
+  observedHolidayColor,
 }) => {
   const today = new Date();
   // In the URL, so a refresh or a shared link lands on the same month and the same view.
@@ -83,7 +83,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const [filters, setFilters] = useState<CalendarFilters>({
     eventCategoryIds: new Set(['uncategorized']),
     customHolidayTabs: new Set(['default']),
-    federal: true,
+    observed: true,
   });
 
   const hasUncategorizedEvents = events.some((event) => !event.category);
@@ -125,7 +125,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       return {
         eventCategoryIds: nextEventCategoryIds,
         customHolidayTabs: nextCustomHolidayTabs,
-        federal: currentFilters.federal,
+        observed: currentFilters.observed,
       };
     });
   }, [categories, holidayTabs]);
@@ -182,17 +182,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     target[key].push(displayHoliday);
   });
 
-  const federalHolidaysByDate: Record<string, Holiday[]> = {};
-  federalHolidays.forEach((rawHoliday) => {
+  const observedHolidaysByDate: Record<string, Holiday[]> = {};
+  // An ignored day is not observed at all, so it is off the calendar rather than drawn struck through.
+  observedHolidays.forEach((rawHoliday) => {
+    if (rawHoliday.is_ignored) return;
     // Resolved here so every consumer reads it off the holiday rather than hardcoding a grey.
     const holiday = {
       ...rawHoliday,
-      tab_color: federalHolidayColor ?? FEDERAL_HOLIDAY_COLOR,
+      tab_color: observedHolidayColor ?? OBSERVED_HOLIDAY_COLOR,
     };
-    if (!federalHolidaysByDate[holiday.date]) {
-      federalHolidaysByDate[holiday.date] = [];
+    if (!observedHolidaysByDate[holiday.date]) {
+      observedHolidaysByDate[holiday.date] = [];
     }
-    federalHolidaysByDate[holiday.date].push(holiday);
+    observedHolidaysByDate[holiday.date].push(holiday);
   });
 
   const getDayData = (day: Date): DayData => {
@@ -211,7 +213,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       customHolidays: dayCustomHolidays.filter((holiday) =>
         filters.customHolidayTabs.has(holiday.tab || 'default')
       ),
-      federalHolidays: filters.federal ? (federalHolidaysByDate[dayKey] ?? []) : [],
+      observedHolidays: filters.observed ? (observedHolidaysByDate[dayKey] ?? []) : [],
     };
   };
 
@@ -341,7 +343,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         pageControls={pageControls}
         navLeading={navLeading?.(anchorDate)}
         defaultHolidayColor={defaultHolidayColor}
-        federalHolidayColor={federalHolidayColor}
+        observedHolidayColor={observedHolidayColor}
         headerLabel={getHeaderLabel(viewMode, anchorDate)}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -354,10 +356,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         loading={loading}
         onToggleEventCategory={toggleEventCategory}
         onToggleCustomHolidayTab={toggleCustomHolidayTab}
-        onToggleFederal={() =>
+        onToggleObserved={() =>
           setFilters((currentFilters) => ({
             ...currentFilters,
-            federal: !currentFilters.federal,
+            observed: !currentFilters.observed,
           }))
         }
       />

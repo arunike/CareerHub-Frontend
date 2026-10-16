@@ -7,11 +7,11 @@ import ColorSwatchPicker from '../inputs/ColorSwatchPicker';
 import LockableListItem from '../display/LockableListItem';
 import { SECTION_ICONS } from './settingsChrome';
 import {
-  FEDERAL_HOLIDAY_COLOR,
-  FEDERAL_HOLIDAY_LABEL,
+  OBSERVED_HOLIDAY_COLOR,
+  OBSERVED_HOLIDAY_LABEL,
   UNTABBED_HOLIDAY_COLOR,
   UNTABBED_HOLIDAY_LABEL,
-  getFederalHolidayColor,
+  getObservedHolidayColor,
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
 import { describeConflict } from '../../utils/colorConflicts';
@@ -237,20 +237,20 @@ const CategoriesSection = ({
           <span
             className="h-3 w-3 shrink-0 rounded-full"
             style={{
-              backgroundColor: getFederalHolidayColor(
-                settings?.federal_holiday_color ?? FEDERAL_HOLIDAY_COLOR
+              backgroundColor: getObservedHolidayColor(
+                settings?.observed_holiday_color ?? OBSERVED_HOLIDAY_COLOR
               ).dot,
             }}
           />
           <span className="text-sm font-medium text-gray-800 dark:text-ink-50">
-            {FEDERAL_HOLIDAY_LABEL}
+            {OBSERVED_HOLIDAY_LABEL}
           </span>
           <span className="text-xs text-gray-400 dark:text-ink-500">public holidays</span>
         </div>
         <ColorSwatchPicker
-          value={settings?.federal_holiday_color ?? FEDERAL_HOLIDAY_COLOR}
+          value={settings?.observed_holiday_color ?? OBSERVED_HOLIDAY_COLOR}
           onChange={(color) =>
-            setSettings((prev) => (prev ? { ...prev, federal_holiday_color: color } : prev))
+            setSettings((prev) => (prev ? { ...prev, observed_holiday_color: color } : prev))
           }
           allowCustomHex
         />

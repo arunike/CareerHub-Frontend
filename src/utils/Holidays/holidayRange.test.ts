@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import {
   buildHolidayRangePayloads,
   holidayGroupMembers,
+  holidayRangeDates,
   planHolidayGroupEdit,
 } from './holidayGrouping';
 import type { Holiday } from '../../types';
@@ -12,6 +13,75 @@ const day = (iso: string) => dayjs(iso);
 // A span steps forward day by day from the first date.
 const FIRST = '2026-07-01';
 const LATER = '2026-10-01';
+
+describe('a run keeps its own tab', () => {
+  const observedRow = {
+    id: 1,
+    date: FIRST,
+    description: 'Company Holiday',
+    holiday_type: 'federal' as const,
+    is_recurring: false,
+    is_locked: false,
+  };
+
+  it('gives a day added to the run the run\u2019s type, not the custom default', () => {
+    const result = planHolidayGroupEdit(
+      [observedRow],
+      { date: day(FIRST), end_date: day('2026-07-02'), is_multi_day: true },
+      'Company Holiday'
+    );
+    expect(result?.ok).toBe(true);
+    if (!result?.ok) return;
+    expect(result.plan.create).toHaveLength(1);
+    expect(result.plan.create[0].holiday_type).toBe('federal');
+    expect(result.plan.update[0].patch.holiday_type).toBe('federal');
+  });
+
+  it('moving the only day keeps the type on the row that replaces it', () => {
+    const result = planHolidayGroupEdit([observedRow], { date: day(LATER) }, 'Company Holiday');
+    expect(result?.ok).toBe(true);
+    if (!result?.ok) return;
+    expect(result.plan.deleteIds).toEqual([1]);
+    expect(result.plan.create[0].holiday_type).toBe('federal');
+  });
+
+  it('leaves a custom day without a type rather than inventing one', () => {
+    const result = planHolidayGroupEdit(
+      [{ ...observedRow, holiday_type: undefined }],
+      { date: day(LATER) },
+      'Time off'
+    );
+    expect(result?.ok).toBe(true);
+    if (!result?.ok) return;
+    expect(result.plan.create[0]).not.toHaveProperty('holiday_type');
+  });
+});
+
+describe('holidayRangeDates', () => {
+  it('is empty without a start, so a form with no date judges nothing', () => {
+    expect(holidayRangeDates({})).toEqual([]);
+  });
+
+  it('is the one day when the span is off', () => {
+    expect(holidayRangeDates({ date: day(FIRST), end_date: day(LATER) })).toEqual([FIRST]);
+  });
+
+  it('walks the span inclusively when multi-day is on', () => {
+    expect(
+      holidayRangeDates({
+        date: day('2026-07-03'),
+        end_date: day('2026-07-05'),
+        is_multi_day: true,
+      })
+    ).toEqual(['2026-07-03', '2026-07-04', '2026-07-05']);
+  });
+
+  it('is empty when the end precedes the start', () => {
+    expect(
+      holidayRangeDates({ date: day(LATER), end_date: day(FIRST), is_multi_day: true })
+    ).toEqual([]);
+  });
+});
 
 describe('buildHolidayRangePayloads', () => {
   it('makes one row for a single day and gives it no group', () => {

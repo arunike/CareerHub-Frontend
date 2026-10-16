@@ -40,6 +40,14 @@ const resolveRange = (values: HolidayRangeRequest, fallback: dayjs.Dayjs) => {
   return { start, end };
 };
 
+// The days a form's own dates cover, so a span can be judged before anything is saved.
+export const holidayRangeDates = (values: HolidayRangeRequest) => {
+  if (!values.date) return [];
+  const { start, end } = resolveRange(values, values.date);
+  if (end.isBefore(start, 'day')) return [];
+  return getInclusiveHolidayDates(start, end).map((day) => day.format('YYYY-MM-DD'));
+};
+
 // One row per day sharing a group id, shared so both calendars agree on what a range means.
 export const buildHolidayRangePayloads = (
   values: HolidayRangeRequest,
@@ -119,6 +127,7 @@ export const planHolidayGroupEdit = (
               pto_experience_ids: values.pto_experience_ids ?? [],
               counts_as_pto: values.counts_as_pto !== false,
               group_id: null,
+              ...(target.holiday_type ? { holiday_type: target.holiday_type } : {}),
             },
           },
         ],
@@ -143,6 +152,8 @@ export const planHolidayGroupEdit = (
     pto_experience_ids: values.pto_experience_ids ?? [],
     counts_as_pto: values.counts_as_pto !== false,
     ...(groupId ? { group_id: groupId } : {}),
+    // A day moved or added to a run stays in the run's own tab, rather than defaulting to custom.
+    ...(sorted[0].holiday_type ? { holiday_type: sorted[0].holiday_type } : {}),
   };
 
   const byDate = new Map(sorted.map((row) => [row.date, row]));

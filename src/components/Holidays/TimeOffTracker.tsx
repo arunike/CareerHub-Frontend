@@ -11,10 +11,12 @@ import { holidayRuns } from '../../utils/Holidays/holidayRuns';
 import {
   coverageOfYear,
   daysOffInWindow,
+  leaveDaysOf,
   ptoBalance,
+  timeOffInWindow,
   yearsOfService,
 } from '../../utils/TimeOff/ptoBalance';
-import type { DayOff, PtoPolicy, RoleWindow } from '../../utils/TimeOff/ptoBalance';
+import type { DayOff, ObservedDays, PtoPolicy, RoleWindow } from '../../utils/TimeOff/ptoBalance';
 
 const rangeLabel = (dates: string[]) => {
   const first = dayjs(dates[0]);
@@ -53,6 +55,8 @@ interface Props {
   year: number;
   // Whatever colour the My Time Off bucket is set to; the bar has no palette of its own.
   tabColor?: string | null;
+  // Days the employer is already closed, which a trip spends no leave on.
+  observedDates?: ObservedDays;
   onOpenDay: (holiday: HolidayLike) => void;
 }
 
@@ -64,7 +68,7 @@ const LAPSE_MONTHS = [
   })),
 ];
 
-const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
+const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: Props) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleId, setRoleId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -121,16 +125,11 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
 
   const role = rolesInYear.find((entry) => entry.id === roleId) ?? rolesInYear[0] ?? null;
 
-  const taken = useMemo(
-    () => (role ? daysOffInWindow(holidays, role.window, year, role.id) : []),
-    [holidays, role, year]
-  );
-
   const balance = useMemo(() => {
     if (!role) return null;
     const asEntries = [
-      ...daysOffInWindow(holidays, role.window, year, role.id),
-      ...daysOffInWindow(holidays, role.window, year - 1, role.id),
+      ...daysOffInWindow(holidays, role.window, year, role.id, observedDates),
+      ...daysOffInWindow(holidays, role.window, year - 1, role.id, observedDates),
     ].map((date) => ({ date, days: 1, kind: 'PTO' }));
     return ptoBalance({
       policy: role.policy,
@@ -139,7 +138,7 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
       entries: asEntries,
       todayIso: toIsoDate(new Date()),
     });
-  }, [holidays, role, year]);
+  }, [holidays, role, year, observedDates]);
 
   // Written back to the offer it came from: these are the employer's policy, not view settings.
   const savePolicy = async (patch: Partial<Role['policy']>, payload: Record<string, number>) => {
@@ -156,21 +155,24 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
     }
   };
 
-  // A trip is one line, not one line per day: its label and its range say everything.
+  // A trip is one line, not one line per day, and the line shows what was booked as well as spent.
   const rows = useMemo(() => {
-    const counted = new Set(taken);
+    const booked = new Set(role ? timeOffInWindow(holidays, role.window, year, role.id) : []);
     const todayIso = dayjs().format('YYYY-MM-DD');
     return (
-      holidayRuns(holidays.filter((holiday) => counted.has(holiday.date)))
+      holidayRuns(holidays.filter((holiday) => booked.has(holiday.date)))
         .map(({ members }) => {
           const dates = members.map((member) => member.date);
           return {
             label: members[0].description || 'Time off',
             holiday: members[0],
             dates,
+            leaveDays: leaveDaysOf(dates, observedDates).length,
             upcoming: dates[dates.length - 1] >= todayIso,
           };
         })
+        // A trip falling entirely on days already off spends nothing, so it is not a leave row.
+        .filter((group) => group.leaveDays > 0)
         // Upcoming first and soonest-first; what is already spent reads newest-first below it.
         .sort((a, b) =>
           a.upcoming === b.upcoming
@@ -182,12 +184,14 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
               : 1
         )
     );
-  }, [taken, holidays]);
+  }, [holidays, role, year, observedDates]);
 
   // Across every role, because a job change splits the year and the whole year still matters.
   const yearTotal = useMemo(
-    () => daysOffInWindow(holidays, { startDate: null, endDate: null }, year).length,
-    [holidays, year]
+    () =>
+      daysOffInWindow(holidays, { startDate: null, endDate: null }, year, null, observedDates)
+        .length,
+    [holidays, year, observedDates]
   );
 
   if (rolesInYear.length === 0 || !balance) return null;
@@ -199,6 +203,8 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
   // Unlimited has no hour value to quote, so it stays in days alone.
   const inHours = (days: number) =>
     balance.unlimited || !role ? '' : `${Math.round(days * role.policy.hoursPerDay)}h`;
+  // Hours only help where the charge is the whole trip; otherwise the booked length is the fact.
+  const hoursSuffix = (days: number) => (inHours(days) ? ` \u00b7 ${inHours(days)}` : '');
   // The working has to reconcile with the headline, so tenure is named rather than folded in silently.
   const annualWorking = (() => {
     if (!role) return '';
@@ -252,11 +258,11 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
         {rows.map((group, index) => (
           <Tooltip
             key={group.holiday.group_id || group.holiday.id}
-            title={`${group.label} \u00b7 ${group.dates.length}d`}
+            title={`${group.label} \u00b7 ${group.leaveDays}d of ${group.dates.length}d`}
           >
             <span
               style={{
-                width: `${total > 0 ? Math.min(100, (group.dates.length / total) * 100) : 0}%`,
+                width: `${total > 0 ? Math.min(100, (group.leaveDays / total) * 100) : 0}%`,
                 backgroundColor: segmentColor,
                 opacity: SEGMENT_FADES[index % SEGMENT_FADES.length],
               }}
@@ -424,8 +430,10 @@ const TimeOffTracker = ({ holidays, year, tabColor, onOpenDay }: Props) => {
                   <span className="truncate text-[12.5px] text-slate-700 dark:text-ink-100">
                     {group.label}
                     <span className="ml-1.5 text-slate-400 dark:text-ink-500">
-                      {group.dates.length}d
-                      {inHours(group.dates.length) ? ` · ${inHours(group.dates.length)}` : ''}
+                      {group.leaveDays}d
+                      {group.leaveDays === group.dates.length
+                        ? hoursSuffix(group.leaveDays)
+                        : ` of ${group.dates.length}d`}
                     </span>
                   </span>
                   <span className="shrink-0 text-[11.5px] tabular-nums text-slate-400 dark:text-ink-500">

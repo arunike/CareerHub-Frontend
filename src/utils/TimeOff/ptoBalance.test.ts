@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  alreadyOffReason,
   coverageOfYear,
+  costsLeave,
   daysOffInWindow,
   isWorkday,
+  leaveDaysOf,
+  timeOffInWindow,
   ptoBalance,
   tenureDays,
   yearsOfService,
@@ -189,6 +193,67 @@ describe('weekends', () => {
       '2026-07-03',
       '2026-07-06',
     ]);
+  });
+});
+
+describe('a day the employer is already closed', () => {
+  // 3 Jul 2026 is the observed Independence Day, the 4th falling on a Saturday.
+  const observed = new Set(['2026-07-03']);
+  // Wed to Mon: six calendar days, of which two are the weekend and one is observed.
+  const trip = ['2026-07-01', '2026-07-02', '2026-07-03', '2026-07-04', '2026-07-05', '2026-07-06'];
+  const rows = trip.map((date) => ({ date, tab: null }));
+
+  it('costs no leave', () => {
+    expect(costsLeave('2026-07-03')).toBe(true);
+    expect(costsLeave('2026-07-03', observed)).toBe(false);
+  });
+
+  it('leaves a working day chargeable', () => {
+    expect(costsLeave('2026-07-01', observed)).toBe(true);
+  });
+
+  it('charges a six-day trip for the three days it actually spends', () => {
+    expect(leaveDaysOf(trip, observed)).toEqual(['2026-07-01', '2026-07-02', '2026-07-06']);
+    expect(daysOffInWindow(rows, { startDate: null, endDate: null }, 2026, null, observed)).toEqual(
+      ['2026-07-01', '2026-07-02', '2026-07-06']
+    );
+  });
+
+  it('keeps the whole booked span, so a row can show what the trip was planned for', () => {
+    expect(timeOffInWindow(rows, { startDate: null, endDate: null }, 2026)).toEqual(trip);
+  });
+
+  it('still charges the holiday when no observed days are given', () => {
+    expect(daysOffInWindow(rows, { startDate: null, endDate: null }, 2026)).toContain('2026-07-03');
+  });
+});
+
+describe('alreadyOffReason', () => {
+  const observed = new Set(['2026-07-03']);
+
+  it('names the holiday when the whole span is observed', () => {
+    expect(alreadyOffReason(['2026-07-03'], observed)).toBe('holiday');
+  });
+
+  it('names the weekend when the whole span is one', () => {
+    expect(alreadyOffReason(['2026-07-04', '2026-07-05'], observed)).toBe('weekend');
+  });
+
+  it('reports both when the span mixes a holiday and a weekend', () => {
+    expect(alreadyOffReason(['2026-07-03', '2026-07-04'], observed)).toBe('both');
+  });
+
+  it('says nothing while any day of the span still costs leave', () => {
+    expect(alreadyOffReason(['2026-07-03', '2026-07-06'], observed)).toBeNull();
+    expect(alreadyOffReason(['2026-07-01'], observed)).toBeNull();
+  });
+
+  it('charges an ignored holiday, which arrives as an unobserved day', () => {
+    expect(alreadyOffReason(['2026-07-03'])).toBeNull();
+  });
+
+  it('says nothing for an empty span, so a form with no date keeps the choice', () => {
+    expect(alreadyOffReason([], observed)).toBeNull();
   });
 });
 
