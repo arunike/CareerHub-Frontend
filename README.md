@@ -169,7 +169,10 @@ One calendar across three pages, with the same header, month/week/day views and 
 - **Drag to reschedule** an event or a day of time off on the calendar; clicking a day opens the editor directly.
 - **Quick add on a day** offers Add Event, Add Time Off and a button per custom holiday tab, led by whichever kind the page is for — the holiday buttons first on Holidays, Add Event first on Events.
 - **Grouped time off draws as one connected bar** across the month rather than a chip per day.
-- **An ignored observed holiday leaves the calendar entirely**, and clicking any observed day — including a computed federal one — opens its editor, where the Observance switch turns it on or off; turning one back on happens on the Holidays list, which still lists ignored days.
+- **Observed holidays are managed under Advanced Options.** With it on, the quick-add sheet offers
+  `Add Observed Holiday` and the editor's Holiday Tab control moves a day between a custom tab and
+  the observed tab; with it off, an observed day opens read-only.
+- **An ignored observed holiday leaves the calendar entirely**, so turning one back on happens on the Holidays list, which still lists ignored days. Clicking any observed day opens it, and the Observance switch sits there under Advanced Options.
 - **A day the employer is already closed spends no leave**, so time off booked on a weekend or an observed holiday is shown as such instead of offering the PTO charge, and a trip reads as the leave it spends against the days it was booked for.
 - **⚡ Conflict radar**: the notification bell surfaces unresolved conflicts, upcoming events and task deadlines.
 
