@@ -47,7 +47,9 @@ export const useHolidayData = ({
           getEvents(),
           getCategories(),
         ]);
-      setHolidays(customResp.data.filter((holiday: Holiday) => holiday.holiday_type !== 'federal'));
+      setHolidays(
+        customResp.data.filter((holiday: Holiday) => holiday.holiday_type !== 'observed')
+      );
       setObservedHolidays(observedResp.data);
       setUserSettings(settingsResp.data);
       setEvents(eventsResp.data);
@@ -112,7 +114,6 @@ export const useHolidayData = ({
             date: item.date,
             description: item.description,
             is_recurring: item.is_recurring,
-            is_locked: false,
           };
           groupMap.set(item.group_id, newGroup);
           groups.push(newGroup);
@@ -120,12 +121,6 @@ export const useHolidayData = ({
         groupMap.get(item.group_id).items.push(item);
       } else {
         groups.push({ isGroup: false, ...item });
-      }
-    });
-
-    groups.forEach((g) => {
-      if (g.isGroup) {
-        g.is_locked = g.items.every((i: any) => i.is_locked);
       }
     });
 

@@ -61,7 +61,7 @@ export const useObservedHolidays = ({
               group_id: groupId,
               description,
               is_recurring: isRecurring,
-              holiday_type: 'federal',
+              holiday_type: 'observed',
             })
           )
         );
@@ -71,7 +71,7 @@ export const useObservedHolidays = ({
           date: values.date.format('YYYY-MM-DD'),
           description,
           is_recurring: isRecurring,
-          holiday_type: 'federal',
+          holiday_type: 'observed',
         });
         messageApi.success('Observed holiday added');
       }

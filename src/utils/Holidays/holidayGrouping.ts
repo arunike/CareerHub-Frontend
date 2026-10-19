@@ -1,5 +1,6 @@
 import type { Holiday } from '../../types';
 import dayjs from 'dayjs';
+import { holidayTabPatch } from './observance';
 
 // Re-exported, not redefined: one shape for the event form on every page.
 export type { ApiError, EventFormValues } from '../Events/eventFormTypes';
@@ -62,12 +63,20 @@ export const buildHolidayRangePayloads = (
     date: day.format('YYYY-MM-DD'),
     description: values.description?.trim() || fallbackLabel,
     is_recurring: !!values.is_recurring,
-    tab: values.tab || null,
+    ...holidayTabPatch(values.tab),
     pto_experience_ids: values.pto_experience_ids ?? [],
     counts_as_pto: values.counts_as_pto !== false,
     ...(groupId ? { group_id: groupId } : {}),
   }));
 };
+
+// An observed day's siblings are in the observed list, which the custom list deliberately excludes.
+export const holidayRunMembers = (
+  custom: Holiday[],
+  observed: Holiday[],
+  holiday?: Holiday | null
+): Holiday[] =>
+  holidayGroupMembers(holiday?.holiday_type === 'observed' ? observed : custom, holiday);
 
 // A grouped trip is edited as a whole, so its other days have to be found before anything changes.
 export const holidayGroupMembers = (all: Holiday[], holiday?: Holiday | null): Holiday[] => {
@@ -87,7 +96,7 @@ interface HolidayGroupEdit {
 
 type HolidayGroupEditResult =
   | { ok: true; plan: HolidayGroupEdit }
-  | { ok: false; reason: 'backwards' | 'locked' | 'occupied' };
+  | { ok: false; reason: 'backwards' | 'occupied' };
 
 // Moving a range means keeping the days it still covers, adding the new ones and dropping the rest.
 export const planHolidayGroupEdit = (
@@ -108,7 +117,6 @@ export const planHolidayGroupEdit = (
 
   // One day out of a trip leaves the group, so the remaining days still draw as one run.
   if (target && members.length > 1) {
-    if (target.is_locked) return { ok: false, reason: 'locked' };
     const moved = start.format('YYYY-MM-DD');
     const clash = members.some((row) => row.id !== target.id && row.date === moved);
     if (clash) return { ok: false, reason: 'occupied' };
@@ -123,11 +131,10 @@ export const planHolidayGroupEdit = (
               date: moved,
               description: values.description?.trim() || target.description || fallbackLabel,
               is_recurring: !!values.is_recurring,
-              tab: values.tab || null,
+              ...holidayTabPatch(values.tab, target.holiday_type),
               pto_experience_ids: values.pto_experience_ids ?? [],
               counts_as_pto: values.counts_as_pto !== false,
               group_id: null,
-              ...(target.holiday_type ? { holiday_type: target.holiday_type } : {}),
             },
           },
         ],
@@ -139,8 +146,6 @@ export const planHolidayGroupEdit = (
   const days = getInclusiveHolidayDates(start, end).map((day) => day.format('YYYY-MM-DD'));
   const wanted = new Set(days);
   const removed = sorted.filter((row) => !wanted.has(row.date));
-  // A pinned day exists to stay put, so the whole edit is refused rather than partly applied.
-  if (removed.some((row) => row.is_locked)) return { ok: false, reason: 'locked' };
 
   // Days beyond the first need a group to belong to, reusing the trip's own id where there is one.
   const existingGroupId = sorted.find((row) => row.group_id)?.group_id;
@@ -148,12 +153,10 @@ export const planHolidayGroupEdit = (
   const shared = {
     description: values.description?.trim() || sorted[0].description || fallbackLabel,
     is_recurring: !!values.is_recurring,
-    tab: values.tab || null,
+    ...holidayTabPatch(values.tab, sorted[0].holiday_type),
     pto_experience_ids: values.pto_experience_ids ?? [],
     counts_as_pto: values.counts_as_pto !== false,
     ...(groupId ? { group_id: groupId } : {}),
-    // A day moved or added to a run stays in the run's own tab, rather than defaulting to custom.
-    ...(sorted[0].holiday_type ? { holiday_type: sorted[0].holiday_type } : {}),
   };
 
   const byDate = new Map(sorted.map((row) => [row.date, row]));

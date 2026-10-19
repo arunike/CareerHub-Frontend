@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { List, Button, Tag } from 'antd';
-import { LockOutlined, SyncOutlined } from '@ant-design/icons';
+import { SyncOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import RowActions from '../actions/RowActions';
 import SelectionCheckbox from '../inputs/SelectionCheckbox';
 
 export const GroupedHolidayItem = ({
   item,
-  handleToggleLockGroup,
   handleDeleteGroup,
-  toggleLock,
   handleDelete,
   handleEditItem,
   handleDuplicateHoliday,
@@ -138,16 +136,6 @@ export const GroupedHolidayItem = ({
                     Yearly
                   </Tag>
                 )}
-
-                {item.is_locked && (
-                  <Tag
-                    color="gold"
-                    icon={<LockOutlined />}
-                    className="m-0 rounded border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-medium px-1.5 py-0"
-                  >
-                    Locked
-                  </Tag>
-                )}
               </div>
             </div>
           </div>
@@ -165,12 +153,9 @@ export const GroupedHolidayItem = ({
               <RowActions
                 key={`actions-group-${item.id}`}
                 size="middle"
-                isLocked={item.is_locked}
-                onToggleLock={() => handleToggleLockGroup(item)}
                 onEdit={() => handleEditItem(item)}
                 onDuplicate={() => handleDuplicateHoliday(item)}
                 onDelete={() => handleDeleteGroup(item)}
-                disableDelete={item.is_locked}
               />
             </div>
           </div>
@@ -200,12 +185,9 @@ export const GroupedHolidayItem = ({
                   <RowActions
                     key={`actions-${subItem.id}`}
                     size="small"
-                    isLocked={subItem.is_locked}
-                    onToggleLock={() => toggleLock(subItem)}
                     onEdit={() => handleEditItem(subItem)}
                     onDuplicate={() => handleDuplicateHoliday(subItem)}
                     onDelete={() => handleDelete(subItem.id)}
-                    disableDelete={subItem.is_locked}
                   />
                 </div>
               ))}

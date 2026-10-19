@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Button, Checkbox, Form, Input, Select, Switch } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { LockOutlined, UnlockOutlined, DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import ModalShell from '../modals/ModalShell';
 import SpanDateFields from './SpanDateFields';
 import type { Holiday, HolidayTab } from '../../types';
@@ -12,6 +12,13 @@ import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import { UNTABBED_HOLIDAY_LABEL } from '../../utils/holidayTabColors';
 import { holidayRangeDates } from '../../utils/Holidays/holidayGrouping';
 import { alreadyOffReason, type ObservedDays } from '../../utils/TimeOff/ptoBalance';
+import {
+  holidayKindOf,
+  isHolidayViewOnly,
+  OBSERVED_TAB_LABEL,
+  OBSERVED_TAB_VALUE,
+  tabFieldValue,
+} from '../../utils/Holidays/observance';
 
 export type CalendarHolidayFormValues = {
   description?: string;
@@ -36,6 +43,7 @@ type CalendarHolidayModalProps = {
   // Every day of the trip being edited, so its real extent is what the pickers show.
   groupHolidays?: Holiday[];
   holidayTabs?: HolidayTab[];
+  allowObservedTab?: boolean;
   // Days the employer is already closed, which no amount of leave is spent on.
   observedDates?: ObservedDays;
   // Full-time roles a day can be charged to.
@@ -48,7 +56,6 @@ type CalendarHolidayModalProps = {
   onCancel: () => void;
   onSubmit: (values: CalendarHolidayFormValues) => void;
   onDelete?: (holiday: Holiday) => boolean | void | Promise<boolean | void>;
-  onToggleLock?: (holiday: Holiday) => void | Promise<void>;
   // Observing a day is a setting rather than a field of the record, so it saves on the switch.
   onToggleObservance?: (holiday: Holiday, observed: boolean) => void | Promise<void>;
 };
@@ -67,13 +74,6 @@ const rolesRunningOnIn = (
     .map((role) => role.id);
 };
 
-// A computed holiday has no row behind it, so its name and dates are facts rather than fields.
-const holidayKindOf = (holiday?: Holiday | null) => {
-  if (holiday?.holiday_type === 'observed_native') return 'native' as const;
-  if (holiday?.holiday_type === 'federal') return 'observed' as const;
-  return 'custom' as const;
-};
-
 const ALREADY_OFF_COPY = {
   holiday: 'an observed holiday',
   weekend: 'the weekend',
@@ -88,12 +88,12 @@ const CalendarHolidayModal = ({
   holiday,
   groupHolidays = [],
   holidayTabs = [],
+  allowObservedTab = false,
   observedDates,
   ptoRoles = [],
   onCancel,
   onSubmit,
   onDelete,
-  onToggleLock,
   onToggleObservance,
 }: CalendarHolidayModalProps) => {
   const [form] = Form.useForm<CalendarHolidayFormValues>();
@@ -124,7 +124,7 @@ const CalendarHolidayModal = ({
     form.setFieldsValue({
       description: holiday?.description || '',
       is_recurring: !!holiday?.is_recurring,
-      tab: holiday?.tab || target?.tab || '',
+      tab: tabFieldValue(holiday) || target?.tab || '',
       scope: 'all',
       date: spansDays ? dayjs(groupDays[0].date) : clicked,
       end_date: spansDays ? dayjs(groupDays[groupDays.length - 1].date) : null,
@@ -151,11 +151,16 @@ const CalendarHolidayModal = ({
     });
   };
 
-  const kind = holidayKindOf(holiday);
-  const isObserved = kind !== 'custom';
+  const isObserved = holidayKindOf(holiday) !== 'custom';
+  // The option has to exist for a day already in the tab, or the control renders a raw sentinel.
+  const showObservedTab = allowObservedTab || isObserved;
+  const readOnly = isHolidayViewOnly(holiday, allowObservedTab);
   // Names what is being edited: one editor opens every kind of day, so a generic title says nothing.
-  const tabLabel = isObserved ? 'Observed Holiday' : (holiday?.tab_name ?? UNTABBED_HOLIDAY_LABEL);
-  const title = mode === 'edit' ? `Edit ${tabLabel}` : `Add ${target?.label || 'Time off'}`;
+  const tabLabel = isObserved ? OBSERVED_TAB_LABEL : (holiday?.tab_name ?? UNTABBED_HOLIDAY_LABEL);
+  const title =
+    mode === 'edit'
+      ? `${readOnly ? '' : 'Edit '}${tabLabel}`
+      : `Add ${target?.label || 'Time off'}`;
 
   return (
     <ModalShell
@@ -166,7 +171,7 @@ const CalendarHolidayModal = ({
       bodyClassName="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6"
       footer={
         <>
-          {mode === 'edit' && holiday?.id && !holiday.is_locked && onDelete ? (
+          {mode === 'edit' && holiday?.id && onDelete && !readOnly ? (
             <Button
               danger
               size="large"
@@ -178,9 +183,9 @@ const CalendarHolidayModal = ({
             </Button>
           ) : null}
           <Button size="large" onClick={onCancel} className="w-full sm:w-auto">
-            {kind === 'native' ? 'Close' : 'Cancel'}
+            {readOnly ? 'Close' : 'Cancel'}
           </Button>
-          {kind === 'native' ? null : (
+          {readOnly ? null : (
             <Button
               size="large"
               type="primary"
@@ -202,12 +207,12 @@ const CalendarHolidayModal = ({
         <Form.Item name="description" label="Name">
           <Input
             size="large"
-            disabled={kind === 'native'}
+            disabled={readOnly}
             placeholder={target?.label || holiday?.description || 'Time off'}
           />
         </Form.Item>
 
-        {kind === 'native' ? (
+        {readOnly ? (
           <Form.Item label="Date">
             <Input size="large" disabled value={holiday?.date ?? ''} />
           </Form.Item>
@@ -216,8 +221,6 @@ const CalendarHolidayModal = ({
             form={form}
             size="large"
             isMultiDay={isMultiDay}
-            // A run of observed days is edited as a run on the Holidays list; here one day moves alone.
-            multiDayDisabled={isObserved}
             spanDays={mode === 'edit' ? groupDays.map((row) => row.date) : []}
             onScopeChange={onScopeChange}
             dateRequiredMessage="Pick the day this starts"
@@ -228,20 +231,22 @@ const CalendarHolidayModal = ({
           </SpanDateFields>
         )}
 
-        {/* An observed holiday belongs to that tab by its type, so there is no tab to choose. */}
-        {isObserved ? null : (
-          <Form.Item name="tab" label="Holiday Tab">
-            <Select
-              size="large"
-              options={[
-                { label: UNTABBED_HOLIDAY_LABEL, value: '' },
-                ...holidayTabs.map((tab) => ({ label: tab.name, value: tab.id })),
-              ]}
-            />
-          </Form.Item>
-        )}
+        <Form.Item name="tab" label="Holiday Tab">
+          <Select
+            size="large"
+            // A day that cannot be edited here still shows the tab it belongs to.
+            disabled={readOnly}
+            options={[
+              { label: UNTABBED_HOLIDAY_LABEL, value: '' },
+              ...holidayTabs.map((tab) => ({ label: tab.name, value: tab.id })),
+              ...(showObservedTab
+                ? [{ label: OBSERVED_TAB_LABEL, value: OBSERVED_TAB_VALUE }]
+                : []),
+            ]}
+          />
+        </Form.Item>
 
-        {isObserved && onToggleObservance && holiday ? (
+        {isObserved && allowObservedTab && onToggleObservance && holiday ? (
           <div className="mb-6 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-sm font-medium text-slate-700 dark:text-ink-100">
@@ -259,7 +264,7 @@ const CalendarHolidayModal = ({
         ) : null}
 
         {/* Emptying the roles is the same decision as unticking this, so the two move together. */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isObserved ? null : alreadyOff ? (
             <p className="mb-0 text-sm text-slate-500 dark:text-ink-400">
               Already off for {ALREADY_OFF_COPY[alreadyOff]}, so this spends no PTO.
@@ -278,16 +283,6 @@ const CalendarHolidayModal = ({
               </Checkbox>
             </Form.Item>
           )}
-          {/* Beside the record rather than a fourth footer button, where it was running off the edge. */}
-          {mode === 'edit' && holiday?.id && onToggleLock ? (
-            <Button
-              size="small"
-              icon={holiday.is_locked ? <UnlockOutlined /> : <LockOutlined />}
-              onClick={() => void onToggleLock(holiday)}
-            >
-              {holiday.is_locked ? 'Unlock' : 'Lock'}
-            </Button>
-          ) : null}
         </div>
 
         {!isObserved && !alreadyOff && countsAsPto !== false && (

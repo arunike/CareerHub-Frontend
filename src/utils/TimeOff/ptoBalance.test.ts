@@ -151,7 +151,7 @@ describe('daysOffInWindow', () => {
     { date: '2026-07-02', tab: null },
     { date: '2026-07-02', tab: null },
     { date: '2026-11-02', tab: null },
-    { date: '2026-07-03', tab: 'federal' },
+    { date: '2026-07-03', tab: 'company' },
   ];
 
   it('counts one day away from work even when two entries share the date', () => {

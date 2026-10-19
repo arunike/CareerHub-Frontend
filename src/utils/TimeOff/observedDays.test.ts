@@ -8,7 +8,6 @@ const holiday = (date: string, is_ignored?: boolean) =>
     date,
     description: 'Holiday',
     is_recurring: false,
-    is_locked: false,
     is_ignored,
   }) as Holiday;
 

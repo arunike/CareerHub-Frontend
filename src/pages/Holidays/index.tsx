@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Tabs, Space, Form, Input, message } from 'antd';
+import { Tabs, Space, Form, Input, Switch, Typography, message } from 'antd';
 import Modal from '../../components/modals/MobileModal';
 import { deleteHoliday } from '../../api';
 import PageShell from '../../components/layout/PageShell';
@@ -34,7 +34,9 @@ import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayM
 import { PageState } from '../../components/feedback/PageState';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ObservedHolidayTabPanel from '../../components/Holidays/ObservedHolidayTabPanel';
-import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
+import { holidayRunMembers } from '../../utils/Holidays/holidayGrouping';
+
+const { Text } = Typography;
 
 const Holidays = () => {
   const location = useLocation();
@@ -82,7 +84,6 @@ const Holidays = () => {
     categories,
     setCategories,
     holidays,
-    setHolidays,
     observedHolidays,
     userSettings,
     loading,
@@ -126,7 +127,7 @@ const Holidays = () => {
     handleCalendarHolidaySelect,
     handleCalendarHolidaySubmit,
     handleCalendarItemDrop,
-  } = useCalendarHolidays({ fetchData, messageApi, holidays });
+  } = useCalendarHolidays({ fetchData, messageApi, holidays, observedHolidays });
 
   const observedDates = useMemo(() => observedDaysOf(observedHolidays), [observedHolidays]);
   const { toggleObservance } = useObservance({ fetchData, messageApi });
@@ -168,14 +169,11 @@ const Holidays = () => {
   const {
     selectedIds,
     setSelectedIds,
-    isAnySelectedLocked,
     handleSelectChange,
     handleSelectGroup,
     handleSelectAll,
     handleBulkDelete,
-    handleBulkToggleLock,
     handleBulkEditClick,
-    handleToggleLockGroup,
     handleDeleteGroup,
   } = useHolidaySelection({
     holidays,
@@ -196,12 +194,10 @@ const Holidays = () => {
     handleDuplicateHoliday,
     handleEditClick,
     handleEditSubmit,
-    toggleLock,
     handleImportUpload,
     handleExportWrapper,
   } = useHolidayCrud({
     holidays,
-    setHolidays,
     activeTab,
     isRangeMode,
     form,
@@ -228,11 +224,10 @@ const Holidays = () => {
 
       {/* List */}
       <HolidayListCard
-        onDeleteAllUnlocked={async () => {
+        onDeleteAll={async () => {
           try {
-            const toDelete = activeTabHolidays.filter((h) => !h.is_locked);
-            await Promise.all(toDelete.map((h) => deleteHoliday(h.id)));
-            messageApi.success('All unlocked time off deleted');
+            await Promise.all(activeTabHolidays.map((h) => deleteHoliday(h.id)));
+            messageApi.success('All time off deleted');
             fetchData();
           } catch {
             messageApi.error('Failed to delete all');
@@ -246,7 +241,6 @@ const Holidays = () => {
         groupedHolidays={groupedHolidays}
         handleBulkDelete={handleBulkDelete}
         handleBulkEditClick={handleBulkEditClick}
-        handleBulkToggleLock={handleBulkToggleLock}
         handleDelete={handleDelete}
         handleDeleteGroup={handleDeleteGroup}
         handleDuplicateHoliday={handleDuplicateHoliday}
@@ -254,8 +248,6 @@ const Holidays = () => {
         handleSelectAll={(checked: boolean) => handleSelectAll(checked, sortedHolidays)}
         handleSelectChange={handleSelectChange}
         handleSelectGroup={handleSelectGroup}
-        handleToggleLockGroup={handleToggleLockGroup}
-        isAnySelectedLocked={isAnySelectedLocked}
         loading={loading}
         selectedIds={selectedIds}
         setSelectedIds={setSelectedIds}
@@ -264,7 +256,6 @@ const Holidays = () => {
         sortBy={sortBy}
         sortOrder={sortOrder}
         sortedHolidays={sortedHolidays}
-        toggleLock={toggleLock}
       />
     </Space>
   );
@@ -385,6 +376,16 @@ const Holidays = () => {
             defaultHolidayColor={userSettings?.default_holiday_color}
             observedHolidayColor={userSettings?.observed_holiday_color}
             addActionHighlight="holidays"
+            allowObservedTab={isAdvancedMode}
+            // The list view carries this switch in its own panel, so it is not shown twice.
+            extraControls={
+              contentView === 'calendar' ? (
+                <Space size={8}>
+                  <Text strong>Advanced Options</Text>
+                  <Switch checked={isAdvancedMode} onChange={setIsAdvancedMode} />
+                </Space>
+              ) : null
+            }
             loading={loading}
             onEventSelect={handleCalendarEventSelect}
             onHolidaySelect={handleCalendarHolidaySelect}
@@ -474,15 +475,15 @@ const Holidays = () => {
           date={pendingCalendarHoliday?.date}
           target={pendingCalendarHoliday?.target}
           holiday={editingCalendarHoliday}
-          groupHolidays={holidayGroupMembers(holidays, editingCalendarHoliday)}
+          groupHolidays={holidayRunMembers(holidays, observedHolidays, editingCalendarHoliday)}
           holidayTabs={customTabs}
+          allowObservedTab={isAdvancedMode}
           onCancel={() => {
             setPendingCalendarHoliday(null);
             setEditingCalendarHoliday(null);
           }}
           onSubmit={handleCalendarHolidaySubmit}
           onDelete={handleCalendarHolidayDelete}
-          onToggleLock={toggleLock}
           observedDates={observedDates}
           onToggleObservance={toggleObservance}
           ptoRoles={ptoRoles}

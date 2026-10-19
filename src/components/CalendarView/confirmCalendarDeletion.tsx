@@ -58,7 +58,7 @@ export const confirmEventDeletion = (event: Event, onDelete: EventDeleteHandler)
 };
 
 export const confirmHolidayDeletion = (holiday: Holiday, onDelete: HolidayDeleteHandler) => {
-  if (holiday.is_locked || !holiday.id) return;
+  if (!holiday.id) return;
 
   confirmDestructive({
     title: 'Delete time off?',

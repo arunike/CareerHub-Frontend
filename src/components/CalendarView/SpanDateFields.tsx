@@ -11,7 +11,6 @@ type SpanDateFieldsProps = {
   form: FormInstance;
   isMultiDay?: boolean;
   // One day out of a run is one day, so spanning from it is not offered.
-  multiDayDisabled?: boolean;
   size?: 'large';
   dateRequiredMessage?: string;
   // Every day of the run being edited, so any of them can be picked without reopening.
@@ -50,7 +49,6 @@ const ScopeStrip = ({
 const SpanDateFields = ({
   form,
   isMultiDay,
-  multiDayDisabled,
   size,
   dateRequiredMessage,
   spanDays = [],
@@ -88,7 +86,7 @@ const SpanDateFields = ({
         {children}
         <Form.Item name="is_multi_day" valuePropName="checked" noStyle>
           <Checkbox
-            disabled={multiDayDisabled || (canChooseScope && scope !== 'all')}
+            disabled={canChooseScope && scope !== 'all'}
             onChange={(changeEvent) => {
               // Seed the end date with the start so the picker opens somewhere sensible.
               if (changeEvent.target.checked && !form.getFieldValue('end_date')) {

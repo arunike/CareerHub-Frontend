@@ -8,6 +8,7 @@ import {
   getObservedHolidayColor,
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
+import { holidayKindOf } from '../../utils/Holidays/observance';
 import type { DayData } from './types';
 import { eventTimeLabel, eventTimeRangeLabel, hasDayItems } from './utils';
 
@@ -30,9 +31,7 @@ export type CalendarDragItem =
 export const canDragEvent = (event: Event) =>
   !event.is_locked && !event.is_recurring && !event.parent_event;
 
-// An observed day, whether a federal one the API computes or a range you added to that tab.
-const isObservedHoliday = (holiday: Holiday) =>
-  holiday.holiday_type === 'federal' || holiday.holiday_type === 'observed_native';
+const isObservedHoliday = (holiday: Holiday) => holidayKindOf(holiday) !== 'custom';
 
 // One description of a holiday chip for every view: the bucket it arrived in decides nothing
 export const holidayChrome = (holiday: Holiday) => ({
@@ -52,10 +51,7 @@ export const dayHolidays = (dayData: DayData) => [
 
 // Observed holidays are fixed calendar facts; only your own custom ones can move.
 const canDragHoliday = (holiday: Holiday) =>
-  Boolean(holiday.id) &&
-  holiday.holiday_type !== 'federal' &&
-  !holiday.is_locked &&
-  !holiday.is_recurring;
+  Boolean(holiday.id) && holiday.holiday_type !== 'observed' && !holiday.is_recurring;
 
 type DayTooltipProps = {
   day: Date;

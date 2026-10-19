@@ -14,7 +14,7 @@ import { buildEventMovePatch } from '../../components/CalendarView/utils';
 import { getApiErrorMessage } from '../../utils/apiError';
 import {
   buildHolidayRangePayloads,
-  holidayGroupMembers,
+  holidayRunMembers,
   planHolidayGroupEdit,
 } from '../../utils/Holidays/holidayGrouping';
 
@@ -22,11 +22,13 @@ export const useCalendarHolidays = ({
   fetchData,
   messageApi,
   holidays,
+  observedHolidays,
 }: {
   fetchData: () => Promise<void> | void;
   messageApi: MessageInstance;
   // Needed to find the other days of a grouped trip before its dates are changed.
   holidays: Holiday[];
+  observedHolidays: Holiday[];
 }) => {
   const [pendingCalendarHoliday, setPendingCalendarHoliday] = useState<{
     date: Date;
@@ -48,15 +50,15 @@ export const useCalendarHolidays = ({
     try {
       if (editingCalendarHoliday) {
         const result = planHolidayGroupEdit(
-          holidayGroupMembers(holidays, editingCalendarHoliday),
+          holidayRunMembers(holidays, observedHolidays, editingCalendarHoliday),
           values,
           editingCalendarHoliday.description
         );
         if (!result) return;
         if (!result.ok) {
           messageApi.error(
-            result.reason === 'locked'
-              ? 'Unlock the pinned days before changing these dates'
+            result.reason === 'occupied'
+              ? 'Another day of this trip is already on that date'
               : 'End date must be after start date'
           );
           return;

@@ -29,7 +29,7 @@ import { buildEventMovePatch } from '../../components/CalendarView/utils';
 import { getApiErrorMessage } from '../../utils/apiError';
 import {
   buildHolidayRangePayloads,
-  holidayGroupMembers,
+  holidayRunMembers,
   planHolidayGroupEdit,
 } from '../../utils/Holidays/holidayGrouping';
 
@@ -41,6 +41,7 @@ export const useEventMutations = ({
   pendingCalendarHoliday,
   editingHoliday,
   customHolidays,
+  observedHolidays,
   setPendingCalendarHoliday,
   setEditingHoliday,
   setViewingEvent,
@@ -54,6 +55,7 @@ export const useEventMutations = ({
   editingHoliday: Holiday | null;
   // Needed to find the other days of a grouped trip before its dates are changed.
   customHolidays: Holiday[];
+  observedHolidays: Holiday[];
   setPendingCalendarHoliday: React.Dispatch<
     React.SetStateAction<{ date: Date; target: CalendarHolidayTarget } | null>
   >;
@@ -94,7 +96,7 @@ export const useEventMutations = ({
   const handleDeleteAction = (event: Event) => confirmEventDeletion(event, handleDelete);
 
   const handleCalendarHolidayDelete = async (holiday: Holiday) => {
-    if (holiday.is_locked || !holiday.id) return false;
+    if (!holiday.id) return false;
     try {
       await deleteHoliday(holiday.id);
       messageApi.success('Time off deleted');
@@ -137,15 +139,15 @@ export const useEventMutations = ({
     try {
       if (editingHoliday) {
         const result = planHolidayGroupEdit(
-          holidayGroupMembers(customHolidays, editingHoliday),
+          holidayRunMembers(customHolidays, observedHolidays, editingHoliday),
           values,
           editingHoliday.description
         );
         if (!result) return;
         if (!result.ok) {
           messageApi.error(
-            result.reason === 'locked'
-              ? 'Unlock the pinned days before changing these dates'
+            result.reason === 'occupied'
+              ? 'Another day of this trip is already on that date'
               : 'End date must be after start date'
           );
           return;

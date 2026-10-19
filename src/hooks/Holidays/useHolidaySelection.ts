@@ -1,9 +1,9 @@
 import { confirmDestructive } from '../../components/modals/confirmDestructive';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type React from 'react';
 import type { FormInstance } from 'antd';
 import type { MessageInstance } from 'antd/es/message/interface';
-import { deleteHoliday, updateHoliday } from '../../api';
+import { deleteHoliday } from '../../api';
 import type { Holiday } from '../../types';
 
 export const useHolidaySelection = ({
@@ -22,11 +22,6 @@ export const useHolidaySelection = ({
   messageApi: MessageInstance;
 }) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-  const isAnySelectedLocked = useMemo(
-    () => selectedIds.some((id) => holidays.find((holiday) => holiday.id === id)?.is_locked),
-    [selectedIds, holidays]
-  );
 
   const handleSelectChange = (id: number, checked: boolean) => {
     setSelectedIds((prev) =>
@@ -77,18 +72,6 @@ export const useHolidaySelection = ({
     });
   };
 
-  const handleBulkToggleLock = async (lock: boolean) => {
-    try {
-      await Promise.all(selectedIds.map((id) => updateHoliday(id, { is_locked: lock })));
-      messageApi.success(`${selectedIds.length} holidays ${lock ? 'locked' : 'unlocked'}`);
-      setSelectedIds([]);
-      fetchData();
-    } catch (error) {
-      messageApi.error(`Failed to ${lock ? 'lock' : 'unlock'} some holidays`);
-      fetchData();
-    }
-  };
-
   const handleBulkEditClick = () => {
     editForm.resetFields();
 
@@ -123,20 +106,6 @@ export const useHolidaySelection = ({
     setEditModalOpen(true);
   };
 
-  const handleToggleLockGroup = async (groupItem: any) => {
-    const newLockState = !groupItem.is_locked;
-    try {
-      await Promise.all(
-        groupItem.items.map((i: any) => updateHoliday(i.id, { is_locked: newLockState }))
-      );
-      messageApi.success(`Collection ${newLockState ? 'locked' : 'unlocked'}`);
-      fetchData();
-    } catch (error) {
-      messageApi.error(`Failed to toggle lock for collection`);
-      fetchData();
-    }
-  };
-
   const handleDeleteGroup = (groupItem: any) => {
     confirmDestructive({
       title: 'Delete Time Off Collection',
@@ -159,14 +128,11 @@ export const useHolidaySelection = ({
   return {
     selectedIds,
     setSelectedIds,
-    isAnySelectedLocked,
     handleSelectChange,
     handleSelectGroup,
     handleSelectAll,
     handleBulkDelete,
-    handleBulkToggleLock,
     handleBulkEditClick,
-    handleToggleLockGroup,
     handleDeleteGroup,
   };
 };

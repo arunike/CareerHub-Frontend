@@ -13,7 +13,7 @@ export interface ObservedHolidayGroup {
   date: string;
   endDate: string;
   description: string;
-  holiday_type: 'federal';
+  holiday_type: 'observed';
   is_ignored: boolean;
 }
 
@@ -27,7 +27,7 @@ export const groupObservedHolidays = (holidays: Holiday[]): ObservedHolidayDispl
   const groupMap = new Map<string, ObservedHolidayGroup>();
 
   holidays.forEach((holiday) => {
-    if (!holiday.group_id || holiday.holiday_type !== 'federal') {
+    if (!holiday.group_id || holiday.holiday_type !== 'observed') {
       displayItems.push(holiday);
       return;
     }
@@ -42,7 +42,7 @@ export const groupObservedHolidays = (holidays: Holiday[]): ObservedHolidayDispl
         date: holiday.date,
         endDate: holiday.date,
         description: holiday.description,
-        holiday_type: 'federal',
+        holiday_type: 'observed',
         is_ignored: false,
       };
       groupMap.set(holiday.group_id, group);
@@ -83,7 +83,7 @@ const ObservedHolidayCard = ({
     ? `${dayjs(item.date).format('MMM D')} to ${dayjs(item.endDate).format('MMM D, YYYY')}`
     : dayjs(item.date).format('MMMM D, YYYY');
   const dateDetail = isGroup ? `${item.items.length} days` : dayjs(item.date).format('dddd');
-  const isCustomObserved = item.holiday_type === 'federal';
+  const isCustomObserved = item.holiday_type === 'observed';
 
   return (
     <div

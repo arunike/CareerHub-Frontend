@@ -31,7 +31,7 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 import { TIMEZONE_OPTIONS, getBrowserTimeZone, normalizeTimeZone } from '../../lib/timezones';
 import LinkInterviewsModal from '../../components/Events/LinkInterviewsModal';
 import EventsListSection from '../../components/Events/EventsListSection';
-import { holidayGroupMembers } from '../../utils/Holidays/holidayGrouping';
+import { holidayRunMembers } from '../../utils/Holidays/holidayGrouping';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -250,6 +250,7 @@ const Events = () => {
     formatEventTime,
     handleCalendarItemDrop,
   } = useEventMutations({
+    observedHolidays,
     setEvents,
     customHolidays,
     setCalendarEvents,
@@ -470,7 +471,7 @@ const Events = () => {
       <CalendarHolidayModal
         open={!!pendingCalendarHoliday || !!editingHoliday}
         mode={editingHoliday ? 'edit' : 'add'}
-        groupHolidays={holidayGroupMembers(customHolidays, editingHoliday)}
+        groupHolidays={holidayRunMembers(customHolidays, observedHolidays, editingHoliday)}
         date={pendingCalendarHoliday?.date}
         target={pendingCalendarHoliday?.target}
         holiday={editingHoliday}

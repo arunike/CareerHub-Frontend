@@ -11,7 +11,6 @@ import {
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
 
 export const useHolidayCrud = ({
-  setHolidays,
   activeTab,
   isRangeMode,
   form,
@@ -26,7 +25,6 @@ export const useHolidayCrud = ({
   messageApi,
 }: {
   holidays: Holiday[];
-  setHolidays: React.Dispatch<React.SetStateAction<Holiday[]>>;
   activeTab: string;
   isRangeMode: boolean;
   form: FormInstance;
@@ -108,7 +106,7 @@ export const useHolidayCrud = ({
   };
 
   const handleCalendarHolidayDelete = async (holiday: Holiday) => {
-    if (holiday.is_locked || !holiday.id) return false;
+    if (!holiday.id) return false;
     const deleted = await handleDelete(holiday.id);
     if (deleted) setEditingCalendarHoliday(null);
     return deleted;
@@ -180,19 +178,6 @@ export const useHolidayCrud = ({
     }
   };
 
-  const toggleLock = async (holiday: Holiday) => {
-    try {
-      await updateHoliday(holiday.id, { is_locked: !holiday.is_locked });
-      setHolidays((prev) =>
-        prev.map((h) => (h.id === holiday.id ? { ...h, is_locked: !h.is_locked } : h))
-      );
-      messageApi.success(holiday.is_locked ? 'Unlocked' : 'Locked');
-    } catch (error) {
-      messageApi.error('Failed to toggle lock');
-      console.error(error);
-    }
-  };
-
   const handleImportUpload = async () => {
     if (!importFile) return;
     const formData = new FormData();
@@ -227,7 +212,6 @@ export const useHolidayCrud = ({
     handleDuplicateHoliday,
     handleEditClick,
     handleEditSubmit,
-    toggleLock,
     handleImportUpload,
     handleExportWrapper,
   };

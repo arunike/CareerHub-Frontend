@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import dayjs from 'dayjs';
 import {
   buildHolidayRangePayloads,
+  holidayRunMembers,
   holidayGroupMembers,
   holidayRangeDates,
   planHolidayGroupEdit,
 } from './holidayGrouping';
 import type { Holiday } from '../../types';
+import { OBSERVED_TAB_VALUE } from './observance';
 
 const day = (iso: string) => dayjs(iso);
 
@@ -19,9 +21,8 @@ describe('a run keeps its own tab', () => {
     id: 1,
     date: FIRST,
     description: 'Company Holiday',
-    holiday_type: 'federal' as const,
+    holiday_type: 'observed' as const,
     is_recurring: false,
-    is_locked: false,
   };
 
   it('gives a day added to the run the run\u2019s type, not the custom default', () => {
@@ -33,8 +34,8 @@ describe('a run keeps its own tab', () => {
     expect(result?.ok).toBe(true);
     if (!result?.ok) return;
     expect(result.plan.create).toHaveLength(1);
-    expect(result.plan.create[0].holiday_type).toBe('federal');
-    expect(result.plan.update[0].patch.holiday_type).toBe('federal');
+    expect(result.plan.create[0].holiday_type).toBe('observed');
+    expect(result.plan.update[0].patch.holiday_type).toBe('observed');
   });
 
   it('moving the only day keeps the type on the row that replaces it', () => {
@@ -42,7 +43,7 @@ describe('a run keeps its own tab', () => {
     expect(result?.ok).toBe(true);
     if (!result?.ok) return;
     expect(result.plan.deleteIds).toEqual([1]);
-    expect(result.plan.create[0].holiday_type).toBe('federal');
+    expect(result.plan.create[0].holiday_type).toBe('observed');
   });
 
   it('leaves a custom day without a type rather than inventing one', () => {
@@ -249,27 +250,6 @@ describe('planHolidayGroupEdit', () => {
     expect(plan.deleteIds).toEqual([lone[0].id]);
   });
 
-  it('refuses to drop a pinned day, rather than applying half the change', () => {
-    const pinned = [row(FIRST), row('2026-07-02'), row('2026-07-03', { is_locked: true })];
-    const result = planHolidayGroupEdit(
-      pinned,
-      { date: day(FIRST), end_date: day('2026-07-02'), is_multi_day: true },
-      'My Time Off'
-    );
-    expect(result).toEqual({ ok: false, reason: 'locked' });
-  });
-
-  it('leaves a pinned day alone when the range still covers it', () => {
-    const pinned = [row(FIRST), row('2026-07-02', { is_locked: true })];
-    expect(
-      planHolidayGroupEdit(
-        pinned,
-        { date: day(FIRST), end_date: day('2026-07-02'), is_multi_day: true },
-        'My Time Off'
-      )?.ok
-    ).toBe(true);
-  });
-
   it('reports a backwards range instead of saving one', () => {
     expect(
       planHolidayGroupEdit(
@@ -372,13 +352,6 @@ describe('planHolidayGroupEdit, editing one day out of a trip', () => {
     ).toEqual({ ok: false, reason: 'occupied' });
   });
 
-  it('refuses to change a pinned day', () => {
-    const pinned = [row(FIRST), row('2026-07-02', { is_locked: true })];
-    expect(
-      planHolidayGroupEdit(pinned, { scope: '2026-07-02', date: day(LATER) }, 'My Time Off')
-    ).toEqual({ ok: false, reason: 'locked' });
-  });
-
   it('treats a lone day as the whole thing, so its group is not needlessly cleared', () => {
     const lone = [row(FIRST, { group_id: undefined })];
     const plan = okPlan(
@@ -426,5 +399,77 @@ describe('planHolidayGroupEdit picks the day by its own date', () => {
     );
     expect(plan.update).toHaveLength(3);
     expect(plan.deleteIds).toEqual([]);
+  });
+});
+
+describe('the tab control moves a day between kinds', () => {
+  const customRow = {
+    id: 7,
+    date: FIRST,
+    description: 'Company Holiday',
+    holiday_type: 'custom' as const,
+    tab: 'company',
+    is_recurring: false,
+  };
+
+  it('promotes a custom day to the observed tab', () => {
+    const result = planHolidayGroupEdit(
+      [customRow],
+      { date: day(FIRST), tab: OBSERVED_TAB_VALUE },
+      'Company Holiday'
+    );
+    expect(result?.ok).toBe(true);
+    if (!result?.ok) return;
+    expect(result.plan.update[0].patch).toMatchObject({
+      tab: null,
+      holiday_type: 'observed',
+    });
+  });
+
+  it('returns an observed day to a custom tab', () => {
+    const result = planHolidayGroupEdit(
+      [{ ...customRow, holiday_type: 'observed' as const, tab: null }],
+      { date: day(FIRST), tab: 'company' },
+      'Company Holiday'
+    );
+    expect(result?.ok).toBe(true);
+    if (!result?.ok) return;
+    expect(result.plan.update[0].patch).toMatchObject({
+      tab: 'company',
+      holiday_type: 'custom',
+    });
+  });
+
+  it('creates an observed day straight from the calendar', () => {
+    const payloads = buildHolidayRangePayloads(
+      { date: day(FIRST), tab: OBSERVED_TAB_VALUE },
+      day(FIRST),
+      'Observed Holiday'
+    );
+    expect(payloads).toHaveLength(1);
+    expect(payloads?.[0]).toMatchObject({ tab: null, holiday_type: 'observed' });
+  });
+});
+
+describe('holidayRunMembers', () => {
+  const observedRun = [
+    { id: 1, date: FIRST, group_id: 'run-1', holiday_type: 'observed' as const },
+    { id: 2, date: '2026-07-02', group_id: 'run-1', holiday_type: 'observed' as const },
+  ] as unknown as Holiday[];
+  const customRun = [
+    { id: 3, date: LATER, group_id: 'run-2', holiday_type: 'custom' as const },
+    { id: 4, date: '2026-10-02', group_id: 'run-2', holiday_type: 'custom' as const },
+  ] as unknown as Holiday[];
+
+  it('finds an observed run in the observed pool, which the custom list excludes', () => {
+    expect(holidayRunMembers([], observedRun, observedRun[0])).toHaveLength(2);
+  });
+
+  it('would miss the run if only the custom pool were searched', () => {
+    expect(holidayRunMembers(customRun, [], observedRun[0])).toEqual([observedRun[0]]);
+  });
+
+  it('still finds a custom run in the custom pool', () => {
+    expect(holidayRunMembers(customRun, observedRun, customRun[0])).toHaveLength(2);
   });
 });

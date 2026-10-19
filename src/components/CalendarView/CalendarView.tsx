@@ -26,6 +26,7 @@ const formatIsoDay = (date: Date) => format(date, 'yyyy-MM-dd');
 
 import { getHeaderLabel, getVisibleRangeDates, quickAddLayout, shiftAnchorDate } from './utils';
 import { OBSERVED_HOLIDAY_COLOR } from '../../utils/holidayTabColors';
+import { OBSERVED_TAB_LABEL, OBSERVED_TAB_VALUE } from '../../utils/Holidays/observance';
 
 interface CalendarViewProps {
   events: Event[];
@@ -40,6 +41,7 @@ interface CalendarViewProps {
   onHolidaySelect?: (holiday: Holiday) => void;
   onAddEvent?: (day: Date) => void;
   onAddHoliday?: (day: Date, target: CalendarHolidayTarget) => void;
+  allowObservedTab?: boolean;
   // Merged into the calendar header rather than leaving an empty band under the page title.
   pageControls?: React.ReactNode;
   // Given the calendar's own anchor, so a control beside the arrows follows what is on screen.
@@ -62,6 +64,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   onHolidaySelect,
   onAddEvent,
   onAddHoliday,
+  allowObservedTab = false,
   pageControls,
   navLeading,
   defaultHolidayColor,
@@ -334,6 +337,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           Add {tab.name}
         </Button>
       ))}
+      {allowObservedTab ? (
+        <Button
+          type={shouldHighlightHolidayAdd ? 'primary' : 'default'}
+          onClick={() => handleAddHoliday({ tab: OBSERVED_TAB_VALUE, label: OBSERVED_TAB_LABEL })}
+          block
+        >
+          Add {OBSERVED_TAB_LABEL}
+        </Button>
+      ) : null}
     </>
   ) : null;
 

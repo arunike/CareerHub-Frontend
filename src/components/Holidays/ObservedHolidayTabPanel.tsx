@@ -1,6 +1,6 @@
 import type React from 'react';
 import { List, Button, Card, Space, Switch, Typography } from 'antd';
-import { LockOutlined, PlusOutlined } from '@ant-design/icons';
+import { CalendarOutlined, PlusOutlined } from '@ant-design/icons';
 import ObservedHolidayCard, { type ObservedHolidayDisplayItem } from './ObservedHolidayCard';
 
 const { Text } = Typography;
@@ -36,7 +36,7 @@ const ObservedHolidayTabPanel = ({
     <Card>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <Space align="start">
-          <LockOutlined style={{ fontSize: 20, color: '#2563eb', marginTop: 4 }} />
+          <CalendarOutlined className="mt-1 text-xl text-blue-600 dark:text-blue-400" />
           <div>
             <Text strong>Observed Holidays</Text>
             <div>

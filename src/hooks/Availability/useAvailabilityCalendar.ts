@@ -33,7 +33,7 @@ import { normalizeTimeZone } from '../../lib/timezones';
 import { getErrorMessage } from '../../utils/Availability/availabilityFormTypes';
 import {
   buildHolidayRangePayloads,
-  holidayGroupMembers,
+  holidayRunMembers,
   planHolidayGroupEdit,
 } from '../../utils/Holidays/holidayGrouping';
 
@@ -218,7 +218,7 @@ export const useAvailabilityCalendar = ({
   };
 
   const handleCalendarHolidayDelete = async (holiday: Holiday) => {
-    if (holiday.is_locked || !holiday.id) return false;
+    if (!holiday.id) return false;
     try {
       await deleteHoliday(holiday.id);
       messageApi.success('Time off deleted');
@@ -248,15 +248,15 @@ export const useAvailabilityCalendar = ({
     try {
       if (editingHoliday) {
         const result = planHolidayGroupEdit(
-          holidayGroupMembers(customHolidays, editingHoliday),
+          holidayRunMembers(customHolidays, observedHolidays, editingHoliday),
           values,
           editingHoliday.description
         );
         if (!result) return;
         if (!result.ok) {
           messageApi.error(
-            result.reason === 'locked'
-              ? 'Unlock the pinned days before changing these dates'
+            result.reason === 'occupied'
+              ? 'Another day of this trip is already on that date'
               : 'End date must be after start date'
           );
           return;

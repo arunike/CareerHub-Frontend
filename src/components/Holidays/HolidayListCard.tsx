@@ -1,12 +1,10 @@
 import type React from 'react';
-import { List, Button, Card, Tag, Popconfirm, Select, Tooltip } from 'antd';
+import { List, Button, Card, Tag, Popconfirm, Select } from 'antd';
 import {
   DeleteOutlined,
-  LockOutlined,
   SyncOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
-  UnlockOutlined,
   EditOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -24,11 +22,10 @@ type Props = {
   setSelectedYear: (year: number | 'all') => void;
   activeTabHolidays: Holiday[];
   fetchData: () => void;
-  onDeleteAllUnlocked: () => void;
+  onDeleteAll: () => void;
   groupedHolidays: any[];
   handleBulkDelete: () => void;
   handleBulkEditClick: () => void;
-  handleBulkToggleLock: (lock: boolean) => void;
   handleDelete: (id: number) => void;
   handleDeleteGroup: (groupItem: any) => void;
   handleDuplicateHoliday: (item: any) => void;
@@ -36,8 +33,6 @@ type Props = {
   handleSelectAll: (checked: boolean) => void;
   handleSelectChange: (id: number, checked: boolean) => void;
   handleSelectGroup: (items: any[], checked: boolean) => void;
-  handleToggleLockGroup: (groupItem: any) => void;
-  isAnySelectedLocked: boolean;
   loading: boolean;
   selectedIds: number[];
   setSelectedIds: React.Dispatch<React.SetStateAction<number[]>>;
@@ -46,16 +41,14 @@ type Props = {
   sortBy: 'date' | 'name';
   sortOrder: 'asc' | 'desc';
   sortedHolidays: Holiday[];
-  toggleLock: (holiday: Holiday) => void;
 };
 
 const HolidayListCard = ({
   activeTabHolidays,
-  onDeleteAllUnlocked,
+  onDeleteAll,
   groupedHolidays,
   handleBulkDelete,
   handleBulkEditClick,
-  handleBulkToggleLock,
   handleDelete,
   handleDeleteGroup,
   handleDuplicateHoliday,
@@ -63,8 +56,6 @@ const HolidayListCard = ({
   handleSelectAll,
   handleSelectChange,
   handleSelectGroup,
-  handleToggleLockGroup,
-  isAnySelectedLocked,
   loading,
   selectedIds,
   setSelectedIds,
@@ -73,7 +64,6 @@ const HolidayListCard = ({
   sortBy,
   sortOrder,
   sortedHolidays,
-  toggleLock,
   tabLabel,
   selectedYear,
   setSelectedYear,
@@ -90,27 +80,12 @@ const HolidayListCard = ({
         title={`${tabLabel} (${activeTabHolidays.length})`}
         bulkActions={
           <>
-            <Button onClick={() => handleBulkToggleLock(true)} icon={<LockOutlined />}>
-              Lock
-            </Button>
-            <Button onClick={() => handleBulkToggleLock(false)} icon={<UnlockOutlined />}>
-              Unlock
-            </Button>
             <Button onClick={handleBulkEditClick} icon={<EditOutlined />}>
               Edit
             </Button>
-            <Tooltip
-              title={isAnySelectedLocked ? 'Cannot delete while locked items are selected' : ''}
-            >
-              <Button
-                danger
-                onClick={handleBulkDelete}
-                icon={<DeleteOutlined />}
-                disabled={isAnySelectedLocked}
-              >
-                Delete
-              </Button>
-            </Tooltip>
+            <Button danger onClick={handleBulkDelete} icon={<DeleteOutlined />}>
+              Delete
+            </Button>
           </>
         }
         defaultActions={
@@ -133,11 +108,11 @@ const HolidayListCard = ({
               onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
             />
             <Popconfirm
-              title="Delete All Unlocked?"
-              description={`This will delete all unlocked holidays in "${tabLabel}". This cannot be undone.`}
+              title="Delete All?"
+              description={`This will delete every holiday in "${tabLabel}". This cannot be undone.`}
               okText="Delete All"
               okType="danger"
-              onConfirm={onDeleteAllUnlocked}
+              onConfirm={onDeleteAll}
               disabled={activeTabHolidays.length === 0}
             >
               <Button
@@ -166,9 +141,7 @@ const HolidayListCard = ({
               <GroupedHolidayItem
                 key={`group-${item.id}`}
                 item={item}
-                handleToggleLockGroup={handleToggleLockGroup}
                 handleDeleteGroup={handleDeleteGroup}
-                toggleLock={toggleLock}
                 handleDelete={handleDelete}
                 handleEditItem={handleEditClick}
                 handleDuplicateHoliday={handleDuplicateHoliday}
@@ -231,16 +204,6 @@ const HolidayListCard = ({
                             Yearly
                           </Tag>
                         )}
-
-                        {item.is_locked && (
-                          <Tag
-                            color="gold"
-                            icon={<LockOutlined />}
-                            className="m-0 rounded border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-medium px-1.5 py-0"
-                          >
-                            Locked
-                          </Tag>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -250,12 +213,9 @@ const HolidayListCard = ({
                       <RowActions
                         key={`actions-${item.id}`}
                         size="middle"
-                        isLocked={item.is_locked}
-                        onToggleLock={() => toggleLock(item)}
                         onEdit={() => handleEditClick(item)}
                         onDuplicate={() => handleDuplicateHoliday(item)}
                         onDelete={() => handleDelete(item.id)}
-                        disableDelete={item.is_locked}
                       />
                     </div>
                   </div>
