@@ -72,6 +72,7 @@ Compare offers on total compensation and on the things that are not compensation
 - **Decision journal**: record the judgement itself. Concerns are itemised and later marked as became real, never happened or still unclear, so the Analytics tab can read your decisions back as a set.
 - **Compensation simulator**: after-tax monthly take-home with rent, commute, food budget, PTO value and equity vesting.
 - **Equity liquidity**: mark a grant freely tradable, company-buyback or currently unsellable, which the scorecard and simulator price differently.
+- **Share pricing**: a grant carries a symbol, share count, grant price and current price, and is revalued at the latest price. Typing either the share count or the grant price fills the other from the grant total, which a yearly grant reconstructs from its vesting percent.
 - **Negotiation advisor**: a suggested counter-ask with concrete numbers, your leverage points, talking points and what to watch for, saved per offer.
 - **Career transition advisor**: takes what is wrong with the current role and returns a strategic outcome and target criteria for the next one.
 - **Equity refresh grants** and **match gap** model the parts of a package that arrive after year one.
@@ -118,6 +119,7 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Application → Experience** — selecting the offer that led to a role keeps the accepted application in Applications, links both surfaces to one career record, and offers a non-blocking contact review after save; leaving the offer blank creates a historical role
 - **Work Email** — store the email address you had at that job, on the experience record
 - **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
+- **Equity vesting trend** (`EquityVestingChart.tsx`) — a `Vesting schedule` popover on a role's Equity / RSU row: a bar per vesting year, plus `Day` / `Week` / `Month` views of the whole grant, what has vested and the share price. Fetches every trading day since the grant.
 - **Overall Earnings Panels** — combined Full-Time and Internship summaries with breakdown modals; internship totals now include overtime pay across tracked roles
 - **Pay Growth** — current vs previous role comparison in the Earnings panel, defaulting to the top two roles in list order (pinned/drag order included) with dropdowns to compare any two roles and a swap button.
 - **Schedule Phases** — split an internship into multiple schedule phases with per-phase rate, schedule, overtime, and total-hours inputs
