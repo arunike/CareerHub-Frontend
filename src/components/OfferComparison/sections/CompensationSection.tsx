@@ -5,6 +5,12 @@ import FieldLabel from './FieldLabel';
 import { EQUITY_TOOLTIPS } from '../../../content/tooltips';
 import UnitNumberInput from '../../inputs/UnitNumberInput';
 import {
+  grantValueOf,
+  impliedShares,
+  pairedGrantPrice,
+  pairedShareCount,
+} from '../../../utils/OfferComparison/equityPricing';
+import {
   CONTROL_CLASS,
   FIELD_HEADER_CLASS,
   FIELD_HINT_CLASS,
@@ -103,13 +109,17 @@ const CompensationSection = ({
   sharePriceAsOf = null,
   onCurrentSharePriceChange,
 }: CompensationSectionProps) => {
-  const grantValue = Number(equityTotalGrant) || Number(equity) || Number(equityBuybackValue) || 0;
-  const shares =
-    Number(equityShares) > 0
-      ? Number(equityShares)
-      : Number(equityGrantPrice) > 0 && grantValue > 0
-        ? grantValue / Number(equityGrantPrice)
-        : null;
+  // One basis for the hints, the linked pair and the repricing, or the preview can disagree with it.
+  const pricingFields = {
+    equity: Number(equity) || 0,
+    equity_total_grant: equityTotalGrant,
+    equity_buyback_value: Number(equityBuybackValue) || 0,
+    equity_vesting_percent: effectiveEquityVestingPercent,
+    equity_shares: equityShares,
+    equity_grant_price: equityGrantPrice,
+  };
+  const grantValue = grantValueOf(pricingFields);
+  const shares = impliedShares(pricingFields);
   // Shares win over the recorded grant price, matching priceRatio, so the preview cannot disagree.
   const basisPrice =
     Number(equityGrantPrice) > 0
@@ -125,29 +135,23 @@ const CompensationSection = ({
   // A private buyback has no ticker; its price is per-offer rather than a shared market quote.
   const isListed = equityLiquidity === 'LIQUID';
 
-  // The pair multiplies to the total grant, never the annual figure, so only the total anchors it.
-  const linkAnchor = Number(equityTotalGrant) || 0;
-  // Whole-share rounding puts the pair slightly off the total, so the hint shows the real product.
+  // Whole-share rounding puts the pair slightly off the basis, so the hint shows the real product.
   const pairedTotal =
     Number(equityShares) > 0 && Number(equityGrantPrice) > 0
       ? Number(equityShares) * Number(equityGrantPrice)
       : null;
 
-  // Share pricing only reads the equity total: describing a grant must not edit what you were paid.
+  // Share pricing only reads the grant value: describing a grant must not edit what you were paid.
   const typedShares = (value: number | null) => {
     onEquitySharesChange?.(value);
-    const count = Number(value);
-    if (count > 0 && linkAnchor > 0) {
-      onEquityGrantPriceChange?.(Math.round((linkAnchor / count) * 100) / 100);
-    }
+    const price = pairedGrantPrice(grantValue, Number(value));
+    if (price != null) onEquityGrantPriceChange?.(price);
   };
 
   const typedGrantPrice = (value: number | null) => {
     onEquityGrantPriceChange?.(value);
-    const price = Number(value);
-    if (price > 0 && linkAnchor > 0) {
-      onEquitySharesChange?.(Math.round(linkAnchor / price));
-    }
+    const count = pairedShareCount(grantValue, Number(value));
+    if (count != null) onEquitySharesChange?.(count);
   };
   return (
     <div className="space-y-4">
@@ -277,7 +281,7 @@ const CompensationSection = ({
               <div className={FIELD_HINT_CLASS}>
                 {!Number(equityShares) && shares
                   ? `≈ ${Math.round(shares).toLocaleString()} implied`
-                  : linkAnchor > 0
+                  : Number(equityGrantPrice) > 0
                     ? 'Floats with the grant price'
                     : ''}
               </div>

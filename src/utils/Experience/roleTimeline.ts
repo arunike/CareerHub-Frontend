@@ -1,9 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs';
 
 export interface RoleDateLabel {
-  // "Sep 14, 2026 – Present"
+  // "Jul 1, 2026 – Present"
   range: string;
-  // "1 yr 8 mos (616 days)", "starts in 28 days", or ''.
+  // "1 yr 4 mos (487 days)", "starts in 30 days", or ''.
   detail: string;
   // A role dated in the future has earned nothing yet, which is not the same as having no dates.
   notStarted: boolean;

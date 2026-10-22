@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { impliedShares, priceRatio, pricesBySymbol, withCurrentEquity } from './equityPricing';
+import {
+  grantValueOf,
+  impliedShares,
+  pairedGrantPrice,
+  pairedShareCount,
+  priceRatio,
+  pricesBySymbol,
+  withCurrentEquity,
+} from './equityPricing';
 
 const offer = (over: Partial<Parameters<typeof priceRatio>[0]> = {}) => ({
   equity: 50000,
@@ -172,5 +180,43 @@ describe('private pricing without a ticker', () => {
   it('falls back to the shared quote when the offer has no price of its own', () => {
     const listed = { ...priv, equity_ticker: 'GOOG', equity_current_price: null };
     expect(priceRatio(listed, { GOOG: 30 })).toBeCloseTo(1.5);
+  });
+});
+
+describe('grantValueOf', () => {
+  it('prefers the recorded total grant', () => {
+    expect(grantValueOf(offer())).toBe(200000);
+  });
+
+  it('rebuilds the total from the yearly figure and the vesting percent', () => {
+    expect(grantValueOf(offer({ equity_total_grant: null }))).toBe(200000);
+    expect(grantValueOf(offer({ equity_total_grant: null, equity_vesting_percent: 20 }))).toBe(
+      250000
+    );
+  });
+
+  it('falls back to the buyback figure when there is no grant to size', () => {
+    const buyback = offer({ equity: 0, equity_total_grant: null, equity_buyback_value: 120000 });
+    expect(grantValueOf(buyback)).toBe(120000);
+  });
+});
+
+describe('the linked share pricing pair', () => {
+  it('prices the whole grant, not the slice vesting this year', () => {
+    const grant = grantValueOf(offer({ equity_total_grant: null }));
+    expect(pairedShareCount(grant, 125)).toBe(1600);
+    expect(pairedGrantPrice(grant, 1600)).toBe(125);
+  });
+
+  it('rounds shares whole and the price to the cent', () => {
+    expect(pairedShareCount(200000, 137.5)).toBe(1455);
+    expect(pairedGrantPrice(200000, 1455)).toBe(137.46);
+  });
+
+  it('fills nothing without both a basis and an entry', () => {
+    expect(pairedShareCount(0, 110)).toBeNull();
+    expect(pairedShareCount(200000, 0)).toBeNull();
+    expect(pairedGrantPrice(0, 2000)).toBeNull();
+    expect(pairedGrantPrice(200000, 0)).toBeNull();
   });
 });

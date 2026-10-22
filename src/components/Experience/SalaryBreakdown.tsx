@@ -4,6 +4,13 @@ import { EditNotice } from './breakdownRows';
 import type { YearEarnings } from '../../utils/Income/raiseSchedule';
 import type { LedgerYear } from '../../hooks/Income/useLedgerEarnings';
 import { payYearsOf, payYearsTotal } from '../../utils/Experience/payYears';
+import { Button } from 'antd';
+import { LineChartOutlined } from '@ant-design/icons';
+import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
+import { EquityVestingChart } from './EquityVestingChart';
+import { toIsoDate } from '../../utils/localDay';
+import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
+import type { PriceSeriesPeriod } from '../../api/career/offers';
 
 const round = (value: number) => Math.round(value);
 
@@ -18,6 +25,9 @@ export const SalaryBreakdown = ({
   totalHint,
   onEdit,
   editLabel,
+  equityVesting,
+  grantPriceHistory,
+  onFillGrantPriceHistory,
 }: {
   total: number;
   base: number;
@@ -29,6 +39,9 @@ export const SalaryBreakdown = ({
   totalHint?: string;
   onEdit?: () => void;
   editLabel?: string;
+  equityVesting?: EquityVestingResult | null;
+  grantPriceHistory?: Array<{ as_of: string; price: string | number }>;
+  onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
 }) => {
   const years = payYearsOf(ledgerYears, earningsYears);
   // Each year is rounded before it is added, so the rows on screen sum to the totals on screen.
@@ -245,6 +258,48 @@ export const SalaryBreakdown = ({
                     })}
                   </div>
                 )}
+
+                {row.key === 'equity' && equityVesting?.plan ? (
+                  <div className="mt-3 border-t border-gray-100 dark:border-white/[0.07] pt-2">
+                    <ResponsiveDisclosure
+                      placement="bottomLeft"
+                      title={
+                        <span className="flex items-center gap-2">
+                          <LineChartOutlined className="text-pink-500 dark:text-pink-300" />
+                          Vesting schedule
+                        </span>
+                      }
+                      content={
+                        <div className="w-full md:w-[520px]">
+                          <EquityVestingChart
+                            plan={equityVesting.plan}
+                            todayIso={toIsoDate(new Date())}
+                            priceHistory={grantPriceHistory}
+                            onFillHistory={onFillGrantPriceHistory}
+                          />
+                        </div>
+                      }
+                      trigger={(onClick) => (
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<LineChartOutlined />}
+                          onClick={onClick}
+                          // A plain button in a modal body is outside the global 44px floor.
+                          className="min-h-11 !px-2 text-xs font-semibold !text-blue-600 lg:min-h-0 dark:!text-blue-300"
+                        >
+                          Vesting schedule
+                        </Button>
+                      )}
+                    />
+                  </div>
+                ) : null}
+                {/* The row is the context, so an absent grant says which record is missing. */}
+                {row.key === 'equity' && equityVesting?.reason ? (
+                  <div className="mt-3 border-t border-gray-100 dark:border-white/[0.07] pt-2 text-xs text-slate-400 dark:text-ink-500">
+                    {equityVesting.reason}
+                  </div>
+                ) : null}
               </div>
             );
           })}

@@ -21,7 +21,9 @@ export interface VestOccasion {
 }
 
 // Value accrued before the cliff is not forfeited; it is released on the cliff date.
-export const vestOccasions = (terms: VestTerms): VestOccasion[] => {
+export const vestOccasions = (
+  terms: Pick<VestTerms, 'vestsPerYear' | 'vestingYears' | 'cliffMonths'>
+): VestOccasion[] => {
   const vestsPerYear = Math.max(1, Math.round(terms.vestsPerYear));
   const years = Math.max(1, Math.round(terms.vestingYears));
   const total = years * vestsPerYear;
@@ -51,6 +53,13 @@ export const vestOccasions = (terms: VestTerms): VestOccasion[] => {
   return occasions;
 };
 
+// One definition of a vest date, so the ledger and the Experience chart cannot disagree.
+export const vestDateFor = (grantDate: Date, monthsFromGrant: number) => {
+  const vestDate = new Date(grantDate);
+  vestDate.setMonth(vestDate.getMonth() + monthsFromGrant);
+  return vestDate;
+};
+
 export const periodForDate = (date: Date, paychecksPerYear: number) => {
   const startOfYear = new Date(date.getFullYear(), 0, 1);
   const dayOfYear = inclusiveDayCount(startOfYear, date);
@@ -75,11 +84,10 @@ export const buildVestEvents = (terms: VestTerms): IncomeEvent[] => {
   if (!grantDate) return [];
 
   return vestOccasions(terms)
-    .map((occasion) => {
-      const vestDate = new Date(grantDate);
-      vestDate.setMonth(vestDate.getMonth() + occasion.monthsFromGrant);
-      return { occasion, vestDate };
-    })
+    .map((occasion) => ({
+      occasion,
+      vestDate: vestDateFor(grantDate, occasion.monthsFromGrant),
+    }))
     .filter(({ vestDate }) => vestDate.getFullYear() === terms.taxYear)
     .map(({ occasion, vestDate }) => ({
       id: `vest-${terms.taxYear}-${occasion.monthsFromGrant}`,

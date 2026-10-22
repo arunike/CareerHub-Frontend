@@ -130,10 +130,27 @@ export const refreshStockPrice = (symbol?: string) =>
     symbol ? { symbol } : {}
   );
 
-export const getStockPriceHistory = (symbol?: string) =>
+export const getStockPriceHistory = (symbol?: string, since?: string) =>
   api.get<StockPriceHistoryRow[]>('/career/stock-prices/history/', {
-    params: symbol ? { symbol } : undefined,
+    params: { ...(symbol ? { symbol } : {}), ...(since ? { since } : {}) },
   });
+
+// Yahoo's own range words; anything else is refused server-side.
+export type PriceSeriesPeriod = '1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' | '10y' | 'max';
+
+export interface BackfilledSeries {
+  symbol: string;
+  added: number;
+  first: string;
+  last: string;
+}
+
+// Fills the daily log from the provider's series, so a chart is not limited to what was collected here.
+export const backfillStockPriceHistory = (symbol?: string, period?: PriceSeriesPeriod) =>
+  api.post<{ filled: BackfilledSeries[]; failed: Array<{ symbol: string; detail: string }> }>(
+    '/career/stock-prices/backfill/',
+    { ...(symbol ? { symbol } : {}), ...(period ? { period } : {}) }
+  );
 
 export const deleteOfferDecisionJournal = (id: number) =>
   api.delete(`/career/offer-decision-journal/${id}/`);

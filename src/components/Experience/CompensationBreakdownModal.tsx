@@ -9,6 +9,8 @@ import { OverallPayBreakdown } from './OverallPayBreakdown';
 import { OverallInternshipBreakdown } from './OverallInternshipBreakdown';
 import type { EarningsReport } from '../../utils/Experience/earningsByYear';
 import type { PayPart } from './PayPartsPanel';
+import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
+import type { PriceSeriesPeriod } from '../../api/career/offers';
 
 type Props = ExperienceCompensationSnapshot & {
   open: boolean;
@@ -30,6 +32,10 @@ type Props = ExperienceCompensationSnapshot & {
   // Replaces the single-role view with the combined one: parts of pay, roles inside each.
   overallEarnings?: EarningsReport;
   overallInternship?: { parts: PayPart[]; roleCount: number; hours: number };
+  // The grant behind this role's equity line, dated out over the years it vests.
+  equityVesting?: EquityVestingResult | null;
+  grantPriceHistory?: Array<{ as_of: string; price: string | number }>;
+  onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
 };
 
 const CompensationBreakdownModal: React.FC<Props> = ({
@@ -51,6 +57,9 @@ const CompensationBreakdownModal: React.FC<Props> = ({
   hourlyDisplayMode,
   overallEarnings,
   overallInternship,
+  equityVesting,
+  grantPriceHistory,
+  onFillGrantPriceHistory,
   ...snapshot
 }) => {
   const resolvedContextLabel = contextLabel ?? [roleTitle, companyName].filter(Boolean).join(' @ ');
@@ -94,6 +103,9 @@ const CompensationBreakdownModal: React.FC<Props> = ({
           totalHint={totalHint}
           onEdit={onEdit}
           editLabel={editLabel}
+          equityVesting={equityVesting}
+          grantPriceHistory={grantPriceHistory}
+          onFillGrantPriceHistory={onFillGrantPriceHistory}
         />
       ) : (
         <HourlyBreakdown

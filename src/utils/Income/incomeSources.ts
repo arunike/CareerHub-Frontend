@@ -2,6 +2,7 @@ import { parseIsoDate } from './paySchedule';
 import type { EmployerContributions } from './tax/ledger';
 import type { RaiseEntry } from '../../types';
 import { storedPackageOf } from '../Experience/compensation';
+import { getTotalGrant } from '../OfferComparison/vestingSchedule';
 
 export interface IncomeSource {
   key: string;
@@ -79,14 +80,16 @@ const premiumsOf = (offer: Record<string, any> | null) => {
   };
 };
 
-// equity holds the annualized value, so the grant is recoverable from the vest percent.
-const grantOf = (offer: Record<string, any> | null, fallbackEquity = 0) => {
-  const equity = offer ? num(offer.equity) : fallbackEquity;
-  const explicit = offer ? num(offer.equity_total_grant) : 0;
-  if (explicit > 0) return explicit;
-  const vestPercent = offer ? num(offer.equity_vesting_percent) : 25;
-  return vestPercent > 0 ? equity / (vestPercent / 100) : equity * 4;
-};
+const grantOf = (offer: Record<string, any> | null, fallbackEquity = 0) =>
+  getTotalGrant(
+    offer
+      ? {
+          equity: num(offer.equity),
+          equity_total_grant: num(offer.equity_total_grant),
+          equity_vesting_percent: num(offer.equity_vesting_percent),
+        }
+      : { equity: fallbackEquity }
+  );
 
 const employerOf = (offer: Record<string, any> | null): EmployerContributions => ({
   match401kPercent: offer ? num(offer.forty_one_k_match_percent) : 0,
@@ -108,8 +111,11 @@ const raisesOf = (offer: Record<string, any> | null): RaiseEntry[] => {
   return Array.isArray(history) ? (history as RaiseEntry[]) : [];
 };
 
-const vestingOf = (offer: Record<string, any> | null) => ({
-  cliffMonths: offer ? num(offer.equity_cliff_months) || 12 : 12,
+// An absent cliff is the standard twelve months; a stored 0 is a grant that has none.
+const withDefault = (value: unknown, fallback: number) => (value == null ? fallback : num(value));
+
+export const vestingTermsOf = (offer: Record<string, any> | null) => ({
+  cliffMonths: offer ? withDefault(offer.equity_cliff_months, 12) : 12,
   vestsPerYear: offer ? num(offer.equity_vests_per_year) || 4 : 4,
   vestingYears: offer ? num(offer.equity_vesting_years) || 4 : 4,
 });
@@ -163,7 +169,7 @@ export const buildIncomeSources = (
       paychecksPerYear: offer ? num(offer.paychecks_per_year) || 26 : 26,
       ...spreadPremiums(premiumsOf(offer)),
       employer: employerOf(offer),
-      ...vestingOf(offer),
+      ...vestingTermsOf(offer),
       raises: raisesOf(offer),
       hasBenefitData: Boolean(offer),
     };
@@ -191,7 +197,7 @@ export const buildIncomeSources = (
         paychecksPerYear: num(offer.paychecks_per_year) || 26,
         ...spreadPremiums(premiumsOf(offer)),
         employer: employerOf(offer),
-        ...vestingOf(offer),
+        ...vestingTermsOf(offer),
         raises: raisesOf(offer),
         hasBenefitData: true,
       };

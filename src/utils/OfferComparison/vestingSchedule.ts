@@ -53,7 +53,8 @@ export const getEquityGrowth = (preset: EquityPreset, customGrowthPct: number) =
   return 0;
 };
 
-const getTotalGrant = (offer: VestingOfferFields) => {
+// A grant entered as a yearly figure has no stored total, so the vest percent reconstructs it.
+export const getTotalGrant = (offer: VestingOfferFields) => {
   const annualEquity = Number(offer.equity || 0);
   const explicitGrant = Number(offer.equity_total_grant || 0);
   if (explicitGrant > 0) return explicitGrant;

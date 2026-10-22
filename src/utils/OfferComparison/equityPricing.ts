@@ -1,3 +1,5 @@
+import { getTotalGrant } from './vestingSchedule';
+
 interface EquityFields {
   equity: number;
   equity_total_grant?: number | null;
@@ -6,6 +8,7 @@ interface EquityFields {
   equity_shares?: number | null;
   equity_grant_price?: number | null;
   equity_current_price?: number | null;
+  equity_vesting_percent?: number | null;
 }
 
 export type PriceBySymbol = Record<string, number>;
@@ -15,12 +18,12 @@ const num = (value: unknown) => Number(value) || 0;
 export const normalizeSymbol = (value: unknown) =>
   typeof value === 'string' ? value.trim().toUpperCase() : '';
 
-// Whatever dollar figure the grant is measured by, so an offer priced only by buyback still works.
-const grantValueOf = (offer: EquityFields) =>
-  num(offer.equity_total_grant) || num(offer.equity) || num(offer.equity_buyback_value);
+// Shares price the whole grant, so the basis is its total, never the slice vesting this year.
+export const grantValueOf = (offer: EquityFields) =>
+  getTotalGrant(offer) || num(offer.equity_buyback_value);
 
 // A private company has no ticker, so its price lives on the offer; a listed one shares a quote.
-const currentPriceOf = (offer: EquityFields, prices: PriceBySymbol): number => {
+export const currentPriceOf = (offer: EquityFields, prices: PriceBySymbol): number => {
   const own = num(offer.equity_current_price);
   if (own > 0) return own;
   const symbol = normalizeSymbol(offer.equity_ticker);
@@ -53,6 +56,13 @@ export const impliedShares = (offer: EquityFields): number | null => {
   return null;
 };
 
+// Typing either half of the pair fills the other, so both still multiply back to the same basis.
+export const pairedGrantPrice = (grantValue: number, shares: number): number | null =>
+  grantValue > 0 && shares > 0 ? Math.round((grantValue / shares) * 100) / 100 : null;
+
+export const pairedShareCount = (grantValue: number, grantPrice: number): number | null =>
+  grantValue > 0 && grantPrice > 0 ? Math.round(grantValue / grantPrice) : null;
+
 // Applied after any raise, so the figure being repriced is the grant you actually hold today.
 export const withCurrentEquity = <T extends EquityFields>(offer: T, prices: PriceBySymbol): T => {
   const ratio = priceRatio(offer, prices);
@@ -65,6 +75,14 @@ export const withCurrentEquity = <T extends EquityFields>(offer: T, prices: Pric
     equity_total_grant: scaled(offer.equity_total_grant),
   };
 };
+
+// The date a price is good for, which the panel must name rather than calling any price "today".
+export const priceDatesBySymbol = (rows: Array<{ symbol: string; as_of?: string | null }>) =>
+  rows.reduce<Record<string, string>>((map, row) => {
+    const symbol = normalizeSymbol(row.symbol);
+    if (symbol && row.as_of) map[symbol] = String(row.as_of).slice(0, 10);
+    return map;
+  }, {});
 
 export const pricesBySymbol = (rows: Array<{ symbol: string; price: string | number }>) =>
   rows.reduce<PriceBySymbol>((map, row) => {

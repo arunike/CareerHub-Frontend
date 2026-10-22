@@ -5,6 +5,7 @@ import {
   deleteExperience,
   getExperiences,
   getOffers,
+  getStockPrices,
   updateExperience,
 } from '../../api';
 import { getUserSettings } from '../../api/availability';
@@ -13,6 +14,11 @@ import { isLLMConfigurationError } from '../../lib/llmClient';
 import type { EmploymentType, Experience } from '../../types';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { DEFAULT_EMP_TYPES, parseExperienceDate } from '../../utils/Experience/experienceUtils';
+import {
+  priceDatesBySymbol,
+  pricesBySymbol,
+  type PriceBySymbol,
+} from '../../utils/OfferComparison/equityPricing';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 // Server data and its mutations; modal state and rendering stay in the page.
@@ -28,6 +34,10 @@ export const useExperienceData = () => {
   const [allOffers, setAllOffers] = useState<Offer[]>([]);
 
   const [aiProviderConfigured, setAiProviderConfigured] = useState(false);
+
+  // Only the equity vesting panel reads these, so a failed fetch leaves the grant at its own price.
+  const [stockPrices, setStockPrices] = useState<PriceBySymbol>({});
+  const [stockPriceDates, setStockPriceDates] = useState<Record<string, string>>({});
 
   const fetchOffersData = async () => {
     try {
@@ -50,6 +60,14 @@ export const useExperienceData = () => {
         // use defaults
       });
     fetchOffersData();
+    getStockPrices()
+      .then((res) => {
+        setStockPrices(pricesBySymbol(res.data ?? []));
+        setStockPriceDates(priceDatesBySymbol(res.data ?? []));
+      })
+      .catch(() => {
+        // no price data
+      });
   }, []);
 
   const fetchExperiences = async () => {
@@ -186,6 +204,8 @@ export const useExperienceData = () => {
     loadError,
     empTypes,
     allOffers,
+    stockPrices,
+    stockPriceDates,
     aiProviderConfigured,
     fetchExperiences,
     fetchOffersData,

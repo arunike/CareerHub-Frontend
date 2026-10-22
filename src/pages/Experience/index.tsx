@@ -23,6 +23,13 @@ import PayGrowthModal from '../../components/Experience/PayGrowthModal';
 import PromotionReviewModal from '../../components/Experience/PromotionReviewModal';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { getExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
+import { buildEquityVesting } from '../../utils/Experience/equityVesting';
+import {
+  backfillStockPriceHistory,
+  getStockPriceHistory,
+  type PriceSeriesPeriod,
+} from '../../api/career/offers';
+import { toIsoDate } from '../../utils/localDay';
 import ExperienceAnalyticsPanels from '../../components/Experience/ExperienceAnalyticsPanels';
 import ExperienceGroupCard from '../../components/Experience/ExperienceGroupCard';
 import { useExperienceData } from '../../hooks/Experience/useExperienceData';
@@ -66,6 +73,8 @@ const ExperiencePage: React.FC = () => {
     loadError,
     empTypes,
     allOffers,
+    stockPrices,
+    stockPriceDates,
     fetchExperiences,
     fetchOffersData,
     setAllOffers,
@@ -201,6 +210,60 @@ const ExperiencePage: React.FC = () => {
     : experiences;
 
   const compBreakdownSnapshot = compBreakdownExp ? getCompensationSnapshot(compBreakdownExp) : null;
+
+  // Fetched only when a breakdown is open, since the vesting popover is the one reader.
+  const [grantPriceHistory, setGrantPriceHistory] = useState<
+    Array<{ as_of: string; price: string }>
+  >([]);
+
+  // Dated from the role's start date, which is the grant date the Income ledger falls back to.
+  const compBreakdownVesting = useMemo(() => {
+    if (!compBreakdownExp) return null;
+    const offer = compBreakdownExp.offer
+      ? allOffers.find((o) => o.id === compBreakdownExp.offer)
+      : null;
+    return buildEquityVesting(
+      offer,
+      compBreakdownExp.start_date,
+      toIsoDate(new Date()),
+      stockPrices,
+      stockPriceDates
+    );
+  }, [allOffers, compBreakdownExp, stockPriceDates, stockPrices]);
+
+  const breakdownTicker = compBreakdownVesting?.plan?.ticker ?? null;
+  // Only the days the chart can plot, so a four-year grant is not capped by the endpoint's page.
+  const breakdownGrantDate = compBreakdownVesting?.plan?.grantDate ?? null;
+  useEffect(() => {
+    if (!breakdownTicker) {
+      setGrantPriceHistory([]);
+      return;
+    }
+    let cancelled = false;
+    getStockPriceHistory(breakdownTicker, breakdownGrantDate ?? undefined)
+      .then((res) => {
+        if (!cancelled) setGrantPriceHistory(res.data ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setGrantPriceHistory([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [breakdownGrantDate, breakdownTicker]);
+
+  const fillGrantPriceHistory = useCallback(
+    async (period: PriceSeriesPeriod) => {
+      if (!breakdownTicker) return 0;
+      const res = await backfillStockPriceHistory(breakdownTicker, period);
+      const failure = res.data.failed?.[0];
+      if (failure) throw new Error(failure.detail);
+      const reloaded = await getStockPriceHistory(breakdownTicker, breakdownGrantDate ?? undefined);
+      setGrantPriceHistory(reloaded.data ?? []);
+      return res.data.filled?.[0]?.added ?? 0;
+    },
+    [breakdownGrantDate, breakdownTicker]
+  );
 
   // Internship pay splits by role the same way full-time pay does.
   const internshipParts = useMemo(
@@ -472,6 +535,9 @@ const ExperiencePage: React.FC = () => {
           openSchedulePhases={() => {
             setSchedulePhasesExp(compBreakdownExp);
           }}
+          equityVesting={compBreakdownVesting}
+          grantPriceHistory={grantPriceHistory}
+          onFillGrantPriceHistory={fillGrantPriceHistory}
           {...compBreakdownSnapshot}
         />
       )}
