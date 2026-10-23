@@ -347,7 +347,7 @@ const PublicBookingManager = ({
                           <button
                             type="button"
                             onClick={() => onCopyLink(link)}
-                            className="h-11 w-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 transition-colors hover:border-blue-200 hover:text-blue-600 sm:h-9 sm:w-9 sm:rounded-lg"
+                            className="h-11 w-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 transition-colors hover:border-blue-200 hover:text-blue-600 dark:hover:text-blue-300 sm:h-9 sm:w-9 sm:rounded-lg"
                             title="Copy booking link"
                             aria-label="Copy booking link"
                           >
@@ -357,7 +357,7 @@ const PublicBookingManager = ({
                             <button
                               type="button"
                               onClick={() => onDeactivateLink(link.id)}
-                              className="h-11 w-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 transition-colors hover:border-red-200 hover:text-red-600 sm:h-9 sm:w-9 sm:rounded-lg"
+                              className="h-11 w-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 transition-colors hover:border-red-200 hover:text-red-600 dark:hover:text-red-300 sm:h-9 sm:w-9 sm:rounded-lg"
                               title="Deactivate link"
                               aria-label="Deactivate booking link"
                             >

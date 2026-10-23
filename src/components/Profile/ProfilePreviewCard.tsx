@@ -26,7 +26,7 @@ const ProfilePreviewCard = ({
 }: Props) => (
   <aside className="col-span-12 lg:col-span-4 lg:sticky lg:top-8 lg:self-start">
     <div className="relative overflow-hidden rounded-[18px] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900">
-      <div className="absolute inset-x-0 top-0 h-px bg-slate-900/20" />
+      <div className="absolute inset-x-0 top-0 h-px bg-slate-900/20 dark:bg-white/[0.12]" />
 
       <div className="relative p-4 sm:p-6">
         <div className="mb-6 flex items-center justify-between gap-4">
@@ -124,7 +124,7 @@ const ProfilePreviewCard = ({
             <p className="mt-1 truncate text-sm font-medium text-slate-500 dark:text-ink-400">
               {user?.email}
             </p>
-            <div className="mt-4 h-px w-14 bg-slate-900" />
+            <div className="mt-4 h-px w-14 bg-slate-900 dark:bg-ink-300" />
           </div>
         </div>
 

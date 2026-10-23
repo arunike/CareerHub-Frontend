@@ -356,7 +356,7 @@ const NegotiationResultsTab: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => navigate(`/negotiation-result/${result.id}`)}
-                        className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-ink-50 hover:text-blue-600"
+                        className="min-h-10 min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-ink-50 hover:text-blue-600 dark:hover:text-blue-300"
                       >
                         <span className="line-clamp-2">{displayTitle}</span>
                       </button>
@@ -365,7 +365,7 @@ const NegotiationResultsTab: React.FC = () => {
                         onClick={() => {
                           setEditingResult({ id: result.id, title: displayTitle });
                         }}
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-ink-500 transition hover:bg-gray-100 hover:text-blue-600 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-ink-500 transition hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-blue-600 dark:hover:text-blue-300 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Rename ${displayTitle}`}
                       >
                         <EditOutlined />

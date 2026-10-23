@@ -48,7 +48,7 @@ export const OverallPayBreakdown = ({
 
   return (
     <div className="mt-2 space-y-4">
-      <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 via-white dark:via-ink-900 to-blue-50 p-5">
+      <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 dark:from-emerald-500/10 via-white dark:via-ink-900 to-blue-50 dark:to-blue-500/10 p-5">
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-ink-500">
           Earned all time
         </div>

@@ -379,7 +379,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
             className={`inline-flex min-h-10 min-w-20 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
               activeSectionIndex === 0
                 ? 'cursor-not-allowed bg-slate-100 dark:bg-ink-800 text-slate-400 dark:text-ink-500'
-                : 'bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-slate-300 hover:bg-slate-50'
+                : 'bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-ink-800'
             }`}
           >
             Back

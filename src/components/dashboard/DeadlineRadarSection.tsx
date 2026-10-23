@@ -17,7 +17,10 @@ const DeadlineRadarSection = ({ deadlines, markTaskDone, setIsOpen, snoozeDeadli
       Deadline Radar
     </div>
     {deadlines.map((deadline) => (
-      <div key={deadline.id} className="p-3 hover:bg-amber-50 transition-colors">
+      <div
+        key={deadline.id}
+        className="p-3 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+      >
         <div className="flex justify-between items-start gap-2">
           <div className="min-w-0">
             <div className="text-xs font-medium text-gray-900 dark:text-ink-50 truncate">
@@ -42,7 +45,7 @@ const DeadlineRadarSection = ({ deadlines, markTaskDone, setIsOpen, snoozeDeadli
         <div className="mt-2 flex items-center justify-between gap-2">
           <Link
             to={deadline.linkTo}
-            className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-600 dark:text-blue-300 hover:text-blue-700"
+            className="inline-flex min-h-11 items-center text-xs font-semibold text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300"
             onClick={() => setIsOpen(false)}
           >
             Open
@@ -60,7 +63,7 @@ const DeadlineRadarSection = ({ deadlines, markTaskDone, setIsOpen, snoozeDeadli
             <button
               type="button"
               onClick={(e) => snoozeDeadline(deadline.id, e)}
-              className="min-h-11 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-100"
+              className="min-h-11 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 py-2 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-100 dark:hover:bg-ink-800"
             >
               Dismiss 1d
             </button>

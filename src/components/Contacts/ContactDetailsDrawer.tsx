@@ -186,7 +186,7 @@ const ContactDetailsDrawer = ({
                     </p>
                     {contact.email ? (
                       <a
-                        className="block truncate text-sm font-medium text-slate-700 dark:text-ink-100 hover:text-blue-600"
+                        className="block truncate text-sm font-medium text-slate-700 dark:text-ink-100 hover:text-blue-600 dark:hover:text-blue-300"
                         href={`mailto:${contact.email}`}
                       >
                         {contact.email}
@@ -240,7 +240,7 @@ const ContactDetailsDrawer = ({
                           <UserOutlined />
                         </span>
                         <div className="flex min-w-0 items-center gap-1.5" title={direction}>
-                          <span className="shrink-0 text-sm text-slate-300 dark:text-ink-600">
+                          <span className="shrink-0 text-sm text-slate-500 dark:text-ink-400">
                             {arrow}
                           </span>
                           <p className="truncate text-sm font-medium text-slate-800 dark:text-ink-50">

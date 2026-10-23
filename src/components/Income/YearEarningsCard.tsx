@@ -116,7 +116,7 @@ const RoleBreakdown = ({
             type="button"
             onClick={() => onSelectRole(role.sourceKey)}
             style={{ gridTemplateColumns: template }}
-            className="flex w-full flex-col gap-1 rounded-lg border border-slate-100 dark:border-white/[0.07] px-3 py-2.5 text-left transition hover:bg-slate-50 sm:grid sm:items-baseline sm:gap-x-4 sm:gap-y-0 sm:rounded-md sm:border-0 sm:px-2 sm:py-2"
+            className="flex w-full flex-col gap-1 rounded-lg border border-slate-100 dark:border-white/[0.07] px-3 py-2.5 text-left transition hover:bg-slate-50 dark:hover:bg-ink-800 sm:grid sm:items-baseline sm:gap-x-4 sm:gap-y-0 sm:rounded-md sm:border-0 sm:px-2 sm:py-2"
           >
             <span className="min-w-0 sm:truncate">
               <span className="text-sm font-medium text-slate-800 dark:text-ink-50">
@@ -453,7 +453,7 @@ export const YearEarningsCard = ({
                 key={year.taxYear}
                 type="button"
                 onClick={() => onSelectYear(year.taxYear)}
-                className={`flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50 ${
+                className={`flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition hover:bg-slate-50 dark:hover:bg-ink-800 ${
                   year.taxYear === taxYear ? 'bg-slate-50 dark:bg-ink-900' : ''
                 }`}
               >

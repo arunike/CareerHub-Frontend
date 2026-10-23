@@ -9,7 +9,7 @@ const bookingFieldClass =
   'min-h-11 min-w-0 rounded-lg border bg-white dark:bg-ink-900 px-3 py-2 text-sm';
 
 const secondaryButtonClass =
-  'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 text-sm font-medium text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-50 disabled:opacity-70 sm:w-auto';
+  'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 text-sm font-medium text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-50 dark:hover:bg-ink-800 disabled:opacity-70 sm:w-auto';
 
 const primaryButtonClass =
   'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-70 motion-reduce:active:scale-100 sm:w-auto';
@@ -349,7 +349,7 @@ const AvailabilityBookingCard = ({
                                 intakeQuestions.filter((_, idx) => idx !== index)
                               )
                             }
-                            className="min-h-11 shrink-0 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-500 dark:text-ink-400 transition-colors hover:border-red-200 hover:text-red-600"
+                            className="min-h-11 shrink-0 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-500 dark:text-ink-400 transition-colors hover:border-red-200 hover:text-red-600 dark:hover:text-red-300"
                           >
                             Remove
                           </button>
@@ -366,7 +366,7 @@ const AvailabilityBookingCard = ({
                       { id: `q_${Date.now()}`, label: '', required: false },
                     ])
                   }
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-gray-900 dark:hover:text-ink-50"
                 >
                   <PlusOutlined aria-hidden="true" />
                   Add question

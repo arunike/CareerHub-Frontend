@@ -49,7 +49,7 @@ const AvailabilityTextControls = ({
       <button
         type="button"
         onClick={onCopyAll}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 transition-colors hover:bg-white hover:text-blue-600 sm:w-auto"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 transition-colors hover:bg-white dark:hover:bg-ink-800 hover:text-blue-600 dark:hover:text-blue-300 sm:w-auto"
       >
         {copiedIndex === 'ALL' ? (
           <CheckCircleOutlined className="text-base text-green-500 dark:text-green-400" />

@@ -41,7 +41,7 @@ const AIProviderSection = ({
     title="AI Provider"
     description="Your own provider powers cover letters, JD matching and custom widgets. The key is stored encrypted and never shown again after saving."
   >
-    <div className="rounded-2xl border border-sky-100 dark:border-sky-500/20 bg-gradient-to-br from-sky-50 via-white dark:via-ink-900 to-sky-50 p-5 space-y-4">
+    <div className="rounded-2xl border border-sky-100 dark:border-sky-500/20 bg-gradient-to-br from-sky-50 dark:from-sky-500/10 via-white dark:via-ink-900 to-sky-50 dark:to-sky-500/10 p-5 space-y-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
           <RobotOutlined className="text-lg" />
@@ -145,7 +145,7 @@ const AIProviderSection = ({
             <button
               type="button"
               onClick={() => setShowAiApiKey((current) => !current)}
-              className="text-xs font-medium text-sky-600 dark:text-sky-300 hover:text-sky-700"
+              className="text-xs font-medium text-sky-600 dark:text-sky-300 hover:text-sky-700 dark:hover:text-sky-300"
             >
               {showAiApiKey ? 'Hide key' : 'Show key'}
             </button>
@@ -234,7 +234,7 @@ const AIProviderSection = ({
             type="button"
             onClick={handleClearAiSettings}
             disabled={!aiSettings.apiKeyConfigured}
-            className="min-h-11 rounded-xl border border-gray-300 dark:border-white/[0.12] px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 transition-colors hover:bg-gray-50"
+            className="min-h-11 rounded-xl border border-gray-300 dark:border-white/[0.12] px-3.5 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 transition-colors hover:bg-gray-50 dark:hover:bg-ink-800"
           >
             Clear Stored Key
           </button>

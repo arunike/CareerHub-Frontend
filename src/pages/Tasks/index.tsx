@@ -378,7 +378,7 @@ const Tasks: React.FC = () => {
             className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
               viewMode === 'kanban'
                 ? 'bg-white dark:bg-ink-900 text-gray-900 dark:text-ink-50 shadow-sm'
-                : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
+                : 'text-gray-500 dark:text-ink-400 hover:text-gray-700 dark:hover:text-ink-100'
             }`}
             aria-pressed={viewMode === 'kanban'}
           >
@@ -390,7 +390,7 @@ const Tasks: React.FC = () => {
             className={`min-h-11 rounded-lg px-4 text-sm font-medium transition-colors ${
               viewMode === 'checklist'
                 ? 'bg-white dark:bg-ink-900 text-blue-600 dark:text-blue-300 shadow-sm'
-                : 'text-gray-500 dark:text-ink-400 hover:text-gray-700'
+                : 'text-gray-500 dark:text-ink-400 hover:text-gray-700 dark:hover:text-ink-100'
             }`}
             aria-pressed={viewMode === 'checklist'}
           >

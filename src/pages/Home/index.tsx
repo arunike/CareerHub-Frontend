@@ -135,11 +135,11 @@ function ProductPreview() {
                 {[true, true, false].map((complete, index) => (
                   <div key={index} className="flex flex-1 items-center last:flex-none">
                     <span
-                      className={`h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-ink-950 ${complete ? 'bg-blue-500' : 'bg-slate-300 dark:bg-ink-700'}`}
+                      className={`h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-ink-950 ${complete ? 'bg-blue-500' : 'bg-slate-400 dark:bg-ink-500'}`}
                     />
                     {index < 2 && (
                       <span
-                        className={`h-px flex-1 ${index < 1 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-ink-700'}`}
+                        className={`h-px flex-1 ${index < 1 ? 'bg-blue-500' : 'bg-slate-400 dark:bg-ink-500'}`}
                       />
                     )}
                   </div>

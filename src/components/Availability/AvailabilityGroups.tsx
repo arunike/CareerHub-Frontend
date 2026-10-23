@@ -141,7 +141,7 @@ const AvailabilityItem = ({
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="min-h-11 rounded bg-gray-100 dark:bg-ink-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 hover:bg-gray-200"
+                className="min-h-11 rounded bg-gray-100 dark:bg-ink-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-ink-100 hover:bg-gray-200 dark:hover:bg-ink-800"
               >
                 Cancel
               </button>
@@ -157,7 +157,7 @@ const AvailabilityItem = ({
                     setEditText(item.availability);
                     setIsEditing(true);
                   }}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-gray-400 dark:text-ink-500 opacity-100 transition-opacity hover:bg-gray-100 hover:text-blue-600 md:min-h-0 md:min-w-0 md:p-1 md:opacity-0 md:group-hover/text:opacity-100 md:group-focus-within/text:opacity-100"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-gray-400 dark:text-ink-500 opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-blue-600 dark:hover:text-blue-300 md:min-h-0 md:min-w-0 md:p-1 md:opacity-0 md:group-hover/text:opacity-100 md:group-focus-within/text:opacity-100"
                   title="Edit availability"
                   aria-label={`Edit availability for ${item.displayDate}`}
                 >
@@ -174,7 +174,7 @@ const AvailabilityItem = ({
             'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg p-2 transition-colors',
             copiedIndex === itemId
               ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-300'
-              : 'bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 opacity-100 hover:bg-gray-100 hover:text-gray-600 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100'
+              : 'bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 opacity-100 hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-gray-600 dark:hover:text-ink-200 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100'
           )}
           title="Copy line"
           aria-label={`Copy availability for ${item.displayDate}`}

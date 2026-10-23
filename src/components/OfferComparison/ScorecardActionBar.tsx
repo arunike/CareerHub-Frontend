@@ -47,7 +47,7 @@ const ScorecardActionBar = ({
           <button
             type="button"
             onClick={() => onEditScenario(String(row.offer.id))}
-            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
+            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300 transition-colors hover:bg-sky-50 dark:hover:bg-sky-500/10 sm:min-h-9 sm:rounded-lg"
           >
             Edit
           </button>
@@ -62,7 +62,7 @@ const ScorecardActionBar = ({
           >
             <button
               type="button"
-              className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-500 dark:text-rose-400 transition-colors hover:bg-rose-50 sm:min-h-9 sm:rounded-lg"
+              className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-rose-500 dark:text-rose-400 transition-colors hover:bg-rose-50 dark:hover:bg-rose-500/10 sm:min-h-9 sm:rounded-lg"
             >
               Delete
             </button>
@@ -75,7 +75,7 @@ const ScorecardActionBar = ({
           <button
             type="button"
             onClick={() => onEditClick(row.storedOffer as Offer)}
-            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300 transition-colors hover:bg-sky-50 sm:min-h-9 sm:rounded-lg"
+            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-sky-600 dark:text-sky-300 transition-colors hover:bg-sky-50 dark:hover:bg-sky-500/10 sm:min-h-9 sm:rounded-lg"
           >
             Edit
           </button>
@@ -85,8 +85,8 @@ const ScorecardActionBar = ({
             className={clsx(
               'min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-9 sm:rounded-lg',
               (row.storedOffer as Offer).is_current
-                ? 'text-slate-400 dark:text-ink-500 hover:bg-slate-50'
-                : 'text-slate-600 dark:text-ink-200 hover:bg-slate-50'
+                ? 'text-slate-400 dark:text-ink-500 hover:bg-slate-50 dark:hover:bg-ink-800'
+                : 'text-slate-600 dark:text-ink-200 hover:bg-slate-50 dark:hover:bg-ink-800'
             )}
           >
             {(row.storedOffer as Offer).is_current ? 'Unmark Current' : 'Mark Current'}
@@ -94,14 +94,14 @@ const ScorecardActionBar = ({
           <button
             type="button"
             onClick={() => onSnapshotsClick(row.storedOffer as Offer)}
-            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300 transition-colors hover:bg-emerald-50 sm:min-h-9 sm:rounded-lg"
+            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-500/10 sm:min-h-9 sm:rounded-lg"
           >
             Snapshots
           </button>
           <button
             type="button"
             onClick={() => onDecisionJournalClick(row.storedOffer as Offer)}
-            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-violet-600 dark:text-violet-300 transition-colors hover:bg-violet-50 sm:min-h-9 sm:rounded-lg"
+            className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-violet-600 dark:text-violet-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 sm:min-h-9 sm:rounded-lg"
           >
             Journal
           </button>
@@ -113,7 +113,7 @@ const ScorecardActionBar = ({
                 <button
                   type="button"
                   onClick={() => onSaveSnapshotClick(row.storedOffer as Offer, row)}
-                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50"
+                  className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
                 >
                   Save Snapshot
                 </button>
@@ -121,7 +121,7 @@ const ScorecardActionBar = ({
                   <button
                     type="button"
                     onClick={() => onRaiseHistoryClick(row.storedOffer as Offer)}
-                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50"
+                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10"
                   >
                     Raise History
                   </button>
@@ -129,7 +129,7 @@ const ScorecardActionBar = ({
                   <button
                     type="button"
                     onClick={() => onNegotiateClick(row.storedOffer as Offer)}
-                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-50"
+                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10"
                   >
                     Negotiate
                   </button>
@@ -138,7 +138,7 @@ const ScorecardActionBar = ({
                   <button
                     type="button"
                     onClick={() => onNegotiationLogClick(row.storedOffer as Offer)}
-                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50"
+                    className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
                   >
                     Negotiation Log
                   </button>
@@ -149,8 +149,8 @@ const ScorecardActionBar = ({
                   className={clsx(
                     'min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold',
                     isRowRejected
-                      ? 'text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50'
-                      : 'text-rose-700 dark:text-rose-300 hover:bg-rose-50'
+                      ? 'text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
+                      : 'text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10'
                   )}
                 >
                   {isRowRejected ? 'Restore Offer' : 'Mark as Rejected'}
@@ -172,7 +172,7 @@ const ScorecardActionBar = ({
                   >
                     <button
                       type="button"
-                      className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-50"
+                      className="min-h-11 rounded-lg px-3 py-2 text-left text-xs font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                     >
                       Delete
                     </button>
@@ -183,7 +183,7 @@ const ScorecardActionBar = ({
           >
             <button
               type="button"
-              className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-50 sm:min-h-9 sm:rounded-lg"
+              className="min-h-11 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-50 dark:hover:bg-ink-800 sm:min-h-9 sm:rounded-lg"
             >
               More
             </button>

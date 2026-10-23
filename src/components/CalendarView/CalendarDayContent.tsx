@@ -260,7 +260,7 @@ export const CalendarCompactDayEntries = ({
             clickEvent.stopPropagation();
             onViewMore?.();
           }}
-          className="w-full rounded border border-gray-200 dark:border-white/[0.08] bg-white/85 dark:bg-ink-900/85 px-1.5 py-0.5 text-left font-medium text-gray-500 dark:text-ink-400 transition-colors hover:border-blue-200 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="w-full rounded border border-gray-200 dark:border-white/[0.08] bg-white/85 dark:bg-ink-900/85 px-1.5 py-0.5 text-left font-medium text-gray-500 dark:text-ink-400 transition-colors hover:border-blue-200 hover:text-blue-600 dark:hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
         >
           View {hiddenCount} more
         </button>

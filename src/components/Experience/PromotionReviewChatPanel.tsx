@@ -344,7 +344,7 @@ const PromotionReviewChatPanel: React.FC<{
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full ${
-                        stepIndex === thinkingIndex ? 'bg-blue-600' : 'bg-slate-300 dark:bg-ink-700'
+                        stepIndex === thinkingIndex ? 'bg-blue-600' : 'bg-slate-500 dark:bg-ink-500'
                       }`}
                     />
                     {step}

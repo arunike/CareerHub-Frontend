@@ -41,7 +41,7 @@ const CompBreakdownSection = ({
       type="button"
       onClick={() => setIsChartExpanded((current) => !current)}
       aria-expanded={isChartExpanded}
-      className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
+      className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
     >
       <span className="flex min-w-0 items-center gap-3">
         <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">

@@ -120,8 +120,8 @@ export const HourlyBreakdown = ({
         <div
           className={`rounded-2xl border p-5 ${
             isManualTotal
-              ? 'border-blue-100 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 via-white dark:via-ink-900 to-blue-50'
-              : 'border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 via-white dark:via-ink-900 to-blue-50'
+              ? 'border-blue-100 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 dark:from-blue-500/10 via-white dark:via-ink-900 to-blue-50 dark:to-blue-500/10'
+              : 'border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 dark:from-emerald-500/10 via-white dark:via-ink-900 to-blue-50 dark:to-blue-500/10'
           }`}
         >
           <div className="flex items-start justify-between gap-3">
@@ -152,7 +152,7 @@ export const HourlyBreakdown = ({
                     <button
                       type="button"
                       onClick={() => setActiveField('total_earnings_override')}
-                      className="min-h-11 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 sm:min-h-9"
+                      className="min-h-11 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-3 text-xs font-semibold text-gray-600 dark:text-ink-200 transition-colors hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-300 sm:min-h-9"
                     >
                       Override
                     </button>

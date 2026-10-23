@@ -13,10 +13,11 @@ export type HourlyInputUpdate = {
   total_earnings_override: number | null;
 };
 
+// Keys match the chart series tokens, which is where the colour comes from.
 export const SEGMENTS = [
-  { key: 'base', label: 'Base Salary', color: '#2563eb' },
-  { key: 'bonus', label: 'Bonus', color: '#10b981' },
-  { key: 'equity', label: 'Equity / RSU', color: '#60a5fa' },
+  { key: 'base', label: 'Base Salary' },
+  { key: 'bonus', label: 'Bonus' },
+  { key: 'equity', label: 'Equity / RSU' },
 ] as const;
 
 // The same formatter under the name eight Experience files already import.

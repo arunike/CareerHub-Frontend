@@ -67,7 +67,7 @@ const SidebarFooter = ({
               type="button"
               onClick={() => navigate('/profile')}
               aria-label="Open profile"
-              className="flex h-10 w-12 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white/75 dark:bg-ink-900/75 shadow-sm transition-all hover:border-blue-200 hover:bg-white hover:shadow-lg hover:shadow-blue-900/5"
+              className="flex h-10 w-12 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white/75 dark:bg-ink-900/75 shadow-sm transition-all hover:border-blue-200 hover:bg-white dark:hover:bg-ink-800 hover:shadow-lg hover:shadow-blue-900/5"
             >
               <IdentityAvatar
                 imageUrl={profilePic}
@@ -137,7 +137,7 @@ const SidebarFooter = ({
                 <p className="mb-1 text-[10px] font-black uppercase leading-none tracking-widest text-slate-400 dark:text-ink-500">
                   Account
                 </p>
-                <p className="truncate text-sm font-bold text-slate-900 dark:text-ink-50 transition-colors group-hover:text-blue-600">
+                <p className="truncate text-sm font-bold text-slate-900 dark:text-ink-50 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-300">
                   {displayName || 'CareerHub User'}
                 </p>
               </div>
@@ -177,7 +177,7 @@ const SidebarFooter = ({
               </Button>
             </div>
           </div>
-          <p className="mt-2 text-center text-[10px] font-medium text-slate-300 dark:text-ink-600">
+          <p className="mt-2 text-center text-[10px] font-medium text-slate-500 dark:text-ink-400">
             © 2026 CareerHub
           </p>
         </>

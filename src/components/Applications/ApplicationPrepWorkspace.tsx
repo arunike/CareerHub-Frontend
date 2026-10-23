@@ -433,7 +433,7 @@ const ApplicationPrepWorkspace = ({ application, onGenerateCoverLetter }: Props)
           <div className="space-y-2">
             {workspace.timeline.slice(0, 4).map((entry) => (
               <div key={entry.id} className="flex items-start gap-2 text-sm">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400 dark:bg-ink-700" />
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400 dark:bg-ink-500" />
                 <div className="min-w-0">
                   <span className="font-semibold text-slate-800 dark:text-ink-50">
                     {entry.stage_label}

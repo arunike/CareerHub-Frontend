@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 const LINE_CLASS = 'absolute left-1/2 w-0.5 -translate-x-1/2 rounded-full';
-const LINE_TINT = 'bg-slate-200 dark:bg-ink-800';
+const LINE_TINT = 'bg-slate-300 dark:bg-ink-700';
 // Reaches into the space-y-10 gap so the line never breaks between cards.
 const LINE_SPAN = { top: 26, bottom: 'calc(-2.5rem - 26px)' } as const;
 
@@ -22,12 +22,12 @@ export const TimelineRailDesktop = ({
     {isFirst && (
       <>
         <div
-          className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-200 dark:to-ink-800'}`}
+          className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-300 dark:to-ink-700'}`}
           style={{ top: -18, height: 44 }}
         />
         {isCurrent && (
           <span
-            className="absolute left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-blue-400"
+            className="absolute left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-blue-500 dark:bg-blue-400"
             style={{ top: -20 }}
             title="Current role"
           />
@@ -61,14 +61,14 @@ export const TimelineRailMobile = ({
   <div className="absolute -left-6 bottom-0 top-0 z-10 w-6 md:hidden" aria-hidden>
     {isFirst && (
       <div
-        className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-200 dark:to-ink-800'}`}
+        className={`${LINE_CLASS} ${isCurrent ? 'bg-gradient-to-b from-transparent to-blue-300' : 'bg-gradient-to-b from-transparent to-slate-300 dark:to-ink-700'}`}
         style={{ top: 0, height: 26 }}
       />
     )}
     {!isLast && <div className={`${LINE_CLASS} ${LINE_TINT}`} style={LINE_SPAN} />}
     <div
       className={`absolute left-1/2 top-[20px] h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 bg-white dark:bg-ink-900 ${
-        isCurrent ? 'border-blue-400' : 'border-slate-300 dark:border-white/[0.12]'
+        isCurrent ? 'border-blue-500 dark:border-blue-400' : 'border-slate-500 dark:border-ink-500'
       }`}
     />
     <div className="absolute left-1/2 top-[24px] h-0.5 w-3.5 bg-gradient-to-r from-slate-300 dark:from-ink-700 to-transparent" />

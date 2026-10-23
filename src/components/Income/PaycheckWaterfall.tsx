@@ -159,7 +159,7 @@ const Row = ({
         <span className="truncate">{label}</span>
         {hint ? (
           <Tooltip title={hint}>
-            <InfoCircleOutlined className="shrink-0 text-[11px] text-slate-300 dark:text-ink-600" />
+            <InfoCircleOutlined className="shrink-0 text-[11px] text-slate-500 dark:text-ink-400" />
           </Tooltip>
         ) : null}
         {balanced ? (
@@ -477,7 +477,7 @@ export const PaycheckWaterfall = ({
             <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
             <span className={SECTION_LABEL_CLASS}>Paid by your employer</span>
             <Tooltip title={INCOME_TOOLTIPS.employerMatchNotTakeHome}>
-              <InfoCircleOutlined className="text-[11px] text-slate-300 dark:text-ink-600" />
+              <InfoCircleOutlined className="text-[11px] text-slate-500 dark:text-ink-400" />
             </Tooltip>
           </div>
           <div className="mt-1.5 flex items-baseline justify-between gap-3">
@@ -511,7 +511,7 @@ export const PaycheckWaterfall = ({
             ) : null}
             {row.isMatchAdjusted ? ' · recorded, not from the formula' : ''}
           </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-300 dark:text-ink-600">
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-ink-400">
             {matchFormulaLabel}
           </p>
         </div>

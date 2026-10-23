@@ -20,7 +20,7 @@ const PayChangeCard = ({ raise }: { raise: CommandRaise }) => {
           aria-pressed={revealed}
           aria-label={revealed ? 'Hide pay figures' : 'Show pay figures'}
           onClick={() => setRevealed((current) => !current)}
-          className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-ink-500 dark:hover:bg-white/[0.06]"
+          className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:text-ink-200 dark:text-ink-500 dark:hover:bg-white/[0.06]"
         >
           {revealed ? (
             <EyeOutlined className="text-[13px]" />

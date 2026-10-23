@@ -185,7 +185,7 @@ const HourlyRoleDetail = ({
           <Button
             type="dashed"
             block
-            className="h-10 text-gray-400 dark:text-ink-500 hover:text-gray-600 border-gray-200 dark:border-white/[0.08]"
+            className="h-10 text-gray-400 dark:text-ink-500 hover:text-gray-600 dark:hover:text-ink-200 border-gray-200 dark:border-white/[0.08]"
             onClick={() => setShowOverrides(true)}
           >
             {advancedOptionsCta}
@@ -250,7 +250,7 @@ const HourlyRoleDetail = ({
             <Button
               type="text"
               size="small"
-              className="text-gray-400 dark:text-ink-500 hover:text-gray-600 mb-1"
+              className="text-gray-400 dark:text-ink-500 hover:text-gray-600 dark:hover:text-ink-200 mb-1"
               onClick={() => setShowOverrides(false)}
             >
               Hide Advanced Options

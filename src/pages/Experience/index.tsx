@@ -327,7 +327,7 @@ const ExperiencePage: React.FC = () => {
           size="large"
           icon={<RobotOutlined />}
           onClick={() => setJdModalOpen(true)}
-          className="toolbar-btn text-sky-600 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/25 hover:bg-sky-100 hover:border-sky-300 shadow-sm"
+          className="toolbar-btn text-sky-600 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/25 hover:bg-sky-100 dark:hover:bg-sky-500/10 hover:border-sky-300 shadow-sm"
         >
           Match JD
         </Button>

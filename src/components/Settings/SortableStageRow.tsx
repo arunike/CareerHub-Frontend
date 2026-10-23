@@ -63,7 +63,7 @@ export const SortableStageRow = ({
           className={`shrink-0 rounded p-1 text-gray-300 dark:text-ink-600 transition-colors ${
             disabled
               ? 'cursor-not-allowed'
-              : 'cursor-grab text-gray-400 dark:text-ink-500 hover:text-gray-600'
+              : 'cursor-grab text-gray-400 dark:text-ink-500 hover:text-gray-600 dark:hover:text-ink-200'
           }`}
         >
           <HolderOutlined />

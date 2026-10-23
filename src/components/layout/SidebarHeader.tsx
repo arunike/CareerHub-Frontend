@@ -31,7 +31,7 @@ const SidebarHeader = ({
             type="button"
             onClick={toggleDesktopSidebar}
             aria-label="Expand sidebar"
-            className="group relative flex h-11 w-12 items-center justify-center rounded-xl border border-transparent transition-all duration-200 hover:border-slate-200/90 hover:bg-white hover:shadow-xs"
+            className="group relative flex h-11 w-12 items-center justify-center rounded-xl border border-transparent transition-all duration-200 hover:border-slate-200/90 hover:bg-white dark:hover:bg-ink-800 hover:shadow-xs"
           >
             <img
               src={logo}

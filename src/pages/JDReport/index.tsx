@@ -311,7 +311,7 @@ const JDReportPage: React.FC = () => {
                 {tailoredBullets.map((bullet, index) => (
                   <div
                     key={index}
-                    className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-gradient-to-br from-blue-50/70 to-white dark:to-ink-900 p-5 flex flex-col gap-3"
+                    className="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-gradient-to-br from-blue-50/70 dark:from-blue-500/10 to-white dark:to-ink-900 p-5 flex flex-col gap-3"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-300 bg-blue-100 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/25 px-2.5 py-1 rounded-full">
@@ -459,7 +459,7 @@ const JDReportPage: React.FC = () => {
                 {report.recommendations.map((rec, i) => (
                   <div
                     key={i}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-white dark:to-ink-900 border border-amber-100 dark:border-amber-500/20"
+                    className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 dark:from-amber-500/10 to-white dark:to-ink-900 border border-amber-100 dark:border-amber-500/20"
                   >
                     <div className="w-6 h-6 rounded-full bg-amber-200 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                       {i + 1}

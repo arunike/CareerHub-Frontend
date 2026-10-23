@@ -32,7 +32,7 @@ const DueSoonSection = ({
               className="min-w-0 text-left"
               onClick={() => setViewingEvent(event)}
             >
-              <p className="truncate text-sm font-medium text-slate-900 dark:text-ink-50 hover:text-blue-700">
+              <p className="truncate text-sm font-medium text-slate-900 dark:text-ink-50 hover:text-blue-700 dark:hover:text-blue-300">
                 {event.name}
               </p>
               <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
@@ -44,7 +44,7 @@ const DueSoonSection = ({
           <div className="mt-1.5 flex items-center gap-3">
             <button
               type="button"
-              className="text-xs font-semibold text-slate-500 dark:text-ink-400 hover:text-slate-700"
+              className="text-xs font-semibold text-slate-500 dark:text-ink-400 hover:text-slate-700 dark:hover:text-ink-100"
               onClick={(clickEvent) => {
                 // Clear the entry too, or the bell keeps ringing after a dismiss.
                 setReminder(event.id, dismissUntil(reminderSettings));
@@ -56,7 +56,7 @@ const DueSoonSection = ({
             {reminderSettings.allowForeverIgnore && (
               <button
                 type="button"
-                className="text-xs text-slate-400 dark:text-ink-500 hover:text-slate-600"
+                className="text-xs text-slate-400 dark:text-ink-500 hover:text-slate-600 dark:hover:text-ink-200"
                 onClick={() => setReminder(event.id, 'forever')}
               >
                 Never remind me

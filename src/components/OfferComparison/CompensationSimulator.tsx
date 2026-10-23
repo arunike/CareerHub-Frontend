@@ -126,7 +126,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
         type="button"
         onClick={() => setIsExpanded((current) => !current)}
         aria-expanded={isExpanded}
-        className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
+        className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
       >
         <span className="flex min-w-0 items-center gap-3">
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
@@ -321,7 +321,7 @@ const CompensationSimulator = ({ scenarioRows }: { scenarioRows: ScenarioRow[] }
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/[0.07]">
             {rows.map((item) => (
-              <tr key={item.key} className="hover:bg-slate-50/70">
+              <tr key={item.key} className="hover:bg-slate-50/70 dark:hover:bg-ink-800">
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-950 dark:text-ink-50">

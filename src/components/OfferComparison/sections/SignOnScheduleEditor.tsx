@@ -46,7 +46,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
           <button
             type="button"
             onClick={() => onChange([total, ...rows.slice(1).map(() => 0)])}
-            className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+            className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
           >
             All in Y1
           </button>
@@ -76,7 +76,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
           <button
             type="button"
             onClick={() => onChange([...rows, 0])}
-            className="rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+            className="rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
           >
             + Year {rows.length + 1}
           </button>
@@ -86,7 +86,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-ink-400 hover:bg-gray-50"
+          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-ink-400 hover:bg-gray-50 dark:hover:bg-ink-800"
         >
           Done
         </button>
@@ -112,7 +112,7 @@ const SignOnScheduleEditor = ({ total, schedule, onChange }: Props) => {
       >
         <button
           type="button"
-          className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+          className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
         >
           Payout by year
         </button>

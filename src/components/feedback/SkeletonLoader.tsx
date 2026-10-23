@@ -151,7 +151,7 @@ export const TableSkeleton: React.FC = () => {
           return (
             <div
               key={idx}
-              className="p-4 grid grid-cols-4 md:grid-cols-6 gap-4 items-center hover:bg-slate-50/30"
+              className="p-4 grid grid-cols-4 md:grid-cols-6 gap-4 items-center hover:bg-slate-50/30 dark:hover:bg-ink-800"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <SkeletonBlock width="16px" height="16px" className="rounded shrink-0 opacity-40" />

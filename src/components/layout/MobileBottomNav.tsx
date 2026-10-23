@@ -74,7 +74,7 @@ const MobileBottomNav = ({
             className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
               isActive
                 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 shadow-[inset_0_0_0_1px_rgba(191,219,254,0.65)]'
-                : 'text-slate-500 dark:text-ink-400 hover:bg-slate-50 hover:text-slate-700'
+                : 'text-slate-500 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100'
             }`}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
@@ -114,7 +114,7 @@ const MobileBottomNav = ({
         className={`flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
           isMoreActive || !collapsed
             ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15'
-            : 'text-slate-500 dark:text-ink-400 hover:bg-slate-50 hover:text-slate-700'
+            : 'text-slate-500 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100'
         }`}
         aria-label="Open more navigation"
         aria-description={

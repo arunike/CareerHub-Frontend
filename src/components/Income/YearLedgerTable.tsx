@@ -95,7 +95,7 @@ export const YearLedgerTable = ({
       width: 44,
       responsive: ['xxl'],
       render: (_: number, row) => (
-        <span className="tabular-nums text-slate-300 dark:text-ink-600">{viewOf(row).ordinal}</span>
+        <span className="tabular-nums text-slate-500 dark:text-ink-400">{viewOf(row).ordinal}</span>
       ),
     },
     {
@@ -352,7 +352,7 @@ export const YearLedgerTable = ({
               columnWidth: 22,
               expandIcon: ({ expanded }) => (
                 <span
-                  className={`inline-flex text-[10px] text-slate-300 dark:text-ink-600 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                  className={`inline-flex text-[10px] text-slate-500 dark:text-ink-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
                 >
                   <RightOutlined />
                 </span>

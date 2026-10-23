@@ -59,12 +59,12 @@ const ModeToggle = <T extends string>({
     <div
       ref={trackRef}
       role="radiogroup"
-      className={`relative inline-flex items-center rounded-lg bg-slate-100 ring-1 ring-inset ring-slate-900/[0.04] dark:bg-ink-800 ${scale.track}`}
+      className={`relative inline-flex items-center rounded-lg bg-slate-100 ring-1 ring-inset ring-slate-900/[0.04] dark:bg-ink-800 dark:ring-white/[0.06] ${scale.track}`}
     >
       {thumb && (
         <span
           aria-hidden
-          className={`pointer-events-none absolute rounded-[7px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.04)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-ink-900 ${scale.thumb}`}
+          className={`pointer-events-none absolute rounded-[7px] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.10),0_0_0_1px_rgba(15,23,42,0.04)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-ink-900 dark:ring-1 dark:ring-inset dark:ring-white/15 ${scale.thumb}`}
           style={{ width: thumb.width, transform: `translateX(${thumb.left}px)`, left: 0 }}
         />
       )}
@@ -82,7 +82,7 @@ const ModeToggle = <T extends string>({
           className={`relative z-10 rounded-[7px] text-center font-semibold transition-colors duration-150 ${scale.button} ${
             value === option.value
               ? 'text-blue-600 dark:text-blue-300'
-              : 'text-slate-500 dark:text-ink-400 hover:text-slate-700'
+              : 'text-slate-500 dark:text-ink-400 hover:text-slate-700 dark:hover:text-ink-100'
           }`}
         >
           {option.label}

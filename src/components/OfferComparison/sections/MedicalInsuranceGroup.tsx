@@ -93,7 +93,7 @@ const MedicalInsuranceGroup = ({
       </div>
 
       {/* Financial Risk Banner */}
-      <div className="rounded-xl border border-blue-200 dark:border-blue-500/25 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 p-3.5 space-y-1.5 shadow-sm">
+      <div className="rounded-xl border border-blue-200 dark:border-blue-500/25 bg-gradient-to-r from-blue-50/80 dark:from-blue-500/10 to-indigo-50/80 dark:to-indigo-500/10 p-3.5 space-y-1.5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-200">
             Worst-Case Annual Financial Exposure

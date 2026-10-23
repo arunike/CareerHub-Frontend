@@ -31,7 +31,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange }) => {
                 ${
                   isSelected
                     ? 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 ring-2 ring-blue-500 ring-offset-1'
-                    : 'hover:bg-gray-100 text-gray-600 dark:text-ink-200 hover:text-gray-900'
+                    : 'hover:bg-gray-100 dark:hover:bg-ink-800 text-gray-600 dark:text-ink-200 hover:text-gray-900 dark:hover:text-ink-50'
                 }
               `}
             >

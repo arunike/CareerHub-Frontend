@@ -51,7 +51,7 @@ const SegmentedToggle = <T extends string>({
                 ? option.activeClassName ||
                     'bg-white dark:bg-ink-900 text-slate-950 dark:text-ink-50 shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
                 : option.inactiveClassName ||
-                    'text-slate-500 dark:text-ink-400 hover:bg-white/50 hover:text-slate-700'
+                    'text-slate-500 dark:text-ink-400 hover:bg-white/50 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100'
             )}
           >
             {option.icon}

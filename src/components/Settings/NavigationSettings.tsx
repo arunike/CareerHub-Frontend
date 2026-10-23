@@ -51,8 +51,8 @@ const SortableToolbarSlot = ({ slot, index }: { slot: MobileToolbarSlot; index: 
         isDragging
           ? 'z-10 bg-white dark:bg-ink-900 opacity-90 shadow-lg ring-2 ring-blue-400'
           : slot.isSmart
-            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100'
-            : 'text-slate-500 dark:text-ink-400 hover:bg-slate-100'
+            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/10'
+            : 'text-slate-500 dark:text-ink-400 hover:bg-slate-100 dark:hover:bg-ink-800'
       }`}
     >
       <Icon className="text-base" />
@@ -153,7 +153,7 @@ const VisibilityToggle = ({
     }`}
   >
     <span
-      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white dark:bg-ink-900 shadow-sm transition-transform ${
+      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
         checked ? 'translate-x-4' : 'translate-x-0'
       }`}
     />
@@ -190,7 +190,7 @@ const PinButton = ({
       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
         pinned
           ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300'
-          : 'text-slate-300 dark:text-ink-600 hover:bg-slate-100 hover:text-slate-500 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300'
+          : 'text-slate-300 dark:text-ink-600 hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-500 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-300'
       }`}
     >
       <PushpinFilled />
@@ -242,7 +242,7 @@ const SortableNavRow = ({
           {...attributes}
           {...listeners}
           aria-label={`Drag ${navLabel(item.key, item.label, labels)} to reorder`}
-          className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-300 dark:text-ink-600 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing"
+          className="flex h-8 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-slate-300 dark:text-ink-600 transition hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-600 dark:hover:text-ink-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing"
         >
           <HolderOutlined />
         </button>
@@ -386,7 +386,7 @@ const NavigationSettings = ({
         >
           <button
             type="button"
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] px-2.5 text-xs font-semibold text-slate-600 dark:text-ink-200 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:h-9"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] px-2.5 text-xs font-semibold text-slate-600 dark:text-ink-200 transition-colors hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-ink-50 sm:h-9"
           >
             <ReloadOutlined className="text-xs" />
             Reset to default

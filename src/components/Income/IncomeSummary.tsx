@@ -128,7 +128,7 @@ export const IncomeSummary = ({
             <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500">
               Role
               <Tooltip title={INCOME_TOOLTIPS.rolesListed}>
-                <InfoCircleOutlined className="text-slate-300 dark:text-ink-600" />
+                <InfoCircleOutlined className="text-slate-500 dark:text-ink-400" />
               </Tooltip>
             </span>
             <Select

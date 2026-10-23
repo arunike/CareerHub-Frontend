@@ -98,7 +98,7 @@ const ColorSwatchPicker = ({
         {allowCustomHex && (
           <label
             className={clsx(
-              'ml-1 flex h-11 min-w-[92px] cursor-pointer items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition hover:border-slate-400 hover:bg-slate-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1 md:h-8',
+              'ml-1 flex h-11 min-w-[92px] cursor-pointer items-center justify-center gap-2 rounded-full border px-3 text-xs font-semibold transition hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-ink-800 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1 md:h-8',
               hasCustomValue
                 ? 'border-slate-900 bg-slate-50 dark:bg-ink-900 text-slate-900 dark:text-ink-50'
                 : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200'

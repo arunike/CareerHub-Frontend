@@ -9,6 +9,7 @@ import { LineChartOutlined } from '@ant-design/icons';
 import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
 import { EquityVestingChart } from './EquityVestingChart';
 import { toIsoDate } from '../../utils/localDay';
+import { useChartSeries } from '../../theme/chartColors';
 import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
 
@@ -43,6 +44,7 @@ export const SalaryBreakdown = ({
   grantPriceHistory?: Array<{ as_of: string; price: string | number }>;
   onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
 }) => {
+  const series = useChartSeries();
   const years = payYearsOf(ledgerYears, earningsYears);
   // Each year is rounded before it is added, so the rows on screen sum to the totals on screen.
   const earned = years.reduce(
@@ -62,16 +64,16 @@ export const SalaryBreakdown = ({
     label: segment.label,
     sublabel: undefined as string | undefined,
     value: breakdown[segment.key],
-    color: segment.color,
+    color: series[segment.key],
   }));
   // Each part of pay splits into the years that made it up.
   const yearShades = Object.fromEntries(
-    SEGMENTS.map((segment) => [segment.key, shadesFor(segment.color, years.length)])
+    SEGMENTS.map((segment) => [segment.key, shadesFor(series[segment.key], years.length)])
   ) as Record<string, string[]>;
   const chartGroups = SEGMENTS.map((segment) => ({
     key: segment.key,
     label: segment.label,
-    color: segment.color,
+    color: series[segment.key],
     total: breakdown[segment.key],
     children: years.map((year, index) => ({
       key: `${segment.key}-${year.year}`,
@@ -96,8 +98,8 @@ export const SalaryBreakdown = ({
       )}
 
       <div className="grid gap-5 md:grid-cols-[320px,1fr]">
-        <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 via-white dark:via-ink-900 to-blue-50 p-5">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-ink-500">
+        <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 dark:from-emerald-500/10 via-white dark:via-ink-900 to-blue-50 dark:to-blue-500/10 p-5">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-ink-400">
             {totalLabel ??
               (years.length
                 ? years.length === 1

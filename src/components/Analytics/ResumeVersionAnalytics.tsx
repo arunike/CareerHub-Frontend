@@ -62,9 +62,9 @@ const GroupTable = ({
             <div className="min-w-0 flex-1">
               <Bar value={row[rate]} muted={row.below_minimum_sample} />
             </div>
-            <span className="w-24 shrink-0 text-right text-[11.5px] tabular-nums text-slate-500 dark:text-ink-400">
+            <span className="w-24 shrink-0 text-right text-[11.5px] tabular-nums text-slate-700 dark:text-ink-100">
               {formatRate(row[rate])}
-              <span className="ml-1 text-slate-300 dark:text-ink-600">
+              <span className="ml-1 text-slate-500 dark:text-ink-400">
                 {countFor(row, rate)}/{row.applications}
               </span>
             </span>

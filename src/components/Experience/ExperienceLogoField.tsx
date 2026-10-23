@@ -75,7 +75,7 @@ const ExperienceLogoField = ({
             icon={<ZoomInOutlined />}
             type="link"
             onClick={handleOpenAdjustModal}
-            className="!min-h-11 !px-3 text-blue-600 dark:text-blue-300 hover:text-blue-700 font-medium lg:!min-h-0 lg:!px-0"
+            className="!min-h-11 !px-3 text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300 font-medium lg:!min-h-0 lg:!px-0"
           >
             Adjust size / fit
           </Button>

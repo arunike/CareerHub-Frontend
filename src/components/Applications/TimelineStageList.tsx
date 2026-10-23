@@ -57,7 +57,7 @@ const TimelineStageList = ({
               <Tooltip title={displayTitle}>
                 <button
                   type="button"
-                  className="flex min-w-[82px] flex-col items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                  className="flex min-w-[82px] flex-col items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-white/80 dark:hover:bg-ink-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                   onClick={() => scrollToStage(stage.key)}
                   aria-label={`Jump to ${displayTitle} timeline stage`}
                 >
@@ -92,7 +92,7 @@ const TimelineStageList = ({
     </div>
 
     <div className="relative pl-8">
-      <div className="absolute bottom-2 left-[11px] top-2 w-px bg-slate-100 dark:bg-ink-800" />
+      <div className="absolute bottom-2 left-[11px] top-2 w-px bg-slate-100 dark:bg-ink-700" />
       {activeStages.map((stage: DisplayStage, index: number) => {
         const draft = drafts[stage.key] || emptyDraft();
         const isCurrent = application?.status === stage.key;
@@ -205,7 +205,7 @@ const TimelineStageList = ({
                 </div>
               </div>
 
-              <div className="mx-4 mt-2 h-px bg-slate-50 dark:bg-ink-900" />
+              <div className="mx-4 mt-2 h-px bg-slate-50 dark:bg-white/[0.06]" />
 
               <div className="px-3 pb-3 pt-2">
                 <Input.TextArea

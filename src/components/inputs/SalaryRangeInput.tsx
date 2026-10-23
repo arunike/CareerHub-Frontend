@@ -69,7 +69,7 @@ const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
           <button
             type="button"
             onClick={() => setMode('range')}
-            className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+            className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
           >
             Use min / max
           </button>
@@ -121,7 +121,7 @@ const SalaryRangeInput = ({ value, onChange, placeholder }: Props) => {
         <button
           type="button"
           onClick={() => setMode('text')}
-          className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+          className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
         >
           Enter as text
         </button>

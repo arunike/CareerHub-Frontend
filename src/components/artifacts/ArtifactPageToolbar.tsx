@@ -26,12 +26,12 @@ const ArtifactPageToolbar = ({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 dark:text-ink-200 transition-colors hover:bg-slate-100 hover:text-slate-950"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 dark:text-ink-200 transition-colors hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-950 dark:hover:text-ink-50"
         >
           <ArrowLeftOutlined />
           <span>{backLabel}</span>
         </button>
-        <span className="hidden h-5 w-px shrink-0 bg-slate-200 dark:bg-ink-800 sm:block" />
+        <span className="hidden h-5 w-px shrink-0 bg-slate-200 dark:bg-white/[0.12] sm:block" />
         <div className="hidden min-w-0 items-center gap-2 text-sm font-semibold text-slate-700 dark:text-ink-100 sm:flex">
           <span className="flex shrink-0 items-center text-blue-600 dark:text-blue-300">
             {contextIcon}

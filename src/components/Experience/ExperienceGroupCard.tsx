@@ -131,7 +131,7 @@ const ExperienceGroupCard = ({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="m-0 min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.015em] text-slate-950 dark:text-ink-50 transition-colors group-hover:text-blue-700 sm:text-[21px]">
+              <h3 className="m-0 min-w-0 break-words text-[17px] font-semibold leading-snug tracking-[-0.015em] text-slate-950 dark:text-ink-50 transition-colors group-hover:text-blue-700 dark:group-hover:text-blue-300 sm:text-[21px]">
                 {exp.title}
               </h3>
               <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
@@ -216,7 +216,7 @@ const ExperienceGroupCard = ({
             {skills.map((skill) => (
               <Tag
                 key={skill}
-                className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 dark:text-blue-300 border border-blue-100/60 dark:border-blue-500/25 font-medium hover:bg-blue-50 transition-colors"
+                className="m-0 px-3 py-1 rounded-md bg-[rgb(248,250,255)] text-blue-600 dark:text-blue-300 border border-blue-100/60 dark:border-blue-500/25 font-medium hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
               >
                 {skill}
               </Tag>
@@ -292,8 +292,8 @@ const ExperienceGroupCard = ({
             return (
               <div key={exp.id} className={`relative ${roleIdx < group.length - 1 ? 'mb-8' : ''}`}>
                 {/* Timeline dot */}
-                <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white dark:bg-ink-900 border-2 border-gray-300 dark:border-white/[0.12] flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-ink-700" />
+                <div className="absolute -left-[29px] top-[5px] w-4 h-4 rounded-full bg-white dark:bg-ink-900 border-2 border-slate-400 dark:border-ink-600 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-slate-500 dark:bg-ink-500" />
                 </div>
                 {(() => {
                   const compGroup = experiences.filter((e) => e.company === exp.company);
@@ -405,7 +405,7 @@ const ExperienceGroupCard = ({
                     {skills.map((skill) => (
                       <Tag
                         key={skill}
-                        className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 dark:text-blue-300 border border-blue-100/60 dark:border-blue-500/25 font-medium text-sm hover:bg-blue-50 transition-colors"
+                        className="m-0 px-2.5 py-0.5 rounded-md bg-[rgb(248,250,255)] text-blue-600 dark:text-blue-300 border border-blue-100/60 dark:border-blue-500/25 font-medium text-sm hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
                       >
                         {skill}
                       </Tag>

@@ -157,7 +157,7 @@ const RecurrenceModal: React.FC<RecurrenceModalProps> = ({
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors',
                     selectedDays.includes(day.value)
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-ink-800 text-gray-700 dark:text-ink-100 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-ink-800 text-gray-700 dark:text-ink-100 hover:bg-gray-200 dark:hover:bg-ink-800'
                   )}
                 >
                   {day.label}

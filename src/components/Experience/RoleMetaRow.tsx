@@ -6,7 +6,7 @@ import type { RoleDateLabel } from '../../utils/Experience/roleTimeline';
 
 const META_TEXT = 'text-[12.5px] leading-5';
 const MONEY_PILL =
-  'inline-flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-emerald-200/70 dark:border-emerald-500/25 bg-emerald-50/70 dark:bg-emerald-500/10 px-3 text-[12.5px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300 transition-colors hover:border-emerald-300 hover:bg-emerald-100/70 sm:min-h-7 sm:w-auto sm:justify-start sm:px-2.5';
+  'inline-flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-emerald-200/70 dark:border-emerald-500/25 bg-emerald-50/70 dark:bg-emerald-500/10 px-3 text-[12.5px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300 transition-colors hover:border-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/10 sm:min-h-7 sm:w-auto sm:justify-start sm:px-2.5';
 const MONEY_STATIC =
   'inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-emerald-200/60 dark:border-emerald-500/25 bg-emerald-50/60 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[12.5px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300';
 

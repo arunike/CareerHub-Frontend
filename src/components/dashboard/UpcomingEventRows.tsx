@@ -29,14 +29,14 @@ const UpcomingEventRows = ({ dismissEvent, otherUpcoming, setViewingEvent }: Pro
             aria-label={`Dismiss ${event.name}`}
             title="Dismiss"
             // Always visible: a hover-only control is unreachable on a touch screen.
-            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-ink-600 transition hover:bg-slate-100 hover:text-slate-600"
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 dark:text-ink-400 transition hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-800 dark:hover:text-ink-50"
           >
             <CloseOutlined className="text-[11px]" />
           </button>
           <button
             type="button"
             onClick={() => setViewingEvent(event)}
-            className="block w-full p-3 pr-10 text-left transition-colors hover:bg-gray-50"
+            className="block w-full p-3 pr-10 text-left transition-colors hover:bg-gray-50 dark:hover:bg-ink-800"
           >
             <div className="flex justify-between items-start gap-2">
               <span className="font-medium text-sm text-gray-900 dark:text-ink-50 line-clamp-1">

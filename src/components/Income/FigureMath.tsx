@@ -123,7 +123,7 @@ const FigureMath = ({
       <button
         type="button"
         aria-label={`How ${label.toLowerCase()} is worked out`}
-        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-300 dark:text-ink-600 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-500 dark:text-ink-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         <InfoCircleOutlined />
       </button>

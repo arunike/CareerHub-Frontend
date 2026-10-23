@@ -215,7 +215,7 @@ const CalendarMonthView = ({
         <div
           key={cloneDay.toString()}
           className={clsx(
-            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 dark:border-white/[0.07] p-1 transition-all [@media(hover:hover)]:hover:bg-gray-50 sm:h-28 sm:p-2 md:h-32',
+            'relative flex h-18 touch-manipulation cursor-pointer flex-col gap-1 border border-gray-100 dark:border-white/[0.07] p-1 transition-all [@media(hover:hover)]:hover:bg-gray-50 dark:hover:bg-ink-800 sm:h-28 sm:p-2 md:h-32',
             !isCurrentMonth && 'bg-gray-50/50 dark:bg-ink-900/50 text-gray-400 dark:text-ink-500',
             // Both can be true; which class wins is stylesheet order, not this order.
             isTodayDate && !isSelected && 'bg-blue-50/30 dark:bg-blue-500/10',

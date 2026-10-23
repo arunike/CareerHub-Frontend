@@ -28,14 +28,14 @@ const ToolbarButton = ({ active, onClick, title, children }: ToolbarButtonProps)
     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-sm transition-colors sm:h-8 sm:w-8 ${
       active
         ? 'bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300'
-        : 'text-slate-500 dark:text-ink-400 hover:bg-slate-100 hover:text-slate-700'
+        : 'text-slate-500 dark:text-ink-400 hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100'
     }`}
   >
     {children}
   </button>
 );
 
-const Divider = () => <div className="mx-1 h-4 w-px bg-slate-200 dark:bg-ink-800" />;
+const Divider = () => <div className="mx-1 h-4 w-px bg-slate-200 dark:bg-white/[0.12]" />;
 
 type Props = {
   applicationId: number;
@@ -149,7 +149,7 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
               <button
                 type="button"
                 onClick={() => void persistNotes(editor.getHTML())}
-                className="min-h-11 rounded-lg px-2 font-semibold text-rose-700 dark:text-rose-300 underline decoration-rose-300 underline-offset-2 hover:bg-rose-50 sm:min-h-8"
+                className="min-h-11 rounded-lg px-2 font-semibold text-rose-700 dark:text-rose-300 underline decoration-rose-300 underline-offset-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 sm:min-h-8"
               >
                 Retry
               </button>
@@ -279,7 +279,7 @@ const RichNotesEditor = ({ applicationId, initialNotes, onSaved }: Props) => {
         {/* Footer */}
         <div className="flex items-center justify-end border-t border-slate-50 dark:border-white/[0.07] px-4 py-2">
           <span
-            className={`text-[11px] ${nearLimit ? 'text-amber-400' : 'text-slate-300 dark:text-ink-600'}`}
+            className={`text-[11px] ${nearLimit ? 'text-amber-400' : 'text-slate-500 dark:text-ink-400'}`}
           >
             {charCount} / {MAX_CHARS}
           </span>

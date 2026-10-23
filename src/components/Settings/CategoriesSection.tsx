@@ -82,7 +82,7 @@ const CategoriesSection = ({
         <button
           type="button"
           onClick={() => setIsHolidayTabsLocked((l) => !l)}
-          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isHolidayTabsLocked ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100' : 'text-gray-600 dark:text-ink-200 hover:bg-gray-100 hover:text-gray-800'}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors sm:h-9 sm:w-9 ${isHolidayTabsLocked ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/10' : 'text-gray-600 dark:text-ink-200 hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-gray-800 dark:hover:text-ink-50'}`}
           title={isHolidayTabsLocked ? 'Unlock section' : 'Lock section'}
           aria-pressed={isHolidayTabsLocked}
         >
@@ -101,7 +101,7 @@ const CategoriesSection = ({
                 setIsAddingHolidayTab(true);
               }
             }}
-            className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 sm:min-h-9 sm:rounded-lg sm:py-1.5"
+            className="flex min-h-11 items-center gap-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition hover:bg-blue-100 dark:hover:bg-blue-500/10 sm:min-h-9 sm:rounded-lg sm:py-1.5"
           >
             {isAddingHolidayTab ? (
               <CloseOutlined className="text-base" />

@@ -111,7 +111,7 @@ const DrivingAssumptions = ({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100"
         >
           Cancel
         </button>
@@ -142,7 +142,7 @@ const DrivingAssumptions = ({
       <ul className="m-0 max-h-[220px] list-none space-y-1.5 overflow-y-auto p-0">
         {overrides.map((target) => (
           <li key={target.key}>
-            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 dark:border-white/[0.08] p-2 transition-colors hover:bg-slate-50">
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 dark:border-white/[0.08] p-2 transition-colors hover:bg-slate-50 dark:hover:bg-ink-800">
               <input
                 type="checkbox"
                 checked={selected.includes(target.key)}
@@ -179,7 +179,7 @@ const DrivingAssumptions = ({
               prev.length === overrides.length ? [] : overrides.map((target) => target.key)
             )
           }
-          className="rounded px-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800"
+          className="rounded px-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800 dark:hover:text-blue-200"
         >
           {selected.length === overrides.length ? 'Clear all' : 'Select all'}
         </button>
@@ -187,7 +187,7 @@ const DrivingAssumptions = ({
           <button
             type="button"
             onClick={() => setStep('edit')}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-slate-100 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100"
           >
             Back
           </button>
@@ -218,7 +218,7 @@ const DrivingAssumptions = ({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-ink-200 shadow-sm transition-colors hover:border-blue-400 hover:text-blue-700"
+        className="flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-ink-200 shadow-sm transition-colors hover:border-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
       >
         <CarOutlined className="text-slate-400 dark:text-ink-500" />
         <span className="text-slate-500 dark:text-ink-400">Driving:</span>

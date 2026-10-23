@@ -59,7 +59,7 @@ const CalendarRangeView = ({
                   'w-full touch-manipulation border-b border-gray-100 dark:border-white/[0.07] px-4 py-3 text-left transition-colors',
                   isSelected
                     ? 'bg-blue-50 dark:bg-blue-500/10'
-                    : 'bg-gray-50/80 dark:bg-ink-900/80 hover:bg-gray-50'
+                    : 'bg-gray-50/80 dark:bg-ink-900/80 hover:bg-gray-50 dark:hover:bg-ink-800'
                 )}
               >
                 <div className="flex items-center justify-between gap-3">

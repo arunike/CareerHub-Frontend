@@ -74,7 +74,7 @@ const Field = ({
         <button
           type="button"
           onClick={onHintClick}
-          className="mt-1 block text-[10px] leading-3 font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800"
+          className="mt-1 block text-[10px] leading-3 font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800 dark:hover:text-blue-200"
         >
           {hint} · use shared
         </button>
@@ -103,7 +103,7 @@ const SharedValue = ({
       onClick={onOverride}
       aria-label={label}
       title={label}
-      className="shrink-0 rounded px-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800"
+      className="shrink-0 rounded px-1 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-800 dark:hover:text-blue-200"
     >
       Edit
     </button>
@@ -131,7 +131,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
         <button
           type="button"
           onClick={() => onChange([...options, newOption(options.map((o) => o.mode))])}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 transition hover:bg-blue-50"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 transition hover:bg-blue-50 dark:hover:bg-blue-500/10"
         >
           <PlusOutlined className="text-[10px]" /> Add mode
         </button>
@@ -205,7 +205,7 @@ const CommuteOptionsEditor = ({ options, onChange, officeDays, drivingDefaults }
                       type="button"
                       onClick={() => remove(index)}
                       aria-label={`Remove ${COMMUTE_MODE_LABELS[option.mode]}`}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 dark:text-ink-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 dark:text-ink-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-300"
                     >
                       <DeleteOutlined className="text-xs" />
                     </button>

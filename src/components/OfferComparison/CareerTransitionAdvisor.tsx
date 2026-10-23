@@ -79,7 +79,7 @@ const CareerTransitionAdvisor = ({
       type="button"
       onClick={() => setIsAdvisorExpanded(!isAdvisorExpanded)}
       aria-expanded={isAdvisorExpanded}
-      className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
+      className="flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 sm:px-6"
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
@@ -405,7 +405,7 @@ const CareerTransitionAdvisor = ({
                 )}
 
                 {advisorResult.next_steps_criteria && (
-                  <div className="bg-gradient-to-r from-slate-50 dark:from-ink-900 to-indigo-50/30 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4 shadow-sm">
+                  <div className="bg-gradient-to-r from-slate-50 dark:from-ink-900 to-indigo-50/30 dark:to-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4 shadow-sm">
                     <h5 className="text-xs font-bold text-indigo-800 dark:text-indigo-200 uppercase tracking-wider mb-2 border-b border-indigo-100/60 dark:border-indigo-500/25 pb-1.5 flex items-center gap-1.5">
                       🎯{' '}
                       {advisorResult.next_steps_criteria.title || 'Recommended Job Search Criteria'}
@@ -414,7 +414,10 @@ const CareerTransitionAdvisor = ({
                       {Array.isArray(advisorResult.next_steps_criteria.items) &&
                         advisorResult.next_steps_criteria.items.map(
                           (point: string, idx: number) => (
-                            <li key={idx} className="hover:text-indigo-900 transition-colors">
+                            <li
+                              key={idx}
+                              className="hover:text-indigo-900 dark:hover:text-indigo-200 transition-colors"
+                            >
                               {parseInlineMarkdown(point)}
                             </li>
                           )

@@ -373,7 +373,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 dark:text-ink-200 outline-none transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 dark:text-ink-200 outline-none transition-colors hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         aria-label="Open notifications"
         aria-expanded={isOpen}
       >
@@ -419,7 +419,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
             </h3>
             <Link
               to="/?view=calendar"
-              className="text-xs text-blue-600 dark:text-blue-300 hover:text-blue-700 font-medium"
+              className="text-xs text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               onClick={() => setIsOpen(false)}
             >
               View Calendar
@@ -460,7 +460,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ placement = 'bottom
                     {conflicts.map((conflict) => (
                       <div
                         key={conflict.id}
-                        className="p-3 hover:bg-red-50 transition-colors relative group"
+                        className="p-3 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors relative group"
                       >
                         <div className="text-xs font-medium text-gray-900 dark:text-ink-50 mb-1">
                           Overlap Detected

@@ -66,7 +66,7 @@ const FreeFoodGroup = ({
                 className={`min-h-11 rounded-lg border px-3 text-left text-sm font-medium transition-colors sm:h-[38px] sm:min-h-0 ${
                   active
                     ? 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-900 dark:text-ink-50'
-                    : 'border-dashed border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-400 dark:text-ink-500 hover:text-slate-600'
+                    : 'border-dashed border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-400 dark:text-ink-500 hover:text-slate-600 dark:hover:text-ink-200'
                 }`}
               >
                 {MEAL_LABELS[meal]}

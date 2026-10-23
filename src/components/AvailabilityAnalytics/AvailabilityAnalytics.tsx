@@ -153,7 +153,7 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
         <button
           type="button"
           onClick={() => setIsCustomizeOpen(true)}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-500 dark:text-ink-400 transition-all hover:bg-gray-100 hover:text-gray-700 sm:w-auto"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-500 dark:text-ink-400 transition-all hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-gray-700 dark:hover:text-ink-100 sm:w-auto"
         >
           <SettingOutlined />
           Customize view

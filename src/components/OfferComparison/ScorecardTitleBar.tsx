@@ -89,7 +89,7 @@ const ScorecardTitleBar = ({
               {leader.score}
             </p>
           </div>
-          <div className="h-12 w-[1px] bg-slate-200 dark:bg-ink-800" />
+          <div className="h-12 w-[1px] bg-slate-200 dark:bg-white/[0.12]" />
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-ink-500">
               Value

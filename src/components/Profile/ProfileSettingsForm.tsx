@@ -150,7 +150,7 @@ const ProfileSettingsForm = ({
         </div>
         <h3 className="text-base font-bold text-slate-800 dark:text-ink-50">Security & Privacy</h3>
         <Tooltip title={ACCOUNT_TOOLTIPS.passwordStorage}>
-          <div className="ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-[10px] font-bold text-emerald-600 dark:text-emerald-300 cursor-help transition-all hover:bg-emerald-100">
+          <div className="ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-[10px] font-bold text-emerald-600 dark:text-emerald-300 cursor-help transition-all hover:bg-emerald-100 dark:hover:bg-emerald-500/10">
             <SafetyOutlined className="text-[12px]" />
             ENCRYPTED
           </div>
@@ -210,7 +210,7 @@ const ProfileSettingsForm = ({
             icon={<LockOutlined />}
             loading={passwordSaving}
             onClick={handlePasswordChange}
-            className="rounded-xl h-11 text-xs font-bold border-slate-200 dark:border-white/[0.08] hover:border-sky-500 hover:text-sky-600 transition-all flex items-center gap-2"
+            className="rounded-xl h-11 text-xs font-bold border-slate-200 dark:border-white/[0.08] hover:border-sky-500 hover:text-sky-600 dark:hover:text-sky-300 transition-all flex items-center gap-2"
           >
             Update Account Password
           </Button>

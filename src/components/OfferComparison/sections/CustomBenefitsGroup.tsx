@@ -37,7 +37,7 @@ const CustomBenefitsGroup = ({
         <button
           type="button"
           onClick={onAddBenefitItem}
-          className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 px-3 text-xs font-semibold text-blue-700 dark:text-blue-300 transition hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:rounded-lg"
+          className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 px-3 text-xs font-semibold text-blue-700 dark:text-blue-300 transition hover:border-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:rounded-lg"
         >
           + Add Custom Item
         </button>
@@ -86,13 +86,13 @@ const CustomBenefitsGroup = ({
               onClick={() => onUpdateBenefitItem(item.id, { is_taxable: !item.is_taxable })}
               className={`flex h-[38px] items-center justify-center gap-1.5 rounded-[9px] border text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 item.is_taxable
-                  ? 'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100'
-                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400 hover:bg-slate-50'
+                  ? 'border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/10'
+                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800'
               }`}
             >
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
-                  item.is_taxable ? 'bg-amber-500' : 'bg-slate-300 dark:bg-ink-700'
+                  item.is_taxable ? 'bg-amber-500' : 'bg-slate-500 dark:bg-ink-500'
                 }`}
               />
               {item.is_taxable ? 'Taxable' : 'Tax-free'}
@@ -100,7 +100,7 @@ const CustomBenefitsGroup = ({
             <button
               type="button"
               onClick={() => onRemoveBenefitItem(item.id)}
-              className="flex h-[38px] items-center justify-center rounded-[9px] text-slate-400 dark:text-ink-500 transition-colors hover:bg-red-50 hover:text-red-600"
+              className="flex h-[38px] items-center justify-center rounded-[9px] text-slate-400 dark:text-ink-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-300"
               aria-label="Remove benefit item"
             >
               <CloseOutlined className="text-xs" />

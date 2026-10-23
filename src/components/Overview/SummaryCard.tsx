@@ -79,7 +79,7 @@ const SummaryCard = ({
               aria-expanded={open}
               aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
               onClick={() => setOpen((current) => !current)}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-ink-500 dark:hover:bg-white/[0.06]"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:text-ink-200 dark:text-ink-500 dark:hover:bg-white/[0.06]"
             >
               <DownOutlined
                 className={`text-[11px] transition-transform ${collapsed ? '-rotate-90' : ''}`}

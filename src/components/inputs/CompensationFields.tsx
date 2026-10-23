@@ -193,7 +193,7 @@ const CompensationFields: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={resetVestingToFull}
-                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
               >
                 Reset 100%
               </button>
@@ -269,7 +269,7 @@ const CompensationFields: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => setIsVestingOpen(false)}
-          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-ink-400 hover:bg-gray-50"
+          className="rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 dark:text-ink-400 hover:bg-gray-50 dark:hover:bg-ink-800"
         >
           Done
         </button>
@@ -394,7 +394,7 @@ const CompensationFields: React.FC<Props> = ({
               >
                 <button
                   type="button"
-                  className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50"
+                  className="shrink-0 rounded px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10"
                 >
                   Configure
                 </button>

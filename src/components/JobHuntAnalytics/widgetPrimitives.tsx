@@ -97,7 +97,7 @@ export const TooltipLabel = ({
       <span>{children}</span>
       <CrispInfoIcon
         size={13}
-        className="text-slate-400 dark:text-ink-500 opacity-70 group-hover:opacity-100 group-hover:text-blue-600 transition-all"
+        className="text-slate-400 dark:text-ink-500 opacity-70 group-hover:opacity-100 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-all"
       />
     </span>
   </Tooltip>
@@ -116,7 +116,7 @@ export const renderPercentageList = (
       return (
         <div
           key={item.name}
-          className="group/metric relative grid grid-cols-[minmax(0,88px)_minmax(28px,1fr)_56px] items-center gap-2 rounded-lg px-1 py-1.5 transition-colors hover:bg-slate-50 md:grid-cols-[96px_1fr_44px] md:gap-3"
+          className="group/metric relative grid grid-cols-[minmax(0,88px)_minmax(28px,1fr)_56px] items-center gap-2 rounded-lg px-1 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-ink-800 md:grid-cols-[96px_1fr_44px] md:gap-3"
         >
           <span
             className="truncate text-sm font-medium text-gray-700 dark:text-ink-100"
@@ -131,7 +131,7 @@ export const renderPercentageList = (
             />
             <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 scale-95 whitespace-nowrap rounded-lg border border-slate-800 bg-slate-900/95 px-3 py-1.5 text-center text-xs text-white opacity-0 shadow-xl transition-all duration-150 group-hover/metric:scale-100 group-hover/metric:opacity-100 md:block">
               <span className="block font-bold text-slate-100">{item.name}</span>
-              <span className="mt-0.5 block text-[11px] text-slate-300 dark:text-ink-600">
+              <span className="mt-0.5 block text-[11px] text-slate-300">
                 {item.count} application{item.count === 1 ? '' : 's'} ({shownPercent})
               </span>
               <span className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-800 bg-slate-900" />

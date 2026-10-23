@@ -116,7 +116,7 @@ const ContactsPanel = ({ applicationId, experienceId, description }: Props) => {
                 {contact.email && (
                   <a
                     href={`mailto:${contact.email}`}
-                    className="block truncate text-xs text-slate-500 dark:text-ink-400 hover:text-blue-600"
+                    className="block truncate text-xs text-slate-500 dark:text-ink-400 hover:text-blue-600 dark:hover:text-blue-300"
                   >
                     {contact.email}
                   </a>

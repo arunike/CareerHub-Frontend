@@ -245,7 +245,7 @@ export const WatchListSection = ({
                   {/* A report you cannot act on sends you hunting through 800 rows. */}
                   <Link
                     to={`/applications?application=${item.application_id}`}
-                    className="block truncate text-sm font-semibold text-gray-900 dark:text-ink-50 hover:text-blue-700 hover:underline"
+                    className="block truncate text-sm font-semibold text-gray-900 dark:text-ink-50 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
                     title={`Open ${item.company} — ${item.role_title}`}
                   >
                     {item.company} · {item.role_title}
@@ -275,7 +275,7 @@ export const WatchListSection = ({
                       type="button"
                       onClick={() => onGhost(item.application_id)}
                       aria-label={`Mark ${item.company} as ghosted`}
-                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-white hover:text-rose-600"
+                      className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-white dark:hover:bg-ink-800 hover:text-rose-600 dark:hover:text-rose-300"
                     >
                       Ghosted
                     </button>

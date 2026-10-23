@@ -57,7 +57,7 @@ const ProjectionAssumptions = ({
                 'flex-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
                 equityGrowthPct === shortcut.value
                   ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
-                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 hover:border-slate-300 hover:bg-slate-50'
+                  : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-ink-800'
               )}
             >
               {shortcut.label}
@@ -102,7 +102,7 @@ const ProjectionAssumptions = ({
           'text-[11px] font-medium transition-colors',
           isDefault
             ? 'cursor-default text-slate-300 dark:text-ink-600'
-            : 'text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 hover:underline'
+            : 'text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline'
         )}
       >
         Reset to defaults
@@ -126,7 +126,7 @@ const ProjectionAssumptions = ({
     >
       <button
         type="button"
-        className="flex min-h-8 items-center gap-1.5 rounded-md border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-ink-100 transition-colors hover:border-indigo-400 hover:text-indigo-600"
+        className="flex min-h-8 items-center gap-1.5 rounded-md border border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-ink-100 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300"
         aria-label={`Projection assumptions: equity ${formatSigned(equityGrowthPct)} per year, base ${formatSigned(baseGrowthPct)} per year`}
       >
         <SlidersOutlined className="text-[11px] text-slate-400 dark:text-ink-500" />

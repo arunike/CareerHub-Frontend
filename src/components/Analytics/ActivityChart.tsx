@@ -264,7 +264,7 @@ const ActivityChart = ({
           <button
             type="button"
             onClick={() => setDrill([])}
-            className="font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:text-blue-900"
+            className="font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:text-blue-900 dark:hover:text-blue-200"
           >
             {picked
               ? formatWindow(picked.start, picked.end)
@@ -281,7 +281,7 @@ const ActivityChart = ({
                 className={
                   index === drill.length - 1
                     ? 'font-semibold text-slate-900 dark:text-ink-50'
-                    : 'font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:text-blue-900'
+                    : 'font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:text-blue-900 dark:hover:text-blue-200'
                 }
               >
                 {step.label}
@@ -292,7 +292,7 @@ const ActivityChart = ({
             type="button"
             onClick={() => setDrill([])}
             aria-label="Clear breakdown"
-            className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-white hover:text-slate-800"
+            className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 font-semibold text-slate-500 dark:text-ink-400 transition-colors hover:bg-white dark:hover:bg-ink-800 hover:text-slate-800 dark:hover:text-ink-50"
           >
             <CloseOutlined className="text-[10px]" /> Reset
           </button>

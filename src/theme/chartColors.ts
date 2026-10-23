@@ -3,7 +3,7 @@ import { useTheme } from './ThemeProvider';
 // Recharts takes hex props, so a chart cannot answer `dark:`; full saturation reads fluorescent.
 const LIGHT_SERIES = {
   base: '#2563eb',
-  bonus: '#60a5fa',
+  bonus: '#16a34a',
   equity: '#ec4899',
   signOn: '#14b8a6',
   benefits: '#f59e0b',
@@ -14,7 +14,7 @@ const LIGHT_SERIES = {
 
 const DARK_SERIES = {
   base: '#5b8def',
-  bonus: '#8fb6ff',
+  bonus: '#3fbf6a',
   equity: '#d2739a',
   signOn: '#4fb8a5',
   benefits: '#d9a441',
@@ -25,10 +25,10 @@ const DARK_SERIES = {
 
 export type ChartSeries = typeof LIGHT_SERIES;
 
-const chartSeriesFor = (theme: 'light' | 'dark'): ChartSeries =>
+export const chartSeriesForTheme = (theme: 'light' | 'dark'): ChartSeries =>
   theme === 'dark' ? DARK_SERIES : LIGHT_SERIES;
 
-export const useChartSeries = (): ChartSeries => chartSeriesFor(useTheme().resolved);
+export const useChartSeries = (): ChartSeries => chartSeriesForTheme(useTheme().resolved);
 
 // Axes and gridlines follow the surface, not the data.
 const chartAxisFor = (theme: 'light' | 'dark') =>

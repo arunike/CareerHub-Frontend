@@ -46,13 +46,13 @@ const AttributeTable: React.FC<{ comparison: PayComparison }> = ({ comparison })
           className="truncate text-right text-slate-900 dark:text-ink-50"
           title={attribute.current ?? undefined}
         >
-          {attribute.current ?? <span className="text-slate-300 dark:text-ink-600">Not set</span>}
+          {attribute.current ?? <span className="text-slate-500 dark:text-ink-400">Not set</span>}
         </span>
         <span
           className="truncate text-right text-slate-500 dark:text-ink-400"
           title={attribute.previous ?? undefined}
         >
-          {attribute.previous ?? <span className="text-slate-300 dark:text-ink-600">Not set</span>}
+          {attribute.previous ?? <span className="text-slate-500 dark:text-ink-400">Not set</span>}
         </span>
         <span className="text-right">
           {attribute.changed ? (
@@ -205,7 +205,7 @@ const PayGrowthModal: React.FC<Props> = ({ open, onClose, summary, getSnapshot }
               type="button"
               onClick={swapSides}
               aria-label="Swap current and previous roles"
-              className="mb-0.5 shrink-0 rounded-lg border border-slate-200 dark:border-white/[0.08] p-2 text-slate-400 dark:text-ink-500 transition-colors hover:border-sky-300 hover:text-sky-600"
+              className="mb-0.5 shrink-0 rounded-lg border border-slate-200 dark:border-white/[0.08] p-2 text-slate-400 dark:text-ink-500 transition-colors hover:border-sky-300 hover:text-sky-600 dark:hover:text-sky-300"
             >
               <SwapOutlined />
             </button>

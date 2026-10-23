@@ -24,7 +24,7 @@ const CollapsibleGroup = ({
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-controls={panelId}
-          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50"
+          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-ink-800"
         >
           <span className="min-w-0 text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-ink-50">
             {title}

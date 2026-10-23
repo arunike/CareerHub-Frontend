@@ -36,7 +36,7 @@ const ScorecardMedicalBreakdown = ({
                 </span>
               )}
             </div>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 group-hover:text-sky-800 transition-colors">
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 group-hover:text-sky-800 dark:group-hover:text-sky-200 transition-colors">
               {isMedicalExpanded ? 'Hide' : 'View breakdown'}
               {isMedicalExpanded ? (
                 <DownOutlined className="text-[9px]" />

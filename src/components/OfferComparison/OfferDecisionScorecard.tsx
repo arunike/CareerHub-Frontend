@@ -417,7 +417,7 @@ const OfferDecisionScorecard = ({
                             <button
                               type="button"
                               onClick={() => onToggleCurrent(baselineCandidates[0])}
-                              className="rounded-lg border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 shadow-sm transition-colors hover:bg-amber-50"
+                              className="rounded-lg border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 shadow-sm transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10"
                             >
                               Move to {offerLabel(baselineCandidates[0])} →
                             </button>
@@ -436,7 +436,7 @@ const OfferDecisionScorecard = ({
                                       key={candidate.id}
                                       type="button"
                                       onClick={() => onToggleCurrent(candidate)}
-                                      className="rounded-lg px-2 py-1.5 text-left text-xs font-semibold text-slate-700 dark:text-ink-100 hover:bg-slate-50"
+                                      className="rounded-lg px-2 py-1.5 text-left text-xs font-semibold text-slate-700 dark:text-ink-100 hover:bg-slate-50 dark:hover:bg-ink-800"
                                     >
                                       {offerLabel(candidate)}
                                       {candidate.linked_experience?.start_date && (
@@ -451,7 +451,7 @@ const OfferDecisionScorecard = ({
                             >
                               <button
                                 type="button"
-                                className="rounded-lg border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 shadow-sm transition-colors hover:bg-amber-50"
+                                className="rounded-lg border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-ink-900 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 shadow-sm transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10"
                               >
                                 Move baseline →
                               </button>

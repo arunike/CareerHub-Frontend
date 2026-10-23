@@ -50,7 +50,7 @@ const BookingSlotPicker = ({
             className={`min-h-11 rounded-lg px-4 text-sm font-semibold transition-colors sm:min-h-9 ${
               slotView === 'list'
                 ? 'bg-white dark:bg-ink-900 text-blue-700 dark:text-blue-300 shadow-sm'
-                : 'text-slate-600 dark:text-ink-200 hover:text-slate-900'
+                : 'text-slate-600 dark:text-ink-200 hover:text-slate-900 dark:hover:text-ink-50'
             }`}
             aria-pressed={slotView === 'list'}
           >
@@ -62,7 +62,7 @@ const BookingSlotPicker = ({
             className={`min-h-11 rounded-lg px-4 text-sm font-semibold transition-colors sm:min-h-9 ${
               slotView === 'calendar'
                 ? 'bg-white dark:bg-ink-900 text-blue-700 dark:text-blue-300 shadow-sm'
-                : 'text-slate-600 dark:text-ink-200 hover:text-slate-900'
+                : 'text-slate-600 dark:text-ink-200 hover:text-slate-900 dark:hover:text-ink-50'
             }`}
             aria-pressed={slotView === 'calendar'}
           >
@@ -146,7 +146,7 @@ const BookingSlotPicker = ({
                         isSelected
                           ? 'border-blue-600 bg-blue-600 text-white'
                           : hasSlots
-                            ? 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50'
+                            ? 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10'
                             : 'cursor-not-allowed border-transparent bg-slate-50 dark:bg-ink-900 text-slate-400 dark:text-ink-500 opacity-60'
                       }`}
                       aria-pressed={isSelected}
@@ -183,7 +183,7 @@ const BookingSlotPicker = ({
                       className={`min-h-11 rounded-xl border px-4 text-sm font-semibold transition-colors ${
                         active
                           ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50'
+                          : 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10'
                       }`}
                       aria-pressed={active}
                     >
@@ -215,7 +215,7 @@ const BookingSlotPicker = ({
                     className={`flex min-h-14 items-center justify-between rounded-xl border px-4 text-left transition-colors ${
                       active
                         ? 'border-blue-600 bg-blue-600 text-white'
-                        : 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50'
+                        : 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10'
                     }`}
                     aria-pressed={active}
                   >

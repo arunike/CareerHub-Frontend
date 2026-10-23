@@ -21,7 +21,7 @@ export const EditNotice = ({
       <button
         type="button"
         onClick={onEdit}
-        className="shrink-0 rounded-full border border-blue-200 dark:border-blue-500/25 bg-white dark:bg-ink-900 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:bg-blue-100"
+        className="shrink-0 rounded-full border border-blue-200 dark:border-blue-500/25 bg-white dark:bg-ink-900 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-300 transition-colors hover:bg-blue-100 dark:hover:bg-blue-500/10"
       >
         {actionLabel}
       </button>
@@ -125,11 +125,11 @@ export const EditableMetricRow = ({
     <button
       type="button"
       onClick={onActivate}
-      className="group w-full py-2.5 text-left transition-colors hover:bg-gray-50/70 outline-none px-2 -mx-2 rounded-lg"
+      className="group w-full py-2.5 text-left transition-colors hover:bg-gray-50/70 dark:hover:bg-ink-800 outline-none px-2 -mx-2 rounded-lg"
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-ink-500 group-hover:text-gray-600 transition-colors">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400 dark:text-ink-500 group-hover:text-gray-600 dark:group-hover:text-ink-200 transition-colors">
             {label}
           </div>
           {hint && (
@@ -140,7 +140,7 @@ export const EditableMetricRow = ({
         </div>
         <div className="shrink-0 flex items-center gap-3 text-left sm:text-right mt-1 sm:mt-0">
           <div className="text-[15px] font-bold text-gray-800 dark:text-ink-50">{value}</div>
-          <div className="text-[10px] font-semibold text-gray-400 dark:text-ink-500 group-hover:text-blue-600 transition-colors uppercase tracking-widest bg-gray-50 dark:bg-ink-900 px-1.5 py-0.5 rounded group-hover:bg-blue-50">
+          <div className="text-[10px] font-semibold text-gray-400 dark:text-ink-500 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors uppercase tracking-widest bg-gray-50 dark:bg-ink-900 px-1.5 py-0.5 rounded group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10">
             Edit
           </div>
         </div>

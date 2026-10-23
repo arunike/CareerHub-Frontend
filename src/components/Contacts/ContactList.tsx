@@ -107,7 +107,7 @@ const ContactList = ({ groups, groupMode, relationshipSummary, onSelect }: Props
                   type="button"
                   aria-label={`Open ${contact.name}`}
                   onClick={() => onSelect(contact)}
-                  className={`group grid w-full grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors duration-200 hover:bg-slate-50/80 active:bg-slate-100 sm:gap-5 sm:px-5 ${columnGrid}`}
+                  className={`group grid w-full grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors duration-200 hover:bg-slate-50/80 dark:hover:bg-ink-800 active:bg-slate-100 dark:active:bg-ink-800 sm:gap-5 sm:px-5 ${columnGrid}`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-ink-900 text-xs font-semibold tracking-wide text-slate-600 dark:text-ink-200 shadow-sm">

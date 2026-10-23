@@ -284,7 +284,7 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
                               className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex flex-col gap-0.5 border ${
                                 isActive
                                   ? 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/25 text-blue-800 dark:text-blue-200'
-                                  : 'bg-white dark:bg-ink-900 border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-ink-100 hover:bg-slate-50 hover:border-slate-300'
+                                  : 'bg-white dark:bg-ink-900 border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-ink-100 hover:bg-slate-50 dark:hover:bg-ink-800 hover:border-slate-300'
                               }`}
                             >
                               <span className="font-semibold block truncate">
@@ -420,11 +420,11 @@ const PromotionReviewModal: React.FC<PromotionReviewModalProps> = ({
                           {optionalFieldGroups.map((group) => (
                             <section key={group.title} className="space-y-4">
                               <div className="flex items-center gap-3">
-                                <div className="h-px flex-1 bg-slate-200 dark:bg-ink-800" />
+                                <div className="h-px flex-1 bg-slate-200 dark:bg-white/[0.12]" />
                                 <Text className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-ink-400">
                                   {group.title}
                                 </Text>
-                                <div className="h-px flex-1 bg-slate-200 dark:bg-ink-800" />
+                                <div className="h-px flex-1 bg-slate-200 dark:bg-white/[0.12]" />
                               </div>
                               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 {group.fields.map((field) => (

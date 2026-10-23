@@ -34,7 +34,8 @@ const desktopOptionClass = 'mb-0.5 h-9 text-sm last:mb-0';
 const mobileOptionClass = 'mb-0.5 min-h-12 text-lg last:mb-0';
 const activeOptionClass =
   'bg-white dark:bg-ink-900 text-gray-950 dark:text-ink-50 shadow-[0_1px_8px_rgba(15,23,42,0.08)] ring-1 ring-gray-200 dark:ring-white/[0.08]';
-const inactiveOptionClass = 'text-gray-500 dark:text-ink-400 hover:bg-white hover:text-gray-900';
+const inactiveOptionClass =
+  'text-gray-500 dark:text-ink-400 hover:bg-white dark:hover:bg-ink-800 hover:text-gray-900 dark:hover:text-ink-50';
 const columnClass =
   'overflow-y-auto rounded-md bg-gray-50/70 dark:bg-ink-900/70 p-1 ring-1 ring-gray-100 dark:ring-white/[0.08]';
 
@@ -449,7 +450,7 @@ const FriendlyTimeInput = ({
                     'h-1 w-11 rounded-full transition-colors',
                     mobileSheet.isDragging
                       ? 'bg-blue-400'
-                      : 'bg-gray-300 dark:bg-ink-700 group-active:bg-blue-400'
+                      : 'bg-gray-300 dark:bg-ink-600 group-active:bg-blue-400'
                   )}
                   aria-hidden="true"
                 />

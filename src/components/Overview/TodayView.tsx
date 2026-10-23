@@ -468,7 +468,7 @@ const TodayView = ({
               {soonest.applicationId && (
                 <Link
                   to={`/applications?open=${soonest.applicationId}`}
-                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3 text-[12px] font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700 dark:border-white/[0.10] dark:text-ink-100 dark:hover:border-blue-400/40"
+                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3 text-[12px] font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-300 dark:border-white/[0.10] dark:text-ink-100 dark:hover:border-blue-400/40"
                 >
                   Open application
                 </Link>
@@ -530,7 +530,7 @@ const TodayView = ({
                 </Link>
                 <Link
                   to="/applications?action=job-import"
-                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700 dark:border-white/[0.10] dark:text-ink-100 dark:hover:border-blue-400/40"
+                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3.5 text-[12px] font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-300 dark:border-white/[0.10] dark:text-ink-100 dark:hover:border-blue-400/40"
                 >
                   Import from a job link
                 </Link>

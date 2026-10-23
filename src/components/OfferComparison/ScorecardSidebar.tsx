@@ -89,7 +89,7 @@ const ScorecardSidebar = ({
           <button
             type="button"
             onClick={saveAdjustments}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white dark:bg-ink-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-ink-100 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-white/[0.12] transition-colors hover:bg-slate-50"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white dark:bg-ink-900 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-ink-100 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-white/[0.12] transition-colors hover:bg-slate-50 dark:hover:bg-ink-800"
           >
             Save Settings
           </button>

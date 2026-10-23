@@ -72,7 +72,7 @@ const TaskFilterBar = ({
             <button
               type="button"
               onClick={() => setSmartReminderText(example)}
-              className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-medium text-slate-600 dark:text-ink-200 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 text-xs font-medium text-slate-600 dark:text-ink-200 transition-colors hover:border-sky-200 hover:bg-sky-50 dark:hover:bg-sky-500/10 hover:text-sky-700 dark:hover:text-sky-300"
             >
               {example}
             </button>

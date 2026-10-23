@@ -178,9 +178,9 @@ const MobileQuickActions = ({ open, sourceKey, onClose, onNavigate }: MobileQuic
                 key={action.key}
                 type="button"
                 onClick={() => onNavigate(action.destination)}
-                className="group flex min-h-[76px] items-center gap-3 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
+                className="group flex min-h-[76px] items-center gap-3 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:hover:bg-blue-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-ink-800 text-base text-slate-700 dark:text-ink-100 transition-colors group-hover:bg-white group-hover:text-blue-600">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-ink-800 text-base text-slate-700 dark:text-ink-100 transition-colors group-hover:bg-white dark:group-hover:bg-ink-800 group-hover:text-blue-600 dark:group-hover:text-blue-300">
                   <Icon />
                 </span>
                 <span className="min-w-0">

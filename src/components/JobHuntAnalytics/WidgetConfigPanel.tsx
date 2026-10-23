@@ -148,7 +148,7 @@ const WidgetConfigPanel = ({
                 className={`p-2 rounded-lg border text-sm transition-all ${
                   newWidgetIcon === iconData.name
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 scale-105 font-bold shadow-sm'
-                    : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400 hover:bg-slate-50 hover:text-slate-700'
+                    : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-500 dark:text-ink-400 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-700 dark:hover:text-ink-100'
                 }`}
               >
                 <CurrentIcon />

@@ -248,7 +248,7 @@ export const PromotionReviewResultView: React.FC<{
               ? `/promotion-review/${activeReviewId}`
               : '/ai-tools?tab=promotion-reviews'
           }
-          className="text-[13px] font-bold text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 inline-flex items-center gap-1 mt-3"
+          className="text-[13px] font-bold text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-indigo-300 inline-flex items-center gap-1 mt-3"
         >
           {activeReviewId
             ? 'View Full Detailed Review →'

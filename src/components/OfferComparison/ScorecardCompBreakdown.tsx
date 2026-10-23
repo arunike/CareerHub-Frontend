@@ -43,7 +43,7 @@ const ScorecardCompBreakdown = ({
       type="button"
       onClick={() => toggleOfferDetails(row.id)}
       aria-expanded={!collapsedDetailIds.has(row.id)}
-      className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
+      className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 sm:px-6"
     >
       <span>
         <span className="block text-xs font-semibold text-slate-800 dark:text-ink-50">

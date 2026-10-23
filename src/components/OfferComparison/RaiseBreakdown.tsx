@@ -83,7 +83,7 @@ const RaiseBreakdown = ({
           return (
             <tr
               key={row.label}
-              className="border-b border-gray-50 dark:border-white/[0.07] hover:bg-gray-50"
+              className="border-b border-gray-50 dark:border-white/[0.07] hover:bg-gray-50 dark:hover:bg-ink-800"
             >
               <td className="px-4 py-2 text-gray-700 dark:text-ink-100">
                 <div>{row.label}</div>

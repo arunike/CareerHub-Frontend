@@ -60,7 +60,7 @@ const CalendarHeader = ({
     } ${loading ? 'cursor-not-allowed opacity-60' : ''}`;
 
   const rangeButtonClassName =
-    'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
+    'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
 
   const navCluster = (
     <div
@@ -83,7 +83,7 @@ const CalendarHeader = ({
         type="button"
         onClick={onGoToToday}
         disabled={loading}
-        className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3.5 text-sm font-medium text-slate-700 dark:text-ink-100 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
+        className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3.5 text-sm font-medium text-slate-700 dark:text-ink-100 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-950 dark:hover:text-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:px-3"
       >
         Today
       </button>

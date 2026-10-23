@@ -95,7 +95,7 @@ const OfferDocumentsPanel = ({
         <button
           type="button"
           onClick={() => setIsUploadOpen(true)}
-          className="text-xs font-semibold text-blue-600 dark:text-blue-300 hover:text-blue-700"
+          className="text-xs font-semibold text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300"
         >
           Add
         </button>
@@ -116,7 +116,7 @@ const OfferDocumentsPanel = ({
           {documents.map((doc) => (
             <li
               key={doc.id}
-              className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50"
+              className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-50 dark:hover:bg-ink-800"
             >
               <span className="flex min-w-0 items-center gap-2.5">
                 <FileTextOutlined className="shrink-0 text-slate-400 dark:text-ink-500" />
@@ -124,7 +124,7 @@ const OfferDocumentsPanel = ({
                   <button
                     type="button"
                     onClick={() => void openDocument(doc)}
-                    className="truncate text-left text-[13px] text-blue-600 dark:text-blue-300 hover:text-blue-700 hover:underline"
+                    className="truncate text-left text-[13px] text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
                     title={doc.title}
                   >
                     {doc.title}

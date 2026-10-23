@@ -73,7 +73,7 @@ const AvailabilitySection = ({
                 className={`min-h-11 min-w-11 rounded-lg border px-3 text-sm font-medium transition-colors ${
                   isSelected
                     ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50'
+                    : 'border-slate-300 dark:border-white/[0.12] bg-white dark:bg-ink-900 text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10'
                 }`}
                 aria-pressed={isSelected}
               >
@@ -93,7 +93,7 @@ const AvailabilitySection = ({
           <button
             type="button"
             onClick={() => addAvailabilityRange()}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition-colors hover:bg-blue-50"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-blue-700 dark:text-blue-300 transition-colors hover:bg-blue-50 dark:hover:bg-blue-500/10"
           >
             <PlusOutlined /> Add Range
           </button>
@@ -173,7 +173,7 @@ const AvailabilitySection = ({
                         aria-expanded={isExpanded}
                         aria-controls={editorId}
                         aria-label={`Edit availability for ${daySummary}: ${blockSummary}`}
-                        className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-lg px-2 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-lg px-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-ink-800 text-sm font-bold text-slate-600 dark:text-ink-200">
                           {groupIndex + 1}
@@ -204,7 +204,7 @@ const AvailabilitySection = ({
                         onClick={() =>
                           removeAvailabilityGroup(group.blocks.map(({ index }) => index))
                         }
-                        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 dark:text-ink-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 dark:text-ink-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                         aria-label={`Remove all availability on ${daySummary}`}
                       >
                         <CloseOutlined />
@@ -287,7 +287,7 @@ const AvailabilitySection = ({
                                 <button
                                   type="button"
                                   onClick={() => removeAvailabilityRange(index)}
-                                  className="inline-flex min-h-11 min-w-11 items-center justify-center justify-self-start rounded-lg text-slate-400 dark:text-ink-500 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 sm:justify-self-auto"
+                                  className="inline-flex min-h-11 min-w-11 items-center justify-center justify-self-start rounded-lg text-slate-400 dark:text-ink-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 sm:justify-self-auto"
                                   aria-label={`Remove block ${blockIndex + 1} on ${daySummary}`}
                                 >
                                   <CloseOutlined />
@@ -302,7 +302,7 @@ const AvailabilitySection = ({
                         <button
                           type="button"
                           onClick={() => addAvailabilityRange(group.days)}
-                          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] px-3 py-1 text-xs font-medium text-slate-600 dark:text-ink-200 transition hover:border-blue-400 hover:text-blue-600 active:scale-[0.98] sm:min-h-8 sm:rounded-md"
+                          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.12] px-3 py-1 text-xs font-medium text-slate-600 dark:text-ink-200 transition hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-300 active:scale-[0.98] sm:min-h-8 sm:rounded-md"
                         >
                           <PlusOutlined /> Add time block
                         </button>
@@ -332,7 +332,7 @@ const AvailabilitySection = ({
                                     isSelected
                                       ? 'border-blue-200 dark:border-blue-500/25 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
                                       : isEnabledWorkDay
-                                        ? 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 hover:bg-gray-50'
+                                        ? 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-600 dark:text-ink-200 hover:bg-gray-50 dark:hover:bg-ink-800'
                                         : 'cursor-not-allowed border-gray-100 dark:border-white/[0.07] bg-gray-50 dark:bg-ink-900 text-gray-300 dark:text-ink-600'
                                   }`}
                                   title={
@@ -353,7 +353,7 @@ const AvailabilitySection = ({
                                   enabledDays
                                 )
                               }
-                              className="min-h-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 py-1 text-xs font-medium text-gray-600 dark:text-ink-200 transition hover:bg-gray-50 active:scale-[0.98] sm:min-h-8 sm:rounded-md"
+                              className="min-h-11 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-3 py-1 text-xs font-medium text-gray-600 dark:text-ink-200 transition hover:bg-gray-50 dark:hover:bg-ink-800 active:scale-[0.98] sm:min-h-8 sm:rounded-md"
                             >
                               Use work days
                             </button>

@@ -191,7 +191,7 @@ const ExperienceAnalyticsPanels = ({
                         onClick={() => setOverallCompBreakdownOpen(true)}
                         title="View overall pay structure breakdown"
                         aria-label="View full-time earnings breakdown"
-                        className="shrink-0 rounded-full border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/80 dark:bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100"
+                        className="shrink-0 rounded-full border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/80 dark:bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-500/10"
                       >
                         Breakdown
                       </button>
@@ -238,7 +238,7 @@ const ExperienceAnalyticsPanels = ({
                         onClick={() => setOverallInternshipBreakdownOpen(true)}
                         title="View internship earnings breakdown"
                         aria-label="View internship earnings breakdown"
-                        className="shrink-0 rounded-full border border-amber-200 dark:border-amber-500/25 bg-amber-50/80 dark:bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-amber-100"
+                        className="shrink-0 rounded-full border border-amber-200 dark:border-amber-500/25 bg-amber-50/80 dark:bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/10"
                       >
                         Breakdown
                       </button>
@@ -277,7 +277,7 @@ const ExperienceAnalyticsPanels = ({
                         onClick={() => setPayGrowthOpen(true)}
                         title="View pay growth breakdown"
                         aria-label="View pay growth breakdown"
-                        className="shrink-0 rounded-full border border-sky-200 dark:border-sky-500/25 bg-sky-50/80 dark:bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold text-sky-700 dark:text-sky-300 transition-colors hover:bg-sky-100"
+                        className="shrink-0 rounded-full border border-sky-200 dark:border-sky-500/25 bg-sky-50/80 dark:bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold text-sky-700 dark:text-sky-300 transition-colors hover:bg-sky-100 dark:hover:bg-sky-500/10"
                       >
                         Growth
                       </button>
@@ -307,7 +307,7 @@ const ExperienceAnalyticsPanels = ({
                 <button
                   type="button"
                   onClick={() => setSelectedSkill(null)}
-                  className="text-[11px] font-medium text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-700"
+                  className="text-[11px] font-medium text-blue-600 dark:text-blue-300 transition-colors hover:text-blue-700 dark:hover:text-blue-300"
                 >
                   Clear filter
                 </button>
@@ -325,7 +325,7 @@ const ExperienceAnalyticsPanels = ({
                       className={`m-0 rounded-md border px-2 py-0.5 text-[11px] font-medium leading-4 transition-all ${
                         isSelected
                           ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-slate-200/80 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 text-slate-600 dark:text-ink-200 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600'
+                          : 'border-slate-200/80 dark:border-white/[0.08] bg-slate-50/60 dark:bg-ink-900/60 text-slate-600 dark:text-ink-200 hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-300'
                       }`}
                     >
                       {skill} <span className="ml-1 opacity-50">{skillCounts[skill]}</span>

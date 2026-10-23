@@ -59,7 +59,7 @@ const SettingsSearch = ({ onJump }: { onJump: (tab: SettingsTab, sectionId: stri
                   <button
                     type="button"
                     onClick={() => jump(entry.tab, entry.id)}
-                    className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-slate-50"
+                    className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-ink-800"
                   >
                     <span className="min-w-0 truncate text-sm font-medium text-slate-900 dark:text-ink-50">
                       {entry.title}

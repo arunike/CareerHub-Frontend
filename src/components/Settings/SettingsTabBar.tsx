@@ -28,7 +28,7 @@ const SettingsTabBar = ({ activeTab, activeTabMeta, dirtyTabs, setActiveTab }: P
           className={`flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors ${
             activeTab === tab.key
               ? 'bg-white dark:bg-ink-900 text-slate-950 dark:text-ink-50 shadow-sm'
-              : 'text-slate-600 dark:text-ink-200 hover:bg-white/60 hover:text-slate-900'
+              : 'text-slate-600 dark:text-ink-200 hover:bg-white/60 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-ink-50'
           }`}
         >
           <span

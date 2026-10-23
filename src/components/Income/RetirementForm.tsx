@@ -72,7 +72,7 @@ const Row = ({
       {label}
       {hint ? (
         <Tooltip title={hint}>
-          <InfoCircleOutlined className="text-[11px] text-slate-300 dark:text-ink-600" />
+          <InfoCircleOutlined className="text-[11px] text-slate-500 dark:text-ink-400" />
         </Tooltip>
       ) : null}
     </span>

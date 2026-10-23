@@ -27,7 +27,7 @@ const CurrentBookingCard = ({ managedBooking }: Props) => (
           {managedBooking?.ics_url && (
             <a
               href={managedBooking.ics_url}
-              className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 dark:border-white/[0.12] px-5 text-sm font-semibold text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:text-blue-700"
+              className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 dark:border-white/[0.12] px-5 text-sm font-semibold text-slate-700 dark:text-ink-100 hover:border-blue-300 hover:text-blue-700 dark:hover:text-blue-300"
             >
               Download .ics
             </a>
@@ -43,7 +43,7 @@ const CurrentBookingCard = ({ managedBooking }: Props) => (
           {managedBooking?.cancel_url && (
             <a
               href={managedBooking.cancel_url}
-              className="inline-flex min-h-11 items-center rounded-xl bg-rose-50 dark:bg-rose-500/10 px-5 text-sm font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100"
+              className="inline-flex min-h-11 items-center rounded-xl bg-rose-50 dark:bg-rose-500/10 px-5 text-sm font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/10"
             >
               Cancel
             </a>

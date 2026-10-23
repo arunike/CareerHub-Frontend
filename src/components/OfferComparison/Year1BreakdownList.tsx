@@ -78,7 +78,7 @@ const Year1BreakdownList = ({ data }: { data: ChartDatum[] }) => {
                     return (
                       <td
                         key={component.label}
-                        className={`px-3 py-3 text-right ${value > 0 ? 'text-slate-900 dark:text-ink-50' : 'text-slate-300 dark:text-ink-600'}`}
+                        className={`px-3 py-3 text-right ${value > 0 ? 'text-slate-900 dark:text-ink-50' : 'text-slate-500 dark:text-ink-400'}`}
                       >
                         {value > 0 ? formatCurrency(value) : '—'}
                       </td>

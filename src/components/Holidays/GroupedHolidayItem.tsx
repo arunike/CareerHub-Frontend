@@ -145,7 +145,7 @@ export const GroupedHolidayItem = ({
               type="text"
               size="small"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg px-2.5 py-1 flex items-center gap-1"
+              className="text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg px-2.5 py-1 flex items-center gap-1"
             >
               {isExpanded ? 'Hide Days ▲' : `View Days (${item.items.length}) ▼`}
             </Button>

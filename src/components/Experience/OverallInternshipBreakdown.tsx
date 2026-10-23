@@ -14,7 +14,7 @@ export const OverallInternshipBreakdown = ({
 
   return (
     <div className="mt-2 space-y-4">
-      <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 via-white dark:via-ink-900 to-blue-50 p-5">
+      <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 dark:from-amber-500/10 via-white dark:via-ink-900 to-blue-50 dark:to-blue-500/10 p-5">
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-ink-500">
           Combined internship earnings
         </div>

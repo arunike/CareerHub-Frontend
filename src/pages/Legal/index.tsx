@@ -210,7 +210,7 @@ export default function LegalPage({ type }: LegalPageProps) {
             </span>
             <Link
               to={`/${alternateType}`}
-              className="inline-flex min-h-11 items-center font-bold text-slate-600 dark:text-ink-200 transition hover:text-slate-900"
+              className="inline-flex min-h-11 items-center font-bold text-slate-600 dark:text-ink-200 transition hover:text-slate-900 dark:hover:text-ink-50"
             >
               View {alternateLabel}
             </Link>

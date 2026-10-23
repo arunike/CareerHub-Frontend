@@ -209,7 +209,7 @@ const ScorecardCategoryList = ({
                   value: option.value,
                   label: option.label,
                 }))}
-                className="w-full rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 text-xs transition-colors hover:bg-slate-100 [&_.ant-select-selector]:!bg-transparent"
+                className="w-full rounded-lg border border-slate-100 dark:border-white/[0.07] bg-slate-50 dark:bg-ink-900 text-xs transition-colors hover:bg-slate-100 dark:hover:bg-ink-800 [&_.ant-select-selector]:!bg-transparent"
               />
               <p className="mt-1.5 text-[10px] leading-4 text-slate-400 dark:text-ink-500">
                 {selectedImmigrationOption?.description ||

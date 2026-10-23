@@ -21,7 +21,7 @@ const ApplicationMetricCards = ({ applicationMetrics }: Props) => (
                 : metric.tone === 'amber'
                   ? 'border-amber-400 bg-amber-50/40 dark:bg-amber-500/10 shadow-inner'
                   : 'border-slate-400 dark:border-white/[0.16] bg-slate-100/70 dark:bg-ink-800/70 shadow-inner'
-            : 'hover:bg-slate-50/80 hover:border-slate-300 hover:shadow-md'
+            : 'hover:bg-slate-50/80 dark:hover:bg-ink-800 hover:border-slate-300 hover:shadow-md'
         }`}
       >
         <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-ink-400">
