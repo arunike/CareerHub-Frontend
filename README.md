@@ -211,7 +211,8 @@ Six tabs, each a set of section cards with a global Save.
 - **Security**: active sessions, sign-in history and account protection.
 - **Organize**: categories, employment types, time-off colours and pipeline stages. A stage's colour is used everywhere that stage appears.
 - **Navigation**: reorder the sidebar, hide entries you do not use, and choose what sits in the mobile toolbar. The page you are on is never hidden from you, and `Reset to default` restores the shipped order.
-- **Light and dark themes**: one preference for the whole product, persisted per account, with a dedicated ink palette for dark. A category colour you picked renders the same in both.
+- **Light and dark themes**: one preference for the whole product, persisted per account, with a dedicated ink palette for dark. A category colour you picked renders the same in both. Chart series colours come from `theme/chartColors.ts`, so base, bonus and equity read the same everywhere.
+- **Contrast is checked, not eyeballed**: `npm run lint:dark` fails the build when a hover or focus colour answers only light mode, when an ink text tier drops under AA on a dark surface, or when a textless mark such as a dot or a rule goes under 3:1 in dark.
 - **Income roles and years** can be hidden from the Income pickers, and hiding never empties one — the last visible entry cannot be switched off.
 - **Pay and benefits defaults** that other pages read: insurance premiums shared with the offer form, 401(k) rates that change by date with optional auto-escalation, and PTO settings where unlimited PTO re-labels the existing days field rather than adding a second one.
 - **Settings search** matches section titles and keywords, switching tab and scrolling to the result; a per-section dot marks which one has a pending edit.
