@@ -120,7 +120,8 @@ Sidebar "Intelligence" tree groups all AI-generated outputs under one collapsibl
 - **Work Email** — store the email address you had at that job, on the experience record
 - **Internship Compensation Breakdown** — per-role earnings breakdown with editable hourly inputs, overtime configuration, manual total hours, and linked schedule-phase management
 - **Unvested equity is held back** (`vestedEquity.ts`) — equity counts in a pay total on its vest date, so a grant inside its cliff adds nothing. The equity row draws the next twelve months of vesting at the latest share price, as a hatched bar counting down to the vest date.
-- **Equity vesting trend** (`EquityVestingChart.tsx`) — a `Vesting schedule` popover on a role's Equity / RSU row: a bar per vesting year, plus `Day` / `Week` / `Month` views of the whole grant, what has vested and the share price. Fetches every trading day, and says weekends carry no price.
+- **Equity vesting trend** (`EquityVestingChart.tsx`) — the `Grant details` popover on a role's Equity / RSU row: a `Year` bar per vesting year, the view it opens on, plus `Day` / `Week` / `Month` views of the grant, what has vested and the share price. Weekends carry no price.
+- **Vesting tracker** (`VestingTracker.tsx`) — the `Schedule` view in that popover: every vest date with its status, value and share of the grant, the next one with a countdown, and when the grant finishes vesting. Moving a date re-dates the vests after it.
 - **Overall Earnings Panels** — combined Full-Time and Internship summaries with breakdown modals; internship totals now include overtime pay across tracked roles
 - **Pay Growth** — current vs previous role comparison in the Earnings panel, defaulting to the top two roles in list order (pinned/drag order included) with dropdowns to compare any two roles and a swap button.
 - **Schedule Phases** — split an internship into multiple schedule phases with per-phase rate, schedule, overtime, and total-hours inputs
