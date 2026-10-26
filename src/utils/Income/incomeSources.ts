@@ -1,4 +1,5 @@
 import { parseIsoDate } from './paySchedule';
+import { parseVestOverrides, type VestDateOverride } from './vestEvents';
 import type { EmployerContributions } from './tax/ledger';
 import type { RaiseEntry } from '../../types';
 import { storedPackageOf } from '../Experience/compensation';
@@ -32,6 +33,7 @@ export interface IncomeSource {
   cliffMonths: number;
   vestsPerYear: number;
   vestingYears: number;
+  vestOverrides: VestDateOverride[];
   // Recorded pay changes, so a paycheck is grossed at the rate in force on its own date.
   raises: RaiseEntry[];
   // False when a past role has no linked offer, so benefits and match are unknown.
@@ -118,6 +120,7 @@ export const vestingTermsOf = (offer: Record<string, any> | null) => ({
   cliffMonths: offer ? withDefault(offer.equity_cliff_months, 12) : 12,
   vestsPerYear: offer ? num(offer.equity_vests_per_year) || 4 : 4,
   vestingYears: offer ? num(offer.equity_vesting_years) || 4 : 4,
+  vestOverrides: parseVestOverrides(offer?.equity_vest_overrides),
 });
 
 const spreadPremiums = (premiums: ReturnType<typeof premiumsOf>) => ({

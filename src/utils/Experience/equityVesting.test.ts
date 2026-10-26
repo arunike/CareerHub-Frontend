@@ -143,7 +143,15 @@ describe('buildEquityVestingPlan', () => {
   it('vests everything at once when the cliff outlasts the schedule', () => {
     const plan = buildEquityVesting(grant({ equity_cliff_months: 60 }), GRANT_DATE, TODAY).plan!;
     expect(plan.vests).toEqual([
-      { date: '2030-07-01', monthsFromGrant: 60, value: 200000, shares: null, vested: false },
+      {
+        date: '2030-07-01',
+        scheduledDate: '2030-07-01',
+        moved: false,
+        monthsFromGrant: 60,
+        value: 200000,
+        shares: null,
+        vested: false,
+      },
     ]);
     expect(plan.years.map((year) => year.label)).toEqual(['Year 5']);
   });

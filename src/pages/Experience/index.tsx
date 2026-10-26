@@ -139,6 +139,7 @@ const ExperiencePage: React.FC = () => {
     handleSaveTeamHistory,
     handleSaveSchedulePhases,
     handleSaveInternshipCompInputs,
+    handleSaveVestDates,
   } = useExperienceMutations({
     experiences,
     allOffers,
@@ -545,6 +546,12 @@ const ExperiencePage: React.FC = () => {
           equityVesting={compBreakdownVesting}
           grantPriceHistory={grantPriceHistory}
           onFillGrantPriceHistory={fillGrantPriceHistory}
+          onSaveVestDates={compBreakdownExp.is_locked ? undefined : handleSaveVestDates}
+          vestDatesLockedReason={
+            compBreakdownExp.is_locked
+              ? 'This role is locked, so its vest dates cannot be moved. Unlock it on the role card to record the dates payroll used.'
+              : undefined
+          }
           {...compBreakdownSnapshot}
         />
       )}

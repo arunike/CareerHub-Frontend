@@ -1,5 +1,10 @@
-import { localDay, toIsoDate } from '../localDay';
-import { vestDateFor, vestOccasions } from '../Income/vestEvents';
+import { localDay } from '../localDay';
+import {
+  parseVestOverrides,
+  scheduleVests,
+  vestOccasions,
+  type VestDateOverride,
+} from '../Income/vestEvents';
 import { vestingTermsOf } from '../Income/incomeSources';
 import {
   currentPriceOf,
@@ -22,10 +27,14 @@ export interface EquityGrantFields {
   equity_current_price?: number | null;
   equity_buyback_value?: number | null;
   equity_liquidity?: string | null;
+  equity_vest_overrides?: VestDateOverride[] | null;
 }
 
 export interface EquityVest {
   date: string;
+  // Where the cadence put it, which a moved vest shows beside its own date.
+  scheduledDate: string;
+  moved: boolean;
   monthsFromGrant: number;
   value: number;
   shares: number | null;
@@ -106,16 +115,18 @@ export const buildEquityVesting = (
 
   const terms = vestingTermsOf(offer as Record<string, unknown>);
   const shareCount = num(offer.equity_shares);
-  const vests: EquityVest[] = vestOccasions(terms).map((occasion) => {
-    const date = toIsoDate(vestDateFor(start, occasion.monthsFromGrant));
-    return {
-      date,
+  const overrides = parseVestOverrides(offer.equity_vest_overrides);
+  const vests: EquityVest[] = scheduleVests(start, vestOccasions(terms), overrides).map(
+    (occasion) => ({
+      date: occasion.date,
+      scheduledDate: occasion.scheduledDate,
+      moved: occasion.moved,
       monthsFromGrant: occasion.monthsFromGrant,
       value: totalGrant * occasion.fraction,
       shares: shareCount > 0 ? shareCount * occasion.fraction : null,
-      vested: date <= todayIso,
-    };
-  });
+      vested: occasion.date <= todayIso,
+    })
+  );
 
   const years: EquityVestingYear[] = [];
   let cumulative = 0;

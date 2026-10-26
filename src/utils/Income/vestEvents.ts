@@ -1,4 +1,4 @@
-import { daysInYear } from '../localDay';
+import { daysInYear, localDay, toIsoDate } from '../localDay';
 import type { IncomeEvent } from './tax/ledger';
 import { inclusiveDayCount, parseIsoDate, type PayPeriod } from './paySchedule';
 
@@ -13,6 +13,21 @@ export interface VestTerms {
   paychecksPerYear: number;
   // When supplied, a vest lands on the first paycheck on or after the vest date.
   periods?: PayPeriod[];
+  // Dates the company actually vested on, which outrank the cadence.
+  vestOverrides?: VestDateOverride[];
+}
+
+export interface VestDateOverride {
+  // The occasion it moves, counted in whole months from the grant date.
+  months: number;
+  date: string;
+}
+
+export interface ScheduledVest extends VestOccasion {
+  date: string;
+  // Where the cadence put it, which a moved vest shows beside its new date.
+  scheduledDate: string;
+  moved: boolean;
 }
 
 export interface VestOccasion {
@@ -53,11 +68,46 @@ export const vestOccasions = (
   return occasions;
 };
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+// A stored list outlives the shape it was written in, so an unusable entry is dropped, not fixed.
+export const parseVestOverrides = (value: unknown): VestDateOverride[] =>
+  Array.isArray(value)
+    ? value.flatMap((entry) => {
+        const months = Math.round(Number((entry as VestDateOverride)?.months));
+        const date = (entry as VestDateOverride)?.date;
+        const usable = Number.isFinite(months) && months >= 0 && ISO_DAY.test(String(date));
+        return usable ? [{ months, date }] : [];
+      })
+    : [];
+
 // One definition of a vest date, so the ledger and the Experience chart cannot disagree.
 export const vestDateFor = (grantDate: Date, monthsFromGrant: number) => {
   const vestDate = new Date(grantDate);
   vestDate.setMonth(vestDate.getMonth() + monthsFromGrant);
   return vestDate;
+};
+
+// A moved vest re-anchors the ones after it, stepped in months so a quarter keeps its day.
+export const scheduleVests = (
+  grantDate: Date,
+  occasions: VestOccasion[],
+  overrides: VestDateOverride[] = []
+): ScheduledVest[] => {
+  const moved = new Map(overrides.map((override) => [override.months, override.date]));
+  let anchor = { date: grantDate, months: 0 };
+  return occasions.map((occasion) => {
+    const scheduledDate = toIsoDate(vestDateFor(grantDate, occasion.monthsFromGrant));
+    const override = moved.get(occasion.monthsFromGrant);
+    if (override != null) anchor = { date: localDay(override), months: occasion.monthsFromGrant };
+    return {
+      ...occasion,
+      date:
+        override ?? toIsoDate(vestDateFor(anchor.date, occasion.monthsFromGrant - anchor.months)),
+      scheduledDate,
+      moved: override != null,
+    };
+  });
 };
 
 export const periodForDate = (date: Date, paychecksPerYear: number) => {
@@ -83,11 +133,8 @@ export const buildVestEvents = (terms: VestTerms): IncomeEvent[] => {
   const grantDate = terms.grantDate ? parseIsoDate(terms.grantDate) : new Date(terms.taxYear, 0, 1);
   if (!grantDate) return [];
 
-  return vestOccasions(terms)
-    .map((occasion) => ({
-      occasion,
-      vestDate: vestDateFor(grantDate, occasion.monthsFromGrant),
-    }))
+  return scheduleVests(grantDate, vestOccasions(terms), terms.vestOverrides)
+    .map((occasion) => ({ occasion, vestDate: localDay(occasion.date) }))
     .filter(({ vestDate }) => vestDate.getFullYear() === terms.taxYear)
     .map(({ occasion, vestDate }) => ({
       id: `vest-${terms.taxYear}-${occasion.monthsFromGrant}`,

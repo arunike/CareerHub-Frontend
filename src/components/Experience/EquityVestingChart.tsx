@@ -24,6 +24,8 @@ import {
   type EquityVestingPlan,
 } from '../../utils/Experience/equityVesting';
 import { shade } from './PayChart';
+import { VestingTracker } from './VestingTracker';
+import type { VestDateOverride } from '../../utils/Income/vestEvents';
 import { GrantValueChart, PRICE, VESTED, WHOLE, type ValueSeriesShown } from './GrantValueChart';
 import ModeToggle from '../inputs/ModeToggle';
 import {
@@ -66,6 +68,10 @@ const Hatch = ({ id, color }: { id: string; color: string }) => (
 );
 
 const monthLabel = (iso: string) => dayjs(iso).format('MMM YYYY');
+
+// Only the three price granularities plot a series; the other two read the plan itself.
+const isPriceView = (view: ChartView): view is PriceGranularity =>
+  view !== 'year' && view !== 'tracker';
 
 const VestTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: Row }[] }) => {
   const row = payload?.[0]?.payload;
@@ -137,7 +143,7 @@ const Fact = ({
   </div>
 );
 
-type ChartView = 'vesting' | PriceGranularity;
+type ChartView = 'tracker' | 'year' | PriceGranularity;
 
 const SERIES_CHIPS: { key: keyof ValueSeriesShown; label: string }[] = [
   { key: 'grant', label: WHOLE },
@@ -156,10 +162,11 @@ interface FillNote {
 }
 
 const VIEWS: { label: string; value: ChartView }[] = [
-  { label: 'Vesting', value: 'vesting' },
   { label: 'Day', value: 'day' },
   { label: 'Week', value: 'week' },
   { label: 'Month', value: 'month' },
+  { label: 'Year', value: 'year' },
+  { label: 'Schedule', value: 'tracker' },
 ];
 
 export const EquityVestingChart = ({
@@ -167,13 +174,17 @@ export const EquityVestingChart = ({
   todayIso,
   priceHistory = [],
   onFillHistory,
+  onSaveVestDates,
+  vestDatesLockedReason,
 }: {
   plan: EquityVestingPlan;
   todayIso: string;
   priceHistory?: Array<{ as_of: string; price: string | number }>;
   onFillHistory?: (period: PriceSeriesPeriod) => Promise<number>;
+  onSaveVestDates?: (overrides: VestDateOverride[]) => Promise<void>;
+  vestDatesLockedReason?: string;
 }) => {
-  const [view, setView] = useState<ChartView>('vesting');
+  const [view, setView] = useState<ChartView>('year');
   const [filling, setFilling] = useState(false);
   const [fillNote, setFillNote] = useState<FillNote | null>(null);
   const [shown, setShown] = useState<ValueSeriesShown>({
@@ -219,7 +230,7 @@ export const EquityVestingChart = ({
   // A disabled chip must draw nothing, whatever it was left switched on as.
   const drawn: ValueSeriesShown = { ...shown, vested: shown.vested && hasVested };
   const points = useMemo(
-    () => (view === 'vesting' ? [] : buildGrantValueHistory(plan, priceHistory, view)),
+    () => (isPriceView(view) ? buildGrantValueHistory(plan, priceHistory, view) : []),
     [plan, priceHistory, view]
   );
   const canFill = onFillHistory != null && plan.ticker != null;
@@ -343,7 +354,7 @@ export const EquityVestingChart = ({
         <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">{TRADING_DAYS_ONLY}</div>
       )}
 
-      {view !== 'vesting' && points.length >= 2 && (
+      {isPriceView(view) && points.length >= 2 && (
         <div className="mt-2 flex flex-wrap gap-2">
           {SERIES_CHIPS.map((chip) => {
             const unavailable = disabledChip(chip.key);
@@ -378,12 +389,18 @@ export const EquityVestingChart = ({
         </div>
       )}
 
-      {view !== 'vesting' && points.length >= 2 && !hasVested && (
+      {isPriceView(view) && points.length >= 2 && !hasVested && (
         <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">{vestingReason}</div>
       )}
 
-      <div className="mt-2 h-[200px] sm:h-[230px]">
-        {view !== 'vesting' && points.length < 2 ? (
+      <div className={view === 'tracker' ? 'mt-2' : 'mt-2 h-[200px] sm:h-[230px]'}>
+        {view === 'tracker' ? (
+          <VestingTracker
+            plan={plan}
+            onSaveVestDates={onSaveVestDates}
+            vestDatesLockedReason={vestDatesLockedReason}
+          />
+        ) : isPriceView(view) && points.length < 2 ? (
           <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 px-4 text-center text-xs text-slate-400 dark:border-white/[0.08] dark:text-ink-500">
             {!plan.ticker
               ? 'A ticker is what gives this grant a price history.'
@@ -391,7 +408,7 @@ export const EquityVestingChart = ({
                 ? `No ${plan.ticker} prices recorded since the grant yet; fetching every trading day since.`
                 : `Only one ${plan.ticker} price recorded so far, and a trend needs two.`}
           </div>
-        ) : view !== 'vesting' ? (
+        ) : isPriceView(view) ? (
           <GrantValueChart points={points} granularity={view} show={drawn} />
         ) : (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
@@ -445,7 +462,7 @@ export const EquityVestingChart = ({
       </div>
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-ink-400">
-        {view !== 'vesting' && points.length >= 2 && (
+        {isPriceView(view) && points.length >= 2 && (
           <span>
             {view === 'day'
               ? `${points.length} trading days recorded`
@@ -483,7 +500,7 @@ export const EquityVestingChart = ({
             ''
           )}
         </span>
-        {data.some((row) => !fullyVested(row)) && view === 'vesting' && (
+        {data.some((row) => !fullyVested(row)) && view === 'year' && (
           <span>A hatched bar has not vested yet, so no total counts it.</span>
         )}
       </div>

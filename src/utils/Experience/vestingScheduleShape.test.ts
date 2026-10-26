@@ -48,3 +48,35 @@ describe('a quarterly grant behind a one-year cliff', () => {
     expect(planFor('2027-10-01').vestedToDate).toBe(62500);
   });
 });
+
+describe('a first-year date moved to the one payroll actually used', () => {
+  const moved = { ...offer, equity_vest_overrides: [{ months: 12, date: '2027-07-15' }] };
+  const planFor = (todayIso: string) =>
+    buildEquityVesting(moved as never, '2026-07-01', todayIso, {}, {}).plan!;
+
+  it('vests on the recorded date, not the anniversary', () => {
+    const first = planFor('2030-07-01').vests[0];
+    expect(first.date).toBe('2027-07-15');
+    expect(first.scheduledDate).toBe('2027-07-01');
+    expect(first.moved).toBe(true);
+  });
+
+  it('carries the quarters after it by the same days', () => {
+    expect(
+      planFor('2030-07-01')
+        .vests.slice(1, 3)
+        .map((vest) => vest.date)
+    ).toEqual(['2027-10-15', '2028-01-15']);
+  });
+
+  it('has not vested on the anniversary the grant was written for', () => {
+    expect(planFor('2027-07-01').vestedToDate).toBe(0);
+    expect(planFor('2027-07-15').vestedToDate).toBe(50000);
+  });
+
+  it('still adds up to the whole grant', () => {
+    const vests = planFor('2030-07-01').vests;
+    expect(vests).toHaveLength(13);
+    expect(vests.reduce((sum, vest) => sum + vest.value, 0)).toBe(200000);
+  });
+});

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildVestEvents, periodForDate, vestOccasions, type VestTerms } from './vestEvents';
+import {
+  buildVestEvents,
+  parseVestOverrides,
+  periodForDate,
+  scheduleVests,
+  vestOccasions,
+  type VestTerms,
+} from './vestEvents';
+import { localDay } from '../localDay';
 
 const terms = (overrides: Partial<VestTerms> = {}): VestTerms => ({
   totalGrant: 400000,
@@ -97,5 +105,98 @@ describe('periodForDate', () => {
   it('maps January to the first period and December to the last', () => {
     expect(periodForDate(new Date(2026, 0, 1), 24)).toBe(1);
     expect(periodForDate(new Date(2026, 11, 31), 24)).toBe(24);
+  });
+});
+
+describe('scheduleVests', () => {
+  const occasions = () => vestOccasions(terms());
+  const grant = () => localDay('2026-01-15');
+
+  it('follows the cadence when no date has been moved', () => {
+    const scheduled = scheduleVests(grant(), occasions());
+    expect(scheduled[0].date).toBe('2027-01-15');
+    expect(scheduled[0].scheduledDate).toBe('2027-01-15');
+    expect(scheduled.every((vest) => !vest.moved)).toBe(true);
+  });
+
+  it('re-anchors the later vests on the moved one, a quarter at a time', () => {
+    const scheduled = scheduleVests(grant(), occasions(), [{ months: 12, date: '2027-02-01' }]);
+    expect(scheduled[0]).toMatchObject({
+      date: '2027-02-01',
+      scheduledDate: '2027-01-15',
+      moved: true,
+    });
+    expect(scheduled[1]).toMatchObject({
+      date: '2027-05-01',
+      scheduledDate: '2027-04-15',
+      moved: false,
+    });
+    expect(scheduled.at(-1)?.date).toBe('2030-02-01');
+  });
+
+  it('re-anchors again at the next date that was moved itself', () => {
+    const scheduled = scheduleVests(grant(), occasions(), [
+      { months: 12, date: '2027-02-01' },
+      { months: 18, date: '2027-07-15' },
+    ]);
+    expect(scheduled[1].date).toBe('2027-05-01');
+    expect(scheduled[2]).toMatchObject({ date: '2027-07-15', moved: true });
+    expect(scheduled[3].date).toBe('2027-10-15');
+  });
+
+  it('ignores a move for an occasion this cadence does not have', () => {
+    const scheduled = scheduleVests(grant(), occasions(), [{ months: 13, date: '2027-02-01' }]);
+    expect(scheduled.every((vest) => !vest.moved)).toBe(true);
+    expect(scheduled[0].date).toBe('2027-01-15');
+  });
+
+  it('keeps every quarter on the day the moved vest landed on', () => {
+    const scheduled = scheduleVests(grant(), occasions(), [{ months: 12, date: '2027-02-01' }]);
+    expect(scheduled.slice(0, 5).map((vest) => vest.date)).toEqual([
+      '2027-02-01',
+      '2027-05-01',
+      '2027-08-01',
+      '2027-11-01',
+      '2028-02-01',
+    ]);
+  });
+
+  it('keeps the whole grant on the schedule whatever moved', () => {
+    const scheduled = scheduleVests(grant(), occasions(), [{ months: 12, date: '2027-02-01' }]);
+    expect(scheduled).toHaveLength(13);
+    expect(scheduled.reduce((sum, vest) => sum + vest.fraction, 0)).toBeCloseTo(1, 10);
+  });
+
+  it('pays the moved date, not the generated one, into the ledger', () => {
+    const events = buildVestEvents(
+      terms({ taxYear: 2027, vestOverrides: [{ months: 12, date: '2027-02-01' }] })
+    );
+    expect(events[0].label).toBe('Vest Feb 1');
+  });
+
+  it('drops a vest the move pushed out of the tax year', () => {
+    const events = buildVestEvents(
+      terms({ taxYear: 2027, vestOverrides: [{ months: 48, date: '2030-02-01' }] })
+    );
+    expect(events).toHaveLength(4);
+  });
+});
+
+describe('parseVestOverrides', () => {
+  it('keeps a well formed entry and drops the rest', () => {
+    expect(
+      parseVestOverrides([
+        { months: 12, date: '2027-02-01' },
+        { months: 12 },
+        { months: -1, date: '2027-02-01' },
+        { months: 24, date: 'Feb 2027' },
+        'nonsense',
+      ])
+    ).toEqual([{ months: 12, date: '2027-02-01' }]);
+  });
+
+  it('reads nothing out of a value that is not a list', () => {
+    expect(parseVestOverrides(null)).toEqual([]);
+    expect(parseVestOverrides({ months: 12, date: '2027-02-01' })).toEqual([]);
   });
 });

@@ -32,6 +32,7 @@ export const source = (overrides: Partial<IncomeSource> = {}): IncomeSource => (
   cliffMonths: 12,
   vestsPerYear: 4,
   vestingYears: 4,
+  vestOverrides: [],
   raises: [],
   hasBenefitData: true,
   ...overrides,

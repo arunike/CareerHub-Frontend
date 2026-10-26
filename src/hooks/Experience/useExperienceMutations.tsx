@@ -15,6 +15,7 @@ import { getApiErrorMessage } from '../../utils/apiError';
 import { roundOfferDecimals } from '../../utils/OfferComparison/offerPrecision';
 import { normalizeInternshipCompInputs } from '../../utils/Experience/internshipCompInputs';
 import type { InternshipCompInputs } from '../../utils/Experience/internshipCompInputs';
+import type { VestDateOverride } from '../../utils/Income/vestEvents';
 
 export const useExperienceMutations = ({
   allOffers,
@@ -223,6 +224,25 @@ export const useExperienceMutations = ({
     );
     message.success('Internship earnings inputs updated');
   };
+  const handleSaveVestDates = async (overrides: VestDateOverride[]) => {
+    if (!compBreakdownExp) return;
+    const offer = getLinkedOffer(compBreakdownExp);
+    if (!offer?.id) {
+      message.error('Link an offer to this role before moving a vest date');
+      return;
+    }
+    try {
+      // Only the field being changed: spreading the offer writes derived figures back to the record.
+      await updateOffer(offer.id, { equity_vest_overrides: overrides });
+      setAllOffers((prev) =>
+        prev.map((o) => (o.id === offer.id ? { ...o, equity_vest_overrides: overrides } : o))
+      );
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'Failed to save the vest date'));
+      throw err;
+    }
+  };
+
   return {
     handleCreateOrUpdate,
     handleExportWrapper,
@@ -232,5 +252,6 @@ export const useExperienceMutations = ({
     handleSaveTeamHistory,
     handleSaveSchedulePhases,
     handleSaveInternshipCompInputs,
+    handleSaveVestDates,
   };
 };

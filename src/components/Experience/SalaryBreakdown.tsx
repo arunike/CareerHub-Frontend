@@ -17,6 +17,7 @@ import { useChartSeries } from '../../theme/chartColors';
 import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
 import type { UpcomingVesting, VestedEquitySplit } from '../../utils/Experience/vestedEquity';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
+import type { VestDateOverride } from '../../utils/Income/vestEvents';
 import dayjs from 'dayjs';
 
 const round = (value: number) => Math.round(value);
@@ -90,6 +91,8 @@ export const SalaryBreakdown = ({
   equityVesting,
   grantPriceHistory,
   onFillGrantPriceHistory,
+  onSaveVestDates,
+  vestDatesLockedReason,
 }: {
   total: number;
   base: number;
@@ -104,6 +107,8 @@ export const SalaryBreakdown = ({
   equityVesting?: EquityVestingResult | null;
   grantPriceHistory?: Array<{ as_of: string; price: string | number }>;
   onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
+  onSaveVestDates?: (overrides: VestDateOverride[]) => Promise<void>;
+  vestDatesLockedReason?: string;
 }) => {
   const series = useChartSeries();
   const todayIso = toIsoDate(new Date());
@@ -349,7 +354,7 @@ export const SalaryBreakdown = ({
                       title={
                         <span className="flex items-center gap-2">
                           <LineChartOutlined className="text-pink-500 dark:text-pink-300" />
-                          Vesting schedule
+                          Grant details
                         </span>
                       }
                       content={
@@ -359,6 +364,8 @@ export const SalaryBreakdown = ({
                             todayIso={todayIso}
                             priceHistory={grantPriceHistory}
                             onFillHistory={onFillGrantPriceHistory}
+                            onSaveVestDates={onSaveVestDates}
+                            vestDatesLockedReason={vestDatesLockedReason}
                           />
                         </div>
                       }
@@ -371,7 +378,7 @@ export const SalaryBreakdown = ({
                           // A plain button in a modal body is outside the global 44px floor.
                           className="min-h-11 !px-2 text-xs font-semibold !text-blue-600 lg:min-h-0 dark:!text-blue-300"
                         >
-                          Vesting schedule
+                          Grant details
                         </Button>
                       )}
                     />

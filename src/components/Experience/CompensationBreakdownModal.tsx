@@ -11,6 +11,7 @@ import type { EarningsReport } from '../../utils/Experience/earningsByYear';
 import type { PayPart } from './PayPartsPanel';
 import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
+import type { VestDateOverride } from '../../utils/Income/vestEvents';
 
 type Props = ExperienceCompensationSnapshot & {
   open: boolean;
@@ -36,6 +37,9 @@ type Props = ExperienceCompensationSnapshot & {
   equityVesting?: EquityVestingResult | null;
   grantPriceHistory?: Array<{ as_of: string; price: string | number }>;
   onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
+  // Vest dates recorded against the grant, which the tracker writes back to the offer.
+  onSaveVestDates?: (overrides: VestDateOverride[]) => Promise<void>;
+  vestDatesLockedReason?: string;
 };
 
 const CompensationBreakdownModal: React.FC<Props> = ({
@@ -60,6 +64,8 @@ const CompensationBreakdownModal: React.FC<Props> = ({
   equityVesting,
   grantPriceHistory,
   onFillGrantPriceHistory,
+  onSaveVestDates,
+  vestDatesLockedReason,
   ...snapshot
 }) => {
   const resolvedContextLabel = contextLabel ?? [roleTitle, companyName].filter(Boolean).join(' @ ');
@@ -110,6 +116,8 @@ const CompensationBreakdownModal: React.FC<Props> = ({
           equityVesting={equityVesting}
           grantPriceHistory={grantPriceHistory}
           onFillGrantPriceHistory={onFillGrantPriceHistory}
+          onSaveVestDates={onSaveVestDates}
+          vestDatesLockedReason={vestDatesLockedReason}
         />
       ) : (
         <HourlyBreakdown

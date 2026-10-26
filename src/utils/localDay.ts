@@ -26,3 +26,10 @@ export const toIsoDate = (date: Date) => {
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 };
+
+// Set, not added in milliseconds: a day across a daylight-saving change is 23 or 25 hours.
+export const addDays = (iso: string, days: number) => {
+  const date = localDay(iso);
+  date.setDate(date.getDate() + days);
+  return toIsoDate(date);
+};

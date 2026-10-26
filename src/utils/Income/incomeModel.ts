@@ -15,7 +15,7 @@ import { summarizeRetirement } from './retirement';
 import { allowanceSchedule as buildAllowanceSchedule, splitAllowances } from './allowances';
 import { tiersFromOffer, type MatchTier } from './matchTiers';
 import { splitCustomDeductions } from './deductions';
-import { buildVestEvents } from './vestEvents';
+import { buildVestEvents, type VestDateOverride } from './vestEvents';
 import { backPayFor, raiseLedgerNotice, salaryByPeriod } from './raiseSchedule';
 import { salaryBasisOf, type SalaryBasis } from './salaryBasis';
 import { deferralOverridesFor, emptyDeferralPlan, mergeDeferralSchedule } from './deferralSchedule';
@@ -61,6 +61,7 @@ export interface IncomeModel {
     cliffMonths: number;
     vestsPerYear: number;
     grantDate: string | null;
+    vestOverrides: VestDateOverride[];
   };
   stateAbbr: string;
   targetBonus: number;
@@ -117,6 +118,8 @@ export const buildIncomeModel = ({
     cliffMonths: settings.cliffMonthsOverride ?? source?.cliffMonths ?? 12,
     vestsPerYear: settings.vestsPerYearOverride ?? source?.vestsPerYear ?? 4,
     grantDate: settings.firstVestDate ?? source?.startDate ?? null,
+    // Dates recorded against the grant itself, which no income setting overrides.
+    vestOverrides: source?.vestOverrides ?? [],
   };
 
   const targetBonus = settings.bonusOverride ?? source?.bonus ?? 0;
