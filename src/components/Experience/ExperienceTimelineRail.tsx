@@ -1,19 +1,55 @@
 import type { ReactNode } from 'react';
+import type { TimelineMark } from '../../utils/Experience/roleTimeline';
 
 const LINE_CLASS = 'absolute left-1/2 w-0.5 -translate-x-1/2 rounded-full';
 const LINE_TINT = 'bg-slate-300 dark:bg-ink-700';
 // Reaches into the space-y-10 gap so the line never breaks between cards.
 const LINE_SPAN = { top: 26, bottom: 'calc(-2.5rem - 26px)' } as const;
 
+// Centred on the node, which sits 26px down: a 60px box around the 52px avatar.
+const RING_RADIUS = 27;
+const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
+
+// The card's height is its content, so the year a role started can only be shown at the node.
+const MonthRing = ({ fraction, isCurrent }: { fraction: number; isCurrent: boolean }) => (
+  <svg
+    viewBox="0 0 60 60"
+    className="pointer-events-none absolute left-1/2 top-[-4px] h-[60px] w-[60px] -translate-x-1/2"
+    aria-hidden
+  >
+    <circle
+      cx="30"
+      cy="30"
+      r={RING_RADIUS}
+      fill="none"
+      strokeWidth="2"
+      className="stroke-slate-200 dark:stroke-ink-800"
+    />
+    <circle
+      cx="30"
+      cy="30"
+      r={RING_RADIUS}
+      fill="none"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeDasharray={`${RING_LENGTH * fraction} ${RING_LENGTH}`}
+      transform="rotate(-90 30 30)"
+      className={
+        isCurrent ? 'stroke-blue-400 dark:stroke-blue-300' : 'stroke-slate-400 dark:stroke-ink-500'
+      }
+    />
+  </svg>
+);
+
 export const TimelineRailDesktop = ({
   avatar,
-  year,
+  mark,
   isFirst,
   isLast,
   isCurrent,
 }: {
   avatar: ReactNode;
-  year?: string;
+  mark?: TimelineMark | null;
   isFirst: boolean;
   isLast: boolean;
   isCurrent: boolean;
@@ -35,15 +71,21 @@ export const TimelineRailDesktop = ({
       </>
     )}
     {!isLast && <div className={`${LINE_CLASS} ${LINE_TINT}`} style={LINE_SPAN} />}
-    <div className="relative z-10">{avatar}</div>
+    {mark && <MonthRing fraction={mark.yearFraction} isCurrent={isCurrent} />}
+    <div className="relative z-10" title={mark?.title}>
+      {avatar}
+    </div>
     {/* Connector into the card: the 24px column gap. */}
     <div
       className="absolute left-full top-[25px] h-0.5 w-5 bg-gradient-to-r from-slate-300 dark:from-ink-700 to-transparent"
       aria-hidden
     />
-    {year && (
-      <span className="relative z-10 mt-2 rounded bg-white/90 dark:bg-ink-900/90 px-1 text-[11px] font-semibold tabular-nums text-slate-400 dark:text-ink-500">
-        {year}
+    {mark && (
+      <span
+        className="relative z-10 mt-2 whitespace-nowrap rounded bg-white/90 dark:bg-ink-900/90 px-1 text-[11px] font-semibold tabular-nums text-slate-400 dark:text-ink-500"
+        title={mark.title}
+      >
+        {mark.label}
       </span>
     )}
   </div>

@@ -6,6 +6,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -17,7 +18,11 @@ import { money } from '../../utils/Income/format';
 import { formatPercentChange } from '../../utils/OfferComparison/raiseAfterValues';
 import { isSharePriceStale } from '../../utils/OfferComparison/sharePriceFreshness';
 import { useChartAxis, useChartSeries } from '../../theme/chartColors';
-import { vestingCadenceLabel, type EquityVestingPlan } from '../../utils/Experience/equityVesting';
+import {
+  isRepriced,
+  vestingCadenceLabel,
+  type EquityVestingPlan,
+} from '../../utils/Experience/equityVesting';
 import { shade } from './PayChart';
 import { GrantValueChart, PRICE, VESTED, WHOLE, type ValueSeriesShown } from './GrantValueChart';
 import ModeToggle from '../inputs/ModeToggle';
@@ -36,9 +41,29 @@ interface Row {
   window: string;
   shares: number | null;
   vested: boolean;
+  // What has vested of this year, so a year part way through reads as part way through.
+  vestedPart: number;
   [GRANTED]: number;
   [TODAY]?: number;
 }
+
+const fullyVested = (row: Row) => row.vestedPart >= row[GRANTED];
+
+// Hatched rather than paler: a ghost mixed toward white gets brighter on a near-black plot.
+const GRANTED_HATCH = 'careerhub-vest-hatch-granted';
+const TODAY_HATCH = 'careerhub-vest-hatch-today';
+
+const Hatch = ({ id, color }: { id: string; color: string }) => (
+  <pattern
+    id={id}
+    width="6"
+    height="6"
+    patternUnits="userSpaceOnUse"
+    patternTransform="rotate(135)"
+  >
+    <rect width="3" height="6" fill={color} />
+  </pattern>
+);
 
 const monthLabel = (iso: string) => dayjs(iso).format('MMM YYYY');
 
@@ -51,7 +76,7 @@ const VestTooltip = ({ active, payload }: { active?: boolean; payload?: { payloa
       <p className="font-bold text-slate-800 dark:text-ink-50">
         {row.label}
         <span className="ml-1.5 font-normal text-slate-400 dark:text-ink-500">
-          {row.vested ? 'vested' : 'scheduled'}
+          {fullyVested(row) ? 'vested' : row.vestedPart > 0 ? 'part vested' : 'scheduled'}
         </span>
       </p>
       <p className="text-slate-400 dark:text-ink-500">{row.window}</p>
@@ -65,6 +90,14 @@ const VestTooltip = ({ active, payload }: { active?: boolean; payload?: { payloa
         <div className="flex justify-between gap-4">
           <span className="text-slate-500 dark:text-ink-400">{TODAY}</span>
           <span className="font-semibold text-slate-700 dark:text-ink-100">{fmtMoney(today)}</span>
+        </div>
+      )}
+      {row.vestedPart > 0 && !fullyVested(row) && (
+        <div className="flex justify-between gap-4">
+          <span className="text-slate-500 dark:text-ink-400">Vested so far</span>
+          <span className="font-semibold text-slate-700 dark:text-ink-100">
+            {fmtMoney(row.vestedPart)}
+          </span>
         </div>
       )}
       {row.shares != null && (
@@ -112,6 +145,16 @@ const SERIES_CHIPS: { key: keyof ValueSeriesShown; label: string }[] = [
   { key: 'price', label: PRICE },
 ];
 
+// A gap in the daily series is a shut market, not a price the fetch missed.
+const TRADING_DAYS_ONLY =
+  'Markets are shut at weekends and on market holidays, so those days carry no price.';
+
+// Whether the note is about trading days at all: a provider that could not be reached is not.
+interface FillNote {
+  text: string;
+  tradingDays: boolean;
+}
+
 const VIEWS: { label: string; value: ChartView }[] = [
   { label: 'Vesting', value: 'vesting' },
   { label: 'Day', value: 'day' },
@@ -132,7 +175,7 @@ export const EquityVestingChart = ({
 }) => {
   const [view, setView] = useState<ChartView>('vesting');
   const [filling, setFilling] = useState(false);
-  const [fillNote, setFillNote] = useState<string | null>(null);
+  const [fillNote, setFillNote] = useState<FillNote | null>(null);
   const [shown, setShown] = useState<ValueSeriesShown>({
     grant: true,
     vested: true,
@@ -146,7 +189,7 @@ export const EquityVestingChart = ({
     price: 'base',
   };
   // Only a known current price earns a second series; inventing one would restate the grant.
-  const repriced = plan.currentPrice != null && plan.priceRatio !== 1;
+  const repriced = isRepriced(plan);
   const data: Row[] = plan.years.map((year) => ({
     label: year.label,
     window:
@@ -155,10 +198,12 @@ export const EquityVestingChart = ({
         : `${monthLabel(year.from)} – ${monthLabel(year.to)}`,
     shares: year.shares,
     vested: year.vested,
+    vestedPart: Math.round(year.vestedValue),
     [GRANTED]: Math.round(year.value),
     ...(repriced ? { [TODAY]: Math.round(year.value * plan.priceRatio) } : {}),
   }));
   const vestedNow = plan.vestedToDate * plan.priceRatio;
+  const stillToVest = Math.max(0, plan.totalGrant - plan.vestedToDate);
   // Before the first vest the vested series is a flat $0, which pins the axis and shows nothing.
   const hasVested = plan.vestedToDate > 0;
   const nextVest = plan.vests.find((vest) => !vest.vested)?.date ?? null;
@@ -178,6 +223,8 @@ export const EquityVestingChart = ({
     [plan, priceHistory, view]
   );
   const canFill = onFillHistory != null && plan.ticker != null;
+  // Said where the gaps show: after a fill that counted trading days, and over the daily chart.
+  const explainGaps = (fillNote?.tradingDays ?? false) || (view === 'day' && points.length >= 2);
   // Plain text under the button, not a toast: a toast inside a popover is gone before it is read.
   const fillHistory = useCallback(
     async (auto = false) => {
@@ -187,14 +234,21 @@ export const EquityVestingChart = ({
       try {
         const added = await onFillHistory(seriesPeriodFor(plan.grantDate, todayIso));
         if (added > 0) {
-          setFillNote(
-            `Added ${added} trading day${added === 1 ? '' : 's'} of ${plan.ticker} prices.`
-          );
+          setFillNote({
+            text: `Added ${added} trading day${added === 1 ? '' : 's'} of ${plan.ticker} prices.`,
+            tradingDays: true,
+          });
         } else if (!auto) {
-          setFillNote(`Every ${plan.ticker} trading day the provider has was already recorded.`);
+          setFillNote({
+            text: `Every ${plan.ticker} trading day the provider has was already recorded.`,
+            tradingDays: true,
+          });
         }
       } catch {
-        setFillNote(`Could not reach ${plan.ticker}'s price history. Try again in a moment.`);
+        setFillNote({
+          text: `Could not reach ${plan.ticker}'s price history. Try again in a moment.`,
+          tradingDays: false,
+        });
       } finally {
         setFilling(false);
       }
@@ -282,7 +336,12 @@ export const EquityVestingChart = ({
         <ModeToggle options={VIEWS} value={view} onChange={setView} />
       </div>
 
-      {fillNote && <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">{fillNote}</div>}
+      {fillNote && (
+        <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">{fillNote.text}</div>
+      )}
+      {explainGaps && (
+        <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">{TRADING_DAYS_ONLY}</div>
+      )}
 
       {view !== 'vesting' && points.length >= 2 && (
         <div className="mt-2 flex flex-wrap gap-2">
@@ -338,6 +397,10 @@ export const EquityVestingChart = ({
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
             {/* The modal is already animating in, and the entry animation never completes headless. */}
             <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <Hatch id={GRANTED_HATCH} color={shade(series.equity, 0.45)} />
+                <Hatch id={TODAY_HATCH} color={series.equity} />
+              </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={axis.grid} />
               <XAxis dataKey="label" stroke={axis.axis} tick={{ fontSize: 12, fill: axis.label }} />
               <YAxis
@@ -353,14 +416,28 @@ export const EquityVestingChart = ({
                 fill={shade(series.equity, 0.45)}
                 radius={[4, 4, 0, 0]}
                 isAnimationActive={false}
-              />
+              >
+                {data.map((row) => (
+                  <Cell
+                    key={row.label}
+                    fill={fullyVested(row) ? shade(series.equity, 0.45) : `url(#${GRANTED_HATCH})`}
+                  />
+                ))}
+              </Bar>
               {repriced && (
                 <Bar
                   dataKey={TODAY}
                   fill={series.equity}
                   radius={[4, 4, 0, 0]}
                   isAnimationActive={false}
-                />
+                >
+                  {data.map((row) => (
+                    <Cell
+                      key={row.label}
+                      fill={fullyVested(row) ? series.equity : `url(#${TODAY_HATCH})`}
+                    />
+                  ))}
+                </Bar>
               )}
             </BarChart>
           </ResponsiveContainer>
@@ -369,7 +446,11 @@ export const EquityVestingChart = ({
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-ink-400">
         {view !== 'vesting' && points.length >= 2 && (
-          <span>{`${points.length} prices recorded`}</span>
+          <span>
+            {view === 'day'
+              ? `${points.length} trading days recorded`
+              : `${points.length} prices recorded`}
+          </span>
         )}
         <span>
           <span className="font-semibold text-slate-700 dark:text-ink-100">
@@ -382,10 +463,29 @@ export const EquityVestingChart = ({
         </span>
         <span>
           <span className="font-semibold text-slate-700 dark:text-ink-100">
-            {fmtMoney(Math.max(0, plan.totalGrant - plan.vestedToDate))}
+            {fmtMoney(stillToVest)}
           </span>{' '}
           still to vest
+          {repriced ? (
+            <>
+              {`, worth ${fmtMoney(stillToVest * plan.priceRatio)} at ${priceIsToday ? "today's" : 'the latest'} price `}
+              <span
+                className={
+                  plan.priceRatio > 1
+                    ? 'font-semibold text-emerald-600 dark:text-emerald-300'
+                    : 'font-semibold text-rose-600 dark:text-rose-300'
+                }
+              >
+                {formatPercentChange((plan.priceRatio - 1) * 100)}
+              </span>
+            </>
+          ) : (
+            ''
+          )}
         </span>
+        {data.some((row) => !fullyVested(row)) && view === 'vesting' && (
+          <span>A hatched bar has not vested yet, so no total counts it.</span>
+        )}
       </div>
     </div>
   );

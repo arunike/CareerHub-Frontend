@@ -1,4 +1,4 @@
-import { countdownLabel } from './notificationDeadlines';
+import { countdownLabel } from '../../utils/eventReminders';
 import type React from 'react';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
 import { CloseOutlined, ClockCircleOutlined } from '@ant-design/icons';

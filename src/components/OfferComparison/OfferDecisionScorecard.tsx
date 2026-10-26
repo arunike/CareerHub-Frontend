@@ -15,6 +15,7 @@ import type {
 } from '../../utils/OfferComparison/calculations';
 import { formatExperienceRange, isPastRole } from '../../utils/OfferComparison/calculations';
 import type { ScenarioRow } from '../../utils/OfferComparison/offerAdjustmentsTypes';
+import { LevelBadge } from '../display/LevelBadge';
 import ScorecardSidebar from './ScorecardSidebar';
 import ScorecardTitleBar from './ScorecardTitleBar';
 import ScorecardCompBreakdown from './ScorecardCompBreakdown';
@@ -313,9 +314,12 @@ const OfferDecisionScorecard = ({
                           {row.company}
                         </h3>
                       </div>
-                      <p className="text-sm font-medium text-slate-500 dark:text-ink-400">
-                        {row.role}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-slate-500 dark:text-ink-400">
+                          {row.role}
+                        </p>
+                        <LevelBadge level={row.level} company={row.company} />
+                      </div>
                     </div>
                     <div className="flex flex-col items-end text-right">
                       <ScoreBreakdownTrigger

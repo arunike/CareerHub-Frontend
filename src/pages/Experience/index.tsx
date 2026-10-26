@@ -24,6 +24,8 @@ import PromotionReviewModal from '../../components/Experience/PromotionReviewMod
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { getExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
 import { buildEquityVesting } from '../../utils/Experience/equityVesting';
+import { splitEquityByVesting } from '../../utils/Experience/vestedEquity';
+import { payYearsOf } from '../../utils/Experience/payYears';
 import {
   backfillStockPriceHistory,
   getStockPriceHistory,
@@ -114,11 +116,16 @@ const ExperiencePage: React.FC = () => {
     (exp: Experience) => {
       const linkedOffer = exp.offer ? allOffers.find((offer) => offer.id === exp.offer) : undefined;
       const snapshot = getExperienceCompensationSnapshot(exp, linkedOffer);
+      if (snapshot?.kind !== 'salary') return snapshot;
       // The ledger counts real paychecks, so it replaces the rate-and-days estimate where it exists.
       const ledger = ledgerByRole.get(`experience-${exp.id}`);
-      if (snapshot?.kind === 'salary' && ledger?.length)
-        return { ...snapshot, ledgerYears: ledger };
-      return snapshot;
+      const withLedger = ledger?.length ? { ...snapshot, ledgerYears: ledger } : snapshot;
+      // The chip and the breakdown have to hold back the same equity, so one helper decides it.
+      const unvestedEquity = splitEquityByVesting(
+        payYearsOf(withLedger.ledgerYears, withLedger.earningsYears),
+        buildEquityVesting(linkedOffer, exp.start_date, toIsoDate(new Date())).plan
+      ).unvested;
+      return unvestedEquity > 0 ? { ...withLedger, unvestedEquity } : withLedger;
     },
     [allOffers, ledgerByRole]
   );

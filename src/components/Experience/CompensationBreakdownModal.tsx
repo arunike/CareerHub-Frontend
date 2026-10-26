@@ -90,7 +90,11 @@ const CompensationBreakdownModal: React.FC<Props> = ({
       {overallInternship ? (
         <OverallInternshipBreakdown {...overallInternship} />
       ) : overallEarnings ? (
-        <OverallPayBreakdown groups={overallEarnings.groups} skipped={overallEarnings.skipped} />
+        <OverallPayBreakdown
+          groups={overallEarnings.groups}
+          skipped={overallEarnings.skipped}
+          unvestedEquity={overallEarnings.unvestedEquity}
+        />
       ) : snapshot.kind === 'salary' ? (
         <SalaryBreakdown
           total={snapshot.total}

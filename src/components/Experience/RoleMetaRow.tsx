@@ -137,7 +137,10 @@ const RoleMetaRow = ({
         <div className="flex min-w-0">
           {/* Earned across the whole stint where the dates allow it, not the current annual rate. */}
           {payYears.length
-            ? earnings(payYearsTotal(payYears), 'View pay structure breakdown')
+            ? earnings(
+                payYearsTotal(payYears) - (salary.unvestedEquity ?? 0),
+                'View pay structure breakdown'
+              )
             : dates.notStarted
               ? earnings(0, 'View pay structure breakdown')
               : rate(salary.total)}

@@ -3,7 +3,11 @@ import { PayPie, PayStackedBar, shadesFor } from './PayChart';
 import { EditNotice } from './breakdownRows';
 import type { YearEarnings } from '../../utils/Income/raiseSchedule';
 import type { LedgerYear } from '../../hooks/Income/useLedgerEarnings';
-import { payYearsOf, payYearsTotal } from '../../utils/Experience/payYears';
+import { payYearsOf, payYearsTotal, type PayYear } from '../../utils/Experience/payYears';
+import { splitEquityByVesting, upcomingVesting } from '../../utils/Experience/vestedEquity';
+import { signedMoneyUpToCents } from '../../utils/Income/format';
+import { countdownLabel } from '../../utils/eventReminders';
+import { formatPercentChange } from '../../utils/OfferComparison/raiseAfterValues';
 import { Button } from 'antd';
 import { LineChartOutlined } from '@ant-design/icons';
 import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
@@ -11,9 +15,66 @@ import { EquityVestingChart } from './EquityVestingChart';
 import { toIsoDate } from '../../utils/localDay';
 import { useChartSeries } from '../../theme/chartColors';
 import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
+import type { UpcomingVesting, VestedEquitySplit } from '../../utils/Experience/vestedEquity';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
+import dayjs from 'dayjs';
 
 const round = (value: number) => Math.round(value);
+
+// emerald-600 is 3.52:1 on this block in light mode, so a gain climbs a step there.
+const changeTone = (up: boolean) =>
+  up ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300';
+
+// A grant counts on its vest date, so what is waiting is shown as a countdown, outside every total.
+const UnvestedEquityShadow = ({
+  split,
+  upcoming,
+  color,
+}: {
+  split: VestedEquitySplit;
+  upcoming: UpcomingVesting;
+  color: string;
+}) => {
+  if (!upcoming.nextDate) return null;
+  const gain = upcoming.atCurrentPrice - upcoming.value;
+  return (
+    <div className="mt-3 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.14] bg-slate-50/80 dark:bg-white/[0.03] px-3 py-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span className="text-xs font-medium text-slate-500 dark:text-ink-400">
+          {upcoming.value > 0 ? 'Vesting in the next 12 months' : 'Nothing vests for 12 months'}
+        </span>
+        {upcoming.value > 0 && (
+          <span className="flex items-baseline gap-2">
+            <span className="text-sm font-semibold text-slate-600 dark:text-ink-200">
+              {fmtMoney(upcoming.atCurrentPrice)}
+            </span>
+            {split.repriced && (
+              <span className={`text-xs font-semibold ${changeTone(gain >= 0)}`}>
+                {signedMoneyUpToCents(gain)} · {formatPercentChange(split.growthPercent)}
+              </span>
+            )}
+          </span>
+        )}
+      </div>
+      <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-ink-800">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${Math.max(upcoming.progress * 100, 4)}%`,
+            backgroundImage: `repeating-linear-gradient(135deg, ${color} 0 4px, transparent 4px 8px)`,
+          }}
+        />
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 text-[11px] text-slate-500 dark:text-ink-400">
+        <span>
+          {countdownLabel(upcoming.nextDate)} · next vest{' '}
+          {dayjs(upcoming.nextDate).format('MMM D, YYYY')}
+        </span>
+        <span>Outside every total above</span>
+      </div>
+    </div>
+  );
+};
 
 export const SalaryBreakdown = ({
   total,
@@ -45,6 +106,7 @@ export const SalaryBreakdown = ({
   onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
 }) => {
   const series = useChartSeries();
+  const todayIso = toIsoDate(new Date());
   const years = payYearsOf(ledgerYears, earningsYears);
   // Each year is rounded before it is added, so the rows on screen sum to the totals on screen.
   const earned = years.reduce(
@@ -55,16 +117,26 @@ export const SalaryBreakdown = ({
     }),
     { base: 0, bonus: 0, equity: 0 }
   );
+  // Equity accrues by the day but is earned on its vest date, so the unvested part is held back.
+  const vesting = splitEquityByVesting(years, equityVesting?.plan);
+  const upcoming = upcomingVesting(equityVesting?.plan, todayIso);
+  const partOf = (year: PayYear, key: (typeof SEGMENTS)[number]['key']) =>
+    key === 'equity' ? (vesting.vestedByYear[year.year] ?? 0) : year.byComponent[key];
+  const totalOf = (year: PayYear) => year.total - year.byComponent.equity + partOf(year, 'equity');
   // With dated years the card reports money earned, not the rate it is earned at.
-  const breakdown = years.length ? earned : { base, bonus, equity };
+  const breakdown = years.length ? { ...earned, equity: vesting.vested } : { base, bonus, equity };
   // The same helper the role card chip uses, so the headline and the chip cannot drift apart.
-  const headline = years.length ? payYearsTotal(years) : total;
+  const headline = years.length ? payYearsTotal(years) - vesting.unvested : total;
   const rows = SEGMENTS.map((segment) => ({
     key: segment.key,
     label: segment.label,
     sublabel: undefined as string | undefined,
     value: breakdown[segment.key],
     color: series[segment.key],
+    empty:
+      segment.key === 'equity' && (vesting.unvested > 0 || vesting.outstanding > 0)
+        ? 'Nothing vested yet'
+        : 'Not included',
   }));
   // Each part of pay splits into the years that made it up.
   const yearShades = Object.fromEntries(
@@ -78,7 +150,7 @@ export const SalaryBreakdown = ({
     children: years.map((year, index) => ({
       key: `${segment.key}-${year.year}`,
       label: String(year.year),
-      value: year.byComponent[segment.key],
+      value: partOf(year, segment.key),
       color: yearShades[segment.key][index],
     })),
   }));
@@ -116,6 +188,11 @@ export const SalaryBreakdown = ({
                 ? `${years.at(-1)!.year}–${years[0].year} · ${fromLedger ? 'from your paycheck ledger' : 'estimated from your pay and dates'}`
                 : 'Base salary + bonus + equity, at your current rate')}
           </div>
+          {vesting.unvested > 0 && (
+            <div className="mt-2 rounded-lg bg-white/70 dark:bg-ink-900/70 px-2.5 py-1.5 text-[11px] text-slate-500 dark:text-ink-400">
+              Excludes {fmtMoney(vesting.unvested)} of equity that has not vested yet.
+            </div>
+          )}
 
           {years.length > 0 && (
             <>
@@ -142,16 +219,16 @@ export const SalaryBreakdown = ({
                         {year.year}
                       </span>
                       <span className="font-semibold text-slate-900 dark:text-ink-50">
-                        {fmtMoney(year.total)}
+                        {fmtMoney(totalOf(year))}
                       </span>
                     </div>
                     <div className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
                       {year.detail} · base {fmtMoney(year.byComponent.base)}
                       {year.byComponent.bonus > 0 && ` · bonus ${fmtMoney(year.byComponent.bonus)}`}
-                      {year.byComponent.equity > 0 &&
-                        ` · equity ${fmtMoney(year.byComponent.equity)}`}
+                      {partOf(year, 'equity') > 0 &&
+                        ` · equity ${fmtMoney(partOf(year, 'equity'))}`}
                       {/* The Income tab reports the whole year, so name it here to reconcile. */}
-                      {year.projected > year.total &&
+                      {year.projected > totalOf(year) &&
                         ` · ${fmtMoney(year.projected)} for the full year`}
                     </div>
                   </div>
@@ -199,7 +276,7 @@ export const SalaryBreakdown = ({
                     <div className="mt-1 text-xs text-gray-400 dark:text-ink-500">
                       {value > 0
                         ? `${pct.toFixed(1)}%${row.sublabel ? ` · ${row.sublabel}` : ''}`
-                        : 'Not included'}
+                        : row.empty}
                     </div>
                   </div>
                   <div className="text-right">
@@ -215,7 +292,7 @@ export const SalaryBreakdown = ({
                       parts={years.map((year, index) => ({
                         key: `${row.key}-${year.year}`,
                         label: String(year.year),
-                        value: round(year.byComponent[row.key]),
+                        value: round(partOf(year, row.key)),
                         color: yearShades[row.key][index],
                       }))}
                     />
@@ -235,7 +312,7 @@ export const SalaryBreakdown = ({
                 {years.length > 1 && value > 0 && (
                   <div className="mt-3 space-y-1.5 border-t border-gray-100 dark:border-white/[0.07] pt-3">
                     {years.map((year, index) => {
-                      const part = round(year.byComponent[row.key]);
+                      const part = round(partOf(year, row.key));
                       if (part <= 0) return null;
                       return (
                         <div
@@ -261,6 +338,10 @@ export const SalaryBreakdown = ({
                   </div>
                 )}
 
+                {row.key === 'equity' && (vesting.unvested > 0 || vesting.outstanding > 0) ? (
+                  <UnvestedEquityShadow split={vesting} upcoming={upcoming} color={row.color} />
+                ) : null}
+
                 {row.key === 'equity' && equityVesting?.plan ? (
                   <div className="mt-3 border-t border-gray-100 dark:border-white/[0.07] pt-2">
                     <ResponsiveDisclosure
@@ -275,7 +356,7 @@ export const SalaryBreakdown = ({
                         <div className="w-full md:w-[520px]">
                           <EquityVestingChart
                             plan={equityVesting.plan}
-                            todayIso={toIsoDate(new Date())}
+                            todayIso={todayIso}
                             priceHistory={grantPriceHistory}
                             onFillHistory={onFillGrantPriceHistory}
                           />

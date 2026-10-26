@@ -5,6 +5,8 @@ import {
   type ExperienceCompensationSnapshot,
 } from './compensation';
 import { earningsForYear, employmentWindow, yearsCovered } from '../Income/raiseSchedule';
+import { buildEquityVesting, type EquityGrantFields } from './equityVesting';
+import { splitEquityByVesting } from './vestedEquity';
 import { shadesFor } from '../../components/Experience/PayChart';
 import type { RaiseEntry } from '../../types';
 import type { Experience } from '../../types';
@@ -27,11 +29,13 @@ export interface YearGroup {
 
 export interface EarningsReport {
   groups: YearGroup[];
+  // Equity that has accrued without vesting, which no total here counts.
+  unvestedEquity: number;
   // Roles that produced no figure, so a missing name in the chart has a stated reason.
   skipped: { company: string; roleTitle: string; reason: string }[];
 }
 
-interface OfferLike {
+interface OfferLike extends Omit<EquityGrantFields, 'equity'> {
   base_salary?: number | string | null;
   bonus?: number | string | null;
   equity?: number | string | null;
@@ -68,13 +72,13 @@ const salaryRows = (
   exp: Experience,
   offer: OfferLike | undefined,
   todayIso: string
-): RoleYearEarnings[] => {
+): { rows: RoleYearEarnings[]; unvested: number } => {
   const stored = storedPackageOf(exp, offer);
-  if (stored.base + stored.bonus + stored.equity <= 0) return [];
+  if (stored.base + stored.bonus + stored.equity <= 0) return { rows: [], unvested: 0 };
 
   const raises = offer?.raise_history ?? [];
   const finish = exp.is_current ? todayIso : (exp.end_date ?? todayIso);
-  return yearsCovered(exp.start_date ?? null, finish, todayIso).flatMap((year) => {
+  const accrued = yearsCovered(exp.start_date ?? null, finish, todayIso).flatMap((year) => {
     const window = employmentWindow(
       year,
       exp.start_date,
@@ -83,17 +87,29 @@ const salaryRows = (
     );
     const earned = earningsForYear(raises, stored, window, year);
     if (!earned || earned.total <= 0) return [];
-    return [
-      {
+    return [{ year, byComponent: rounded(earned.byComponent) }];
+  });
+  // Equity is earned on its vest date, so the part that has only accrued stays out of the rows.
+  const grant = offer ? { ...offer, equity: Number(offer.equity) || 0 } : null;
+  const vesting = splitEquityByVesting(
+    accrued,
+    buildEquityVesting(grant, exp.start_date, todayIso).plan
+  );
+
+  return {
+    unvested: vesting.unvested,
+    rows: accrued.map(({ year, byComponent }) => {
+      const parts = { ...byComponent, equity: vesting.vestedByYear[year] ?? 0 };
+      return {
         key: `${exp.id}-${year}`,
         year,
         company: exp.company || 'Role',
         roleTitle: exp.title || '',
-        amount: whole(earned.byComponent),
-        byComponent: rounded(earned.byComponent),
-      },
-    ];
-  });
+        amount: whole(parts),
+        byComponent: rounded(parts),
+      };
+    }),
+  };
 };
 
 // An hourly stint reports one total, so it is spread over its years by weekdays worked in each.
@@ -139,6 +155,7 @@ export const buildEarningsReport = (
   todayIso: string
 ): EarningsReport => {
   const rows: RoleYearEarnings[] = [];
+  let unvestedEquity = 0;
   const skipped: EarningsReport['skipped'] = [];
   const skip = (exp: Experience, reason: string) =>
     skipped.push({ company: exp.company || 'Role', roleTitle: exp.title || '', reason });
@@ -149,11 +166,13 @@ export const buildEarningsReport = (
     if (snapshot?.kind === 'hourly') {
       rows.push(...hourlyRows(exp, snapshot, todayIso));
     } else if (snapshot?.kind === 'salary') {
-      rows.push(
-        ...(snapshot.ledgerYears?.length
-          ? ledgerRows(exp, snapshot.ledgerYears)
-          : salaryRows(exp, getOffer(exp), todayIso))
-      );
+      if (snapshot.ledgerYears?.length) {
+        rows.push(...ledgerRows(exp, snapshot.ledgerYears));
+      } else {
+        const salary = salaryRows(exp, getOffer(exp), todayIso);
+        rows.push(...salary.rows);
+        unvestedEquity += salary.unvested;
+      }
     } else {
       skip(exp, 'no pay recorded');
       continue;
@@ -178,7 +197,7 @@ export const buildEarningsReport = (
     }))
     .sort((a, b) => b.year - a.year);
 
-  return { groups, skipped };
+  return { groups, skipped, unvestedEquity };
 };
 
 export const buildEarningsByYear = (

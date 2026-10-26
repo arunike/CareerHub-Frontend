@@ -252,6 +252,7 @@ export const buildRows = (
       applicationId: offer.application,
       company: app?.company_name || offer.application_details?.company || 'Unknown company',
       role: app?.role_title || offer.application_details?.role_title || 'Unknown role',
+      level: app?.level || offer.application_details?.level || '',
       score: Math.round(score),
       rank: 0,
       categories,
@@ -442,6 +443,8 @@ export const buildRows = (
       applicationId: offer.application || 0,
       company,
       role,
+      // A scenario typed from scratch names no level; one based on a real application keeps its.
+      level: baseApp?.level || '',
       score: Math.round(score),
       rank: 0,
       categories,

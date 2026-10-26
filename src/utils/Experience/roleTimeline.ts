@@ -126,3 +126,19 @@ export const gapLabelBetween = (newer: GroupSpan, older: GroupSpan): string | nu
   if (days < GAP_FLOOR_DAYS) return null;
   return `${humanizeDaySpan(days)} gap`;
 };
+
+export interface TimelineMark {
+  label: string;
+  // Where the start sits in its own year: 0 on 1 January, 1 on 31 December.
+  yearFraction: number;
+  title: string;
+}
+
+export const timelineMarkFor = (start: Dayjs | null | undefined): TimelineMark | null => {
+  if (!start) return null;
+  return {
+    label: start.format('MMM YYYY'),
+    yearFraction: (start.month() + (start.date() - 1) / start.daysInMonth()) / 12,
+    title: `Started ${start.format('MMMM D, YYYY')}`,
+  };
+};

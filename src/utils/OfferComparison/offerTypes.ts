@@ -146,7 +146,7 @@ export interface OfferLike {
   id?: number;
   linked_experience?: LinkedExperience | null;
   application: number;
-  application_details?: { company: string; role_title: string };
+  application_details?: { company: string; role_title: string; level?: string };
   // ISO date the offer expires, e.g. '2026-08-14'.
   deadline?: string | null;
   // When you would start. The first bonus is pro-rated from here rather than from today.

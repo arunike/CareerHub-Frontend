@@ -43,6 +43,14 @@ const toDay = (value: Date) =>
 export const daysUntil = (eventDate: string, today: Date) =>
   Math.round((parseDay(eventDate).getTime() - parseDay(toDay(today)).getTime()) / 86400000);
 
+export const countdownLabel = (date: string) => {
+  const away = daysUntil(date, new Date());
+  if (away < 0) return 'Past';
+  if (away === 0) return 'Today';
+  if (away === 1) return 'Tomorrow';
+  return `In ${away} days`;
+};
+
 export const resolveSettings = (raw: unknown): ReminderSettings => {
   const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const asNumber = (value: unknown, fallback: number, min: number, max: number) => {

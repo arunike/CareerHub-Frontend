@@ -223,6 +223,18 @@ describe('roles that produce no figure are reported, not dropped', () => {
       TODAY
     );
 
+  it('credits equity to the year its vest landed in and holds back the rest', () => {
+    const built = report([role({ id: 1, start_date: '2025-01-01', is_current: true })], {
+      1: { base_salary: 165000, bonus: 24750, equity: 50000 },
+    });
+    const equityIn = (year: number) =>
+      built.groups.find((group) => group.year === year)!.roles[0].byComponent.equity;
+    // The 12-month cliff releases on 2026-01-01, so 2025 earned none of it.
+    expect(equityIn(2025)).toBe(0);
+    expect(equityIn(2026)).toBe(87500);
+    expect(built.unvestedEquity).toBe(4281);
+  });
+
   it('uses the role own pay when the linked offer has none', () => {
     const withOffer = report(
       [

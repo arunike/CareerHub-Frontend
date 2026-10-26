@@ -26,6 +26,8 @@ export interface SalaryCompensationSnapshot {
   earningsYears?: YearEarnings[];
   // The Income tab's ledger for this role, which counts real paychecks and wins where present.
   ledgerYears?: LedgerYear[];
+  // Accrued equity whose vest date has not arrived, which no total counts.
+  unvestedEquity?: number;
 }
 
 export interface HourlyCompensationSnapshot {

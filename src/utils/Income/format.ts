@@ -32,4 +32,7 @@ export const moneyUpToCents = (value: number) =>
   upToCents.format(Number.isFinite(value) ? value : 0);
 export const signedMoney = (value: number) =>
   `${value >= 0 ? '+' : '-'}${currency.format(Math.abs(value))}`;
+// The signed form of moneyUpToCents, for a change shown beside a figure that carries no cents.
+export const signedMoneyUpToCents = (value: number) =>
+  `${value >= 0 ? '+' : '-'}${upToCents.format(Math.abs(Number.isFinite(value) ? value : 0))}`;
 export const percent = (value: number, digits = 1) => `${(value * 100).toFixed(digits)}%`;

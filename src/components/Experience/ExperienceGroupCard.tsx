@@ -8,11 +8,13 @@ import type { EmploymentType } from '../../types';
 import { getAvatarStyle, parseExperienceDate } from '../../utils/Experience/experienceUtils';
 
 import { EmploymentBadge } from './ExperienceBadges';
+import { LevelBadge } from '../display/LevelBadge';
 import RoleMetaRow from './RoleMetaRow';
 import RoleActionRow from './RoleActionRow';
 import {
   gapLabelBetween,
   groupSpan,
+  timelineMarkFor,
   type RoleDateLabel,
 } from '../../utils/Experience/roleTimeline';
 import {
@@ -21,10 +23,7 @@ import {
   TimelineRailMobile,
 } from './ExperienceTimelineRail';
 import { SortableGroupCard } from './SortableGroupCard';
-import {
-  LEVEL_BADGE_CLASS,
-  STATUS_BADGE_CLASS,
-} from '../../utils/Experience/experienceBadgeClasses';
+import { STATUS_BADGE_CLASS } from '../../utils/Experience/experienceBadgeClasses';
 import type { ExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
 import type { ReactNode } from 'react';
 
@@ -135,7 +134,7 @@ const ExperienceGroupCard = ({
                 {exp.title}
               </h3>
               <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-              {exp.level && <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>}
+              <LevelBadge level={exp.level} company={exp.company} />
               {exp.is_return_offer && (
                 <span
                   className={`${STATUS_BADGE_CLASS} border-blue-100 dark:border-blue-500/20 bg-blue-50/80 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300`}
@@ -336,7 +335,7 @@ const ExperienceGroupCard = ({
                         </span>
                       )}
                       <EmploymentBadge type={exp.employment_type} empTypes={empTypes} />
-                      {exp.level && <span className={LEVEL_BADGE_CLASS}>{exp.level}</span>}
+                      <LevelBadge level={exp.level} company={exp.company} />
                       {exp.is_return_offer && (
                         <span
                           className={`${STATUS_BADGE_CLASS} border-blue-100 dark:border-blue-500/20 bg-blue-50/80 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300`}
@@ -433,7 +432,7 @@ const ExperienceGroupCard = ({
         />
         <TimelineRailDesktop
           avatar={groupAvatar}
-          year={span.start ? span.start.format('YYYY') : undefined}
+          mark={timelineMarkFor(span.start)}
           isFirst={groupIdx === 0}
           isLast={groupIdx === groupedExperiences.length - 1}
           isCurrent={span.isCurrent}

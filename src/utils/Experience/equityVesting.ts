@@ -42,6 +42,8 @@ export interface EquityVestingYear {
   cumulative: number;
   shares: number | null;
   vested: boolean;
+  // How much of this year's value has actually vested, which a part-vested year needs stated.
+  vestedValue: number;
 }
 
 export interface EquityVestingPlan {
@@ -131,11 +133,13 @@ export const buildEquityVesting = (
         cumulative,
         shares: vest.shares,
         vested: vest.vested,
+        vestedValue: vest.vested ? vest.value : 0,
       });
       return;
     }
     row.to = vest.date;
     row.value += vest.value;
+    row.vestedValue += vest.vested ? vest.value : 0;
     row.cumulative = cumulative;
     row.shares = row.shares == null ? vest.shares : row.shares + (vest.shares ?? 0);
     row.vested = row.vested && vest.vested;
@@ -167,6 +171,9 @@ export const buildEquityVesting = (
     reason: null,
   };
 };
+
+export const isRepriced = (plan: EquityVestingPlan) =>
+  plan.currentPrice != null && plan.priceRatio !== 1;
 
 const CADENCE: Record<number, string> = {
   1: 'once a year',

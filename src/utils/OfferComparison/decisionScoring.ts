@@ -42,6 +42,7 @@ export type DecisionRow = {
   applicationId: number;
   company: string;
   role: string;
+  level: string;
   score: number;
   rank: number;
   categories: CategoryScore[];

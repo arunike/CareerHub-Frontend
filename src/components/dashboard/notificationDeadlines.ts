@@ -1,6 +1,5 @@
 import { compareAsc, differenceInCalendarDays, parseISO, startOfDay } from 'date-fns';
 import type { Task } from '../../types';
-import { daysUntil } from '../../utils/eventReminders';
 import {
   getDeadlineStatus,
   isDecisionSettled,
@@ -23,14 +22,6 @@ export interface DeadlineItem {
 }
 
 export type RankedDeadline = DeadlineItem & { rank: number };
-
-export const countdownLabel = (date: string) => {
-  const away = daysUntil(date, new Date());
-  if (away < 0) return 'Past';
-  if (away === 0) return 'Today';
-  if (away === 1) return 'Tomorrow';
-  return `In ${away} days`;
-};
 
 export const DEADLINE_SNOOZE_KEY = 'deadline_radar_snooze';
 const MAX_DEADLINE_DAYS = 7;

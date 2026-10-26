@@ -30,12 +30,12 @@ import ConfirmModal from '../modals/ConfirmModal';
 import {
   DEADLINE_SNOOZE_KEY,
   buildOfferDeadlines,
-  countdownLabel,
   buildTaskDeadlines,
   mergeDeadlines,
   type DeadlineItem,
 } from './notificationDeadlines';
 import { Button, Spin, message, notification } from 'antd';
+import { countdownLabel } from '../../utils/eventReminders';
 import { type OfferDeadlineSource } from '../../utils/offerDeadline';
 import DueSoonSection from './DueSoonSection';
 import DeadlineRadarSection from './DeadlineRadarSection';

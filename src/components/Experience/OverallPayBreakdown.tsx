@@ -13,9 +13,11 @@ import {
 export const OverallPayBreakdown = ({
   groups,
   skipped = [],
+  unvestedEquity = 0,
 }: {
   groups: YearGroup[];
   skipped?: { company: string; roleTitle: string; reason: string }[];
+  unvestedEquity?: number;
 }) => {
   const years = yearsIn(groups);
   const [scope, setScope] = useState<string>('all');
@@ -102,6 +104,12 @@ export const OverallPayBreakdown = ({
           />
         </div>
       </div>
+
+      {unvestedEquity > 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-white/[0.14] bg-slate-50/80 dark:bg-white/[0.03] px-4 py-3 text-xs text-slate-500 dark:text-ink-400">
+          Not vested yet, so no total above counts it: {money(unvestedEquity)} of equity.
+        </div>
+      )}
 
       {skipped.length > 0 && (
         <div className="rounded-2xl border border-amber-200 dark:border-amber-500/25 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200">
