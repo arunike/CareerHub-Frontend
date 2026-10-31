@@ -5,7 +5,12 @@ import {
   type ExperienceCompensationSnapshot,
 } from './compensation';
 import { earningsForYear, employmentWindow, yearsCovered } from '../Income/raiseSchedule';
-import { buildEquityVesting, lastDayOf, type EquityGrantFields } from './equityVesting';
+import {
+  buildEquityVesting,
+  grantSourceOf,
+  lastDayOf,
+  type EquityGrantFields,
+} from './equityVesting';
 import { splitEquityByVesting } from './vestedEquity';
 import { shadesFor } from '../../components/Experience/PayChart';
 import type { RaiseEntry } from '../../types';
@@ -90,7 +95,7 @@ const salaryRows = (
     return [{ year, byComponent: rounded(earned.byComponent) }];
   });
   // Equity is earned on its vest date, so the part that has only accrued stays out of the rows.
-  const grant = offer ? { ...offer, equity: Number(offer.equity) || 0 } : null;
+  const grant = grantSourceOf(exp, offer);
   const vesting = splitEquityByVesting(
     accrued,
     buildEquityVesting(grant, exp.start_date, todayIso, {}, {}, lastDayOf(exp)).plan

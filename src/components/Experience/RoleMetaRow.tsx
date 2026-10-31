@@ -1,6 +1,7 @@
 import { moneyUpToCents, moneyWhole as money } from '../../utils/Income/format';
 import { DollarOutlined, RightOutlined, TeamOutlined } from '@ant-design/icons';
-import { payYearsOf, payYearsTotal } from '../../utils/Experience/payYears';
+import { payYearsOf } from '../../utils/Experience/payYears';
+import { earnedTotal } from '../../utils/Experience/vestedEquity';
 import type { ExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
 import type { RoleDateLabel } from '../../utils/Experience/roleTimeline';
 
@@ -137,10 +138,7 @@ const RoleMetaRow = ({
         <div className="flex min-w-0">
           {/* Earned across the whole stint where the dates allow it, not the current annual rate. */}
           {payYears.length
-            ? earnings(
-                payYearsTotal(payYears) - (salary.unvestedEquity ?? 0),
-                'View pay structure breakdown'
-              )
+            ? earnings(earnedTotal(payYears, salary.vestedByYear), 'View pay structure breakdown')
             : dates.notStarted
               ? earnings(0, 'View pay structure breakdown')
               : rate(salary.total)}

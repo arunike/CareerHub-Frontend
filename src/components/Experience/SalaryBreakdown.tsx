@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { SEGMENTS, fmtMoney } from '../../utils/Experience/compensationBreakdownFormat';
 import { PayPie, PayStackedBar, shadesFor } from './PayChart';
 import { EditNotice } from './breakdownRows';
 import type { YearEarnings } from '../../utils/Income/raiseSchedule';
 import type { LedgerYear } from '../../hooks/Income/useLedgerEarnings';
-import { payYearsOf, payYearsTotal, type PayYear } from '../../utils/Experience/payYears';
+import { payYearsOf, type PayYear } from '../../utils/Experience/payYears';
 import { splitEquityByVesting, upcomingVesting } from '../../utils/Experience/vestedEquity';
 import { signedMoneyUpToCents } from '../../utils/Income/format';
 import { countdownLabel } from '../../utils/eventReminders';
@@ -14,6 +15,7 @@ import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
 import { EquityVestingChart } from './EquityVestingChart';
 import { toIsoDate } from '../../utils/localDay';
 import { useChartSeries } from '../../theme/chartColors';
+import FilterChip from '../inputs/FilterChip';
 import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
 import type { UpcomingVesting, VestedEquitySplit } from '../../utils/Experience/vestedEquity';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
@@ -126,30 +128,32 @@ export const SalaryBreakdown = ({
   const series = useChartSeries();
   const todayIso = toIsoDate(new Date());
   const years = payYearsOf(ledgerYears, earningsYears);
-  // Each year is rounded before it is added, so the rows on screen sum to the totals on screen.
-  const earned = years.reduce(
-    (sum, year) => ({
-      base: sum.base + year.byComponent.base,
-      bonus: sum.bonus + year.byComponent.bonus,
-      equity: sum.equity + year.byComponent.equity,
-    }),
-    { base: 0, bonus: 0, equity: 0 }
-  );
+  // A view filter, not a saved preference: it answers "what does this look like without equity".
+  const [hiddenParts, setHiddenParts] = useState<string[]>([]);
+  const [hiddenYears, setHiddenYears] = useState<number[]>([]);
   // Equity accrues by the day but is earned on its vest date, so the unvested part is held back.
   const vesting = splitEquityByVesting(years, equityVesting?.plan);
   const upcoming = upcomingVesting(equityVesting?.plan, todayIso);
   const partOf = (year: PayYear, key: (typeof SEGMENTS)[number]['key']) =>
     key === 'equity' ? (vesting.vestedByYear[year.year] ?? 0) : year.byComponent[key];
-  const totalOf = (year: PayYear) => year.total - year.byComponent.equity + partOf(year, 'equity');
+  // Vesting is split across every year first: hiding one must not re-credit a cliff to another.
+  const shownSegments = SEGMENTS.filter((segment) => !hiddenParts.includes(segment.key));
+  const shownYears = years.filter((year) => !hiddenYears.includes(year.year));
+  const totalOf = (year: PayYear) =>
+    shownSegments.reduce((sum, segment) => sum + partOf(year, segment.key), 0);
   // With dated years the card reports money earned, not the rate it is earned at.
-  const breakdown = years.length ? { ...earned, equity: vesting.vested } : { base, bonus, equity };
-  // The same helper the role card chip uses, so the headline and the chip cannot drift apart.
-  const headline = years.length ? payYearsTotal(years) - vesting.unvested : total;
-  const rows = SEGMENTS.map((segment) => ({
+  const rate = { base, bonus, equity };
+  const valueOf = (key: (typeof SEGMENTS)[number]['key']) =>
+    years.length ? shownYears.reduce((sum, year) => sum + partOf(year, key), 0) : rate[key];
+  // Summed from the parts on show, so hiding one re-bases every percentage beside it.
+  const headline = shownSegments.reduce((sum, segment) => sum + valueOf(segment.key), 0);
+  const filtered = hiddenParts.length > 0 || hiddenYears.length > 0;
+  const fromLedger = years.some((year) => year.fromLedger);
+  const rows = shownSegments.map((segment) => ({
     key: segment.key,
     label: segment.label,
     sublabel: undefined as string | undefined,
-    value: breakdown[segment.key],
+    value: valueOf(segment.key),
     color: series[segment.key],
     empty:
       segment.key === 'equity' && (vesting.unvested > 0 || vesting.outstanding > 0)
@@ -158,14 +162,17 @@ export const SalaryBreakdown = ({
   }));
   // Each part of pay splits into the years that made it up.
   const yearShades = Object.fromEntries(
-    SEGMENTS.map((segment) => [segment.key, shadesFor(series[segment.key], years.length)])
+    SEGMENTS.map((segment) => [
+      segment.key,
+      shadesFor(series[segment.key], Math.max(1, shownYears.length)),
+    ])
   ) as Record<string, string[]>;
-  const chartGroups = SEGMENTS.map((segment) => ({
+  const chartGroups = shownSegments.map((segment) => ({
     key: segment.key,
     label: segment.label,
     color: series[segment.key],
-    total: breakdown[segment.key],
-    children: years.map((year, index) => ({
+    total: valueOf(segment.key),
+    children: shownYears.map((year, index) => ({
       key: `${segment.key}-${year.year}`,
       label: String(year.year),
       value: partOf(year, segment.key),
@@ -174,7 +181,6 @@ export const SalaryBreakdown = ({
   }));
   // The rate is the package as it stands now, whichever source the yearly figures came from.
   const currentRate = total;
-  const fromLedger = years.some((year) => year.fromLedger);
 
   return (
     <div className="mt-2 space-y-4">
@@ -186,6 +192,63 @@ export const SalaryBreakdown = ({
           onEdit={onEdit}
         />
       )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
+          Showing
+        </span>
+        {SEGMENTS.map((segment) => {
+          const active = !hiddenParts.includes(segment.key);
+          return (
+            <FilterChip
+              key={segment.key}
+              label={segment.label}
+              active={active}
+              dot={series[segment.key]}
+              disabled={active && shownSegments.length === 1}
+              title={active && shownSegments.length === 1 ? 'The last part stays on' : undefined}
+              onToggle={() =>
+                setHiddenParts((current) =>
+                  active ? [...current, segment.key] : current.filter((k) => k !== segment.key)
+                )
+              }
+            />
+          );
+        })}
+        {years.length > 1 && (
+          <span aria-hidden className="h-5 w-px bg-slate-200 dark:bg-white/[0.12]" />
+        )}
+        {years.length > 1 &&
+          years.map((year) => {
+            const active = !hiddenYears.includes(year.year);
+            return (
+              <FilterChip
+                key={year.year}
+                label={String(year.year)}
+                active={active}
+                disabled={active && shownYears.length === 1}
+                title={active && shownYears.length === 1 ? 'The last year stays on' : undefined}
+                onToggle={() =>
+                  setHiddenYears((current) =>
+                    active ? [...current, year.year] : current.filter((y) => y !== year.year)
+                  )
+                }
+              />
+            );
+          })}
+        {filtered && (
+          <button
+            type="button"
+            onClick={() => {
+              setHiddenParts([]);
+              setHiddenYears([]);
+            }}
+            className="min-h-11 px-1.5 text-xs font-semibold text-blue-600 md:min-h-0 dark:text-blue-300"
+          >
+            Show all
+          </button>
+        )}
+      </div>
 
       <div className="grid gap-5 md:grid-cols-[320px,1fr]">
         <div className="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 dark:from-emerald-500/10 via-white dark:via-ink-900 to-blue-50 dark:to-blue-500/10 p-5">
@@ -206,7 +269,7 @@ export const SalaryBreakdown = ({
                 ? `${years.at(-1)!.year}–${years[0].year} · ${fromLedger ? 'from your paycheck ledger' : 'estimated from your pay and dates'}`
                 : 'Base salary + bonus + equity, at your current rate')}
           </div>
-          {vesting.unvested > 0 && (
+          {vesting.unvested > 0 && !hiddenParts.includes('equity') && (
             <div className="mt-2 rounded-lg bg-white/70 dark:bg-ink-900/70 px-2.5 py-1.5 text-[11px] text-slate-500 dark:text-ink-400">
               Excludes {fmtMoney(vesting.unvested)} of equity that has not vested yet.
             </div>
@@ -230,7 +293,7 @@ export const SalaryBreakdown = ({
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
                   How this adds up
                 </div>
-                {years.map((year) => (
+                {shownYears.map((year) => (
                   <div key={year.year} className="mt-2">
                     <div className="flex items-baseline justify-between gap-2 text-xs">
                       <span className="font-semibold text-slate-700 dark:text-ink-100">
@@ -241,20 +304,22 @@ export const SalaryBreakdown = ({
                       </span>
                     </div>
                     <div className="mt-1 text-[11px] text-slate-400 dark:text-ink-500">
-                      {year.detail} · base {fmtMoney(year.byComponent.base)}
-                      {year.byComponent.bonus > 0 && ` · bonus ${fmtMoney(year.byComponent.bonus)}`}
-                      {partOf(year, 'equity') > 0 &&
-                        ` · equity ${fmtMoney(partOf(year, 'equity'))}`}
+                      {year.detail}
+                      {shownSegments.map((segment) =>
+                        partOf(year, segment.key) > 0
+                          ? ` · ${segment.label.toLowerCase()} ${fmtMoney(partOf(year, segment.key))}`
+                          : ''
+                      )}
                       {/* The Income tab reports the whole year, so name it here to reconcile. */}
                       {year.projected > totalOf(year) &&
                         ` · ${fmtMoney(year.projected)} for the full year`}
                     </div>
                   </div>
                 ))}
-                {years.length > 1 && (
+                {shownYears.length > 1 && (
                   <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-slate-200 dark:border-white/[0.08] pt-2 text-xs">
                     <span className="font-medium text-slate-600 dark:text-ink-200">
-                      {years.length} years in this role
+                      {shownYears.length} years in this role
                     </span>
                     <span className="font-bold text-slate-900 dark:text-ink-50">
                       {fmtMoney(headline)}
@@ -304,10 +369,10 @@ export const SalaryBreakdown = ({
                   </div>
                 </div>
                 <div className="mt-3">
-                  {years.length > 1 ? (
+                  {shownYears.length > 1 ? (
                     <PayStackedBar
                       total={value}
-                      parts={years.map((year, index) => ({
+                      parts={shownYears.map((year, index) => ({
                         key: `${row.key}-${year.year}`,
                         label: String(year.year),
                         value: round(partOf(year, row.key)),
@@ -327,9 +392,9 @@ export const SalaryBreakdown = ({
                   )}
                 </div>
 
-                {years.length > 1 && value > 0 && (
+                {shownYears.length > 1 && value > 0 && (
                   <div className="mt-3 space-y-1.5 border-t border-gray-100 dark:border-white/[0.07] pt-3">
-                    {years.map((year, index) => {
+                    {shownYears.map((year, index) => {
                       const part = round(partOf(year, row.key));
                       if (part <= 0) return null;
                       return (

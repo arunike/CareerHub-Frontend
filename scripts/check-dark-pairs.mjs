@@ -157,11 +157,52 @@ const checkMarks = (source, where, tokens) => {
   return found;
 };
 
+// A hand-written rule is invisible to the utility pairing above, so a light fill it hard-codes
+// stays light in dark mode. One shipped: the selected ledger row went white in dark and its
+// dimmest cells became unreadable. A themed var() is the fix; a dark rule for the same selector
+// is the escape hatch for a colour that genuinely cannot be a token.
+const checkHardCodedFills = (css) => {
+  const found = [];
+  const darkSelectors = [...css.matchAll(/\[data-theme='dark'\][^{]*/g)].map((m) => m[0]);
+  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = rule[1].trim();
+    if (selector.startsWith('@') || selector.includes(':root')) continue;
+    if (selector.includes("[data-theme='dark']")) continue;
+    const fill = /background(?:-color)?:\s*(#[0-9a-fA-F]{3,8})/.exec(rule[2]);
+    if (!fill) continue;
+    const hex = fill[1].slice(1);
+    const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+    // A dark fill already suits a dark theme, and a saturated one is a brand colour that reads
+    // on both; only a light near-neutral is a surface that has to be answered.
+    if ((r + g + b) / 3 < 140) continue;
+    if (Math.max(r, g, b) - Math.min(r, g, b) > 40) continue;
+    // Compared by the classes the selector uses, not its text: the dark answer is often written
+    // with a different `:where(...)` list or pseudo-class, and a substring match calls that a
+    // miss. A plain `includes` also matched the empty string once, which passed everything.
+    // A class inside `:not()` is what the rule excludes, not what it targets, and the dark
+    // answer is routinely written with a different exclusion.
+    const classesOf = (text) =>
+      new Set((text.replace(/:not\([^)]*\)/g, '').match(/\.[A-Za-z][\w-]*/g) ?? []));
+    const used = classesOf(selector);
+    if (used.size === 0) continue;
+    const answered = darkSelectors.some((dark) => {
+      const theirs = classesOf(dark);
+      return [...used].every((name) => theirs.has(name));
+    });
+    if (answered) continue;
+    const key = selector.split('\n').pop().trim();
+    found.push(`index.css: '${key}' hard-codes the light fill ${fill[1]} with no dark answer`);
+  }
+  return found;
+};
+
 const files = await walk(SRC);
 const problems = [];
 if (files.length === 0) problems.push('no source files found; the glob is wrong');
 const appCss = await readFile(join(SRC, 'index.css'), 'utf8');
 problems.push(...checkTokens(appCss));
+problems.push(...checkHardCodedFills(appCss));
 const tokens = await loadPalette(appCss);
 let marks = 0;
 
@@ -197,5 +238,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `dark pairs: ${files.length} files, every light hover and focus answers dark; ${TEXT_TIERS.length} ink text tiers clear AA; textless marks keep their visibility in dark`
+  `dark pairs: ${files.length} files, every light hover and focus answers dark; ${TEXT_TIERS.length} ink text tiers clear AA; textless marks keep their visibility in dark; no light fill in index.css is left without a dark answer`
 );

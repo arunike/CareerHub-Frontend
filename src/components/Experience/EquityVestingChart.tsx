@@ -31,6 +31,7 @@ import { GrantForfeiture } from './GrantForfeiture';
 import type { VestDateOverride } from '../../utils/Income/vestEvents';
 import { GrantValueChart, PRICE, VESTED, WHOLE, type ValueSeriesShown } from './GrantValueChart';
 import ModeToggle from '../inputs/ModeToggle';
+import FilterChip from '../inputs/FilterChip';
 import {
   buildGrantValueHistory,
   pricePointRows,
@@ -331,6 +332,14 @@ export const EquityVestingChart = ({
         {plan.derivedFromYearly ? ` · from ${fmtMoney(plan.derivedFromYearly)} a year` : ''}
       </div>
 
+      {/* The cadence is the app's default here, so it must not read as terms somebody recorded. */}
+      {plan.assumedTerms && (
+        <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">
+          Vesting is assumed from this role's own equity figure. Link an offer to record the real
+          cliff, cadence and share price.
+        </div>
+      )}
+
       {plan.forfeited > 0 && plan.lastDay && (
         <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
           The role ended {dayjs(plan.lastDay).format('MMM D, YYYY')}, so the{' '}
@@ -415,29 +424,17 @@ export const EquityVestingChart = ({
             const active = drawn[chip.key];
             const pinned = onlySeriesLeft(chip.key);
             return (
-              <button
+              <FilterChip
                 key={chip.key}
-                type="button"
-                aria-pressed={active}
+                label={chip.label}
+                active={active}
+                dot={series[CHIP_COLORS[chip.key]]}
                 disabled={pinned || unavailable}
                 title={
                   unavailable ? vestingReason : pinned ? 'The last series stays on' : undefined
                 }
-                onClick={() => setShown((current) => ({ ...current, [chip.key]: !active }))}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed md:min-h-0 md:px-2.5 md:py-1 ${
-                  unavailable ? 'opacity-50 ' : ''
-                }${
-                  active
-                    ? 'border-gray-200 bg-white text-gray-700 shadow-sm dark:border-white/[0.08] dark:bg-ink-900 dark:text-ink-100'
-                    : 'border-gray-200 bg-gray-50 text-gray-400 dark:border-white/[0.08] dark:bg-ink-900 dark:text-ink-500'
-                }`}
-              >
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: active ? series[CHIP_COLORS[chip.key]] : '#d1d5db' }}
-                />
-                <span>{chip.label}</span>
-              </button>
+                onToggle={() => setShown((current) => ({ ...current, [chip.key]: !active }))}
+              />
             );
           })}
         </div>

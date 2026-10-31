@@ -30,6 +30,8 @@ export interface EquityGrantFields {
   equity_current_price?: number | null;
   equity_price_points?: unknown;
   equity_vesting_stopped_on?: string | null;
+  // Set when the grant came off the role itself, so the cadence is the default, not a record.
+  terms_assumed?: boolean;
   equity_buyback_value?: number | null;
   equity_liquidity?: string | null;
   equity_vest_overrides?: VestDateOverride[] | null;
@@ -65,6 +67,8 @@ export interface EquityVestingPlan {
   totalGrant: number;
   // The role's last day, after which nothing more vests; null while it is still current.
   lastDay: string | null;
+  // Whether the cadence below is the app's default rather than terms recorded on an offer.
+  assumedTerms: boolean;
   // Grant value that never vested because the role ended first, and the vests it was owed by.
   forfeited: number;
   forfeitedVests: EquityVest[];
@@ -101,6 +105,17 @@ export const lastDayOf = (
   role: { is_current?: boolean | null; end_date?: string | null } | null | undefined
 ) => (!role || role.is_current ? null : (role.end_date ?? null));
 
+// A role can record equity with no offer, so the grant is its yearly figure over four years.
+export const grantSourceOf = (
+  role: { equity?: unknown } | null | undefined,
+  // The stored figure arrives as a string from the API, so the offer's own type is widened here.
+  offer: (Omit<EquityGrantFields, 'equity'> & { equity?: unknown }) | null | undefined
+): EquityGrantFields | null => {
+  if (offer) return { ...offer, equity: Number(offer.equity) || 0 };
+  const equity = Number(role?.equity) || 0;
+  return equity > 0 ? { equity, terms_assumed: true } : null;
+};
+
 // A grant can stop on a day of its own, so a date recorded against it outranks the role's.
 export const vestingStoppedOn = (
   offer: Pick<EquityGrantFields, 'equity_vesting_stopped_on'> | null | undefined,
@@ -119,7 +134,7 @@ export const buildEquityVesting = (
   lastDay: string | null = null
 ): EquityVestingResult => {
   if (!offer) {
-    return nothingToDraw('Link this role to an offer to chart the grant behind its equity.');
+    return nothingToDraw('No equity is recorded on this role, and no offer is linked to it.');
   }
   // An unsellable grant is counted as $0 everywhere else, so a dollar trend would contradict it.
   if (offer.equity_liquidity === 'ILLIQUID') {
@@ -199,6 +214,7 @@ export const buildEquityVesting = (
       grantDate,
       totalGrant,
       lastDay: stopped,
+      assumedTerms: Boolean(offer.terms_assumed),
       forfeited,
       forfeitedVests: lost,
       priceRatio: priceRatio({ ...offer, equity: num(offer.equity) }, prices),

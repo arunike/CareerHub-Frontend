@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildEquityVesting, type EquityGrantFields } from './equityVesting';
-import { splitEquityByVesting, upcomingVesting } from './vestedEquity';
+import { earnedTotal, splitEquityByVesting, upcomingVesting } from './vestedEquity';
 import type { PayYear } from './payYears';
 
 const GRANT_DATE = '2025-07-01';
@@ -142,5 +142,46 @@ describe('upcomingVesting', () => {
       nextDate: null,
       progress: 0,
     });
+  });
+});
+
+describe('a ledger that records no vest paycheck', () => {
+  // Real paychecks carrying base and bonus, and no vest event anywhere.
+  const ledgerYears = [
+    { year: 2026, byComponent: { base: 165000, bonus: 24750, equity: 0 }, fromLedger: true },
+    { year: 2025, byComponent: { base: 165000, bonus: 0, equity: 0 }, fromLedger: true },
+  ] as never as PayYear[];
+
+  const plan = buildEquityVesting(grant(), GRANT_DATE, TODAY).plan!;
+
+  it('credits what the grant vested rather than reporting none', () => {
+    const split = splitEquityByVesting(ledgerYears, plan);
+    expect(plan.vestedToDate).toBe(62500);
+    expect(split.vested).toBe(62500);
+    // The cliff lands in 2026, so that is the year it is credited to.
+    expect(split.vestedByYear[2026]).toBe(62500);
+    expect(split.vestedByYear[2025]).toBe(0);
+    // Nothing accrued through the ledger, so nothing is held back as accrued-but-unvested.
+    expect(split.unvested).toBe(0);
+  });
+
+  it('totals the same for the role card chip as for the breakdown', () => {
+    const split = splitEquityByVesting(ledgerYears, plan);
+    const parts = ledgerYears.reduce(
+      (sum, year) =>
+        sum + year.byComponent.base + year.byComponent.bonus + split.vestedByYear[year.year],
+      0
+    );
+    expect(earnedTotal(ledgerYears, split.vestedByYear)).toBe(parts);
+    expect(earnedTotal(ledgerYears, split.vestedByYear)).toBe(165000 + 189750 + 62500);
+  });
+
+  it('leaves a ledger that does record equity alone', () => {
+    const withVests = ledgerYears.map((year, index) =>
+      index === 0 ? { ...year, byComponent: { ...year.byComponent, equity: 50000 } } : year
+    );
+    const split = splitEquityByVesting(withVests, plan);
+    expect(split.vested).toBe(50000);
+    expect(split.vestedByYear[2026]).toBe(50000);
   });
 });

@@ -28,6 +28,8 @@ export interface SalaryCompensationSnapshot {
   ledgerYears?: LedgerYear[];
   // Accrued equity whose vest date has not arrived, which no total counts.
   unvestedEquity?: number;
+  // What vested in each year, so the role card chip totals the same way the breakdown does.
+  vestedByYear?: Record<number, number>;
 }
 
 export interface HourlyCompensationSnapshot {

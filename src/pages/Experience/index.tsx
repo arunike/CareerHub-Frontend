@@ -23,7 +23,7 @@ import PayGrowthModal from '../../components/Experience/PayGrowthModal';
 import PromotionReviewModal from '../../components/Experience/PromotionReviewModal';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { getExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
-import { buildEquityVesting, lastDayOf } from '../../utils/Experience/equityVesting';
+import { buildEquityVesting, grantSourceOf, lastDayOf } from '../../utils/Experience/equityVesting';
 import { splitEquityByVesting } from '../../utils/Experience/vestedEquity';
 import { payYearsOf } from '../../utils/Experience/payYears';
 import {
@@ -121,18 +121,18 @@ const ExperiencePage: React.FC = () => {
       const ledger = ledgerByRole.get(`experience-${exp.id}`);
       const withLedger = ledger?.length ? { ...snapshot, ledgerYears: ledger } : snapshot;
       // The chip and the breakdown have to hold back the same equity, so one helper decides it.
-      const unvestedEquity = splitEquityByVesting(
+      const split = splitEquityByVesting(
         payYearsOf(withLedger.ledgerYears, withLedger.earningsYears),
         buildEquityVesting(
-          linkedOffer,
+          grantSourceOf(exp, linkedOffer),
           exp.start_date,
           toIsoDate(new Date()),
           {},
           {},
           lastDayOf(exp)
         ).plan
-      ).unvested;
-      return unvestedEquity > 0 ? { ...withLedger, unvestedEquity } : withLedger;
+      );
+      return { ...withLedger, unvestedEquity: split.unvested, vestedByYear: split.vestedByYear };
     },
     [allOffers, ledgerByRole]
   );
@@ -244,7 +244,7 @@ const ExperiencePage: React.FC = () => {
       ? allOffers.find((o) => o.id === compBreakdownExp.offer)
       : null;
     return buildEquityVesting(
-      offer,
+      grantSourceOf(compBreakdownExp, offer),
       compBreakdownExp.start_date,
       toIsoDate(new Date()),
       stockPrices,

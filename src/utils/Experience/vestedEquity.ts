@@ -42,6 +42,8 @@ export const splitEquityByVesting = (
   if (years.length === 0) return { vestedByYear: {}, vested: 0, unvested: 0, ...fromPlan(plan) };
   // The ledger credits equity only when a vest event lands in a paycheck, so its figure is vested.
   const splits = plan != null && !years.some((year) => year.fromLedger);
+  // With no vest paycheck anywhere, the grant's schedule is the only record of what vested.
+  const fromGrant = plan != null && !splits && years.every((year) => year.byComponent.equity === 0);
   const vestedByYear: Record<number, number> = {};
   let accrued = 0;
   let counted = 0;
@@ -49,9 +51,10 @@ export const splitEquityByVesting = (
   for (const year of [...years].sort((a, b) => a.year - b.year)) {
     accrued += year.byComponent.equity;
     let vested = year.byComponent.equity;
-    if (splits) {
+    if (splits || fromGrant) {
       // A cliff releases what earlier years accrued, so it is credited to the year it landed in.
-      const reached = round(Math.min(accrued, vestedThroughYear(plan, year.year)));
+      const through = vestedThroughYear(plan!, year.year);
+      const reached = round(splits ? Math.min(accrued, through) : through);
       vested = Math.max(0, reached - counted);
       counted = reached;
     }
@@ -67,6 +70,17 @@ export const splitEquityByVesting = (
     ...fromPlan(plan),
   };
 };
+
+// Pay years with equity replaced by what vested, summed the same way the breakdown card sums it.
+export const earnedTotal = (
+  years: Array<{ year: number; byComponent: { base: number; bonus: number } }>,
+  vestedByYear: Record<number, number> = {}
+) =>
+  years.reduce(
+    (sum, year) =>
+      sum + year.byComponent.base + year.byComponent.bonus + (vestedByYear[year.year] ?? 0),
+    0
+  );
 
 export interface UpcomingVesting {
   // What the twelve months ahead release, at the grant's price and at the latest one.

@@ -454,13 +454,23 @@ textarea::placeholder {
   border-bottom-color: #f4f6fa !important;
 }
 
+/* Lifted rather than tinted: a hard-coded pale fill turns the row into a white band in dark. */
 .ledger-table .ant-table-tbody > tr.ledger-row-selected > td {
-  background: #f6f9ff !important;
+  --ledger-row-lift:
+    inset 0 1px 0 rgba(37, 99, 235, 0.25), inset 0 -1px 0 rgba(37, 99, 235, 0.25),
+    0 10px 22px -16px rgba(15, 23, 42, 0.55);
+  /* Raised over its neighbours, or the row below paints over the shadow it casts. */
+  position: relative;
+  z-index: 1;
+  background: var(--careerhub-accent-soft) !important;
+  box-shadow: var(--ledger-row-lift);
 }
 
 /* The leftmost cell is the selection checkbox, so the accent rules the whole row. */
 .ledger-table .ant-table-tbody > tr.ledger-row-selected > td:first-child {
-  box-shadow: inset 2px 0 0 #2563eb;
+  box-shadow:
+    inset 2px 0 0 var(--careerhub-accent),
+    var(--ledger-row-lift);
 }
 
 .ledger-table .ant-table-tbody > tr.ledger-detail-row > td {
@@ -2249,6 +2259,28 @@ summary,
 [data-theme='dark'] .ledger-table .ant-table-thead > tr > th,
 [data-theme='dark'] .ledger-table .ant-table-tbody > tr.ledger-detail-row > td {
   background: var(--careerhub-surface-subtle) !important;
+}
+
+/* Lift only: any fill lightens the surface and drops the muted tier under AA. */
+[data-theme='dark'] .ledger-table .ant-table-tbody > tr.ledger-row-selected > td {
+  --ledger-row-lift:
+    inset 0 1px 0 rgba(77, 141, 253, 0.45), inset 0 -1px 0 rgba(77, 141, 253, 0.45),
+    0 12px 26px -16px rgba(0, 0, 0, 1);
+  background: var(--careerhub-surface) !important;
+}
+
+[data-theme='dark'] .ledger-table .ant-table-tbody > tr > td.ledger-editable-cell:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme='dark'] .row-actions .ant-btn-dangerous:not(:disabled):hover {
+  background: rgba(244, 63, 94, 0.16) !important;
+  color: #fda4af !important;
+}
+
+[data-theme='dark'] .toolbar-toggle-group {
+  background: var(--careerhub-surface-subtle);
+  border-color: var(--careerhub-border-soft);
 }
 
 [data-theme='dark'] .ledger-table .ant-table-body {

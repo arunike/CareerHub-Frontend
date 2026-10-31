@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildEquityVesting,
+  grantSourceOf,
   lastDayOf,
   retainedGrant,
   vestingCadenceLabel,
@@ -149,7 +150,7 @@ describe('buildEquityVestingPlan', () => {
       expect(result.plan).toBeNull();
       return result.reason;
     };
-    expect(reasonFor(null, GRANT_DATE, TODAY)).toMatch(/Link this role to an offer/);
+    expect(reasonFor(null, GRANT_DATE, TODAY)).toMatch(/No equity is recorded on this role/);
     expect(reasonFor(grant(), null, TODAY)).toMatch(/Add a start date/);
     expect(reasonFor(grant({ equity: 0, equity_total_grant: 0 }), GRANT_DATE, TODAY)).toMatch(
       /No equity grant is recorded/
@@ -258,5 +259,32 @@ describe('a role that ended before the grant finished vesting', () => {
     expect(lastDayOf({ is_current: true, end_date: '2026-11-01' })).toBeNull();
     expect(lastDayOf({ is_current: false, end_date: null })).toBeNull();
     expect(lastDayOf(null)).toBeNull();
+  });
+});
+
+describe('a role that records equity with no offer linked', () => {
+  const role = { equity: 50000 };
+
+  it("builds the grant from the role's own yearly figure", () => {
+    const plan = buildEquityVesting(grantSourceOf(role, null), GRANT_DATE, TODAY).plan!;
+    // 25% a year is the default vesting percent, so a yearly figure implies a four-year grant.
+    expect(plan.totalGrant).toBe(200000);
+    expect(plan.vestedToDate).toBe(62500);
+    expect(plan.assumedTerms).toBe(true);
+    expect(vestingCadenceLabel(plan)).toBe('4 years, quarterly, 12-month cliff');
+  });
+
+  it('prefers the linked offer, whose terms are recorded rather than assumed', () => {
+    const plan = buildEquityVesting(grantSourceOf(role, grant()), GRANT_DATE, TODAY).plan!;
+    expect(plan.totalGrant).toBe(200000);
+    expect(plan.assumedTerms).toBe(false);
+  });
+
+  it('has nothing to draw when neither the role nor an offer records equity', () => {
+    expect(grantSourceOf({ equity: 0 }, null)).toBeNull();
+    expect(grantSourceOf(null, null)).toBeNull();
+    expect(buildEquityVesting(grantSourceOf({}, null), GRANT_DATE, TODAY).reason).toMatch(
+      /No equity is recorded on this role/
+    );
   });
 });
