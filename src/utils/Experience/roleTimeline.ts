@@ -129,16 +129,29 @@ export const gapLabelBetween = (newer: GroupSpan, older: GroupSpan): string | nu
 
 export interface TimelineMark {
   label: string;
-  // Where the start sits in its own year: 0 on 1 January, 1 on 31 December.
-  yearFraction: number;
+  // Years served in full, then how far through the one after them: a dial segment each.
+  years: number;
+  fraction: number;
+  // Read beside the dial, since a phone cannot hover to find out what it counts.
+  tenure: string;
   title: string;
 }
 
-export const timelineMarkFor = (start: Dayjs | null | undefined): TimelineMark | null => {
+export const timelineMarkFor = (span: GroupSpan, now: Dayjs = dayjs()): TimelineMark | null => {
+  const start = span.start;
   if (!start) return null;
+  const end = span.isCurrent || !span.end ? now : span.end;
+  const days = Math.max(0, end.diff(start, 'day'));
+  const years = Math.max(0, end.diff(start, 'year'));
+  const anniversary = start.add(years, 'year');
+  const yearLength = start.add(years + 1, 'year').diff(anniversary, 'day');
+  const through = yearLength > 0 ? end.diff(anniversary, 'day') / yearLength : 0;
+  const tenure = days > 0 ? humanizeDaySpan(days) : 'starts later';
   return {
     label: start.format('MMM YYYY'),
-    yearFraction: (start.month() + (start.date() - 1) / start.daysInMonth()) / 12,
-    title: `Started ${start.format('MMMM D, YYYY')}`,
+    years,
+    fraction: Math.min(1, Math.max(0, through)),
+    tenure,
+    title: `${tenure} here, from ${start.format('MMMM D, YYYY')}`,
   };
 };

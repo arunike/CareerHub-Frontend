@@ -23,7 +23,7 @@ import PayGrowthModal from '../../components/Experience/PayGrowthModal';
 import PromotionReviewModal from '../../components/Experience/PromotionReviewModal';
 import type { OfferLike as Offer } from '../../utils/OfferComparison/calculations';
 import { getExperienceCompensationSnapshot } from '../../utils/Experience/compensation';
-import { buildEquityVesting } from '../../utils/Experience/equityVesting';
+import { buildEquityVesting, lastDayOf } from '../../utils/Experience/equityVesting';
 import { splitEquityByVesting } from '../../utils/Experience/vestedEquity';
 import { payYearsOf } from '../../utils/Experience/payYears';
 import {
@@ -123,7 +123,14 @@ const ExperiencePage: React.FC = () => {
       // The chip and the breakdown have to hold back the same equity, so one helper decides it.
       const unvestedEquity = splitEquityByVesting(
         payYearsOf(withLedger.ledgerYears, withLedger.earningsYears),
-        buildEquityVesting(linkedOffer, exp.start_date, toIsoDate(new Date())).plan
+        buildEquityVesting(
+          linkedOffer,
+          exp.start_date,
+          toIsoDate(new Date()),
+          {},
+          {},
+          lastDayOf(exp)
+        ).plan
       ).unvested;
       return unvestedEquity > 0 ? { ...withLedger, unvestedEquity } : withLedger;
     },
@@ -140,6 +147,8 @@ const ExperiencePage: React.FC = () => {
     handleSaveSchedulePhases,
     handleSaveInternshipCompInputs,
     handleSaveVestDates,
+    handleSaveGrantPrices,
+    handleSaveVestingStopped,
   } = useExperienceMutations({
     experiences,
     allOffers,
@@ -224,6 +233,10 @@ const ExperiencePage: React.FC = () => {
     Array<{ as_of: string; price: string }>
   >([]);
 
+  const compBreakdownOffer = compBreakdownExp?.offer
+    ? (allOffers.find((o) => o.id === compBreakdownExp.offer) ?? null)
+    : null;
+
   // Dated from the role's start date, which is the grant date the Income ledger falls back to.
   const compBreakdownVesting = useMemo(() => {
     if (!compBreakdownExp) return null;
@@ -235,7 +248,8 @@ const ExperiencePage: React.FC = () => {
       compBreakdownExp.start_date,
       toIsoDate(new Date()),
       stockPrices,
-      stockPriceDates
+      stockPriceDates,
+      lastDayOf(compBreakdownExp)
     );
   }, [allOffers, compBreakdownExp, stockPriceDates, stockPrices]);
 
@@ -550,6 +564,20 @@ const ExperiencePage: React.FC = () => {
           vestDatesLockedReason={
             compBreakdownExp.is_locked
               ? 'This role is locked, so its vest dates cannot be moved. Unlock it on the role card to record the dates payroll used.'
+              : undefined
+          }
+          roleLastDay={lastDayOf(compBreakdownExp)}
+          grantStoppedOn={compBreakdownOffer?.equity_vesting_stopped_on ?? null}
+          onSaveVestingStopped={compBreakdownExp.is_locked ? undefined : handleSaveVestingStopped}
+          vestingStoppedLockedReason={
+            compBreakdownExp.is_locked
+              ? 'This role is locked, so the day its grant stopped vesting cannot be changed. Unlock it on the role card to record a leaving date.'
+              : undefined
+          }
+          onSaveGrantPrices={compBreakdownExp.is_locked ? undefined : handleSaveGrantPrices}
+          grantPricesLockedReason={
+            compBreakdownExp.is_locked
+              ? 'This role is locked, so its prices cannot be changed. Unlock it on the role card to record a buyback price.'
               : undefined
           }
           {...compBreakdownSnapshot}

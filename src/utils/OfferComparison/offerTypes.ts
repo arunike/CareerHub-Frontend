@@ -169,6 +169,10 @@ export interface OfferLike {
   equity_grant_price?: number | null;
   // Only for a company with no ticker; a listed price lives in StockPrice, shared across offers.
   equity_current_price?: number | null;
+  // Dated prices for the same grant, [{date: '2026-07-01', price: 125}], oldest first.
+  equity_price_points?: Array<{ date: string; price: number }>;
+  // The day this grant stopped vesting, where that is not the role's own last day.
+  equity_vesting_stopped_on?: string | null;
   equity_cliff_months?: number;
   equity_vests_per_year?: number;
   equity_vesting_years?: number;

@@ -7,7 +7,11 @@ import { countdownLabel } from '../../utils/eventReminders';
 import { STATUS_BADGE_CLASS } from '../../utils/Experience/experienceBadgeClasses';
 import { useChartSeries } from '../../theme/chartColors';
 import { addDays } from '../../utils/localDay';
-import type { EquityVest, EquityVestingPlan } from '../../utils/Experience/equityVesting';
+import {
+  retainedGrant,
+  type EquityVest,
+  type EquityVestingPlan,
+} from '../../utils/Experience/equityVesting';
 import type { VestDateOverride } from '../../utils/Income/vestEvents';
 
 const VESTED_CHIP =
@@ -79,7 +83,9 @@ export const VestingTracker = ({
   const nextVest = plan.vests.find((vest) => !vest.vested) ?? null;
   const lastVest = plan.vests.at(-1) ?? null;
   const vestedCount = plan.vests.filter((vest) => vest.vested).length;
-  const vestedShare = plan.totalGrant > 0 ? plan.vestedToDate / plan.totalGrant : 0;
+  // The grant the role lasted long enough to earn; the forfeited part is no longer a denominator.
+  const kept = retainedGrant(plan);
+  const vestedShare = kept > 0 ? plan.vestedToDate / kept : 0;
   const movedCount = plan.vests.filter((vest) => vest.moved).length;
 
   const save = async (months: number, overrides: VestDateOverride[]) => {
@@ -216,7 +222,7 @@ export const VestingTracker = ({
         <span className="text-sm font-semibold text-slate-700 dark:text-ink-100">
           {fmtMoney(plan.vestedToDate)}
           <span className="ml-1.5 text-xs font-normal text-slate-500 dark:text-ink-400">
-            vested of {fmtMoney(plan.totalGrant)}
+            vested of {fmtMoney(kept)}
           </span>
         </span>
         <span className="text-xs text-slate-500 dark:text-ink-400">
@@ -241,7 +247,11 @@ export const VestingTracker = ({
 
       <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-4 text-[11px] text-slate-500 dark:text-ink-400">
         <span>Granted {dateLabel(plan.grantDate)}</span>
-        {lastVest && <span>Fully vested {dateLabel(lastVest.date)}</span>}
+        {lastVest && (
+          <span>
+            {plan.forfeited > 0 ? 'Last vest' : 'Fully vested'} {dateLabel(lastVest.date)}
+          </span>
+        )}
       </div>
 
       <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600 dark:bg-white/[0.04] dark:text-ink-200">
@@ -251,6 +261,15 @@ export const VestingTracker = ({
             <span className="font-normal text-slate-500 dark:text-ink-400">
               {' '}
               · {countdownLabel(nextVest.date).toLowerCase()} · {fmtMoney(nextVest.value)}
+            </span>
+          </>
+        ) : plan.forfeited > 0 && plan.lastDay ? (
+          <>
+            Vesting stopped {dateLabel(plan.lastDay)}, when the role ended
+            <span className="font-normal text-slate-500 dark:text-ink-400">
+              {' '}
+              · {fmtMoney(plan.forfeited)} forfeited over {plan.forfeitedVests.length}{' '}
+              {plan.forfeitedVests.length === 1 ? 'vest' : 'vests'}
             </span>
           </>
         ) : (

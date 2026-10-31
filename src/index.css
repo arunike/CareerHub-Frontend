@@ -510,12 +510,14 @@ textarea::placeholder {
 
   /* .ant-input-number is absent from the global 44px rule, so a row came out 44 / 33 / 44. */
   .ledger-edit-row :is(.ant-picker, .ant-input-number, .ant-input),
-  .ledger-table :is(.ant-picker, .ant-input-number, .ant-input) {
+  .ledger-table :is(.ant-picker, .ant-input-number, .ant-input),
+  .grant-price-row :is(.ant-picker, .ant-input-number) {
     min-height: 44px;
   }
 
   .ledger-edit-row :is(.ant-input-number-input, .ant-picker-input > input),
-  .ledger-table :is(.ant-input-number-input, .ant-picker-input > input) {
+  .ledger-table :is(.ant-input-number-input, .ant-picker-input > input),
+  .grant-price-row :is(.ant-input-number-input, .ant-picker-input > input) {
     min-height: 0;
   }
 

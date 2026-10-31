@@ -1,4 +1,4 @@
-import { daysInYear, localDay, toIsoDate } from '../localDay';
+import { daysInYear, isIsoDay, localDay, toIsoDate } from '../localDay';
 import type { IncomeEvent } from './tax/ledger';
 import { inclusiveDayCount, parseIsoDate, type PayPeriod } from './paySchedule';
 
@@ -15,6 +15,8 @@ export interface VestTerms {
   periods?: PayPeriod[];
   // Dates the company actually vested on, which outrank the cadence.
   vestOverrides?: VestDateOverride[];
+  // The last day of the role; leaving forfeits every vest after it.
+  lastDay?: string | null;
 }
 
 export interface VestDateOverride {
@@ -68,15 +70,13 @@ export const vestOccasions = (
   return occasions;
 };
 
-const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
-
 // A stored list outlives the shape it was written in, so an unusable entry is dropped, not fixed.
 export const parseVestOverrides = (value: unknown): VestDateOverride[] =>
   Array.isArray(value)
     ? value.flatMap((entry) => {
         const months = Math.round(Number((entry as VestDateOverride)?.months));
         const date = (entry as VestDateOverride)?.date;
-        const usable = Number.isFinite(months) && months >= 0 && ISO_DAY.test(String(date));
+        const usable = Number.isFinite(months) && months >= 0 && isIsoDay(date);
         return usable ? [{ months, date }] : [];
       })
     : [];
@@ -134,6 +134,7 @@ export const buildVestEvents = (terms: VestTerms): IncomeEvent[] => {
   if (!grantDate) return [];
 
   return scheduleVests(grantDate, vestOccasions(terms), terms.vestOverrides)
+    .filter((occasion) => terms.lastDay == null || occasion.date <= terms.lastDay)
     .map((occasion) => ({ occasion, vestDate: localDay(occasion.date) }))
     .filter(({ vestDate }) => vestDate.getFullYear() === terms.taxYear)
     .map(({ occasion, vestDate }) => ({

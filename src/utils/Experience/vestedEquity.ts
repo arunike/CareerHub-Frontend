@@ -1,4 +1,4 @@
-import { isRepriced, type EquityVestingPlan } from './equityVesting';
+import { isRepriced, retainedGrant, type EquityVestingPlan } from './equityVesting';
 import { vestDateFor } from '../Income/vestEvents';
 import { daysApart, localDay, toIsoDate } from '../localDay';
 
@@ -29,7 +29,7 @@ const vestedThroughYear = (plan: EquityVestingPlan, year: number) =>
     .reduce((sum, vest) => sum + vest.value, 0);
 
 const fromPlan = (plan: EquityVestingPlan | null | undefined) => ({
-  outstanding: plan ? Math.max(0, round(plan.totalGrant - plan.vestedToDate)) : 0,
+  outstanding: plan ? Math.max(0, round(retainedGrant(plan) - plan.vestedToDate)) : 0,
   growthPercent: ((plan?.priceRatio ?? 1) - 1) * 100,
   repriced: plan != null && isRepriced(plan),
 });

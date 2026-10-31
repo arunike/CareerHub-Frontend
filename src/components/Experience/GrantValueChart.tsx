@@ -13,7 +13,7 @@ import { money } from '../../utils/Income/format';
 import { useChartAxis, useChartSeries } from '../../theme/chartColors';
 import type { GrantValuePoint, PriceGranularity } from '../../utils/Experience/grantValueHistory';
 
-export const WHOLE = 'Whole grant';
+export const WHOLE = 'Granted';
 export const VESTED = 'Vested';
 export const PRICE = 'Share price';
 

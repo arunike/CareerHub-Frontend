@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildEquityVesting, vestingCadenceLabel, type EquityGrantFields } from './equityVesting';
+import {
+  buildEquityVesting,
+  lastDayOf,
+  retainedGrant,
+  vestingCadenceLabel,
+  vestingStoppedOn,
+  type EquityGrantFields,
+} from './equityVesting';
 
 const GRANT_DATE = '2025-07-01';
 const TODAY = '2026-11-01';
@@ -74,6 +81,23 @@ describe('buildEquityVestingPlan', () => {
     ).plan!;
     expect(plan.currentPrice).toBe(140);
     expect(plan.priceAsOf).toBeNull();
+  });
+
+  it('dates a private grant by the newest price typed against it', () => {
+    const privateGrant = grant({
+      equity_liquidity: 'BUYBACK',
+      equity_current_price: 140,
+      equity_grant_price: 125,
+      equity_price_points: [
+        { date: '2026-07-01', price: 130 },
+        { date: '2026-10-01', price: 137.5 },
+      ],
+    });
+    const plan = buildEquityVesting(privateGrant, GRANT_DATE, TODAY).plan!;
+    expect(plan.currentPrice).toBe(137.5);
+    expect(plan.priceAsOf).toBe('2026-10-01');
+    expect(plan.pricePoints.map((point) => point.date)).toEqual(['2026-07-01', '2026-10-01']);
+    expect(plan.priceRatio).toBeCloseTo(1.1);
   });
 
   it('says when the total was rebuilt from a yearly figure rather than recorded', () => {
@@ -168,5 +192,71 @@ describe('vestingCadenceLabel', () => {
     ).plan!;
     expect(vestingCadenceLabel(noCliff)).toBe('4 years, twice a year');
     expect(noCliff.vests[0].date).toBe('2026-01-01');
+  });
+});
+
+describe('a role that ended before the grant finished vesting', () => {
+  const afterLeaving = (over: Partial<EquityGrantFields> = {}) =>
+    buildEquityVesting(grant(over), GRANT_DATE, TODAY, {}, {}, '2026-11-01').plan!;
+
+  it('stops the schedule on the last day and forfeits the rest', () => {
+    const plan = afterLeaving();
+    expect(plan.vests.map((vest) => vest.date)).toEqual(['2026-07-01', '2026-10-01']);
+    expect(plan.lastDay).toBe('2026-11-01');
+    expect(plan.forfeitedVests).toHaveLength(11);
+    expect(plan.forfeited).toBe(137500);
+    expect(retainedGrant(plan)).toBe(62500);
+  });
+
+  it('counts only what landed, while the grant itself keeps its recorded value', () => {
+    const plan = afterLeaving();
+    expect(plan.totalGrant).toBe(200000);
+    expect(plan.vestedToDate).toBe(62500);
+    expect(plan.years.map((year) => [year.label, year.value])).toEqual([
+      ['Year 1', 50000],
+      ['Year 2', 12500],
+    ]);
+  });
+
+  it('forfeits the whole grant when the role ended before the cliff', () => {
+    const plan = buildEquityVesting(grant(), GRANT_DATE, TODAY, {}, {}, '2026-01-02').plan!;
+    expect(plan.vests).toEqual([]);
+    expect(plan.forfeited).toBe(200000);
+    expect(retainedGrant(plan)).toBe(0);
+  });
+
+  it('leaves a grant alone when no last day is given', () => {
+    expect(afterLeaving().vests.length).toBeLessThan(
+      buildEquityVesting(grant(), GRANT_DATE, TODAY).plan!.vests.length
+    );
+    expect(buildEquityVesting(grant(), GRANT_DATE, TODAY).plan!.forfeited).toBe(0);
+  });
+
+  it('lets a date recorded against the grant outrank the last day of the role', () => {
+    const plan = buildEquityVesting(
+      grant({ equity_vesting_stopped_on: '2026-07-01' }),
+      GRANT_DATE,
+      TODAY,
+      {},
+      {},
+      '2026-11-01'
+    ).plan!;
+    expect(plan.lastDay).toBe('2026-07-01');
+    expect(plan.vests.map((vest) => vest.date)).toEqual(['2026-07-01']);
+    expect(plan.forfeitedVests).toHaveLength(12);
+    expect(retainedGrant(plan)).toBe(50000);
+  });
+
+  it('falls back to the role once the grant records nothing usable', () => {
+    expect(vestingStoppedOn({ equity_vesting_stopped_on: null }, '2026-11-01')).toBe('2026-11-01');
+    expect(vestingStoppedOn({ equity_vesting_stopped_on: 'the day I left' }, null)).toBeNull();
+    expect(vestingStoppedOn(null, '2026-11-01')).toBe('2026-11-01');
+  });
+
+  it('reads the last day off the role, and a current one has none', () => {
+    expect(lastDayOf({ is_current: false, end_date: '2026-11-01' })).toBe('2026-11-01');
+    expect(lastDayOf({ is_current: true, end_date: '2026-11-01' })).toBeNull();
+    expect(lastDayOf({ is_current: false, end_date: null })).toBeNull();
+    expect(lastDayOf(null)).toBeNull();
   });
 });

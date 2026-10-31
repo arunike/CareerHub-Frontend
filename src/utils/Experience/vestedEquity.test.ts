@@ -99,6 +99,15 @@ describe('splitEquityByVesting', () => {
 });
 
 describe('upcomingVesting', () => {
+  it('has nothing left to come once the role has ended', () => {
+    const left = buildEquityVesting(grant(), GRANT_DATE, TODAY, {}, {}, '2026-11-01').plan!;
+    const upcoming = upcomingVesting(left, TODAY);
+    expect(upcoming.nextDate).toBeNull();
+    expect(upcoming.value).toBe(0);
+    // Nothing is outstanding either: what had not vested by the last day was forfeited.
+    expect(splitEquityByVesting([payYear(2026, 62500)], left).outstanding).toBe(0);
+  });
+
   it('adds up the vests falling in the twelve months ahead', () => {
     const upcoming = upcomingVesting(planOn(TODAY), TODAY);
     // Four quarters of 6.25% sit between 2026-11-01 and 2027-11-01, the cliff having passed.

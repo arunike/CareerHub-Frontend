@@ -31,21 +31,41 @@ describe('roleDateLabel notStarted', () => {
 });
 
 describe('timelineMarkFor', () => {
-  const mark = (iso: string) => timelineMarkFor(dayjs(iso));
+  const NOW = dayjs('2026-10-01');
+  const span = (startIso: string | null, endIso: string | null = null, isCurrent = false) =>
+    timelineMarkFor(
+      { start: startIso ? dayjs(startIso) : null, end: endIso ? dayjs(endIso) : null, isCurrent },
+      NOW
+    );
 
   it('names the month the role started, not just its year', () => {
-    expect(mark('2025-07-01')?.label).toBe('Jul 2025');
-    expect(mark('2026-01-02')?.label).toBe('Jan 2026');
+    expect(span('2025-07-01', null, true)?.label).toBe('Jul 2025');
+    expect(span('2026-01-02', null, true)?.label).toBe('Jan 2026');
   });
 
-  it('places the start in its own year, so the ring reads as a date', () => {
-    expect(mark('2026-01-01')?.yearFraction).toBe(0);
-    expect(mark('2026-07-01')?.yearFraction).toBeCloseTo(0.5, 6);
-    // 19 days into a 31-day December, so the ring is all but shut.
-    expect(mark('2026-12-20')?.yearFraction).toBeCloseTo((11 + 19 / 31) / 12, 6);
+  it('counts a ring for every year served and an arc for the part year after them', () => {
+    const current = span('2025-07-01', null, true);
+    expect(current?.years).toBe(1);
+    // Jul 1 to Oct 1 is 92 days of a 365-day year.
+    expect(current?.fraction).toBeCloseTo(92 / 365, 4);
+    expect(current?.tenure).toBe('1 yr 3 mos');
+  });
+
+  it('measures a finished role to its leaving date, not to today', () => {
+    const past = span('2025-07-01', '2026-07-01');
+    expect(past?.years).toBe(1);
+    expect(past?.fraction).toBe(0);
+    expect(past?.title).toContain('from July 1, 2025');
+  });
+
+  it('draws no ring for a role that has not started', () => {
+    const future = span('2026-12-20', null, true);
+    expect(future?.years).toBe(0);
+    expect(future?.fraction).toBe(0);
+    expect(future?.tenure).toBe('starts later');
   });
 
   it('has no mark to draw without a start date', () => {
-    expect(timelineMarkFor(null)).toBeNull();
+    expect(span(null)).toBeNull();
   });
 });

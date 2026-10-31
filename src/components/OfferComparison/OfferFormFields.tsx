@@ -83,6 +83,7 @@ export interface OfferFormFieldsProps {
   isFetchingSharePrice?: boolean;
   sharePriceHistory?: Array<{ id: number; as_of: string; price: string; source: string }>;
   sharePriceAsOf?: string | null;
+  equityPricePoints?: Array<{ date: string; price: number }>;
   onCurrentSharePriceChange?: (value: number | null) => void;
   annualRefreshValue?: number;
   onAnnualRefreshValueChange?: (value: number) => void;

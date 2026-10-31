@@ -20,19 +20,24 @@ import { isSharePriceStale } from '../../utils/OfferComparison/sharePriceFreshne
 import { useChartAxis, useChartSeries } from '../../theme/chartColors';
 import {
   isRepriced,
+  retainedGrant,
   vestingCadenceLabel,
   type EquityVestingPlan,
 } from '../../utils/Experience/equityVesting';
 import { shade } from './PayChart';
 import { VestingTracker } from './VestingTracker';
+import { GrantPriceLog } from './GrantPriceLog';
+import { GrantForfeiture } from './GrantForfeiture';
 import type { VestDateOverride } from '../../utils/Income/vestEvents';
 import { GrantValueChart, PRICE, VESTED, WHOLE, type ValueSeriesShown } from './GrantValueChart';
 import ModeToggle from '../inputs/ModeToggle';
 import {
   buildGrantValueHistory,
+  pricePointRows,
   seriesPeriodFor,
   type PriceGranularity,
 } from '../../utils/Experience/grantValueHistory';
+import type { PricePoint } from '../../utils/OfferComparison/equityPricing';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
 
 const GRANTED = 'At grant';
@@ -69,9 +74,9 @@ const Hatch = ({ id, color }: { id: string; color: string }) => (
 
 const monthLabel = (iso: string) => dayjs(iso).format('MMM YYYY');
 
-// Only the three price granularities plot a series; the other two read the plan itself.
+// Only the three price granularities plot a series; the other three read the plan itself.
 const isPriceView = (view: ChartView): view is PriceGranularity =>
-  view !== 'year' && view !== 'tracker';
+  view !== 'year' && view !== 'tracker' && view !== 'leaving';
 
 const VestTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: Row }[] }) => {
   const row = payload?.[0]?.payload;
@@ -143,12 +148,12 @@ const Fact = ({
   </div>
 );
 
-type ChartView = 'tracker' | 'year' | PriceGranularity;
+type ChartView = 'tracker' | 'year' | 'leaving' | PriceGranularity;
 
 const SERIES_CHIPS: { key: keyof ValueSeriesShown; label: string }[] = [
+  { key: 'price', label: PRICE },
   { key: 'grant', label: WHOLE },
   { key: 'vested', label: VESTED },
-  { key: 'price', label: PRICE },
 ];
 
 // A gap in the daily series is a shut market, not a price the fetch missed.
@@ -167,6 +172,7 @@ const VIEWS: { label: string; value: ChartView }[] = [
   { label: 'Month', value: 'month' },
   { label: 'Year', value: 'year' },
   { label: 'Schedule', value: 'tracker' },
+  { label: 'Leaving', value: 'leaving' },
 ];
 
 export const EquityVestingChart = ({
@@ -176,6 +182,12 @@ export const EquityVestingChart = ({
   onFillHistory,
   onSaveVestDates,
   vestDatesLockedReason,
+  onSaveGrantPrices,
+  grantPricesLockedReason,
+  roleLastDay = null,
+  grantStoppedOn = null,
+  onSaveVestingStopped,
+  vestingStoppedLockedReason,
 }: {
   plan: EquityVestingPlan;
   todayIso: string;
@@ -183,14 +195,22 @@ export const EquityVestingChart = ({
   onFillHistory?: (period: PriceSeriesPeriod) => Promise<number>;
   onSaveVestDates?: (overrides: VestDateOverride[]) => Promise<void>;
   vestDatesLockedReason?: string;
+  onSaveGrantPrices?: (points: PricePoint[]) => Promise<void>;
+  grantPricesLockedReason?: string;
+  // The role's own last day, and the day recorded against the grant where it differs.
+  roleLastDay?: string | null;
+  grantStoppedOn?: string | null;
+  onSaveVestingStopped?: (stoppedOn: string | null) => Promise<void>;
+  vestingStoppedLockedReason?: string;
 }) => {
   const [view, setView] = useState<ChartView>('year');
   const [filling, setFilling] = useState(false);
   const [fillNote, setFillNote] = useState<FillNote | null>(null);
+  // What vested and what a share is worth are the two questions; the whole grant is the backdrop.
   const [shown, setShown] = useState<ValueSeriesShown>({
-    grant: true,
+    grant: false,
     vested: true,
-    price: false,
+    price: true,
   });
   const series = useChartSeries();
   const axis = useChartAxis();
@@ -214,7 +234,13 @@ export const EquityVestingChart = ({
     ...(repriced ? { [TODAY]: Math.round(year.value * plan.priceRatio) } : {}),
   }));
   const vestedNow = plan.vestedToDate * plan.priceRatio;
-  const stillToVest = Math.max(0, plan.totalGrant - plan.vestedToDate);
+  // Only what the role ran long enough to vest is still the holder's, so every total counts that.
+  const kept = retainedGrant(plan);
+  const keptShares =
+    plan.shares != null && plan.totalGrant > 0
+      ? (plan.shares * kept) / plan.totalGrant
+      : plan.shares;
+  const stillToVest = Math.max(0, kept - plan.vestedToDate);
   // Before the first vest the vested series is a flat $0, which pins the axis and shows nothing.
   const hasVested = plan.vestedToDate > 0;
   const nextVest = plan.vests.find((vest) => !vest.vested)?.date ?? null;
@@ -229,13 +255,27 @@ export const EquityVestingChart = ({
   const onlySeriesLeft = (key: keyof ValueSeriesShown) => shown[key] && activeSeries === 1;
   // A disabled chip must draw nothing, whatever it was left switched on as.
   const drawn: ValueSeriesShown = { ...shown, vested: shown.vested && hasVested };
+  // A grant with no ticker has no feed, so its series is the prices typed against it.
+  const priceRows = useMemo(
+    () =>
+      plan.ticker
+        ? priceHistory
+        : pricePointRows(
+            plan.pricePoints,
+            plan.vests.map((vest) => vest.date),
+            todayIso
+          ),
+    [plan, priceHistory, todayIso]
+  );
   const points = useMemo(
-    () => (isPriceView(view) ? buildGrantValueHistory(plan, priceHistory, view) : []),
-    [plan, priceHistory, view]
+    () => (isPriceView(view) ? buildGrantValueHistory(plan, priceRows, view) : []),
+    [plan, priceRows, view]
   );
   const canFill = onFillHistory != null && plan.ticker != null;
   // Said where the gaps show: after a fill that counted trading days, and over the daily chart.
-  const explainGaps = (fillNote?.tradingDays ?? false) || (view === 'day' && points.length >= 2);
+  const explainGaps =
+    (fillNote?.tradingDays ?? false) ||
+    (plan.ticker != null && view === 'day' && points.length >= 2);
   // Plain text under the button, not a toast: a toast inside a popover is gone before it is read.
   const fillHistory = useCallback(
     async (auto = false) => {
@@ -291,13 +331,25 @@ export const EquityVestingChart = ({
         {plan.derivedFromYearly ? ` · from ${fmtMoney(plan.derivedFromYearly)} a year` : ''}
       </div>
 
+      {plan.forfeited > 0 && plan.lastDay && (
+        <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+          The role ended {dayjs(plan.lastDay).format('MMM D, YYYY')}, so the{' '}
+          {plan.forfeitedVests.length} vest{plan.forfeitedVests.length === 1 ? '' : 's'} after it
+          never landed. Every figure here counts the {fmtMoney(kept)} that vested before then, not
+          the {fmtMoney(plan.forfeited)} forfeited.
+        </div>
+      )}
+
       <div className="mt-3 grid grid-cols-2 gap-3">
         <Fact
-          label="Grant value"
-          value={fmtMoney(plan.totalGrant)}
+          label={
+            // Once a grant has stopped, what was granted is history: what is left is what vested.
+            plan.lastDay == null ? 'Grant value' : stillToVest > 0 ? 'Grant kept' : 'Vested'
+          }
+          value={fmtMoney(kept)}
           hint={
             [
-              plan.shares ? `${plan.shares.toLocaleString()} shares` : null,
+              keptShares ? `${Math.round(keptShares).toLocaleString()} shares` : null,
               plan.grantPrice ? `${money(plan.grantPrice)} a share` : null,
             ]
               .filter(Boolean)
@@ -306,11 +358,13 @@ export const EquityVestingChart = ({
         />
         <Fact
           label={valueLabel}
-          value={repriced ? fmtMoney(plan.totalGrant * plan.priceRatio) : '—'}
+          value={repriced ? fmtMoney(kept * plan.priceRatio) : '—'}
           hint={
             plan.currentPrice
               ? `${money(plan.currentPrice)} a share${priceIsToday || !plan.priceAsOf ? '' : ', the last one recorded'}`
-              : 'Add a current share price to reprice it'
+              : plan.ticker
+                ? 'Add a current share price to reprice it'
+                : 'Enter a price below to reprice it'
           }
           accent={
             repriced ? (
@@ -393,8 +447,20 @@ export const EquityVestingChart = ({
         <div className="mt-1 text-xs text-slate-500 dark:text-ink-400">{vestingReason}</div>
       )}
 
-      <div className={view === 'tracker' ? 'mt-2' : 'mt-2 h-[200px] sm:h-[230px]'}>
-        {view === 'tracker' ? (
+      <div
+        className={
+          view === 'tracker' || view === 'leaving' ? 'mt-2' : 'mt-2 h-[200px] sm:h-[230px]'
+        }
+      >
+        {view === 'leaving' ? (
+          <GrantForfeiture
+            plan={plan}
+            roleLastDay={roleLastDay}
+            ownDate={grantStoppedOn}
+            onSave={onSaveVestingStopped}
+            lockedReason={vestingStoppedLockedReason}
+          />
+        ) : view === 'tracker' ? (
           <VestingTracker
             plan={plan}
             onSaveVestDates={onSaveVestDates}
@@ -403,7 +469,9 @@ export const EquityVestingChart = ({
         ) : isPriceView(view) && points.length < 2 ? (
           <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 px-4 text-center text-xs text-slate-400 dark:border-white/[0.08] dark:text-ink-500">
             {!plan.ticker
-              ? 'A ticker is what gives this grant a price history.'
+              ? plan.pricePoints.length === 0
+                ? 'No price recorded yet. Enter the buyback price below and the day it applied from.'
+                : 'One price so far, and a trend needs two: enter the next one below.'
               : points.length === 0
                 ? `No ${plan.ticker} prices recorded since the grant yet; fetching every trading day since.`
                 : `Only one ${plan.ticker} price recorded so far, and a trend needs two.`}
@@ -461,10 +529,21 @@ export const EquityVestingChart = ({
         )}
       </div>
 
+      {plan.ticker == null && view !== 'tracker' && view !== 'leaving' && (
+        <GrantPriceLog
+          points={plan.pricePoints}
+          undatedPrice={plan.priceAsOf == null ? plan.currentPrice : null}
+          grantDate={plan.grantDate}
+          todayIso={todayIso}
+          onSave={onSaveGrantPrices}
+          lockedReason={grantPricesLockedReason}
+        />
+      )}
+
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-ink-400">
         {isPriceView(view) && points.length >= 2 && (
           <span>
-            {view === 'day'
+            {view === 'day' && plan.ticker
               ? `${points.length} trading days recorded`
               : `${points.length} prices recorded`}
           </span>
@@ -483,7 +562,7 @@ export const EquityVestingChart = ({
             {fmtMoney(stillToVest)}
           </span>{' '}
           still to vest
-          {repriced ? (
+          {repriced && stillToVest > 0 ? (
             <>
               {`, worth ${fmtMoney(stillToVest * plan.priceRatio)} at ${priceIsToday ? "today's" : 'the latest'} price `}
               <span

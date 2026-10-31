@@ -5,7 +5,7 @@ import {
   type ExperienceCompensationSnapshot,
 } from './compensation';
 import { earningsForYear, employmentWindow, yearsCovered } from '../Income/raiseSchedule';
-import { buildEquityVesting, type EquityGrantFields } from './equityVesting';
+import { buildEquityVesting, lastDayOf, type EquityGrantFields } from './equityVesting';
 import { splitEquityByVesting } from './vestedEquity';
 import { shadesFor } from '../../components/Experience/PayChart';
 import type { RaiseEntry } from '../../types';
@@ -93,7 +93,7 @@ const salaryRows = (
   const grant = offer ? { ...offer, equity: Number(offer.equity) || 0 } : null;
   const vesting = splitEquityByVesting(
     accrued,
-    buildEquityVesting(grant, exp.start_date, todayIso).plan
+    buildEquityVesting(grant, exp.start_date, todayIso, {}, {}, lastDayOf(exp)).plan
   );
 
   return {

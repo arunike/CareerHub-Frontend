@@ -314,6 +314,11 @@ const EditOfferModal = ({
             isFetchingSharePrice={isFetchingSharePrice}
             sharePriceHistory={sharePriceHistory}
             sharePriceAsOf={sharePriceAsOf}
+            equityPricePoints={
+              Array.isArray(editingOffer.equity_price_points)
+                ? editingOffer.equity_price_points
+                : undefined
+            }
             onFetchSharePrice={() => void fetchLatestSharePrice()}
             onCurrentSharePriceChange={(value) => {
               setCurrentSharePrice(value);

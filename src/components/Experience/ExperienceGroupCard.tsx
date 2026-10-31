@@ -432,7 +432,7 @@ const ExperienceGroupCard = ({
         />
         <TimelineRailDesktop
           avatar={groupAvatar}
-          mark={timelineMarkFor(span.start)}
+          mark={timelineMarkFor(span)}
           isFirst={groupIdx === 0}
           isLast={groupIdx === groupedExperiences.length - 1}
           isCurrent={span.isCurrent}

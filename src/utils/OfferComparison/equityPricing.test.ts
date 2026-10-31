@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   grantValueOf,
   impliedShares,
+  latestPricePoint,
   pairedGrantPrice,
   pairedShareCount,
+  parsePricePoints,
   priceRatio,
   pricesBySymbol,
   withCurrentEquity,
@@ -180,6 +182,53 @@ describe('private pricing without a ticker', () => {
   it('falls back to the shared quote when the offer has no price of its own', () => {
     const listed = { ...priv, equity_ticker: 'GOOG', equity_current_price: null };
     expect(priceRatio(listed, { GOOG: 30 })).toBeCloseTo(1.5);
+  });
+});
+
+describe('prices typed against a grant with no ticker', () => {
+  const priv = {
+    equity: 50000,
+    equity_total_grant: 200000,
+    equity_ticker: '',
+    equity_shares: null,
+    equity_grant_price: 125,
+    equity_current_price: 137.5,
+  };
+
+  it('reads the newest one however the list was stored', () => {
+    const points = [
+      { date: '2026-10-01', price: 137.5 },
+      { date: '2026-07-01', price: '125.00' },
+    ];
+    expect(parsePricePoints(points).map((point) => point.date)).toEqual([
+      '2026-07-01',
+      '2026-10-01',
+    ]);
+    expect(latestPricePoint(points)).toEqual({ date: '2026-10-01', price: 137.5 });
+  });
+
+  it('drops an entry it could not price or date', () => {
+    const mixed = [
+      { date: '2026-07-01', price: 125 },
+      { date: 'July 2026', price: 137.5 },
+      { date: '2026-10-01', price: 0 },
+      { date: '2026-10-01' },
+      null,
+      '2026-10-01',
+    ];
+    expect(parsePricePoints(mixed)).toEqual([{ date: '2026-07-01', price: 125 }]);
+    expect(parsePricePoints(undefined)).toEqual([]);
+    expect(latestPricePoint([])).toBeNull();
+  });
+
+  it('outranks the undated price on the offer', () => {
+    const dated = { ...priv, equity_price_points: [{ date: '2026-07-01', price: 131.25 }] };
+    // The dated 131.25 wins, so the ratio is 1.05 and not the 1.1 the undated 137.50 would give.
+    expect(priceRatio(dated, {})).toBeCloseTo(1.05);
+  });
+
+  it('leaves the undated price in force until one is dated', () => {
+    expect(priceRatio({ ...priv, equity_price_points: [] }, {})).toBeCloseTo(1.1);
   });
 });
 

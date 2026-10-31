@@ -1,3 +1,4 @@
+import { isIsoDay } from '../localDay';
 import { getTotalGrant } from './vestingSchedule';
 
 interface EquityFields {
@@ -8,6 +9,7 @@ interface EquityFields {
   equity_shares?: number | null;
   equity_grant_price?: number | null;
   equity_current_price?: number | null;
+  equity_price_points?: unknown;
   equity_vesting_percent?: number | null;
 }
 
@@ -22,8 +24,29 @@ export const normalizeSymbol = (value: unknown) =>
 export const grantValueOf = (offer: EquityFields) =>
   getTotalGrant(offer) || num(offer.equity_buyback_value);
 
+export interface PricePoint {
+  date: string;
+  price: number;
+}
+
+// A stored list outlives the shape it was written in, so an unusable entry is dropped, not fixed.
+export const parsePricePoints = (value: unknown): PricePoint[] =>
+  (Array.isArray(value) ? value : [])
+    .flatMap((entry) => {
+      const point = entry as { date?: unknown; price?: unknown };
+      const price = num(point?.price);
+      return isIsoDay(point?.date) && price > 0 ? [{ date: point.date, price }] : [];
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+export const latestPricePoint = (value: unknown): PricePoint | null =>
+  parsePricePoints(value).at(-1) ?? null;
+
 // A private company has no ticker, so its price lives on the offer; a listed one shares a quote.
 export const currentPriceOf = (offer: EquityFields, prices: PriceBySymbol): number => {
+  // A dated price outranks the undated one: it is the same figure with the day it applied from.
+  const typed = latestPricePoint(offer.equity_price_points);
+  if (typed) return typed.price;
   const own = num(offer.equity_current_price);
   if (own > 0) return own;
   const symbol = normalizeSymbol(offer.equity_ticker);

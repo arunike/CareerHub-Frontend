@@ -12,6 +12,7 @@ import type { PayPart } from './PayPartsPanel';
 import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
 import type { VestDateOverride } from '../../utils/Income/vestEvents';
+import type { PricePoint } from '../../utils/OfferComparison/equityPricing';
 
 type Props = ExperienceCompensationSnapshot & {
   open: boolean;
@@ -37,6 +38,12 @@ type Props = ExperienceCompensationSnapshot & {
   equityVesting?: EquityVestingResult | null;
   grantPriceHistory?: Array<{ as_of: string; price: string | number }>;
   onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
+  onSaveGrantPrices?: (points: PricePoint[]) => Promise<void>;
+  grantPricesLockedReason?: string;
+  roleLastDay?: string | null;
+  grantStoppedOn?: string | null;
+  onSaveVestingStopped?: (stoppedOn: string | null) => Promise<void>;
+  vestingStoppedLockedReason?: string;
   // Vest dates recorded against the grant, which the tracker writes back to the offer.
   onSaveVestDates?: (overrides: VestDateOverride[]) => Promise<void>;
   vestDatesLockedReason?: string;
@@ -64,6 +71,12 @@ const CompensationBreakdownModal: React.FC<Props> = ({
   equityVesting,
   grantPriceHistory,
   onFillGrantPriceHistory,
+  onSaveGrantPrices,
+  grantPricesLockedReason,
+  roleLastDay,
+  grantStoppedOn,
+  onSaveVestingStopped,
+  vestingStoppedLockedReason,
   onSaveVestDates,
   vestDatesLockedReason,
   ...snapshot
@@ -116,6 +129,12 @@ const CompensationBreakdownModal: React.FC<Props> = ({
           equityVesting={equityVesting}
           grantPriceHistory={grantPriceHistory}
           onFillGrantPriceHistory={onFillGrantPriceHistory}
+          onSaveGrantPrices={onSaveGrantPrices}
+          grantPricesLockedReason={grantPricesLockedReason}
+          roleLastDay={roleLastDay}
+          grantStoppedOn={grantStoppedOn}
+          onSaveVestingStopped={onSaveVestingStopped}
+          vestingStoppedLockedReason={vestingStoppedLockedReason}
           onSaveVestDates={onSaveVestDates}
           vestDatesLockedReason={vestDatesLockedReason}
         />

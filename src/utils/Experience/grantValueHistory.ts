@@ -1,5 +1,6 @@
 import type { PriceSeriesPeriod } from '../../api/career/offers';
 import { epochDay } from '../localDay';
+import type { PricePoint } from '../OfferComparison/equityPricing';
 import type { EquityVestingPlan } from './equityVesting';
 
 export type PriceGranularity = 'day' | 'week' | 'month';
@@ -11,10 +12,29 @@ export interface GrantValuePoint {
   vestedValue: number;
 }
 
-interface PriceRow {
+export interface PriceRow {
   as_of: string;
   price: string | number;
 }
+
+// A hand-typed price holds until the next one, so a vest between two of them is valued at the first.
+export const pricePointRows = (
+  points: PricePoint[],
+  vestDates: string[],
+  todayIso: string
+): PriceRow[] => {
+  const first = points[0];
+  if (!first) return [];
+  const days = new Set(points.map((point) => point.date));
+  vestDates
+    .filter((date) => date > first.date && date <= todayIso)
+    .forEach((date) => days.add(date));
+  if (todayIso > first.date) days.add(todayIso);
+  return [...days].sort().map((date) => ({
+    as_of: date,
+    price: points.reduce((held, point) => (point.date <= date ? point : held), first).price,
+  }));
+};
 
 // Shares are what a price multiplies; a grant recorded only in dollars implies them from its price.
 const sharesOf = (plan: EquityVestingPlan) => {
@@ -51,10 +71,12 @@ export const buildGrantValueHistory = (
     const vestedFraction = plan.vests
       .filter((vest) => vest.date <= row.date)
       .reduce((sum, vest) => sum + vest.value / plan.totalGrant, 0);
+    // Past the last day of the role only the vested shares are still held.
+    const held = plan.lastDay != null && row.date > plan.lastDay ? vestedFraction : 1;
     return {
       date: row.date,
       price: row.price,
-      grantValue: shares * row.price,
+      grantValue: shares * held * row.price,
       vestedValue: shares * vestedFraction * row.price,
     };
   });

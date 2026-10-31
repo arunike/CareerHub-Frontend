@@ -1,4 +1,4 @@
-import { localDay } from '../localDay';
+import { isIsoDay, localDay } from '../localDay';
 import {
   parseVestOverrides,
   scheduleVests,
@@ -8,9 +8,12 @@ import {
 import { vestingTermsOf } from '../Income/incomeSources';
 import {
   currentPriceOf,
+  latestPricePoint,
   normalizeSymbol,
+  parsePricePoints,
   priceRatio,
   type PriceBySymbol,
+  type PricePoint,
 } from '../OfferComparison/equityPricing';
 import { getTotalGrant } from '../OfferComparison/vestingSchedule';
 
@@ -25,6 +28,8 @@ export interface EquityGrantFields {
   equity_ticker?: string | null;
   equity_grant_price?: number | null;
   equity_current_price?: number | null;
+  equity_price_points?: unknown;
+  equity_vesting_stopped_on?: string | null;
   equity_buyback_value?: number | null;
   equity_liquidity?: string | null;
   equity_vest_overrides?: VestDateOverride[] | null;
@@ -58,6 +63,11 @@ export interface EquityVestingYear {
 export interface EquityVestingPlan {
   grantDate: string;
   totalGrant: number;
+  // The role's last day, after which nothing more vests; null while it is still current.
+  lastDay: string | null;
+  // Grant value that never vested because the role ended first, and the vests it was owed by.
+  forfeited: number;
+  forfeitedVests: EquityVest[];
   // Appreciation is kept as its own number: every value below is the grant's own price.
   priceRatio: number;
   ticker: string | null;
@@ -65,8 +75,10 @@ export interface EquityVestingPlan {
   derivedFromYearly: number | null;
   grantPrice: number | null;
   currentPrice: number | null;
-  // The day that price is good for, or null for one typed onto the offer, which carries no date.
+  // The day that price is good for, or null for an undated one typed onto the offer.
   priceAsOf: string | null;
+  // Prices typed by hand for a grant with no ticker, which is the only series it can have.
+  pricePoints: PricePoint[];
   shares: number | null;
   cliffMonths: number;
   vestsPerYear: number;
@@ -84,6 +96,17 @@ export interface EquityVestingResult {
 
 const num = (value: unknown) => Number(value) || 0;
 
+// A role you are still in has no last day, so its grant goes on vesting.
+export const lastDayOf = (
+  role: { is_current?: boolean | null; end_date?: string | null } | null | undefined
+) => (!role || role.is_current ? null : (role.end_date ?? null));
+
+// A grant can stop on a day of its own, so a date recorded against it outranks the role's.
+export const vestingStoppedOn = (
+  offer: Pick<EquityGrantFields, 'equity_vesting_stopped_on'> | null | undefined,
+  lastDay: string | null
+) => (isIsoDay(offer?.equity_vesting_stopped_on) ? offer.equity_vesting_stopped_on : lastDay);
+
 const nothingToDraw = (reason: string): EquityVestingResult => ({ plan: null, reason });
 
 export const buildEquityVesting = (
@@ -91,7 +114,9 @@ export const buildEquityVesting = (
   grantDate: string | null | undefined,
   todayIso: string,
   prices: PriceBySymbol = {},
-  priceDates: Record<string, string> = {}
+  priceDates: Record<string, string> = {},
+  // The day the role ended, which stops the schedule; the vests after it are forfeited.
+  lastDay: string | null = null
 ): EquityVestingResult => {
   if (!offer) {
     return nothingToDraw('Link this role to an offer to chart the grant behind its equity.');
@@ -116,7 +141,7 @@ export const buildEquityVesting = (
   const terms = vestingTermsOf(offer as Record<string, unknown>);
   const shareCount = num(offer.equity_shares);
   const overrides = parseVestOverrides(offer.equity_vest_overrides);
-  const vests: EquityVest[] = scheduleVests(start, vestOccasions(terms), overrides).map(
+  const scheduled: EquityVest[] = scheduleVests(start, vestOccasions(terms), overrides).map(
     (occasion) => ({
       date: occasion.date,
       scheduledDate: occasion.scheduledDate,
@@ -127,6 +152,12 @@ export const buildEquityVesting = (
       vested: occasion.date <= todayIso,
     })
   );
+  // Leaving forfeits whatever has not vested, so the schedule ends on the day it stopped.
+  const stopped = vestingStoppedOn(offer, lastDay);
+  const landed = (vest: EquityVest) => stopped == null || vest.date <= stopped;
+  const vests = scheduled.filter(landed);
+  const lost = scheduled.filter((vest) => !landed(vest));
+  const forfeited = lost.reduce((sum, vest) => sum + vest.value, 0);
 
   const years: EquityVestingYear[] = [];
   let cumulative = 0;
@@ -161,18 +192,27 @@ export const buildEquityVesting = (
   // The offer form's own resolution: the offer's price for a private grant, else the ticker's.
   const currentPrice = currentPriceOf({ ...offer, equity: num(offer.equity) }, prices);
   const asOf = priceDates[normalizeSymbol(offer.equity_ticker)];
+  const typedPoint = latestPricePoint(offer.equity_price_points);
 
   return {
     plan: {
       grantDate,
       totalGrant,
+      lastDay: stopped,
+      forfeited,
+      forfeitedVests: lost,
       priceRatio: priceRatio({ ...offer, equity: num(offer.equity) }, prices),
       ticker: normalizeSymbol(offer.equity_ticker) || null,
       derivedFromYearly:
         num(offer.equity_total_grant) > 0 || num(offer.equity) <= 0 ? null : num(offer.equity),
       grantPrice: grantPrice > 0 ? grantPrice : null,
       currentPrice: currentPrice > 0 ? currentPrice : null,
-      priceAsOf: num(offer.equity_current_price) > 0 ? null : (asOf ?? null),
+      priceAsOf: typedPoint
+        ? typedPoint.date
+        : num(offer.equity_current_price) > 0
+          ? null
+          : (asOf ?? null),
+      pricePoints: parsePricePoints(offer.equity_price_points),
       shares: shareCount > 0 ? shareCount : null,
       ...terms,
       vests,
@@ -182,6 +222,10 @@ export const buildEquityVesting = (
     reason: null,
   };
 };
+
+// What the grant left you holding: all of it, less the vests the role ended before.
+export const retainedGrant = (plan: EquityVestingPlan) =>
+  Math.max(0, plan.totalGrant - plan.forfeited);
 
 export const isRepriced = (plan: EquityVestingPlan) =>
   plan.currentPrice != null && plan.priceRatio !== 1;

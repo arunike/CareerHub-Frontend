@@ -18,6 +18,7 @@ import type { EquityVestingResult } from '../../utils/Experience/equityVesting';
 import type { UpcomingVesting, VestedEquitySplit } from '../../utils/Experience/vestedEquity';
 import type { PriceSeriesPeriod } from '../../api/career/offers';
 import type { VestDateOverride } from '../../utils/Income/vestEvents';
+import type { PricePoint } from '../../utils/OfferComparison/equityPricing';
 import dayjs from 'dayjs';
 
 const round = (value: number) => Math.round(value);
@@ -93,6 +94,12 @@ export const SalaryBreakdown = ({
   onFillGrantPriceHistory,
   onSaveVestDates,
   vestDatesLockedReason,
+  onSaveGrantPrices,
+  grantPricesLockedReason,
+  roleLastDay,
+  grantStoppedOn,
+  onSaveVestingStopped,
+  vestingStoppedLockedReason,
 }: {
   total: number;
   base: number;
@@ -109,6 +116,12 @@ export const SalaryBreakdown = ({
   onFillGrantPriceHistory?: (period: PriceSeriesPeriod) => Promise<number>;
   onSaveVestDates?: (overrides: VestDateOverride[]) => Promise<void>;
   vestDatesLockedReason?: string;
+  onSaveGrantPrices?: (points: PricePoint[]) => Promise<void>;
+  grantPricesLockedReason?: string;
+  roleLastDay?: string | null;
+  grantStoppedOn?: string | null;
+  onSaveVestingStopped?: (stoppedOn: string | null) => Promise<void>;
+  vestingStoppedLockedReason?: string;
 }) => {
   const series = useChartSeries();
   const todayIso = toIsoDate(new Date());
@@ -366,6 +379,12 @@ export const SalaryBreakdown = ({
                             onFillHistory={onFillGrantPriceHistory}
                             onSaveVestDates={onSaveVestDates}
                             vestDatesLockedReason={vestDatesLockedReason}
+                            onSaveGrantPrices={onSaveGrantPrices}
+                            grantPricesLockedReason={grantPricesLockedReason}
+                            roleLastDay={roleLastDay}
+                            grantStoppedOn={grantStoppedOn}
+                            onSaveVestingStopped={onSaveVestingStopped}
+                            vestingStoppedLockedReason={vestingStoppedLockedReason}
                           />
                         </div>
                       }

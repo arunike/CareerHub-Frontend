@@ -62,6 +62,7 @@ export interface IncomeModel {
     vestsPerYear: number;
     grantDate: string | null;
     vestOverrides: VestDateOverride[];
+    lastDay: string | null;
   };
   stateAbbr: string;
   targetBonus: number;
@@ -120,6 +121,8 @@ export const buildIncomeModel = ({
     grantDate: settings.firstVestDate ?? source?.startDate ?? null,
     // Dates recorded against the grant itself, which no income setting overrides.
     vestOverrides: source?.vestOverrides ?? [],
+    // Nothing vests after you leave, so a past role stops crediting the ledger on its last day.
+    lastDay: source?.isCurrent ? null : (source?.endDate ?? null),
   };
 
   const targetBonus = settings.bonusOverride ?? source?.bonus ?? 0;

@@ -7,6 +7,7 @@ import UnitNumberInput from '../../inputs/UnitNumberInput';
 import {
   grantValueOf,
   impliedShares,
+  latestPricePoint,
   pairedGrantPrice,
   pairedShareCount,
 } from '../../../utils/OfferComparison/equityPricing';
@@ -56,6 +57,7 @@ type CompensationSectionProps = {
   isFetchingSharePrice?: boolean;
   sharePriceHistory?: Array<{ id: number; as_of: string; price: string; source: string }>;
   sharePriceAsOf?: string | null;
+  equityPricePoints?: Array<{ date: string; price: number }>;
   onCurrentSharePriceChange?: (value: number | null) => void;
 };
 
@@ -107,6 +109,7 @@ const CompensationSection = ({
   isFetchingSharePrice = false,
   sharePriceHistory = [],
   sharePriceAsOf = null,
+  equityPricePoints,
   onCurrentSharePriceChange,
 }: CompensationSectionProps) => {
   // One basis for the hints, the linked pair and the repricing, or the preview can disagree with it.
@@ -127,13 +130,15 @@ const CompensationSection = ({
       : shares && grantValue > 0
         ? grantValue / shares
         : null;
-  const ratio =
-    basisPrice && Number(currentSharePrice) > 0 ? Number(currentSharePrice) / basisPrice : null;
   // Nothing to reprice when the grant cannot be sold: it is counted as $0 either way.
   const showPricing =
     Boolean(onEquityTickerChange) && grantValue > 0 && equityLiquidity !== 'ILLIQUID';
   // A private buyback has no ticker; its price is per-offer rather than a shared market quote.
   const isListed = equityLiquidity === 'LIQUID';
+  // A dated price outranks the undated field, so the preview reads the figure the app prices on.
+  const datedPrice = isListed ? null : latestPricePoint(equityPricePoints);
+  const effectivePrice = datedPrice ? datedPrice.price : Number(currentSharePrice) || 0;
+  const ratio = basisPrice && effectivePrice > 0 ? effectivePrice / basisPrice : null;
 
   // Whole-share rounding puts the pair slightly off the basis, so the hint shows the real product.
   const pairedTotal =
@@ -327,16 +332,19 @@ const CompensationSection = ({
               <UnitNumberInput
                 unit="$"
                 min={0}
-                value={currentSharePrice ?? null}
+                disabled={datedPrice != null}
+                value={datedPrice ? datedPrice.price : (currentSharePrice ?? null)}
                 placeholder="0"
                 onChange={(value) => onCurrentSharePriceChange?.(value ?? null)}
               />
               <div className={FIELD_HINT_CLASS}>
-                {!isListed
-                  ? 'Internal price per share'
-                  : equityTicker
-                    ? `${equityTicker}${sharePriceAsOf ? ` · as of ${sharePriceAsOf}` : ''}`
-                    : 'Needs a symbol'}
+                {datedPrice
+                  ? `Dated ${datedPrice.date}, set in Grant details`
+                  : !isListed
+                    ? 'Internal price per share'
+                    : equityTicker
+                      ? `${equityTicker}${sharePriceAsOf ? ` · as of ${sharePriceAsOf}` : ''}`
+                      : 'Needs a symbol'}
               </div>
             </div>
           </div>

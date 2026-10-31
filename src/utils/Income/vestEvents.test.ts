@@ -92,6 +92,12 @@ describe('buildVestEvents', () => {
     }
   });
 
+  it('stops crediting the ledger once the role has ended', () => {
+    const left = buildVestEvents(terms({ taxYear: 2027, lastDay: '2027-07-01' }));
+    expect(left).toHaveLength(2);
+    expect(buildVestEvents(terms({ taxYear: 2028, lastDay: '2027-07-01' }))).toEqual([]);
+  });
+
   it('returns nothing without a grant', () => {
     expect(buildVestEvents(terms({ totalGrant: 0 }))).toEqual([]);
   });

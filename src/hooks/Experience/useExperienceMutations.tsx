@@ -16,6 +16,7 @@ import { roundOfferDecimals } from '../../utils/OfferComparison/offerPrecision';
 import { normalizeInternshipCompInputs } from '../../utils/Experience/internshipCompInputs';
 import type { InternshipCompInputs } from '../../utils/Experience/internshipCompInputs';
 import type { VestDateOverride } from '../../utils/Income/vestEvents';
+import type { PricePoint } from '../../utils/OfferComparison/equityPricing';
 
 export const useExperienceMutations = ({
   allOffers,
@@ -243,6 +244,44 @@ export const useExperienceMutations = ({
     }
   };
 
+  const handleSaveGrantPrices = async (points: PricePoint[]) => {
+    if (!compBreakdownExp) return;
+    const offer = getLinkedOffer(compBreakdownExp);
+    if (!offer?.id) {
+      message.error('Link an offer to this role before pricing its grant');
+      return;
+    }
+    try {
+      // Only the field being changed: spreading the offer writes derived figures back to the record.
+      await updateOffer(offer.id, { equity_price_points: points });
+      setAllOffers((prev) =>
+        prev.map((o) => (o.id === offer.id ? { ...o, equity_price_points: points } : o))
+      );
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'Failed to save the price'));
+      throw err;
+    }
+  };
+
+  const handleSaveVestingStopped = async (stoppedOn: string | null) => {
+    if (!compBreakdownExp) return;
+    const offer = getLinkedOffer(compBreakdownExp);
+    if (!offer?.id) {
+      message.error('Link an offer to this role before recording when its grant stopped');
+      return;
+    }
+    try {
+      // Only the field being changed: spreading the offer writes derived figures back to the record.
+      await updateOffer(offer.id, { equity_vesting_stopped_on: stoppedOn });
+      setAllOffers((prev) =>
+        prev.map((o) => (o.id === offer.id ? { ...o, equity_vesting_stopped_on: stoppedOn } : o))
+      );
+    } catch (err) {
+      message.error(getApiErrorMessage(err, 'Failed to save the leaving date'));
+      throw err;
+    }
+  };
+
   return {
     handleCreateOrUpdate,
     handleExportWrapper,
@@ -253,5 +292,7 @@ export const useExperienceMutations = ({
     handleSaveSchedulePhases,
     handleSaveInternshipCompInputs,
     handleSaveVestDates,
+    handleSaveGrantPrices,
+    handleSaveVestingStopped,
   };
 };
