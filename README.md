@@ -32,7 +32,7 @@ The frontend is a React single-page application for managing a job search end to
 - 🔄 **Google Sheets sync**: connect Google for read-only access and sync a sheet into Applications or Events.
 - 🧭 **One navigation source**: the sidebar, mobile toolbar, settings picker and browser tab title all read the same registry.
 - 🏠 **Overview** (`/overview`, with `/` redirecting there): two views behind one switch. *Today* is the action layer — the next event, what needs you today and replies worth chasing; *This week* is the measurement layer — a one-line verdict then labelled stat strips.
-- 🌐 **Public shell**: logged-out visitors get an editorial homepage with Light, Dark and System modes, an illustrative workspace, a progressive-disclosure FAQ, and Privacy/Terms. Every public example uses the sanctioned substitutes rather than account data.
+- 🌐 **Public shell**: logged-out visitors get an editorial homepage with Light, Dark and System modes, an illustrative workspace, a word-by-word tagline reveal, a progressive-disclosure FAQ, and Privacy/Terms. Every public example uses the sanctioned substitutes rather than account data.
 
 ## ✨ Features
 
@@ -199,7 +199,7 @@ Two dashboards — Job Search and Availability — built from draggable widgets.
 - **Reply timing**: when responses actually arrive, so a follow-up lands at a useful moment.
 - 🔍 **Decision outcome insights**: reads the Decision Journal back as a set — which concerns became real, which assumptions were wrong, and which criteria have historically mattered.
 - 📄 **Resume version analytics**: which version went out, and how each performed.
-- **Availability analytics** and **schedule load**: how your week is actually filling up.
+- **Availability analytics** and **schedule load**: how your week is actually filling up, with events by category drawn as a donut beside a per-category breakdown.
 - **Custom widget engine**: define your own widget from the recorded data and place it alongside the built-in ones.
 
 ### ✅ Action Items (`/tasks`)
@@ -296,7 +296,7 @@ Every page keeps its render in `pages/<Feature>/index.tsx`; its state lives in
 | **JDReport**        | —                                                                                                                                                                                                                                                             | `JDStrengthsGapsGrid`, `jdReportFields.ts`                                                                                                                                                                                                                                                                  |
 | **PublicBooking**   | —                                                                                                                                                                                                                                                             | `BookingHeaderCard`, `BookingSlotPicker`, `BookingDetailsForm`, `CurrentBookingCard`, `bookingFieldStyles.ts`                                                                                                                                                                                               |
 | **Profile**         | —                                                                                                                                                                                                                                                             | `ProfilePreviewCard`, `ProfileSettingsForm`, `SettingsLoadError`                                                                                                                                                                                                                                            |
-| `components/`            | —                                                                                                                                                                                                                                                             | `Layout` → `SidebarHeader`, `SidebarFooter`, `MobileBottomNav`; `NotificationBell` → `DueSoonSection`, `DeadlineRadarSection`, `UpcomingEventRows`, `notificationDeadlines.ts`; `jobHuntAnalytics/widgetRenderer` → `widgetPrimitives`, `widgetFunnelSections`, `widgetOutcomeSections`, `widgetStatsTypes` |
+| `components/`            | —                                                                                                                                                                                                                                                             | `Layout` → `SidebarHeader`, `SidebarFooter`, `MobileBottomNav`; `NotificationBell` → `DueSoonSection`, `DeadlineRadarSection`, `UpcomingEventRows`, `notificationDeadlines.ts`; `jobHuntAnalytics/widgetRenderer` → `widgetPrimitives`, `widgetFunnelSections`, `widgetOutcomeSections`, `widgetStatsTypes`; both analytics dashboards → `dashboard/DashboardCards`, `dashboard/DashboardToolbar` |
 
 ### Spacing scale
 
