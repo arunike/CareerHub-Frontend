@@ -105,6 +105,7 @@ const DecisionOutcomeInsights = () => {
     return (
       <PageState
         tone="neutral"
+        variant="panel"
         title="No decision has been journalled yet"
         description="Record why you took or turned down an offer from its card on the Offers page, then grade it at 30 and 90 days. This is where the pattern across those decisions shows up."
       />

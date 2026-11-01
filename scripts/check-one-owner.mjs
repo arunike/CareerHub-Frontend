@@ -11,6 +11,7 @@ const OWNED = [
   { name: 'epochDay', owner: 'src/utils/localDay.ts', pattern: /^(export )?const epochDay\s*=/m },
   { name: 'normalizeBenefitItem', owner: 'src/utils/OfferComparison/benefitItem.ts', pattern: /^(export )?const normalizeBenefitItem\s*=/m },
   { name: 'toNullableNumber', owner: 'src/utils/Experience/experienceUtils.ts', pattern: /^(export )?const toNullableNumber\s*=/m },
+  { name: 'the dashboard widget strip', owner: 'src/components/dashboard/DashboardToolbar.tsx', pattern: /widget\{[^}]*\} enabled/ },
 ];
 
 // A literal that belongs to a shared constant, and the two dialog spellings the helper replaced.
@@ -19,6 +20,11 @@ const LITERALS = [
   { text: 'className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-ink-500"', use: 'SECTION_LABEL_CLASS' },
   { text: "okType: 'danger'", use: 'confirmDestructive', owner: 'src/components/modals/confirmDestructive.ts' },
   { text: 'okButtonProps: { danger: true }', use: 'confirmDestructive' },
+  {
+    text: 'Customize view',
+    use: 'components/dashboard/DashboardToolbar',
+    owner: 'src/components/dashboard/DashboardToolbar.tsx',
+  },
   {
     text: 'page-toolbar-view-switch',
     use: 'components/CalendarView/CalendarViewControls',

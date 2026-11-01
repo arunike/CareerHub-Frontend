@@ -358,7 +358,7 @@ const OfferFormFields: React.FC<OfferFormFieldsProps> = (props) => {
   };
 
   return (
-    <div className="offer-form-workspace grid min-h-full min-w-0 w-full overflow-x-hidden bg-slate-50/80 dark:bg-ink-900/80 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="offer-form-workspace grid min-h-full min-w-0 w-full overflow-x-clip bg-slate-50/80 dark:bg-ink-900/80 lg:grid-cols-[220px_minmax(0,1fr)]">
       <OfferFormSidebar
         activeSectionIndex={activeSectionIndex}
         navigationItems={navigationItems}

@@ -1,11 +1,11 @@
-import { DesktopOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
+import { Monitor, Moon, Sun } from '@phosphor-icons/react';
 import type { ComponentType } from 'react';
 import type { ThemePreference } from './preference';
 
 const OPTIONS: Array<{ value: ThemePreference; label: string; icon: ComponentType }> = [
-  { value: 'light', label: 'Light theme', icon: SunOutlined },
-  { value: 'dark', label: 'Dark theme', icon: MoonOutlined },
-  { value: 'system', label: 'Use system theme', icon: DesktopOutlined },
+  { value: 'light', label: 'Light theme', icon: Sun },
+  { value: 'dark', label: 'Dark theme', icon: Moon },
+  { value: 'system', label: 'Use system theme', icon: Monitor },
 ];
 
 const TRACK =

@@ -1,4 +1,5 @@
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus } from '@phosphor-icons/react';
+import useReveal from '../../hooks/useReveal';
 
 const questions = [
   {
@@ -44,12 +45,17 @@ const questions = [
 ];
 
 export default function PublicFaq() {
+  const reveal = useReveal();
+
   return (
     <section
       id="faq"
-      className="scroll-mt-28 border-y border-slate-200 bg-white px-5 py-20 dark:border-white/[0.08] dark:bg-ink-900 sm:px-8 sm:py-28 lg:px-10"
+      className="scroll-mt-28 border-y border-slate-200 bg-white px-5 py-20 dark:border-white/[0.08] dark:bg-night-1 sm:px-8 sm:py-28 lg:px-10"
     >
-      <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[minmax(260px,0.58fr)_minmax(0,1.42fr)] lg:items-start lg:gap-20">
+      <div
+        {...reveal}
+        className="public-reveal mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[minmax(260px,0.58fr)_minmax(0,1.42fr)] lg:items-start lg:gap-20"
+      >
         <div className="lg:sticky lg:top-28">
           <h2 className="max-w-[12ch] text-balance text-4xl font-bold leading-[1.05] tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
             The practical questions.
@@ -66,19 +72,19 @@ export default function PublicFaq() {
               key={item.question}
               className="group border-b border-slate-200 dark:border-white/[0.08]"
             >
-              <summary className="grid cursor-pointer list-none grid-cols-[28px_minmax(0,1fr)_40px] items-center gap-3 py-5 text-left outline-none transition-colors duration-200 hover:text-blue-800 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:hover:text-blue-300 sm:grid-cols-[36px_minmax(0,1fr)_44px] sm:gap-5 sm:py-6 [&::-webkit-details-marker]:hidden">
+              <summary className="grid cursor-pointer list-none grid-cols-[28px_minmax(0,1fr)_40px] items-center gap-3 py-5 text-left outline-none transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-blue-800 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:hover:text-blue-300 sm:grid-cols-[36px_minmax(0,1fr)_44px] sm:gap-5 sm:py-6 [&::-webkit-details-marker]:hidden">
                 <span className="text-xs font-semibold tabular-nums text-slate-400 dark:text-ink-500">
                   {String(index + 1).padStart(2, '0')}
                 </span>
-                <span className="text-base font-semibold leading-6 tracking-[-0.012em] text-slate-950 transition-colors group-open:text-blue-800 dark:text-ink-50 dark:group-open:text-blue-300 sm:text-lg">
+                <span className="text-base font-semibold leading-6 tracking-[-0.012em] text-slate-950 transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-open:text-blue-800 dark:text-ink-50 dark:group-open:text-blue-300 sm:text-lg">
                   {item.question}
                 </span>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full text-blue-700 transition-colors duration-200 group-hover:bg-blue-50 group-open:bg-blue-50 group-open:text-blue-800 dark:text-blue-300 dark:group-hover:bg-blue-500/10 dark:group-hover:group-open:bg-blue-500/10 dark:group-open:text-blue-200 sm:h-11 sm:w-11">
-                  <PlusOutlined className="text-xs transition-transform duration-300 group-open:rotate-45" />
+                <span className="flex h-10 w-10 items-center justify-center rounded-full text-blue-700 transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:bg-blue-50 group-open:bg-blue-50 group-open:text-blue-800 dark:text-blue-300 dark:group-hover:bg-blue-500/10 dark:group-hover:group-open:bg-blue-500/10 dark:group-open:text-blue-200 sm:h-11 sm:w-11">
+                  <Plus className="text-xs transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-open:rotate-45" />
                 </span>
               </summary>
               <div className="grid grid-cols-[28px_minmax(0,1fr)_40px] gap-3 pb-7 sm:grid-cols-[36px_minmax(0,1fr)_44px] sm:gap-5 sm:pb-8">
-                <p className="col-start-2 max-w-[68ch] text-[15px] leading-[1.8] text-slate-600 dark:text-ink-200">
+                <p className="col-start-2 max-w-[68ch] text-sm text-slate-600 dark:text-ink-200">
                   {item.answer}
                 </p>
               </div>

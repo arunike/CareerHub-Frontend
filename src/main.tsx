@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from './theme/ThemeProvider';
+import '@fontsource-variable/geist';
 import './index.css';
 import App from './App.tsx';
 import AppErrorBoundary from './components/layout/AppErrorBoundary';

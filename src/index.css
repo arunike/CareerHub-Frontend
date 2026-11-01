@@ -35,6 +35,11 @@
   --color-sky-500: #4d75c8;
   --color-sky-600: #375cae;
   --color-sky-700: #2d4b91;
+  --color-night-0: #000000;
+  --color-night-1: #181818;
+  --color-night-2: #1f1f1f;
+  --color-night-3: #272727;
+  --color-night-4: #313131;
 }
 
 html {
@@ -50,9 +55,7 @@ body {
   background: #f6f8fb;
   color: #111827;
   font-family:
-    'Aptos',
-    'Geist',
-    'Satoshi',
+    'Geist Variable',
     ui-sans-serif,
     -apple-system,
     BlinkMacSystemFont,
@@ -115,18 +118,40 @@ textarea::placeholder {
   color: #0f172a;
 }
 
-.public-home-grid {
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, black, transparent 82%);
+.public-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.public-home[data-theme='dark'] .public-home-grid {
-  background-image:
-    linear-gradient(rgba(96, 165, 250, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(96, 165, 250, 0.07) 1px, transparent 1px);
+.public-reveal[data-revealed='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+.public-tagline-word {
+  opacity: 0.3;
+  transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.public-tagline-word[data-active='true'] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-reveal,
+  .public-reveal[data-revealed='true'] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .public-tagline-word {
+    opacity: 1;
+    transition: none;
+  }
 }
 
 .scrollbar-none {

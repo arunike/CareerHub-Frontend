@@ -1,49 +1,50 @@
 import { Link } from 'react-router-dom';
 import {
-  ArrowRightOutlined,
-  CalendarOutlined,
-  CheckCircleFilled,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  DeleteOutlined,
-  DollarOutlined,
-  ExportOutlined,
-  FileTextOutlined,
-  GoogleOutlined,
-  KeyOutlined,
-  LockOutlined,
-  RobotOutlined,
-  SafetyCertificateOutlined,
-  SolutionOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
+  ArrowRight,
+  CalendarBlank,
+  CheckCircle,
+  ClipboardText,
+  Clock,
+  CurrencyDollar,
+  Export,
+  FileText,
+  GoogleLogo,
+  Key,
+  Lock,
+  Robot,
+  SealCheck,
+  Trash,
+  UsersThree,
+} from '@phosphor-icons/react';
 import PublicHeader from '../../components/layout/PublicHeader';
 import PublicFaq from '../../components/Home/PublicFaq';
 import ThemeSwitch from '../../theme/ThemeSwitch';
 import { useTheme } from '../../theme/ThemeProvider';
 import WeekAtGlance from '../../components/Home/WeekAtGlance';
+import TaglineReveal from '../../components/Home/TaglineReveal';
+import useReveal from '../../hooks/useReveal';
 
 const lifecycle = [
   {
-    icon: SolutionOutlined,
+    icon: ClipboardText,
     title: 'Capture the opportunity',
     body: 'Keep the posting, compensation range, contacts, notes, and every stage change attached to one application.',
     detail: 'Applications · timeline · source',
   },
   {
-    icon: CalendarOutlined,
+    icon: CalendarBlank,
     title: 'Prepare with context',
     body: 'Bring the job description, submitted documents, interview schedule, and debriefs into the same preparation view.',
     detail: 'Interviews · documents · debriefs',
   },
   {
-    icon: DollarOutlined,
+    icon: CurrencyDollar,
     title: 'Compare what matters',
     body: 'Evaluate salary, equity, benefits, taxes, commute, rent, and time off instead of stopping at the headline offer.',
     detail: 'Offers · scenarios · real value',
   },
   {
-    icon: CheckCircleOutlined,
+    icon: CheckCircle,
     title: 'Carry the decision forward',
     body: 'Turn an accepted role into career history and income planning without rebuilding the record somewhere else.',
     detail: 'Experience · income · growth',
@@ -52,27 +53,27 @@ const lifecycle = [
 
 const privacyFacts = [
   {
-    icon: ExportOutlined,
+    icon: Export,
     title: 'Export anytime',
     body: 'Download an account export from your Profile whenever you want a portable copy.',
   },
   {
-    icon: DeleteOutlined,
+    icon: Trash,
     title: 'Delete on your terms',
     body: 'Schedule account deletion from your Profile, with a grace period before permanent removal.',
   },
   {
-    icon: RobotOutlined,
+    icon: Robot,
     title: 'Optional AI',
     body: 'Core career tracking works without AI. Connect a provider only when you want AI features.',
   },
   {
-    icon: KeyOutlined,
+    icon: Key,
     title: 'Encrypted provider key',
     body: 'Your AI provider key is encrypted on the backend and used for requests you initiate.',
   },
   {
-    icon: GoogleOutlined,
+    icon: GoogleLogo,
     title: 'Read-only Google Sheets',
     body: 'CareerHub reads only the spreadsheets you select for preview or sync and does not write to them.',
   },
@@ -87,28 +88,15 @@ const upcomingItems = [
 function ProductPreview() {
   return (
     <div className="relative mx-auto w-full max-w-[620px] lg:mx-0">
-      <div
-        className="absolute -inset-8 rounded-[2.5rem] bg-blue-200/35 blur-3xl dark:bg-blue-500/10"
-        aria-hidden
-      />
-      <div
-        className="absolute -bottom-5 left-12 right-12 h-16 rounded-full bg-blue-300/30 blur-2xl dark:bg-blue-500/10"
-        aria-hidden
-      />
-      <div className="relative overflow-hidden rounded-[1.4rem] bg-white shadow-[0_42px_110px_-54px_rgba(30,64,175,0.48)] ring-1 ring-slate-200/90 dark:bg-ink-950 dark:shadow-[0_42px_110px_-54px_rgba(0,0,0,0.95)] dark:ring-white/[0.12]">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-white/[0.08] dark:bg-ink-950 sm:px-5">
-          <div className="flex items-center gap-2" aria-hidden>
-            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-ink-700" />
-            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-ink-700" />
-            <span className="h-2 w-2 rounded-full bg-slate-300 dark:bg-ink-700" />
-          </div>
-          <span className="text-[11px] font-semibold tracking-wide text-slate-500 dark:text-ink-400">
-            ILLUSTRATIVE WORKSPACE
+      <div className="relative overflow-hidden rounded-[1.4rem] bg-white shadow-[0_42px_110px_-54px_rgba(30,64,175,0.48)] ring-1 ring-slate-200/90 dark:bg-night-1 dark:shadow-[0_42px_110px_-54px_rgba(0,0,0,0.95)] dark:ring-white/[0.12]">
+        <div className="flex items-center border-b border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-white/[0.08] dark:bg-night-2 sm:px-5">
+          <span className="text-xs font-medium text-slate-500 dark:text-ink-400">
+            Illustrative workspace
           </span>
         </div>
 
-        <div className="grid gap-px bg-slate-200 dark:bg-ink-800 sm:grid-cols-[minmax(0,1.3fr)_minmax(180px,0.7fr)]">
-          <div className="bg-white p-5 dark:bg-ink-950 sm:p-6">
+        <div className="grid gap-px bg-slate-200 dark:bg-night-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(180px,0.7fr)]">
+          <div className="bg-white p-5 dark:bg-night-1 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-medium text-slate-500 dark:text-ink-400">
@@ -135,7 +123,7 @@ function ProductPreview() {
                 {[true, true, false].map((complete, index) => (
                   <div key={index} className="flex flex-1 items-center last:flex-none">
                     <span
-                      className={`h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-ink-950 ${complete ? 'bg-blue-500' : 'bg-slate-400 dark:bg-ink-500'}`}
+                      className={`h-2.5 w-2.5 rounded-full ring-4 ring-white dark:ring-night-1 ${complete ? 'bg-blue-500' : 'bg-slate-400 dark:bg-ink-500'}`}
                     />
                     {index < 2 && (
                       <span
@@ -145,7 +133,7 @@ function ProductPreview() {
                   </div>
                 ))}
               </div>
-              <div className="mt-3 grid grid-cols-3 text-[11px] text-slate-400 dark:text-ink-500">
+              <div className="mt-3 grid grid-cols-3 text-xs text-slate-400 dark:text-ink-500">
                 <span>Applied</span>
                 <span className="text-center font-medium text-blue-700 dark:text-blue-300">
                   Interview
@@ -155,13 +143,13 @@ function ProductPreview() {
             </div>
 
             <div className="mt-7 grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200 dark:bg-ink-900 dark:ring-white/[0.12]">
-                <FileTextOutlined className="text-slate-400 dark:text-ink-500" />
+              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200 dark:bg-night-2 dark:ring-white/[0.12]">
+                <FileText className="text-slate-400 dark:text-ink-500" />
                 <p className="mt-4 text-xs text-slate-500 dark:text-ink-400">Submitted</p>
                 <p className="mt-1 text-sm font-medium text-slate-950 dark:text-ink-50">Resume</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200 dark:bg-ink-900 dark:ring-white/[0.12]">
-                <TeamOutlined className="text-slate-400 dark:text-ink-500" />
+              <div className="rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200 dark:bg-night-2 dark:ring-white/[0.12]">
+                <UsersThree className="text-slate-400 dark:text-ink-500" />
                 <p className="mt-4 text-xs text-slate-500 dark:text-ink-400">Contacts</p>
                 <p className="mt-1 text-sm font-medium text-slate-950 dark:text-ink-50">
                   Connected
@@ -170,10 +158,10 @@ function ProductPreview() {
             </div>
           </div>
 
-          <div className="bg-blue-50/70 p-5 dark:bg-ink-900 sm:p-6">
+          <div className="bg-blue-50/70 p-5 dark:bg-night-2 sm:p-6">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-slate-500 dark:text-ink-400">Next up</p>
-              <ClockCircleOutlined className="text-slate-400 dark:text-ink-500" />
+              <Clock className="text-slate-400 dark:text-ink-500" />
             </div>
             <div className="mt-4 space-y-4">
               {upcomingItems.map((item) => (
@@ -190,10 +178,10 @@ function ProductPreview() {
             </div>
             <Link
               to="/login"
-              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(37,99,235,0.85)] transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-50 dark:focus-visible:bg-blue-500 dark:hover:bg-blue-400 dark:focus-visible:ring-offset-ink-900"
+              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-50 dark:border-white/[0.12] dark:bg-night-3 dark:text-ink-100 dark:hover:bg-night-4 dark:hover:text-ink-50 dark:focus-visible:ring-offset-night-2"
             >
               Open workspace
-              <ArrowRightOutlined />
+              <ArrowRight />
             </Link>
           </div>
         </div>
@@ -207,13 +195,25 @@ function ProductPreview() {
 
 export default function HomePage() {
   const { preference, setPreference, resolved: resolvedTheme } = useTheme();
+  const metricsReveal = useReveal();
+  const workflowReveal = useReveal();
+  const decisionReveal = useReveal();
+  const privacyReveal = useReveal();
+  const ctaReveal = useReveal();
 
   return (
     <main
-      className="public-home min-h-screen w-full min-w-0 overflow-x-hidden bg-[#f6f8fc] text-slate-700 transition-colors duration-300 dark:bg-ink-950 dark:text-ink-200"
+      className="public-home min-h-screen w-full min-w-0 overflow-x-clip bg-[#f6f8fc] text-slate-700 transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] dark:bg-night-0 dark:text-ink-200"
       data-theme={resolvedTheme}
       style={{ colorScheme: resolvedTheme }}
     >
+      <a
+        href="#careerhub-main-content"
+        className="fixed left-4 top-4 z-[var(--careerhub-z-skip-link)] -translate-y-24 rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+      >
+        Skip to main content
+      </a>
+
       <PublicHeader
         navItems={[
           { label: 'How it works', to: '#workflow' },
@@ -224,40 +224,35 @@ export default function HomePage() {
         utility={<ThemeSwitch value={preference} onChange={setPreference} />}
       />
 
-      <section className="relative isolate px-5 pb-20 pt-36 sm:px-8 sm:pb-28 sm:pt-44 lg:px-10 lg:pb-32">
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[660px] bg-[radial-gradient(circle_at_75%_24%,rgba(191,219,254,0.55),transparent_33%),radial-gradient(circle_at_12%_6%,rgba(224,231,255,0.55),transparent_28%)] dark:bg-[radial-gradient(circle_at_75%_24%,rgba(37,99,235,0.16),transparent_34%),radial-gradient(circle_at_12%_6%,rgba(79,70,229,0.12),transparent_30%)]"
-          aria-hidden
-        />
-        <div
-          className="public-home-grid pointer-events-none absolute inset-0 -z-10 opacity-45"
-          aria-hidden
-        />
+      <section
+        id="careerhub-main-content"
+        className="relative isolate px-5 pb-20 pt-36 sm:px-8 sm:pb-28 sm:pt-44 lg:px-10 lg:pb-32"
+      >
         <div className="relative mx-auto grid w-full max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.88fr)_minmax(520px,1.12fr)] lg:items-center lg:gap-16">
           <div className="max-w-2xl">
-            <p className="mb-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
+            <p className="mb-6 inline-flex items-center gap-2 text-xs font-semibold text-blue-700 dark:text-blue-300">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
               Private career workspace
             </p>
-            <h1 className="max-w-[13ch] text-balance text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-slate-950 dark:text-ink-50 sm:text-6xl lg:text-[4.5rem]">
+            <h1 className="max-w-[13ch] text-balance text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-slate-950 dark:text-ink-50 sm:text-6xl lg:text-7xl">
               Your career decisions deserve a system.
             </h1>
             <p className="mt-7 max-w-[58ch] text-pretty text-lg leading-8 text-slate-600 dark:text-ink-200 sm:text-xl sm:leading-9">
-              CareerHub keeps the full story—from first application to accepted offer, career
-              growth, and income planning—in one private workspace built for you.
+              CareerHub keeps the full story in one private workspace: first application, accepted
+              offer, career growth, and income planning.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 to="/login"
-                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-[0_18px_30px_-20px_rgba(37,99,235,0.85)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_22px_36px_-20px_rgba(37,99,235,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-[0_18px_30px_-20px_rgba(37,99,235,0.85)] transition-[transform,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_22px_36px_-20px_rgba(37,99,235,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               >
                 Sign in to CareerHub
-                <ArrowRightOutlined />
+                <ArrowRight />
               </Link>
               <a
                 href="#workflow"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-xl px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white/70 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:text-ink-100 dark:hover:bg-ink-800 dark:hover:text-ink-50 dark:focus-visible:ring-offset-ink-950"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-xl px-5 text-sm font-semibold text-slate-700 dark:text-ink-200 transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-white/70 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:text-ink-100 dark:hover:bg-night-2 dark:hover:text-ink-50 dark:focus-visible:ring-offset-night-0"
               >
                 See how it works
               </a>
@@ -267,9 +262,9 @@ export default function HomePage() {
               {['Private by default', 'AI is optional', 'No ad trackers'].map((item) => (
                 <span
                   key={item}
-                  className="inline-flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-slate-200/80 backdrop-blur-sm dark:bg-ink-900/70 dark:ring-white/[0.12]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-slate-200/80 backdrop-blur-sm dark:bg-night-1/70 dark:ring-white/[0.12]"
                 >
-                  <CheckCircleFilled className="text-emerald-600" />
+                  <CheckCircle weight="fill" className="text-emerald-600" />
                   {item}
                 </span>
               ))}
@@ -280,16 +275,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200/80 bg-white px-5 py-8 dark:border-white/[0.08] dark:bg-ink-900 sm:px-8 lg:px-10">
-        <div className="mx-auto grid w-full max-w-7xl gap-5 text-sm font-medium text-slate-600 dark:text-ink-200 sm:grid-cols-3 sm:divide-x sm:divide-slate-200 sm:dark:divide-white/[0.12]">
+      <section className="border-y border-slate-200/80 bg-white px-5 py-8 dark:border-white/[0.08] dark:bg-night-1 sm:px-8 lg:px-10">
+        <div
+          {...metricsReveal}
+          className="public-reveal mx-auto grid w-full max-w-7xl gap-5 text-sm font-medium text-slate-600 dark:text-ink-200 sm:grid-cols-3 sm:divide-x sm:divide-slate-200 sm:dark:divide-white/[0.12]"
+        >
           <p className="flex items-center justify-center gap-2 sm:justify-start">
-            <SolutionOutlined className="text-blue-600" /> One record across the full career cycle
+            <ClipboardText className="text-blue-600" /> One record across the full career cycle
           </p>
           <p className="flex items-center justify-center gap-2 sm:px-8">
-            <SafetyCertificateOutlined className="text-blue-600" /> Your own AI provider, if wanted
+            <SealCheck className="text-blue-600" /> Your own AI provider, if wanted
           </p>
           <p className="flex items-center justify-center gap-2 sm:justify-end">
-            <ExportOutlined className="text-blue-600" /> Account data can be exported
+            <Export className="text-blue-600" /> Account data can be exported
           </p>
         </div>
       </section>
@@ -298,14 +296,10 @@ export default function HomePage() {
         id="workflow"
         className="relative scroll-mt-28 overflow-hidden px-5 py-20 sm:px-8 sm:py-28 lg:px-10"
       >
-        <div
-          className="pointer-events-none absolute -left-40 bottom-20 h-80 w-80 rounded-full bg-indigo-100/60 blur-3xl dark:bg-indigo-500/10"
-          aria-hidden
-        />
-        <div className="mx-auto w-full max-w-7xl">
+        <div {...workflowReveal} className="public-reveal mx-auto w-full max-w-7xl">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-20">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
                 01 · The connected workflow
               </p>
               <h2 className="mt-5 max-w-[13ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
@@ -325,10 +319,10 @@ export default function HomePage() {
               return (
                 <article
                   key={item.title}
-                  className="group relative grid gap-5 border-b border-slate-200 py-8 transition-colors duration-300 hover:border-blue-200 dark:hover:border-white/[0.08] dark:hover:border-blue-500/50 sm:grid-cols-[64px_minmax(200px,0.75fr)_minmax(0,1.25fr)] sm:items-start sm:gap-8 sm:py-10"
+                  className="group relative grid gap-5 border-b border-slate-200 py-8 transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-blue-200 dark:hover:border-white/[0.08] dark:hover:border-blue-500/50 sm:grid-cols-[64px_minmax(200px,0.75fr)_minmax(0,1.25fr)] sm:items-start sm:gap-8 sm:py-10"
                 >
                   <div className="flex items-center gap-4 sm:block">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-700 ring-1 ring-inset ring-blue-100 transition-transform duration-300 group-hover:-translate-y-0.5 dark:group-hover:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-400/20">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-lg text-blue-700 ring-1 ring-inset ring-blue-100 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-0.5 dark:group-hover:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-400/20">
                       <Icon />
                     </span>
                     <span className="text-xs font-semibold text-slate-400 dark:text-ink-500 sm:mt-3 sm:block">
@@ -339,7 +333,7 @@ export default function HomePage() {
                     <h3 className="text-xl font-semibold tracking-[-0.015em] text-slate-950 dark:text-ink-50">
                       {item.title}
                     </h3>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-300">
+                    <p className="mt-2 text-xs font-semibold text-blue-700 dark:text-blue-300">
                       {item.detail}
                     </p>
                   </div>
@@ -353,16 +347,17 @@ export default function HomePage() {
         </div>
       </section>
 
+      <TaglineReveal />
+
       <WeekAtGlance />
 
-      <section className="relative overflow-hidden border-y border-blue-100 bg-blue-50/70 px-5 py-20 dark:border-white/[0.08] dark:bg-ink-900/70 sm:px-8 sm:py-28 lg:px-10">
+      <section className="relative overflow-hidden border-y border-blue-100 bg-blue-50/70 px-5 py-20 dark:border-white/[0.08] dark:bg-night-1 sm:px-8 sm:py-28 lg:px-10">
         <div
-          className="pointer-events-none absolute -right-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-white/80 blur-3xl dark:bg-blue-500/5"
-          aria-hidden
-        />
-        <div className="mx-auto grid w-full max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(440px,1.1fr)] lg:items-center lg:gap-20">
+          {...decisionReveal}
+          className="public-reveal mx-auto grid w-full max-w-7xl gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(440px,1.1fr)] lg:items-center lg:gap-20"
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
+            <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
               03 · Decision support
             </p>
             <h2 className="mt-5 max-w-[14ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
@@ -384,14 +379,14 @@ export default function HomePage() {
                   key={item}
                   className="flex items-center gap-3 border-t border-blue-200 py-3 dark:border-white/[0.12]"
                 >
-                  <CheckCircleOutlined className="text-blue-600" />
+                  <CheckCircle className="text-blue-600" />
                   {item}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="relative rounded-2xl bg-white p-5 text-slate-900 shadow-[0_34px_90px_-54px_rgba(30,64,175,0.5)] ring-1 ring-slate-200 dark:bg-ink-950 dark:text-ink-50 dark:shadow-[0_34px_90px_-54px_rgba(0,0,0,0.95)] dark:ring-white/[0.12] sm:p-7">
+          <div className="relative rounded-2xl bg-white p-5 text-slate-900 shadow-[0_34px_90px_-54px_rgba(30,64,175,0.5)] ring-1 ring-slate-200 dark:bg-night-2 dark:text-ink-50 dark:shadow-[0_34px_90px_-54px_rgba(0,0,0,0.95)] dark:ring-white/[0.12] sm:p-7">
             <span
               className="absolute left-0 top-7 h-12 w-1 rounded-r-full bg-blue-600"
               aria-hidden
@@ -427,7 +422,7 @@ export default function HomePage() {
                 </dd>
               </div>
             </dl>
-            <p className="mt-5 rounded-xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-600 dark:bg-ink-900 dark:text-ink-400">
+            <p className="mt-5 rounded-xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-600 dark:bg-night-3 dark:text-ink-400">
               Illustrative values only. Real comparisons stay private to the signed-in account.
             </p>
           </div>
@@ -435,11 +430,11 @@ export default function HomePage() {
       </section>
 
       <section id="privacy" className="scroll-mt-28 px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
-        <div className="mx-auto w-full max-w-7xl">
+        <div {...privacyReveal} className="public-reveal mx-auto w-full max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
             <div className="lg:sticky lg:top-28 lg:self-start">
-              <LockOutlined className="text-2xl text-blue-700 dark:text-blue-300" />
-              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
+              <Lock className="text-2xl text-blue-700 dark:text-blue-300" />
+              <p className="mt-6 text-xs font-semibold text-blue-700 dark:text-blue-300">
                 04 · Ownership
               </p>
               <h2 className="mt-5 max-w-[14ch] text-balance text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 dark:text-ink-50 sm:text-5xl">
@@ -451,10 +446,10 @@ export default function HomePage() {
               </p>
               <Link
                 to="/privacy"
-                className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-lg font-semibold text-blue-700 transition-colors hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:text-blue-300 dark:hover:text-blue-200 dark:focus-visible:ring-offset-ink-950"
+                className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-lg font-semibold text-blue-700 transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:text-blue-300 dark:hover:text-blue-200 dark:focus-visible:ring-offset-night-0"
               >
                 Read the privacy policy
-                <ArrowRightOutlined />
+                <ArrowRight />
               </Link>
             </div>
 
@@ -485,16 +480,17 @@ export default function HomePage() {
 
       <PublicFaq />
 
-      <section className="bg-white px-5 pb-10 pt-16 dark:bg-ink-950 sm:px-8 sm:pb-12 sm:pt-20 lg:px-10">
-        <div className="relative mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-8 overflow-hidden rounded-3xl bg-blue-600 px-6 py-10 text-white shadow-[0_32px_80px_-42px_rgba(29,78,216,0.72)] sm:px-10 sm:py-12 lg:flex-row lg:items-center lg:px-14">
+      <section className="bg-white px-5 pb-10 pt-16 dark:bg-night-1 sm:px-8 sm:pb-12 sm:pt-20 lg:px-10">
+        <div
+          {...ctaReveal}
+          className="public-reveal relative mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-8 overflow-hidden rounded-3xl bg-blue-600 px-6 py-10 text-white shadow-[0_32px_80px_-42px_rgba(29,78,216,0.72)] sm:px-10 sm:py-12 lg:flex-row lg:items-center lg:px-14"
+        >
           <div
             className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full border-[40px] border-white/10"
             aria-hidden
           />
           <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-100">
-              Your workspace is ready
-            </p>
+            <p className="text-xs font-semibold text-blue-100">Your workspace is ready</p>
             <h2 className="mt-4 text-balance text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
               Put the whole decision in one place.
             </h2>
@@ -504,10 +500,10 @@ export default function HomePage() {
           </div>
           <Link
             to="/login"
-            className="relative inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-blue-700 shadow-[0_18px_30px_-20px_rgba(15,23,42,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 dark:focus-visible:bg-ink-950 dark:text-blue-300 dark:hover:bg-slate-900"
+            className="relative inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-blue-700 shadow-[0_18px_30px_-20px_rgba(15,23,42,0.8)] transition-[transform,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 dark:focus-visible:bg-ink-950 dark:text-blue-300 dark:hover:bg-slate-900"
           >
             Sign in to CareerHub
-            <ArrowRightOutlined />
+            <ArrowRight />
           </Link>
         </div>
       </section>
@@ -517,13 +513,13 @@ export default function HomePage() {
           <span>CareerHub is a private career management workspace for individuals.</span>
           <div className="flex gap-6">
             <Link
-              className="font-medium transition-colors hover:text-slate-950 dark:hover:text-ink-50"
+              className="font-medium transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-950 dark:hover:text-ink-50"
               to="/privacy"
             >
               Privacy
             </Link>
             <Link
-              className="font-medium transition-colors hover:text-slate-950 dark:hover:text-ink-50"
+              className="font-medium transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-950 dark:hover:text-ink-50"
               to="/terms"
             >
               Terms

@@ -6,8 +6,6 @@ import {
 } from '@ant-design/icons';
 import type { WidgetDefinition } from '../JobHuntAnalytics/types';
 
-export const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#60a5fa', '#ec4899', '#06b6d4'];
-
 export const AVAILABLE_WIDGETS: WidgetDefinition[] = [
   {
     id: 'total',

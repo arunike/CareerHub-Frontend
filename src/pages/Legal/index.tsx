@@ -1,10 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  CheckCircleOutlined,
-  FileProtectOutlined,
-  LockOutlined,
-  SafetyCertificateOutlined,
-} from '@ant-design/icons';
+import { CheckCircle, FileLock, Lock, SealCheck } from '@phosphor-icons/react';
 import PublicHeader from '../../components/layout/PublicHeader';
 
 type LegalPageProps = {
@@ -111,9 +106,9 @@ const pageCopy: Record<
 };
 
 const trustItems = [
-  { icon: LockOutlined, label: 'Encrypted integration tokens' },
-  { icon: SafetyCertificateOutlined, label: 'Authenticated account access' },
-  { icon: FileProtectOutlined, label: 'Publicly available legal pages' },
+  { icon: Lock, label: 'Encrypted integration tokens' },
+  { icon: SealCheck, label: 'Authenticated account access' },
+  { icon: FileLock, label: 'Publicly available legal pages' },
 ];
 
 export default function LegalPage({ type }: LegalPageProps) {
@@ -122,7 +117,7 @@ export default function LegalPage({ type }: LegalPageProps) {
   const alternateLabel = type === 'privacy' ? 'Terms of Service' : 'Privacy Policy';
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-ink-900 text-slate-600 dark:text-ink-200 selection:bg-blue-500/20">
+    <main className="min-h-screen bg-slate-50 dark:bg-night-0 text-slate-600 dark:text-ink-200 selection:bg-blue-500/20">
       <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 pb-5 pt-24 sm:px-8 sm:pt-32 lg:px-10">
         <PublicHeader />
 
@@ -144,7 +139,7 @@ export default function LegalPage({ type }: LegalPageProps) {
                   return (
                     <span
                       key={item.label}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-ink-100"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-night-1 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-ink-100"
                     >
                       <Icon className="text-blue-600 dark:text-blue-300" />
                       {item.label}
@@ -154,7 +149,7 @@ export default function LegalPage({ type }: LegalPageProps) {
               </div>
             </div>
 
-            <aside className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-8">
+            <aside className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-night-1 p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:p-8">
               <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
                 Quick summary
               </p>
@@ -164,7 +159,7 @@ export default function LegalPage({ type }: LegalPageProps) {
                     key={item}
                     className="flex gap-3 text-sm font-medium leading-6 text-slate-700 dark:text-ink-100"
                   >
-                    <CheckCircleOutlined className="mt-1 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                    <CheckCircle className="mt-1 shrink-0 text-emerald-500 dark:text-emerald-400" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -175,7 +170,7 @@ export default function LegalPage({ type }: LegalPageProps) {
             </aside>
           </section>
 
-          <section className="mb-12 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:px-8">
+          <section className="mb-12 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-night-1 px-5 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.55)] sm:px-8">
             {copy.sections.map((section) => (
               <article
                 key={section.title}
@@ -194,7 +189,7 @@ export default function LegalPage({ type }: LegalPageProps) {
                         key={bullet}
                         className="flex gap-3 text-sm font-medium leading-6 text-slate-600 dark:text-ink-200"
                       >
-                        <CheckCircleOutlined className="mt-1 shrink-0 text-blue-600 dark:text-blue-300" />
+                        <CheckCircle className="mt-1 shrink-0 text-blue-600 dark:text-blue-300" />
                         <span>{bullet}</span>
                       </li>
                     ))}
@@ -210,7 +205,7 @@ export default function LegalPage({ type }: LegalPageProps) {
             </span>
             <Link
               to={`/${alternateType}`}
-              className="inline-flex min-h-11 items-center font-bold text-slate-600 dark:text-ink-200 transition hover:text-slate-900 dark:hover:text-ink-50"
+              className="inline-flex min-h-11 items-center font-bold text-slate-600 dark:text-ink-200 transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-slate-900 dark:hover:text-ink-50"
             >
               View {alternateLabel}
             </Link>

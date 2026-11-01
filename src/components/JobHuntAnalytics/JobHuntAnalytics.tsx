@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Grid, Typography, message } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
+import { Grid, message } from 'antd';
 import { useCustomWidgets } from '../../hooks/useCustomWidgets';
 import { useDashboardLayout } from '../../hooks/useDashboardLayout';
 import type { CustomWidget } from '../../hooks/useCustomWidgets';
 import type { VisualConfig } from '../../lib/visualWidgetQuery';
 import { AVAILABLE_WIDGETS } from './constants';
 import DashboardCustomizeModal from './DashboardCustomizeModal';
+import DashboardToolbar from '../dashboard/DashboardToolbar';
 import CreateCustomWidgetModal from './CreateCustomWidgetModal';
 import { WidgetCollapseProvider } from './widgetCollapse';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -21,7 +21,6 @@ import { getApplicationTimelineAnalytics, updateApplication } from '../../api/ca
 import { getApiErrorMessage } from '../../utils/apiError';
 
 import type { ApplicationStats, ApplicationTimelineAnalytics } from '../../types';
-const { Text } = Typography;
 
 interface AnalyticsProps {
   applicationStats: ApplicationStats | null;
@@ -251,20 +250,10 @@ const JobHuntAnalytics: React.FC<AnalyticsProps> = ({
   return (
     <>
       {contextHolder}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-        <div>
-          <Text className="text-gray-500 dark:text-ink-400">
-            {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
-          </Text>
-        </div>
-        <button
-          onClick={() => setIsCustomizeOpen(true)}
-          className={`${isMobile ? 'flex w-full rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 px-4 py-3 text-slate-700 dark:text-ink-100 shadow-sm' : 'hidden sm:flex sm:w-auto'} items-center justify-center gap-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-gray-700 dark:hover:text-ink-100`}
-        >
-          <SettingOutlined />
-          Customize view
-        </button>
-      </div>
+      <DashboardToolbar
+        widgetCount={enabledWidgets.length}
+        onCustomize={() => setIsCustomizeOpen(true)}
+      />
 
       <div ref={gridRef}>
         <WidgetGrid

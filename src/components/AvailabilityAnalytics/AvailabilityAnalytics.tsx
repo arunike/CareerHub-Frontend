@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { SettingOutlined } from '@ant-design/icons';
-import { Grid, Typography, message } from 'antd';
+import { Grid, message } from 'antd';
 import WidgetGrid, { GRID_COLS } from '../JobHuntAnalytics/WidgetGrid';
 import type { Placement } from '../JobHuntAnalytics/widgetLayout';
 import { WidgetCollapseProvider } from '../JobHuntAnalytics/widgetCollapse';
@@ -8,6 +7,7 @@ import { usePersistedState } from '../../hooks/usePersistedState';
 import { useCustomWidgets } from '../../hooks/useCustomWidgets';
 import { useDashboardLayout } from '../../hooks/useDashboardLayout';
 import DashboardCustomizeModal from '../JobHuntAnalytics/DashboardCustomizeModal';
+import DashboardToolbar from '../dashboard/DashboardToolbar';
 import { AVAILABLE_WIDGETS } from './constants';
 import CreateCustomWidgetModal from '../JobHuntAnalytics/CreateCustomWidgetModal';
 import type { VisualConfig } from '../../lib/visualWidgetQuery';
@@ -16,8 +16,6 @@ import {
   renderAvailabilityWidget,
   type AvailabilityStats,
 } from './widgetRenderer';
-
-const { Text } = Typography;
 
 interface AvailabilityAnalyticsProps {
   stats: AvailabilityStats;
@@ -41,6 +39,12 @@ const normalizeEnabledWidgets = (ids: string[]) => {
 
 const EMPTY_PLACEMENTS: Record<string, Placement> = {};
 
+const PLACEMENTS_KEY = 'careerhub.analytics.availability.placements.v3';
+const RETIRED_PLACEMENT_KEYS = [
+  'careerhub.analytics.availability.placements',
+  'careerhub.analytics.availability.placements.v2',
+];
+
 const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const {
@@ -56,6 +60,14 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   const [gridWidth, setGridWidth] = useState(0);
 
   useEffect(() => {
+    try {
+      RETIRED_PLACEMENT_KEYS.forEach((key) => window.localStorage.removeItem(key));
+    } catch {
+      // A browser refusing storage has nothing left to clean up anyway.
+    }
+  }, []);
+
+  useEffect(() => {
     const node = gridRef.current;
     if (!node) return;
     const observer = new ResizeObserver(([entry]) => setGridWidth(entry.contentRect.width));
@@ -63,9 +75,8 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
     return () => observer.disconnect();
   }, []);
 
-  // Where each widget sits, chosen by dragging; v1 held the pre-settling layout, so it is dropped.
   const [placements, setPlacements] = usePersistedState<Record<string, Placement>>(
-    'careerhub.analytics.availability.placements.v2',
+    PLACEMENTS_KEY,
     {}
   );
 
@@ -144,21 +155,10 @@ const AvailabilityAnalytics: React.FC<AvailabilityAnalyticsProps> = ({ stats }) 
   return (
     <>
       {contextHolder}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-        <div>
-          <Text className="text-gray-500 dark:text-ink-400">
-            {enabledWidgets.length} widget{enabledWidgets.length !== 1 ? 's' : ''} enabled
-          </Text>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsCustomizeOpen(true)}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-500 dark:text-ink-400 transition-all hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-gray-700 dark:hover:text-ink-100 sm:w-auto"
-        >
-          <SettingOutlined />
-          Customize view
-        </button>
-      </div>
+      <DashboardToolbar
+        widgetCount={enabledWidgets.length}
+        onCustomize={() => setIsCustomizeOpen(true)}
+      />
 
       <div ref={gridRef}>
         <WidgetGrid

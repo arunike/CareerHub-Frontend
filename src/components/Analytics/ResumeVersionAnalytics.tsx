@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Segmented, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { FileTextOutlined, TrophyOutlined, WarningOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getResumeVersionAnalytics } from '../../api/career';
 import { PageState } from '../feedback/PageState';
+import SegmentedToggle from '../inputs/SegmentedToggle';
 import { MetricCardsSkeleton } from '../feedback/SkeletonLoader';
 import {
   RATE_LABELS,
@@ -245,9 +246,9 @@ const ResumeVersionAnalytics = ({ selectedYear }: { selectedYear: number | 'all'
             .
           </p>
         </div>
-        <Segmented
+        <SegmentedToggle
           value={rate}
-          onChange={(value) => setRate(value as RateKey)}
+          onChange={setRate}
           options={RATE_KEYS.map((key) => ({ label: RATE_LABELS[key], value: key }))}
         />
       </header>
@@ -255,6 +256,7 @@ const ResumeVersionAnalytics = ({ selectedYear }: { selectedYear: number | 'all'
       {data.versions.length === 0 ? (
         <PageState
           tone="neutral"
+          variant="panel"
           title="No resume version has been recorded against an application yet"
           description="Attach the exact resume you sent under an application's submitted documents, and its response, interview and offer rates will build up here on their own."
         />

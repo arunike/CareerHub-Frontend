@@ -5,6 +5,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { endOfDay, startOfDay } from 'date-fns';
 import { ANALYTICS_CHART_INITIAL_DIMENSION } from '../../constants/chartDimensions';
+import { SectionCard } from '../dashboard/DashboardCards';
 import { CONTROL_CLASS } from '../inputs/formControls';
 import SegmentedToggle from '../inputs/SegmentedToggle';
 import { parseDateOnlyLocal } from '../../utils/dateOnly';
@@ -181,22 +182,17 @@ const ActivityChart = ({
   const canDrill = FINER_GRANULARITY[series.granularity] !== null;
 
   return (
-    <div className="enterprise-card p-4 sm:p-6">
-      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <RiseOutlined className="text-xl text-blue-600 dark:text-blue-300" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-ink-50">
-              {GRANULARITY_LABELS[series.granularity]} {title}
-            </h3>
-          </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-ink-400">
-            {formatWindow(series.windowStart, series.windowEnd)} · {series.total.toLocaleString()}{' '}
-            {series.total === 1 ? noun.one : noun.many}
-            {series.capped && ' · range capped'}
-          </p>
-        </div>
-
+    <SectionCard
+      icon={<RiseOutlined />}
+      title={`${GRANULARITY_LABELS[series.granularity]} ${title}`}
+      subtitle={
+        <>
+          {formatWindow(series.windowStart, series.windowEnd)} · {series.total.toLocaleString()}{' '}
+          {series.total === 1 ? noun.one : noun.many}
+          {series.capped && ' · range capped'}
+        </>
+      }
+      actions={
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <SegmentedToggle
             value={granularity}
@@ -257,8 +253,8 @@ const ActivityChart = ({
             />
           )}
         </div>
-      </div>
-
+      }
+    >
       {drill.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/10 px-3 py-2 text-xs">
           <button
@@ -359,7 +355,7 @@ const ActivityChart = ({
           Click a bar to break it down by {FINER_GRANULARITY[series.granularity]}.
         </p>
       )}
-    </div>
+    </SectionCard>
   );
 };
 

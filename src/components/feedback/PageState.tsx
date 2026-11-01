@@ -9,6 +9,8 @@ type PageStateProps = {
   onAction?: () => void;
   icon?: ReactNode;
   className?: string;
+  // 'panel' sizes to its own text; 'page' fills the viewport, which is 600px of nothing in a stack.
+  variant?: 'page' | 'panel';
 };
 
 export const PageState = ({
@@ -19,10 +21,14 @@ export const PageState = ({
   onAction,
   icon,
   className = '',
+  variant = 'page',
 }: PageStateProps) => {
+  const panel = variant === 'panel';
   const state = (
     <section
-      className={`enterprise-empty mx-auto box-border min-w-0 w-full max-w-[calc(100vw-2rem)] overflow-hidden px-5 py-8 text-center sm:max-w-xl sm:px-8 ${className}`.trim()}
+      className={`enterprise-empty mx-auto box-border min-w-0 w-full overflow-hidden text-center ${
+        panel ? 'max-w-full px-4 py-6' : 'max-w-[calc(100vw-2rem)] px-5 py-8 sm:max-w-xl sm:px-8'
+      } ${className}`.trim()}
       role={tone === 'error' ? 'alert' : 'status'}
     >
       {icon ? (
@@ -37,8 +43,12 @@ export const PageState = ({
           {icon}
         </div>
       ) : null}
-      <h2 className="text-lg font-bold text-slate-900 dark:text-ink-50">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md break-words text-sm leading-6 text-slate-600 dark:text-ink-200">
+      <h2
+        className={`font-bold text-slate-900 dark:text-ink-50 ${panel ? 'text-base' : 'text-lg'}`}
+      >
+        {title}
+      </h2>
+      <p className="mx-auto mt-1.5 max-w-md break-words text-sm leading-6 text-slate-600 dark:text-ink-200">
         {description}
       </p>
       {actionLabel && onAction ? (
@@ -53,7 +63,7 @@ export const PageState = ({
     </section>
   );
 
-  if (tone === 'error') return state;
+  if (tone === 'error' || panel) return state;
 
   return <div className="page-state-center">{state}</div>;
 };

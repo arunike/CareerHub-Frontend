@@ -41,7 +41,7 @@ const CAREERHUB_THEME = {
     borderRadiusSM: 5,
     fontSize: 14,
     fontSizeLG: 15,
-    fontFamily: `'Aptos', 'Geist', 'Satoshi', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`,
+    fontFamily: `'Geist Variable', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`,
     boxShadow: '0 1px 2px 0 rgba(15, 23, 42, 0.05)',
     boxShadowSecondary:
       '0 18px 45px -30px rgba(15, 23, 42, 0.45), 0 4px 14px -12px rgba(15, 23, 42, 0.35)',

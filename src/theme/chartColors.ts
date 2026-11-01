@@ -37,3 +37,28 @@ const chartAxisFor = (theme: 'light' | 'dark') =>
     : { axis: '#94a3b8', grid: 'rgba(15,23,42,0.12)', label: '#64748b' };
 
 export const useChartAxis = () => chartAxisFor(useTheme().resolved);
+
+const LIGHT_CATEGORICAL = [
+  '#2563eb',
+  '#10b981',
+  '#f59e0b',
+  '#e11d48',
+  '#8b5cf6',
+  '#06b6d4',
+  '#ec4899',
+];
+
+const DARK_CATEGORICAL = [
+  '#5b8def',
+  '#4fc08a',
+  '#d9a441',
+  '#e2727f',
+  '#a98ce4',
+  '#4fb8c6',
+  '#d2739a',
+];
+
+export const chartCategoricalForTheme = (theme: 'light' | 'dark'): string[] =>
+  theme === 'dark' ? DARK_CATEGORICAL : LIGHT_CATEGORICAL;
+
+export const useChartCategorical = (): string[] => chartCategoricalForTheme(useTheme().resolved);
