@@ -185,6 +185,9 @@ One calendar across three pages, with the same header, month/week/day views and 
   the observed tab; with it off, an observed day opens read-only.
 - **An ignored observed holiday leaves the calendar entirely**, so turning one back on happens on the Holidays list, which still lists ignored days. Clicking any observed day opens it, and the Observance switch sits there under Advanced Options.
 - **A day the employer is already closed spends no leave**, so time off booked on a weekend or an observed holiday is shown as such instead of offering the PTO charge, and a trip reads as the leave it spends against the days it was booked for.
+- **Each time off tab decides whether it charges PTO**, set in Settings, on the Holidays list under Advanced Options, or from the options popover behind the dots that appear on hovering a calendar legend chip. A day inside a tab that does not charge drops the PTO controls entirely.
+- **A role can roll its year-end balance into the next year**, off by default and switched on per role in the time off tracker. The carry starts the year after you switch it on, and a role you have left carries nothing. Unused days carry up to an optional ceiling and can lapse in a chosen month.
+- **The leave policy panel carries the unlimited switch**, so a role on unlimited PTO can be put onto a fixed allowance and get rollover without opening its offer. One days field re-labels by mode (`components/Holidays/LeavePolicyFields.tsx`).
 - **⚡ Conflict radar**: the notification bell surfaces unresolved conflicts, upcoming events and task deadlines.
 
 ### 📊 Analytics (`/analytics`)
