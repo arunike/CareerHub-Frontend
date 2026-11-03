@@ -46,6 +46,7 @@ export interface HolidayTab {
   name: string;
   color?: string;
   locked?: boolean;
+  counts_as_pto?: boolean;
 }
 
 export interface EmploymentType {
@@ -163,6 +164,7 @@ export interface UserSettings {
   employment_types?: EmploymentType[];
   holiday_tabs?: HolidayTab[];
   default_holiday_color?: string;
+  default_holiday_counts_as_pto?: boolean;
   observed_holiday_color?: string;
   application_stages?: Array<{
     key: string;

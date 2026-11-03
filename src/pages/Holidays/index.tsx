@@ -19,6 +19,8 @@ import HolidayEditModal from '../../components/Holidays/HolidayEditModal';
 import TimeOffTracker from '../../components/Holidays/TimeOffTracker';
 import { usePtoRoles } from '../../hooks/Holidays/usePtoRoles';
 import { observedDaysOf } from '../../utils/TimeOff/observedDays';
+import { ptoTabPolicyOf, UNTABBED_KEY } from '../../utils/TimeOff/ptoTabs';
+import { usePtoTabCounting } from '../../hooks/Holidays/usePtoTabCounting';
 import HolidayListCard from '../../components/Holidays/HolidayListCard';
 import { useCalendarContentView } from '../../hooks/useCalendarContentView';
 import { usePersistedState } from '../../hooks/usePersistedState';
@@ -86,6 +88,7 @@ const Holidays = () => {
     holidays,
     observedHolidays,
     userSettings,
+    setUserSettings,
     loading,
     loadError,
     fetchData,
@@ -130,6 +133,8 @@ const Holidays = () => {
   } = useCalendarHolidays({ fetchData, messageApi, holidays, observedHolidays });
 
   const observedDates = useMemo(() => observedDaysOf(observedHolidays), [observedHolidays]);
+  const ptoTabPolicy = useMemo(() => ptoTabPolicyOf(userSettings), [userSettings]);
+  const { setTabCharges } = usePtoTabCounting({ userSettings, setUserSettings });
   const { toggleObservance } = useObservance({ fetchData, messageApi });
 
   const {
@@ -212,8 +217,29 @@ const Holidays = () => {
     messageApi,
   });
 
-  const renderHolidayListTab = (_tabKey: string, tabLabel: string) => (
+  // 'custom' is the list's key for the untabbed bucket, which the PTO policy calls the empty string.
+  const ptoTabIdOf = (tabKey: string) => (tabKey === 'custom' ? UNTABBED_KEY : tabKey);
+
+  const renderHolidayListTab = (tabKey: string, tabLabel: string) => (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      {isAdvancedMode && tabKey !== 'observed' ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-ink-900/70 px-4 py-3">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-700 dark:text-ink-100">
+              Counts against my PTO
+            </div>
+            <div className="text-xs text-slate-500 dark:text-ink-400">
+              Applies to everything in {tabLabel}. A single day can still opt out.
+            </div>
+          </div>
+          <Switch
+            checked={ptoTabPolicy.chargingTabs.has(ptoTabIdOf(tabKey))}
+            onChange={(next) => void setTabCharges(ptoTabIdOf(tabKey), next)}
+            aria-label={`${tabLabel} charges PTO`}
+          />
+        </div>
+      ) : null}
+
       {/* Add Form */}
       <HolidayAddForm
         form={form}
@@ -363,6 +389,7 @@ const Holidays = () => {
                 year={anchorDate.getFullYear()}
                 tabColor={userSettings?.default_holiday_color}
                 observedDates={observedDates}
+                tabPolicy={ptoTabPolicy}
                 // The full time-off editor, not the cut-down one: the tracker's rows are trips.
                 onOpenDay={(holiday) => setEditingCalendarHoliday(holiday as never)}
               />
@@ -373,6 +400,8 @@ const Holidays = () => {
             observedHolidays={observedHolidays}
             categories={categories}
             holidayTabs={customTabs}
+            ptoTabPolicy={isAdvancedMode ? ptoTabPolicy : undefined}
+            onSetTabCharges={isAdvancedMode ? setTabCharges : undefined}
             defaultHolidayColor={userSettings?.default_holiday_color}
             observedHolidayColor={userSettings?.observed_holiday_color}
             addActionHighlight="holidays"
@@ -470,6 +499,7 @@ const Holidays = () => {
         />
 
         <CalendarHolidayModal
+          ptoTabPolicy={ptoTabPolicy}
           open={!!pendingCalendarHoliday || !!editingCalendarHoliday}
           mode={editingCalendarHoliday ? 'edit' : 'add'}
           date={pendingCalendarHoliday?.date}

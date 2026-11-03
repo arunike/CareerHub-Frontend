@@ -1,7 +1,7 @@
 import { toIsoDate } from '../../utils/localDay';
 import ResponsiveDisclosure from '../modals/ResponsiveDisclosure';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, InputNumber, Popover, Select, Tooltip, message } from 'antd';
+import { Button, Popover, Select, Tooltip, message } from 'antd';
 import { SettingOutlined, SunOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getExperiences, getOffers, updateOffer } from '../../api';
@@ -17,6 +17,9 @@ import {
   yearsOfService,
 } from '../../utils/TimeOff/ptoBalance';
 import type { DayOff, ObservedDays, PtoPolicy, RoleWindow } from '../../utils/TimeOff/ptoBalance';
+import { chargesAllowance } from '../../utils/TimeOff/ptoTabs';
+import type { PtoTabPolicy } from '../../utils/TimeOff/ptoTabs';
+import LeavePolicyFields from './LeavePolicyFields';
 
 const rangeLabel = (dates: string[]) => {
   const first = dayjs(dates[0]);
@@ -57,18 +60,19 @@ interface Props {
   tabColor?: string | null;
   // Days the employer is already closed, which a trip spends no leave on.
   observedDates?: ObservedDays;
+  // Which holiday tabs charge the allowance.
+  tabPolicy: PtoTabPolicy;
   onOpenDay: (holiday: HolidayLike) => void;
 }
 
-const LAPSE_MONTHS = [
-  { value: 0, label: 'Never' },
-  ...Array.from({ length: 12 }, (_, index) => ({
-    value: index + 1,
-    label: new Date(2026, index, 1).toLocaleString(undefined, { month: 'long' }),
-  })),
-];
-
-const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: Props) => {
+const TimeOffTracker = ({
+  holidays,
+  year,
+  tabColor,
+  observedDates,
+  tabPolicy,
+  onOpenDay,
+}: Props) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleId, setRoleId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -100,8 +104,10 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
                 ptoDays: num(offer.pto_days),
                 isUnlimited: Boolean(offer.is_unlimited_pto),
                 unlimitedPlanningDays: num(offer.unlimited_pto_planning_days),
+                rolloverEnabled: Boolean(offer.pto_rollover_enabled),
                 rolloverMaxDays: num(offer.pto_rollover_max_days),
                 rolloverExpiresMonth: num(offer.pto_rollover_expires_month),
+                rolloverFromYear: num(offer.pto_rollover_from_year),
                 accrualDaysPerYear: num(offer.pto_accrual_days_per_year),
                 accrualMaxDays: num(offer.pto_accrual_max_days),
                 hoursPerDay: num(offer.pto_hours_per_day) || 8,
@@ -117,6 +123,11 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
     })();
   }, []);
 
+  const chargeable = useMemo(
+    () => holidays.filter((holiday) => chargesAllowance(holiday, tabPolicy)),
+    [holidays, tabPolicy]
+  );
+
   // Only roles the year actually contains: a 2025 view should not offer a job that started in 2026.
   const rolesInYear = useMemo(
     () => roles.filter((entry) => coverageOfYear(entry.window, year) > 0),
@@ -128,8 +139,8 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
   const balance = useMemo(() => {
     if (!role) return null;
     const asEntries = [
-      ...daysOffInWindow(holidays, role.window, year, role.id, observedDates),
-      ...daysOffInWindow(holidays, role.window, year - 1, role.id, observedDates),
+      ...daysOffInWindow(chargeable, role.window, year, role.id, observedDates),
+      ...daysOffInWindow(chargeable, role.window, year - 1, role.id, observedDates),
     ].map((date) => ({ date, days: 1, kind: 'PTO' }));
     return ptoBalance({
       policy: role.policy,
@@ -138,10 +149,13 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
       entries: asEntries,
       todayIso: toIsoDate(new Date()),
     });
-  }, [holidays, role, year, observedDates]);
+  }, [chargeable, role, year, observedDates]);
 
   // Written back to the offer it came from: these are the employer's policy, not view settings.
-  const savePolicy = async (patch: Partial<Role['policy']>, payload: Record<string, number>) => {
+  const savePolicy = async (
+    patch: Partial<Role['policy']>,
+    payload: Record<string, number | boolean>
+  ) => {
     if (!role?.offerId) return;
     setRoles((current) =>
       current.map((entry) =>
@@ -157,10 +171,10 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
 
   // A trip is one line, not one line per day, and the line shows what was booked as well as spent.
   const rows = useMemo(() => {
-    const booked = new Set(role ? timeOffInWindow(holidays, role.window, year, role.id) : []);
+    const booked = new Set(role ? timeOffInWindow(chargeable, role.window, year, role.id) : []);
     const todayIso = dayjs().format('YYYY-MM-DD');
     return (
-      holidayRuns(holidays.filter((holiday) => booked.has(holiday.date)))
+      holidayRuns(chargeable.filter((holiday) => booked.has(holiday.date)))
         .map(({ members }) => {
           const dates = members.map((member) => member.date);
           return {
@@ -184,14 +198,14 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
               : 1
         )
     );
-  }, [holidays, role, year, observedDates]);
+  }, [chargeable, role, year, observedDates]);
 
   // Across every role, because a job change splits the year and the whole year still matters.
   const yearTotal = useMemo(
     () =>
-      daysOffInWindow(holidays, { startDate: null, endDate: null }, year, null, observedDates)
+      daysOffInWindow(chargeable, { startDate: null, endDate: null }, year, null, observedDates)
         .length,
-    [holidays, year, observedDates]
+    [chargeable, year, observedDates]
   );
 
   if (rolesInYear.length === 0 || !balance) return null;
@@ -210,17 +224,18 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
     if (!role) return '';
     const headline = balance.unlimited ? role.policy.unlimitedPlanningDays : role.policy.ptoDays;
     const annual = headline + balance.accrued;
+    // Unlimited quotes a self-set target, so the sentence must not read as an employer allowance.
+    const scale = balance.unlimited ? `${annual}d planned a year` : `${annual}d a year`;
     const tenure = balance.accrued > 0 ? ` (${headline}d + ${balance.accrued}d for tenure)` : '';
-    if (!balance.prorated) return balance.accrued > 0 ? `${annual}d a year${tenure}` : '';
+    const carried =
+      balance.rolledOver === 0
+        ? ''
+        : `, ${balance.rolledOver > 0 ? 'plus' : 'less'} ${Math.abs(balance.rolledOver)}d carried from ${year - 1}`;
+    if (!balance.prorated)
+      return balance.accrued > 0 || carried ? `${scale}${tenure}${carried}` : '';
     const share = Math.round(coverageOfYear(role.window, year) * 100);
-    return `${annual}d a year${tenure}, prorated to the ${share}% of ${year} this role covered`;
+    return `${scale}${tenure}, prorated to the ${share}% of ${year} this role covered${carried}`;
   })();
-
-  // Hours per paycheck, which is how an accrual policy is usually quoted.
-  const perPaycheck =
-    role && role.policy.paychecksPerYear > 0
-      ? (balance.entitled * role.policy.hoursPerDay) / role.policy.paychecksPerYear
-      : 0;
 
   const body = (
     <div className="w-full sm:w-[340px]">
@@ -277,133 +292,33 @@ const TimeOffTracker = ({ holidays, year, tabColor, observedDates, onOpenDay }: 
       </p>
 
       {/* Policy lives behind the gear: it is set once, while the balance is read every time. */}
-      {!balance.unlimited && (
-        <div className="mt-2">
-          {role?.offerId == null ? (
-            <span className="text-[12px] text-slate-400 dark:text-ink-500">
-              Link an offer to this role to set its leave policy.
-            </span>
-          ) : (
-            <Popover
-              trigger="click"
-              placement="bottom"
-              title="Leave policy"
-              content={
-                <div className="w-[264px] space-y-3 text-[12px]">
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-slate-600 dark:text-ink-300">Carry over, at most</span>
-                    <InputNumber
-                      value={role.policy.rolloverMaxDays}
-                      onChange={(value) =>
-                        void savePolicy(
-                          { rolloverMaxDays: value ?? 0 },
-                          { pto_rollover_max_days: value ?? 0 }
-                        )
-                      }
-                      min={0}
-                      max={90}
-                      size="small"
-                      className="w-16"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-slate-600 dark:text-ink-300">Carried days lapse in</span>
-                    <Select
-                      value={role.policy.rolloverExpiresMonth}
-                      onChange={(value) =>
-                        void savePolicy(
-                          { rolloverExpiresMonth: value },
-                          { pto_rollover_expires_month: value }
-                        )
-                      }
-                      size="small"
-                      className="w-28"
-                      options={LAPSE_MONTHS}
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-slate-600 dark:text-ink-300">
-                      Extra days per year worked
-                    </span>
-                    <InputNumber
-                      value={role.policy.accrualDaysPerYear}
-                      onChange={(value) =>
-                        void savePolicy(
-                          { accrualDaysPerYear: value ?? 0 },
-                          { pto_accrual_days_per_year: value ?? 0 }
-                        )
-                      }
-                      min={0}
-                      max={30}
-                      size="small"
-                      className="w-16"
-                    />
-                  </label>
-
-                  {role.policy.accrualDaysPerYear > 0 && (
-                    <label className="flex items-center justify-between gap-2">
-                      <span className="text-slate-600 dark:text-ink-300">
-                        Stop once extras reach
-                      </span>
-                      <InputNumber
-                        value={role.policy.accrualMaxDays}
-                        onChange={(value) =>
-                          void savePolicy(
-                            { accrualMaxDays: value ?? 0 },
-                            { pto_accrual_max_days: value ?? 0 }
-                          )
-                        }
-                        min={0}
-                        max={60}
-                        size="small"
-                        placeholder="No cap"
-                        className="w-16"
-                      />
-                    </label>
-                  )}
-
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-slate-600 dark:text-ink-300">Hours in a day</span>
-                    <InputNumber
-                      value={role.policy.hoursPerDay}
-                      onChange={(value) =>
-                        void savePolicy(
-                          { hoursPerDay: value ?? 8 },
-                          { pto_hours_per_day: value ?? 8 }
-                        )
-                      }
-                      min={1}
-                      max={24}
-                      step={0.5}
-                      size="small"
-                      className="w-16"
-                    />
-                  </label>
-
-                  <p className="border-t border-slate-100 pt-2 text-slate-400 dark:border-white/[0.07] dark:text-ink-500">
-                    Accrues {perPaycheck.toFixed(2)}h per paycheck over{' '}
-                    {role.policy.paychecksPerYear} paychecks.
-                    {role.policy.accrualDaysPerYear > 0
-                      ? ` ${yearsOfService(role.window, year)} year${yearsOfService(role.window, year) === 1 ? '' : 's'} worked has added ${balance.accrued}d${
-                          role.policy.accrualMaxDays > 0 &&
-                          balance.accrued >= role.policy.accrualMaxDays
-                            ? ', which is the cap'
-                            : ''
-                        }.`
-                      : ''}
-                  </p>
-                </div>
-              }
-            >
-              <Button size="small" icon={<SettingOutlined />}>
-                Policy
-              </Button>
-            </Popover>
-          )}
-        </div>
-      )}
+      <div className="mt-2">
+        {role?.offerId == null ? (
+          <span className="text-[12px] text-slate-400 dark:text-ink-500">
+            Link an offer to this role to set its leave policy.
+          </span>
+        ) : (
+          <Popover
+            trigger="click"
+            placement="bottom"
+            title="Leave policy"
+            content={
+              <LeavePolicyFields
+                policy={role.policy}
+                onSave={(patch, payload) => void savePolicy(patch, payload)}
+                entitled={balance.entitled}
+                accrued={balance.accrued}
+                yearsWorked={yearsOfService(role.window, year)}
+                todayYear={new Date().getFullYear()}
+              />
+            }
+          >
+            <Button size="small" icon={<SettingOutlined />}>
+              Policy
+            </Button>
+          </Popover>
+        )}
+      </div>
 
       <div className="mt-3 border-t border-slate-100 pt-2 dark:border-white/[0.07]">
         {rows.length === 0 ? (

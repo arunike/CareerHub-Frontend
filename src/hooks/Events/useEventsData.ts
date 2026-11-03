@@ -42,6 +42,7 @@ export const useEventsData = ({
   const [customHolidays, setCustomHolidays] = useState<Holiday[]>([]);
   const [observedHolidays, setObservedHolidays] = useState<Holiday[]>([]);
   const [holidayTabs, setHolidayTabs] = useState<HolidayTab[]>([]);
+  const [defaultTabChargesPto, setDefaultTabChargesPto] = useState(true);
   const [defaultHolidayColor, setDefaultHolidayColor] = useState<string | undefined>();
   const [observedHolidayColor, setObservedHolidayColor] = useState<string | undefined>();
   const [eventsTotal, setEventsTotal] = useState(0);
@@ -77,6 +78,7 @@ export const useEventsData = ({
         setDefaultCategory(settingsResp.data.default_event_category ?? null);
         setHolidayTabs(settingsResp.data.holiday_tabs || []);
         setDefaultHolidayColor(settingsResp.data.default_holiday_color);
+        setDefaultTabChargesPto(settingsResp.data.default_holiday_counts_as_pto !== false);
         setObservedHolidayColor(settingsResp.data.observed_holiday_color);
         if (settingsResp.data.primary_timezone) {
           setUserTimezone((current) =>
@@ -176,6 +178,7 @@ export const useEventsData = ({
     customHolidays,
     observedHolidays,
     holidayTabs,
+    defaultTabChargesPto,
     defaultHolidayColor,
     observedHolidayColor,
     eventsTotal,

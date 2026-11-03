@@ -3,6 +3,7 @@ import type React from 'react';
 import type { ColorConflict } from '../../utils/colorConflicts';
 import type { UserSettings, HolidayTab } from '../../types';
 import { PlusOutlined, CloseOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { Switch } from 'antd';
 import ColorSwatchPicker from '../inputs/ColorSwatchPicker';
 import LockableListItem from '../display/LockableListItem';
 import { SECTION_ICONS } from './settingsChrome';
@@ -72,10 +73,10 @@ const CategoriesSection = ({
       <div>
         <h2 className="flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-ink-50">
           <span className="text-slate-400 dark:text-ink-500">{SECTION_ICONS.holiday}</span>
-          Time Off Colors
+          Time Off Tabs
         </h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-ink-400">
-          Custom tabs in Holiday Manager — saved with Settings
+          Colour, and whether a tab charges your PTO. Saved with Settings.
         </p>
       </div>
       <div className="flex items-center justify-end gap-2">
@@ -194,16 +195,37 @@ const CategoriesSection = ({
               <span className="block truncate font-medium text-gray-800 dark:text-ink-50">
                 {t.name}
               </span>
-              <span className="block truncate text-xs text-gray-400 dark:text-ink-500 font-mono">
-                {t.id}
+              <span className="block truncate text-xs text-gray-400 dark:text-ink-500">
+                {t.counts_as_pto ? 'Charges PTO' : 'Does not charge PTO'}
               </span>
+            </span>
+            <span className="ml-auto shrink-0">
+              <Switch
+                size="small"
+                checked={!!t.counts_as_pto}
+                disabled={isHolidayTabsLocked || !!t.locked}
+                onChange={(next) =>
+                  setSettings((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          holiday_tabs: getHolidayTabs().map((x) =>
+                            x.id === t.id ? { ...x, counts_as_pto: next } : x
+                          ),
+                        }
+                      : null
+                  )
+                }
+                aria-label={`${t.name} charges PTO`}
+              />
             </span>
           </LockableListItem>
         ))}
       </div>
     )}
     <p className="text-xs text-gray-400 dark:text-ink-500 mt-3">
-      Deleting a tab moves its time off back to <em>My Time Off</em>.
+      Deleting a tab moves its time off back to <em>{UNTABBED_HOLIDAY_LABEL}</em>, and onto that
+      bucket&apos;s PTO rule. A single day can still opt out from the day itself.
     </p>
 
     {/* A real setting now: a hardcoded colour could silently match an event category. */}
@@ -223,6 +245,15 @@ const CategoriesSection = ({
           </span>
           <span className="text-xs text-gray-400 dark:text-ink-500">time off with no tab</span>
         </div>
+        <Switch
+          size="small"
+          checked={settings?.default_holiday_counts_as_pto !== false}
+          disabled={isHolidayTabsLocked}
+          onChange={(next) =>
+            setSettings((prev) => (prev ? { ...prev, default_holiday_counts_as_pto: next } : prev))
+          }
+          aria-label={`${UNTABBED_HOLIDAY_LABEL} charges PTO`}
+        />
         <ColorSwatchPicker
           value={settings?.default_holiday_color ?? UNTABBED_HOLIDAY_COLOR}
           onChange={(color) =>

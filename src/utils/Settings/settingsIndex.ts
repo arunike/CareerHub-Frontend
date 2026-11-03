@@ -39,6 +39,7 @@ const TAB_FIELDS: Partial<Record<SettingsTab, Array<keyof UserSettings>>> = {
     'application_stages',
     'holiday_tabs',
     'default_holiday_color',
+    'default_holiday_counts_as_pto',
     'observed_holiday_color',
     'ignored_observed_holidays',
     'hidden_income_roles',
@@ -127,8 +128,8 @@ const SETTINGS_SEARCH_INDEX: SettingsSearchEntry[] = [
   {
     tab: 'organize',
     id: 'holiday-colors',
-    title: 'Time Off Colors',
-    keywords: 'holiday federal observed palette colour color time off',
+    title: 'Time Off Tabs',
+    keywords: 'holiday federal observed palette colour color time off pto allowance leave counts',
   },
   {
     tab: 'organize',

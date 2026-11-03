@@ -3,9 +3,14 @@ export interface PtoPolicy {
   ptoDays: number;
   isUnlimited: boolean;
   unlimitedPlanningDays: number;
+  // Off by default: a year's balance, shortfall included, only carries when this is on.
+  rolloverEnabled: boolean;
+  // Ceiling on the days that carry. 0 means no ceiling; it never caps a shortfall.
   rolloverMaxDays: number;
   // Month the carried days lapse, 1-12; 0 means they never lapse.
   rolloverExpiresMonth: number;
+  // First year the carry lands in, so switching it on leaves the year in progress alone; 0 is unrestricted.
+  rolloverFromYear: number;
   // Extra days per completed year of service; 0 leaves the allowance flat.
   accrualDaysPerYear: number;
   accrualMaxDays: number;
@@ -96,6 +101,21 @@ export const rolloverHasLapsed = (
   return todayYear === year && Number(todayIso.slice(5, 7)) >= month;
 };
 
+// A shortfall carries whole and never lapses: the ceiling and the lapse are about unused days.
+export const carriedInto = (
+  policy: PtoPolicy,
+  lastYearBalance: number,
+  year: number,
+  todayIso?: string
+) => {
+  if (policy.isUnlimited || !policy.rolloverEnabled) return 0;
+  if (num(policy.rolloverFromYear) > year) return 0;
+  if (lastYearBalance < 0) return lastYearBalance;
+  if (rolloverHasLapsed(policy.rolloverExpiresMonth, year, todayIso)) return 0;
+  const cap = num(policy.rolloverMaxDays);
+  return cap > 0 ? Math.min(cap, lastYearBalance) : lastYearBalance;
+};
+
 export const ptoBalance = ({
   policy,
   window,
@@ -113,14 +133,12 @@ export const ptoBalance = ({
   const entitled = entitledIn(policy, window, year);
   const taken = toHalfDay(takenIn(entries, year));
   // Carried days come from the year just gone and never carry twice; unlimited has nothing to carry.
-  const unusedLastYear = Math.max(
-    0,
-    entitledIn(policy, window, year - 1) - takenIn(entries, year - 1)
-  );
-  const rolledOver =
-    policy.isUnlimited || rolloverHasLapsed(policy.rolloverExpiresMonth, year, todayIso)
-      ? 0
-      : toHalfDay(Math.min(num(policy.rolloverMaxDays), unusedLastYear));
+  const lastYearBalance = entitledIn(policy, window, year - 1) - takenIn(entries, year - 1);
+  // A role you have left holds no leave to spend, so its balance stops at the last year it covered.
+  const stillHeld = coverageOfYear(window, year) > 0;
+  const rolledOver = stillHeld
+    ? toHalfDay(carriedInto(policy, lastYearBalance, year, todayIso))
+    : 0;
 
   return {
     entitled,
@@ -167,7 +185,7 @@ export const alreadyOffReason = (dates: string[], observed?: ObservedDays) => {
   return 'both' as const;
 };
 
-// A day falls to whichever role you held that day, so changing jobs splits the year by itself.
+// Tabs are the caller's business: pass days already filtered by `chargesAllowance`.
 export const timeOffInWindow = (
   days: DayOff[],
   window: RoleWindow,
@@ -177,7 +195,7 @@ export const timeOffInWindow = (
   const from = window.startDate ?? `${year}-01-01`;
   const to = window.endDate ?? `${year}-12-31`;
   const dates = days
-    .filter((day) => !day.tab && day.date.slice(0, 4) === String(year))
+    .filter((day) => day.date.slice(0, 4) === String(year))
     .filter((day) => day.counts_as_pto !== false)
     .filter((day) => {
       // An explicit link wins outright, so a day charged elsewhere never lands here by its date.

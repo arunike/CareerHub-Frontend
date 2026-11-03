@@ -146,6 +146,7 @@ export const useHolidayData = ({
     setHolidays,
     observedHolidays,
     userSettings,
+    setUserSettings,
     loading,
     loadError,
     fetchData,

@@ -20,7 +20,7 @@ const LockableListItem: React.FC<LockableListItemProps> = ({
 }) => {
   return (
     <div className="group flex flex-col gap-2 rounded-lg border border-gray-100 dark:border-white/[0.07] p-3 transition hover:bg-gray-50 dark:hover:bg-ink-800 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-center gap-2">{children}</div>
+      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
 
       {!sectionLocked && (
         <div className="flex w-full shrink-0 justify-end opacity-100 transition-opacity sm:w-auto md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">

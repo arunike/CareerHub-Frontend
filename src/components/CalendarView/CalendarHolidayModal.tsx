@@ -12,6 +12,7 @@ import { SCROLL_TO_FIRST_ERROR } from '../../constants/formDefaults';
 import { UNTABBED_HOLIDAY_LABEL } from '../../utils/holidayTabColors';
 import { holidayRangeDates } from '../../utils/Holidays/holidayGrouping';
 import { alreadyOffReason, type ObservedDays } from '../../utils/TimeOff/ptoBalance';
+import { chargesAllowance, type PtoTabPolicy } from '../../utils/TimeOff/ptoTabs';
 import {
   holidayKindOf,
   isHolidayViewOnly,
@@ -43,6 +44,8 @@ type CalendarHolidayModalProps = {
   // Every day of the trip being edited, so its real extent is what the pickers show.
   groupHolidays?: Holiday[];
   holidayTabs?: HolidayTab[];
+  // Without it the PTO controls show, which is the behaviour before tabs could opt out.
+  ptoTabPolicy?: PtoTabPolicy;
   allowObservedTab?: boolean;
   // Days the employer is already closed, which no amount of leave is spent on.
   observedDates?: ObservedDays;
@@ -88,6 +91,7 @@ const CalendarHolidayModal = ({
   holiday,
   groupHolidays = [],
   holidayTabs = [],
+  ptoTabPolicy,
   allowObservedTab = false,
   observedDates,
   ptoRoles = [],
@@ -99,6 +103,14 @@ const CalendarHolidayModal = ({
   const [form] = Form.useForm<CalendarHolidayFormValues>();
   const rolesRunningOn = (date: string | null) => rolesRunningOnIn(ptoRoles, date);
   const countsAsPto = Form.useWatch('counts_as_pto', form);
+  const selectedTab = Form.useWatch('tab', form);
+  // The tab decides for every day in it, so a day inside one that is off has nothing to choose.
+  const tabCharges =
+    !ptoTabPolicy || selectedTab === OBSERVED_TAB_VALUE
+      ? true
+      : chargesAllowance({ tab: selectedTab ?? '' }, ptoTabPolicy);
+  const selectedTabLabel =
+    holidayTabs.find((tab) => tab.id === selectedTab)?.name ?? UNTABBED_HOLIDAY_LABEL;
   const isMultiDay = Form.useWatch('is_multi_day', form);
   const startDate = Form.useWatch('date', form);
   const endDate = Form.useWatch('end_date', form);
@@ -265,7 +277,11 @@ const CalendarHolidayModal = ({
 
         {/* Emptying the roles is the same decision as unticking this, so the two move together. */}
         <div className="flex flex-wrap items-center gap-2">
-          {isObserved ? null : alreadyOff ? (
+          {isObserved ? null : !tabCharges ? (
+            <p className="mb-0 text-sm text-slate-500 dark:text-ink-400">
+              {selectedTabLabel} does not charge PTO, so this spends none.
+            </p>
+          ) : alreadyOff ? (
             <p className="mb-0 text-sm text-slate-500 dark:text-ink-400">
               Already off for {ALREADY_OFF_COPY[alreadyOff]}, so this spends no PTO.
             </p>
@@ -285,7 +301,7 @@ const CalendarHolidayModal = ({
           )}
         </div>
 
-        {!isObserved && !alreadyOff && countsAsPto !== false && (
+        {!isObserved && tabCharges && !alreadyOff && countsAsPto !== false && (
           <Form.Item
             name="pto_experience_ids"
             label="Charge to role"

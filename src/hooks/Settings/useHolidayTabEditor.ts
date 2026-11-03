@@ -47,7 +47,10 @@ export const useHolidayTabEditor = ({
         prev
           ? {
               ...prev,
-              holiday_tabs: [...current, { id, name: newTabName, color: newTabColor }],
+              holiday_tabs: [
+                ...current,
+                { id, name: newTabName, color: newTabColor, counts_as_pto: false },
+              ],
             }
           : null
       );

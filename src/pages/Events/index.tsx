@@ -16,6 +16,7 @@ import { PageState } from '../../components/feedback/PageState';
 import type { CalendarHolidayTarget } from '../../components/CalendarView/types';
 import CalendarHolidayModal from '../../components/CalendarView/CalendarHolidayModal';
 import { observedDaysOf } from '../../utils/TimeOff/observedDays';
+import { ptoTabPolicyOf } from '../../utils/TimeOff/ptoTabs';
 import { useObservance } from '../../hooks/Holidays/useObservance';
 import CalendarWorkspace from '../../components/CalendarView/CalendarWorkspace';
 import EventsFilterBar from '../../components/Events/EventsFilterBar';
@@ -91,6 +92,7 @@ const Events = () => {
     customHolidays,
     observedHolidays,
     holidayTabs,
+    defaultTabChargesPto,
     defaultHolidayColor,
     observedHolidayColor,
     eventsTotal,
@@ -130,6 +132,14 @@ const Events = () => {
   }, [eventDeepLink.search, events, navigateEvents]);
 
   const observedDates = useMemo(() => observedDaysOf(observedHolidays), [observedHolidays]);
+  const eventsPtoTabPolicy = useMemo(
+    () =>
+      ptoTabPolicyOf({
+        holiday_tabs: holidayTabs,
+        default_holiday_counts_as_pto: defaultTabChargesPto,
+      }),
+    [holidayTabs, defaultTabChargesPto]
+  );
   const { toggleObservance } = useObservance({ fetchData: fetchCalendarData, messageApi });
 
   const paginatedEvents = events;
@@ -469,6 +479,7 @@ const Events = () => {
       />
 
       <CalendarHolidayModal
+        ptoTabPolicy={eventsPtoTabPolicy}
         open={!!pendingCalendarHoliday || !!editingHoliday}
         mode={editingHoliday ? 'edit' : 'add'}
         groupHolidays={holidayRunMembers(customHolidays, observedHolidays, editingHoliday)}

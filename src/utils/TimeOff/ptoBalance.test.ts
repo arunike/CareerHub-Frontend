@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   alreadyOffReason,
+  carriedInto,
   coverageOfYear,
   costsLeave,
   daysOffInWindow,
@@ -17,8 +18,10 @@ const policy = (over: Partial<PtoPolicy> = {}): PtoPolicy => ({
   ptoDays: 20,
   isUnlimited: false,
   unlimitedPlanningDays: 25,
+  rolloverEnabled: true,
   rolloverMaxDays: 5,
   rolloverExpiresMonth: 0,
+  rolloverFromYear: 0,
   accrualDaysPerYear: 0,
   accrualMaxDays: 0,
   hoursPerDay: 8,
@@ -50,7 +53,7 @@ describe('ptoBalance', () => {
   it('counts days taken against the allowance', () => {
     // No rollover, so this isolates the year's own arithmetic from anything carried in.
     const result = ptoBalance({
-      policy: policy({ rolloverMaxDays: 0 }),
+      policy: policy({ rolloverEnabled: false }),
       window: wholeYear,
       year: 2026,
       entries: [day('2026-07-01'), day('2026-07-02', 0.5)],
@@ -81,10 +84,10 @@ describe('ptoBalance', () => {
     expect(result.remaining).toBe(25);
   });
 
-  it('carries nothing when the policy allows no rollover', () => {
+  it('carries nothing when the role does not roll over', () => {
     expect(
       ptoBalance({
-        policy: policy({ rolloverMaxDays: 0 }),
+        policy: policy({ rolloverEnabled: false }),
         window: wholeYear,
         year: 2026,
         entries: [],
@@ -151,7 +154,6 @@ describe('daysOffInWindow', () => {
     { date: '2026-07-02', tab: null },
     { date: '2026-07-02', tab: null },
     { date: '2026-11-02', tab: null },
-    { date: '2026-07-03', tab: 'company' },
   ];
 
   it('counts one day away from work even when two entries share the date', () => {
@@ -162,8 +164,9 @@ describe('daysOffInWindow', () => {
     ]);
   });
 
-  it('leaves days on a holiday tab alone, which are not your time off', () => {
-    expect(daysOffInWindow(days, { startDate: null, endDate: null }, 2026)).not.toContain(
+  it('judges no tab of its own, so the caller decides what charges the allowance', () => {
+    const tabbed = [...days, { date: '2026-07-03', tab: 'company' }];
+    expect(daysOffInWindow(tabbed, { startDate: null, endDate: null }, 2026)).toContain(
       '2026-07-03'
     );
   });
@@ -351,5 +354,89 @@ describe('carried days that lapse', () => {
 
   it('cannot lapse without a reference date', () => {
     expect(ptoBalance(carried).rolledOver).toBe(5);
+  });
+});
+
+describe('carriedInto', () => {
+  const FULL_YEAR = { startDate: null, endDate: null };
+  const lastYear = (daysTaken: number) =>
+    Array.from({ length: daysTaken }, (_, index) => ({
+      date: `2025-02-${String(index + 1).padStart(2, '0')}`,
+      days: 1,
+    }));
+
+  it('carries nothing when the role does not roll over, which is the default', () => {
+    expect(carriedInto(policy({ rolloverEnabled: false }), 3, 2026)).toBe(0);
+  });
+
+  it('carries the unused days when it does', () => {
+    expect(carriedInto(policy({ rolloverEnabled: true, rolloverMaxDays: 0 }), 3, 2026)).toBe(3);
+  });
+
+  it('caps the unused days at the ceiling, and treats 0 as no ceiling', () => {
+    expect(carriedInto(policy({ rolloverMaxDays: 2 }), 3, 2026)).toBe(2);
+    expect(carriedInto(policy({ rolloverMaxDays: 0 }), 3, 2026)).toBe(3);
+  });
+
+  // Overspending is a debt, so the ceiling on unused days has nothing to say about it.
+  it('carries a shortfall whole, past any ceiling', () => {
+    expect(carriedInto(policy({ rolloverMaxDays: 1 }), -2, 2026)).toBe(-2);
+  });
+
+  it('lapses unused days but never a shortfall', () => {
+    const lapsing = policy({ rolloverExpiresMonth: 3 });
+    expect(carriedInto(lapsing, 3, 2026, '2026-04-01')).toBe(0);
+    expect(carriedInto(lapsing, -2, 2026, '2026-04-01')).toBe(-2);
+  });
+
+  it('carries nothing under an unlimited policy', () => {
+    expect(carriedInto(policy({ isUnlimited: true }), 3, 2026)).toBe(0);
+  });
+
+  it('leaves the years before the start year alone, and carries from it onward', () => {
+    const fromNextYear = policy({ rolloverMaxDays: 0, rolloverFromYear: 2027 });
+    expect(carriedInto(fromNextYear, 3, 2026)).toBe(0);
+    expect(carriedInto(fromNextYear, 3, 2027)).toBe(3);
+  });
+
+  it('holds a shortfall back too, since the start year governs the whole carry', () => {
+    expect(carriedInto(policy({ rolloverFromYear: 2027 }), -2, 2026)).toBe(0);
+  });
+
+  it('carries into every year when the start year is 0', () => {
+    expect(carriedInto(policy({ rolloverMaxDays: 0, rolloverFromYear: 0 }), 3, 2026)).toBe(3);
+  });
+
+  it('carries nothing into a year after the role ended', () => {
+    const left = ptoBalance({
+      policy: policy({ ptoDays: 20, rolloverMaxDays: 0 }),
+      window: { startDate: '2025-07-01', endDate: '2026-11-01' },
+      year: 2027,
+      entries: [],
+    });
+    expect(left.rolledOver).toBe(0);
+    expect(left.remaining).toBe(0);
+  });
+
+  it("adds last year's leftover to this year's allowance", () => {
+    const balance = ptoBalance({
+      policy: policy({ ptoDays: 20, rolloverMaxDays: 0 }),
+      window: FULL_YEAR,
+      year: 2026,
+      entries: lastYear(17),
+    });
+    expect(balance.rolledOver).toBe(3);
+    expect(balance.remaining).toBe(23);
+  });
+
+  it("takes last year's overspend off this year's allowance", () => {
+    const balance = ptoBalance({
+      policy: policy({ ptoDays: 20, rolloverMaxDays: 0 }),
+      window: FULL_YEAR,
+      year: 2026,
+      entries: lastYear(22),
+    });
+    expect(balance.rolledOver).toBe(-2);
+    expect(balance.remaining).toBe(18);
   });
 });

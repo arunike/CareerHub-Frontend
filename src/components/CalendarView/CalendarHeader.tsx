@@ -1,5 +1,6 @@
-import type React from 'react';
-import { CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Popover, Switch, Tooltip } from 'antd';
+import { CalendarOutlined, LeftOutlined, MoreOutlined, RightOutlined } from '@ant-design/icons';
 import type { EventCategory, HolidayTab } from '../../types';
 import { getEventCategoryColor } from '../../utils/eventCategoryColors';
 import {
@@ -8,6 +9,8 @@ import {
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
 import SegmentedToggle from '../inputs/SegmentedToggle';
+import { UNTABBED_KEY } from '../../utils/TimeOff/ptoTabs';
+import type { PtoTabPolicy } from '../../utils/TimeOff/ptoTabs';
 import type { CalendarFilters, CalendarViewMode } from './types';
 import { VIEW_OPTIONS } from './types';
 
@@ -31,6 +34,9 @@ type Props = {
   pageControls?: React.ReactNode;
   defaultHolidayColor?: string;
   observedHolidayColor?: string;
+  // Advanced Options only: flip whether a whole tab charges the PTO allowance.
+  ptoTabPolicy?: PtoTabPolicy;
+  onSetTabCharges?: (tabId: string, charges: boolean) => void;
 };
 
 const CalendarHeader = ({
@@ -51,6 +57,8 @@ const CalendarHeader = ({
   pageControls,
   defaultHolidayColor,
   observedHolidayColor,
+  ptoTabPolicy,
+  onSetTabCharges,
 }: Props) => {
   const filterButtonClassName = (active: boolean) =>
     `inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors md:min-h-0 md:px-2.5 md:py-1 md:text-sm ${
@@ -58,6 +66,64 @@ const CalendarHeader = ({
         ? 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-gray-700 dark:text-ink-100 shadow-sm hover:border-blue-200'
         : 'border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 hover:text-gray-500'
     } ${loading ? 'cursor-not-allowed opacity-60' : ''}`;
+
+  // Kept open-aware: the trigger is hover-revealed, and losing it mid-interaction shuts the panel.
+  const [openOptionsTab, setOpenOptionsTab] = useState<string | null>(null);
+
+  const tabOptions = (tabId: string, tabName: string) => {
+    if (!ptoTabPolicy || !onSetTabCharges) return null;
+    const charges = ptoTabPolicy.chargingTabs.has(tabId);
+    const open = openOptionsTab === tabId;
+    return (
+      <Popover
+        open={open}
+        onOpenChange={(next) => setOpenOptionsTab(next ? tabId : null)}
+        trigger="click"
+        placement="bottomLeft"
+        overlayClassName="calendar-tab-options"
+        content={
+          <div className="w-full space-y-3 sm:w-64">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
+              {tabName}
+            </div>
+            <div className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-slate-700 dark:text-ink-100">
+                  Counts against my PTO
+                </span>
+                <span className="block text-xs text-slate-500 dark:text-ink-400">
+                  Applies to every day in this tab. A single day can still opt out.
+                </span>
+              </span>
+              <Switch
+                size="small"
+                checked={charges}
+                onChange={(next) => onSetTabCharges(tabId, next)}
+                aria-label={`${tabName} charges PTO`}
+              />
+            </div>
+          </div>
+        }
+      >
+        <Tooltip title={open ? '' : `${tabName} options`}>
+          <button
+            type="button"
+            disabled={loading}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-label={`${tabName} options`}
+            className={`size-11 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors dark:border-white/[0.08] dark:text-ink-500 md:size-6 md:hover:text-gray-600 md:dark:hover:text-ink-200 ${
+              open
+                ? 'inline-flex bg-white text-gray-600 dark:bg-ink-900 dark:text-ink-200'
+                : 'inline-flex bg-gray-50 dark:bg-ink-900 md:hidden md:group-focus-within:inline-flex md:group-hover:inline-flex'
+            } ${loading ? 'cursor-not-allowed opacity-60' : ''}`}
+          >
+            <MoreOutlined className="text-sm" />
+          </button>
+        </Tooltip>
+      </Popover>
+    );
+  };
 
   const rangeButtonClassName =
     'inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-ink-900 text-slate-600 dark:text-ink-200 transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-ink-800 hover:text-slate-900 dark:hover:text-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 sm:size-9';
@@ -156,43 +222,48 @@ const CalendarHeader = ({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => onToggleCustomHolidayTab('default')}
-            disabled={loading}
-            aria-pressed={filters.customHolidayTabs.has('default')}
-            className={filterButtonClassName(filters.customHolidayTabs.has('default'))}
-          >
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: filters.customHolidayTabs.has('default')
-                  ? getHolidayTabColor(defaultHolidayColor).dot
-                  : '#d1d5db',
-              }}
-            />
-            <span>{UNTABBED_HOLIDAY_LABEL}</span>
-          </button>
+          <span className="group inline-flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onToggleCustomHolidayTab('default')}
+              disabled={loading}
+              aria-pressed={filters.customHolidayTabs.has('default')}
+              className={filterButtonClassName(filters.customHolidayTabs.has('default'))}
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor: filters.customHolidayTabs.has('default')
+                    ? getHolidayTabColor(defaultHolidayColor).dot
+                    : '#d1d5db',
+                }}
+              />
+              <span>{UNTABBED_HOLIDAY_LABEL}</span>
+            </button>
+            {tabOptions(UNTABBED_KEY, UNTABBED_HOLIDAY_LABEL)}
+          </span>
 
           {holidayTabs.map((tab) => {
             const tabColor = getHolidayTabColor(tab.color);
             const active = filters.customHolidayTabs.has(tab.id);
 
             return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onToggleCustomHolidayTab(tab.id)}
-                disabled={loading}
-                aria-pressed={active}
-                className={filterButtonClassName(active)}
-              >
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: active ? tabColor.dot : '#d1d5db' }}
-                />
-                <span>{tab.name}</span>
-              </button>
+              <span className="group inline-flex shrink-0 items-center gap-1" key={tab.id}>
+                <button
+                  type="button"
+                  onClick={() => onToggleCustomHolidayTab(tab.id)}
+                  disabled={loading}
+                  aria-pressed={active}
+                  className={filterButtonClassName(active)}
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: active ? tabColor.dot : '#d1d5db' }}
+                  />
+                  <span>{tab.name}</span>
+                </button>
+                {tabOptions(tab.id, tab.name)}
+              </span>
             );
           })}
 

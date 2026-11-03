@@ -10,6 +10,7 @@ import Modal from '../modals/MobileModal';
 import type { Event, EventCategory, Holiday, HolidayTab } from '../../types';
 import CalendarDetailsPanel from './CalendarDetailsPanel';
 import CalendarHeader from './CalendarHeader';
+import type { PtoTabPolicy } from '../../utils/TimeOff/ptoTabs';
 import CalendarMonthView from './CalendarMonthView';
 import type { CalendarDragItem } from './CalendarDayContent';
 import CalendarRangeView from './CalendarRangeView';
@@ -34,6 +35,8 @@ interface CalendarViewProps {
   observedHolidays: Holiday[];
   categories?: EventCategory[];
   holidayTabs?: HolidayTab[];
+  ptoTabPolicy?: PtoTabPolicy;
+  onSetTabCharges?: (tabId: string, charges: boolean) => void;
   addActionHighlight?: AddActionHighlight;
   loading?: boolean;
   onEventSelect?: (event: Event, day?: Date) => void;
@@ -57,6 +60,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   observedHolidays,
   categories = [],
   holidayTabs = [],
+  ptoTabPolicy,
+  onSetTabCharges,
   addActionHighlight = 'all',
   loading = false,
   onEventSelect,
@@ -363,6 +368,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         onGoToToday={goToToday}
         categories={categories}
         holidayTabs={holidayTabs}
+        ptoTabPolicy={ptoTabPolicy}
+        onSetTabCharges={onSetTabCharges}
         filters={filters}
         hasUncategorizedEvents={hasUncategorizedEvents}
         loading={loading}

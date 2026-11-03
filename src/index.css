@@ -2398,3 +2398,17 @@ summary,
 [data-theme='dark'] .ant-empty svg {
   opacity: 0.38;
 }
+
+@media (max-width: 639px) {
+  /* The chip row scrolls sideways and nothing clips the overlay, so antd can anchor it off-screen. */
+  .calendar-tab-options.ant-popover {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .calendar-tab-options .ant-popover-arrow {
+    display: none;
+  }
+}
