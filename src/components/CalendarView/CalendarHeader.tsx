@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Popover, Switch, Tooltip } from 'antd';
+import { Popover, Switch } from 'antd';
 import { CalendarOutlined, LeftOutlined, MoreOutlined, RightOutlined } from '@ant-design/icons';
 import type { EventCategory, HolidayTab } from '../../types';
 import { getEventCategoryColor } from '../../utils/eventCategoryColors';
@@ -9,6 +9,7 @@ import {
   getHolidayTabColor,
 } from '../../utils/holidayTabColors';
 import SegmentedToggle from '../inputs/SegmentedToggle';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { UNTABBED_KEY } from '../../utils/TimeOff/ptoTabs';
 import type { PtoTabPolicy } from '../../utils/TimeOff/ptoTabs';
 import type { CalendarFilters, CalendarViewMode } from './types';
@@ -67,61 +68,70 @@ const CalendarHeader = ({
         : 'border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-ink-900 text-gray-400 dark:text-ink-500 hover:text-gray-500'
     } ${loading ? 'cursor-not-allowed opacity-60' : ''}`;
 
-  // Kept open-aware: the trigger is hover-revealed, and losing it mid-interaction shuts the panel.
+  const isMobile = useIsMobile();
+
+  // Kept open-aware so the phone's kebab can report its state, and so only one panel is ever open.
   const [openOptionsTab, setOpenOptionsTab] = useState<string | null>(null);
 
-  const tabOptions = (tabId: string, tabName: string) => {
-    if (!ptoTabPolicy || !onSetTabCharges) return null;
-    const charges = ptoTabPolicy.chargingTabs.has(tabId);
-    const open = openOptionsTab === tabId;
-    return (
-      <Popover
-        open={open}
-        onOpenChange={(next) => setOpenOptionsTab(next ? tabId : null)}
-        trigger="click"
-        placement="bottomLeft"
-        overlayClassName="calendar-tab-options"
-        content={
-          <div className="w-full space-y-3 sm:w-64">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
-              {tabName}
-            </div>
-            <div className="flex items-start justify-between gap-3">
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-slate-700 dark:text-ink-100">
-                  Counts against my PTO
-                </span>
-                <span className="block text-xs text-slate-500 dark:text-ink-400">
-                  Applies to every day in this tab. A single day can still opt out.
-                </span>
-              </span>
-              <Switch
-                size="small"
-                checked={charges}
-                onChange={(next) => onSetTabCharges(tabId, next)}
-                aria-label={`${tabName} charges PTO`}
-              />
-            </div>
+  const tabOptionsPopover = (tabId: string, tabName: string, trigger: React.ReactElement) => (
+    <Popover
+      open={openOptionsTab === tabId}
+      onOpenChange={(next) => setOpenOptionsTab(next ? tabId : null)}
+      trigger={isMobile ? 'click' : ['hover', 'focus']}
+      placement="bottomLeft"
+      overlayClassName="calendar-tab-options"
+      content={
+        <div className="w-full space-y-3 sm:w-64">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-ink-500">
+            {tabName}
           </div>
-        }
-      >
-        <Tooltip title={open ? '' : `${tabName} options`}>
+          <div className="flex items-start justify-between gap-3">
+            <span className="min-w-0">
+              <span className="block text-sm font-medium text-slate-700 dark:text-ink-100">
+                Counts against my PTO
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-ink-400">
+                Applies to every day in this tab. A single day can still opt out.
+              </span>
+            </span>
+            <Switch
+              size="small"
+              checked={ptoTabPolicy?.chargingTabs.has(tabId) ?? false}
+              onChange={(next) => onSetTabCharges?.(tabId, next)}
+              aria-label={`${tabName} charges PTO`}
+            />
+          </div>
+        </div>
+      }
+    >
+      {trigger}
+    </Popover>
+  );
+
+  // Advanced Options only: the chip opens its own panel, and the phone keeps a kebab because it has no hover.
+  const withTabOptions = (tabId: string, tabName: string, chip: React.ReactElement) => {
+    if (!ptoTabPolicy || !onSetTabCharges) return chip;
+    if (!isMobile) return tabOptionsPopover(tabId, tabName, chip);
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1">
+        {chip}
+        {tabOptionsPopover(
+          tabId,
+          tabName,
           <button
             type="button"
             disabled={loading}
             aria-haspopup="dialog"
-            aria-expanded={open}
+            aria-expanded={openOptionsTab === tabId}
             aria-label={`${tabName} options`}
-            className={`size-11 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-400 transition-colors dark:border-white/[0.08] dark:text-ink-500 md:size-6 md:hover:text-gray-600 md:dark:hover:text-ink-200 ${
-              open
-                ? 'inline-flex bg-white text-gray-600 dark:bg-ink-900 dark:text-ink-200'
-                : 'inline-flex bg-gray-50 dark:bg-ink-900 md:hidden md:group-focus-within:inline-flex md:group-hover:inline-flex'
-            } ${loading ? 'cursor-not-allowed opacity-60' : ''}`}
+            className={`inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-400 dark:border-white/[0.08] dark:bg-ink-900 dark:text-ink-500 ${
+              loading ? 'cursor-not-allowed opacity-60' : ''
+            }`}
           >
             <MoreOutlined className="text-sm" />
           </button>
-        </Tooltip>
-      </Popover>
+        )}
+      </span>
     );
   };
 
@@ -222,7 +232,9 @@ const CalendarHeader = ({
             </button>
           )}
 
-          <span className="group inline-flex shrink-0 items-center gap-1">
+          {withTabOptions(
+            UNTABBED_KEY,
+            UNTABBED_HOLIDAY_LABEL,
             <button
               type="button"
               onClick={() => onToggleCustomHolidayTab('default')}
@@ -240,30 +252,32 @@ const CalendarHeader = ({
               />
               <span>{UNTABBED_HOLIDAY_LABEL}</span>
             </button>
-            {tabOptions(UNTABBED_KEY, UNTABBED_HOLIDAY_LABEL)}
-          </span>
+          )}
 
           {holidayTabs.map((tab) => {
             const tabColor = getHolidayTabColor(tab.color);
             const active = filters.customHolidayTabs.has(tab.id);
 
             return (
-              <span className="group inline-flex shrink-0 items-center gap-1" key={tab.id}>
-                <button
-                  type="button"
-                  onClick={() => onToggleCustomHolidayTab(tab.id)}
-                  disabled={loading}
-                  aria-pressed={active}
-                  className={filterButtonClassName(active)}
-                >
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: active ? tabColor.dot : '#d1d5db' }}
-                  />
-                  <span>{tab.name}</span>
-                </button>
-                {tabOptions(tab.id, tab.name)}
-              </span>
+              <React.Fragment key={tab.id}>
+                {withTabOptions(
+                  tab.id,
+                  tab.name,
+                  <button
+                    type="button"
+                    onClick={() => onToggleCustomHolidayTab(tab.id)}
+                    disabled={loading}
+                    aria-pressed={active}
+                    className={filterButtonClassName(active)}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: active ? tabColor.dot : '#d1d5db' }}
+                    />
+                    <span>{tab.name}</span>
+                  </button>
+                )}
+              </React.Fragment>
             );
           })}
 
